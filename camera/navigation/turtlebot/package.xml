@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package>
+  <name>realsense_navigation</name>
+  <version>1.0.0</version>
+  <description>RealSense Camera package allowing access to Intel 3D cameras and advanced modules</description>
+
+  <maintainer email="amit.moran@intel.com">Amit Moran</maintainer>
+
+  <license>BSD 3-clause. See license attached</license>
+
+  <url type="website">http://www.ros.org/wiki/RealSense</url>
+
+  <author email="amit.moran@intel.com">Amit Moran</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+ 
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+</package>

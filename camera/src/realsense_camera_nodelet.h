@@ -1,9 +1,31 @@
 /******************************************************************************
- INTEL CORPORATION PROPRIETARY INFORMATION
- This software is supplied under the terms of a license agreement or nondisclosure
- agreement with Intel Corporation and may not be copied or disclosed except in
- accordance with the terms of that agreement
- Copyright(c) 2011-2016 Intel Corporation. All Rights Reserved.
+ Copyright (c) 2016, Intel Corporation
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice, this
+ list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
+ and/or other materials provided with the distribution.
+
+ 3. Neither the name of the copyright holder nor the names of its contributors
+ may be used to endorse or promote products derived from this software without
+ specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
 #pragma once
@@ -38,6 +60,9 @@
 
 #include <librealsense/rs.hpp>
 #include <realsense_camera/cameraConfiguration.h>
+#include <dynamic_reconfigure/server.h>
+#include <realsense_camera/camera_paramsConfig.h>
+
 
 namespace realsense_camera
 {
@@ -61,14 +86,17 @@ public:
   const bool ENABLE_DEPTH = true;
   const bool ENABLE_COLOR = true;
   const bool ENABLE_PC = true;
+  const bool ENABLE_TF = true;
   const uint32_t SERIAL_NUMBER = 0xFFFFFFFF;
   const rs_format DEPTH_FORMAT = RS_FORMAT_Z16;
   const rs_format COLOR_FORMAT = RS_FORMAT_RGB8;
   const rs_format IR1_FORMAT = RS_FORMAT_Y8;
   const rs_format IR2_FORMAT = RS_FORMAT_Y8;
-  const char *BASE_DEF_FRAME = "realsense_frame";
-  const char *DEPTH_DEF_FRAME = "camera_depth_optical_frame";
-  const char *COLOR_DEF_FRAME = "camera_color_optical_frame";
+  const char *BASE_DEF_FRAME = "camera_link";
+  const char *DEPTH_DEF_FRAME = "camera_depth_frame";
+  const char *COLOR_DEF_FRAME = "camera_rgb_frame";
+  const char *DEPTH_OPTICAL_DEF_FRAME = "camera_depth_optical_frame";
+  const char *COLOR_OPTICAL_DEF_FRAME = "camera_rgb_optical_frame";
   const char *IR1_DEF_FRAME = "camera_infrared_optical_frame";
   const char *IR2_DEF_FRAME = "camera_infrared2_optical_frame";
   const char *DEPTH_TOPIC = "camera/depth/image_raw";
@@ -83,6 +111,7 @@ public:
 private:
   // Member Variables.
   boost::shared_ptr<boost::thread> device_thread_;
+  boost::shared_ptr<boost::thread> transform_thread_;
 
   rs_error *rs_error_ = 0;
   rs_context *rs_context_;
@@ -98,11 +127,20 @@ private:
   bool enable_color_;
   bool enable_depth_;
   bool enable_pointcloud_;
+  bool enable_tf_;
   std::vector<std::string> camera_configuration_;
   std::string camera_ = "R200";
   const uint16_t *image_depth16_;
 
   cv::Mat image_[STREAM_COUNT];
+
+  rs_option edge_options_[4] = {
+    RS_OPTION_R200_AUTO_EXPOSURE_LEFT_EDGE,
+    RS_OPTION_R200_AUTO_EXPOSURE_TOP_EDGE,
+    RS_OPTION_R200_AUTO_EXPOSURE_RIGHT_EDGE,
+    RS_OPTION_R200_AUTO_EXPOSURE_BOTTOM_EDGE
+  };
+  double edge_values_[4];
 
   sensor_msgs::CameraInfoPtr camera_info_ptr_[STREAM_COUNT];
   sensor_msgs::CameraInfo * camera_info_[STREAM_COUNT];
@@ -124,6 +162,7 @@ private:
     double min, max, step, value;
   };
   std::vector<option_str> options;
+  boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>> dynamic_reconf_server_;
 
   // Member Functions.
   void check_error();
@@ -132,6 +171,7 @@ private:
   void prepareStreamData(rs_stream rs_strm);
   void publishStreams();
   void publishPointCloud(cv::Mat & image_rgb);
+  void publishTransforms();
   void devicePoll();
   void allocateResources();
   bool connectToCamera();
@@ -139,6 +179,7 @@ private:
   void getConfigValues(std::vector<std::string> args);
   void setConfigValues(std::vector<std::string> args, std::vector<struct option_str> cam_options);
   bool getCameraSettings(realsense_camera::cameraConfiguration::Request & req, realsense_camera::cameraConfiguration::Response & res);
+  void configCallback(realsense_camera::camera_paramsConfig &config, uint32_t level);
 
 };
 }

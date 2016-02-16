@@ -1,0 +1,20 @@
+<launch>
+
+	<arg name="mode" default="preset" />
+	<arg name="enable_depth" default="true" />
+	<arg name="enable_color" default="true" />
+	<arg name="enable_pointcloud" default="true" />
+	<arg name="enable_tf" default="true" />		
+	
+  	<node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
+  	
+	<node pkg="nodelet" type="nodelet" name="RealsenseNodelet"
+        args="load realsense_camera/RealsenseNodelet standalone_nodelet 
+        mode $(arg mode)
+        enable_depth $(arg enable_depth)
+        enable_color $(arg enable_color)
+        enable_pointcloud $(arg enable_pointcloud)
+        enable_tf $(arg enable_tf)">        
+  	</node>
+  
+</launch> 

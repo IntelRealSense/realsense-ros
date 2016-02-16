@@ -1,9 +1,31 @@
 /******************************************************************************
- INTEL CORPORATION PROPRIETARY INFORMATION
- This software is supplied under the terms of a license agreement or nondisclosure
- agreement with Intel Corporation and may not be copied or disclosed except in
- accordance with the terms of that agreement
- Copyright(c) 2011-2016 Intel Corporation. All Rights Reserved.
+ Copyright (c) 2016, Intel Corporation
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice, this
+ list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
+ and/or other materials provided with the distribution.
+
+ 3. Neither the name of the copyright holder nor the names of its contributors
+ may be used to endorse or promote products derived from this software without
+ specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 #include "gtest/gtest.h"
 
@@ -18,7 +40,7 @@ void imageInfrared1Callback(const sensor_msgs::ImageConstPtr & msg, const sensor
 
   long infrared1_total = 0;
   int infrared1_count = 1;
-  for (int i = 0; i < msg->height * msg->width; i++)
+  for (unsigned int i = 0; i < msg->height * msg->width; i++)
   {
     if (*infrared1_data > 0 && *infrared1_data < 255)
     {
@@ -48,7 +70,7 @@ void imageInfrared2Callback(const sensor_msgs::ImageConstPtr & msg, const sensor
 
   long infrared2_total = 0;
   int infrared2_count = 1;
-  for (int i = 0; i < msg->height * msg->width; i++)
+  for (unsigned int i = 0; i < msg->height * msg->width; i++)
   {
     if (*infrared2_data > 0 && *infrared2_data < 255)
     {
@@ -77,9 +99,9 @@ void imageDepthCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msg
 
   long depth_total = 0;
   int depth_count = 0;
-  for (int i = 0; i < msg->height * msg->width; ++i)
+  for (unsigned int i = 0; i < msg->height * msg->width; ++i)
   {
-    if (0 < *image_data <= R200_DEPTH_MAX)
+    if ((0 < *image_data) && (*image_data <= R200_DEPTH_MAX))
     {
       depth_total += *image_data;
       depth_count++;
@@ -103,34 +125,33 @@ void imageDepthCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msg
   depth_recv = true;
 }
 
-/*
- void pcCallback (const sensor_msgs::PointCloud2ConstPtr pc)
- {
- pcl::PointCloud < pcl::PointXYZRGB > pointcloud;
- pcl::fromROSMsg (*pc, pointcloud);
 
- long pc_depth_total = 0;
- int pc_depth_count = 0;
- for (int i = 0; i < pointcloud.width * pointcloud.height; ++i)
- {
- pcl::PointXYZRGB point = pointcloud.points[i];
- float pc_depth = (float) std::ceil (point.z);
- if (0 < pc_depth <= 10)
- {
- pc_depth_total += pc_depth;
- pc_depth_count++;
- }
- }
+ void pcCallback(const sensor_msgs::PointCloud2ConstPtr pc)
+{
+  pcl::PointCloud < pcl::PointXYZRGB > pointcloud;
+  pcl::fromROSMsg(*pc, pointcloud);
 
+  long pc_depth_total = 0;
+  int pc_depth_count = 0;
+  for (unsigned int i = 0; i < pointcloud.width * pointcloud.height; ++i)
+  {
+    pcl::PointXYZRGB point = pointcloud.points[i];
+    float pc_depth = (float) std::ceil(point.z);
+    if ((0 < pc_depth) && (pc_depth <= R200_DEPTH_MAX))
+    {
+      pc_depth_total += pc_depth;
+      pc_depth_count++;
+    }
+  }
 
- if (pc_depth_count != 0)
- {
- pc_depth_avg = pc_depth_total / pc_depth_count;
- }
+  if (pc_depth_count != 0)
+  {
+    pc_depth_avg = pc_depth_total / pc_depth_count;
+  }
 
- pc_recv = true;
- }
- */
+  pc_recv = true;
+}
+
 
 void imageColorCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msgs::CameraInfoConstPtr & info_msg)
 {
@@ -139,7 +160,7 @@ void imageColorCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msg
   uchar *color_data = image.data;
   long color_total = 0;
   int color_count = 1;
-  for (int i = 0; i < msg->height * msg->width * 3; i++)
+  for (unsigned int i = 0; i < msg->height * msg->width * 3; i++)
   {
     if (*color_data > 0 && *color_data < 255)
     {
@@ -340,21 +361,21 @@ TEST (RealsenseTests, testInfrared2CameraInfo)
   }
 }
 
-/*
+
  TEST (RealsenseTests, testPointCloud)
- {
- if (enable_depth)
- {
- ROS_INFO_STREAM ("RealSense Camera - pc_depth_avg: " << pc_depth_avg);
- EXPECT_TRUE (pc_depth_avg > 0);
- EXPECT_TRUE (pc_recv);
- }
- else
- {
- EXPECT_FALSE (pc_recv);
- }
- }
- */
+{
+  if (enable_depth)
+  {
+    ROS_INFO_STREAM ("RealSense Camera - pc_depth_avg: " << pc_depth_avg);
+    EXPECT_TRUE (pc_depth_avg > 0);
+    EXPECT_TRUE (pc_recv);
+  }
+  else
+  {
+    EXPECT_FALSE (pc_recv);
+  }
+}
+
 
 TEST (RealsenseTests, testCameraSettings)
 {
@@ -372,6 +393,39 @@ TEST (RealsenseTests, testCameraSettings)
       int expected_value = atoi (last_element.c_str ());
       int current_Value = atoi (config_args.at (option_name).c_str ());
       EXPECT_EQ (current_Value, expected_value);
+    }
+  }
+}
+
+TEST (RealsenseTests, testTransforms)
+{
+  // make sure all transforms are being broadcast as expected
+  tf::TransformListener tf_listener;
+  ros::Duration(1).sleep();  // must listen for ~1 sec or tf won't be found
+
+  EXPECT_TRUE(tf_listener.canTransform (BASE_DEF_FRAME, DEPTH_DEF_FRAME, ros::Time::now()));
+  EXPECT_TRUE(tf_listener.canTransform (DEPTH_DEF_FRAME, DEPTH_OPTICAL_DEF_FRAME, ros::Time::now()));
+  EXPECT_TRUE(tf_listener.canTransform (BASE_DEF_FRAME, COLOR_DEF_FRAME, ros::Time::now()));
+  EXPECT_TRUE(tf_listener.canTransform (COLOR_DEF_FRAME,COLOR_OPTICAL_DEF_FRAME, ros::Time::now()));
+}
+
+TEST (RealsenseTests, testDynamicReconfigure)
+{
+  stringstream settings_ss (srv.response.configuration_str);
+  string setting;
+  string setting_name;
+  string setting_value;
+
+  while (getline (settings_ss, setting, ';'))
+  {
+    stringstream setting_ss (setting);
+    getline (setting_ss, setting_name, ':');
+    setting_value = (setting.substr (setting.rfind (":") + 1));
+    if (config_args.find (setting_name) != config_args.end ())
+    {
+      int actual_value = atoi (setting_value.c_str ());
+      int expected_value = atoi (config_args.at (setting_name).c_str ());
+      EXPECT_EQ (expected_value, actual_value);
     }
   }
 }
@@ -398,7 +452,14 @@ void fillConfigMap(int argc, char **argv)
     if (config_args.find("enable_depth") != config_args.end())
     {
       ROS_INFO ("RealSense Camera - Setting %s to %s", "enable_depth", config_args.at("enable_depth").c_str());
-      enable_depth = atoi(config_args.at("enable_depth").c_str());
+      if (strcmp((config_args.at("enable_depth").c_str ()),"true") == 0)
+      {
+        enable_depth = true;
+      }
+      else
+      {
+        enable_depth = false;
+      }
     }
     if (config_args.find("depth_encoding") != config_args.end())
     {
@@ -425,7 +486,14 @@ void fillConfigMap(int argc, char **argv)
     if (config_args.find("enable_color") != config_args.end())
     {
       ROS_INFO ("RealSense Camera - Setting %s to %s", "enable_color", config_args.at("enable_color").c_str());
-      enable_color = atoi(config_args.at("enable_color").c_str());
+      if (strcmp((config_args.at("enable_color").c_str ()),"true") == 0)
+      {
+        enable_color = true;
+      }
+      else
+      {
+        enable_color = false;
+      }
     }
     if (config_args.find("color_encoding") != config_args.end())
     {
@@ -452,8 +520,6 @@ void fillConfigMap(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-  int return_value = 1;
-
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "utest");
   fillConfigMap(argc, argv);
@@ -470,7 +536,7 @@ int main(int argc, char **argv)
     camera_subscriber[3] = it.subscribeCamera(IR2_TOPIC, 1, imageInfrared2Callback, 0);
   }
 
-  //m_sub_pc = nh.subscribe <sensor_msgs::PointCloud2> (PC_TOPIC, 1, pcCallback);
+  m_sub_pc = nh.subscribe <sensor_msgs::PointCloud2> (PC_TOPIC, 1, pcCallback);
   ros::ServiceClient client = nh.serviceClient < realsense_camera::cameraConfiguration > (SETTINGS_SERVICE);
   client.call(srv);
 

@@ -1,9 +1,31 @@
 /******************************************************************************
- INTEL CORPORATION PROPRIETARY INFORMATION
- This software is supplied under the terms of a license agreement or nondisclosure
- agreement with Intel Corporation and may not be copied or disclosed except in
- accordance with the terms of that agreement
- Copyright(c) 2011-2016 Intel Corporation. All Rights Reserved.
+ Copyright (c) 2016, Intel Corporation
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice, this
+ list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
+ and/or other materials provided with the distribution.
+
+ 3. Neither the name of the copyright holder nor the names of its contributors
+ may be used to endorse or promote products derived from this software without
+ specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
 #include "realsense_camera_nodelet.h"
@@ -13,6 +35,8 @@ using namespace std;
 
 // Nodelet dependencies.
 #include <pluginlib/class_list_macros.h>
+#include <tf/transform_broadcaster.h>
+
 PLUGINLIB_EXPORT_CLASS (realsense_camera::RealsenseNodelet, nodelet::Nodelet)
 namespace realsense_camera
 {
@@ -23,6 +47,11 @@ namespace realsense_camera
   RealsenseNodelet::~RealsenseNodelet ()
   {
     device_thread_->join ();
+
+    if (enable_tf_ == true)
+    {
+      transform_thread_->join();
+    }
 
     // Stop device.
     if (is_device_started_ == true)
@@ -53,12 +82,13 @@ namespace realsense_camera
     enable_depth_ = ENABLE_DEPTH;
     enable_color_ = ENABLE_COLOR;
     enable_pointcloud_ = ENABLE_PC;
+    enable_tf_ = ENABLE_TF;
     is_device_started_ = false;
 
     camera_configuration_ = getMyArgv ();
 
-    frame_id_[RS_STREAM_DEPTH] = DEPTH_DEF_FRAME;
-    frame_id_[RS_STREAM_COLOR] = COLOR_DEF_FRAME;
+    frame_id_[RS_STREAM_DEPTH] = DEPTH_OPTICAL_DEF_FRAME;
+    frame_id_[RS_STREAM_COLOR] = COLOR_OPTICAL_DEF_FRAME;
     frame_id_[RS_STREAM_INFRARED] = IR1_DEF_FRAME;
     frame_id_[RS_STREAM_INFRARED2] = IR2_DEF_FRAME;
 
@@ -96,14 +126,86 @@ namespace realsense_camera
 
     get_options_service_ = nh.advertiseService (SETTINGS_SERVICE, &RealsenseNodelet::getCameraSettings, this);
 
-    // Start working thread.
-    device_thread_ =
-        boost::shared_ptr < boost::thread > (new boost::thread (boost::bind (&RealsenseNodelet::devicePoll, this)));
-  }
+    dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>(getPrivateNodeHandle()));
+
+    bool connected = false;
+
+    connected = connectToCamera ();
+
+    if (connected == true)
+    {
+      // Start working thread.
+      device_thread_ =
+          boost::shared_ptr < boost::thread > (new boost::thread (boost::bind (&RealsenseNodelet::devicePoll, this)));
+
+      if (enable_tf_ == true)
+      {
+        transform_thread_ =
+        boost::shared_ptr < boost::thread > (new boost::thread (boost::bind (&RealsenseNodelet::publishTransforms, this)));
+      }
+
+    }
+    else
+    {
+      ros::shutdown ();
+    }
+
+    dynamic_reconf_server_->setCallback(boost::bind(&RealsenseNodelet::configCallback, this, _1, _2));
+}
 
   /*
    *Private Methods.
    */
+  void RealsenseNodelet::configCallback(realsense_camera::camera_paramsConfig &config, uint32_t level)
+  {
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_BACKLIGHT_COMPENSATION, config.COLOR_BACKLIGHT_COMPENSATION, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_BRIGHTNESS, config.COLOR_BRIGHTNESS, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_CONTRAST, config.COLOR_CONTRAST, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_GAIN, config.COLOR_GAIN, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_GAMMA, config.COLOR_GAMMA, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_HUE, config.COLOR_HUE, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_SATURATION, config.COLOR_SATURATION, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_SHARPNESS, config.COLOR_SHARPNESS, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_ENABLE_AUTO_WHITE_BALANCE, config.COLOR_ENABLE_AUTO_WHITE_BALANCE, 0);
+
+    if(config.COLOR_ENABLE_AUTO_WHITE_BALANCE == 0) {
+      rs_set_device_option(rs_device_, RS_OPTION_COLOR_WHITE_BALANCE, config.COLOR_WHITE_BALANCE, 0);
+    }
+
+    //R200 camera specific options
+    rs_set_device_option(rs_device_, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, config.R200_LR_AUTO_EXPOSURE_ENABLED, 0);
+
+    if(config.R200_LR_AUTO_EXPOSURE_ENABLED == 0) {
+      rs_set_device_option(rs_device_, RS_OPTION_R200_LR_EXPOSURE, config.R200_LR_EXPOSURE, 0);
+    }
+
+    rs_set_device_option(rs_device_, RS_OPTION_R200_LR_GAIN, config.R200_LR_GAIN, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_R200_EMITTER_ENABLED, config.R200_EMITTER_ENABLED, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_R200_DISPARITY_MULTIPLIER, config.R200_DISPARITY_MULTIPLIER, 0);
+
+    if(config.R200_LR_AUTO_EXPOSURE_ENABLED == 1)
+    {
+      if(config.R200_AUTO_EXPOSURE_TOP_EDGE >= depth_height_) {
+      	config.R200_AUTO_EXPOSURE_TOP_EDGE = depth_height_ - 1;
+      }
+      if(config.R200_AUTO_EXPOSURE_BOTTOM_EDGE >= depth_height_) {
+      	config.R200_AUTO_EXPOSURE_BOTTOM_EDGE = depth_height_ - 1;
+      }
+      if(config.R200_AUTO_EXPOSURE_LEFT_EDGE >= depth_width_) {
+      	config.R200_AUTO_EXPOSURE_LEFT_EDGE = depth_width_ - 1;
+      }
+      if(config.R200_AUTO_EXPOSURE_RIGHT_EDGE >= depth_width_) {
+      	config.R200_AUTO_EXPOSURE_RIGHT_EDGE = depth_width_ - 1;
+      }
+      edge_values_[0] = config.R200_AUTO_EXPOSURE_LEFT_EDGE;
+      edge_values_[1] = config.R200_AUTO_EXPOSURE_TOP_EDGE;
+      edge_values_[2] = config.R200_AUTO_EXPOSURE_RIGHT_EDGE;
+      edge_values_[3] = config.R200_AUTO_EXPOSURE_BOTTOM_EDGE;
+
+      rs_set_device_options(rs_device_, edge_options_, 4, edge_values_, 0);
+   }
+  }
+
   void RealsenseNodelet::check_error ()
   {
     if (rs_error_)
@@ -123,20 +225,9 @@ namespace realsense_camera
    */
   void RealsenseNodelet::devicePoll ()
   {
-    bool connected = false;
-
-    connected = connectToCamera ();
-
-    if (connected == true)
+    while (ros::ok ())
     {
-      while (ros::ok ())
-      {
-        publishStreams ();
-      }
-    }
-    else
-    {
-      ros::shutdown ();
+      publishStreams ();
     }
   }
 
@@ -364,22 +455,65 @@ namespace realsense_camera
 
     if (config_.find ("enable_color") != config_.end ())
     {
-      enable_color_ = atoi (config_.at ("enable_color").c_str ());
+      if (strcmp((config_.at ("enable_color").c_str ()),"true") == 0)
+      {
+        enable_color_ = true;
+      }
+      else
+      {
+        enable_color_ = false;
+      }
     }
 
     if (config_.find ("enable_depth") != config_.end ())
     {
-      enable_depth_ = atoi (config_.at ("enable_depth").c_str ());
+      if (strcmp((config_.at ("enable_depth").c_str ()),"true") == 0)
+      {
+        enable_depth_ = true;
+      }
+      else
+      {
+        enable_depth_ = false;
+      }
     }
 
-    if (config_.find ("enable_pointCloud") != config_.end ())
+    if (config_.find ("enable_pointcloud") != config_.end ())
     {
-      enable_pointcloud_ = atoi (config_.at ("enable_pointCloud").c_str ());
+      if (strcmp((config_.at ("enable_pointcloud").c_str ()),"true") == 0)
+      {
+        enable_pointcloud_ = true;
+      }
+      else
+      {
+        enable_pointcloud_ = false;
+      }
+    }
+
+    if (config_.find ("enable_tf") != config_.end ())
+    {
+      if (strcmp((config_.at ("enable_tf").c_str ()),"true") == 0)
+      {
+        enable_tf_ = true;
+      }
+      else
+      {
+        enable_tf_ = false;
+      }
     }
 
     if (config_.find ("camera") != config_.end ())
     {
       camera_ = config_.at ("camera").c_str ();
+    }
+
+    if (config_.find ("depth_frame_id") != config_.end ())
+    {
+      frame_id_[RS_STREAM_DEPTH] = config_.at ("depth_frame_id").c_str ();
+    }
+
+    if (config_.find ("rgb_frame_id") != config_.end ())
+    {
+      frame_id_[RS_STREAM_COLOR] = config_.at ("rgb_frame_id").c_str ();
     }
 
     if (mode_.compare ("manual") == 0)
@@ -464,6 +598,9 @@ namespace realsense_camera
       case RS_STREAM_INFRARED2:
       image_[(uint32_t) RS_STREAM_INFRARED2].data =
       (unsigned char *) (rs_get_frame_data (rs_device_, RS_STREAM_INFRARED2, 0));
+      break;
+      default:
+      // no other streams supported
       break;
     }
   }
@@ -576,8 +713,6 @@ namespace realsense_camera
       sensor_msgs::PointCloud2Iterator < uint8_t > iter_g (msg_pointcloud, "g");
       sensor_msgs::PointCloud2Iterator < uint8_t > iter_b (msg_pointcloud, "b");
 
-      rs::float2 thirdImagePixel;
-
       float depth_point[3], color_point[3], color_pixel[2], scaled_depth;
       unsigned char *color_data = image_color.data;
       const float depth_scale = rs_get_device_depth_scale (rs_device_, &rs_error_);
@@ -643,4 +778,51 @@ namespace realsense_camera
       pointcloud_publisher_.publish (msg_pointcloud);
     }
   }
-}
+  /*
+   * Publish camera transforms
+   */
+  void RealsenseNodelet::publishTransforms()
+  {
+    // publish transforms for the cameras
+    ROS_INFO_STREAM("RealSense Camera - Publishing camera transforms");
+    tf::Transform tr;
+    tf::Quaternion q;
+    tf::TransformBroadcaster tf_broadcaster;
+    rs_extrinsics z_extrinsic;
+
+    // extrinsics are offsets between the cameras
+    rs_get_device_extrinsics (rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_); check_error ();
+
+    ros::Duration sleeper(0.1); // 100ms
+
+    while (ros::ok())
+    {
+      // time stamp is future dated to be valid for given duration
+      ros::Time time_stamp = ros::Time::now() + sleeper;
+
+      // transform base frame to depth frame
+      tr.setOrigin(tf::Vector3(z_extrinsic.translation[0], z_extrinsic.translation[1], z_extrinsic.translation[2]));
+      tr.setRotation(tf::Quaternion(0, 0, 0, 1));
+      tf_broadcaster.sendTransform(tf::StampedTransform(tr, time_stamp, BASE_DEF_FRAME, DEPTH_DEF_FRAME));
+
+      // transform depth frame to depth optical frame
+      tr.setOrigin(tf::Vector3(0,0,0));
+      q.setEuler( M_PI/2, 0.0, -M_PI/2 );
+      tr.setRotation( q );
+      tf_broadcaster.sendTransform(tf::StampedTransform(tr, time_stamp, DEPTH_DEF_FRAME, frame_id_[RS_STREAM_DEPTH]));
+
+      // transform base frame to color frame (these are the same)
+      tr.setOrigin(tf::Vector3(0,0,0));
+      tr.setRotation(tf::Quaternion(0, 0, 0, 1));
+      tf_broadcaster.sendTransform(tf::StampedTransform(tr, time_stamp, BASE_DEF_FRAME, COLOR_DEF_FRAME));
+
+      // transform color frame to color optical frame
+      tr.setOrigin(tf::Vector3(0,0,0));
+      q.setEuler( M_PI/2, 0.0, -M_PI/2 );
+      tr.setRotation( q );
+      tf_broadcaster.sendTransform(tf::StampedTransform(tr, time_stamp, COLOR_DEF_FRAME, frame_id_[RS_STREAM_COLOR]));
+
+      sleeper.sleep(); // need sleep or transform won't publish correctly
+    }
+  }
+}  // end namespace
