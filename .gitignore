@@ -1,0 +1,10 @@
+# git ls-files --others --exclude-from=.git/info/exclude
+# Lines that start with '#' are comments.
+# See http://git-scm.com/docs/gitignore
+
+# Don't check in Top Level CMakeLists.txt
+/CMakeLists.txt
+
+# Ignore all Linux Editor revision save files
+*~
+

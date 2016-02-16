@@ -1,0 +1,113 @@
+<h1 id="intel-realsense-technology---ros-integration">Intel RealSense Technology - ROS Integration</h1>
+<h3 id="ros-indigo-ubuntu-14.04-64-bit">(ROS Indigo + Ubuntu 14.04 [64-bit])</h3>
+<h3 id="installation">Installation</h3>
+<h5 id="getting-the-camera-to-work-on-linux">Getting the camera to work on Linux</h5>
+<p>Please make sure that you have a working camera and that the software stack is installed properly. This can be checked by connecting the camera (to a USB3 port) and running one of the provided librealsense samples. If this does not work, you should first fix this issue before continuing with the ROS integration.</p>
+<h5 id="building-package">Building package:</h5>
+<ul>
+<li>Follow the steps in the README.md file of the <b>ros</b> repository. Setup ROS and create a local catkin workspace.</li>
+<li>To compile just realsense package, instead of catkin_make, execute following command catkin_make --pkg realsense</li>
+</ul>
+<p>Successful execution of command will build target <b>“r200_camera_nodelet”</b></p>
+<p>Sample launch files are available in realsense/launch directory</p>
+<p><b>realsense_r200_launch_preset.launch</b></p>
+<p><b>realsense_r200_launch_manual.launch</b></p>
+<h3 id="intel-realsense-r200-nodelet">Intel RealSense R200 Nodelet</h3>
+<p>Publishing stream data from the Intel RealSense R200 (DS4) camera</p>
+<h4 id="subscribed-topics">Subscribed Topics</h4>
+<pre><code>None</code></pre>
+<h4 id="publisehd-topics">Publisehd Topics</h4>
+<p>Color camera</p>
+<pre><code>camera/color/image_raw (sensor_msgs/Image)
+    Color rectified image. RGB format.
+camera/color/camera_info
+    Calibration data</code></pre>
+<p>Depth camera</p>
+<pre><code>camera/depth/image_raw (sensor_msgs/Image)
+    uint16 depths in mm
+camera/depth/camera_info
+    Calibration data
+camera/depth/points (sensor_msgs/PointCloud2)
+    Registered XYZRGB point cloud.</code></pre>
+<p>Infrared camera</p>
+<pre><code>camera/infrared1/image_raw (sensor_msgs/Image)
+camera/infrared1/camera_info
+    Calibration data</code></pre>
+<p>Infrared2 camera</p>
+<pre><code>camera/infrared2/image_raw (sensor_msgs/Image)
+camera/infrared2/camera_info
+    Calibration data</code></pre>
+<h4 id="parameters">Parameters</h4>
+<pre><code>Mode (string, default: preset)
+Specify mode to start camera streams with. Preset mode starts all streams with defaults values for each stream’s width/height and FPS. In Manual mode, camera streams will be set with resolution and FPS values passed.
+cHeight (int, default: 480)
+    Specify the color camera height resolution.
+cWidth (int, default: 640)
+    Specify the color camera width resolution.
+dHeight (int, default: 360)
+    Specify the depth camera height resolution.
+dWidth (int, default: 480)
+    Specify the depth camera width resolution.
+cFPS (int, default: 60)
+    Specify the color camera FPS
+dFPS (int, default: 60)
+    Specify the depth camera FPS
+enableDepth (bool, default: 1) 
+    Specify if to enable or not the depth camera. 1 is true. 0 is false.
+enableColor (bool, default: 1) 
+    Specify if to enable or not the color camera. 1 is true. 0 is false.
+enablePointCloud (bool, default: 1) 
+    Specify if to enable or not the point cloud camera. 1 is true. 0 is false.
+Supported options: Here are r200 camera supported options that can be set
+    COLOR_BACKLIGHT_COMPENSATION : [0, 4]
+    COLOR_BRIGHTNESS : [0, 255]
+    COLOR_CONTRAST : [16, 64]
+    COLOR_EXPOSURE : [0, 0]
+    COLOR_GAIN : [0, 256]
+    COLOR_GAMMA : [100, 280]
+    COLOR_HUE : [-2200, 2200]
+    COLOR_SATURATION : [0, 255]
+    COLOR_SHARPNESS : [0, 7]
+    COLOR_WHITE_BALANCE : [2000, 8000]
+    COLOR_ENABLE_AUTO_EXPOSURE : [0, 0]
+    COLOR_ENABLE_AUTO_WHITE_BALANCE : [0, 1]
+    R200_LR_AUTO_EXPOSURE_ENABLED : [0, 1]
+    R200_LR_GAIN : [100, 1600]
+    R200_LR_EXPOSURE : [0, 333]
+    R200_EMITTER_ENABLED : [0, 1]
+    R200_DEPTH_CONTROL_PRESET : [0, 5]
+    R200_DEPTH_UNITS : [1, 2147483647]
+    R200_DEPTH_CLAMP_MIN : [0, 65535]
+    R200_DEPTH_CLAMP_MAX : [0, 65535]
+    R200_DISPARITY_MULTIPLIER : [1, 1000]
+    R200_DISPARITY_SHIFT : [0, 0] </code></pre>
+<h4 id="services">Services</h4>
+<pre><code>None</code></pre>
+<h3 id="running-the-r200-nodelet">Running the R200 nodelet</h3>
+<p>Simply type:</p>
+<pre><code>$ roslaunch realsense realsense_r200_launch.launch</code></pre>
+<p>This will launch the camera nodelet. You will see the camera lights up.</p>
+<p>For color, infrared1 and infrared2 streams, you can open <b>RVIZ</b> and load the published topics.</p>
+<p>You can also open RVIZ and load the provided RVIZ configuration file: realsenseRvizConfiguration.rviz. <img src="realsenseRvizScreenshot.png" /></p>
+<p>Other commands to view streams:</p>
+<ul>
+<li><p>For Color stream</p>
+<p>$ rosrun image_view image_view image:=/camera/color/image_raw</p></li>
+<li><p>For depth stream</p></li>
+</ul>
+<p>Verified data and other info by rostopic echo command for image_raw and camera_info.</p>
+<pre><code>$ rostopic echo /camera/depth/image_raw
+$ rostopic echo /camera/depth/camera_info</code></pre>
+<ul>
+<li>For pointcloud</li>
+</ul>
+<p>To view it in rviz, set camera_depth_optical_frame using following command:</p>
+<pre><code>$ rosrun tf static_transform_publisher 0.0 0.0 0.0 0.0 0.0 0.0 map camera_depth_optical_frame 100</code></pre>
+<p>To view it using image_view:</p>
+<pre><code>$ rosrun pcl_ros convert_pointcloud_to_image input:=/camera/depth/points output:=/my_image
+$ rosrun image_view image_view image:=/my_image</code></pre>
+<p><b>Tech and dependencies</b> * librealsense.so</p>
+<p><b>System:</b> * Linux 14.04+ * ROS Indigo * R200 (DS4) camera</p>
+<p>** The ROS integration has been tested on a 64bit machine with Linux 14.04 (Trusty) and ROS Indigo.</p>
+<h3 id="limitations">Limitations:</h3>
+<p>Currently camera ROS node supports following formats * Color stream: RGB8 * Depth stream: Y16 * Infrared stream: Y8</p>

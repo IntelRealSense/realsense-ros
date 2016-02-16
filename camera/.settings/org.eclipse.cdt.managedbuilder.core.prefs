@@ -1,0 +1,14 @@
+eclipse.preferences.version=1
+environment/buildEnvironmentInclude/0.451674452/CPATH/delimiter=\:
+environment/buildEnvironmentInclude/0.451674452/CPATH/operation=replace
+environment/buildEnvironmentInclude/0.451674452/CPATH/value=/home/turtlebot/workspace/3AM/ROS_Nodes/catkin_tb/devel/include\:/opt/ros/indigo/include
+environment/buildEnvironmentInclude/0.451674452/CPLUS_INCLUDE_PATH/delimiter=\:
+environment/buildEnvironmentInclude/0.451674452/CPLUS_INCLUDE_PATH/operation=remove
+environment/buildEnvironmentInclude/0.451674452/C_INCLUDE_PATH/delimiter=\:
+environment/buildEnvironmentInclude/0.451674452/C_INCLUDE_PATH/operation=remove
+environment/buildEnvironmentInclude/0.451674452/append=true
+environment/buildEnvironmentInclude/0.451674452/appendContributed=true
+environment/buildEnvironmentLibrary/0.451674452/LIBRARY_PATH/delimiter=\:
+environment/buildEnvironmentLibrary/0.451674452/LIBRARY_PATH/operation=remove
+environment/buildEnvironmentLibrary/0.451674452/append=true
+environment/buildEnvironmentLibrary/0.451674452/appendContributed=true

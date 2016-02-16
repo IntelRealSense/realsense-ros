@@ -1,0 +1,30 @@
+<launch>
+
+	<arg name="mode" default="manual" />
+	<arg name="color_height" default="240" />
+	<arg name="color_width" default="320" />
+	<arg name="depth_height" default="252" />
+	<arg name="depth_width" default="332" />
+	<arg name="enable_depth" default="1" />
+	<arg name="enable_color" default="1" />
+	<arg name="enable_pointcloud" default="1" />
+	<arg name="depth_fps" default="60" />
+	<arg name="color_fps" default="60" />	
+	
+  	<node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
+  	
+	<node pkg="nodelet" type="nodelet" name="RealsenseNodelet"
+        args="load realsense_camera/RealsenseNodelet standalone_nodelet 
+        mode $(arg mode)
+        color_height $(arg color_height) 
+        color_width $(arg color_width)
+        depth_height $(arg depth_height)
+        depth_width $(arg depth_width)
+        enable_color $(arg enable_color)
+        enable_depth $(arg enable_depth)
+        depth_fps $(arg depth_fps)
+        color_fps $(arg color_fps)
+        enable_pointcloud $(arg enable_pointcloud)">        
+  	</node>
+  
+</launch> 
