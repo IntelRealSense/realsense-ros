@@ -172,12 +172,12 @@ For viewing supported camera settings with current values:
 ###Unit Tests
 The Unit Tests can be executed using either of the methods:
 
-1. Using rostest command with test files
+Using rostest command with test files
 
     $ rostest <path of test file>
     E.g. rostest realsense_r200_depth_only.test 
 
-2. Using rosrun command
+Using rosrun command
 
     $ roslaunch realsense_camera realsense_r200_launch_manual.launch
 
