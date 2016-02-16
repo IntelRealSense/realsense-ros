@@ -134,12 +134,11 @@ Type the following to launch the camera nodelet. You will notice the camera ligh
 View using RVIZ:
 
 For color, infrared1 and infrared2 streams, you can open <b>RVIZ</b> and load the published topics.
-For the point cloud steam, before loading its corresponding topic, set the camera_depth_optical_frame using following command:
+For the point cloud stream, before loading its corresponding topic, set the camera_depth_optical_frame using following command:
 
     $ rosrun tf static_transform_publisher 0.0 0.0 0.0 0.0 0.0 0.0 map camera_depth_optical_frame 100
 
 You can also open RVIZ and load the provided RVIZ configuration file: realsenseRvizConfiguration.rviz.
-![](docs/realsenseRvizScreenshot.png)
 
 View using other commands:
 * For color stream
@@ -173,7 +172,7 @@ View using other commands:
 ** The ROS integration has been tested on a 64bit machine with Linux 14.04 (Trusty) and ROS Indigo.
 
 ###Limitations:
-Currently camera ROS node supports following formats
+Currently, the ROS camera nodelet only supports the following formats:
 * Color stream:    RGB8
 * Depth stream:    Y16
 * Infrared stream: Y8
