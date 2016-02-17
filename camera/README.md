@@ -4,21 +4,20 @@
 ###Installation
 #####Getting the camera to work on Linux
 
-* Clone the source from the librealsense git repository https://github.intel.com/PerCSystemsEngineering/librealsense.
-* Follow the instructions at https://github.intel.com/PerCSystemsEngineering/librealsense/blob/master/doc/installation.md.
+* Clone the source from the librealsense git repository https://github.com/IntelRealSense/librealsense.git and follow the "Installation Guide" for installing the library.
 * Make sure that the software stack is installed properly and that the camera is working. This can be checked by connecting the camera to a USB3 port and running the "cpp-capture" sample program in the "librealsense/bin" folder.
 If this does not work, you should first fix this issue before continuing with the ROS integration.
-* Make sure /usr/local/lib is in your LD__LIBRARY_PATH.
+* Make sure "/usr/local/lib" is set in your "LD_LIBRARY_PATH".
 
 #####Building package:
 
 * Follow the steps in the README.md file of the <b>ros</b> repository. Setup ROS and create a local catkin workspace.
 * To compile just realsense package, instead of catkin_make, execute following command
-    catkin_make --pkg realsense
+    catkin_make --pkg realsense_camera
 
-Successful execution of command will build target <b>“r200_camera_nodelet”</b>
+Successful execution of command will build target <b>“realsense_camera_nodelet”</b>
 
-Sample launch files are available in realsense/launch directory
+Sample launch files are available in camera/launch directory
 
 <b>realsense_r200_launch_preset.launch</b>
 
@@ -123,13 +122,12 @@ Infrared2 camera
 ####Services
     get_settings (camera/get_settings)
 	To get supported camera options with current value set. It returns string in options:value format where different options are seperated by semicolon.
-	
 
 ###Running the R200 nodelet
 
-Type the following to launch the camera nodelet. You will notice the camera light up.
+Use the following command to launch the camera nodelet. You will notice the camera light up.
 
-    $ roslaunch realsense realsense_r200_launch_preset.launch
+    $ roslaunch realsense_camera realsense_r200_launch_preset.launch
 
 View using RVIZ:
 
@@ -141,23 +139,23 @@ For the point cloud stream, before loading its corresponding topic, set the came
 You can also open RVIZ and load the provided RVIZ configuration file: realsenseRvizConfiguration.rviz.
 
 View using other commands:
-* For color stream
+For color stream
 
     $ rosrun image_view image_view image:=/camera/color/image_raw
 
-* For depth stream
+For depth stream
 
     $ rostopic echo /camera/depth/image_raw
 
     $ rostopic echo /camera/depth/camera_info
 
-* For pointcloud
+For pointcloud
 
     $ rosrun pcl_ros convert_pointcloud_to_image input:=/camera/depth/points output:=/my_image
 
     $ rosrun image_view image_view image:=/my_image
 
-* For viewing supported camera settings with current values:
+For viewing supported camera settings with current values:
 
     $ rosservice call /camera/get_settings
 
@@ -170,6 +168,33 @@ View using other commands:
 * R200 (DS4) camera
 
 ** The ROS integration has been tested on a 64bit machine with Linux 14.04 (Trusty) and ROS Indigo.
+
+###Unit Tests
+The Unit Tests can be executed using either of the methods:
+
+Using rostest command with test files
+
+    $ rostest <path of test file>
+    E.g. rostest realsense_r200_depth_only.test 
+
+Using rosrun command
+
+    $ roslaunch realsense_camera realsense_r200_launch_manual.launch
+
+    $ rosrun realsense_camera realsense_camera_test <args>
+    E.g. rosrun realsense_camera realsense_camera_test enable_depth 1 depth_encoding 16UC1 depth_height 360 depth_width 480 depth_step 960 enable_color 1 color_encoding rgb8 color_height 480 color_width 640 color_step 1920
+
+Sample testfiles are available in test directory
+
+<b>realsense_r200_color_only.test</b>
+
+<b>realsense_r200_depth_only.test</b>
+
+<b>realsense_r200_resolution.test</b>
+
+<b>realsense_r200_settings.test</b>
+
+Both of these methods first starts "RealsenseNodelet" for Intel® RealSense™ R200 (DS4) camera and then executes all the unit tests.
 
 ###Limitations:
 Currently, the ROS camera nodelet only supports the following formats:
