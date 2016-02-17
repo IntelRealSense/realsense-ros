@@ -6,7 +6,6 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  rospy
   nodelet
   cv_bridge
   image_transport
