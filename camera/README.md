@@ -8,12 +8,12 @@
 * Make sure that the software stack is installed properly and that the camera is working. This can be checked by connecting the camera to a USB3 port and running the "cpp-capture" sample program in the "librealsense/bin" folder.
 If this does not work, you should first fix this issue before continuing with the ROS integration.
 * Make sure "/usr/local/lib" is set in your "LD_LIBRARY_PATH".
+* Copy the librealsense header files folder "librealsense/include/librealsense" to "/usr/local/include".
 
 #####Building package:
 
-* Follow the steps in the README.md file of the <b>ros</b> repository. Setup ROS and create a local catkin workspace.
-* To compile just realsense package, instead of catkin_make, execute following command
-    catkin_make --pkg realsense_camera
+* Setup ROS and create a local catkin workspace.
+* Compile the realsense_camera package by executing the catkin_make command.
 
 Successful execution of command will build target <b>“realsense_camera_nodelet”</b>
 
