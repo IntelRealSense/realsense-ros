@@ -1,0 +1,21 @@
+<launch>
+	<arg name="manager" 		default="camera_nodelet_manager" />
+	<arg name="depth_frame_id" 	default="camera_depth_optical_frame" />
+	<arg name="rgb_frame_id" 	default="camera_rgb_optical_frame" />
+	<arg name="depth" 			default="depth" />
+	<arg name="rgb" 			default="rgb" />				
+	<arg name="ir" 				default="ir" />
+	<arg name="ir2" 		    default="ir2" />	
+			
+	<node pkg="nodelet" type="nodelet" name="RealsenseNodelet"
+        args="load realsense_camera/RealsenseNodelet $(arg manager)
+        depth_frame_id $(arg depth_frame_id)
+        rgb_frame_id $(arg rgb_frame_id)">
+        
+	    <remap from="camera/depth/image_raw"  		to="$(arg depth)/image_raw" />
+	    <remap from="camera/color/image_raw"  		to="$(arg rgb)/image_raw" />       
+	    <remap from="camera/infrared1/image_raw"  	to="$(arg ir)/image_raw" />    
+		<remap from="camera/infrared2/image_raw"  	to="$(arg ir2)/image_raw" />	     
+  	</node>
+  	
+</launch> 

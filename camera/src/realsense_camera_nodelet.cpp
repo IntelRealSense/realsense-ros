@@ -382,6 +382,16 @@ namespace realsense_camera
       camera_ = config_.at ("camera").c_str ();
     }
 
+    if (config_.find ("depth_frame_id") != config_.end ())
+    {
+      frame_id_[RS_STREAM_DEPTH] = config_.at ("depth_frame_id").c_str ();
+    }
+
+    if (config_.find ("color_frame_id") != config_.end ())
+    {
+      frame_id_[RS_STREAM_COLOR] = config_.at ("color_frame_id").c_str ();
+    }
+
     if (mode_.compare ("manual") == 0)
     {
       if (config_.find ("color_fps") != config_.end ())

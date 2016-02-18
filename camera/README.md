@@ -19,11 +19,11 @@ Successful execution of command will build target <b>“realsense_camera_nodelet
 
 Sample launch files are available in camera/launch directory
 
-<b>realsense_r200_launch_preset.launch</b>
+<b>realsense_r200_nodelet_standalone_preset.launch</b>
 
-<b>realsense_r200_launch_manual.launch</b>
+<b>realsense_r200_nodelet_standalone_manual.launch</b>
 
-<b>realsense_r200_launch_settings.launch</b>
+<b>realsense_r200_rgbd.launch</b>
 
 ### Intel&reg; RealSense&trade; R200 Nodelet
 Publishing stream data from the Intel® RealSense™ R200 (DS4) camera
@@ -31,7 +31,7 @@ Publishing stream data from the Intel® RealSense™ R200 (DS4) camera
 #### Subscribed Topics
     None
 
-#### Published Topics
+#### Published Topics (default)
 
 Color camera
 
@@ -133,10 +133,10 @@ View using RVIZ:
 
 For color, infrared1 and infrared2 streams, you can open <b>RVIZ</b> and load the published topics.
 
-You can also open RVIZ and load the provided RVIZ configuration file: realsenseRvizConfiguration.rviz.
+You can also open RVIZ and load the provided RVIZ configuration file: realsenseRvizConfiguration1.rviz.
 ```
    $ roscd realsense_camera
-   $ rosrun rviz rviz -d rviz/realsenseRvizConfiguration.rviz
+   $ rosrun rviz rviz -d rviz/realsenseRvizConfiguration1.rviz
 ```
 For the point cloud stream, before loading its corresponding topic, set the camera_depth_optical_frame using following command:
 

@@ -1,12 +1,10 @@
 <launch>
-	<include file="$(find realsense_camera)/launch/realsense_r200_launch_preset.launch">
-		<arg name="enable_depth" value="1" />
+	<include file="$(find realsense_camera)/launch/realsense_r200_nodelet_standalone_preset.launch">
 		<arg name="enable_color" value="0" />
-		<arg name="enable_pointcloud" value="1" />
 	</include>
 	
 	<!-- Test -->
   	<test pkg="realsense_camera" type="realsense_camera_test" test-name="realsense_camera_test" 
-  		args="enable_depth 1 enable_color 0 enable_pointcloud 1" /> 	
+  		args="enable_depth 1 enable_color 0" /> 	
 </launch> 
  
