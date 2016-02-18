@@ -132,11 +132,16 @@ Use the following command to launch the camera nodelet. You will notice the came
 View using RVIZ:
 
 For color, infrared1 and infrared2 streams, you can open <b>RVIZ</b> and load the published topics.
+
+You can also open RVIZ and load the provided RVIZ configuration file: realsenseRvizConfiguration.rviz.
+```
+   $ roscd realsense_camera
+   $ rosrun rviz rviz -d rviz/realsenseRvizConfiguration.rviz
+```
 For the point cloud stream, before loading its corresponding topic, set the camera_depth_optical_frame using following command:
 
     $ rosrun tf static_transform_publisher 0.0 0.0 0.0 0.0 0.0 0.0 map camera_depth_optical_frame 100
 
-You can also open RVIZ and load the provided RVIZ configuration file: realsenseRvizConfiguration.rviz.
 
 View using other commands:
 For color stream
