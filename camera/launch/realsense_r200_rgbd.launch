@@ -21,7 +21,7 @@
        tree. Useful if you are playing back recorded raw data from a bag, or are
        supplying a more accurate tf tree from calibration. -->
   <arg name="load_driver" default="true" />
-  <arg name="publish_tf" default="false" />
+  <arg name="publish_tf" default="true" />
   <!-- Processing Modules -->
   <arg name="rgb_processing"                  default="true"/>
   <arg name="ir_processing"                   default="true"/>

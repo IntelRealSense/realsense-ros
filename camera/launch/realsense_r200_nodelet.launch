@@ -15,7 +15,10 @@
 	    <remap from="camera/depth/image_raw"  		to="$(arg depth)/image_raw" />
 	    <remap from="camera/color/image_raw"  		to="$(arg rgb)/image_raw" />       
 	    <remap from="camera/infrared1/image_raw"  	to="$(arg ir)/image_raw" />    
-		<remap from="camera/infrared2/image_raw"  	to="$(arg ir2)/image_raw" />	     
+		<remap from="camera/infrared2/image_raw"  	to="$(arg ir2)/image_raw" />
+		<remap from="/camera/depth/camera_info"  	to="$(arg depth)/camera_info" />		
+		<remap from="/camera/color/camera_info"  	to="$(arg rgb)/camera_info" />
+		<remap from="/camera/infrared1/camera_info"  	to="$(arg ir)/camera_info" />		
+		<remap from="/camera/infrared2/camera_info"  	to="$(arg ir2)/camera_info" />			     
   	</node>
-  	
 </launch> 
