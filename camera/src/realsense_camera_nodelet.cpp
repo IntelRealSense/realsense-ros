@@ -13,6 +13,8 @@ using namespace std;
 
 // Nodelet dependencies.
 #include <pluginlib/class_list_macros.h>
+#include <tf/transform_broadcaster.h>
+
 PLUGINLIB_EXPORT_CLASS (realsense_camera::RealsenseNodelet, nodelet::Nodelet)
 namespace realsense_camera
 {
@@ -23,6 +25,7 @@ namespace realsense_camera
   RealsenseNodelet::~RealsenseNodelet ()
   {
     device_thread_->join ();
+    transform_thread_->join();
 
     // Stop device.
     if (is_device_started_ == true)
@@ -57,8 +60,8 @@ namespace realsense_camera
 
     camera_configuration_ = getMyArgv ();
 
-    frame_id_[RS_STREAM_DEPTH] = DEPTH_DEF_FRAME;
-    frame_id_[RS_STREAM_COLOR] = COLOR_DEF_FRAME;
+    frame_id_[RS_STREAM_DEPTH] = DEPTH_OPTICAL_DEF_FRAME;
+    frame_id_[RS_STREAM_COLOR] = COLOR_OPTICAL_DEF_FRAME;
     frame_id_[RS_STREAM_INFRARED] = IR1_DEF_FRAME;
     frame_id_[RS_STREAM_INFRARED2] = IR2_DEF_FRAME;
 
@@ -96,10 +99,23 @@ namespace realsense_camera
 
     get_options_service_ = nh.advertiseService (SETTINGS_SERVICE, &RealsenseNodelet::getCameraSettings, this);
 
-    // Start working thread.
-    device_thread_ =
-        boost::shared_ptr < boost::thread > (new boost::thread (boost::bind (&RealsenseNodelet::devicePoll, this)));
-  }
+    bool connected = false;
+
+    connected = connectToCamera ();
+
+    if (connected == true)
+    {
+      // Start working thread.
+      device_thread_ =
+          boost::shared_ptr < boost::thread > (new boost::thread (boost::bind (&RealsenseNodelet::devicePoll, this)));
+      transform_thread_ =
+          boost::shared_ptr < boost::thread > (new boost::thread (boost::bind (&RealsenseNodelet::publishTransforms, this)));
+    }
+    else
+    {
+      ros::shutdown ();
+    }
+}
 
   /*
    *Private Methods.
@@ -123,20 +139,9 @@ namespace realsense_camera
    */
   void RealsenseNodelet::devicePoll ()
   {
-    bool connected = false;
-
-    connected = connectToCamera ();
-
-    if (connected == true)
+    while (ros::ok ())
     {
-      while (ros::ok ())
-      {
-        publishStreams ();
-      }
-    }
-    else
-    {
-      ros::shutdown ();
+      publishStreams ();
     }
   }
 
@@ -675,4 +680,51 @@ namespace realsense_camera
       pointcloud_publisher_.publish (msg_pointcloud);
     }
   }
-}
+  /*
+   * Publish camera transforms
+   */
+  void RealsenseNodelet::publishTransforms()
+  {
+    // publish transforms for the cameras
+    ROS_INFO_STREAM("RealSense Camera - Publishing camera transforms");
+    tf::Transform tr;
+    tf::Quaternion q;
+    tf::TransformBroadcaster tf_broadcaster;
+    rs_extrinsics z_extrinsic;
+
+    // extrinsics are offsets between the cameras
+    rs_get_device_extrinsics (rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_); check_error ();
+
+    ros::Duration sleeper(0.1); // 100ms
+
+    while (ros::ok())
+    {
+      // time stamp is future dated to be valid for given duration
+      ros::Time time_stamp = ros::Time::now() + sleeper;
+
+      // transform base frame to depth frame
+      tr.setOrigin(tf::Vector3(z_extrinsic.translation[0], z_extrinsic.translation[1], z_extrinsic.translation[2]));
+      tr.setRotation(tf::Quaternion(0, 0, 0, 1));
+      tf_broadcaster.sendTransform(tf::StampedTransform(tr, time_stamp, BASE_DEF_FRAME, DEPTH_DEF_FRAME));
+
+      // transform depth frame to depth optical frame
+      tr.setOrigin(tf::Vector3(0,0,0));
+      q.setEuler( M_PI/2, 0.0, -M_PI/2 );
+      tr.setRotation( q );
+      tf_broadcaster.sendTransform(tf::StampedTransform(tr, time_stamp, DEPTH_DEF_FRAME, frame_id_[RS_STREAM_DEPTH]));
+
+      // transform base frame to color frame (these are the same)
+      tr.setOrigin(tf::Vector3(0,0,0));
+      tr.setRotation(tf::Quaternion(0, 0, 0, 1));
+      tf_broadcaster.sendTransform(tf::StampedTransform(tr, time_stamp, BASE_DEF_FRAME, COLOR_DEF_FRAME));
+
+      // transform color frame to color optical frame
+      tr.setOrigin(tf::Vector3(0,0,0));
+      q.setEuler( M_PI/2, 0.0, -M_PI/2 );
+      tr.setRotation( q );
+      tf_broadcaster.sendTransform(tf::StampedTransform(tr, time_stamp, COLOR_DEF_FRAME, frame_id_[RS_STREAM_COLOR]));
+
+      sleeper.sleep(); // need sleep or transform won't publish correctly
+    }
+  }
+}  // end namespace
