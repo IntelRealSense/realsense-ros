@@ -40,7 +40,7 @@
   <run_depend>pcl_ros</run_depend>
 
   <export>
-  	<nodelet plugin="${prefix}/src/RealsenseNodelet_plugins.xml" />
+  	<nodelet plugin="${prefix}/src/realsense_camera_nodelet_plugins.xml" />
   </export>
 </package>
 

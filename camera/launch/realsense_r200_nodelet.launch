@@ -7,7 +7,7 @@
 	<arg name="ir" 				default="ir" />
 	<arg name="ir2" 		    default="ir2" />	
 			
-	<node pkg="nodelet" type="nodelet" name="RealsenseNodelet"
+	<node pkg="nodelet" type="nodelet" name="camera_nodelet"
         args="load realsense_camera/RealsenseNodelet $(arg manager)
         depth_frame_id $(arg depth_frame_id)
         rgb_frame_id $(arg rgb_frame_id)">
