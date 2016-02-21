@@ -8,7 +8,7 @@
 * Make sure that the software stack is installed properly and that the camera is working. This can be checked by connecting the camera to a USB3 port and running the "cpp-capture" sample program in the "librealsense/bin" folder.
 If this does not work, you should first fix this issue before continuing with the ROS integration.
 * Make sure "/usr/local/lib" is set in your "LD_LIBRARY_PATH".
-* Copy the librealsense header files folder "librealsense/include/librealsense" to "/usr/local/include".
+* Copy the librealsense header files **folder** "librealsense/include/librealsense" to "/usr/local/include".
 
 #####Building package:
 
@@ -127,7 +127,7 @@ Infrared2 camera
 
 Use the following command to launch the camera nodelet. You will notice the camera light up.
 
-    $ roslaunch realsense_camera realsense_r200_launch_preset.launch
+    $ roslaunch realsense_camera realsense_r200_nodelet_standalone_preset.launch
 
 View using RVIZ:
 
