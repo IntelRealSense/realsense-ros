@@ -12,6 +12,7 @@ If this does not work, you should first fix this issue before continuing with th
 	
 	E.g. sudo cp -r <librealsense_folder>/include/librealsense /usr/local/include
 
+
 #####Building package:
 
 * Setup ROS and create a local catkin workspace.
