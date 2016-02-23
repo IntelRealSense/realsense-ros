@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package>
+  <name>realsense_navigation</name>
+  <version>0.0.1</version>
+  <description>Intel(r) RealSense(tm) Technology package allowing the use of the R200 camera with the navigation stack</description>
+
+  <maintainer email="amit.moran@intel.com">Amit Moran</maintainer>
+
+  <license>See license attached.</license>
+
+  <url type="website">https://github.com/PercATI/RealSense-ROS</url>
+
+  <author email="amit.moran@intel.com">Amit Moran</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+ 
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+
+</package>

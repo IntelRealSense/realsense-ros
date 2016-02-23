@@ -1,0 +1,40 @@
+<!--
+Launch file to launch the navigation demo
+Doesn't launch the camera!
+
+Author: Raphael Groscot
+
+Arguments:
+  [REQ] ~map: the file relative to home
+
+  [OPT] ~home: Parent folder. Default = ~ (user home)
+
+  [OPT] ~camera: The name of the camera to use (r200, kinect, ...). Default = r200
+
+  [OPT] ~depth_enhance: Use the depth enhance nodelet. Default = false
+
+  [OPT] ~display_depth: display, in RVIZ, the depth image. Default = true
+-->
+<launch>
+  <!-- ARGS -->
+  <arg name="map"/>
+  <arg name="home" default="$(env HOME)"/>
+<!--   <arg name="camera" default="r200"/>
+  <arg name="depth_enhance" default="false"/> -->
+  <arg name="display_depth" default="true"/>
+
+  <!-- RVIZ with custom layout -->
+  <node if="$(arg display_depth)" pkg="rviz" type="rviz" name="rviz" args="-d $(find realsense_navigation)/rviz/navigation_r200.rviz"/>
+  <node unless="$(arg display_depth)" pkg="rviz" type="rviz" name="rviz" args="-d $(find realsense_navigation)/rviz/navigation_r200_without_depth.rviz"/>
+
+  <!-- AMCL -->
+  <include file="$(find realsense_navigation)/launch/amcl.launch">
+    <arg name="map_file" value="$(arg home)/$(arg map)"/>
+  </include>
+
+  <!-- Depth enhance nodelet -->
+<!--   <include if="$(arg depth_enhance)" file="$(find realsense_depth_enhance)/launch/realsense_depth_enhance.launch">
+    <arg name="manager" value="camera/camera_nodelet_manager"/>
+  </include> -->
+
+</launch>
