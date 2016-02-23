@@ -1,9 +1,9 @@
 <launch>
 
 	<arg name="mode" default="preset" />
-	<arg name="enable_depth" default="1" />
-	<arg name="enable_color" default="1" />
-	<arg name="enable_pointcloud" default="1" />	
+	<arg name="enable_depth" default="true" />
+	<arg name="enable_color" default="true" />
+	<arg name="enable_pointcloud" default="true" />	
 	
   	<node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
   	

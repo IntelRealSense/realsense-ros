@@ -5,9 +5,9 @@
 	<arg name="color_width" default="320" />
 	<arg name="depth_height" default="252" />
 	<arg name="depth_width" default="332" />
-	<arg name="enable_depth" default="1" />
-	<arg name="enable_color" default="1" />
-	<arg name="enable_pointcloud" default="1" />
+	<arg name="enable_depth" default="true" />
+	<arg name="enable_color" default="true" />
+	<arg name="enable_pointcloud" default="true" />
 	<arg name="depth_fps" default="60" />
 	<arg name="color_fps" default="60" />	
 	

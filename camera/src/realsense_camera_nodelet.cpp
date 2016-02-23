@@ -364,17 +364,38 @@ namespace realsense_camera
 
     if (config_.find ("enable_color") != config_.end ())
     {
-      enable_color_ = atoi (config_.at ("enable_color").c_str ());
+      if (strcmp((config_.at ("enable_color").c_str ()),"true") == 0)
+      {
+        enable_color_ = true;
+      }
+      else
+      {
+        enable_color_ = false;
+      }
     }
 
     if (config_.find ("enable_depth") != config_.end ())
     {
-      enable_depth_ = atoi (config_.at ("enable_depth").c_str ());
+      if (strcmp((config_.at ("enable_depth").c_str ()),"true") == 0)
+      {
+        enable_depth_ = true;
+      }
+      else
+      {
+        enable_depth_ = false;
+      }
     }
 
-    if (config_.find ("enable_pointCloud") != config_.end ())
+    if (config_.find ("enable_pointcloud") != config_.end ())
     {
-      enable_pointcloud_ = atoi (config_.at ("enable_pointCloud").c_str ());
+      if (strcmp((config_.at ("enable_pointcloud").c_str ()),"true") == 0)
+      {
+        enable_pointcloud_ = true;
+      }
+      else
+      {
+        enable_pointcloud_ = false;
+      }
     }
 
     if (config_.find ("camera") != config_.end ())

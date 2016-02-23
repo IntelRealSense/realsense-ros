@@ -60,7 +60,10 @@
       <arg name="rgb_frame_id"              value="$(arg rgb_frame_id)" />    
       <arg name="depth"                     value="$(arg depth)" />
       <arg name="rgb"                       value="$(arg rgb)" /> 
-      <arg name="ir"                        value="$(arg ir)" />           
+      <arg name="ir"                        value="$(arg ir)" />
+      <arg name="enable_depth"              value="$(arg depth_processing)" />       
+      <arg name="enable_color"              value="$(arg rgb_processing)" />
+                
     </include>
     
     <!-- Load standard constellation of processing nodelets -->
