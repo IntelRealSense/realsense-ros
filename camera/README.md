@@ -8,7 +8,9 @@
 * Make sure that the software stack is installed properly and that the camera is working. This can be checked by connecting the camera to a USB3 port and running the "cpp-capture" sample program in the "librealsense/bin" folder.
 If this does not work, you should first fix this issue before continuing with the ROS integration.
 * Make sure "/usr/local/lib" is set in your "LD_LIBRARY_PATH".
-* Copy the librealsense header files **folder** "librealsense/include/librealsense" to "/usr/local/include".
+* Copy the librealsense header files folder "librealsense/include/librealsense" to "/usr/local/include".
+	
+	E.g. sudo cp -r <librealsense_folder>/include/librealsense /usr/local/include
 
 #####Building package:
 
@@ -179,8 +181,8 @@ The Unit Tests can be executed using either of the methods:
 
 Using rostest command with test files
 
-    $ rostest <path of test file>
-    E.g. rostest realsense_r200_depth_only.test 
+    $ rostest realsense_camera <test_filename>
+    E.g. rostest realsense_camera realsense_r200_depth_only.test 
 
 Using rosrun command
 
@@ -189,7 +191,7 @@ Using rosrun command
     $ rosrun realsense_camera realsense_camera_test <args>
     E.g. rosrun realsense_camera realsense_camera_test enable_depth 1 depth_encoding 16UC1 depth_height 360 depth_width 480 depth_step 960 enable_color 1 color_encoding rgb8 color_height 480 color_width 640 color_step 1920
 
-Sample testfiles are available in test directory
+Sample test files are available in test directory
 
 <b>realsense_r200_color_only.test</b>
 
