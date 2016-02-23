@@ -475,6 +475,9 @@ namespace realsense_camera
       image_[(uint32_t) RS_STREAM_INFRARED2].data =
       (unsigned char *) (rs_get_frame_data (rs_device_, RS_STREAM_INFRARED2, 0));
       break;
+      default:
+      // no other streams supported
+      break;
     }
   }
 
@@ -585,8 +588,6 @@ namespace realsense_camera
       sensor_msgs::PointCloud2Iterator < uint8_t > iter_r (msg_pointcloud, "r");
       sensor_msgs::PointCloud2Iterator < uint8_t > iter_g (msg_pointcloud, "g");
       sensor_msgs::PointCloud2Iterator < uint8_t > iter_b (msg_pointcloud, "b");
-
-      rs::float2 thirdImagePixel;
 
       float depth_point[3], color_point[3], color_pixel[2], scaled_depth;
       unsigned char *color_data = image_color.data;
