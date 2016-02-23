@@ -28,6 +28,7 @@
 #include "std_msgs/Float32MultiArray.h"
 #include <cv_bridge/cv_bridge.h>
 #include <realsense_camera/cameraConfiguration.h>
+#include <tf/transform_listener.h>
 
 const char *DEPTH_TOPIC = "camera/depth/image_raw";
 const char *COLOR_TOPIC = "camera/color/image_raw";
@@ -37,6 +38,12 @@ const char *PC_TOPIC = "camera/depth/points";
 const char *SETTINGS_SERVICE = "camera/get_settings";
 const char *R200 = "R200";
 const int R200_DEPTH_MAX = 10000;
+
+const char *BASE_DEF_FRAME = "realsense_frame";
+const char *DEPTH_DEF_FRAME = "camera_depth_frame";
+const char *COLOR_DEF_FRAME = "camera_color_frame";
+const char *DEPTH_OPTICAL_DEF_FRAME = "camera_depth_optical_frame";
+const char *COLOR_OPTICAL_DEF_FRAME = "camera_color_optical_frame";
 
 //utest commandline args
 int color_height_exp = 0;
