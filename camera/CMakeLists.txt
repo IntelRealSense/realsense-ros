@@ -2,7 +2,16 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(realsense_camera)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+# Save the command line compile commands in the build output
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+# View the makefile commands during build
+#set(CMAKE_VERBOSE_MAKEFILE on)
+
+set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -O2 -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
+# Flags executables
+set(CMAKE_EXE_LINKER_FLAGS "-pie -z noexecstack -z relro -z now")
+# Flags shared libraries
+set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now")
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp

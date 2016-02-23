@@ -18,7 +18,7 @@ void imageInfrared1Callback(const sensor_msgs::ImageConstPtr & msg, const sensor
 
   long infrared1_total = 0;
   int infrared1_count = 1;
-  for (int i = 0; i < msg->height * msg->width; i++)
+  for (unsigned int i = 0; i < msg->height * msg->width; i++)
   {
     if (*infrared1_data > 0 && *infrared1_data < 255)
     {
@@ -48,7 +48,7 @@ void imageInfrared2Callback(const sensor_msgs::ImageConstPtr & msg, const sensor
 
   long infrared2_total = 0;
   int infrared2_count = 1;
-  for (int i = 0; i < msg->height * msg->width; i++)
+  for (unsigned int i = 0; i < msg->height * msg->width; i++)
   {
     if (*infrared2_data > 0 && *infrared2_data < 255)
     {
@@ -77,9 +77,9 @@ void imageDepthCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msg
 
   long depth_total = 0;
   int depth_count = 0;
-  for (int i = 0; i < msg->height * msg->width; ++i)
+  for (unsigned int i = 0; i < msg->height * msg->width; ++i)
   {
-    if (0 < *image_data <= R200_DEPTH_MAX)
+    if ((0 < *image_data) && (*image_data <= R200_DEPTH_MAX))
     {
       depth_total += *image_data;
       depth_count++;
@@ -139,7 +139,7 @@ void imageColorCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msg
   uchar *color_data = image.data;
   long color_total = 0;
   int color_count = 1;
-  for (int i = 0; i < msg->height * msg->width * 3; i++)
+  for (unsigned int i = 0; i < msg->height * msg->width * 3; i++)
   {
     if (*color_data > 0 && *color_data < 255)
     {
@@ -452,8 +452,6 @@ void fillConfigMap(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-  int return_value = 1;
-
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "utest");
   fillConfigMap(argc, argv);
