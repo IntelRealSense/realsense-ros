@@ -216,7 +216,7 @@ Sample test files are available in test directory
 Both of these methods first starts "RealsenseNodelet" for Intel® RealSense™ R200 (DS4) camera and then executes all the unit tests.
 
 ###Developer API:
-Refer to the function definitions in [realsense_camera_nodelet.h](/src/realsense_camera_nodelet.h)
+Refer to the function definitions in [realsense_camera_nodelet.h](src/realsense_camera_nodelet.h)
 
 
 ###Limitations:
