@@ -398,7 +398,14 @@ void fillConfigMap(int argc, char **argv)
     if (config_args.find("enable_depth") != config_args.end())
     {
       ROS_INFO ("RealSense Camera - Setting %s to %s", "enable_depth", config_args.at("enable_depth").c_str());
-      enable_depth = atoi(config_args.at("enable_depth").c_str());
+      if (strcmp((config_args.at("enable_depth").c_str ()),"true") == 0)
+      {
+        enable_depth = true;
+      }
+      else
+      {
+        enable_depth = false;
+      }
     }
     if (config_args.find("depth_encoding") != config_args.end())
     {
@@ -425,7 +432,14 @@ void fillConfigMap(int argc, char **argv)
     if (config_args.find("enable_color") != config_args.end())
     {
       ROS_INFO ("RealSense Camera - Setting %s to %s", "enable_color", config_args.at("enable_color").c_str());
-      enable_color = atoi(config_args.at("enable_color").c_str());
+      if (strcmp((config_args.at("enable_color").c_str ()),"true") == 0)
+      {
+        enable_color = true;
+      }
+      else
+      {
+        enable_color = false;
+      }
     }
     if (config_args.find("color_encoding") != config_args.end())
     {

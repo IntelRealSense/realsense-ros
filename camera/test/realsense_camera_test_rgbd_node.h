@@ -1,0 +1,38 @@
+#include <sensor_msgs/image_encodings.h>
+#include <camera_info_manager/camera_info_manager.h>
+#include <std_msgs/String.h>
+#include <ros/ros.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <gtest/gtest.h>
+
+const static int TOPIC_COUNT = 13;
+
+const char *RGB_IMAGE_MONO = "/camera/rgb/image_mono";
+const char *RGB_IMAGE_COLOR = "/camera/rgb/image_color";
+const char *RGB_IMAGE_RECT_MONO = "/camera/rgb/image_rect_mono";
+const char *RGB_IMAGE_RECT_COLOR = "/camera/rgb/image_rect_color";
+const char *DEPTH_IMAGE_RECT_RAW = "/camera/depth/image_rect_raw";
+const char *DEPTH_IMAGE_RECT = "/camera/depth/image_rect";
+const char *DEPTH_IMAGE = "/camera/depth/image";
+const char *DEPTH_POINTS = "/camera/depth/points";
+const char *IR_IMAGE_RECT_IR = "/camera/ir/image_rect_ir";
+const char *DEPTH_REG_SW_REG_IMAGE_RECT_RAW = "/camera/depth_registered/sw_registered/image_rect_raw";
+const char *DEPTH_REG_SW_REG_CAMERA_INFO = "/camera/depth_registered/sw_registered/camera_info";
+const char *DEPTH_REG_POINTS = "/camera/depth_registered/points";
+const char *DEPTH_REG_SW_REG_IMAGE_RECT = "/camera/depth_registered/sw_registered/image_rect";
+
+bool topic_0_recv = false;
+bool topic_1_recv = false;
+bool topic_2_recv = false;
+bool topic_3_recv = false;
+bool topic_4_recv = false;
+bool topic_5_recv = false;
+bool topic_6_recv = false;
+bool topic_7_recv = false;
+bool topic_8_recv = false;
+bool topic_9_recv = false;
+bool topic_10_recv = false;
+bool topic_11_recv = false;
+bool topic_12_recv = false;
+
+ros::Subscriber subscriber[TOPIC_COUNT];

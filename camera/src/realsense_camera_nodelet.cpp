@@ -364,17 +364,38 @@ namespace realsense_camera
 
     if (config_.find ("enable_color") != config_.end ())
     {
-      enable_color_ = atoi (config_.at ("enable_color").c_str ());
+      if (strcmp((config_.at ("enable_color").c_str ()),"true") == 0)
+      {
+        enable_color_ = true;
+      }
+      else
+      {
+        enable_color_ = false;
+      }
     }
 
     if (config_.find ("enable_depth") != config_.end ())
     {
-      enable_depth_ = atoi (config_.at ("enable_depth").c_str ());
+      if (strcmp((config_.at ("enable_depth").c_str ()),"true") == 0)
+      {
+        enable_depth_ = true;
+      }
+      else
+      {
+        enable_depth_ = false;
+      }
     }
 
-    if (config_.find ("enable_pointCloud") != config_.end ())
+    if (config_.find ("enable_pointcloud") != config_.end ())
     {
-      enable_pointcloud_ = atoi (config_.at ("enable_pointCloud").c_str ());
+      if (strcmp((config_.at ("enable_pointcloud").c_str ()),"true") == 0)
+      {
+        enable_pointcloud_ = true;
+      }
+      else
+      {
+        enable_pointcloud_ = false;
+      }
     }
 
     if (config_.find ("camera") != config_.end ())
@@ -387,9 +408,9 @@ namespace realsense_camera
       frame_id_[RS_STREAM_DEPTH] = config_.at ("depth_frame_id").c_str ();
     }
 
-    if (config_.find ("color_frame_id") != config_.end ())
+    if (config_.find ("rgb_frame_id") != config_.end ())
     {
-      frame_id_[RS_STREAM_COLOR] = config_.at ("color_frame_id").c_str ();
+      frame_id_[RS_STREAM_COLOR] = config_.at ("rgb_frame_id").c_str ();
     }
 
     if (mode_.compare ("manual") == 0)

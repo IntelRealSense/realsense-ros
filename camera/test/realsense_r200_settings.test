@@ -1,8 +1,8 @@
 <launch>
         <arg name="mode" default="preset" />
-        <arg name="enable_depth" default="1" />
-        <arg name="enable_color" default="1" />
-        <arg name="enable_pointcloud" default="1" />
+        <arg name="enable_depth" default="true" />
+        <arg name="enable_color" default="true" />
+        <arg name="enable_pointcloud" default="true" />
         <arg name="camera" default="R200" />
         <arg name="COLOR_BACKLIGHT_COMPENSATION" default="1" />
         <arg name="COLOR_BRIGHTNESS" default="32" />
