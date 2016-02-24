@@ -18,10 +18,8 @@
   <arg name="projector"        default="projector" />
 
   <!-- Optionally suppress loading the driver nodelet and/or publishing the default tf
-       tree. Useful if you are playing back recorded raw data from a bag, or are
-       supplying a more accurate tf tree from calibration. -->
+       tree. Useful if you are playing back recorded raw data from a bag. -->
   <arg name="load_driver" default="true" />
-  <arg name="publish_tf" default="true" />
   <!-- Processing Modules -->
   <arg name="rgb_processing"                  default="true"/>
   <arg name="ir_processing"                   default="true"/>
@@ -86,11 +84,5 @@
     </include>
 
   </group> <!-- camera -->
-
-  <!-- Load reasonable defaults for the relative pose between cameras -->
-  <include if="$(arg publish_tf)"
-       file="$(find rgbd_launch)/launch/kinect_frames.launch">
-    <arg name="camera" value="$(arg camera)" />
-  </include>
 
 </launch>
