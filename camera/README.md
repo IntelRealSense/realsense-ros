@@ -28,14 +28,13 @@ Sample launch files are available in camera/launch directory
 
 <b>realsense_r200_rgbd.launch</b>
 
-Note: The camera does not provide hardware based depth registration/projector data. Hence the launch file realsense_r200_rgbd.launch will not generate data for the following topics:
-
-/camera/depth_registered/hw_registered/image_rect_raw
-/camera/depth_registered/points
-/camera/depth_registered/hw_registered/image_rect
-/camera/depth_registered/image
-/camera/depth/disparity
-/camera/depth_registered/disparity
+Note: The camera does not provide hardware based depth registration/projector data. Hence the launch file "realsense_r200_rgbd.launch" will not generate data for the following topics:  
+/camera/depth_registered/hw_registered/image_rect_raw  
+/camera/depth_registered/points  
+/camera/depth_registered/hw_registered/image_rect  
+/camera/depth_registered/image  
+/camera/depth/disparity  
+/camera/depth_registered/disparity  
 
 
 ### Intel&reg; RealSense&trade; R200 Nodelet
@@ -216,9 +215,14 @@ Sample test files are available in test directory
 
 Both of these methods first starts "RealsenseNodelet" for Intel® RealSense™ R200 (DS4) camera and then executes all the unit tests.
 
+###Developer API:
+Refer to the function definitions in [realsense_camera_nodelet.h](/src/realsense_camera_nodelet.h)
+
+
 ###Limitations:
 Currently, the ROS camera nodelet only supports the following formats:
 * Color stream:    RGB8
 * Depth stream:    Y16
 * Infrared stream: Y8
+
 
