@@ -28,6 +28,16 @@ Sample launch files are available in camera/launch directory
 
 <b>realsense_r200_rgbd.launch</b>
 
+Note: The camera does not provide hardware based depth registration/projector data. Hence the launch file realsense_r200_rgbd.launch will not generate data for the following topics:
+
+/camera/depth_registered/hw_registered/image_rect_raw
+/camera/depth_registered/points
+/camera/depth_registered/hw_registered/image_rect
+/camera/depth_registered/image
+/camera/depth/disparity
+/camera/depth_registered/disparity
+
+
 ### Intel&reg; RealSense&trade; R200 Nodelet
 Publishing stream data from the Intel® RealSense™ R200 (DS4) camera
 
@@ -201,6 +211,8 @@ Sample test files are available in test directory
 <b>realsense_r200_resolution.test</b>
 
 <b>realsense_r200_settings.test</b>
+
+<b>realsense_r200_rgbd.test</b>
 
 Both of these methods first starts "RealsenseNodelet" for Intel® RealSense™ R200 (DS4) camera and then executes all the unit tests.
 
