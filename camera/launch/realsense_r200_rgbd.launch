@@ -3,9 +3,9 @@
 
   <!-- "camera" should uniquely identify the device. All topics are pushed down
        into the "camera" namespace, and it is prepended to tf frame ids. -->
-  <arg name="camera" default="camera" />
-  <arg name="depth_frame_id" default="$(arg camera)_depth_optical_frame" />
-  <arg name="rgb_frame_id"   default="$(arg camera)_rgb_optical_frame" />
+  <arg name="camera"          default="camera" />
+  <arg name="depth_frame_id"  default="$(arg camera)_depth_optical_frame" />
+  <arg name="rgb_frame_id"    default="$(arg camera)_rgb_optical_frame" />
 
   <!-- Use OpenNI's factory-calibrated depth->RGB registration? -->
   <arg name="depth_registration" default="false" />
@@ -32,9 +32,8 @@
   <arg name="hw_registered_processing"        default="true" />
   <arg name="sw_registered_processing"        default="true" />
 
-  <!-- Disable bond topics by default -->
-  <arg name="bond" default="false" /> <!-- DEPRECATED, use respawn arg instead -->
-  <arg name="respawn" default="$(arg bond)" />
+  <!-- Disable respawn topics by default -->
+  <arg name="respawn" default="false" />
 
   <!-- Worker threads for the nodelet manager -->
   <arg name="num_worker_threads" default="4" />
@@ -53,7 +52,7 @@
 
     <!-- Load driver -->
     <include if="$(arg load_driver)"
-	     file="$(find realsense_camera)/launch/realsense_r200_nodelet.launch">
+             file="$(find realsense_camera)/launch/realsense_r200_nodelet.launch">
       <!-- Could really use some syntactic sugar for this -->
       <arg name="manager"                   value="$(arg manager)" />    
       <arg name="depth_frame_id"            value="$(arg depth_frame_id)" />
@@ -63,9 +62,10 @@
       <arg name="ir"                        value="$(arg ir)" />
       <arg name="enable_depth"              value="$(arg depth_processing)" />       
       <arg name="enable_color"              value="$(arg rgb_processing)" />
-                
+      <arg name="enable_ir"                 value="$(arg ir_processing)" />      
+
     </include>
-    
+
     <!-- Load standard constellation of processing nodelets -->
     <include file="$(find rgbd_launch)/launch/includes/processing.launch.xml">
       <arg name="manager"                         value="$(arg manager)" />
@@ -84,12 +84,12 @@
       <arg name="hw_registered_processing"        value="$(arg hw_registered_processing)" />
       <arg name="sw_registered_processing"        value="$(arg sw_registered_processing)" />
     </include>
-  
+
   </group> <!-- camera -->
 
   <!-- Load reasonable defaults for the relative pose between cameras -->
   <include if="$(arg publish_tf)"
-	   file="$(find rgbd_launch)/launch/kinect_frames.launch">
+       file="$(find rgbd_launch)/launch/kinect_frames.launch">
     <arg name="camera" value="$(arg camera)" />
   </include>
 
