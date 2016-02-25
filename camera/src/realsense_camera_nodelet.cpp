@@ -120,6 +120,8 @@ namespace realsense_camera
     }
 
     get_options_service_ = nh.advertiseService (SETTINGS_SERVICE, &RealsenseNodelet::getCameraSettings, this);
+  
+    dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>(getPrivateNodeHandle())); 
 
     bool connected = false;
 
@@ -137,11 +139,63 @@ namespace realsense_camera
     {
       ros::shutdown ();
     }
+
+    dynamic_reconf_server_->setCallback(boost::bind(&RealsenseNodelet::configCallback, this, _1, _2)); 
 }
 
   /*
    *Private Methods.
    */
+  void RealsenseNodelet::configCallback(realsense_camera::camera_paramsConfig &config, uint32_t level)
+  {
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_BACKLIGHT_COMPENSATION, config.COLOR_BACKLIGHT_COMPENSATION, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_BRIGHTNESS, config.COLOR_BRIGHTNESS, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_CONTRAST, config.COLOR_CONTRAST, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_GAIN, config.COLOR_GAIN, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_GAMMA, config.COLOR_GAMMA, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_HUE, config.COLOR_HUE, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_SATURATION, config.COLOR_SATURATION, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_SHARPNESS, config.COLOR_SHARPNESS, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_ENABLE_AUTO_WHITE_BALANCE, config.COLOR_ENABLE_AUTO_WHITE_BALANCE, 0);
+
+    if(config.COLOR_ENABLE_AUTO_WHITE_BALANCE == 1) {
+      rs_set_device_option(rs_device_, RS_OPTION_COLOR_WHITE_BALANCE, config.COLOR_WHITE_BALANCE, 0);
+    }
+
+    //R200 camera specific options
+    rs_set_device_option(rs_device_, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, config.R200_LR_AUTO_EXPOSURE_ENABLED, 0);
+
+    if(config.R200_LR_AUTO_EXPOSURE_ENABLED == 0) {
+      rs_set_device_option(rs_device_, RS_OPTION_R200_LR_EXPOSURE, config.R200_LR_EXPOSURE, 0);
+    }
+
+    rs_set_device_option(rs_device_, RS_OPTION_R200_LR_GAIN, config.R200_LR_GAIN, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_R200_EMITTER_ENABLED, config.R200_EMITTER_ENABLED, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_R200_DISPARITY_MULTIPLIER, config.R200_DISPARITY_MULTIPLIER, 0);
+
+    if(config.R200_LR_AUTO_EXPOSURE_ENABLED == 1)
+    {
+      if(config.R200_AUTO_EXPOSURE_TOP_EDGE >= depth_height_) {
+      	config.R200_AUTO_EXPOSURE_TOP_EDGE = depth_height_ - 1;
+      }
+      if(config.R200_AUTO_EXPOSURE_BOTTOM_EDGE >= depth_height_) {
+      	config.R200_AUTO_EXPOSURE_BOTTOM_EDGE = depth_height_ - 1;
+      }
+      if(config.R200_AUTO_EXPOSURE_LEFT_EDGE >= depth_width_) {
+      	config.R200_AUTO_EXPOSURE_LEFT_EDGE = depth_width_ - 1;
+      }
+      if(config.R200_AUTO_EXPOSURE_RIGHT_EDGE >= depth_width_) {
+      	config.R200_AUTO_EXPOSURE_RIGHT_EDGE = depth_width_ - 1;
+      }
+      edge_values_[0] = config.R200_AUTO_EXPOSURE_LEFT_EDGE;
+      edge_values_[1] = config.R200_AUTO_EXPOSURE_TOP_EDGE;
+      edge_values_[2] = config.R200_AUTO_EXPOSURE_RIGHT_EDGE;
+      edge_values_[3] = config.R200_AUTO_EXPOSURE_BOTTOM_EDGE;
+
+      rs_set_device_options(rs_device_, edge_options_, 4, edge_values_, 0);
+   }
+  }
+
   void RealsenseNodelet::check_error ()
   {
     if (rs_error_)

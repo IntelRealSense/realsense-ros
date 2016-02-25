@@ -14,6 +14,7 @@ set(CMAKE_EXE_LINKER_FLAGS "-pie -z noexecstack -z relro -z now")
 set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now")
 
 find_package(catkin REQUIRED COMPONENTS
+  dynamic_reconfigure
   roscpp
   nodelet
   cv_bridge
@@ -37,6 +38,13 @@ generate_messages(
   std_msgs
 )
 
+#add dynamic reconfigure api
+generate_dynamic_reconfigure_options(
+  cfg/camera_params.cfg
+)
+
+
+
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
@@ -46,7 +54,7 @@ target_link_libraries(realsense_camera_nodelet
   ${catkin_LIBRARIES}
   /usr/local/lib/librealsense.so
 )
-add_dependencies(realsense_camera_nodelet realsense_camera_generate_messages_cpp)
+add_dependencies(realsense_camera_nodelet realsense_camera_generate_messages_cpp ${PROJECT_NAME}_gencfg)
 
 add_executable(realsense_camera_test test/realsense_camera_test_node.cpp)
 target_link_libraries(realsense_camera_test 
