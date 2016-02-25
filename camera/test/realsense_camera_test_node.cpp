@@ -376,6 +376,18 @@ TEST (RealsenseTests, testCameraSettings)
   }
 }
 
+TEST (RealsenseTests, testTransforms)
+{
+  // make sure all transforms are being broadcast as expected
+  tf::TransformListener tf_listener;
+  ros::Duration(1).sleep();  // must listen for ~1 sec or tf won't be found
+
+  EXPECT_TRUE(tf_listener.canTransform (BASE_DEF_FRAME, DEPTH_DEF_FRAME, ros::Time::now()));
+  EXPECT_TRUE(tf_listener.canTransform (DEPTH_DEF_FRAME, DEPTH_OPTICAL_DEF_FRAME, ros::Time::now()));
+  EXPECT_TRUE(tf_listener.canTransform (BASE_DEF_FRAME, COLOR_DEF_FRAME, ros::Time::now()));
+  EXPECT_TRUE(tf_listener.canTransform (COLOR_DEF_FRAME,COLOR_OPTICAL_DEF_FRAME, ros::Time::now()));
+}
+
 void fillConfigMap(int argc, char **argv)
 {
   std::vector < std::string > args;

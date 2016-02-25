@@ -67,8 +67,10 @@ public:
   const rs_format IR1_FORMAT = RS_FORMAT_Y8;
   const rs_format IR2_FORMAT = RS_FORMAT_Y8;
   const char *BASE_DEF_FRAME = "realsense_frame";
-  const char *DEPTH_DEF_FRAME = "camera_depth_optical_frame";
-  const char *COLOR_DEF_FRAME = "camera_color_optical_frame";
+  const char *DEPTH_DEF_FRAME = "camera_depth_frame";
+  const char *COLOR_DEF_FRAME = "camera_color_frame";
+  const char *DEPTH_OPTICAL_DEF_FRAME = "camera_depth_optical_frame";
+  const char *COLOR_OPTICAL_DEF_FRAME = "camera_color_optical_frame";
   const char *IR1_DEF_FRAME = "camera_infrared_optical_frame";
   const char *IR2_DEF_FRAME = "camera_infrared2_optical_frame";
   const char *DEPTH_TOPIC = "camera/depth/image_raw";
@@ -83,6 +85,7 @@ public:
 private:
   // Member Variables.
   boost::shared_ptr<boost::thread> device_thread_;
+  boost::shared_ptr<boost::thread> transform_thread_;
 
   rs_error *rs_error_ = 0;
   rs_context *rs_context_;
@@ -132,6 +135,7 @@ private:
   void prepareStreamData(rs_stream rs_strm);
   void publishStreams();
   void publishPointCloud(cv::Mat & image_rgb);
+  void publishTransforms();
   void devicePoll();
   void allocateResources();
   bool connectToCamera();
