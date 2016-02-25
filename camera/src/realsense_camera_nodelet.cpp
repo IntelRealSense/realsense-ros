@@ -120,9 +120,8 @@ namespace realsense_camera
     }
 
     get_options_service_ = nh.advertiseService (SETTINGS_SERVICE, &RealsenseNodelet::getCameraSettings, this);
-
-    dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>(getPrivateNodeHandle()));
-    dynamic_reconf_server_->setCallback(boost::bind(&RealsenseNodelet::configCallback, this, _1, _2));
+  
+    dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>(getPrivateNodeHandle())); 
 
     bool connected = false;
 
@@ -140,6 +139,8 @@ namespace realsense_camera
     {
       ros::shutdown ();
     }
+
+    dynamic_reconf_server_->setCallback(boost::bind(&RealsenseNodelet::configCallback, this, _1, _2)); 
 }
 
   /*
