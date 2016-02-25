@@ -132,13 +132,13 @@ private:
 
   cv::Mat image_[STREAM_COUNT];
 
-  rs_option edge_options[4] = {
+  rs_option edge_options_[4] = {
     RS_OPTION_R200_AUTO_EXPOSURE_LEFT_EDGE,
     RS_OPTION_R200_AUTO_EXPOSURE_TOP_EDGE,
     RS_OPTION_R200_AUTO_EXPOSURE_RIGHT_EDGE,
     RS_OPTION_R200_AUTO_EXPOSURE_BOTTOM_EDGE
   };
-  double edge_values[4]; 
+  double edge_values_[4]; 
 
   sensor_msgs::CameraInfoPtr camera_info_ptr_[STREAM_COUNT];
   sensor_msgs::CameraInfo * camera_info_[STREAM_COUNT];
@@ -160,7 +160,7 @@ private:
     double min, max, step, value;
   };
   std::vector<option_str> options;
-  boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>> mReconfigureServer;
+  boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>> dynamic_reconf_server_;
 
   // Member Functions.
   void check_error();

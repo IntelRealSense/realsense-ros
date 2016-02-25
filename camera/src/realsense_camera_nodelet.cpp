@@ -121,8 +121,8 @@ namespace realsense_camera
 
     get_options_service_ = nh.advertiseService (SETTINGS_SERVICE, &RealsenseNodelet::getCameraSettings, this);
 
-    mReconfigureServer.reset(new dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>(getPrivateNodeHandle()));
-    mReconfigureServer->setCallback(boost::bind(&RealsenseNodelet::configCallback, this, _1, _2));
+    dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>(getPrivateNodeHandle()));
+    dynamic_reconf_server_->setCallback(boost::bind(&RealsenseNodelet::configCallback, this, _1, _2));
 
     bool connected = false;
 
@@ -186,12 +186,12 @@ namespace realsense_camera
       if(config.R200_AUTO_EXPOSURE_RIGHT_EDGE >= depth_width_) {
       	config.R200_AUTO_EXPOSURE_RIGHT_EDGE = depth_width_ - 1;
       }
-      edge_values[0] = config.R200_AUTO_EXPOSURE_LEFT_EDGE;
-      edge_values[1] = config.R200_AUTO_EXPOSURE_TOP_EDGE;
-      edge_values[2] = config.R200_AUTO_EXPOSURE_RIGHT_EDGE;
-      edge_values[3] = config.R200_AUTO_EXPOSURE_BOTTOM_EDGE;
+      edge_values_[0] = config.R200_AUTO_EXPOSURE_LEFT_EDGE;
+      edge_values_[1] = config.R200_AUTO_EXPOSURE_TOP_EDGE;
+      edge_values_[2] = config.R200_AUTO_EXPOSURE_RIGHT_EDGE;
+      edge_values_[3] = config.R200_AUTO_EXPOSURE_BOTTOM_EDGE;
 
-      rs_set_device_options(rs_device_, edge_options, 4, edge_values, 0);
+      rs_set_device_options(rs_device_, edge_options_, 4, edge_values_, 0);
    }
   }
 

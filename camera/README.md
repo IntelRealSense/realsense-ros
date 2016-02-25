@@ -28,15 +28,6 @@ Sample launch files are available in camera/launch directory
 
 <b>realsense_r200_rgbd.launch</b>
 
-Note: The camera does not provide hardware based depth registration/projector data. Hence the launch file "realsense_r200_rgbd.launch" will not generate data for the following topics:  
-/camera/depth_registered/hw_registered/image_rect_raw  
-/camera/depth_registered/points  
-/camera/depth_registered/hw_registered/image_rect  
-/camera/depth_registered/image  
-/camera/depth/disparity  
-/camera/depth_registered/disparity  
-
-
 ### Intel&reg; RealSense&trade; R200 Nodelet
 Publishing stream data from the Intel® RealSense™ R200 (DS4) camera
 
@@ -135,6 +126,48 @@ Infrared2 camera
     get_settings (camera/get_settings)
 	To get supported camera options with current value set. It returns string in options:value format where different options are seperated by semicolon.
 
+####Dynamic Reconfiguration
+   List of dynamically configurable camera options:
+
+        COLOR_BACKLIGHT_COMPENSATION
+        COLOR_BRIGHTNESS
+        COLOR_CONTRAST
+        COLOR_GAIN
+        COLOR_GAMMA
+        COLOR_HUE
+        COLOR_SATURATION
+        COLOR_SHARPNESS
+        COLOR_WHITE_BALANCE
+        COLOR_ENABLE_AUTO_WHITE_BALANCE
+        R200_LR_AUTO_EXPOSURE_ENABLED
+        R200_LR_GAIN
+        R200_LR_EXPOSURE
+        R200_EMITTER_ENABLED
+        R200_DISPARITY_MULTIPLIER
+        R200_AUTO_EXPOSURE_TOP_EDGE
+        R200_AUTO_EXPOSURE_BOTTOM_EDGE
+        R200_AUTO_EXPOSURE_LEFT_EDGE
+        R200_AUTO_EXPOSURE_RIGHT_EDGE
+
+Use rqt_reconfigure GUI to view and edit the parameters that are accessible via dynamic_reconfigure.
+
+Command to launch GUI:
+
+    $ rosrun rqt_reconfigure rqt_reconfigure
+
+Change options commandline using following command:
+
+    $ rosrun dynamic_reconfigure dynparam set /node parameter_name value
+    E.g. $ rosrun dynamic_reconfigure dynparam set /RealsenseNodelet COLOR_BACKLIGHT_COMPENSATION 2
+
+Note: For Autoexposure EDGE parameters, max value will go only upto the bounds of the infrared image.	
+E.g. For 320x240 infrared image, valid values are within 0-319 and 0-239)
+
+To change EDGE parameters, R200_LR_AUTO_EXPOSURE_ENABLED should be enabled.			
+To set R200_LR_EXPOSURE, R200_LR_AUTO_EXPOSURE_ENABLED should be disabled.	
+To set COLOR_WHITE_BALANCE, COLOR_ENABLE_AUTO_WHITE_BALANCE should be disabled.	
+
+
 ###Running the R200 nodelet
 
 Use the following command to launch the camera nodelet. You will notice the camera light up.
@@ -224,5 +257,13 @@ Currently, the ROS camera nodelet only supports the following formats:
 * Color stream:    RGB8
 * Depth stream:    Y16
 * Infrared stream: Y8
+
+Note: The camera does not provide hardware based depth registration/projector data. Hence the launch file "realsense_r200_rgbd.launch" will not generate data for the following topics:  
+/camera/depth_registered/hw_registered/image_rect_raw  
+/camera/depth_registered/points  
+/camera/depth_registered/hw_registered/image_rect  
+/camera/depth_registered/image  
+/camera/depth/disparity  
+/camera/depth_registered/disparity  
 
 
