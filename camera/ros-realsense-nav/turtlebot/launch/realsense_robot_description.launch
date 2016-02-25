@@ -1,0 +1,14 @@
+<launch>
+	<arg name="base" default="$(env TURTLEBOT_BASE)"/>
+	<arg name="3d_sensor" default="r200"/>
+	<arg name="stacks" default="minimal"/>
+
+	<include file="$(find turtlebot_bringup)/launch/includes/description.launch.xml">
+		<arg name="base" value="$(arg base)"/>
+		<arg name="3d_sensor" value="$(arg 3d_sensor)"/>
+		<arg name="stacks" value="$(arg stacks)"/>
+		<!-- Uncomment this to set a custom urdf/xacro description file
+		<arg name="urdf_file" value="$(find realsense)/.../..."/>
+		-->
+	</include>
+</launch>
