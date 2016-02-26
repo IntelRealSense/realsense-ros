@@ -8,12 +8,12 @@
  1. Redistributions of source code must retain the above copyright notice, this
  list of conditions and the following disclaimer.
 
- 2. Redistributions in binary form must reproduce the above copyright notice, 
- this list of conditions and the following disclaimer in the documentation 
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
  and/or other materials provided with the distribution.
 
- 3. Neither the name of the copyright holder nor the names of its contributors 
- may be used to endorse or promote products derived from this software without 
+ 3. Neither the name of the copyright holder nor the names of its contributors
+ may be used to endorse or promote products derived from this software without
  specific prior written permission.
 
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -408,6 +408,27 @@ TEST (RealsenseTests, testTransforms)
   EXPECT_TRUE(tf_listener.canTransform (DEPTH_DEF_FRAME, DEPTH_OPTICAL_DEF_FRAME, ros::Time::now()));
   EXPECT_TRUE(tf_listener.canTransform (BASE_DEF_FRAME, COLOR_DEF_FRAME, ros::Time::now()));
   EXPECT_TRUE(tf_listener.canTransform (COLOR_DEF_FRAME,COLOR_OPTICAL_DEF_FRAME, ros::Time::now()));
+}
+
+TEST (RealsenseTests, testDynamicReconfigure)
+{
+  stringstream settings_ss (srv.response.configuration_str);
+  string setting;
+  string setting_name;
+  string setting_value;
+
+  while (getline (settings_ss, setting, ';'))
+  {
+    stringstream setting_ss (setting);
+    getline (setting_ss, setting_name, ':');
+    setting_value = (setting.substr (setting.rfind (":") + 1));
+    if (config_args.find (setting_name) != config_args.end ())
+    {
+      int actual_value = atoi (setting_value.c_str ());
+      int expected_value = atoi (config_args.at (setting_name).c_str ());
+      EXPECT_EQ (expected_value, actual_value);
+    }
+  }
 }
 
 void fillConfigMap(int argc, char **argv)
