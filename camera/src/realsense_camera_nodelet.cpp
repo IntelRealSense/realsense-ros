@@ -158,7 +158,7 @@ namespace realsense_camera
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_SHARPNESS, config.COLOR_SHARPNESS, 0);
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_ENABLE_AUTO_WHITE_BALANCE, config.COLOR_ENABLE_AUTO_WHITE_BALANCE, 0);
 
-    if(config.COLOR_ENABLE_AUTO_WHITE_BALANCE == 1) {
+    if(config.COLOR_ENABLE_AUTO_WHITE_BALANCE == 0) {
       rs_set_device_option(rs_device_, RS_OPTION_COLOR_WHITE_BALANCE, config.COLOR_WHITE_BALANCE, 0);
     }
 
