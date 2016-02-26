@@ -10,7 +10,7 @@ If this does not work, you should first fix this issue before continuing with th
 * Make sure "/usr/local/lib" is set in your "LD_LIBRARY_PATH".
 * Copy the librealsense header files folder "librealsense/include/librealsense" to "/usr/local/include". 
  
-	E.g. sudo cp -r <librealsense_folder>/include/librealsense /usr/local/include
+	E.g. sudo cp -r \<librealsense_folder>/include/librealsense /usr/local/include
 
 
 #####Building package:
