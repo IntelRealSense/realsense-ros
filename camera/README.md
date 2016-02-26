@@ -157,7 +157,7 @@ Command to launch GUI:
 
 Change options commandline using following command:
 
-    $ rosrun dynamic_reconfigure dynparam set /node parameter_name value
+    $ rosrun dynamic_reconfigure dynparam set /<node> <parameter_name> <value>
     E.g. $ rosrun dynamic_reconfigure dynparam set /RealsenseNodelet COLOR_BACKLIGHT_COMPENSATION 2
 
 Note: For Autoexposure EDGE parameters, max value will go only upto the bounds of the infrared image.	
@@ -229,7 +229,7 @@ Using rostest command with test files
 
 Using rosrun command
 
-    $ roslaunch realsense_camera realsense_r200_launch_manual.launch
+    $ roslaunch realsense_camera realsense_r200_nodelet_standalone_manual.launch
 
     $ rosrun realsense_camera realsense_camera_test <args>
     E.g. rosrun realsense_camera realsense_camera_test enable_depth 1 depth_encoding 16UC1 depth_height 360 depth_width 480 depth_step 960 enable_color 1 color_encoding rgb8 color_height 480 color_width 640 color_step 1920
