@@ -125,34 +125,33 @@ void imageDepthCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msg
   depth_recv = true;
 }
 
-/*
- void pcCallback (const sensor_msgs::PointCloud2ConstPtr pc)
- {
- pcl::PointCloud < pcl::PointXYZRGB > pointcloud;
- pcl::fromROSMsg (*pc, pointcloud);
 
- long pc_depth_total = 0;
- int pc_depth_count = 0;
- for (int i = 0; i < pointcloud.width * pointcloud.height; ++i)
- {
- pcl::PointXYZRGB point = pointcloud.points[i];
- float pc_depth = (float) std::ceil (point.z);
- if (0 < pc_depth <= 10)
- {
- pc_depth_total += pc_depth;
- pc_depth_count++;
- }
- }
+ void pcCallback(const sensor_msgs::PointCloud2ConstPtr pc)
+{
+  pcl::PointCloud < pcl::PointXYZRGB > pointcloud;
+  pcl::fromROSMsg(*pc, pointcloud);
 
+  long pc_depth_total = 0;
+  int pc_depth_count = 0;
+  for (unsigned int i = 0; i < pointcloud.width * pointcloud.height; ++i)
+  {
+    pcl::PointXYZRGB point = pointcloud.points[i];
+    float pc_depth = (float) std::ceil(point.z);
+    if ((0 < pc_depth) && (pc_depth <= R200_DEPTH_MAX))
+    {
+      pc_depth_total += pc_depth;
+      pc_depth_count++;
+    }
+  }
 
- if (pc_depth_count != 0)
- {
- pc_depth_avg = pc_depth_total / pc_depth_count;
- }
+  if (pc_depth_count != 0)
+  {
+    pc_depth_avg = pc_depth_total / pc_depth_count;
+  }
 
- pc_recv = true;
- }
- */
+  pc_recv = true;
+}
+
 
 void imageColorCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msgs::CameraInfoConstPtr & info_msg)
 {
@@ -362,21 +361,21 @@ TEST (RealsenseTests, testInfrared2CameraInfo)
   }
 }
 
-/*
+
  TEST (RealsenseTests, testPointCloud)
- {
- if (enable_depth)
- {
- ROS_INFO_STREAM ("RealSense Camera - pc_depth_avg: " << pc_depth_avg);
- EXPECT_TRUE (pc_depth_avg > 0);
- EXPECT_TRUE (pc_recv);
- }
- else
- {
- EXPECT_FALSE (pc_recv);
- }
- }
- */
+{
+  if (enable_depth)
+  {
+    ROS_INFO_STREAM ("RealSense Camera - pc_depth_avg: " << pc_depth_avg);
+    EXPECT_TRUE (pc_depth_avg > 0);
+    EXPECT_TRUE (pc_recv);
+  }
+  else
+  {
+    EXPECT_FALSE (pc_recv);
+  }
+}
+
 
 TEST (RealsenseTests, testCameraSettings)
 {
@@ -537,7 +536,7 @@ int main(int argc, char **argv)
     camera_subscriber[3] = it.subscribeCamera(IR2_TOPIC, 1, imageInfrared2Callback, 0);
   }
 
-  //m_sub_pc = nh.subscribe <sensor_msgs::PointCloud2> (PC_TOPIC, 1, pcCallback);
+  m_sub_pc = nh.subscribe <sensor_msgs::PointCloud2> (PC_TOPIC, 1, pcCallback);
   ros::ServiceClient client = nh.serviceClient < realsense_camera::cameraConfiguration > (SETTINGS_SERVICE);
   client.call(srv);
 
