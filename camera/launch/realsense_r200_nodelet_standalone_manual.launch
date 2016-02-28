@@ -8,6 +8,7 @@
 	<arg name="enable_depth" default="true" />
 	<arg name="enable_color" default="true" />
 	<arg name="enable_pointcloud" default="true" />
+	<arg name="enable_tf" default="true" />
 	<arg name="depth_fps" default="60" />
 	<arg name="color_fps" default="60" />	
 	
