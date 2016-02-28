@@ -39,13 +39,13 @@ alias setkinect='export TURTLEBOT_3D_SENSOR=kinect && export TURTLEBOT_STACKS=he
 
 ## B - Mapping
 
-The only difference from the kinect version of the navigation stack is that you need to start the camera driver before the navigation: `roslaunch realsense_camera realsense_r200_nodelet_standalone_preset.launch`.
+The only difference from the kinect version of the navigation stack is that you need to start the camera driver before the navigation: `roslaunch realsense_camera realsense_r200_navigation.launch`.
 
 So, the normal flow would be :
 
 ```bash
 roslaunch turtlebot_bringup minimal.launch
-roslaunch realsense_camera realsense_r200_nodelet_standalone_preset.launch
+roslaunch realsense_camera realsense_r200_navigation.launch
 roslaunch realsense_navigation gmapping.launch
 roslaunch turtlebot_rviz_launchers view_navigation.launch
 ```
@@ -69,7 +69,7 @@ Once you have a map, you can start the navigation with the following commands
 
 ```bash
 roslaunch turtlebot_bringup minimal.launch
-roslaunch realsense_camera realsense_r200_nodelet_standalone_preset.launch
+roslaunch realsense_camera realsense_r200_navigation.launch
 roslaunch realsense_navigation navigation_demo.launch map:=<map-file>
 ```
 
@@ -83,7 +83,7 @@ So we first need to start the turtlebot (+ the teleop of your choice) and the ca
 
 ```bash
 roslaunch turtlebot_bringup minimal.launch
-roslaunch realsense_camera realsense_r200_nodelet_standalone_preset.launch
+roslaunch realsense_camera realsense_r200_navigation.launch
 ```
 
 Then, we will store the relevent topics in a bag file:
