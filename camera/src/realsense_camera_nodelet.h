@@ -92,11 +92,11 @@ public:
   const rs_format COLOR_FORMAT = RS_FORMAT_RGB8;
   const rs_format IR1_FORMAT = RS_FORMAT_Y8;
   const rs_format IR2_FORMAT = RS_FORMAT_Y8;
-  const char *BASE_DEF_FRAME = "realsense_frame";
+  const char *BASE_DEF_FRAME = "camera_link";
   const char *DEPTH_DEF_FRAME = "camera_depth_frame";
-  const char *COLOR_DEF_FRAME = "camera_color_frame";
+  const char *COLOR_DEF_FRAME = "camera_rgb_frame";
   const char *DEPTH_OPTICAL_DEF_FRAME = "camera_depth_optical_frame";
-  const char *COLOR_OPTICAL_DEF_FRAME = "camera_color_optical_frame";
+  const char *COLOR_OPTICAL_DEF_FRAME = "camera_rgb_optical_frame";
   const char *IR1_DEF_FRAME = "camera_infrared_optical_frame";
   const char *IR2_DEF_FRAME = "camera_infrared2_optical_frame";
   const char *DEPTH_TOPIC = "camera/depth/image_raw";
