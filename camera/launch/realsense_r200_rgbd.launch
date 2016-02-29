@@ -18,8 +18,10 @@
   <arg name="projector"        default="projector" />
 
   <!-- Optionally suppress loading the driver nodelet and/or publishing the default tf
-       tree. Useful if you are playing back recorded raw data from a bag. -->
+       tree. Useful if you are playing back recorded raw data from a bag, or are
+       supplying a more accurate tf tree from calibration. -->
   <arg name="load_driver" default="true" />
+  <arg name="publish_tf" default="false" />
   <!-- Processing Modules -->
   <arg name="rgb_processing"                  default="true"/>
   <arg name="ir_processing"                   default="true"/>
@@ -50,17 +52,17 @@
 
     <!-- Load driver -->
     <include if="$(arg load_driver)"
-             file="$(find realsense_camera)/launch/realsense_r200_nodelet.launch">
-      <!-- Could really use some syntactic sugar for this -->
+             file="$(find realsense_camera)/launch/includes/realsense_r200_nodelet.launch.xml">
       <arg name="manager"                   value="$(arg manager)" />    
       <arg name="depth_frame_id"            value="$(arg depth_frame_id)" />
-      <arg name="rgb_frame_id"              value="$(arg rgb_frame_id)" />    
+      <arg name="rgb_frame_id"              value="$(arg rgb_frame_id)" />
+      <arg name="publish_tf"                value="$(arg publish_tf)" />    
       <arg name="depth"                     value="$(arg depth)" />
       <arg name="rgb"                       value="$(arg rgb)" /> 
       <arg name="ir"                        value="$(arg ir)" />
-      <arg name="enable_depth"              value="$(arg depth_processing)" />       
+      <arg name="enable_depth"              value="$(arg depth_processing)" /> 
       <arg name="enable_color"              value="$(arg rgb_processing)" />
-      <arg name="enable_ir"                 value="$(arg ir_processing)" />      
+      <arg name="enable_ir"                 value="$(arg ir_processing)" />
 
     </include>
 

@@ -1,7 +1,10 @@
 <launch>
-    <arg name="manager"             default="camera_nodelet_manager" />
+    <!-- Name of nodelet manager, must be fully resolved -->
+    <arg name="manager" />
+
     <arg name="depth_frame_id"      default="camera_depth_optical_frame" />
     <arg name="rgb_frame_id"        default="camera_rgb_optical_frame" />
+    <arg name="publish_tf"          default="false" />
     <arg name="depth"               default="depth" />
     <arg name="rgb"                 default="rgb" />
     <arg name="ir"                  default="ir" />
@@ -14,6 +17,11 @@
          Else "enable_depth_ir" will take the value of "enable_depth" -->
     <arg name="enable_depth_ir"     value="$(arg enable_ir)"    if="$(arg enable_ir)" />
     <arg name="enable_depth_ir"     value="$(arg enable_depth)" unless="$(arg enable_ir)" />
+    
+    <!-- "enable_tf" will be set to false only if "publish_tf" is true. Else it is set to true.
+         Ensures that the nodelet does not publish tf if the transforms are published statically. -->
+    <arg name="enable_tf"           value="false"    if="$(arg publish_tf)" />
+    <arg name="enable_tf"           value="true"     unless="$(arg publish_tf)" />    
 
      <!-- "enable_pointcloud" is set to false by default because rgbd launch uses standard ROS packages
           to generate point clouds. -->          
@@ -25,7 +33,8 @@
         rgb_frame_id $(arg rgb_frame_id)
         enable_depth $(arg enable_depth_ir)
         enable_color $(arg enable_color)
-        enable_pointcloud $(arg enable_pointcloud)">
+        enable_pointcloud $(arg enable_pointcloud)
+        enable_tf $(arg enable_tf)">
 
         <remap from="camera/depth/image_raw"        to="$(arg depth)/image_raw" />
         <remap from="camera/color/image_raw"        to="$(arg rgb)/image_raw" />

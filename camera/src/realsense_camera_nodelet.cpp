@@ -8,12 +8,12 @@
  1. Redistributions of source code must retain the above copyright notice, this
  list of conditions and the following disclaimer.
 
- 2. Redistributions in binary form must reproduce the above copyright notice, 
- this list of conditions and the following disclaimer in the documentation 
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
  and/or other materials provided with the distribution.
 
- 3. Neither the name of the copyright holder nor the names of its contributors 
- may be used to endorse or promote products derived from this software without 
+ 3. Neither the name of the copyright holder nor the names of its contributors
+ may be used to endorse or promote products derived from this software without
  specific prior written permission.
 
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -47,7 +47,11 @@ namespace realsense_camera
   RealsenseNodelet::~RealsenseNodelet ()
   {
     device_thread_->join ();
-    transform_thread_->join();
+
+    if (enable_tf_ == true)
+    {
+      transform_thread_->join();
+    }
 
     // Stop device.
     if (is_device_started_ == true)
@@ -78,6 +82,7 @@ namespace realsense_camera
     enable_depth_ = ENABLE_DEPTH;
     enable_color_ = ENABLE_COLOR;
     enable_pointcloud_ = ENABLE_PC;
+    enable_tf_ = ENABLE_TF;
     is_device_started_ = false;
 
     camera_configuration_ = getMyArgv ();
@@ -120,8 +125,8 @@ namespace realsense_camera
     }
 
     get_options_service_ = nh.advertiseService (SETTINGS_SERVICE, &RealsenseNodelet::getCameraSettings, this);
-  
-    dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>(getPrivateNodeHandle())); 
+
+    dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>(getPrivateNodeHandle()));
 
     bool connected = false;
 
@@ -132,15 +137,20 @@ namespace realsense_camera
       // Start working thread.
       device_thread_ =
           boost::shared_ptr < boost::thread > (new boost::thread (boost::bind (&RealsenseNodelet::devicePoll, this)));
-      transform_thread_ =
-          boost::shared_ptr < boost::thread > (new boost::thread (boost::bind (&RealsenseNodelet::publishTransforms, this)));
+
+      if (enable_tf_ == true)
+      {
+        transform_thread_ =
+        boost::shared_ptr < boost::thread > (new boost::thread (boost::bind (&RealsenseNodelet::publishTransforms, this)));
+      }
+
     }
     else
     {
       ros::shutdown ();
     }
 
-    dynamic_reconf_server_->setCallback(boost::bind(&RealsenseNodelet::configCallback, this, _1, _2)); 
+    dynamic_reconf_server_->setCallback(boost::bind(&RealsenseNodelet::configCallback, this, _1, _2));
 }
 
   /*
@@ -476,6 +486,18 @@ namespace realsense_camera
       else
       {
         enable_pointcloud_ = false;
+      }
+    }
+
+    if (config_.find ("enable_tf") != config_.end ())
+    {
+      if (strcmp((config_.at ("enable_tf").c_str ()),"true") == 0)
+      {
+        enable_tf_ = true;
+      }
+      else
+      {
+        enable_tf_ = false;
       }
     }
 
