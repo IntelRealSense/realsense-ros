@@ -22,11 +22,13 @@ Successful execution of command will build target <b>“realsense_camera_nodelet
 
 Sample launch files are available in camera/launch directory
 
+<b>realsense_r200_rgbd.launch</b>
+
 <b>realsense_r200_nodelet_standalone_preset.launch</b>
 
 <b>realsense_r200_nodelet_standalone_manual.launch</b>
 
-<b>realsense_r200_rgbd.launch</b>
+<b>realsense_r200_nodelet_standalone_settings.launch</b>
 
 ### Intel&reg; RealSense&trade; R200 Nodelet
 Publishing stream data from the Intel® RealSense™ R200 (DS4) camera
@@ -243,15 +245,14 @@ Using rosrun command
 
 Sample test files are available in test directory
 
+<b>realsense_r200_rgbd.test</b>
+
 <b>realsense_r200_color_only.test</b>
 
 <b>realsense_r200_depth_only.test</b>
 
 <b>realsense_r200_resolution.test</b>
 
-<b>realsense_r200_settings.test</b>
-
-<b>realsense_r200_rgbd.test</b>
 
 Both of these methods first starts "RealsenseNodelet" for Intel® RealSense™ R200 (DS4) camera and then executes all the unit tests.
 
