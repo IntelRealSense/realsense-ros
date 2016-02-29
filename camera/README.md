@@ -245,15 +245,14 @@ Using rosrun command
 
 Sample test files are available in test directory
 
+<b>realsense_r200_rgbd.test</b>
+
 <b>realsense_r200_color_only.test</b>
 
 <b>realsense_r200_depth_only.test</b>
 
 <b>realsense_r200_resolution.test</b>
 
-<b>realsense_r200_settings.test</b>
-
-<b>realsense_r200_rgbd.test</b>
 
 Both of these methods first starts "RealsenseNodelet" for Intel® RealSense™ R200 (DS4) camera and then executes all the unit tests.
 
