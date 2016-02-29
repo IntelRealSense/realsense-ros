@@ -8,3 +8,8 @@
 # Ignore all Linux Editor revision save files
 *~
 
+# Ignore all hidden files
+.project
+.cproject
+.settings
+
