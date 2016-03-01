@@ -28,8 +28,6 @@ Sample launch files are available in camera/launch directory
 
 <b>realsense_r200_nodelet_standalone_manual.launch</b>
 
-<b>realsense_r200_nodelet_standalone_settings.launch</b>
-
 ### Intel&reg; RealSense&trade; R200 Nodelet
 Publishing stream data from the Intel® RealSense™ R200 (DS4) camera
 
@@ -72,7 +70,7 @@ Infrared2 camera
     rosrun tf tf_monitor
 
 
-####Parameters
+#### Static Parameters
 
     mode (string, default: preset)
         Specify the mode to start camera streams. Mode comprises of height, width and fps. 
@@ -89,36 +87,21 @@ Infrared2 camera
         Specify the color camera FPS
     depth_fps (int, default: 60)
         Specify the depth camera FPS
-    enable_depth (bool, default: 1) 
-        Specify if to enable or not the depth camera. 1 is true. 0 is false.
-    enable_color (bool, default: 1) 
-        Specify if to enable or not the color camera. 1 is true. 0 is false.
-    enable_pointcloud (bool, default: 1) 
-        Specify if to enable or not the point cloud camera. 1 is true. 0 is false.
+    enable_depth (bool, default: true) 
+        Specify if to enable or not the depth camera.
+    enable_color (bool, default: true) 
+        Specify if to enable or not the color camera.
+    enable_pointcloud (bool, default: true) 
+        Specify if to enable or not the point cloud camera.
+    enable_tf (bool, default: true) 
+        Specify if to enable or not the transform frames.       
     camera (string, default: "R200") 
         Specify the camera name. 
-    Supported options: Here are r200 camera supported options that can be set
-        COLOR_BACKLIGHT_COMPENSATION : [0, 4]
-        COLOR_BRIGHTNESS : [0, 255]
-        COLOR_CONTRAST : [16, 64]
-        COLOR_EXPOSURE : [0, 0]
-        COLOR_GAIN : [0, 256]
-        COLOR_GAMMA : [100, 280]
-        COLOR_HUE : [-2200, 2200]
-        COLOR_SATURATION : [0, 255]
-        COLOR_SHARPNESS : [0, 7]
-        COLOR_WHITE_BALANCE : [2000, 8000]
-        COLOR_ENABLE_AUTO_EXPOSURE : [0, 0]
-        COLOR_ENABLE_AUTO_WHITE_BALANCE : [0, 1]
-        R200_LR_AUTO_EXPOSURE_ENABLED : [0, 1]
-        R200_LR_GAIN : [100, 1600]
-        R200_LR_EXPOSURE : [0, 333]
-        R200_EMITTER_ENABLED : [0, 1]
+    Supported options: Following are the options supported by the R200 camera:
         R200_DEPTH_CONTROL_PRESET : [0, 5]
         R200_DEPTH_UNITS : [1, 2147483647]
         R200_DEPTH_CLAMP_MIN : [0, 65535]
         R200_DEPTH_CLAMP_MAX : [0, 65535]
-        R200_DISPARITY_MULTIPLIER : [1, 1000]
         R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_DECREMENT : [0 - 255]
         R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_INCREMENT  : [0 - 255]
         R200_DEPTH_CONTROL_MEDIAN_THRESHOLD : [0 - 1023]
@@ -135,7 +118,7 @@ Infrared2 camera
     
 To get supported camera options with current value set. It returns string in options:value format where different options are seperated by semicolon.
 
-####Dynamic Reconfiguration
+####Dynamic Parameters
    List of dynamically configurable camera options:
 
         COLOR_BACKLIGHT_COMPENSATION
