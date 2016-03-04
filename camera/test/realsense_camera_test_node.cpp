@@ -59,6 +59,19 @@ void imageInfrared1Callback(const sensor_msgs::ImageConstPtr & msg, const sensor
   inf1_caminfo_height_recv = info_msg->height;
   inf1_caminfo_width_recv = info_msg->width;
   inf1_dmodel_recv = info_msg->distortion_model;
+
+  // copy rotation matrix
+  for (unsigned int i = 0; i < sizeof(info_msg->R)/sizeof(double); i++)
+  {
+    inf1_caminfo_rotation_recv[i] = info_msg->R[i];
+  }
+
+  // copy projection matrix
+  for (unsigned int i = 0; i < sizeof(info_msg->P)/sizeof(double); i++)
+  {
+    inf1_caminfo_projection_recv[i] = info_msg->P[i];
+  }
+
   infrared1_recv = true;
 }
 
@@ -89,6 +102,19 @@ void imageInfrared2Callback(const sensor_msgs::ImageConstPtr & msg, const sensor
   inf2_caminfo_height_recv = info_msg->height;
   inf2_caminfo_width_recv = info_msg->width;
   inf2_dmodel_recv = info_msg->distortion_model;
+
+  // copy rotation matrix
+  for (unsigned int i = 0; i < sizeof(info_msg->R)/sizeof(double); i++)
+  {
+    inf2_caminfo_rotation_recv[i] = info_msg->R[i];
+  }
+
+  // copy projection matrix
+  for (unsigned int i = 0; i < sizeof(info_msg->P)/sizeof(double); i++)
+  {
+    inf2_caminfo_projection_recv[i] = info_msg->P[i];
+  }
+
   infrared2_recv = true;
 }
 
@@ -121,6 +147,17 @@ void imageDepthCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msg
   depth_caminfo_height_recv = info_msg->height;
   depth_caminfo_width_recv = info_msg->width;
   depth_dmodel_recv = info_msg->distortion_model;
+
+  // copy rotation matrix
+  for (unsigned int i = 0; i < sizeof(info_msg->R)/sizeof(double); i++)
+  {
+    depth_caminfo_rotation_recv[i] = info_msg->R[i];
+  }
+  // copy projection matrix
+  for (unsigned int i = 0; i < sizeof(info_msg->P)/sizeof(double); i++)
+  {
+    depth_caminfo_projection_recv[i] = info_msg->P[i];
+  }
 
   depth_recv = true;
 }
@@ -180,6 +217,18 @@ void imageColorCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msg
   color_caminfo_width_recv = info_msg->width;
   color_dmodel_recv = info_msg->distortion_model;
 
+  // copy rotation matrix
+  for (unsigned int i = 0; i < sizeof(info_msg->R)/sizeof(double); i++)
+  {
+    color_caminfo_rotation_recv[i] = info_msg->R[i];
+  }
+
+  // copy projection matrix
+  for (unsigned int i = 0; i < sizeof(info_msg->P)/sizeof(double); i++)
+  {
+    color_caminfo_projection_recv[i] = info_msg->P[i];
+  }
+
   color_recv = true;
 }
 
@@ -227,6 +276,27 @@ TEST (RealsenseTests, testColorCameraInfo)
     EXPECT_EQ (color_width_recv, color_caminfo_width_recv);
     EXPECT_EQ (color_height_recv, color_caminfo_height_recv);
     EXPECT_STREQ (color_dmodel_recv.c_str (), "plumb_bob");
+
+    // verify rotation is equal to identity matrix
+    for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
+    {
+      EXPECT_EQ (ROTATION_IDENTITY[i], color_caminfo_rotation_recv[i]);
+    }
+
+    // check projection matrix values are set
+    EXPECT_TRUE(color_caminfo_projection_recv[0] != (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[1], (double) 0);
+    EXPECT_TRUE(color_caminfo_projection_recv[2] != (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[3], (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[4], (double) 0);
+    EXPECT_TRUE(color_caminfo_projection_recv[5] != (double) 0);
+    EXPECT_TRUE(color_caminfo_projection_recv[6] != (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[7], (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[8], (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[9], (double) 0);
+    EXPECT_TRUE(color_caminfo_projection_recv[10] != (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[11], (double) 0);
+
   }
 }
 
@@ -274,6 +344,27 @@ TEST (RealsenseTests, testDepthCameraInfo)
     EXPECT_EQ (depth_width_recv, depth_caminfo_width_recv);
     EXPECT_EQ (depth_height_recv, depth_caminfo_height_recv);
     EXPECT_STREQ (depth_dmodel_recv.c_str (), "plumb_bob");
+
+    // verify rotation is equal to identity matrix
+    for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
+    {
+      EXPECT_EQ (ROTATION_IDENTITY[i], depth_caminfo_rotation_recv[i]);
+    }
+
+    // check projection matrix values are set
+    EXPECT_TRUE(depth_caminfo_projection_recv[0] != (double) 0);
+    EXPECT_EQ(depth_caminfo_projection_recv[1], (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[2] != (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[3] != (double) 0);
+    EXPECT_EQ(depth_caminfo_projection_recv[4], (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[5] != (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[6] != (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[7] != (double) 0);
+    EXPECT_EQ(depth_caminfo_projection_recv[8], (double) 0);
+    EXPECT_EQ(depth_caminfo_projection_recv[9], (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[10] != (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[11] != (double) 0);
+
   }
 }
 
@@ -320,6 +411,27 @@ TEST (RealsenseTests, testInfrared1CameraInfo)
     EXPECT_EQ (infrared1_width_recv, inf1_caminfo_width_recv);
     EXPECT_EQ (infrared1_height_recv, inf1_caminfo_height_recv);
     EXPECT_STREQ (inf1_dmodel_recv.c_str (), "plumb_bob");
+
+    // verify rotation is equal to identity matrix
+    for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
+    {
+      EXPECT_EQ (ROTATION_IDENTITY[i], inf1_caminfo_rotation_recv[i]);
+    }
+
+    // check projection matrix values are set
+    EXPECT_TRUE(inf1_caminfo_projection_recv[0] != (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[1], (double) 0);
+    EXPECT_TRUE(inf1_caminfo_projection_recv[2] != (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[3], (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[4], (double) 0);
+    EXPECT_TRUE(inf1_caminfo_projection_recv[5] != (double) 0);
+    EXPECT_TRUE(inf1_caminfo_projection_recv[6] != (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[7], (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[8], (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[9], (double) 0);
+    EXPECT_TRUE(inf1_caminfo_projection_recv[10] != (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[11], (double) 0);
+
   }
 }
 
@@ -358,6 +470,27 @@ TEST (RealsenseTests, testInfrared2CameraInfo)
     EXPECT_EQ (infrared2_width_recv, inf2_caminfo_width_recv);
     EXPECT_EQ (infrared2_height_recv, inf2_caminfo_height_recv);
     EXPECT_STREQ (inf2_dmodel_recv.c_str (), "plumb_bob");
+
+    // verify rotation is equal to identity matrix
+    for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
+    {
+      EXPECT_EQ (ROTATION_IDENTITY[i], inf2_caminfo_rotation_recv[i]);
+    }
+
+    // check projection matrix values are set
+    EXPECT_TRUE(inf2_caminfo_projection_recv[0] != (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[1], (double) 0);
+    EXPECT_TRUE(inf2_caminfo_projection_recv[2] != (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[3], (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[4], (double) 0);
+    EXPECT_TRUE(inf2_caminfo_projection_recv[5] != (double) 0);
+    EXPECT_TRUE(inf2_caminfo_projection_recv[6] != (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[7], (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[8], (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[9], (double) 0);
+    EXPECT_TRUE(inf2_caminfo_projection_recv[10] != (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[11], (double) 0);
+
   }
 }
 

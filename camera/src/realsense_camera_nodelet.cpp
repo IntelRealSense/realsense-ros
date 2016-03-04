@@ -374,28 +374,49 @@ namespace realsense_camera
     camera_info_[stream_index]->width = intrinsic.width;
     camera_info_[stream_index]->height = intrinsic.height;
 
-    camera_info_[stream_index]->K.at (0) = intrinsic.fx;
-    camera_info_[stream_index]->K.at (2) = intrinsic.ppx;
-    camera_info_[stream_index]->K.at (4) = intrinsic.fy;
-    camera_info_[stream_index]->K.at (5) = intrinsic.ppy;
-    camera_info_[stream_index]->K.at (8) = 1;
+    camera_info_[stream_index]->K.at(0) = intrinsic.fx;
+    camera_info_[stream_index]->K.at(2) = intrinsic.ppx;
+    camera_info_[stream_index]->K.at(4) = intrinsic.fy;
+    camera_info_[stream_index]->K.at(5) = intrinsic.ppy;
+    camera_info_[stream_index]->K.at(8) = 1;
 
-    camera_info_[stream_index]->P[0] = camera_info_[stream_index]->K.at (0);
-    camera_info_[stream_index]->P[1] = 0;
-    camera_info_[stream_index]->P[2] = camera_info_[stream_index]->K.at (2);
-    camera_info_[stream_index]->P[3] = 0;
+    camera_info_[stream_index]->P.at(0) = camera_info_[stream_index]->K.at(0);
+    camera_info_[stream_index]->P.at(1) = 0;
+    camera_info_[stream_index]->P.at(2) = camera_info_[stream_index]->K.at(2);
+    camera_info_[stream_index]->P.at(3) = 0;
 
-    camera_info_[stream_index]->P[4] = 0;
-    camera_info_[stream_index]->P[5] = camera_info_[stream_index]->K.at (4);
-    camera_info_[stream_index]->P[6] = camera_info_[stream_index]->K.at (5);
-    camera_info_[stream_index]->P[7] = 0;
+    camera_info_[stream_index]->P.at(4) = 0;
+    camera_info_[stream_index]->P.at(5) = camera_info_[stream_index]->K.at(4);
+    camera_info_[stream_index]->P.at(6) = camera_info_[stream_index]->K.at(5);
+    camera_info_[stream_index]->P.at(7) = 0;
 
-    camera_info_[stream_index]->P[8] = 0;
-    camera_info_[stream_index]->P[9] = 0;
-    camera_info_[stream_index]->P[10] = 1;
-    camera_info_[stream_index]->P[11] = 0;
+    camera_info_[stream_index]->P.at(8) = 0;
+    camera_info_[stream_index]->P.at(9) = 0;
+    camera_info_[stream_index]->P.at(10) = 1;
+    camera_info_[stream_index]->P.at(11) = 0;
+
+    if (stream_index == RS_STREAM_DEPTH)
+    {
+      // set depth to color translation values in Projection matrix (P)
+      rs_extrinsics z_extrinsic;
+      rs_get_device_extrinsics (rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_); check_error ();
+      camera_info_[stream_index]->P.at(3) = z_extrinsic.translation[0]/1000;     // Tx
+      camera_info_[stream_index]->P.at(7) = z_extrinsic.translation[1]/1000;     // Ty
+      camera_info_[stream_index]->P.at(11) = z_extrinsic.translation[2]/1000;    // Tz
+    }
 
     camera_info_[stream_index]->distortion_model = "plumb_bob";
+
+    // set R (rotation matrix) values to identity matrix
+    camera_info_[stream_index]->R.at(0) = (double) 1;
+    camera_info_[stream_index]->R.at(1) = (double) 0;
+    camera_info_[stream_index]->R.at(2) = (double) 0;
+    camera_info_[stream_index]->R.at(3) = (double) 0;
+    camera_info_[stream_index]->R.at(4) = (double) 1;
+    camera_info_[stream_index]->R.at(5) = (double) 0;
+    camera_info_[stream_index]->R.at(6) = (double) 0;
+    camera_info_[stream_index]->R.at(7) = (double) 0;
+    camera_info_[stream_index]->R.at(8) = (double) 1;
 
     for (int i = 0; i < 5; i++)
     camera_info_[stream_index]->D.push_back (0);
