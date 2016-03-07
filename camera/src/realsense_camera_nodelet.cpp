@@ -374,26 +374,26 @@ namespace realsense_camera
     camera_info_[stream_index]->width = intrinsic.width;
     camera_info_[stream_index]->height = intrinsic.height;
 
-    camera_info_[stream_index]->K.at (0) = intrinsic.fx;
-    camera_info_[stream_index]->K.at (2) = intrinsic.ppx;
-    camera_info_[stream_index]->K.at (4) = intrinsic.fy;
-    camera_info_[stream_index]->K.at (5) = intrinsic.ppy;
-    camera_info_[stream_index]->K.at (8) = 1;
+    camera_info_[stream_index]->K.at(0) = intrinsic.fx;
+    camera_info_[stream_index]->K.at(2) = intrinsic.ppx;
+    camera_info_[stream_index]->K.at(4) = intrinsic.fy;
+    camera_info_[stream_index]->K.at(5) = intrinsic.ppy;
+    camera_info_[stream_index]->K.at(8) = 1;
 
-    camera_info_[stream_index]->P[0] = camera_info_[stream_index]->K.at (0);
-    camera_info_[stream_index]->P[1] = 0;
-    camera_info_[stream_index]->P[2] = camera_info_[stream_index]->K.at (2);
-    camera_info_[stream_index]->P[3] = 0;
+    camera_info_[stream_index]->P.at(0) = camera_info_[stream_index]->K.at(0);
+    camera_info_[stream_index]->P.at(1) = 0;
+    camera_info_[stream_index]->P.at(2) = camera_info_[stream_index]->K.at(2);
+    camera_info_[stream_index]->P.at(3) = 0;
 
-    camera_info_[stream_index]->P[4] = 0;
-    camera_info_[stream_index]->P[5] = camera_info_[stream_index]->K.at (4);
-    camera_info_[stream_index]->P[6] = camera_info_[stream_index]->K.at (5);
-    camera_info_[stream_index]->P[7] = 0;
+    camera_info_[stream_index]->P.at(4) = 0;
+    camera_info_[stream_index]->P.at(5) = camera_info_[stream_index]->K.at(4);
+    camera_info_[stream_index]->P.at(6) = camera_info_[stream_index]->K.at(5);
+    camera_info_[stream_index]->P.at(7) = 0;
 
-    camera_info_[stream_index]->P[8] = 0;
-    camera_info_[stream_index]->P[9] = 0;
-    camera_info_[stream_index]->P[10] = 1;
-    camera_info_[stream_index]->P[11] = 0;
+    camera_info_[stream_index]->P.at(8) = 0;
+    camera_info_[stream_index]->P.at(9) = 0;
+    camera_info_[stream_index]->P.at(10) = 1;
+    camera_info_[stream_index]->P.at(11) = 0;
 
     camera_info_[stream_index]->distortion_model = "plumb_bob";
 
