@@ -397,6 +397,17 @@ namespace realsense_camera
 
     camera_info_[stream_index]->distortion_model = "plumb_bob";
 
+    // set R (rotation matrix) values to identity matrix
+    camera_info_[stream_index]->R.at(0) = (double) 1;
+    camera_info_[stream_index]->R.at(1) = (double) 0;
+    camera_info_[stream_index]->R.at(2) = (double) 0;
+    camera_info_[stream_index]->R.at(3) = (double) 0;
+    camera_info_[stream_index]->R.at(4) = (double) 1;
+    camera_info_[stream_index]->R.at(5) = (double) 0;
+    camera_info_[stream_index]->R.at(6) = (double) 0;
+    camera_info_[stream_index]->R.at(7) = (double) 0;
+    camera_info_[stream_index]->R.at(8) = (double) 1;
+
     for (int i = 0; i < 5; i++)
     camera_info_[stream_index]->D.push_back (0);
   }
