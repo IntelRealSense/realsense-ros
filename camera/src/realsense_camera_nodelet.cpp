@@ -395,6 +395,16 @@ namespace realsense_camera
     camera_info_[stream_index]->P.at(10) = 1;
     camera_info_[stream_index]->P.at(11) = 0;
 
+    if (stream_index == RS_STREAM_DEPTH)
+    {
+      // set depth to color translation values in Projection matrix (P)
+      rs_extrinsics z_extrinsic;
+      rs_get_device_extrinsics (rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_); check_error ();
+      camera_info_[stream_index]->P.at(3) = z_extrinsic.translation[0]/1000;     // Tx
+      camera_info_[stream_index]->P.at(7) = z_extrinsic.translation[1]/1000;     // Ty
+      camera_info_[stream_index]->P.at(11) = z_extrinsic.translation[2]/1000;    // Tz
+    }
+
     camera_info_[stream_index]->distortion_model = "plumb_bob";
 
     // set R (rotation matrix) values to identity matrix
