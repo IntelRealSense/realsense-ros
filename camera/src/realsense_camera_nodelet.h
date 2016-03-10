@@ -117,6 +117,8 @@ private:
   rs_context *rs_context_;
   rs_device *rs_device_;
 
+  std::string serial_number_;
+
   int color_height_;
   int color_width_;
   int depth_height_;

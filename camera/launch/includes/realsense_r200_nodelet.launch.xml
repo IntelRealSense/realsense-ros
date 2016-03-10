@@ -2,6 +2,7 @@
     <!-- Name of nodelet manager, must be fully resolved -->
     <arg name="manager" />
 
+    <arg name="device_id"           default="" />
     <arg name="depth_frame_id"      default="camera_depth_optical_frame" />
     <arg name="rgb_frame_id"        default="camera_rgb_optical_frame" />
     <arg name="publish_tf"          default="false" />
@@ -35,7 +36,7 @@
         enable_color $(arg enable_color)
         enable_pointcloud $(arg enable_pointcloud)
         enable_tf $(arg enable_tf)">
-
+	<param name="device_id" type="str" value="$(arg device_id)" />
         <remap from="camera/depth/image_raw"        to="$(arg depth)/image_raw" />
         <remap from="camera/color/image_raw"        to="$(arg rgb)/image_raw" />
         <remap from="camera/infrared1/image_raw"    to="$(arg ir)/image_raw" />

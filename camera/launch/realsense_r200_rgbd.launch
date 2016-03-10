@@ -4,6 +4,7 @@
   <!-- "camera" should uniquely identify the device. All topics are pushed down
        into the "camera" namespace, and it is prepended to tf frame ids. -->
   <arg name="camera"          default="camera" />
+  <arg name="device_id" default="" />
   <arg name="depth_frame_id"  default="$(arg camera)_depth_optical_frame" />
   <arg name="rgb_frame_id"    default="$(arg camera)_rgb_optical_frame" />
 
@@ -54,6 +55,7 @@
     <include if="$(arg load_driver)"
              file="$(find realsense_camera)/launch/includes/realsense_r200_nodelet.launch.xml">
       <arg name="manager"                   value="$(arg manager)" />    
+      <arg name="device_id"                 value="$(arg device_id)" />
       <arg name="depth_frame_id"            value="$(arg depth_frame_id)" />
       <arg name="rgb_frame_id"              value="$(arg rgb_frame_id)" />
       <arg name="publish_tf"                value="$(arg publish_tf)" />    
