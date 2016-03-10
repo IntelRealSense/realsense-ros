@@ -261,7 +261,7 @@ namespace realsense_camera
     }
     else // open a particular camera
     {
-       ROS_INFO_STREAM("Trying to open " << serial_number_ << " for " << frame_id_[RS_STREAM_DEPTH] << " checking device " << i);
+       ROS_INFO_STREAM("Trying to open " << serial_number_ << " for " << frame_id_[RS_STREAM_DEPTH]);
       bool found_device = false;
       // Open the specified device
       for(int i=0; i < num_of_cameras; i++)    
