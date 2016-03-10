@@ -72,6 +72,9 @@ namespace realsense_camera
   {
     ROS_INFO_STREAM ("RealSense Camera - Starting camera nodelet.");
 
+    ros::NodeHandle pnh_ = getPrivateNodeHandle();
+    pnh_.getParam("device_id", serial_number_);
+
     // Set default configurations.
     depth_height_ = DEPTH_HEIGHT;
     depth_width_ = DEPTH_WIDTH;
@@ -128,6 +131,7 @@ namespace realsense_camera
 
     dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>(getPrivateNodeHandle()));
 
+    
     bool connected = false;
 
     connected = connectToCamera ();
@@ -243,14 +247,47 @@ namespace realsense_camera
     check_error ();
 
     int num_of_cameras = rs_get_device_count (rs_context_, NULL);
+    ROS_INFO_STREAM(num_of_cameras << " connected");
     if (num_of_cameras < 1)
     {
       ROS_ERROR_STREAM ("RealSense Camera - No cameras are connected.");
       return false;
     }
 
-    rs_device_ = rs_get_device (rs_context_, 0, &rs_error_);
-    check_error ();
+    if(serial_number_.empty())
+    {
+    	rs_device_ = rs_get_device (rs_context_, 0, &rs_error_);
+    	check_error ();
+    }
+    else // open a particular camera
+    {
+       ROS_INFO_STREAM("Trying to open " << serial_number_ << " for " << frame_id_[RS_STREAM_DEPTH]);
+      bool found_device = false;
+      // Open the specified device
+      for(int i=0; i < num_of_cameras; i++)    
+      {
+        ROS_INFO_STREAM("Getting device number " << i);
+	sleep(rand()/RAND_MAX*3.0);  // Not sure if this is necessary to avoid a race condition?
+        rs_device_ = rs_get_device (rs_context_, i, &rs_error_);
+	check_error ();
+	if(rs_device_ == nullptr)
+	  continue;
+        std::string serial_no = rs_get_device_serial(rs_device_, &rs_error_);
+	check_error ();
+        ROS_INFO_STREAM("Fetched device with serial " << serial_no);
+        if( serial_no == serial_number_)
+        {
+          ROS_INFO_STREAM("Found device " << serial_number_);
+          found_device = true;
+          break;  
+        }
+      }
+      if(!found_device)
+      {
+	ROS_ERROR("Could not find device with serial number %s", serial_number_.c_str());
+        return false;
+      }
+    }
 
     ROS_INFO_STREAM ("RealSense Camera - Number of cameras connected: " << num_of_cameras);
     ROS_INFO_STREAM ("RealSense Camera - Firmware version: " <<
@@ -318,8 +355,20 @@ namespace realsense_camera
 
     // Start device.
     rs_start_device (rs_device_, &rs_error_);
+    check_error ();
+    
+    sleep(1.0);
+   
+    int is_device_streaming = rs_is_device_streaming(rs_device_, &rs_error_);
+    if(is_device_streaming) 
+    	is_device_started_ = true;
+    else
+    {
+      
+      is_device_started_ = false;
+      return false;
+    }
 
-    is_device_started_ = true;
 
     allocateResources ();
 
