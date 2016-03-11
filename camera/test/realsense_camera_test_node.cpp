@@ -262,6 +262,18 @@ TEST (RealsenseTests, testColorCameraInfo)
   }
 }
 
+TEST (RealsenseTests, testIsDepthStreamEnabled)
+{
+  if (enable_depth)
+  {
+    EXPECT_TRUE (depth_recv);
+  }
+  else
+  {
+    EXPECT_FALSE (depth_recv);
+  }
+}
+
 TEST (RealsenseTests, testDepthStream)
 {
   if (enable_depth)
@@ -317,7 +329,7 @@ TEST (RealsenseTests, testDepthCameraInfo)
 
 TEST (RealsenseTests, testInfrared1Stream)
 {
-  if (enable_depth)
+  if (enable_infrared1)
   {
     EXPECT_TRUE (infrared1_avg > 0);
     EXPECT_TRUE (infrared1_recv);
@@ -338,7 +350,7 @@ TEST (RealsenseTests, testInfrared1Stream)
 
 TEST (RealsenseTests, testInfrared1Resolution)
 {
-  if (enable_depth)
+  if (enable_infrared1)
   {
     if (depth_width_exp > 0)
     {
@@ -353,7 +365,7 @@ TEST (RealsenseTests, testInfrared1Resolution)
 
 TEST (RealsenseTests, testInfrared1CameraInfo)
 {
-  if (enable_depth)
+  if (enable_infrared1)
   {
     EXPECT_EQ (infrared1_width_recv, inf1_caminfo_width_recv);
     EXPECT_EQ (infrared1_height_recv, inf1_caminfo_height_recv);
@@ -369,7 +381,7 @@ TEST (RealsenseTests, testInfrared1CameraInfo)
 
 TEST (RealsenseTests, testInfrared2Stream)
 {
-  if (enable_depth)
+  if (enable_infrared2)
   {
     EXPECT_TRUE (infrared2_avg > 0);
     EXPECT_TRUE (infrared2_recv);
@@ -382,7 +394,7 @@ TEST (RealsenseTests, testInfrared2Stream)
 
 TEST (RealsenseTests, testInfrared2Resolution)
 {
-  if (enable_depth)
+  if (enable_infrared2)
   {
     if (depth_width_exp > 0)
     {
@@ -397,7 +409,7 @@ TEST (RealsenseTests, testInfrared2Resolution)
 
 TEST (RealsenseTests, testInfrared2CameraInfo)
 {
-  if (enable_depth)
+  if (enable_infrared2)
   {
     EXPECT_EQ (infrared2_width_recv, inf2_caminfo_width_recv);
     EXPECT_EQ (infrared2_height_recv, inf2_caminfo_height_recv);
