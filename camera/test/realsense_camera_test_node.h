@@ -123,18 +123,23 @@ std::string infrared1_encoding_recv; // Expected depth encoding.
 std::string infrared2_encoding_recv; // Expected depth encoding.
 std::string color_encoding_recv; // Expected color encoding.
 
+
 int depth_caminfo_height_recv = 0;
 int depth_caminfo_width_recv = 0;
 double depth_caminfo_rotation_recv[9] = {0};
+double depth_caminfo_projection_recv[12] = {0};
 int color_caminfo_height_recv = 0;
 int color_caminfo_width_recv = 0;
 double color_caminfo_rotation_recv[9] = {0};
+double color_caminfo_projection_recv[12] = {0};
 int inf1_caminfo_height_recv = 0;
 int inf1_caminfo_width_recv = 0;
 double inf1_caminfo_rotation_recv[9] = {0};
+double inf1_caminfo_projection_recv[12] = {0};
 int inf2_caminfo_height_recv = 0;
 int inf2_caminfo_width_recv = 0;
 double inf2_caminfo_rotation_recv[9] = {0};
+double inf2_caminfo_projection_recv[12] = {0};
 
 std::string inf1_dmodel_recv;
 std::string inf2_dmodel_recv;

@@ -66,6 +66,12 @@ void imageInfrared1Callback(const sensor_msgs::ImageConstPtr & msg, const sensor
     inf1_caminfo_rotation_recv[i] = info_msg->R[i];
   }
 
+  // copy projection matrix
+  for (unsigned int i = 0; i < sizeof(info_msg->P)/sizeof(double); i++)
+  {
+    inf1_caminfo_projection_recv[i] = info_msg->P[i];
+  }
+
   infrared1_recv = true;
 }
 
@@ -101,6 +107,12 @@ void imageInfrared2Callback(const sensor_msgs::ImageConstPtr & msg, const sensor
   for (unsigned int i = 0; i < sizeof(info_msg->R)/sizeof(double); i++)
   {
     inf2_caminfo_rotation_recv[i] = info_msg->R[i];
+  }
+
+  // copy projection matrix
+  for (unsigned int i = 0; i < sizeof(info_msg->P)/sizeof(double); i++)
+  {
+    inf2_caminfo_projection_recv[i] = info_msg->P[i];
   }
 
   infrared2_recv = true;
@@ -140,6 +152,11 @@ void imageDepthCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msg
   for (unsigned int i = 0; i < sizeof(info_msg->R)/sizeof(double); i++)
   {
     depth_caminfo_rotation_recv[i] = info_msg->R[i];
+  }
+  // copy projection matrix
+  for (unsigned int i = 0; i < sizeof(info_msg->P)/sizeof(double); i++)
+  {
+    depth_caminfo_projection_recv[i] = info_msg->P[i];
   }
 
   depth_recv = true;
@@ -206,6 +223,12 @@ void imageColorCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msg
     color_caminfo_rotation_recv[i] = info_msg->R[i];
   }
 
+  // copy projection matrix
+  for (unsigned int i = 0; i < sizeof(info_msg->P)/sizeof(double); i++)
+  {
+    color_caminfo_projection_recv[i] = info_msg->P[i];
+  }
+
   color_recv = true;
 }
 
@@ -259,6 +282,21 @@ TEST (RealsenseTests, testColorCameraInfo)
     {
       EXPECT_EQ (ROTATION_IDENTITY[i], color_caminfo_rotation_recv[i]);
     }
+
+    // check projection matrix values are set
+    EXPECT_TRUE(color_caminfo_projection_recv[0] != (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[1], (double) 0);
+    EXPECT_TRUE(color_caminfo_projection_recv[2] != (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[3], (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[4], (double) 0);
+    EXPECT_TRUE(color_caminfo_projection_recv[5] != (double) 0);
+    EXPECT_TRUE(color_caminfo_projection_recv[6] != (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[7], (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[8], (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[9], (double) 0);
+    EXPECT_TRUE(color_caminfo_projection_recv[10] != (double) 0);
+    EXPECT_EQ(color_caminfo_projection_recv[11], (double) 0);
+
   }
 }
 
@@ -312,6 +350,21 @@ TEST (RealsenseTests, testDepthCameraInfo)
     {
       EXPECT_EQ (ROTATION_IDENTITY[i], depth_caminfo_rotation_recv[i]);
     }
+
+    // check projection matrix values are set
+    EXPECT_TRUE(depth_caminfo_projection_recv[0] != (double) 0);
+    EXPECT_EQ(depth_caminfo_projection_recv[1], (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[2] != (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[3] != (double) 0);
+    EXPECT_EQ(depth_caminfo_projection_recv[4], (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[5] != (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[6] != (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[7] != (double) 0);
+    EXPECT_EQ(depth_caminfo_projection_recv[8], (double) 0);
+    EXPECT_EQ(depth_caminfo_projection_recv[9], (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[10] != (double) 0);
+    EXPECT_TRUE(depth_caminfo_projection_recv[11] != (double) 0);
+
   }
 }
 
@@ -364,6 +417,21 @@ TEST (RealsenseTests, testInfrared1CameraInfo)
     {
       EXPECT_EQ (ROTATION_IDENTITY[i], inf1_caminfo_rotation_recv[i]);
     }
+
+    // check projection matrix values are set
+    EXPECT_TRUE(inf1_caminfo_projection_recv[0] != (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[1], (double) 0);
+    EXPECT_TRUE(inf1_caminfo_projection_recv[2] != (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[3], (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[4], (double) 0);
+    EXPECT_TRUE(inf1_caminfo_projection_recv[5] != (double) 0);
+    EXPECT_TRUE(inf1_caminfo_projection_recv[6] != (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[7], (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[8], (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[9], (double) 0);
+    EXPECT_TRUE(inf1_caminfo_projection_recv[10] != (double) 0);
+    EXPECT_EQ(inf1_caminfo_projection_recv[11], (double) 0);
+
   }
 }
 
@@ -408,6 +476,21 @@ TEST (RealsenseTests, testInfrared2CameraInfo)
     {
       EXPECT_EQ (ROTATION_IDENTITY[i], inf2_caminfo_rotation_recv[i]);
     }
+
+    // check projection matrix values are set
+    EXPECT_TRUE(inf2_caminfo_projection_recv[0] != (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[1], (double) 0);
+    EXPECT_TRUE(inf2_caminfo_projection_recv[2] != (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[3], (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[4], (double) 0);
+    EXPECT_TRUE(inf2_caminfo_projection_recv[5] != (double) 0);
+    EXPECT_TRUE(inf2_caminfo_projection_recv[6] != (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[7], (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[8], (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[9], (double) 0);
+    EXPECT_TRUE(inf2_caminfo_projection_recv[10] != (double) 0);
+    EXPECT_EQ(inf2_caminfo_projection_recv[11], (double) 0);
+
   }
 }
 
