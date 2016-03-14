@@ -80,8 +80,6 @@ uint32_t infrared2_step_exp; 	// Expected infrared2 step.
 
 bool enable_color = true;
 bool enable_depth = true;
-bool enable_infrared1 = true;
-bool enable_infrared2 = true;
 bool enable_pointcloud = true;
 
 std::string depth_encoding_exp; // Expected depth encoding.
