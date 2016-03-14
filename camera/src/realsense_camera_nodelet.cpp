@@ -699,6 +699,12 @@ namespace realsense_camera
       rs_disable_stream(rs_device_, RS_STREAM_DEPTH, &rs_error_); check_error ();
       ROS_INFO_STREAM ("RealSense Camera - Depth Stream Disabled");
 
+      rs_disable_stream(rs_device_, RS_STREAM_INFRARED, &rs_error_); check_error ();
+      ROS_INFO_STREAM ("RealSense Camera - Infrared1 stream Disabled");
+
+      rs_disable_stream(rs_device_, RS_STREAM_INFRARED2, &rs_error_); check_error ();
+      ROS_INFO_STREAM ("RealSense Camera - Infrared2 stream Disabled");
+
       if(rs_is_device_streaming(rs_device_, 0) == 0) 
       {
         rs_start_device (rs_device_, &rs_error_);check_error ();
@@ -715,7 +721,9 @@ namespace realsense_camera
       }
       
       enable_depth_stream();
-      
+      enable_infrared_stream();
+      enable_infrared2_stream();
+ 
       if(rs_is_device_streaming(rs_device_, 0) == 0) 
       {
         rs_start_device (rs_device_, &rs_error_); check_error ();
