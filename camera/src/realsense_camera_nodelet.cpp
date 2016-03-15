@@ -464,7 +464,7 @@ namespace realsense_camera
     {
       // set depth to color translation values in Projection matrix (P)
       rs_extrinsics z_extrinsic;
-      rs_get_device_extrinsics (rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_); check_error ();
+      rs_get_device_extrinsics (rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_); checkError ();
       camera_info_[stream_index]->P.at(3) = z_extrinsic.translation[0]/1000;     // Tx
       camera_info_[stream_index]->P.at(7) = z_extrinsic.translation[1]/1000;     // Ty
       camera_info_[stream_index]->P.at(11) = z_extrinsic.translation[2]/1000;    // Tz
@@ -718,7 +718,6 @@ namespace realsense_camera
         rs_stop_device (rs_device_, &rs_error_); checkError ();
         ROS_INFO_STREAM ("RealSense Camera - Device Stopped");
       }
-
 
       //disable depth, infrared1 and infrared2 streams
       rs_disable_stream(rs_device_, RS_STREAM_DEPTH, &rs_error_); checkError ();

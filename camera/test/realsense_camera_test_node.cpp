@@ -316,6 +316,22 @@ TEST (RealsenseTests, testIsDepthStreamEnabled)
   }
 }
 
+TEST (RealsenseTests, testIsDepthStreamEnabled)
+{
+  if (enable_depth)
+  {
+    EXPECT_TRUE (depth_recv);
+    EXPECT_TRUE (infrared1_recv);
+    EXPECT_TRUE (infrared2_recv);
+  }
+  else
+  {
+    EXPECT_FALSE (depth_recv);
+    EXPECT_FALSE (infrared1_recv);
+    EXPECT_FALSE (infrared2_recv);
+  }
+}
+
 TEST (RealsenseTests, testDepthStream)
 {
   if (enable_depth)
