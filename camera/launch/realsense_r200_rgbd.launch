@@ -17,11 +17,9 @@
   <arg name="depth_registered" default="depth_registered" />
   <arg name="projector"        default="projector" />
 
-  <!-- Optionally suppress loading the driver nodelet and/or publishing the default tf
-       tree. Useful if you are playing back recorded raw data from a bag, or are
-       supplying a more accurate tf tree from calibration. -->
+  <!-- Optionally suppress loading the driver nodelet. Useful while playing back recorded raw data from a bag.-->
   <arg name="load_driver" default="true" />
-  <arg name="publish_tf" default="false" />
+  <arg name="publish_tf" default="true" />
   <!-- Processing Modules -->
   <arg name="rgb_processing"                  default="true"/>
   <arg name="ir_processing"                   default="true"/>
