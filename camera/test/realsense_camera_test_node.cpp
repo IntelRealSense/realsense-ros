@@ -525,27 +525,6 @@ TEST (RealsenseTests, testInfrared2CameraInfo)
   }
 }
 
-
-TEST (RealsenseTests, testCameraSettings)
-{
-  stringstream ss (srv.response.configuration_str);
-  string item;
-  string option_name;
-
-  while (getline (ss, item, ';'))
-  {
-    stringstream ss1 (item);
-    getline (ss1, option_name, ':');
-    if (config_args.find (option_name) != config_args.end ())
-    {
-      std::string last_element (item.substr (item.rfind (":") + 1));
-      int expected_value = atoi (last_element.c_str ());
-      int current_Value = atoi (config_args.at (option_name).c_str ());
-      EXPECT_EQ (current_Value, expected_value);
-    }
-  }
-}
-
 TEST (RealsenseTests, testTransforms)
 {
   // make sure all transforms are being broadcast as expected
@@ -558,7 +537,7 @@ TEST (RealsenseTests, testTransforms)
   EXPECT_TRUE(tf_listener.canTransform (COLOR_DEF_FRAME,COLOR_OPTICAL_DEF_FRAME, ros::Time::now()));
 }
 
-TEST (RealsenseTests, testDynamicReconfigure)
+TEST (RealsenseTests, testCameraOptions)
 {
   stringstream settings_ss (srv.response.configuration_str);
   string setting;

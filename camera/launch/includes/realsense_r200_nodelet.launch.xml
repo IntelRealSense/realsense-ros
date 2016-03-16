@@ -4,11 +4,12 @@
 
     <arg name="depth_frame_id"      default="camera_depth_optical_frame" />
     <arg name="rgb_frame_id"        default="camera_rgb_optical_frame" />
-    <arg name="publish_tf"          default="false" />
+    <arg name="publish_tf"          default="true" />
     <arg name="depth"               default="depth" />
     <arg name="rgb"                 default="rgb" />
     <arg name="ir"                  default="ir" />
     <arg name="ir2"                 default="ir2" />
+    <arg name="mode"                default="preset" />
     <arg name="enable_depth"        default="true" />
     <arg name="enable_color"        default="true" />
     <arg name="enable_ir"           default="true" />
@@ -16,25 +17,21 @@
     <!-- "enable_depth_ir" will take the value of "enable_ir" only if "enable_ir" is true.
          Else "enable_depth_ir" will take the value of "enable_depth" -->
     <arg name="enable_depth_ir"     value="$(arg enable_ir)"    if="$(arg enable_ir)" />
-    <arg name="enable_depth_ir"     value="$(arg enable_depth)" unless="$(arg enable_ir)" />
-    
-    <!-- "enable_tf" will be set to false only if "publish_tf" is true. Else it is set to true.
-         Ensures that the nodelet does not publish tf if the transforms are published statically. -->
-    <arg name="enable_tf"           value="false"    if="$(arg publish_tf)" />
-    <arg name="enable_tf"           value="true"     unless="$(arg publish_tf)" />    
+    <arg name="enable_depth_ir"     value="$(arg enable_depth)" unless="$(arg enable_ir)" />  
 
      <!-- "enable_pointcloud" is set to false by default because rgbd launch uses standard ROS packages
           to generate point clouds. -->          
     <arg name="enable_pointcloud"   default="false" />
 
     <node pkg="nodelet" type="nodelet" name="camera_nodelet"
-        args="load realsense_camera/RealsenseNodelet $(arg manager)
-        depth_frame_id $(arg depth_frame_id)
-        rgb_frame_id $(arg rgb_frame_id)
-        enable_depth $(arg enable_depth_ir)
-        enable_color $(arg enable_color)
-        enable_pointcloud $(arg enable_pointcloud)
-        enable_tf $(arg enable_tf)">
+        args="load realsense_camera/RealsenseNodelet $(arg manager)">
+        <param name="mode"              type="str"  value="$(arg mode)" />
+        <param name="enable_depth"      type="bool" value="$(arg enable_depth_ir)" />
+        <param name="enable_color"      type="bool" value="$(arg enable_color)" />
+        <param name="enable_pointcloud" type="bool" value="$(arg enable_pointcloud)" />
+        <param name="enable_tf"         type="bool" value="$(arg publish_tf)" />
+        <param name="depth_frame_id"    type="str"  value="$(arg depth_frame_id)" />
+        <param name="rgb_frame_id"      type="str"  value="$(arg rgb_frame_id)" />
 
         <remap from="camera/depth/image_raw"        to="$(arg depth)/image_raw" />
         <remap from="camera/color/image_raw"        to="$(arg rgb)/image_raw" />
