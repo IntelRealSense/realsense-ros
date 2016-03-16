@@ -88,7 +88,7 @@ Infrared2 camera
     depth_fps (int, default: 60)
         Specify the depth camera FPS
     enable_depth (bool, default: true) 
-        Specify if to enable or not the depth camera.
+        Specify if to enable or not the depth and infrared camera.
     enable_color (bool, default: true) 
         Specify if to enable or not the color camera.
     enable_pointcloud (bool, default: true) 
@@ -140,6 +140,11 @@ To get supported camera options with current value set. It returns string in opt
         R200_AUTO_EXPOSURE_BOTTOM_EDGE
         R200_AUTO_EXPOSURE_LEFT_EDGE
         R200_AUTO_EXPOSURE_RIGHT_EDGE
+
+    Enable/Disable Stream:
+        ENABLE_DEPTH
+            Check or uncheck the option to disable/enable depth and infrared streams dynamically. 
+            Note: Infrared streams will be enabled or disabled along with depth stream.
 
 Use rqt_reconfigure GUI to view and edit the parameters that are accessible via dynamic_reconfigure.
 

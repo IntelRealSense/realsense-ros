@@ -165,7 +165,11 @@ private:
   boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>> dynamic_reconf_server_;
 
   // Member Functions.
-  void check_error();
+  void enableColorStream();
+  void enableDepthStream();
+  void enableInfraredStream();
+  void enableInfrared2Stream();
+  void checkError();
   void fetchCalibData();
   void prepareStreamCalibData(rs_stream calib_data);
   void prepareStreamData(rs_stream rs_strm);
