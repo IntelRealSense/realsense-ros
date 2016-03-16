@@ -73,22 +73,8 @@ namespace realsense_camera
     ROS_INFO_STREAM ("RealSense Camera - Starting camera nodelet.");
 
     // Set default configurations.
-    depth_height_ = DEPTH_HEIGHT;
-    depth_width_ = DEPTH_WIDTH;
-    color_height_ = COLOR_HEIGHT;
-    color_width_ = COLOR_WIDTH;
-    depth_fps_ = DEPTH_FPS;
-    color_fps_ = COLOR_FPS;
-    enable_depth_ = ENABLE_DEPTH;
-    enable_color_ = ENABLE_COLOR;
-    enable_pointcloud_ = ENABLE_PC;
-    enable_tf_ = ENABLE_TF;
     is_device_started_ = false;
 
-    camera_configuration_ = getMyArgv ();
-
-    frame_id_[RS_STREAM_DEPTH] = DEPTH_OPTICAL_DEF_FRAME;
-    frame_id_[RS_STREAM_COLOR] = COLOR_OPTICAL_DEF_FRAME;
     frame_id_[RS_STREAM_INFRARED] = IR1_DEF_FRAME;
     frame_id_[RS_STREAM_INFRARED2] = IR2_DEF_FRAME;
 
@@ -96,12 +82,12 @@ namespace realsense_camera
       camera_info_[i] = NULL;
 
     ros::NodeHandle & nh = getNodeHandle ();
+    pnh_ = getPrivateNodeHandle();
 
     // Set up the topics.
     image_transport::ImageTransport it (nh);
 
-    // Parse parameters.
-    getConfigValues (camera_configuration_);
+    setStreamOptions();
 
     // Advertise the various topics and services.
     // Advertise color stream only if color parameter is set.
@@ -117,7 +103,7 @@ namespace realsense_camera
     pointcloud_publisher_ = nh.advertise < sensor_msgs::PointCloud2 > (PC_TOPIC, 1);
 
 
-    get_options_service_ = nh.advertiseService (SETTINGS_SERVICE, &RealsenseNodelet::getCameraSettings, this);
+    get_options_service_ = nh.advertiseService (SETTINGS_SERVICE, &RealsenseNodelet::getCameraOptionValues, this);
 
     dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>(getPrivateNodeHandle()));
 
@@ -149,7 +135,7 @@ namespace realsense_camera
   /*
    *Private Methods.
    */
-  void RealsenseNodelet::enableColorStream() 
+  void RealsenseNodelet::enableColorStream()
   {
     // Enable streams.
     if (mode_.compare ("manual") == 0)
@@ -170,7 +156,7 @@ namespace realsense_camera
     }
   }
 
-  void RealsenseNodelet::enableDepthStream() 
+  void RealsenseNodelet::enableDepthStream()
   {
     // Enable streams.
     if (mode_.compare ("manual") == 0)
@@ -186,13 +172,13 @@ namespace realsense_camera
     }
 
     uint32_t stream_index = (uint32_t) RS_STREAM_DEPTH;
-    if(camera_info_[stream_index] == NULL) 
+    if(camera_info_[stream_index] == NULL)
     {
 	prepareStreamCalibData (RS_STREAM_DEPTH);
     }
   }
 
-  void RealsenseNodelet::enableInfraredStream() 
+  void RealsenseNodelet::enableInfraredStream()
   {
     // Enable streams.
     if (mode_.compare ("manual") == 0)
@@ -208,13 +194,13 @@ namespace realsense_camera
     }
 
     uint32_t stream_index = (uint32_t) RS_STREAM_INFRARED;
-    if(camera_info_[stream_index] == NULL) 
+    if(camera_info_[stream_index] == NULL)
     {
 	prepareStreamCalibData (RS_STREAM_INFRARED);
     }
   }
 
-  void RealsenseNodelet::enableInfrared2Stream() 
+  void RealsenseNodelet::enableInfrared2Stream()
   {
     // Enable streams.
     if (mode_.compare ("manual") == 0)
@@ -229,7 +215,7 @@ namespace realsense_camera
     }
 
     uint32_t stream_index = (uint32_t) RS_STREAM_INFRARED2;
-    if(camera_info_[stream_index] == NULL) 
+    if(camera_info_[stream_index] == NULL)
     {
       prepareStreamCalibData (RS_STREAM_INFRARED2);
     }
@@ -286,19 +272,19 @@ namespace realsense_camera
       rs_set_device_options(rs_device_, edge_options_, 4, edge_values_, 0);
     }
 
-    if(config.ENABLE_DEPTH == false) 
+    if(config.ENABLE_DEPTH == false)
     {
-      if(enable_color_ == false) 
+      if(enable_color_ == false)
       {
         ROS_INFO_STREAM ("RealSense Camera - Color stream is also disabled. Cannot disable depth stream");
         config.ENABLE_DEPTH = true;
       }
-      else 
+      else
       {
         enable_depth_ = false;
       }
     }
-    else 
+    else
     {
       enable_depth_ = true;
     }
@@ -392,7 +378,8 @@ namespace realsense_camera
       options.push_back (o);
     }
 
-    setConfigValues (camera_configuration_, options);
+    getCameraOptions();
+    setStaticCameraOptions();
 
     // Start device.
     rs_start_device (rs_device_, &rs_error_);
@@ -403,6 +390,28 @@ namespace realsense_camera
     allocateResources ();
 
     return true;
+  }
+
+  /*
+   * Gets the options supported by the camera along with their min, max and step values.
+   */
+  void RealsenseNodelet::getCameraOptions()
+  {
+    for (int i = 0; i < RS_OPTION_COUNT; ++i)
+    {
+      option_str o = { (rs_option) i };
+
+      if (rs_device_supports_option(rs_device_, o.opt, &rs_error_))
+      {
+        rs_get_device_option_range(rs_device_, o.opt, &o.min, &o.max, &o.step, 0);
+        // Skip the camera options where min and max values are the same.
+        if (o.min != o.max)
+        {
+          o.value = rs_get_device_option(rs_device_, o.opt, 0);
+          options.push_back(o);
+        }
+      }
+    }
   }
 
   /*
@@ -488,32 +497,18 @@ namespace realsense_camera
   }
 
   /*
-   * Service function to get values for supported camera settings.
+   * Get the latest values of the camera options.
    */
-  bool RealsenseNodelet::getCameraSettings (realsense_camera::cameraConfiguration::Request & req,
+  bool RealsenseNodelet::getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req,
       realsense_camera::cameraConfiguration::Response & res)
   {
     std::string get_options_result_str;
     std::string opt_name, opt_value;
 
-    for (int i = 0; i < RS_OPTION_COUNT; ++i)
+    for (option_str o: options)
     {
-      option_str o =
-      { (rs_option) i};
-      if (!rs_device_supports_option (rs_device_, o.opt, 0))
-      {
-        continue;
-      }
-
-      rs_get_device_option_range (rs_device_, o.opt, &o.min, &o.max,
-          &o.step, 0);
-      if (o.min == o.max)
-      {
-        continue;
-      }
-
-      o.value = rs_get_device_option (rs_device_, o.opt, 0);
-      opt_name = rs_option_to_string (o.opt);
+      opt_name = rs_option_to_string(o.opt);
+      o.value = rs_get_device_option(rs_device_, o.opt, 0);
       opt_value = boost::lexical_cast < std::string > (o.value);
       get_options_result_str += opt_name + ":" + opt_value + ";";
     }
@@ -523,143 +518,79 @@ namespace realsense_camera
   }
 
   /*
-   * Parse commandline arguments and set parameters.
+   * Set the stream options based on input params.
    */
-  void RealsenseNodelet::getConfigValues (std::vector < std::string > args)
+  void RealsenseNodelet::setStreamOptions()
   {
-    while (args.size () > 1)
-    {
-      config_[args[0]] = args[1];
-      args.erase (args.begin ());
-      args.erase (args.begin ());
-    }
-
-    if (config_.find ("mode") != config_.end ())
-    {
-      mode_ = config_.at ("mode");
-    }
-
-    if (config_.find ("enable_color") != config_.end ())
-    {
-      if (strcmp((config_.at ("enable_color").c_str ()),"true") == 0)
-      {
-        enable_color_ = true;
-      }
-      else
-      {
-        enable_color_ = false;
-      }
-    }
-
-    if (config_.find ("enable_depth") != config_.end ())
-    {
-      if (strcmp((config_.at ("enable_depth").c_str ()),"true") == 0)
-      {
-        enable_depth_ = true;
-      }
-      else
-      {
-        enable_depth_ = false;
-      }
-    }
-
-    if (config_.find ("enable_pointcloud") != config_.end ())
-    {
-      if (strcmp((config_.at ("enable_pointcloud").c_str ()),"true") == 0)
-      {
-        enable_pointcloud_ = true;
-      }
-      else
-      {
-        enable_pointcloud_ = false;
-      }
-    }
-
-    if (config_.find ("enable_tf") != config_.end ())
-    {
-      if (strcmp((config_.at ("enable_tf").c_str ()),"true") == 0)
-      {
-        enable_tf_ = true;
-      }
-      else
-      {
-        enable_tf_ = false;
-      }
-    }
-
-    if (config_.find ("camera") != config_.end ())
-    {
-      camera_ = config_.at ("camera").c_str ();
-    }
-
-    if (config_.find ("depth_frame_id") != config_.end ())
-    {
-      frame_id_[RS_STREAM_DEPTH] = config_.at ("depth_frame_id").c_str ();
-    }
-
-    if (config_.find ("rgb_frame_id") != config_.end ())
-    {
-      frame_id_[RS_STREAM_COLOR] = config_.at ("rgb_frame_id").c_str ();
-    }
-
-    if (mode_.compare ("manual") == 0)
-    {
-      if (config_.find ("color_fps") != config_.end ())
-      {
-        color_fps_ = atoi (config_.at ("color_fps").c_str ());
-      }
-
-      if (config_.find ("depth_fps") != config_.end ())
-      {
-        depth_fps_ = atoi (config_.at ("depth_fps").c_str ());
-      }
-
-      if (config_.find ("color_height") != config_.end ())
-      {
-        color_height_ = atoi (config_.at ("color_height").c_str ());
-      }
-
-      if (config_.find ("color_width") != config_.end ())
-      {
-        color_width_ = atoi (config_.at ("color_width").c_str ());
-      }
-
-      if (config_.find ("depth_height") != config_.end ())
-      {
-        depth_height_ = atoi (config_.at ("depth_height").c_str ());
-      }
-
-      if (config_.find ("depth_width") != config_.end ())
-      {
-        depth_width_ = atoi (config_.at ("depth_width").c_str ());
-      }
-    }
+    pnh_.param("camera", camera_, (std::string) R200);
+    pnh_.param("mode", mode_, DEFAULT_MODE);
+    pnh_.param("enable_depth", enable_depth_, ENABLE_DEPTH);
+    pnh_.param("enable_color", enable_color_, ENABLE_COLOR);
+    pnh_.param("enable_pointcloud", enable_pointcloud_, ENABLE_PC);
+    pnh_.param("enable_tf", enable_tf_, ENABLE_TF);
+    pnh_.param("depth_width", depth_width_, DEPTH_WIDTH);
+    pnh_.param("depth_height", depth_height_, DEPTH_HEIGHT);
+    pnh_.param("color_width", color_width_, COLOR_WIDTH);
+    pnh_.param("color_height", color_height_, COLOR_HEIGHT);
+    pnh_.param("depth_fps", depth_fps_, DEPTH_FPS);
+    pnh_.param("color_fps", color_fps_, COLOR_FPS);
+    pnh_.param("depth_frame_id", frame_id_[RS_STREAM_DEPTH], (std::string) DEPTH_OPTICAL_DEF_FRAME);
+    pnh_.param("rgb_frame_id", frame_id_[RS_STREAM_COLOR], (std::string) COLOR_OPTICAL_DEF_FRAME);
   }
 
   /*
-   * Change camera settings.
+   * Set the static camera options.
    */
-  void RealsenseNodelet::setConfigValues (std::vector < std::string > args,
-      std::vector < option_str > cam_options)
+  void RealsenseNodelet::setStaticCameraOptions()
   {
-    while (args.size () > 1)
-    {
-      config_[args[0]] = args[1];
-      args.erase (args.begin ());
-      args.erase (args.begin ());
-    }
+    // Get dynamic options from the dynamic reconfigure server.
+    dynamic_reconf_server_->getConfigDefault(params_config_);
+    std::vector<camera_paramsConfig::AbstractParamDescriptionConstPtr> param_desc = params_config_.__getParamDescriptions__();
 
-    while (!cam_options.empty ())
+    // Iterate through the supported camera options
+    for (option_str o: options)
     {
-      option_str o = cam_options.back ();
-      std::string opt_name = rs_option_to_string (o.opt);
-      if (config_.find (opt_name) != config_.end () && rs_device_supports_option (rs_device_, o.opt, 0))
+      std::string opt_name = rs_option_to_string(o.opt);
+      bool found = false;
+
+      std::vector<camera_paramsConfig::AbstractParamDescriptionConstPtr>::iterator it;
+      for (camera_paramsConfig::AbstractParamDescriptionConstPtr param_desc_ptr: param_desc)
       {
-        ROS_INFO_STREAM ("RealSense Camera - Setting" << opt_name.c_str () << " to " << config_.at (opt_name).c_str ());
-        rs_set_device_option (rs_device_, o.opt, atoi (config_.at (opt_name).c_str ()), &rs_error_);
-        checkError ();
+        if (opt_name.compare((* param_desc_ptr).name) == 0)
+        {
+          found = true;
+          break;
+        }
       }
-      cam_options.pop_back ();
+      // Skip the dynamic options and set only the static camera options.
+      if (found == false)
+      {
+        std::string key;
+        double val;
+
+        if (pnh_.searchParam(opt_name, key))
+        {
+          double opt_val;
+          pnh_.getParam(key, val);
+
+          // Validate and set the input values within the min-max range
+          if (val < o.min)
+          {
+            opt_val = o.min;
+          }
+          else if (val > o.max)
+          {
+            opt_val = o.max;
+          }
+          else
+          {
+            opt_val = val;
+          }
+          ROS_INFO_STREAM ("RealSense Camera - Static Options: " << opt_name << " = " << opt_val);
+          rs_set_device_option (rs_device_, o.opt, opt_val, &rs_error_);
+          checkError();
+        }
+      }
     }
   }
 
@@ -711,9 +642,9 @@ namespace realsense_camera
    */
   void RealsenseNodelet::publishStreams ()
   {
-    if(enable_depth_ == false && rs_is_stream_enabled (rs_device_, RS_STREAM_DEPTH, 0) == 1) 
+    if(enable_depth_ == false && rs_is_stream_enabled (rs_device_, RS_STREAM_DEPTH, 0) == 1)
     {
-      if(rs_is_device_streaming(rs_device_, 0) == 1) 
+      if(rs_is_device_streaming(rs_device_, 0) == 1)
       {
         rs_stop_device (rs_device_, &rs_error_); checkError ();
         ROS_INFO_STREAM ("RealSense Camera - Device Stopped");
@@ -729,33 +660,33 @@ namespace realsense_camera
       rs_disable_stream(rs_device_, RS_STREAM_INFRARED2, &rs_error_); checkError ();
       ROS_INFO_STREAM ("RealSense Camera - Infrared2 stream Disabled");
 
-      if(rs_is_device_streaming(rs_device_, 0) == 0) 
+      if(rs_is_device_streaming(rs_device_, 0) == 0)
       {
         rs_start_device (rs_device_, &rs_error_);checkError ();
         ROS_INFO_STREAM ("RealSense Camera - Device Started");
       }
-    } 
-    
-    if(enable_depth_ == true && rs_is_stream_enabled (rs_device_, RS_STREAM_DEPTH, 0) == 0) 
+    }
+
+    if(enable_depth_ == true && rs_is_stream_enabled (rs_device_, RS_STREAM_DEPTH, 0) == 0)
     {
-      if(rs_is_device_streaming(rs_device_, 0) == 1) 
+      if(rs_is_device_streaming(rs_device_, 0) == 1)
       {
         rs_stop_device (rs_device_, &rs_error_); checkError ();
         ROS_INFO_STREAM ("RealSense Camera - Device Stopped");
       }
-      
+
       enableDepthStream();
       enableInfraredStream();
       enableInfrared2Stream();
- 
-      if(rs_is_device_streaming(rs_device_, 0) == 0) 
+
+      if(rs_is_device_streaming(rs_device_, 0) == 0)
       {
         rs_start_device (rs_device_, &rs_error_); checkError ();
         ROS_INFO_STREAM ("RealSense Camera - Device Started");
       }
     }
 
-    if(rs_is_device_streaming(rs_device_, 0) == 1) 
+    if(rs_is_device_streaming(rs_device_, 0) == 1)
     {
       rs_wait_for_frames (rs_device_, &rs_error_);
       checkError ();
@@ -764,7 +695,7 @@ namespace realsense_camera
       for (int stream_index = 0; stream_index < STREAM_COUNT; ++stream_index)
       {
         // Publish image stream only if there is at least one subscriber.
-        if (camera_publisher_[stream_index].getNumSubscribers () > 0 && 
+        if (camera_publisher_[stream_index].getNumSubscribers () > 0 &&
 	    rs_is_stream_enabled (rs_device_, (rs_stream) stream_index, 0) == 1)
         {
           prepareStreamData ((rs_stream) stream_index);

@@ -28,13 +28,13 @@
     <arg name="enable_pointcloud"   default="false" />
 
     <node pkg="nodelet" type="nodelet" name="camera_nodelet"
-        args="load realsense_camera/RealsenseNodelet $(arg manager)
-        depth_frame_id $(arg depth_frame_id)
-        rgb_frame_id $(arg rgb_frame_id)
-        enable_depth $(arg enable_depth_ir)
-        enable_color $(arg enable_color)
-        enable_pointcloud $(arg enable_pointcloud)
-        enable_tf $(arg enable_tf)">
+        args="load realsense_camera/RealsenseNodelet $(arg manager)">
+        <param name="enable_depth"      type="bool" value="$(arg enable_depth_ir)" />
+        <param name="enable_color"      type="bool" value="$(arg enable_color)" />
+        <param name="enable_pointcloud" type="bool" value="$(arg enable_pointcloud)" />
+        <param name="enable_tf"         type="bool" value="$(arg enable_tf)" />
+        <param name="depth_frame_id"    type="str"  value="$(arg depth_frame_id)" />
+        <param name="rgb_frame_id"      type="str"  value="$(arg rgb_frame_id)" />
 
         <remap from="camera/depth/image_raw"        to="$(arg depth)/image_raw" />
         <remap from="camera/color/image_raw"        to="$(arg rgb)/image_raw" />

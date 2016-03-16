@@ -525,7 +525,7 @@ TEST (RealsenseTests, testInfrared2CameraInfo)
   }
 }
 
-
+/*
 TEST (RealsenseTests, testCameraSettings)
 {
   stringstream ss (srv.response.configuration_str);
@@ -545,7 +545,7 @@ TEST (RealsenseTests, testCameraSettings)
     }
   }
 }
-
+*/
 TEST (RealsenseTests, testTransforms)
 {
   // make sure all transforms are being broadcast as expected
@@ -558,7 +558,7 @@ TEST (RealsenseTests, testTransforms)
   EXPECT_TRUE(tf_listener.canTransform (COLOR_DEF_FRAME,COLOR_OPTICAL_DEF_FRAME, ros::Time::now()));
 }
 
-TEST (RealsenseTests, testDynamicReconfigure)
+TEST (RealsenseTests, testCameraOptions)
 {
   stringstream settings_ss (srv.response.configuration_str);
   string setting;

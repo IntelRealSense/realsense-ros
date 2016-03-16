@@ -14,18 +14,19 @@
 	
   	<node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
   	
-	<node pkg="nodelet" type="nodelet" name="RealsenseNodelet"
-        args="load realsense_camera/RealsenseNodelet standalone_nodelet 
-        mode $(arg mode)
-        color_height $(arg color_height) 
-        color_width $(arg color_width)
-        depth_height $(arg depth_height)
-        depth_width $(arg depth_width)
-        enable_color $(arg enable_color)
-        enable_depth $(arg enable_depth)
-        depth_fps $(arg depth_fps)
-        color_fps $(arg color_fps)
-        enable_pointcloud $(arg enable_pointcloud)">        
-  	</node>
-  
+    <node pkg="nodelet" type="nodelet" name="RealsenseNodelet"
+        args="load realsense_camera/RealsenseNodelet standalone_nodelet">
+        <param name="mode"              type="str"  value="$(arg mode)" />
+        <param name="enable_depth"      type="bool" value="$(arg enable_depth)" />
+        <param name="enable_color"      type="bool" value="$(arg enable_color)" />
+        <param name="enable_pointcloud" type="bool" value="$(arg enable_pointcloud)" />
+        <param name="enable_tf"         type="bool" value="$(arg enable_tf)" />
+        <param name="depth_width"       type="int"  value="$(arg depth_width)" />
+        <param name="depth_height"      type="int"  value="$(arg depth_height)" />
+        <param name="color_width"       type="int"  value="$(arg color_width)" />
+        <param name="color_height"      type="int"  value="$(arg color_height)" />
+        <param name="depth_fps"         type="int"  value="$(arg depth_fps)" />
+        <param name="color_fps"         type="int"  value="$(arg color_fps)" />
+    </node>
+
 </launch> 
