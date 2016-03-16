@@ -272,12 +272,12 @@ namespace realsense_camera
       rs_set_device_options(rs_device_, edge_options_, 4, edge_values_, 0);
     }
 
-    if(config.ENABLE_DEPTH == false)
+    if(config.enable_depth == false)
     {
       if(enable_color_ == false)
       {
         ROS_INFO_STREAM ("RealSense Camera - Color stream is also disabled. Cannot disable depth stream");
-        config.ENABLE_DEPTH = true;
+        config.enable_depth = true;
       }
       else
       {

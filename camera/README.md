@@ -88,8 +88,6 @@ Infrared2 camera
 	        Specify the color camera FPS
 	    depth_fps (int, default: 60)
 	        Specify the depth camera FPS
-	    enable_depth (bool, default: true) 
-	        Specify if to enable or not the depth and infrared camera.
 	    enable_color (bool, default: true) 
 	        Specify if to enable or not the color camera.
 	    enable_pointcloud (bool, default: true) 
@@ -121,6 +119,11 @@ To get supported camera options with current value set. It returns string in opt
 
 ####Dynamic Options
 
+    Stream Options:
+        enable_depth (bool, default: true) 
+          Specify if to enable or not the depth and infrared camera.
+          Note: Infrared streams will be enabled or disabled along with depth stream.
+
     Camera Options: 
     Following are the options that can be set dynamically as well as statically in the R200 camera.
         COLOR_BACKLIGHT_COMPENSATION
@@ -142,11 +145,6 @@ To get supported camera options with current value set. It returns string in opt
         R200_AUTO_EXPOSURE_BOTTOM_EDGE (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
         R200_AUTO_EXPOSURE_LEFT_EDGE   (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
         R200_AUTO_EXPOSURE_RIGHT_EDGE  (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
-
-    Enable/Disable Stream:
-        ENABLE_DEPTH
-            Check or uncheck the option to disable/enable depth and infrared streams dynamically. 
-            Note: Infrared streams will be enabled or disabled along with depth stream.
 
 Note: For Autoexposure EDGE parameters, max value will go only upto the bounds of the infrared image.	
 E.g. For 320x240 infrared image, valid values are within 0-319 and 0-239)
