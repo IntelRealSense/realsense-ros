@@ -3,14 +3,14 @@
     
     Steps:
     roslaunch realsense_camera realsense_r200_stream_options_params.launch
-    rosrun realsense_camera realsense_camera_test mode manual enable_depth true enable_color true enable_pointcloud true enable_tf true depth_width 320 depth_height 240 color_width 320 color_height 240 depth_fps 60 color_fps 60 camera R200
+    rosrun realsense_camera realsense_camera_test mode manual enable_depth false enable_color true enable_pointcloud true enable_tf true depth_width 320 depth_height 240 color_width 320 color_height 240 depth_fps 60 color_fps 60 camera R200
     Verify that all the tests pass.
 -->
 
 <launch>
 
     <arg name="mode"                                            default="manual" />
-    <arg name="enable_depth"                                    default="true" />
+    <arg name="enable_depth"                                    default="false" />
     <arg name="enable_color"                                    default="true" />
     <arg name="enable_pointcloud"                               default="true" />
     <arg name="enable_tf"                                       default="true" />

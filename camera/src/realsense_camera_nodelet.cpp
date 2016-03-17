@@ -90,9 +90,7 @@ namespace realsense_camera
     setStreamOptions();
 
     // Advertise the various topics and services.
-    // Advertise color stream only if color parameter is set.
     camera_publisher_[RS_STREAM_COLOR] = it.advertiseCamera (COLOR_TOPIC, 1);
-    // Advertise depth and infrared streams only if depth parameter is set.
     camera_publisher_[RS_STREAM_DEPTH] = it.advertiseCamera (DEPTH_TOPIC, 1);
     camera_publisher_[RS_STREAM_INFRARED] = it.advertiseCamera (IR1_TOPIC, 1);
     if (camera_.find (R200) != std::string::npos)
@@ -358,26 +356,6 @@ namespace realsense_camera
       enableInfrared2Stream();
     }
 
-    for (int i = 0; i < RS_OPTION_COUNT; ++i)
-    {
-      option_str o =
-      { (rs_option) i};
-
-      if (!rs_device_supports_option (rs_device_, o.opt, 0))
-      {
-        continue;
-      }
-
-      rs_get_device_option_range (rs_device_, o.opt, &o.min, &o.max, &o.step, 0);
-      if (o.min == o.max)
-      {
-        continue;
-      }
-
-      o.value = rs_get_device_option (rs_device_, o.opt, 0);
-      options.push_back (o);
-    }
-
     getCameraOptions();
     setStaticCameraOptions();
 
@@ -544,8 +522,9 @@ namespace realsense_camera
   void RealsenseNodelet::setStaticCameraOptions()
   {
     // Get dynamic options from the dynamic reconfigure server.
-    dynamic_reconf_server_->getConfigDefault(params_config_);
-    std::vector<camera_paramsConfig::AbstractParamDescriptionConstPtr> param_desc = params_config_.__getParamDescriptions__();
+    camera_paramsConfig params_config;
+    dynamic_reconf_server_->getConfigDefault(params_config);
+    std::vector<camera_paramsConfig::AbstractParamDescriptionConstPtr> param_desc = params_config.__getParamDescriptions__();
 
     // Iterate through the supported camera options
     for (option_str o: options)

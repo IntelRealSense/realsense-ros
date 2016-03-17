@@ -70,9 +70,9 @@ Infrared2 camera
     rosrun tf tf_monitor
 
 
-#### Static Options
+#### Static Parameters
 
-    Stream options:
+    Stream parameters:
 	    mode (string, default: preset)
 	        Specify the mode to start camera streams. Mode comprises of height, width and fps. 
 	        Preset mode enables default values whereas Manual mode enables the specified parameter values.
@@ -96,8 +96,8 @@ Infrared2 camera
 	        Specify if to enable or not the transform frames.       
 	    camera (string, default: "R200") 
 	        Specify the camera name. 
-    Camera options: 
-    Following are the options that can be set statically in the R200 camera:
+    Camera parameters: 
+    Following are the parameters that can be set only statically in the R200 camera:
         R200_DEPTH_UNITS : [1, 2147483647]
         R200_DEPTH_CLAMP_MIN : [0, 65535]
         R200_DEPTH_CLAMP_MAX : [0, 65535]
@@ -117,15 +117,15 @@ Infrared2 camera
     
 To get supported camera options with current value set. It returns string in options:value format where different options are seperated by semicolon.
 
-####Dynamic Options
+####Dynamic Parameters
 
-    Stream Options:
+    Stream parameters:
         enable_depth (bool, default: true) 
           Specify if to enable or not the depth and infrared camera.
           Note: Infrared streams will be enabled or disabled along with depth stream.
 
-    Camera Options: 
-    Following are the options that can be set dynamically as well as statically in the R200 camera.
+    Camera parameters: 
+    Following are the parameters that can be set dynamically as well as statically in the R200 camera.
         COLOR_BACKLIGHT_COMPENSATION
         COLOR_BRIGHTNESS
         COLOR_CONTRAST
@@ -139,7 +139,7 @@ To get supported camera options with current value set. It returns string in opt
         R200_LR_GAIN
         R200_EMITTER_ENABLED
         R200_LR_EXPOSURE               (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is disabled)        
-    Following are the options that can only be set dynamically in the R200 camera.        
+    Following are the parameters that can only be set dynamically in the R200 camera.        
         R200_LR_AUTO_EXPOSURE_ENABLED
         R200_AUTO_EXPOSURE_TOP_EDGE    (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
         R200_AUTO_EXPOSURE_BOTTOM_EDGE (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
@@ -154,7 +154,7 @@ Command to launch GUI:
 
     $ rosrun rqt_reconfigure rqt_reconfigure
 
-Command to change dynamic options using commandline:
+Command to change dynamic parameters using commandline:
 
     $ rosrun dynamic_reconfigure dynparam set /<node> <parameter_name> <value>
     E.g. $ rosrun dynamic_reconfigure dynparam set /RealsenseNodelet COLOR_BACKLIGHT_COMPENSATION 2
