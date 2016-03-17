@@ -1,0 +1,72 @@
+<!--
+    Launch file for testing if the dynamic camera options get set correctly using params.
+
+    Steps:
+    roslaunch realsense_camera realsense_r200_static_camera_options_params.launch
+    rosrun realsense_camera realsense_camera_test COLOR_BACKLIGHT_COMPENSATION 3 COLOR_BRIGHTNESS 10 COLOR_CONTRAST 16 COLOR_GAIN 18 COLOR_GAMMA 100 COLOR_HUE 20 COLOR_SATURATION 21 COLOR_SHARPNESS 7 COLOR_ENABLE_AUTO_WHITE_BALANCE 0 COLOR_WHITE_BALANCE 3000 R200_LR_GAIN 200 R200_EMITTER_ENABLED 1 R200_LR_EXPOSURE 27
+    Verify that the "testCameraOptions" test pass.
+-->
+
+<launch>
+
+    <arg name="mode"                                            default="manual" />
+    <arg name="enable_depth"                                    default="true" />
+    <arg name="enable_color"                                    default="true" />
+    <arg name="enable_pointcloud"                               default="true" />
+    <arg name="enable_tf"                                       default="true" />
+    <arg name="depth_width"                                     default="320" />
+    <arg name="depth_height"                                    default="240" />
+    <arg name="color_width"                                     default="320" />
+    <arg name="color_height"                                    default="240" />
+    <arg name="depth_fps"                                       default="60" />
+    <arg name="color_fps"                                       default="60" />
+    <arg name="camera"                                          default="R200" />
+
+    <arg name="COLOR_BACKLIGHT_COMPENSATION"                    default="3" />
+    <arg name="COLOR_BRIGHTNESS"                                default="10" />
+    <arg name="COLOR_CONTRAST"                                  default="16" />
+    <arg name="COLOR_GAIN"                                      default="18" />
+    <arg name="COLOR_GAMMA"                                     default="19" />
+    <arg name="COLOR_HUE"                                       default="20" />
+    <arg name="COLOR_SATURATION"                                default="21" />
+    <arg name="COLOR_SHARPNESS"                                 default="22" />
+    <arg name="COLOR_ENABLE_AUTO_WHITE_BALANCE"                 default="0" />    
+    <arg name="COLOR_WHITE_BALANCE"                             default="3000" />
+    <arg name="R200_LR_GAIN"                                    default="200" />
+    <arg name="R200_EMITTER_ENABLED"                            default="1" />
+    <arg name="R200_LR_EXPOSURE"                                default="27" />    
+
+
+  <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
+
+  <node pkg="nodelet" type="nodelet" name="realsense_nodelet"
+    args="load realsense_camera/RealsenseNodelet standalone_nodelet">
+    <param name="mode"                                              type="str"  value="$(arg mode)" />
+    <param name="enable_depth"                                      type="bool" value="$(arg enable_depth)" />
+    <param name="enable_color"                                      type="bool" value="$(arg enable_color)" />
+    <param name="enable_pointcloud"                                 type="bool" value="$(arg enable_pointcloud)" />
+    <param name="enable_tf"                                         type="bool" value="$(arg enable_tf)" />
+    <param name="depth_width"                                       type="int"  value="$(arg depth_width)" />
+    <param name="depth_height"                                      type="int"  value="$(arg depth_height)" />
+    <param name="color_width"                                       type="int"  value="$(arg color_width)" />
+    <param name="color_height"                                      type="int"  value="$(arg color_height)" />
+    <param name="depth_fps"                                         type="int"  value="$(arg depth_fps)" />
+    <param name="color_fps"                                         type="int"  value="$(arg color_fps)" />
+    <param name="camera"                                            type="str"  value="$(arg camera)" />
+
+    <param name="COLOR_BACKLIGHT_COMPENSATION"                      type="int" value="$(arg COLOR_BACKLIGHT_COMPENSATION)" />
+    <param name="COLOR_BRIGHTNESS"                                  type="int" value="$(arg COLOR_BRIGHTNESS)" />
+    <param name="COLOR_CONTRAST"                                    type="int" value="$(arg COLOR_CONTRAST)" />
+    <param name="COLOR_GAIN"                                        type="int" value="$(arg COLOR_GAIN)" />
+    <param name="COLOR_GAMMA"                                       type="int" value="$(arg COLOR_GAMMA)" />
+    <param name="COLOR_HUE"                                         type="int" value="$(arg COLOR_HUE)" />
+    <param name="COLOR_SATURATION"                                  type="int" value="$(arg COLOR_SATURATION)" />
+    <param name="COLOR_SHARPNESS"                                   type="int" value="$(arg COLOR_SHARPNESS)" />
+    <param name="COLOR_ENABLE_AUTO_WHITE_BALANCE"                   type="int" value="$(arg COLOR_ENABLE_AUTO_WHITE_BALANCE)" />    
+    <param name="COLOR_WHITE_BALANCE"                               type="int" value="$(arg COLOR_WHITE_BALANCE)" />
+    <param name="R200_LR_GAIN"                                      type="int" value="$(arg R200_LR_GAIN)" />
+    <param name="R200_EMITTER_ENABLED"                              type="bool" value="$(arg R200_EMITTER_ENABLED)" />
+    <param name="R200_LR_EXPOSURE"                                  type="int" value="$(arg R200_LR_EXPOSURE)" />
+  </node>
+
+</launch>

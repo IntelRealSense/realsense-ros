@@ -8,13 +8,13 @@
 	
   	<node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
   	
-	<node pkg="nodelet" type="nodelet" name="RealsenseNodelet"
-        args="load realsense_camera/RealsenseNodelet standalone_nodelet 
-        mode $(arg mode)
-        enable_depth $(arg enable_depth)
-        enable_color $(arg enable_color)
-        enable_pointcloud $(arg enable_pointcloud)
-        enable_tf $(arg enable_tf)">        
-  	</node>
-  
+    <node pkg="nodelet" type="nodelet" name="RealsenseNodelet"
+        args="load realsense_camera/RealsenseNodelet standalone_nodelet" >
+        <param name="mode"              type="str"  value="$(arg mode)" />
+        <param name="enable_depth"      type="bool" value="$(arg enable_depth)" />
+        <param name="enable_color"      type="bool" value="$(arg enable_color)" />
+        <param name="enable_pointcloud" type="bool" value="$(arg enable_pointcloud)" />
+        <param name="enable_tf"         type="bool" value="$(arg enable_tf)" />
+    </node>
+
 </launch> 
