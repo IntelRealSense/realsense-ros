@@ -2,8 +2,8 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.1 (2016-03-17)
+------------------
 * Convert command line args to ROS params
   This also fixes Issue #9 for publish_tf and enable_tf
   Updated README to indicate changes in R200_DISPARITY_MULTIPLIER.
