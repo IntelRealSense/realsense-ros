@@ -58,7 +58,7 @@ namespace realsense_camera
     {
       rs_stop_device (rs_device_, 0);
       rs_delete_context (rs_context_, &rs_error_);
-      check_error ();
+      checkError ();
     }
 
     ROS_INFO_STREAM ("RealSense Camera - Stopping camera nodelet.");
@@ -73,58 +73,35 @@ namespace realsense_camera
     ROS_INFO_STREAM ("RealSense Camera - Starting camera nodelet.");
 
     // Set default configurations.
-    depth_height_ = DEPTH_HEIGHT;
-    depth_width_ = DEPTH_WIDTH;
-    color_height_ = COLOR_HEIGHT;
-    color_width_ = COLOR_WIDTH;
-    depth_fps_ = DEPTH_FPS;
-    color_fps_ = COLOR_FPS;
-    enable_depth_ = ENABLE_DEPTH;
-    enable_color_ = ENABLE_COLOR;
-    enable_pointcloud_ = ENABLE_PC;
-    enable_tf_ = ENABLE_TF;
     is_device_started_ = false;
 
-    camera_configuration_ = getMyArgv ();
-
-    frame_id_[RS_STREAM_DEPTH] = DEPTH_OPTICAL_DEF_FRAME;
-    frame_id_[RS_STREAM_COLOR] = COLOR_OPTICAL_DEF_FRAME;
     frame_id_[RS_STREAM_INFRARED] = IR1_DEF_FRAME;
     frame_id_[RS_STREAM_INFRARED2] = IR2_DEF_FRAME;
 
+    for (int i = 0; i < STREAM_COUNT; ++i)
+      camera_info_[i] = NULL;
+
     ros::NodeHandle & nh = getNodeHandle ();
+    pnh_ = getPrivateNodeHandle();
 
     // Set up the topics.
     image_transport::ImageTransport it (nh);
 
-    // Parse parameters.
-    getConfigValues (camera_configuration_);
+    setStreamOptions();
 
     // Advertise the various topics and services.
-    // Advertise depth and infrared streams only if depth parameter is set.
-    if (enable_depth_ == true)
+    camera_publisher_[RS_STREAM_COLOR] = it.advertiseCamera (COLOR_TOPIC, 1);
+    camera_publisher_[RS_STREAM_DEPTH] = it.advertiseCamera (DEPTH_TOPIC, 1);
+    camera_publisher_[RS_STREAM_INFRARED] = it.advertiseCamera (IR1_TOPIC, 1);
+    if (camera_.find (R200) != std::string::npos)
     {
-      camera_publisher_[RS_STREAM_DEPTH] = it.advertiseCamera (DEPTH_TOPIC, 1);
-      camera_publisher_[RS_STREAM_INFRARED] = it.advertiseCamera (IR1_TOPIC, 1);
-      if (camera_.find (R200) != std::string::npos)
-      {
-        camera_publisher_[RS_STREAM_INFRARED2] = it.advertiseCamera (IR2_TOPIC, 1);
-      }
-
-      // Advertise pointcloud only if pointcloud parameter is set.
-      if (enable_pointcloud_ == true)
-      {
-        pointcloud_publisher_ = nh.advertise < sensor_msgs::PointCloud2 > (PC_TOPIC, 1);
-      }
+      camera_publisher_[RS_STREAM_INFRARED2] = it.advertiseCamera (IR2_TOPIC, 1);
     }
 
-    // Advertise color stream only if color parameter is set.
-    if (enable_color_ == true)
-    {
-      camera_publisher_[RS_STREAM_COLOR] = it.advertiseCamera (COLOR_TOPIC, 1);
-    }
+    pointcloud_publisher_ = nh.advertise < sensor_msgs::PointCloud2 > (PC_TOPIC, 1);
 
-    get_options_service_ = nh.advertiseService (SETTINGS_SERVICE, &RealsenseNodelet::getCameraSettings, this);
+
+    get_options_service_ = nh.advertiseService (SETTINGS_SERVICE, &RealsenseNodelet::getCameraOptionValues, this);
 
     dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>(getPrivateNodeHandle()));
 
@@ -156,6 +133,94 @@ namespace realsense_camera
   /*
    *Private Methods.
    */
+  void RealsenseNodelet::enableColorStream()
+  {
+    // Enable streams.
+    if (mode_.compare ("manual") == 0)
+    {
+      ROS_INFO_STREAM ("RealSense Camera - Enabling Color Stream: manual mode");
+      rs_enable_stream (rs_device_, RS_STREAM_COLOR, color_width_, color_height_, COLOR_FORMAT, color_fps_, &rs_error_);
+      checkError ();
+    }
+    else
+    {
+      ROS_INFO_STREAM ("RealSense Camera - Enabling Color Stream: preset mode");
+      rs_enable_stream_preset (rs_device_, RS_STREAM_COLOR, RS_PRESET_BEST_QUALITY, &rs_error_); checkError ();
+    }
+
+    uint32_t stream_index = (uint32_t) RS_STREAM_COLOR;
+    if(camera_info_[stream_index] == NULL) {
+      prepareStreamCalibData (RS_STREAM_COLOR);
+    }
+  }
+
+  void RealsenseNodelet::enableDepthStream()
+  {
+    // Enable streams.
+    if (mode_.compare ("manual") == 0)
+    {
+      ROS_INFO_STREAM ("RealSense Camera - Enabling Depth Stream: manual mode");
+      rs_enable_stream (rs_device_, RS_STREAM_DEPTH, depth_width_, depth_height_, DEPTH_FORMAT, depth_fps_, &rs_error_);
+      checkError ();
+    }
+    else
+    {
+      ROS_INFO_STREAM ("RealSense Camera - Enabling Depth Stream: preset mode");
+      rs_enable_stream_preset (rs_device_, RS_STREAM_DEPTH, RS_PRESET_BEST_QUALITY, &rs_error_); checkError ();
+    }
+
+    uint32_t stream_index = (uint32_t) RS_STREAM_DEPTH;
+    if(camera_info_[stream_index] == NULL)
+    {
+      prepareStreamCalibData (RS_STREAM_DEPTH);
+    }
+  }
+
+  void RealsenseNodelet::enableInfraredStream()
+  {
+    // Enable streams.
+    if (mode_.compare ("manual") == 0)
+    {
+      ROS_INFO_STREAM ("RealSense Camera - Enabling Infrared Stream: manual mode");
+      rs_enable_stream (rs_device_, RS_STREAM_INFRARED, depth_width_, depth_height_, IR1_FORMAT, depth_fps_, &rs_error_);
+      checkError ();
+    }
+    else
+    {
+      ROS_INFO_STREAM ("RealSense Camera - Enabling Infrared Stream: preset mode");
+      rs_enable_stream_preset (rs_device_, RS_STREAM_INFRARED, RS_PRESET_BEST_QUALITY, &rs_error_); checkError ();
+    }
+
+    uint32_t stream_index = (uint32_t) RS_STREAM_INFRARED;
+    if(camera_info_[stream_index] == NULL)
+    {
+      prepareStreamCalibData (RS_STREAM_INFRARED);
+    }
+  }
+
+  void RealsenseNodelet::enableInfrared2Stream()
+  {
+    // Enable streams.
+    if (mode_.compare ("manual") == 0)
+    {
+      ROS_INFO_STREAM ("RealSense Camera - Enabling Infrared2 Stream: manual mode");
+      rs_enable_stream (rs_device_, RS_STREAM_INFRARED2, depth_width_, depth_height_, IR2_FORMAT, depth_fps_, 0);
+    }
+    else
+    {
+      ROS_INFO_STREAM ("RealSense Camera - Enabling Infrared2 Stream: preset mode");
+      rs_enable_stream_preset (rs_device_, RS_STREAM_INFRARED2, RS_PRESET_BEST_QUALITY, 0);
+    }
+
+    uint32_t stream_index = (uint32_t) RS_STREAM_INFRARED2;
+    if(camera_info_[stream_index] == NULL)
+    {
+      prepareStreamCalibData (RS_STREAM_INFRARED2);
+    }
+  }
+
+
+
   void RealsenseNodelet::configCallback(realsense_camera::camera_paramsConfig &config, uint32_t level)
   {
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_BACKLIGHT_COMPENSATION, config.COLOR_BACKLIGHT_COMPENSATION, 0);
@@ -203,10 +268,27 @@ namespace realsense_camera
       edge_values_[3] = config.R200_AUTO_EXPOSURE_BOTTOM_EDGE;
 
       rs_set_device_options(rs_device_, edge_options_, 4, edge_values_, 0);
-   }
+    }
+
+    if(config.enable_depth == false)
+    {
+      if(enable_color_ == false)
+      {
+        ROS_INFO_STREAM ("RealSense Camera - Color stream is also disabled. Cannot disable depth stream");
+        config.enable_depth = true;
+      }
+      else
+      {
+        enable_depth_ = false;
+      }
+    }
+    else
+    {
+      enable_depth_ = true;
+    }
   }
 
-  void RealsenseNodelet::check_error ()
+  void RealsenseNodelet::checkError ()
   {
     if (rs_error_)
     {
@@ -240,7 +322,7 @@ namespace realsense_camera
     }
 
     rs_context_ = rs_create_context (RS_API_VERSION, &rs_error_);
-    check_error ();
+    checkError ();
 
     int num_of_cameras = rs_get_device_count (rs_context_, NULL);
     if (num_of_cameras < 1)
@@ -250,80 +332,64 @@ namespace realsense_camera
     }
 
     rs_device_ = rs_get_device (rs_context_, 0, &rs_error_);
-    check_error ();
+    checkError ();
 
     ROS_INFO_STREAM ("RealSense Camera - Number of cameras connected: " << num_of_cameras);
     ROS_INFO_STREAM ("RealSense Camera - Firmware version: " <<
-        rs_get_device_firmware_version (rs_device_, &rs_error_));
-    check_error ();
+    rs_get_device_firmware_version (rs_device_, &rs_error_));
+    checkError ();
     ROS_INFO_STREAM ("RealSense Camera - Name: " << rs_get_device_name (rs_device_, &rs_error_));
-    check_error ();
+    checkError ();
     ROS_INFO_STREAM ("RealSense Camera - Serial no: " << rs_get_device_serial (rs_device_, &rs_error_));
-    check_error ();
+    checkError ();
 
     // Enable streams.
-    if (enable_depth_ == true)
-    {
-      if (mode_.compare ("manual") == 0)
-      {
-        ROS_INFO_STREAM ("RealSense Camera - Enabling Depth Stream: manual mode");
-        rs_enable_stream (rs_device_, RS_STREAM_DEPTH, depth_width_, depth_height_, DEPTH_FORMAT, depth_fps_, &rs_error_);
-        rs_enable_stream (rs_device_, RS_STREAM_INFRARED, depth_width_, depth_height_, IR1_FORMAT, depth_fps_, &rs_error_);
-        rs_enable_stream (rs_device_, RS_STREAM_INFRARED2, depth_width_, depth_height_, IR2_FORMAT, depth_fps_, 0);
-      }
-      else
-      {
-        ROS_INFO_STREAM ("RealSense Camera - Enabling Depth Stream: preset mode");
-        rs_enable_stream_preset (rs_device_, RS_STREAM_DEPTH, RS_PRESET_BEST_QUALITY, &rs_error_); check_error ();
-        rs_enable_stream_preset (rs_device_, RS_STREAM_INFRARED, RS_PRESET_BEST_QUALITY, &rs_error_); check_error ();
-        rs_enable_stream_preset (rs_device_, RS_STREAM_INFRARED2, RS_PRESET_BEST_QUALITY, 0);
-      }
-    }
-
     if (enable_color_ == true)
     {
-      if (mode_.compare ("manual") == 0)
-      {
-        ROS_INFO_STREAM ("RealSense Camera - Enabling Color Stream: manual mode");
-        rs_enable_stream (rs_device_, RS_STREAM_COLOR, color_width_, color_height_, COLOR_FORMAT, color_fps_, &rs_error_);
-      }
-      else
-      {
-        ROS_INFO_STREAM ("RealSense Camera - Enabling Color Stream: preset mode");
-        rs_enable_stream_preset (rs_device_, RS_STREAM_COLOR, RS_PRESET_BEST_QUALITY, &rs_error_); check_error ();
-      }
+      enableColorStream();
     }
 
-    for (int i = 0; i < RS_OPTION_COUNT; ++i)
+    if (enable_depth_ == true)
     {
-      option_str o =
-      { (rs_option) i};
-
-      if (!rs_device_supports_option (rs_device_, o.opt, &rs_error_))
-      {
-        continue;
-      }
-
-      rs_get_device_option_range (rs_device_, o.opt, &o.min, &o.max, &o.step, 0);
-      if (o.min == o.max)
-      {
-        continue;
-      }
-
-      o.value = rs_get_device_option (rs_device_, o.opt, 0);
-      options.push_back (o);
+      enableDepthStream();
+      enableInfraredStream();
+      enableInfrared2Stream();
     }
 
-    setConfigValues (camera_configuration_, options);
+    getCameraOptions();
+    setStaticCameraOptions();
 
     // Start device.
     rs_start_device (rs_device_, &rs_error_);
+    checkError ();
 
     is_device_started_ = true;
 
     allocateResources ();
 
     return true;
+  }
+
+  /*
+   * Gets the options supported by the camera along with their min, max and step values.
+   */
+  void RealsenseNodelet::getCameraOptions()
+  {
+    for (int i = 0; i < RS_OPTION_COUNT; ++i)
+    {
+      option_str o = { (rs_option) i };
+
+      if (rs_device_supports_option(rs_device_, o.opt, &rs_error_))
+      {
+        rs_get_device_option_range(rs_device_, o.opt, &o.min, &o.max, &o.step, 0);
+        // Skip the camera options where min and max values are the same.
+        if (o.min != o.max)
+        {
+          o.value = rs_get_device_option(rs_device_, o.opt, 0);
+          options.push_back(o);
+        }
+      }
+    }
   }
 
   /*
@@ -334,26 +400,12 @@ namespace realsense_camera
     // Prepare camera for enabled streams (color/depth/infrared/infrared2).
     fillStreamEncoding ();
 
-    if (rs_is_stream_enabled (rs_device_, RS_STREAM_COLOR, 0))
+    image_[(uint32_t) RS_STREAM_COLOR] = cv::Mat (color_height_, color_width_, CV_8UC3, cv::Scalar (0, 0, 0));
+    image_[(uint32_t) RS_STREAM_DEPTH] = cv::Mat (depth_height_, depth_width_, CV_16UC1, cv::Scalar (0));
+    image_[(uint32_t) RS_STREAM_INFRARED] = cv::Mat (depth_height_, depth_width_, CV_8UC1, cv::Scalar (0));
+    if (camera_.find (R200) != std::string::npos)
     {
-      image_[(uint32_t) RS_STREAM_COLOR] = cv::Mat (color_height_, color_width_, CV_8UC3, cv::Scalar (0, 0, 0));
-      prepareStreamCalibData (RS_STREAM_COLOR);
-    }
-
-    if (rs_is_stream_enabled (rs_device_, RS_STREAM_DEPTH, 0))
-    {
-      // Define message.
-      image_[(uint32_t) RS_STREAM_DEPTH] = cv::Mat (depth_height_, depth_width_, CV_16UC1, cv::Scalar (0));
-      prepareStreamCalibData (RS_STREAM_DEPTH);
-
-      image_[(uint32_t) RS_STREAM_INFRARED] = cv::Mat (depth_height_, depth_width_, CV_8UC1, cv::Scalar (0));
-      prepareStreamCalibData (RS_STREAM_INFRARED);
-
-      if (rs_is_stream_enabled (rs_device_, RS_STREAM_INFRARED2, 0))
-      {
         image_[(uint32_t) RS_STREAM_INFRARED2] = cv::Mat (depth_height_, depth_width_, CV_8UC1, cv::Scalar (0));
-        prepareStreamCalibData (RS_STREAM_INFRARED2);
-      }
     }
   }
 
@@ -365,7 +417,7 @@ namespace realsense_camera
     uint32_t stream_index = (uint32_t) rs_strm;
     rs_intrinsics intrinsic;
     rs_get_stream_intrinsics (rs_device_, rs_strm, &intrinsic, &rs_error_);
-    check_error ();
+    checkError ();
 
     camera_info_[stream_index] = new sensor_msgs::CameraInfo ();
     camera_info_ptr_[stream_index] = sensor_msgs::CameraInfoPtr (camera_info_[stream_index]);
@@ -374,60 +426,67 @@ namespace realsense_camera
     camera_info_[stream_index]->width = intrinsic.width;
     camera_info_[stream_index]->height = intrinsic.height;
 
-    camera_info_[stream_index]->K.at (0) = intrinsic.fx;
-    camera_info_[stream_index]->K.at (2) = intrinsic.ppx;
-    camera_info_[stream_index]->K.at (4) = intrinsic.fy;
-    camera_info_[stream_index]->K.at (5) = intrinsic.ppy;
-    camera_info_[stream_index]->K.at (8) = 1;
+    camera_info_[stream_index]->K.at(0) = intrinsic.fx;
+    camera_info_[stream_index]->K.at(2) = intrinsic.ppx;
+    camera_info_[stream_index]->K.at(4) = intrinsic.fy;
+    camera_info_[stream_index]->K.at(5) = intrinsic.ppy;
+    camera_info_[stream_index]->K.at(8) = 1;
 
-    camera_info_[stream_index]->P[0] = camera_info_[stream_index]->K.at (0);
-    camera_info_[stream_index]->P[1] = 0;
-    camera_info_[stream_index]->P[2] = camera_info_[stream_index]->K.at (2);
-    camera_info_[stream_index]->P[3] = 0;
+    camera_info_[stream_index]->P.at(0) = camera_info_[stream_index]->K.at(0);
+    camera_info_[stream_index]->P.at(1) = 0;
+    camera_info_[stream_index]->P.at(2) = camera_info_[stream_index]->K.at(2);
+    camera_info_[stream_index]->P.at(3) = 0;
 
-    camera_info_[stream_index]->P[4] = 0;
-    camera_info_[stream_index]->P[5] = camera_info_[stream_index]->K.at (4);
-    camera_info_[stream_index]->P[6] = camera_info_[stream_index]->K.at (5);
-    camera_info_[stream_index]->P[7] = 0;
+    camera_info_[stream_index]->P.at(4) = 0;
+    camera_info_[stream_index]->P.at(5) = camera_info_[stream_index]->K.at(4);
+    camera_info_[stream_index]->P.at(6) = camera_info_[stream_index]->K.at(5);
+    camera_info_[stream_index]->P.at(7) = 0;
 
-    camera_info_[stream_index]->P[8] = 0;
-    camera_info_[stream_index]->P[9] = 0;
-    camera_info_[stream_index]->P[10] = 1;
-    camera_info_[stream_index]->P[11] = 0;
+    camera_info_[stream_index]->P.at(8) = 0;
+    camera_info_[stream_index]->P.at(9) = 0;
+    camera_info_[stream_index]->P.at(10) = 1;
+    camera_info_[stream_index]->P.at(11) = 0;
+
+    if (stream_index == RS_STREAM_DEPTH)
+    {
+      // set depth to color translation values in Projection matrix (P)
+      rs_extrinsics z_extrinsic;
+      rs_get_device_extrinsics (rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_); checkError ();
+      camera_info_[stream_index]->P.at(3) = z_extrinsic.translation[0]/1000;     // Tx
+      camera_info_[stream_index]->P.at(7) = z_extrinsic.translation[1]/1000;     // Ty
+      camera_info_[stream_index]->P.at(11) = z_extrinsic.translation[2]/1000;    // Tz
+    }
 
     camera_info_[stream_index]->distortion_model = "plumb_bob";
+
+    // set R (rotation matrix) values to identity matrix
+    camera_info_[stream_index]->R.at(0) = (double) 1;
+    camera_info_[stream_index]->R.at(1) = (double) 0;
+    camera_info_[stream_index]->R.at(2) = (double) 0;
+    camera_info_[stream_index]->R.at(3) = (double) 0;
+    camera_info_[stream_index]->R.at(4) = (double) 1;
+    camera_info_[stream_index]->R.at(5) = (double) 0;
+    camera_info_[stream_index]->R.at(6) = (double) 0;
+    camera_info_[stream_index]->R.at(7) = (double) 0;
+    camera_info_[stream_index]->R.at(8) = (double) 1;
 
     for (int i = 0; i < 5; i++)
     camera_info_[stream_index]->D.push_back (0);
   }
 
   /*
-   * Service function to get values for supported camera settings.
+   * Get the latest values of the camera options.
    */
-  bool RealsenseNodelet::getCameraSettings (realsense_camera::cameraConfiguration::Request & req,
+  bool RealsenseNodelet::getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req,
       realsense_camera::cameraConfiguration::Response & res)
   {
     std::string get_options_result_str;
     std::string opt_name, opt_value;
 
-    for (int i = 0; i < RS_OPTION_COUNT; ++i)
+    for (option_str o: options)
     {
-      option_str o =
-      { (rs_option) i};
-      if (!rs_device_supports_option (rs_device_, o.opt, &rs_error_))
-      {
-        continue;
-      }
-
-      rs_get_device_option_range (rs_device_, o.opt, &o.min, &o.max,
-          &o.step, 0);
-      if (o.min == o.max)
-      {
-        continue;
-      }
-
-      o.value = rs_get_device_option (rs_device_, o.opt, 0);
-      opt_name = rs_option_to_string (o.opt);
+      opt_name = rs_option_to_string(o.opt);
+      o.value = rs_get_device_option(rs_device_, o.opt, 0);
       opt_value = boost::lexical_cast < std::string > (o.value);
       get_options_result_str += opt_name + ":" + opt_value + ";";
     }
@@ -437,143 +496,80 @@ namespace realsense_camera
   }
 
   /*
-   * Parse commandline arguments and set parameters.
+   * Set the stream options based on input params.
    */
-  void RealsenseNodelet::getConfigValues (std::vector < std::string > args)
+  void RealsenseNodelet::setStreamOptions()
   {
-    while (args.size () > 1)
-    {
-      config_[args[0]] = args[1];
-      args.erase (args.begin ());
-      args.erase (args.begin ());
-    }
-
-    if (config_.find ("mode") != config_.end ())
-    {
-      mode_ = config_.at ("mode");
-    }
-
-    if (config_.find ("enable_color") != config_.end ())
-    {
-      if (strcmp((config_.at ("enable_color").c_str ()),"true") == 0)
-      {
-        enable_color_ = true;
-      }
-      else
-      {
-        enable_color_ = false;
-      }
-    }
-
-    if (config_.find ("enable_depth") != config_.end ())
-    {
-      if (strcmp((config_.at ("enable_depth").c_str ()),"true") == 0)
-      {
-        enable_depth_ = true;
-      }
-      else
-      {
-        enable_depth_ = false;
-      }
-    }
-
-    if (config_.find ("enable_pointcloud") != config_.end ())
-    {
-      if (strcmp((config_.at ("enable_pointcloud").c_str ()),"true") == 0)
-      {
-        enable_pointcloud_ = true;
-      }
-      else
-      {
-        enable_pointcloud_ = false;
-      }
-    }
-
-    if (config_.find ("enable_tf") != config_.end ())
-    {
-      if (strcmp((config_.at ("enable_tf").c_str ()),"true") == 0)
-      {
-        enable_tf_ = true;
-      }
-      else
-      {
-        enable_tf_ = false;
-      }
-    }
-
-    if (config_.find ("camera") != config_.end ())
-    {
-      camera_ = config_.at ("camera").c_str ();
-    }
-
-    if (config_.find ("depth_frame_id") != config_.end ())
-    {
-      frame_id_[RS_STREAM_DEPTH] = config_.at ("depth_frame_id").c_str ();
-    }
-
-    if (config_.find ("rgb_frame_id") != config_.end ())
-    {
-      frame_id_[RS_STREAM_COLOR] = config_.at ("rgb_frame_id").c_str ();
-    }
-
-    if (mode_.compare ("manual") == 0)
-    {
-      if (config_.find ("color_fps") != config_.end ())
-      {
-        color_fps_ = atoi (config_.at ("color_fps").c_str ());
-      }
-
-      if (config_.find ("depth_fps") != config_.end ())
-      {
-        depth_fps_ = atoi (config_.at ("depth_fps").c_str ());
-      }
-
-      if (config_.find ("color_height") != config_.end ())
-      {
-        color_height_ = atoi (config_.at ("color_height").c_str ());
-      }
-
-      if (config_.find ("color_width") != config_.end ())
-      {
-        color_width_ = atoi (config_.at ("color_width").c_str ());
-      }
-
-      if (config_.find ("depth_height") != config_.end ())
-      {
-        depth_height_ = atoi (config_.at ("depth_height").c_str ());
-      }
-
-      if (config_.find ("depth_width") != config_.end ())
-      {
-        depth_width_ = atoi (config_.at ("depth_width").c_str ());
-      }
-    }
+    pnh_.param("camera", camera_, (std::string) R200);
+    pnh_.param("mode", mode_, DEFAULT_MODE);
+    pnh_.param("enable_depth", enable_depth_, ENABLE_DEPTH);
+    pnh_.param("enable_color", enable_color_, ENABLE_COLOR);
+    pnh_.param("enable_pointcloud", enable_pointcloud_, ENABLE_PC);
+    pnh_.param("enable_tf", enable_tf_, ENABLE_TF);
+    pnh_.param("depth_width", depth_width_, DEPTH_WIDTH);
+    pnh_.param("depth_height", depth_height_, DEPTH_HEIGHT);
+    pnh_.param("color_width", color_width_, COLOR_WIDTH);
+    pnh_.param("color_height", color_height_, COLOR_HEIGHT);
+    pnh_.param("depth_fps", depth_fps_, DEPTH_FPS);
+    pnh_.param("color_fps", color_fps_, COLOR_FPS);
+    pnh_.param("depth_frame_id", frame_id_[RS_STREAM_DEPTH], (std::string) DEPTH_OPTICAL_DEF_FRAME);
+    pnh_.param("rgb_frame_id", frame_id_[RS_STREAM_COLOR], (std::string) COLOR_OPTICAL_DEF_FRAME);
   }
 
   /*
-   * Change camera settings.
+   * Set the static camera options.
    */
-  void RealsenseNodelet::setConfigValues (std::vector < std::string > args,
-      std::vector < option_str > cam_options)
+  void RealsenseNodelet::setStaticCameraOptions()
   {
-    while (args.size () > 1)
-    {
-      config_[args[0]] = args[1];
-      args.erase (args.begin ());
-      args.erase (args.begin ());
-    }
+    // Get dynamic options from the dynamic reconfigure server.
+    camera_paramsConfig params_config;
+    dynamic_reconf_server_->getConfigDefault(params_config);
+    std::vector<camera_paramsConfig::AbstractParamDescriptionConstPtr> param_desc = params_config.__getParamDescriptions__();
 
-    while (!cam_options.empty ())
+    // Iterate through the supported camera options
+    for (option_str o: options)
     {
-      option_str o = cam_options.back ();
-      std::string opt_name = rs_option_to_string (o.opt);
-      if (config_.find (opt_name) != config_.end () && rs_device_supports_option (rs_device_, o.opt, 0))
+      std::string opt_name = rs_option_to_string(o.opt);
+      bool found = false;
+
+      std::vector<camera_paramsConfig::AbstractParamDescriptionConstPtr>::iterator it;
+      for (camera_paramsConfig::AbstractParamDescriptionConstPtr param_desc_ptr: param_desc)
       {
-        ROS_INFO_STREAM ("RealSense Camera - Setting" << opt_name.c_str () << " to " << config_.at (opt_name).c_str ());
-        rs_set_device_option (rs_device_, o.opt, atoi (config_.at (opt_name).c_str ()), &rs_error_);
-        check_error ();
+        if (opt_name.compare((* param_desc_ptr).name) == 0)
+        {
+          found = true;
+          break;
+        }
       }
-      cam_options.pop_back ();
+      // Skip the dynamic options and set only the static camera options.
+      if (found == false)
+      {
+        std::string key;
+        double val;
+
+        if (pnh_.searchParam(opt_name, key))
+        {
+          double opt_val;
+          pnh_.getParam(key, val);
+
+          // Validate and set the input values within the min-max range
+          if (val < o.min)
+          {
+            opt_val = o.min;
+          }
+          else if (val > o.max)
+          {
+            opt_val = o.max;
+          }
+          else
+          {
+            opt_val = val;
+          }
+          ROS_INFO_STREAM ("RealSense Camera - Static Options: " << opt_name << " = " << opt_val);
+          rs_set_device_option (rs_device_, o.opt, opt_val, &rs_error_);
+          checkError();
+        }
+      }
     }
   }
 
@@ -625,45 +621,94 @@ namespace realsense_camera
    */
   void RealsenseNodelet::publishStreams ()
   {
-    rs_wait_for_frames (rs_device_, &rs_error_);
-    check_error ();
-    time_stamp_ = ros::Time::now ();
-
-    for (int stream_index = 0; stream_index < STREAM_COUNT; ++stream_index)
+    if(enable_depth_ == false && rs_is_stream_enabled (rs_device_, RS_STREAM_DEPTH, 0) == 1)
     {
-      // Publish image stream only if there is at least one subscriber.
-      if (camera_publisher_[stream_index].getNumSubscribers () > 0)
+      if(rs_is_device_streaming(rs_device_, 0) == 1)
       {
-        prepareStreamData ((rs_stream) stream_index);
+        rs_stop_device (rs_device_, &rs_error_); checkError ();
+        ROS_INFO_STREAM ("RealSense Camera - Device Stopped");
+      }
 
-        sensor_msgs::ImagePtr msg = cv_bridge::CvImage (std_msgs::Header (),
-            stream_encoding_[stream_index],
-            image_[stream_index]).toImageMsg ();
 
-        msg->header.frame_id = frame_id_[stream_index];
-        msg->header.stamp = time_stamp_;	// Publish timestamp to synchronize frames.
-        msg->width = image_[stream_index].cols;
-        msg->height = image_[stream_index].rows;
-        msg->is_bigendian = false;
-        msg->step = stream_step_[stream_index];
+      //disable depth, infrared1 and infrared2 streams
+      rs_disable_stream(rs_device_, RS_STREAM_DEPTH, &rs_error_); checkError ();
+      ROS_INFO_STREAM ("RealSense Camera - Depth Stream Disabled");
 
-        camera_info_ptr_[stream_index]->header.stamp = msg->header.stamp;
-        camera_publisher_[stream_index].publish (msg, camera_info_ptr_[stream_index]);
+      rs_disable_stream(rs_device_, RS_STREAM_INFRARED, &rs_error_); checkError ();
+      ROS_INFO_STREAM ("RealSense Camera - Infrared1 stream Disabled");
+
+      rs_disable_stream(rs_device_, RS_STREAM_INFRARED2, &rs_error_); checkError ();
+      ROS_INFO_STREAM ("RealSense Camera - Infrared2 stream Disabled");
+
+      if(rs_is_device_streaming(rs_device_, 0) == 0)
+      {
+        rs_start_device (rs_device_, &rs_error_);checkError ();
+        ROS_INFO_STREAM ("RealSense Camera - Device Started");
       }
     }
 
-    if (pointcloud_publisher_.getNumSubscribers () > 0 && rs_is_stream_enabled (rs_device_, RS_STREAM_DEPTH, 0)
-        && enable_pointcloud_ == true)
+    if(enable_depth_ == true && rs_is_stream_enabled (rs_device_, RS_STREAM_DEPTH, 0) == 0)
     {
-      if (camera_publisher_[(uint32_t) RS_STREAM_DEPTH].getNumSubscribers () <= 0)
+      if(rs_is_device_streaming(rs_device_, 0) == 1)
       {
-        prepareStreamData (RS_STREAM_DEPTH);
+        rs_stop_device (rs_device_, &rs_error_); checkError ();
+        ROS_INFO_STREAM ("RealSense Camera - Device Stopped");
       }
-      if (camera_publisher_[(uint32_t) RS_STREAM_COLOR].getNumSubscribers () <= 0)
+
+      enableDepthStream();
+      enableInfraredStream();
+      enableInfrared2Stream();
+
+      if(rs_is_device_streaming(rs_device_, 0) == 0)
       {
-        prepareStreamData (RS_STREAM_COLOR);
+        rs_start_device (rs_device_, &rs_error_); checkError ();
+        ROS_INFO_STREAM ("RealSense Camera - Device Started");
       }
-      publishPointCloud (image_[(uint32_t) RS_STREAM_COLOR]);
+    }
+
+    if(rs_is_device_streaming(rs_device_, 0) == 1)
+    {
+      rs_wait_for_frames (rs_device_, &rs_error_);
+      checkError ();
+      time_stamp_ = ros::Time::now ();
+
+      for (int stream_index = 0; stream_index < STREAM_COUNT; ++stream_index)
+      {
+        // Publish image stream only if there is at least one subscriber.
+        if (camera_publisher_[stream_index].getNumSubscribers () > 0 &&
+	    rs_is_stream_enabled (rs_device_, (rs_stream) stream_index, 0) == 1)
+        {
+          prepareStreamData ((rs_stream) stream_index);
+
+          sensor_msgs::ImagePtr msg = cv_bridge::CvImage (std_msgs::Header (),
+              stream_encoding_[stream_index],
+              image_[stream_index]).toImageMsg ();
+
+          msg->header.frame_id = frame_id_[stream_index];
+          msg->header.stamp = time_stamp_;	// Publish timestamp to synchronize frames.
+          msg->width = image_[stream_index].cols;
+          msg->height = image_[stream_index].rows;
+          msg->is_bigendian = false;
+          msg->step = stream_step_[stream_index];
+
+          camera_info_ptr_[stream_index]->header.stamp = msg->header.stamp;
+          camera_publisher_[stream_index].publish (msg, camera_info_ptr_[stream_index]);
+        }
+      }
+
+      if (pointcloud_publisher_.getNumSubscribers () > 0 && rs_is_stream_enabled (rs_device_, RS_STREAM_DEPTH, 0) == 1
+          && enable_pointcloud_ == true)
+      {
+        if (camera_publisher_[(uint32_t) RS_STREAM_DEPTH].getNumSubscribers () <= 0)
+        {
+          prepareStreamData (RS_STREAM_DEPTH);
+        }
+        if (camera_publisher_[(uint32_t) RS_STREAM_COLOR].getNumSubscribers () <= 0)
+        {
+          prepareStreamData (RS_STREAM_COLOR);
+        }
+        publishPointCloud (image_[(uint32_t) RS_STREAM_COLOR]);
+      }
     }
   }
 
@@ -680,12 +725,12 @@ namespace realsense_camera
 
       rs_intrinsics z_intrinsic;
       rs_get_stream_intrinsics (rs_device_, RS_STREAM_DEPTH, &z_intrinsic, &rs_error_);
-      check_error ();
+      checkError ();
 
       if (enable_color_ == true)
       {
-        rs_get_stream_intrinsics (rs_device_, RS_STREAM_COLOR, &color_intrinsic, &rs_error_); check_error ();
-        rs_get_device_extrinsics (rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_); check_error ();
+        rs_get_stream_intrinsics (rs_device_, RS_STREAM_COLOR, &color_intrinsic, &rs_error_); checkError ();
+        rs_get_device_extrinsics (rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_); checkError ();
       }
 
       // Convert pointcloud from the camera to pointcloud object for ROS.
@@ -716,7 +761,7 @@ namespace realsense_camera
       float depth_point[3], color_point[3], color_pixel[2], scaled_depth;
       unsigned char *color_data = image_color.data;
       const float depth_scale = rs_get_device_depth_scale (rs_device_, &rs_error_);
-      check_error ();// Default value is 0.001
+      checkError ();// Default value is 0.001
 
       // Fill the PointCloud2 fields.
       for (int y = 0; y < z_intrinsic.height; y++)
@@ -791,7 +836,7 @@ namespace realsense_camera
     rs_extrinsics z_extrinsic;
 
     // extrinsics are offsets between the cameras
-    rs_get_device_extrinsics (rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_); check_error ();
+    rs_get_device_extrinsics (rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_); checkError ();
 
     ros::Duration sleeper(0.1); // 100ms
 

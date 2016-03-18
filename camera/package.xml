@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>realsense_camera</name>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <description>RealSense Camera package allowing access to Intel 3D cameras and advanced modules</description>
 
   <maintainer email="rajvi.jingar@intel.com">Rajvi Jingar</maintainer>
@@ -13,34 +13,35 @@
 
   <author email="rajvi.jingar@intel.com">Rajvi Jingar</author> 
   <author email="reagan.lopez@intel.com">Reagan Lopez</author>
-  <author email="matthew.k.hansen@intel.com">Matt Hansen</author>  
+  <author email="matthew.k.hansen@intel.com">Matt Hansen</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
-  <build_depend>nodelet</build_depend> 
+  <build_depend>nodelet</build_depend>
   <build_depend>cv_bridge</build_depend>
   <build_depend>image_transport</build_depend>
   <build_depend>camera_info_manager</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>message_generation</build_depend>
-  <build_depend>std_msgs</build_depend>  
-  <build_depend>sensor_msgs</build_depend>  
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
   <build_depend>rostest</build_depend>
   <build_depend>pcl_ros</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
  
   <run_depend>roscpp</run_depend>
-  <run_depend>nodelet</run_depend>  
+  <run_depend>nodelet</run_depend>
   <run_depend>cv_bridge</run_depend>
   <run_depend>image_transport</run_depend>
-  <run_depend>camera_info_manager</run_depend> 
+  <run_depend>camera_info_manager</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>message_generation</run_depend>
-  <run_depend>std_msgs</run_depend>  
-  <run_depend>sensor_msgs</run_depend>  
+  <run_depend>std_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
   <run_depend>rostest</run_depend>
   <run_depend>pcl_ros</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>rgbd_launch</run_depend>
 
   <export>
   	<nodelet plugin="${prefix}/src/realsense_camera_nodelet_plugins.xml" />

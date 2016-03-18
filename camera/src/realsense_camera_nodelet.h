@@ -77,6 +77,7 @@ public:
   // Default Constants.
   const int MAX_Z = 8;	// in meters
   const int DEFAULT_CAMERA = 0;	// default camera index
+  const std::string DEFAULT_MODE = "preset";
   const int DEPTH_HEIGHT = 360;
   const int DEPTH_WIDTH = 480;
   const int COLOR_HEIGHT = 480;
@@ -128,7 +129,6 @@ private:
   bool enable_depth_;
   bool enable_pointcloud_;
   bool enable_tf_;
-  std::vector<std::string> camera_configuration_;
   std::string camera_ = "R200";
   const uint16_t *image_depth16_;
 
@@ -149,6 +149,7 @@ private:
   ros::Time time_stamp_;
   ros::Publisher pointcloud_publisher_;
   ros::ServiceServer get_options_service_;
+  ros::NodeHandle pnh_;
 
   std::string frame_id_[STREAM_COUNT];
   std::string stream_encoding_[STREAM_COUNT];
@@ -165,7 +166,11 @@ private:
   boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>> dynamic_reconf_server_;
 
   // Member Functions.
-  void check_error();
+  void enableColorStream();
+  void enableDepthStream();
+  void enableInfraredStream();
+  void enableInfrared2Stream();
+  void checkError();
   void fetchCalibData();
   void prepareStreamCalibData(rs_stream calib_data);
   void prepareStreamData(rs_stream rs_strm);
@@ -173,12 +178,13 @@ private:
   void publishPointCloud(cv::Mat & image_rgb);
   void publishTransforms();
   void devicePoll();
+  void getCameraOptions();
   void allocateResources();
   bool connectToCamera();
   void fillStreamEncoding();
-  void getConfigValues(std::vector<std::string> args);
-  void setConfigValues(std::vector<std::string> args, std::vector<struct option_str> cam_options);
-  bool getCameraSettings(realsense_camera::cameraConfiguration::Request & req, realsense_camera::cameraConfiguration::Response & res);
+  void setStreamOptions();
+  void setStaticCameraOptions();
+  bool getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req, realsense_camera::cameraConfiguration::Response & res);
   void configCallback(realsense_camera::camera_paramsConfig &config, uint32_t level);
 
 };

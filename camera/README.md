@@ -72,33 +72,32 @@ Infrared2 camera
 
 #### Static Parameters
 
-    mode (string, default: preset)
-        Specify the mode to start camera streams. Mode comprises of height, width and fps. 
-        Preset mode enables default values whereas Manual mode enables the specified parameter values.
-    color_height (int, default: 480)
-        Specify the color camera height resolution.
-    color_width (int, default: 640)
-        Specify the color camera width resolution.
-    depth_height (int, default: 360)
-        Specify the depth camera height resolution.
-    depth_width (int, default: 480)
-        Specify the depth camera width resolution.
-    depth_fps (int, default: 60)
-        Specify the color camera FPS
-    depth_fps (int, default: 60)
-        Specify the depth camera FPS
-    enable_depth (bool, default: true) 
-        Specify if to enable or not the depth camera.
-    enable_color (bool, default: true) 
-        Specify if to enable or not the color camera.
-    enable_pointcloud (bool, default: true) 
-        Specify if to enable or not the point cloud camera.
-    enable_tf (bool, default: true) 
-        Specify if to enable or not the transform frames.       
-    camera (string, default: "R200") 
-        Specify the camera name. 
-    Supported options: Following are the options supported by the R200 camera:
-        R200_DEPTH_CONTROL_PRESET : [0, 5]
+    Stream parameters:
+	    mode (string, default: preset)
+	        Specify the mode to start camera streams. Mode comprises of height, width and fps. 
+	        Preset mode enables default values whereas Manual mode enables the specified parameter values.
+	    color_height (int, default: 480)
+	        Specify the color camera height resolution.
+	    color_width (int, default: 640)
+	        Specify the color camera width resolution.
+	    depth_height (int, default: 360)
+	        Specify the depth camera height resolution.
+	    depth_width (int, default: 480)
+	        Specify the depth camera width resolution.
+	    depth_fps (int, default: 60)
+	        Specify the color camera FPS
+	    depth_fps (int, default: 60)
+	        Specify the depth camera FPS
+	    enable_color (bool, default: true) 
+	        Specify if to enable or not the color camera.
+	    enable_pointcloud (bool, default: true) 
+	        Specify if to enable or not the point cloud camera.
+	    enable_tf (bool, default: true) 
+	        Specify if to enable or not the transform frames.       
+	    camera (string, default: "R200") 
+	        Specify the camera name. 
+    Camera parameters: 
+    Following are the parameters that can be set only statically in the R200 camera:
         R200_DEPTH_UNITS : [1, 2147483647]
         R200_DEPTH_CLAMP_MIN : [0, 65535]
         R200_DEPTH_CLAMP_MAX : [0, 65535]
@@ -119,8 +118,14 @@ Infrared2 camera
 To get supported camera options with current value set. It returns string in options:value format where different options are seperated by semicolon.
 
 ####Dynamic Parameters
-   List of dynamically configurable camera options:
 
+    Stream parameters:
+        enable_depth (bool, default: true) 
+          Specify if to enable or not the depth and infrared camera.
+          Note: Infrared streams will be enabled or disabled along with depth stream.
+
+    Camera parameters: 
+    Following are the parameters that can be set dynamically as well as statically in the R200 camera.
         COLOR_BACKLIGHT_COMPENSATION
         COLOR_BRIGHTNESS
         COLOR_CONTRAST
@@ -129,35 +134,31 @@ To get supported camera options with current value set. It returns string in opt
         COLOR_HUE
         COLOR_SATURATION
         COLOR_SHARPNESS
-        COLOR_WHITE_BALANCE
         COLOR_ENABLE_AUTO_WHITE_BALANCE
-        R200_LR_AUTO_EXPOSURE_ENABLED
+        COLOR_WHITE_BALANCE            (Must be set only if COLOR_ENABLE_AUTO_WHITE_BALANCE is disabled)
         R200_LR_GAIN
-        R200_LR_EXPOSURE
         R200_EMITTER_ENABLED
-        R200_DISPARITY_MULTIPLIER
-        R200_AUTO_EXPOSURE_TOP_EDGE
-        R200_AUTO_EXPOSURE_BOTTOM_EDGE
-        R200_AUTO_EXPOSURE_LEFT_EDGE
-        R200_AUTO_EXPOSURE_RIGHT_EDGE
-
-Use rqt_reconfigure GUI to view and edit the parameters that are accessible via dynamic_reconfigure.
-
-Command to launch GUI:
-
-    $ rosrun rqt_reconfigure rqt_reconfigure
-
-Change options commandline using following command:
-
-    $ rosrun dynamic_reconfigure dynparam set /<node> <parameter_name> <value>
-    E.g. $ rosrun dynamic_reconfigure dynparam set /RealsenseNodelet COLOR_BACKLIGHT_COMPENSATION 2
+        R200_DISPARITY_MULTIPLIER      (This parameter does not work in the latest R200 firmware release. Likely to be removed in the next ros-realsense release.)
+        R200_LR_EXPOSURE               (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is disabled)        
+    Following are the parameters that can only be set dynamically in the R200 camera.        
+        R200_LR_AUTO_EXPOSURE_ENABLED
+        R200_AUTO_EXPOSURE_TOP_EDGE    (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
+        R200_AUTO_EXPOSURE_BOTTOM_EDGE (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
+        R200_AUTO_EXPOSURE_LEFT_EDGE   (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
+        R200_AUTO_EXPOSURE_RIGHT_EDGE  (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
 
 Note: For Autoexposure EDGE parameters, max value will go only upto the bounds of the infrared image.	
 E.g. For 320x240 infrared image, valid values are within 0-319 and 0-239)
 
-To change EDGE parameters, R200_LR_AUTO_EXPOSURE_ENABLED should be enabled.			
-To set R200_LR_EXPOSURE, R200_LR_AUTO_EXPOSURE_ENABLED should be disabled.	
-To set COLOR_WHITE_BALANCE, COLOR_ENABLE_AUTO_WHITE_BALANCE should be disabled.	
+Use rqt_reconfigure GUI to view and edit the parameters that are accessible via dynamic_reconfigure.
+Command to launch GUI:
+
+    $ rosrun rqt_reconfigure rqt_reconfigure
+
+Command to change dynamic parameters using commandline:
+
+    $ rosrun dynamic_reconfigure dynparam set /<node> <parameter_name> <value>
+    E.g. $ rosrun dynamic_reconfigure dynparam set /RealsenseNodelet COLOR_BACKLIGHT_COMPENSATION 2
 
 
 ###Running the R200 nodelet
