@@ -172,7 +172,7 @@ namespace realsense_camera
     uint32_t stream_index = (uint32_t) RS_STREAM_DEPTH;
     if(camera_info_[stream_index] == NULL)
     {
-	prepareStreamCalibData (RS_STREAM_DEPTH);
+      prepareStreamCalibData (RS_STREAM_DEPTH);
     }
   }
 
@@ -194,7 +194,7 @@ namespace realsense_camera
     uint32_t stream_index = (uint32_t) RS_STREAM_INFRARED;
     if(camera_info_[stream_index] == NULL)
     {
-	prepareStreamCalibData (RS_STREAM_INFRARED);
+      prepareStreamCalibData (RS_STREAM_INFRARED);
     }
   }
 
@@ -628,6 +628,7 @@ namespace realsense_camera
         rs_stop_device (rs_device_, &rs_error_); checkError ();
         ROS_INFO_STREAM ("RealSense Camera - Device Stopped");
       }
+
 
       //disable depth, infrared1 and infrared2 streams
       rs_disable_stream(rs_device_, RS_STREAM_DEPTH, &rs_error_); checkError ();
