@@ -43,29 +43,47 @@ generate_dynamic_reconfigure_options(
   cfg/camera_params.cfg
 )
 
-
-
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
 add_library(realsense_camera_nodelet src/realsense_camera_nodelet.cpp)
-target_link_libraries(realsense_camera_nodelet 
+target_link_libraries(realsense_camera_nodelet
   ${catkin_LIBRARIES}
   /usr/local/lib/librealsense.so
 )
 add_dependencies(realsense_camera_nodelet realsense_camera_generate_messages_cpp ${PROJECT_NAME}_gencfg)
 
 add_executable(realsense_camera_test test/realsense_camera_test_node.cpp)
-target_link_libraries(realsense_camera_test 
+target_link_libraries(realsense_camera_test
   ${catkin_LIBRARIES}
   ${GTEST_LIBRARIES}
 )
 add_dependencies(realsense_camera_test realsense_camera_generate_messages_cpp ${PROJECT_NAME}_gencfg)
 
 add_executable(realsense_camera_test_rgbd test/realsense_camera_test_rgbd_node.cpp)
-target_link_libraries(realsense_camera_test_rgbd 
+target_link_libraries(realsense_camera_test_rgbd
   ${catkin_LIBRARIES}
   ${GTEST_LIBRARIES}
 )
 add_dependencies(realsense_camera_test_rgbd realsense_camera_generate_messages_cpp)
+
+# Install nodelet library
+install(TARGETS realsense_camera_nodelet LIBRARY
+    DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+# Install launch files
+install(DIRECTORY launch/
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+)
+
+# Install rviz files
+install(DIRECTORY rviz/
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rviz
+)
+
+# Install xml files
+install(FILES package.xml realsense_camera_nodelet_plugins.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
