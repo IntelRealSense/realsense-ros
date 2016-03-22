@@ -138,7 +138,6 @@ To get supported camera options with current value set. It returns string in opt
         COLOR_WHITE_BALANCE            (Must be set only if COLOR_ENABLE_AUTO_WHITE_BALANCE is disabled)
         R200_LR_GAIN
         R200_EMITTER_ENABLED
-        R200_DISPARITY_MULTIPLIER      (This parameter does not work in the latest R200 firmware release. Likely to be removed in the next ros-realsense release.)
         R200_LR_EXPOSURE               (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is disabled)        
     Following are the parameters that can only be set dynamically in the R200 camera.        
         R200_LR_AUTO_EXPOSURE_ENABLED
