@@ -246,7 +246,6 @@ namespace realsense_camera
 
     rs_set_device_option(rs_device_, RS_OPTION_R200_LR_GAIN, config.R200_LR_GAIN, 0);
     rs_set_device_option(rs_device_, RS_OPTION_R200_EMITTER_ENABLED, config.R200_EMITTER_ENABLED, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_R200_DISPARITY_MULTIPLIER, config.R200_DISPARITY_MULTIPLIER, 0);
 
     if(config.R200_LR_AUTO_EXPOSURE_ENABLED == 1)
     {
