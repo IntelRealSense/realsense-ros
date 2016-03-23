@@ -73,6 +73,9 @@ Infrared2 camera
 #### Static Parameters
 
     Stream parameters:
+        serial_no (string, default: blank)
+            Specify the serial_no to uniquely connect to a camera, especially if multiple cameras are detected by the nodelet.
+            This feature has been tested to work only on kernel version 4.4.0-040400-generic.
 	    mode (string, default: preset)
 	        Specify the mode to start camera streams. Mode comprises of height, width and fps. 
 	        Preset mode enables default values whereas Manual mode enables the specified parameter values.
@@ -244,17 +247,22 @@ Refer to the function definitions in [realsense_camera_nodelet.h](src/realsense_
 
 
 ###Limitations:
-Currently, the ROS camera nodelet only supports the following formats:
-* Color stream:    RGB8
-* Depth stream:    Y16
-* Infrared stream: Y8
+* Currently, the camera nodelet has been tested to work only for R200 cameras.
 
-Note: The camera does not provide hardware based depth registration/projector data. Hence the launch file "realsense_r200_rgbd.launch" will not generate data for the following topics:
-/camera/depth_registered/hw_registered/image_rect_raw  
-/camera/depth_registered/points  
-/camera/depth_registered/hw_registered/image_rect  
-/camera/depth_registered/image  
-/camera/depth/disparity  
-/camera/depth_registered/disparity  
+* Currently, the camera nodelet only supports the following formats:
+    * Color stream:    RGB8
+    * Depth stream:    Y16
+    * Infrared stream: Y8
 
+* The camera does not provide hardware based depth registration/projector data. 
+Hence the launch file "realsense_r200_rgbd.launch" will not generate data for the following topics:  
+    * /camera/depth_registered/hw_registered/image_rect_raw  
+    * /camera/depth_registered/points  
+    * /camera/depth_registered/hw_registered/image_rect  
+    * /camera/depth_registered/image  
+    * /camera/depth/disparity  
+    * /camera/depth_registered/disparity  
+
+* If there are multiple R200 cameras connected to a system, the nodelet can be launched for a particular camera 
+by specifing the serial_no parameter in the launch file. But it has not been tested to launch nodelets simultaneouly for multiple cameras.
 

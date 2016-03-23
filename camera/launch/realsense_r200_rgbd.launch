@@ -1,9 +1,13 @@
 <!-- Entry point for using RealSense devices -->
 <launch>
 
-  <!-- "camera" should uniquely identify the device. All topics are pushed down
-       into the "camera" namespace, and it is prepended to tf frame ids. -->
+  <!-- "camera" should be a user friendly string to uniquely identify the device namespace.
+       All topics are pushed down into the "camera" namespace, and it is prepended to tf frame ids. -->
   <arg name="camera"          default="camera" />
+
+  <!-- "serial_no" should be the unique identifier to connect to a device. -->
+  <arg name="serial_no"       default="" />
+
   <arg name="depth_frame_id"  default="$(arg camera)_depth_optical_frame" />
   <arg name="rgb_frame_id"    default="$(arg camera)_rgb_optical_frame" />
 
@@ -51,6 +55,7 @@
     <!-- Load driver -->
     <include if="$(arg load_driver)"
              file="$(find realsense_camera)/launch/includes/realsense_r200_nodelet.launch.xml">
+      <arg name="serial_no"                 value="$(arg serial_no)" />
       <arg name="manager"                   value="$(arg manager)" />    
       <arg name="depth_frame_id"            value="$(arg depth_frame_id)" />
       <arg name="rgb_frame_id"              value="$(arg rgb_frame_id)" />

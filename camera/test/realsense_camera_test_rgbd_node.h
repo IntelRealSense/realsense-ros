@@ -8,12 +8,12 @@
  1. Redistributions of source code must retain the above copyright notice, this
  list of conditions and the following disclaimer.
 
- 2. Redistributions in binary form must reproduce the above copyright notice, 
- this list of conditions and the following disclaimer in the documentation 
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
  and/or other materials provided with the distribution.
 
- 3. Neither the name of the copyright holder nor the names of its contributors 
- may be used to endorse or promote products derived from this software without 
+ 3. Neither the name of the copyright holder nor the names of its contributors
+ may be used to endorse or promote products derived from this software without
  specific prior written permission.
 
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -37,19 +37,45 @@
 
 const static int TOPIC_COUNT = 13;
 
-const char *RGB_IMAGE_MONO = "/camera/rgb/image_mono";
-const char *RGB_IMAGE_COLOR = "/camera/rgb/image_color";
-const char *RGB_IMAGE_RECT_MONO = "/camera/rgb/image_rect_mono";
-const char *RGB_IMAGE_RECT_COLOR = "/camera/rgb/image_rect_color";
-const char *DEPTH_IMAGE_RECT_RAW = "/camera/depth/image_rect_raw";
-const char *DEPTH_IMAGE_RECT = "/camera/depth/image_rect";
-const char *DEPTH_IMAGE = "/camera/depth/image";
-const char *DEPTH_POINTS = "/camera/depth/points";
-const char *IR_IMAGE_RECT_IR = "/camera/ir/image_rect_ir";
-const char *DEPTH_REG_SW_REG_IMAGE_RECT_RAW = "/camera/depth_registered/sw_registered/image_rect_raw";
-const char *DEPTH_REG_SW_REG_CAMERA_INFO = "/camera/depth_registered/sw_registered/camera_info";
-const char *DEPTH_REG_POINTS = "/camera/depth_registered/points";
-const char *DEPTH_REG_SW_REG_IMAGE_RECT = "/camera/depth_registered/sw_registered/image_rect";
+std::string RGB_IMAGE_MONO = "image_mono";
+std::string RGB_IMAGE_COLOR = "image_color";
+std::string RGB_IMAGE_RECT_MONO = "image_rect_mono";
+std::string RGB_IMAGE_RECT_COLOR = "image_rect_color";
+std::string DEPTH_IMAGE_RECT_RAW = "image_rect_raw";
+std::string DEPTH_IMAGE_RECT = "image_rect";
+std::string DEPTH_IMAGE = "image";
+std::string DEPTH_POINTS = "points";
+std::string IR_IMAGE_RECT_IR = "image_rect_ir";
+std::string DEPTH_REG_SW_REG_IMAGE_RECT_RAW = "sw_registered/image_rect_raw";
+std::string DEPTH_REG_SW_REG_CAMERA_INFO = "sw_registered/camera_info";
+std::string DEPTH_REG_POINTS = "points";
+std::string DEPTH_REG_SW_REG_IMAGE_RECT = "sw_registered/image_rect";
+
+std::string CAMERA = "camera";
+std::string RGB = "rgb";
+std::string DEPTH = "depth";
+std::string IR = "ir";
+std::string DEPTH_REGISTERED = "depth_registered";
+
+std::string camera;
+std::string rgb;
+std::string depth;
+std::string ir;
+std::string depth_registered;
+
+std::string rgb_image_mono;
+std::string rgb_image_color;
+std::string rgb_image_rect_mono;
+std::string rgb_image_rect_color;
+std::string depth_image_rect_raw;
+std::string depth_image_rect;
+std::string depth_image;
+std::string depth_points;
+std::string ir_image_rect_ir;
+std::string depth_reg_sw_reg_image_rect_raw;
+std::string depth_reg_sw_reg_camera_info;
+std::string depth_reg_points;
+std::string depth_reg_sw_reg_image_rect;
 
 bool topic_0_recv = false;
 bool topic_1_recv = false;

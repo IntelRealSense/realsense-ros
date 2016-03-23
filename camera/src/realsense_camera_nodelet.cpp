@@ -328,30 +328,59 @@ namespace realsense_camera
   {
     if (enable_depth_ == false && enable_color_ == false)
     {
-      ROS_INFO_STREAM ("RealSense Camera - None of the streams are enabled. Exiting.");
+      ROS_ERROR_STREAM("RealSense Camera - None of the streams are enabled. Exiting.");
       return false;
     }
 
-    rs_context_ = rs_create_context (RS_API_VERSION, &rs_error_);
+    rs_context_ = rs_create_context(RS_API_VERSION, &rs_error_);
     checkError();
 
-    int num_of_cameras = rs_get_device_count(rs_context_, NULL);
-    if (num_of_cameras < 1)
+    num_of_cameras_ = rs_get_device_count(rs_context_, &rs_error_);
+    checkError();
+
+    // Exit with error if no cameras are connected.
+    if (num_of_cameras_ < 1)
     {
-      ROS_ERROR_STREAM ("RealSense Camera - No cameras are connected.");
+      ROS_ERROR_STREAM("RealSense Camera - No cameras detected. Exiting!");
       return false;
     }
 
-    rs_device_ = rs_get_device(rs_context_, 0, &rs_error_);
-    checkError();
+    rs_device_ = getCameraBySerialNumber(); // Get rs_device_ using input serial number.
 
-    ROS_INFO_STREAM ("RealSense Camera - Number of cameras connected: " << num_of_cameras);
-    ROS_INFO_STREAM ("RealSense Camera - Firmware version: " <<
-    rs_get_device_firmware_version(rs_device_, &rs_error_));
+    // Exit with error if no serial number is specified and multiple cameras are detected.
+    if ((serial_no_.empty() == true) && (num_of_cameras_ > 1))
+    {
+      ROS_INFO_STREAM("RealSense Camera - Following cameras detected:");
+      for (rs_device *rs_detected_device: rs_detected_devices_)
+      {
+        ROS_INFO_STREAM("Serial No: " << rs_get_device_serial(rs_detected_device, &rs_error_) <<
+            " Firmware Version: " << rs_get_device_firmware_version(rs_detected_device, &rs_error_) <<
+            " Name: " << rs_get_device_name(rs_detected_device, &rs_error_));
+      }
+      ROS_ERROR_STREAM("RealSense Camera - Multiple cameras detected but no input serial_no specified. Exiting!");
+      return false;
+    }
+
+    // Exit with error if no camera is detected that matches the input serial number.
+    if ((serial_no_.empty() != true) && (rs_device_ == NULL))
+    {
+      ROS_ERROR_STREAM("RealSense Camera - No camera detected with input serial_no = " << serial_no_ << ". Exiting!");
+      return false;
+    }
+
+    // At this point, rs_device_ will be null if no input serial number was specified and only one camera is connected.
+    // This is a valid use case and the code will proceed.
+    if (rs_device_ == NULL)
+    {
+      rs_device_ = rs_get_device(rs_context_, 0, &rs_error_);
+      checkError();
+    }
+
+    ROS_INFO_STREAM("RealSense Camera - Serial no: " << rs_get_device_serial(rs_device_, &rs_error_));
     checkError();
-    ROS_INFO_STREAM ("RealSense Camera - Name: " << rs_get_device_name(rs_device_, &rs_error_));
+    ROS_INFO_STREAM("RealSense Camera - Firmware version: " << rs_get_device_firmware_version(rs_device_, &rs_error_));
     checkError();
-    ROS_INFO_STREAM ("RealSense Camera - Serial no: " << rs_get_device_serial(rs_device_, &rs_error_));
+    ROS_INFO_STREAM("RealSense Camera - Name: " << rs_get_device_name(rs_device_, &rs_error_));
     checkError();
 
     // Enable streams.
@@ -379,6 +408,30 @@ namespace realsense_camera
     allocateResources();
 
     return true;
+  }
+
+  /*
+   * Returns the device details of the camera that matches the input serial_no.
+   * Returns NULL if no camera is found that matches the input serial_no.
+   * Also populates the list of detected cameras.
+   */
+  rs_device * RealsenseNodelet::getCameraBySerialNumber()
+  {
+    rs_device *rs_device_detect;
+    rs_device *rs_device_connect = NULL;
+    for (int i = 0; i < num_of_cameras_; ++i)
+    {
+      rs_device_detect = rs_get_device(rs_context_, i, &rs_error_);
+      checkError();
+      std::string device_serial_no = rs_get_device_serial(rs_device_detect, &rs_error_);
+      checkError();
+      if (device_serial_no.compare(serial_no_) == 0)
+      {
+        rs_device_connect = rs_device_detect;
+      }
+      rs_detected_devices_.push_back(rs_device_detect);
+    }
+    return rs_device_connect;
   }
 
   /*
@@ -515,6 +568,7 @@ namespace realsense_camera
    */
   void RealsenseNodelet::setStreamOptions()
   {
+    pnh_.getParam("serial_no", serial_no_);
     pnh_.param("camera", camera_, (std::string) R200);
     pnh_.param("mode", mode_, DEFAULT_MODE);
     pnh_.param("enable_depth", enable_depth_, ENABLE_DEPTH);

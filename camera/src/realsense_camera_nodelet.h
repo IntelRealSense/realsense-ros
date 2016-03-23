@@ -76,7 +76,6 @@ public:
 
   // Default Constants.
   const int MAX_Z = 8;	// in meters
-  const int DEFAULT_CAMERA = 0;	// default camera index
   const std::string DEFAULT_MODE = "preset";
   const int DEPTH_HEIGHT = 360;
   const int DEPTH_WIDTH = 480;
@@ -88,7 +87,6 @@ public:
   const bool ENABLE_COLOR = true;
   const bool ENABLE_PC = true;
   const bool ENABLE_TF = true;
-  const uint32_t SERIAL_NUMBER = 0xFFFFFFFF;
   const rs_format DEPTH_FORMAT = RS_FORMAT_Z16;
   const rs_format COLOR_FORMAT = RS_FORMAT_RGB8;
   const rs_format IR1_FORMAT = RS_FORMAT_Y8;
@@ -117,7 +115,10 @@ private:
   rs_error *rs_error_ = 0;
   rs_context *rs_context_;
   rs_device *rs_device_;
+  std::vector<rs_device *> rs_detected_devices_;
 
+  int num_of_cameras_;
+  std::string serial_no_;
   int color_height_;
   int color_width_;
   int depth_height_;
@@ -181,6 +182,7 @@ private:
   void getCameraOptions();
   void allocateResources();
   bool connectToCamera();
+  rs_device * getCameraBySerialNumber();
   void fillStreamEncoding();
   void setStreamOptions();
   void setStaticCameraOptions();
