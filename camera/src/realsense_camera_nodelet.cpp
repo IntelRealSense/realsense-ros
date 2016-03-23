@@ -229,54 +229,54 @@ namespace realsense_camera
 
   void RealsenseNodelet::configCallback(realsense_camera::camera_paramsConfig &config, uint32_t level)
   {
-    rs_set_device_option(rs_device_, RS_OPTION_COLOR_BACKLIGHT_COMPENSATION, config.COLOR_BACKLIGHT_COMPENSATION, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_COLOR_BRIGHTNESS, config.COLOR_BRIGHTNESS, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_COLOR_CONTRAST, config.COLOR_CONTRAST, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_COLOR_GAIN, config.COLOR_GAIN, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_COLOR_GAMMA, config.COLOR_GAMMA, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_COLOR_HUE, config.COLOR_HUE, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_COLOR_SATURATION, config.COLOR_SATURATION, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_COLOR_SHARPNESS, config.COLOR_SHARPNESS, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_COLOR_ENABLE_AUTO_WHITE_BALANCE, config.COLOR_ENABLE_AUTO_WHITE_BALANCE, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_BACKLIGHT_COMPENSATION, config.color_backlight_compensation, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_BRIGHTNESS, config.color_brightness, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_CONTRAST, config.color_contrast, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_GAIN, config.color_gain, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_GAMMA, config.color_gamma, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_HUE, config.color_hue, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_SATURATION, config.color_saturation, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_SHARPNESS, config.color_sharpness, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_ENABLE_AUTO_WHITE_BALANCE, config.color_enable_auto_white_balance, 0);
 
-    if (config.COLOR_ENABLE_AUTO_WHITE_BALANCE == 0)
+    if (config.color_enable_auto_white_balance == 0)
     {
-      rs_set_device_option(rs_device_, RS_OPTION_COLOR_WHITE_BALANCE, config.COLOR_WHITE_BALANCE, 0);
+      rs_set_device_option(rs_device_, RS_OPTION_COLOR_WHITE_BALANCE, config.color_white_balance, 0);
     }
 
     //R200 camera specific options
-    rs_set_device_option(rs_device_, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, config.R200_LR_AUTO_EXPOSURE_ENABLED, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, config.r200_lr_auto_exposure_enabled, 0);
 
-    if (config.R200_LR_AUTO_EXPOSURE_ENABLED == 0)
+    if (config.r200_lr_auto_exposure_enabled == 0)
     {
-      rs_set_device_option(rs_device_, RS_OPTION_R200_LR_EXPOSURE, config.R200_LR_EXPOSURE, 0);
+      rs_set_device_option(rs_device_, RS_OPTION_R200_LR_EXPOSURE, config.r200_lr_exposure, 0);
     }
 
-    rs_set_device_option(rs_device_, RS_OPTION_R200_LR_GAIN, config.R200_LR_GAIN, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_R200_EMITTER_ENABLED, config.R200_EMITTER_ENABLED, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_R200_LR_GAIN, config.r200_lr_gain, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_R200_EMITTER_ENABLED, config.r200_emitter_enabled, 0);
 
-    if (config.R200_LR_AUTO_EXPOSURE_ENABLED == 1)
+    if (config.r200_lr_auto_exposure_enabled == 1)
     {
-      if (config.R200_AUTO_EXPOSURE_TOP_EDGE >= depth_height_)
+      if (config.r200_auto_exposure_top_edge >= depth_height_)
       {
-      	config.R200_AUTO_EXPOSURE_TOP_EDGE = depth_height_ - 1;
+        config.r200_auto_exposure_top_edge = depth_height_ - 1;
       }
-      if (config.R200_AUTO_EXPOSURE_BOTTOM_EDGE >= depth_height_)
+      if (config.r200_auto_exposure_bottom_edge >= depth_height_)
       {
-      	config.R200_AUTO_EXPOSURE_BOTTOM_EDGE = depth_height_ - 1;
+        config.r200_auto_exposure_bottom_edge = depth_height_ - 1;
       }
-      if (config.R200_AUTO_EXPOSURE_LEFT_EDGE >= depth_width_)
+      if (config.r200_auto_exposure_left_edge >= depth_width_)
       {
-      	config.R200_AUTO_EXPOSURE_LEFT_EDGE = depth_width_ - 1;
+        config.r200_auto_exposure_left_edge = depth_width_ - 1;
       }
-      if (config.R200_AUTO_EXPOSURE_RIGHT_EDGE >= depth_width_)
+      if (config.r200_auto_exposure_right_edge >= depth_width_)
       {
-      	config.R200_AUTO_EXPOSURE_RIGHT_EDGE = depth_width_ - 1;
+        config.r200_auto_exposure_right_edge = depth_width_ - 1;
       }
-      edge_values_[0] = config.R200_AUTO_EXPOSURE_LEFT_EDGE;
-      edge_values_[1] = config.R200_AUTO_EXPOSURE_TOP_EDGE;
-      edge_values_[2] = config.R200_AUTO_EXPOSURE_RIGHT_EDGE;
-      edge_values_[3] = config.R200_AUTO_EXPOSURE_BOTTOM_EDGE;
+      edge_values_[0] = config.r200_auto_exposure_left_edge;
+      edge_values_[1] = config.r200_auto_exposure_top_edge;
+      edge_values_[2] = config.r200_auto_exposure_right_edge;
+      edge_values_[3] = config.r200_auto_exposure_bottom_edge;
 
       rs_set_device_options(rs_device_, edge_options_, 4, edge_values_, 0);
     }
@@ -500,6 +500,7 @@ namespace realsense_camera
     for (option_str o: options)
     {
       opt_name = rs_option_to_string(o.opt);
+      std::transform(opt_name.begin(), opt_name.end(), opt_name.begin(), ::tolower);
       o.value = rs_get_device_option(rs_device_, o.opt, 0);
       opt_value = boost::lexical_cast<std::string>(o.value);
       get_options_result_str += opt_name + ":" + opt_value + ";";
@@ -549,6 +550,7 @@ namespace realsense_camera
       std::vector<camera_paramsConfig::AbstractParamDescriptionConstPtr>::iterator it;
       for (camera_paramsConfig::AbstractParamDescriptionConstPtr param_desc_ptr: param_desc)
       {
+        std::transform(opt_name.begin(), opt_name.end(), opt_name.begin(), ::tolower);
         if (opt_name.compare((* param_desc_ptr).name) == 0)
         {
           found = true;

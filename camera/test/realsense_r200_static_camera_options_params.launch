@@ -3,7 +3,7 @@
 
     Steps:
     roslaunch realsense_camera realsense_r200_static_camera_options_params.launch
-    rosrun realsense_camera realsense_camera_test R200_DEPTH_UNITS 2 R200_DEPTH_CLAMP_MIN 3 R200_DEPTH_CLAMP_MAX 4 R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_DECREMENT 5 R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_INCREMENT 6 R200_DEPTH_CONTROL_MEDIAN_THRESHOLD 7 R200_DEPTH_CONTROL_SCORE_MINIMUM_THRESHOLD 8 R200_DEPTH_CONTROL_SCORE_MAXIMUM_THRESHOLD 9 R200_DEPTH_CONTROL_TEXTURE_COUNT_THRESHOLD 10 R200_DEPTH_CONTROL_TEXTURE_DIFFERENCE_THRESHOLD 11 R200_DEPTH_CONTROL_SECOND_PEAK_THRESHOLD 12 R200_DEPTH_CONTROL_NEIGHBOR_THRESHOLD 13 R200_DEPTH_CONTROL_LR_THRESHOLD 14
+    rosrun realsense_camera realsense_camera_test r200_depth_units 2 r200_depth_clamp_min 3 r200_depth_clamp_max 4 r200_depth_control_estimate_median_decrement 5 r200_depth_control_estimate_median_increment 6 r200_depth_control_median_threshold 7 r200_depth_control_score_minimum_threshold 8 r200_depth_control_score_maximum_threshold 9 r200_depth_control_texture_count_threshold 10 r200_depth_control_texture_difference_threshold 11 r200_depth_control_second_peak_threshold 12 r200_depth_control_neighbor_threshold 13 r200_depth_control_lr_threshold 14
     Verify that the "testCameraOptions" test pass.
 -->
 
@@ -11,19 +11,19 @@
 
     <arg name="mode"                                            default="preset" />
 
-    <arg name="R200_DEPTH_UNITS"                                default="2" />
-    <arg name="R200_DEPTH_CLAMP_MIN"                            default="3" />
-    <arg name="R200_DEPTH_CLAMP_MAX"                            default="4" />
-    <arg name="R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_DECREMENT"    default="5" />
-    <arg name="R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_INCREMENT"    default="6" />
-    <arg name="R200_DEPTH_CONTROL_MEDIAN_THRESHOLD"             default="7" />
-    <arg name="R200_DEPTH_CONTROL_SCORE_MINIMUM_THRESHOLD"      default="8" />
-    <arg name="R200_DEPTH_CONTROL_SCORE_MAXIMUM_THRESHOLD"      default="9" />
-    <arg name="R200_DEPTH_CONTROL_TEXTURE_COUNT_THRESHOLD"      default="10" />
-    <arg name="R200_DEPTH_CONTROL_TEXTURE_DIFFERENCE_THRESHOLD" default="11" />
-    <arg name="R200_DEPTH_CONTROL_SECOND_PEAK_THRESHOLD"        default="12" />
-    <arg name="R200_DEPTH_CONTROL_NEIGHBOR_THRESHOLD"           default="13" />
-    <arg name="R200_DEPTH_CONTROL_LR_THRESHOLD"                 default="14" />
+    <arg name="r200_depth_units"                                default="2" />
+    <arg name="r200_depth_clamp_min"                            default="3" />
+    <arg name="r200_depth_clamp_max"                            default="4" />
+    <arg name="r200_depth_control_estimate_median_decrement"    default="5" />
+    <arg name="r200_depth_control_estimate_median_increment"    default="6" />
+    <arg name="r200_depth_control_median_threshold"             default="7" />
+    <arg name="r200_depth_control_score_minimum_threshold"      default="8" />
+    <arg name="r200_depth_control_score_maximum_threshold"      default="9" />
+    <arg name="r200_depth_control_texture_count_threshold"      default="10" />
+    <arg name="r200_depth_control_texture_difference_threshold" default="11" />
+    <arg name="r200_depth_control_second_peak_threshold"        default="12" />
+    <arg name="r200_depth_control_neighbor_threshold"           default="13" />
+    <arg name="r200_depth_control_lr_threshold"                 default="14" />
 
   <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
 
@@ -31,19 +31,19 @@
     args="load realsense_camera/RealsenseNodelet standalone_nodelet">
     <param name="mode"                                              type="str"  value="$(arg mode)" />
 
-    <param name="R200_DEPTH_UNITS"                                  type="int" value="$(arg R200_DEPTH_UNITS)" />
-    <param name="R200_DEPTH_CLAMP_MIN"                              type="int" value="$(arg R200_DEPTH_CLAMP_MIN)" />
-    <param name="R200_DEPTH_CLAMP_MAX"                              type="int" value="$(arg R200_DEPTH_CLAMP_MAX)" />
-    <param name="R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_DECREMENT"      type="int" value="$(arg R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_DECREMENT)" />
-    <param name="R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_INCREMENT"      type="int" value="$(arg R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_INCREMENT)" />
-    <param name="R200_DEPTH_CONTROL_MEDIAN_THRESHOLD"               type="int" value="$(arg R200_DEPTH_CONTROL_MEDIAN_THRESHOLD)" />
-    <param name="R200_DEPTH_CONTROL_SCORE_MINIMUM_THRESHOLD"        type="int" value="$(arg R200_DEPTH_CONTROL_SCORE_MINIMUM_THRESHOLD)" />
-    <param name="R200_DEPTH_CONTROL_SCORE_MAXIMUM_THRESHOLD"        type="int" value="$(arg R200_DEPTH_CONTROL_SCORE_MAXIMUM_THRESHOLD)" />
-    <param name="R200_DEPTH_CONTROL_TEXTURE_COUNT_THRESHOLD"        type="int" value="$(arg R200_DEPTH_CONTROL_TEXTURE_COUNT_THRESHOLD)" />
-    <param name="R200_DEPTH_CONTROL_TEXTURE_DIFFERENCE_THRESHOLD"   type="int" value="$(arg R200_DEPTH_CONTROL_TEXTURE_DIFFERENCE_THRESHOLD)" />
-    <param name="R200_DEPTH_CONTROL_SECOND_PEAK_THRESHOLD"          type="int" value="$(arg R200_DEPTH_CONTROL_SECOND_PEAK_THRESHOLD)" />
-    <param name="R200_DEPTH_CONTROL_NEIGHBOR_THRESHOLD"             type="int" value="$(arg R200_DEPTH_CONTROL_NEIGHBOR_THRESHOLD)" />
-    <param name="R200_DEPTH_CONTROL_LR_THRESHOLD"                   type="int" value="$(arg R200_DEPTH_CONTROL_LR_THRESHOLD)" />
+    <param name="r200_depth_units"                                  type="int" value="$(arg r200_depth_units)" />
+    <param name="r200_depth_clamp_min"                              type="int" value="$(arg r200_depth_clamp_min)" />
+    <param name="r200_depth_clamp_max"                              type="int" value="$(arg r200_depth_clamp_max)" />
+    <param name="r200_depth_control_estimate_median_decrement"      type="int" value="$(arg r200_depth_control_estimate_median_decrement)" />
+    <param name="r200_depth_control_estimate_median_increment"      type="int" value="$(arg r200_depth_control_estimate_median_increment)" />
+    <param name="r200_depth_control_median_threshold"               type="int" value="$(arg r200_depth_control_median_threshold)" />
+    <param name="r200_depth_control_score_minimum_threshold"        type="int" value="$(arg r200_depth_control_score_minimum_threshold)" />
+    <param name="r200_depth_control_score_maximum_threshold"        type="int" value="$(arg r200_depth_control_score_maximum_threshold)" />
+    <param name="r200_depth_control_texture_count_threshold"        type="int" value="$(arg r200_depth_control_texture_count_threshold)" />
+    <param name="r200_depth_control_texture_difference_threshold"   type="int" value="$(arg r200_depth_control_texture_difference_threshold)" />
+    <param name="r200_depth_control_second_peak_threshold"          type="int" value="$(arg r200_depth_control_second_peak_threshold)" />
+    <param name="r200_depth_control_neighbor_threshold"             type="int" value="$(arg r200_depth_control_neighbor_threshold)" />
+    <param name="r200_depth_control_lr_threshold"                   type="int" value="$(arg r200_depth_control_lr_threshold)" />
   </node>
 
 </launch>
