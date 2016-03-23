@@ -1,5 +1,6 @@
 <launch>
 
+    <arg name="serial_no" default="" />
 	<arg name="mode" default="manual" />
 	<arg name="color_height" default="240" />
 	<arg name="color_width" default="320" />
@@ -16,6 +17,7 @@
   	
     <node pkg="nodelet" type="nodelet" name="RealsenseNodelet"
         args="load realsense_camera/RealsenseNodelet standalone_nodelet">
+        <param name="serial_no"         type="str"  value="$(arg serial_no)" />
         <param name="mode"              type="str"  value="$(arg mode)" />
         <param name="enable_depth"      type="bool" value="$(arg enable_depth)" />
         <param name="enable_color"      type="bool" value="$(arg enable_color)" />
