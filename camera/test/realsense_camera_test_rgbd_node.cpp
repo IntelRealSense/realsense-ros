@@ -224,7 +224,7 @@ void setTopics()
   depth_reg_sw_reg_image_rect_raw = "/" + camera + "/" + depth_registered + "/" + DEPTH_REG_SW_REG_IMAGE_RECT_RAW;
   depth_reg_sw_reg_camera_info = "/" + camera + "/" + depth_registered + "/" + DEPTH_REG_SW_REG_CAMERA_INFO;
   depth_reg_points = "/" + camera + "/" + depth_registered + "/" + DEPTH_REG_POINTS;
-  depth_reg_sw_reg_image_rect = "/" + depth_registered + "/" + depth + "/" + DEPTH_REG_SW_REG_IMAGE_RECT;
+  depth_reg_sw_reg_image_rect = "/" + camera + "/" + depth_registered + "/" + DEPTH_REG_SW_REG_IMAGE_RECT;
 }
 
 int main(int argc, char **argv)
