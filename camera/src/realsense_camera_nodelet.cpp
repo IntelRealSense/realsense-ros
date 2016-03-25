@@ -346,17 +346,20 @@ namespace realsense_camera
     }
 
     rs_device_ = getCameraBySerialNumber(); // Get rs_device_ using input serial number.
+    std::string detected_camera_msg = "RealSense Camera - Detected following cameras:";
+    for (rs_device *rs_detected_device: rs_detected_devices_)
+    {
+      detected_camera_msg = detected_camera_msg +
+          "\n\t\t\t\t- Serial No: " + rs_get_device_serial(rs_detected_device, &rs_error_) +
+          "; Firmware: " + rs_get_device_firmware_version(rs_detected_device, &rs_error_) +
+          "; Name: " + rs_get_device_name(rs_detected_device, &rs_error_);
+      checkError();
+    }
+    ROS_INFO_STREAM(detected_camera_msg);
 
     // Exit with error if no serial number is specified and multiple cameras are detected.
     if ((serial_no_.empty() == true) && (num_of_cameras_ > 1))
     {
-      ROS_INFO_STREAM("RealSense Camera - Following cameras detected:");
-      for (rs_device *rs_detected_device: rs_detected_devices_)
-      {
-        ROS_INFO_STREAM("Serial No: " << rs_get_device_serial(rs_detected_device, &rs_error_) <<
-            " Firmware Version: " << rs_get_device_firmware_version(rs_detected_device, &rs_error_) <<
-            " Name: " << rs_get_device_name(rs_detected_device, &rs_error_));
-      }
       ROS_ERROR_STREAM("RealSense Camera - Multiple cameras detected but no input serial_no specified. Exiting!");
       return false;
     }
@@ -376,11 +379,8 @@ namespace realsense_camera
       checkError();
     }
 
-    ROS_INFO_STREAM("RealSense Camera - Serial no: " << rs_get_device_serial(rs_device_, &rs_error_));
-    checkError();
-    ROS_INFO_STREAM("RealSense Camera - Firmware version: " << rs_get_device_firmware_version(rs_device_, &rs_error_));
-    checkError();
-    ROS_INFO_STREAM("RealSense Camera - Name: " << rs_get_device_name(rs_device_, &rs_error_));
+    ROS_INFO_STREAM("RealSense Camera - Connecting to camera with Serial No: " <<
+        rs_get_device_serial(rs_device_, &rs_error_));
     checkError();
 
     // Enable streams.
