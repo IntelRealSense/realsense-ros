@@ -1,7 +1,6 @@
 <launch>
     <!-- Name of nodelet manager, must be fully resolved -->
     <arg name="manager" />
-
     <arg name="depth_frame_id"      default="camera_depth_optical_frame" />
     <arg name="rgb_frame_id"        default="camera_rgb_optical_frame" />
     <arg name="publish_tf"          default="true" />
@@ -9,6 +8,7 @@
     <arg name="rgb"                 default="rgb" />
     <arg name="ir"                  default="ir" />
     <arg name="ir2"                 default="ir2" />
+    <arg name="serial_no"           default="" />
     <arg name="mode"                default="preset" />
     <arg name="enable_depth"        default="true" />
     <arg name="enable_color"        default="true" />
@@ -25,6 +25,7 @@
 
     <node pkg="nodelet" type="nodelet" name="camera_nodelet"
         args="load realsense_camera/RealsenseNodelet $(arg manager)">
+        <param name="serial_no"         type="str"  value="$(arg serial_no)" />
         <param name="mode"              type="str"  value="$(arg mode)" />
         <param name="enable_depth"      type="bool" value="$(arg enable_depth_ir)" />
         <param name="enable_color"      type="bool" value="$(arg enable_color)" />
