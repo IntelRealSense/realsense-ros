@@ -2,6 +2,24 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.0.2 (2016-03-28)
+------------------
+* Added functionality to access camera using Serial No:
+  This fixes Issue #18.
+  Added code to handle various use cases for input serial number such as
+  --Exit with error if no serial number is specified and multiple cameras are detected.
+  --Exit with error if no camera is detected that matches the input serial number.
+  --Prints all the detected cameras.
+  Updated launch files with a placeholder for serial number.
+  Updated rgbd_launch test code to remove hardcoded topic names.
+* Modified all parameters to lowercase for consistency
+  This fixes Issue #13.
+* Removed support for R200_DISPARITY_MULTIPLIER camera option
+* Added missing install targets
+  This fixes Pull Request #2.
+  This fixes Issue #17.
+* Contributors: Reagan Lopez, Rajvi Jingar
+
 1.0.1 (2016-03-17)
 ------------------
 * Convert command line args to ROS params
