@@ -73,6 +73,9 @@ Infrared2 camera
 #### Static Parameters
 
     Stream parameters:
+        serial_no (string, default: blank)
+            Specify the serial_no to uniquely connect to a camera, especially if multiple cameras are detected by the nodelet.
+            This feature has been tested to work only on kernel version 4.4.0-040400-generic.
 	    mode (string, default: preset)
 	        Specify the mode to start camera streams. Mode comprises of height, width and fps. 
 	        Preset mode enables default values whereas Manual mode enables the specified parameter values.
@@ -98,19 +101,19 @@ Infrared2 camera
 	        Specify the camera name. 
     Camera parameters: 
     Following are the parameters that can be set only statically in the R200 camera:
-        R200_DEPTH_UNITS : [1, 2147483647]
-        R200_DEPTH_CLAMP_MIN : [0, 65535]
-        R200_DEPTH_CLAMP_MAX : [0, 65535]
-        R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_DECREMENT : [0 - 255]
-        R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_INCREMENT  : [0 - 255]
-        R200_DEPTH_CONTROL_MEDIAN_THRESHOLD : [0 - 1023]
-        R200_DEPTH_CONTROL_SCORE_MINIMUM_THRESHOLD : [0 - 1023]
-        R200_DEPTH_CONTROL_SCORE_MAXIMUM_THRESHOLD : [0 - 1023]
-        R200_DEPTH_CONTROL_TEXTURE_COUNT_THRESHOLD : [0 - 31]
-        R200_DEPTH_CONTROL_TEXTURE_DIFFERENCE_THRESHOLD : [0 - 1023]
-        R200_DEPTH_CONTROL_SECOND_PEAK_THRESHOLD : [0 - 1023]
-        R200_DEPTH_CONTROL_NEIGHBOR_THRESHOLD : [0 - 1023]
-        R200_DEPTH_CONTROL_LR_THRESHOLD : [0 - 2047]
+        r200_depth_units : [1, 2147483647]
+        r200_depth_clamp_min : [0, 65535]
+        r200_depth_clamp_max : [0, 65535]
+        r200_depth_control_estimate_median_decrement : [0 - 255]
+        r200_depth_control_estimate_median_increment  : [0 - 255]
+        r200_depth_control_median_threshold : [0 - 1023]
+        r200_depth_control_score_minimum_threshold : [0 - 1023]
+        r200_depth_control_score_maximum_threshold : [0 - 1023]
+        r200_depth_control_texture_count_threshold : [0 - 31]
+        r200_depth_control_texture_difference_threshold : [0 - 1023]
+        r200_depth_control_second_peak_threshold : [0 - 1023]
+        r200_depth_control_neighbor_threshold : [0 - 1023]
+        r200_depth_control_lr_threshold : [0 - 2047]
 
 ####Services
     get_settings (camera/get_settings)
@@ -126,28 +129,27 @@ To get supported camera options with current value set. It returns string in opt
 
     Camera parameters: 
     Following are the parameters that can be set dynamically as well as statically in the R200 camera.
-        COLOR_BACKLIGHT_COMPENSATION
-        COLOR_BRIGHTNESS
-        COLOR_CONTRAST
-        COLOR_GAIN
-        COLOR_GAMMA
-        COLOR_HUE
-        COLOR_SATURATION
-        COLOR_SHARPNESS
-        COLOR_ENABLE_AUTO_WHITE_BALANCE
-        COLOR_WHITE_BALANCE            (Must be set only if COLOR_ENABLE_AUTO_WHITE_BALANCE is disabled)
-        R200_LR_GAIN
-        R200_EMITTER_ENABLED
-        R200_DISPARITY_MULTIPLIER      (This parameter does not work in the latest R200 firmware release. Likely to be removed in the next ros-realsense release.)
-        R200_LR_EXPOSURE               (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is disabled)        
-    Following are the parameters that can only be set dynamically in the R200 camera.        
-        R200_LR_AUTO_EXPOSURE_ENABLED
-        R200_AUTO_EXPOSURE_TOP_EDGE    (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
-        R200_AUTO_EXPOSURE_BOTTOM_EDGE (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
-        R200_AUTO_EXPOSURE_LEFT_EDGE   (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
-        R200_AUTO_EXPOSURE_RIGHT_EDGE  (Must be set only if R200_LR_AUTO_EXPOSURE_ENABLED is enabled)
+        color_backlight_compensation
+        color_brightness
+        color_contrast
+        color_gain
+        color_gamma
+        color_hue
+        color_saturation
+        color_sharpness
+        color_enable_auto_white_balance
+        color_white_balance            (Must be set only if color_enable_auto_white_balance is disabled)
+        r200_lr_gain
+        r200_emitter_enabled
+        r200_lr_exposure               (Must be set only if r200_lr_auto_exposure_enabled is disabled)
+    Following are the parameters that can only be set dynamically in the R200 camera.
+        r200_lr_auto_exposure_enabled
+        r200_auto_exposure_top_edge    (Must be set only if r200_lr_auto_exposure_enabled is enabled)
+        r200_auto_exposure_bottom_edge (Must be set only if r200_lr_auto_exposure_enabled is enabled)
+        r200_auto_exposure_left_edge   (Must be set only if r200_lr_auto_exposure_enabled is enabled)
+        r200_auto_exposure_right_edge  (Must be set only if r200_lr_auto_exposure_enabled is enabled)
 
-Note: For Autoexposure EDGE parameters, max value will go only upto the bounds of the infrared image.	
+Note: For Autoexposure edge parameters, max value will go only upto the bounds of the infrared image.
 E.g. For 320x240 infrared image, valid values are within 0-319 and 0-239)
 
 Use rqt_reconfigure GUI to view and edit the parameters that are accessible via dynamic_reconfigure.
@@ -158,7 +160,7 @@ Command to launch GUI:
 Command to change dynamic parameters using commandline:
 
     $ rosrun dynamic_reconfigure dynparam set /<node> <parameter_name> <value>
-    E.g. $ rosrun dynamic_reconfigure dynparam set /RealsenseNodelet COLOR_BACKLIGHT_COMPENSATION 2
+    E.g. $ rosrun dynamic_reconfigure dynparam set /RealsenseNodelet color_backlight_compensation 2
 
 
 ###Running the R200 nodelet
@@ -245,17 +247,22 @@ Refer to the function definitions in [realsense_camera_nodelet.h](src/realsense_
 
 
 ###Limitations:
-Currently, the ROS camera nodelet only supports the following formats:
-* Color stream:    RGB8
-* Depth stream:    Y16
-* Infrared stream: Y8
+* Currently, the camera nodelet has been tested to work only for R200 cameras.
 
-Note: The camera does not provide hardware based depth registration/projector data. Hence the launch file "realsense_r200_rgbd.launch" will not generate data for the following topics:  
-/camera/depth_registered/hw_registered/image_rect_raw  
-/camera/depth_registered/points  
-/camera/depth_registered/hw_registered/image_rect  
-/camera/depth_registered/image  
-/camera/depth/disparity  
-/camera/depth_registered/disparity  
+* Currently, the camera nodelet only supports the following formats:
+    * Color stream:    RGB8
+    * Depth stream:    Y16
+    * Infrared stream: Y8
 
+* The camera does not provide hardware based depth registration/projector data. 
+Hence the launch file "realsense_r200_rgbd.launch" will not generate data for the following topics:  
+    * /camera/depth_registered/hw_registered/image_rect_raw  
+    * /camera/depth_registered/points  
+    * /camera/depth_registered/hw_registered/image_rect  
+    * /camera/depth_registered/image  
+    * /camera/depth/disparity  
+    * /camera/depth_registered/disparity  
+
+* If there are multiple R200 cameras connected to a system, the nodelet can be launched for a particular camera 
+by specifing the serial_no parameter in the launch file. But it has not been tested to launch nodelets simultaneouly for multiple cameras.
 
