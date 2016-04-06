@@ -1,6 +1,13 @@
 #Intel&reg; RealSense&trade; Technology - ROS Integration 
+###Configuration
+| Version          | Best Known           |
+|:---------------- |:---------------------|
+| Operating System | Ubuntu 14.04.4 LTS   |
+| Kernel           | 4.4.0-040400-generic |
+| ROS              | indigo               |
+| librealsense     | 0.9.1                |
+| R200 Firmware    | 1.0.72.06            |
 
-###(ROS Indigo + Ubuntu 14.04 [64-bit])
 ###Installation
 #####Getting the camera to work on Linux
 
@@ -8,10 +15,6 @@
 * Make sure that the software stack is installed properly and that the camera is working. This can be checked by connecting the camera to a USB3 port and running the "cpp-capture" sample program in the "librealsense/bin" folder.
 If this does not work, you should first fix this issue before continuing with the ROS integration.
 * Make sure "/usr/local/lib" is set in your "LD_LIBRARY_PATH".
-* Copy the librealsense header files folder "librealsense/include/librealsense" to "/usr/local/include". 
- 
-	E.g. sudo cp -r \<librealsense_folder>/include/librealsense /usr/local/include
-
 
 #####Building package:
 
@@ -75,7 +78,6 @@ Infrared2 camera
     Stream parameters:
         serial_no (string, default: blank)
             Specify the serial_no to uniquely connect to a camera, especially if multiple cameras are detected by the nodelet.
-            This feature has been tested to work only on kernel version 4.4.0-040400-generic.
 	    mode (string, default: preset)
 	        Specify the mode to start camera streams. Mode comprises of height, width and fps. 
 	        Preset mode enables default values whereas Manual mode enables the specified parameter values.
