@@ -72,12 +72,13 @@ Infrared2 camera
 
     rosrun tf tf_monitor
 
-
 #### Static Parameters
 
     Stream parameters:
         serial_no (string, default: blank)
             Specify the serial_no to uniquely connect to a camera, especially if multiple cameras are detected by the nodelet.
+            You may get the serial_no from the info stream by launching "realsense_r200_nodelet_standalone_preset.launch"
+            one at a time for each camera.
 	    mode (string, default: preset)
 	        Specify the mode to start camera streams. Mode comprises of height, width and fps. 
 	        Preset mode enables default values whereas Manual mode enables the specified parameter values.
@@ -89,7 +90,7 @@ Infrared2 camera
 	        Specify the depth camera height resolution.
 	    depth_width (int, default: 480)
 	        Specify the depth camera width resolution.
-	    depth_fps (int, default: 60)
+	    color_fps (int, default: 60)
 	        Specify the color camera FPS
 	    depth_fps (int, default: 60)
 	        Specify the depth camera FPS
@@ -98,7 +99,21 @@ Infrared2 camera
 	    enable_pointcloud (bool, default: true) 
 	        Specify if to enable or not the point cloud camera.
 	    enable_tf (bool, default: true) 
-	        Specify if to enable or not the transform frames.       
+	        Specify if to enable or not the transform frames.
+        base_frame_id (string, default: camera_link)
+            Specify the base frame id of the camera.
+        depth_frame_id (string, default: camera_depth_frame)
+            Specify the depth frame id of the camera.
+        color_frame_id (string, default: camera_rgb_frame)
+            Specify the color frame id of the camera.
+        depth_optical_frame_id (string, default: camera_depth_optical_frame)
+            Specify the depth optical frame id of the camera.
+        color_optical_frame_id (string, default: camera_rgb_optical_frame)
+            Specify the color optical frame id of the camera.
+        ir_frame_id (string, default: camera_infrared_frame)
+            Specify the IR frame id of the camera.
+        ir2_frame_id (string, default: camera_infrared2_frame)
+            Specify the IR2 frame id of the camera.
 	    camera (string, default: "R200") 
 	        Specify the camera name. 
     Camera parameters: 
@@ -206,15 +221,11 @@ For viewing supported camera settings with current values:
 
     $ rosservice call /camera/get_settings
 
-<b>Tech and dependencies</b>
-* librealsense.so
-
-<b>System:</b>
-* Linux 14.04+
-* ROS Indigo
-* R200 (DS4) camera
-
-** The ROS integration has been tested on a 64bit machine with Linux 14.04 (Trusty) and ROS Indigo.
+For running multiple cameras simultaneously:
+* Create ".launch" files similar to "realsense_r200_rgbd.launch" for each camera.  
+    * Update the "camera" and "serial_no" arguments with unique values for each camera.  
+    * You may choose to include (or not) the "processing.launch.xml" based on your requirement.  
+* Launch the ".launch" files for each camera in separate terminals.  
 
 ###Unit Tests
 The Unit Tests can be executed using either of the methods:
@@ -264,7 +275,4 @@ Hence the launch file "realsense_r200_rgbd.launch" will not generate data for th
     * /camera/depth_registered/image  
     * /camera/depth/disparity  
     * /camera/depth_registered/disparity  
-
-* If there are multiple R200 cameras connected to a system, the nodelet can be launched for a particular camera 
-by specifing the serial_no parameter in the launch file. But it has not been tested to launch nodelets simultaneouly for multiple cameras.
-
+* The performance benchmark for multiple cameras launched at the same time has not been defined yet.  
