@@ -2,6 +2,16 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.0.3 (2016-04-11)
+------------------
+* Updated code to enable multi-camera functionality
+  Added code to generate frame_id's based on user entered values.
+  Updated rgbd_launch files to reflect the changes.
+  Updated README to reflect the changes.
+  This fixes Issue #7.
+* Updated README and Issue Template with BKC
+* Contributors: Reagan Lopez
+
 1.0.2 (2016-03-28)
 ------------------
 * Added functionality to access camera using Serial No:
