@@ -8,9 +8,6 @@
   <!-- "serial_no" should be the unique identifier to connect to a device. -->
   <arg name="serial_no"       default="" />
 
-  <arg name="depth_frame_id"  default="$(arg camera)_depth_optical_frame" />
-  <arg name="rgb_frame_id"    default="$(arg camera)_rgb_optical_frame" />
-
   <!-- Use OpenNI's factory-calibrated depth->RGB registration? -->
   <arg name="depth_registration" default="false" />
 
@@ -55,17 +52,16 @@
     <!-- Load driver -->
     <include if="$(arg load_driver)"
              file="$(find realsense_camera)/launch/includes/realsense_r200_nodelet.launch.xml">
+      <arg name="camera"                    value="$(arg camera)" />
       <arg name="serial_no"                 value="$(arg serial_no)" />
-      <arg name="manager"                   value="$(arg manager)" />    
-      <arg name="depth_frame_id"            value="$(arg depth_frame_id)" />
-      <arg name="rgb_frame_id"              value="$(arg rgb_frame_id)" />
-      <arg name="publish_tf"                value="$(arg publish_tf)" />    
+      <arg name="manager"                   value="$(arg manager)" />
+      <arg name="publish_tf"                value="$(arg publish_tf)" />
       <arg name="depth"                     value="$(arg depth)" />
       <arg name="rgb"                       value="$(arg rgb)" /> 
       <arg name="ir"                        value="$(arg ir)" />
-      <arg name="enable_depth"              value="$(arg depth_processing)" /> 
-      <arg name="enable_color"              value="$(arg rgb_processing)" />
-      <arg name="enable_ir"                 value="$(arg ir_processing)" />
+      <arg name="depth_processing"          value="$(arg depth_processing)" />
+      <arg name="rgb_processing"            value="$(arg rgb_processing)" />
+      <arg name="ir_processing"             value="$(arg ir_processing)" />
 
     </include>
 
