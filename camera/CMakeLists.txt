@@ -14,6 +14,7 @@ set(CMAKE_EXE_LINKER_FLAGS "-pie -z noexecstack -z relro -z now")
 set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now")
 
 find_package(catkin REQUIRED COMPONENTS
+  realsense
   dynamic_reconfigure
   roscpp
   nodelet
@@ -47,26 +48,26 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(realsense_camera_nodelet src/realsense_camera_nodelet.cpp)
-target_link_libraries(realsense_camera_nodelet
+link_libraries(
   ${catkin_LIBRARIES}
-  /usr/local/lib/librealsense.so
 )
-add_dependencies(realsense_camera_nodelet realsense_camera_generate_messages_cpp ${PROJECT_NAME}_gencfg)
+
+set(rs_deps ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_library(realsense_camera_nodelet src/realsense_camera_nodelet.cpp)
+add_dependencies(realsense_camera_nodelet ${rs_deps})
+
+# Testing
+
+link_libraries(
+  ${GTEST_LIBRARIES}
+  )
 
 add_executable(realsense_camera_test test/realsense_camera_test_node.cpp)
-target_link_libraries(realsense_camera_test
-  ${catkin_LIBRARIES}
-  ${GTEST_LIBRARIES}
-)
-add_dependencies(realsense_camera_test realsense_camera_generate_messages_cpp ${PROJECT_NAME}_gencfg)
+add_dependencies(realsense_camera_test ${rs_deps})
 
 add_executable(realsense_camera_test_rgbd test/realsense_camera_test_rgbd_node.cpp)
-target_link_libraries(realsense_camera_test_rgbd
-  ${catkin_LIBRARIES}
-  ${GTEST_LIBRARIES}
-)
-add_dependencies(realsense_camera_test_rgbd realsense_camera_generate_messages_cpp)
+add_dependencies(realsense_camera_test_rgbd ${rs_deps})
 
 # Install nodelet library
 install(TARGETS realsense_camera_nodelet LIBRARY
