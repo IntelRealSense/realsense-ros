@@ -165,12 +165,12 @@ private:
   std::map<std::string, std::string> config_;
   int stream_step_[STREAM_COUNT];
 
-  struct option_str
+  struct CameraOptions
   {
     rs_option opt;
     double min, max, step, value;
   };
-  std::vector<option_str> options;
+  std::vector<CameraOptions> camera_options_;
   boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>> dynamic_reconf_server_;
 
   // Member Functions.
