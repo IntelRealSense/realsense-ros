@@ -8,13 +8,22 @@
   <!-- "serial_no" should be the unique identifier to connect to a device. -->
   <arg name="serial_no"       default="" />
 
+  <!-- Set depth to match the default rectify size. -->
+  <arg name="mode"            default="manual" />
+  <arg name="color_width"     default="640" />
+  <arg name="color_height"    default="480" />
+  <arg name="depth_width"     default="480" />
+  <arg name="depth_height"    default="360" />
+  <arg name="depth_fps"       default="30" />
+  <arg name="color_fps"       default="30" />
+
   <!-- Use OpenNI's factory-calibrated depth->RGB registration? -->
   <arg name="depth_registration" default="false" />
 
   <!-- Arguments for remapping all device namespaces -->
   <arg name="depth"            default="depth" />
-  <arg name="rgb"              default="rgb" />  
-  <arg name="ir"               default="ir" />  
+  <arg name="rgb"              default="rgb" />
+  <arg name="ir"               default="ir" />
   <arg name="depth_registered" default="depth_registered" />
   <arg name="projector"        default="projector" />
 
@@ -28,7 +37,7 @@
   <arg name="depth_registered_processing"     default="true"/>
   <arg name="disparity_processing"            default="true"/>
   <arg name="disparity_registered_processing" default="true"/>
-  <arg name="hw_registered_processing"        default="true" />
+  <arg name="hw_registered_processing"        default="false" />
   <arg name="sw_registered_processing"        default="true" />
 
   <!-- Disable respawn topics by default -->
@@ -36,11 +45,12 @@
 
   <!-- Worker threads for the nodelet manager -->
   <arg name="num_worker_threads" default="4" />
- 
+
   <!-- Push down all topics/nodelets into "camera" namespace -->
   <group ns="$(arg camera)">
 
     <!-- Start nodelet manager in provided namespace -->
+
     <arg name="manager" value="$(arg camera)_nodelet_manager" />
     <arg name="debug" default="false" /> <!-- Run manager in GDB? -->
     <include file="$(find rgbd_launch)/launch/includes/manager.launch.xml">
@@ -57,11 +67,18 @@
       <arg name="manager"                   value="$(arg manager)" />
       <arg name="publish_tf"                value="$(arg publish_tf)" />
       <arg name="depth"                     value="$(arg depth)" />
-      <arg name="rgb"                       value="$(arg rgb)" /> 
+      <arg name="rgb"                       value="$(arg rgb)" />
       <arg name="ir"                        value="$(arg ir)" />
       <arg name="depth_processing"          value="$(arg depth_processing)" />
       <arg name="rgb_processing"            value="$(arg rgb_processing)" />
       <arg name="ir_processing"             value="$(arg ir_processing)" />
+      <arg name="mode"                      value="$(arg mode)" />
+      <arg name="color_width"               value="$(arg color_width)" />
+      <arg name="color_height"              value="$(arg color_height)" />
+      <arg name="depth_width"               value="$(arg depth_width)" />
+      <arg name="depth_height"              value="$(arg depth_height)" />
+      <arg name="depth_fps"                 value="$(arg depth_fps)" />
+      <arg name="color_fps"                 value="$(arg color_fps)" />
 
     </include>
 
