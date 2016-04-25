@@ -4,6 +4,7 @@
 |:---------------- |:---------------------|
 | Operating System | Ubuntu 14.04.4 LTS   |
 | Kernel           | 4.4.0-040400-generic |
+| Backend          | video4linux          |
 | ROS              | indigo               |
 | librealsense     | 0.9.1                |
 | R200 Firmware    | 1.0.72.06            |
