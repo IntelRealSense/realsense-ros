@@ -936,7 +936,7 @@ namespace realsense_camera
       ros::Time time_stamp = ros::Time::now() + sleeper;
 
       // transform base frame to depth frame
-      tr.setOrigin(tf::Vector3(z_extrinsic.translation[0], z_extrinsic.translation[1], z_extrinsic.translation[2]));
+      tr.setOrigin(tf::Vector3(z_extrinsic.translation[2], -z_extrinsic.translation[0], -z_extrinsic.translation[1]));
       tr.setRotation(tf::Quaternion(0, 0, 0, 1));
       tf_broadcaster.sendTransform(tf::StampedTransform(tr, time_stamp, base_frame_id_, depth_frame_id_));
 
