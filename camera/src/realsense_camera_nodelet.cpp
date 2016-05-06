@@ -539,7 +539,7 @@ namespace realsense_camera
 
     for (int i = 0; i < 5; i++)
     {
-      camera_info_[stream_index]->D.push_back(0);
+      camera_info_[stream_index]->D.push_back(intrinsic.coeffs[i]);
     }
   }
 
