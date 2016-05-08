@@ -229,6 +229,11 @@ void imageColorCallback(const sensor_msgs::ImageConstPtr & msg, const sensor_msg
     color_caminfo_projection_recv[i] = info_msg->P[i];
   }
 
+  for (unsigned int i = 0; i < 5; i++)
+  {
+    color_caminfo_D_recv[i] = info_msg->D[i];
+  }
+
   color_recv = true;
 }
 
@@ -296,6 +301,15 @@ TEST (RealsenseTests, testColorCameraInfo)
     EXPECT_EQ(color_caminfo_projection_recv[9], (double) 0);
     EXPECT_TRUE(color_caminfo_projection_recv[10] != (double) 0);
     EXPECT_EQ(color_caminfo_projection_recv[11], (double) 0);
+
+    float color_caminfo_D = 1;
+    // ignoring the 5th value since it always appears to be 0.0 on tested R200 cameras
+    for (unsigned int i = 0; i < 4; i++)
+    {
+      color_caminfo_D = color_caminfo_D && color_caminfo_D_recv[i];
+    }
+
+    EXPECT_TRUE(color_caminfo_D != (float) 0);
 
   }
 }
