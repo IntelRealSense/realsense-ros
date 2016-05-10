@@ -265,7 +265,7 @@ Refer to the function definitions in [realsense_camera_nodelet.h](src/realsense_
 
 * Currently, the camera nodelet only supports the following formats:
     * Color stream:    RGB8
-    * Depth stream:    Y16
+    * Depth stream:    Z16
     * Infrared stream: Y8
 
 * Generating a Depth Registered Point Cloud is very memory intensive.
