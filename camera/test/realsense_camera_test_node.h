@@ -132,6 +132,7 @@ int color_caminfo_height_recv = 0;
 int color_caminfo_width_recv = 0;
 double color_caminfo_rotation_recv[9] = {0};
 double color_caminfo_projection_recv[12] = {0};
+float color_caminfo_D_recv[5] = {0};
 int inf1_caminfo_height_recv = 0;
 int inf1_caminfo_width_recv = 0;
 double inf1_caminfo_rotation_recv[9] = {0};
