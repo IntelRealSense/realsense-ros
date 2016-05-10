@@ -926,11 +926,12 @@ namespace realsense_camera
     checkError();
 
     ros::Duration sleeper(0.1); // 100ms
+    ros::Duration sleeper_with_eps(0.12);
 
     while (ros::ok())
     {
       // time stamp is future dated to be valid for given duration
-      ros::Time time_stamp = ros::Time::now() + sleeper;
+      ros::Time time_stamp = ros::Time::now() + sleeper_with_eps;
 
       // transform base frame to depth frame
       tr.setOrigin(tf::Vector3(z_extrinsic.translation[0], z_extrinsic.translation[1], z_extrinsic.translation[2]));
