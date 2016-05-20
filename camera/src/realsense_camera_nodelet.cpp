@@ -56,12 +56,13 @@ namespace realsense_camera
     // Stop device.
     if (is_device_started_ == true)
     {
+      ROS_INFO_STREAM(nodelet_name_ << " - Stopping camera");
       rs_stop_device(rs_device_, 0);
       rs_delete_context(rs_context_, &rs_error_);
       checkError();
     }
 
-    ROS_INFO_STREAM(nodelet_name_ << " - Stopping camera nodelet.");
+    ROS_INFO_STREAM(nodelet_name_ << " - Stopping...");
     ros::shutdown();
   }
 
@@ -71,7 +72,7 @@ namespace realsense_camera
   void RealsenseNodelet::onInit()
   {
     nodelet_name_ = getName(); // Get the nodelet name
-    ROS_INFO_STREAM(nodelet_name_ << " - Starting camera nodelet.");
+    ROS_INFO_STREAM(nodelet_name_ << " - Starting...");
 
     // Set default configurations.
     is_device_started_ = false;
@@ -143,13 +144,13 @@ namespace realsense_camera
     // Enable streams.
     if (mode_.compare ("manual") == 0)
     {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Color Stream: manual mode");
+      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Color stream: manual mode");
       rs_enable_stream(rs_device_, RS_STREAM_COLOR, color_width_, color_height_, COLOR_FORMAT, color_fps_, &rs_error_);
       checkError();
     }
     else
     {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Color Stream: preset mode");
+      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Color stream: preset mode");
       rs_enable_stream_preset(rs_device_, RS_STREAM_COLOR, RS_PRESET_BEST_QUALITY, &rs_error_);
       checkError();
     }
@@ -166,13 +167,13 @@ namespace realsense_camera
     // Enable streams.
     if (mode_.compare ("manual") == 0)
     {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Depth Stream: manual mode");
+      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Depth stream: manual mode");
       rs_enable_stream(rs_device_, RS_STREAM_DEPTH, depth_width_, depth_height_, DEPTH_FORMAT, depth_fps_, &rs_error_);
       checkError();
     }
     else
     {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Depth Stream: preset mode");
+      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Depth stream: preset mode");
       rs_enable_stream_preset(rs_device_, RS_STREAM_DEPTH, RS_PRESET_BEST_QUALITY, &rs_error_);
       checkError();
     }
@@ -189,13 +190,13 @@ namespace realsense_camera
     // Enable streams.
     if (mode_.compare ("manual") == 0)
     {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared Stream: manual mode");
+      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared stream: manual mode");
       rs_enable_stream(rs_device_, RS_STREAM_INFRARED, depth_width_, depth_height_, IR1_FORMAT, depth_fps_, &rs_error_);
       checkError();
     }
     else
     {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared Stream: preset mode");
+      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared stream: preset mode");
       rs_enable_stream_preset(rs_device_, RS_STREAM_INFRARED, RS_PRESET_BEST_QUALITY, &rs_error_);
       checkError();
     }
@@ -212,12 +213,12 @@ namespace realsense_camera
     // Enable streams.
     if (mode_.compare ("manual") == 0)
     {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared2 Stream: manual mode");
+      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared2 stream: manual mode");
       rs_enable_stream(rs_device_, RS_STREAM_INFRARED2, depth_width_, depth_height_, IR2_FORMAT, depth_fps_, 0);
     }
     else
     {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared2 Stream: preset mode");
+      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared2 stream: preset mode");
       rs_enable_stream_preset(rs_device_, RS_STREAM_INFRARED2, RS_PRESET_BEST_QUALITY, 0);
     }
 
@@ -331,7 +332,7 @@ namespace realsense_camera
   {
     if (enable_depth_ == false && enable_color_ == false)
     {
-      ROS_ERROR_STREAM(nodelet_name_ << " - None of the streams are enabled. Exiting.");
+      ROS_ERROR_STREAM(nodelet_name_ << " - None of the streams are enabled. Exiting!");
       return false;
     }
 
@@ -403,6 +404,7 @@ namespace realsense_camera
     setStaticCameraOptions();
 
     // Start device.
+    ROS_INFO_STREAM(nodelet_name_ << " - Starting camera");
     rs_start_device(rs_device_, &rs_error_);
     checkError();
 
@@ -703,30 +705,30 @@ namespace realsense_camera
     {
       if (rs_is_device_streaming(rs_device_, 0) == 1)
       {
+        ROS_INFO_STREAM(nodelet_name_ << " - Stopping camera");
         rs_stop_device(rs_device_, &rs_error_);
         checkError();
-        ROS_INFO_STREAM(nodelet_name_ << " - Device Stopped");
       }
 
 
       //disable depth, infrared1 and infrared2 streams
+      ROS_INFO_STREAM(nodelet_name_ << " - Disabling Depth stream");
       rs_disable_stream(rs_device_, RS_STREAM_DEPTH, &rs_error_);
       checkError();
-      ROS_INFO_STREAM(nodelet_name_ << " - Depth Stream Disabled");
 
+      ROS_INFO_STREAM(nodelet_name_ << " - Disabling Infrared stream");
       rs_disable_stream(rs_device_, RS_STREAM_INFRARED, &rs_error_);
       checkError();
-      ROS_INFO_STREAM(nodelet_name_ << " - Infrared1 stream Disabled");
 
+      ROS_INFO_STREAM(nodelet_name_ << " - Disabling Infrared2 stream");
       rs_disable_stream(rs_device_, RS_STREAM_INFRARED2, &rs_error_);
       checkError();
-      ROS_INFO_STREAM(nodelet_name_ << " - Infrared2 stream Disabled");
 
       if (rs_is_device_streaming(rs_device_, 0) == 0)
       {
+        ROS_INFO_STREAM(nodelet_name_ << " - Starting camera");
         rs_start_device(rs_device_, &rs_error_);
         checkError();
-        ROS_INFO_STREAM(nodelet_name_ << " - Device Started");
       }
     }
 
@@ -734,9 +736,9 @@ namespace realsense_camera
     {
       if (rs_is_device_streaming(rs_device_, 0) == 1)
       {
+        ROS_INFO_STREAM(nodelet_name_ << " - Stopping camera");
         rs_stop_device(rs_device_, &rs_error_);
         checkError();
-        ROS_INFO_STREAM(nodelet_name_ << " - Device Stopped");
       }
 
       enableDepthStream();
@@ -745,9 +747,9 @@ namespace realsense_camera
 
       if (rs_is_device_streaming(rs_device_, 0) == 0)
       {
+        ROS_INFO_STREAM(nodelet_name_ << " - Starting camera");
         rs_start_device(rs_device_, &rs_error_);
         checkError();
-        ROS_INFO_STREAM(nodelet_name_ << " - Device Started");
       }
     }
 
