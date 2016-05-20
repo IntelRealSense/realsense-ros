@@ -138,6 +138,7 @@ private:
   std::string ir_frame_id_;
   std::string ir2_frame_id_;
   std::string camera_ = "R200";
+  std::string nodelet_name_;
   const uint16_t *image_depth16_;
 
   cv::Mat image_[STREAM_COUNT];
