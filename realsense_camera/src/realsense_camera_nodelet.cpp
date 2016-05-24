@@ -80,6 +80,7 @@ namespace realsense_camera
     for (int i = 0; i < STREAM_COUNT; ++i)
     {
       camera_info_[i] = NULL;
+      stream_ts_[i] = -1;
     }
 
     ros::NodeHandle & nh = getNodeHandle();
@@ -765,21 +766,31 @@ namespace realsense_camera
         if (camera_publisher_[stream_index].getNumSubscribers() > 0 &&
             rs_is_stream_enabled(rs_device_, (rs_stream) stream_index, 0) == 1)
         {
-          prepareStreamData ((rs_stream) stream_index);
+          int current_ts = rs_get_frame_timestamp(rs_device_, (rs_stream) stream_index, 0);
+          if (stream_ts_[stream_index] != current_ts) // publish frames only if its not duplicate
+          {
+            prepareStreamData((rs_stream) stream_index);
 
-          sensor_msgs::ImagePtr msg = cv_bridge::CvImage (std_msgs::Header(),
-              stream_encoding_[stream_index],
-              image_[stream_index]).toImageMsg();
+            sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(),
+                stream_encoding_[stream_index],
+                image_[stream_index]).toImageMsg();
 
-          msg->header.frame_id = frame_id_[stream_index];
-          msg->header.stamp = time_stamp_;	// Publish timestamp to synchronize frames.
-          msg->width = image_[stream_index].cols;
-          msg->height = image_[stream_index].rows;
-          msg->is_bigendian = false;
-          msg->step = stream_step_[stream_index];
+            msg->header.frame_id = frame_id_[stream_index];
+            msg->header.stamp = time_stamp_; // Publish timestamp to synchronize frames.
+            msg->width = image_[stream_index].cols;
+            msg->height = image_[stream_index].rows;
+            msg->is_bigendian = false;
+            msg->step = stream_step_[stream_index];
 
-          camera_info_ptr_[stream_index]->header.stamp = msg->header.stamp;
-          camera_publisher_[stream_index].publish (msg, camera_info_ptr_[stream_index]);
+            camera_info_ptr_[stream_index]->header.stamp = msg->header.stamp;
+            camera_publisher_[stream_index].publish (msg, camera_info_ptr_[stream_index]);
+          }
+          else
+          {
+            ROS_INFO_STREAM(nodelet_name_ << " - Duplicate frame for stream index " << stream_index <<
+            " with ts = " << current_ts);
+          }
+          stream_ts_[stream_index] = current_ts;
         }
       }
 
