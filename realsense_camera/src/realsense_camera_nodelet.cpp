@@ -131,6 +131,7 @@ namespace realsense_camera
     }
     else
     {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Couldn't connect to camera! Shutting down...");
       ros::shutdown();
     }
 
@@ -350,42 +351,47 @@ namespace realsense_camera
       return false;
     }
 
-    rs_device_ = getCameraBySerialNumber(); // Get rs_device_ using input serial number.
-    std::string detected_camera_msg = nodelet_name_ + " - Detected following cameras:";
-    for (rs_device *rs_detected_device: rs_detected_devices_)
-    {
-      detected_camera_msg = detected_camera_msg +
-          "\n\t\t\t\t- Serial No: " + rs_get_device_serial(rs_detected_device, &rs_error_) +
-          "; Firmware: " + rs_get_device_firmware_version(rs_detected_device, &rs_error_) +
-          "; Name: " + rs_get_device_name(rs_detected_device, &rs_error_);
-      checkError();
-    }
-    ROS_INFO_STREAM(detected_camera_msg);
+    // Print list of all cameras found
+    listCameras();
 
-    // Exit with error if no serial number is specified and multiple cameras are detected.
-    if ((serial_no_.empty() == true) && (num_of_cameras_ > 1))
+    // Exit with error if no serial number or usb_port_id is specified and multiple cameras are detected.
+    if (serial_no_.empty() && usb_port_id_.empty() && num_of_cameras_ > 1)
     {
-      ROS_ERROR_STREAM(nodelet_name_ << " - Multiple cameras detected but no input serial_no specified. Exiting!");
+      ROS_ERROR_STREAM(nodelet_name_ << " - Multiple cameras detected but no input serial_no or usb_port_id specified. Exiting!");
       return false;
     }
 
-    // Exit with error if no camera is detected that matches the input serial number.
-    if ((serial_no_.empty() != true) && (rs_device_ == NULL))
+    // init rs_device_ before starting loop
+    rs_device_ = nullptr;
+
+    // find camera
+    for (int i = 0; i < num_of_cameras_; i++)
     {
-      ROS_ERROR_STREAM(nodelet_name_ << " - No camera detected with input serial_no = " << serial_no_ << ". Exiting!");
+      rs_device* rs_detected_device = rs_get_device(rs_context_, i, &rs_error_);
+      // check serial_no and usb_port_id
+      if ((serial_no_.empty() || serial_no_ == rs_get_device_serial(rs_detected_device, &rs_error_)) &&
+          (usb_port_id_.empty() || usb_port_id_ == rs_get_device_usb_port_id(rs_detected_device, &rs_error_)))
+      {
+        // device found
+        rs_device_= rs_detected_device;
+      }
+      // continue loop
+    }
+
+    if (rs_device_ == nullptr)
+    {
+      // camera not found
+      string error_msg = " - Couldn't find camera to connect with ";
+      error_msg += "serial_no = " + serial_no_ + ", ";
+      error_msg += "usb_port_id = " + usb_port_id_;
+      ROS_ERROR_STREAM(nodelet_name_ << error_msg);
       return false;
     }
 
-    // At this point, rs_device_ will be null if no input serial number was specified and only one camera is connected.
-    // This is a valid use case and the code will proceed.
-    if (rs_device_ == NULL)
-    {
-      rs_device_ = rs_get_device(rs_context_, 0, &rs_error_);
-      checkError();
-    }
-
+    // print device info
     ROS_INFO_STREAM(nodelet_name_ << " - Connecting to camera with Serial No: " <<
-        rs_get_device_serial(rs_device_, &rs_error_));
+        rs_get_device_serial(rs_device_, &rs_error_) <<
+        " USB Port ID: " << rs_get_device_usb_port_id(rs_device_, &rs_error_));
     checkError();
 
     // Enable streams.
@@ -416,28 +422,23 @@ namespace realsense_camera
     return true;
   }
 
-  /*
-   * Returns the device details of the camera that matches the input serial_no.
-   * Returns NULL if no camera is found that matches the input serial_no.
-   * Also populates the list of detected cameras.
-   */
-  rs_device * RealsenseNodelet::getCameraBySerialNumber()
+  void RealsenseNodelet::listCameras()
   {
-    rs_device *rs_device_detect;
-    rs_device *rs_device_connect = NULL;
-    for (int i = 0; i < num_of_cameras_; ++i)
+    // print list of detected cameras
+    std::string detected_camera_msg = " - Detected the following cameras:";
+    for (int i = 0; i < num_of_cameras_; i++)
     {
-      rs_device_detect = rs_get_device(rs_context_, i, &rs_error_);
+      // get device
+      rs_device* rs_detected_device = rs_get_device(rs_context_, i, &rs_error_);
+      // print device details
+      detected_camera_msg = detected_camera_msg +
+            "\n\t\t\t\t- Serial No: " + rs_get_device_serial(rs_detected_device, &rs_error_) +
+            "; Firmware: " + rs_get_device_firmware_version(rs_detected_device, &rs_error_) +
+            "; Name: " + rs_get_device_name(rs_detected_device, &rs_error_) +
+            "; USB Port ID: " + rs_get_device_usb_port_id(rs_detected_device, &rs_error_);
       checkError();
-      std::string device_serial_no = rs_get_device_serial(rs_device_detect, &rs_error_);
-      checkError();
-      if (device_serial_no.compare(serial_no_) == 0)
-      {
-        rs_device_connect = rs_device_detect;
-      }
-      rs_detected_devices_.push_back(rs_device_detect);
     }
-    return rs_device_connect;
+    ROS_INFO_STREAM(nodelet_name_ + detected_camera_msg);
   }
 
   /*
@@ -575,6 +576,7 @@ namespace realsense_camera
   void RealsenseNodelet::setStreamOptions()
   {
     pnh_.getParam("serial_no", serial_no_);
+    pnh_.getParam("usb_port_id", usb_port_id_);
     pnh_.param("camera", camera_, (std::string) R200);
     pnh_.param("mode", mode_, DEFAULT_MODE);
     pnh_.param("enable_depth", enable_depth_, ENABLE_DEPTH);
