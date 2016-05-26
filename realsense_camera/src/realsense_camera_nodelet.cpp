@@ -759,6 +759,7 @@ namespace realsense_camera
       rs_wait_for_frames(rs_device_, &rs_error_);
       checkError();
       time_stamp_ = ros::Time::now();
+      bool duplicate_depth_color = false;
 
       for (int stream_index = 0; stream_index < STREAM_COUNT; ++stream_index)
       {
@@ -767,7 +768,7 @@ namespace realsense_camera
             rs_is_stream_enabled(rs_device_, (rs_stream) stream_index, 0) == 1)
         {
           int current_ts = rs_get_frame_timestamp(rs_device_, (rs_stream) stream_index, 0);
-          if (stream_ts_[stream_index] != current_ts) // publish frames only if its not duplicate
+          if (stream_ts_[stream_index] != current_ts) // Publish frames only if its not duplicate
           {
             prepareStreamData((rs_stream) stream_index);
 
@@ -787,25 +788,28 @@ namespace realsense_camera
           }
           else
           {
-            ROS_INFO_STREAM(nodelet_name_ << " - Duplicate frame for stream index " << stream_index <<
-            " with ts = " << current_ts);
+            if ((stream_index == RS_STREAM_DEPTH) || (stream_index == RS_STREAM_COLOR))
+            {
+              duplicate_depth_color = true; // Set this flag to true if Depth and/or Color frame is duplicate
+            }
           }
           stream_ts_[stream_index] = current_ts;
         }
       }
 
       if (pointcloud_publisher_.getNumSubscribers() > 0 &&
-          rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0) == 1 && enable_pointcloud_ == true)
+          rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0) == 1 && enable_pointcloud_ == true &&
+          (duplicate_depth_color == false)) // Skip publishing PointCloud if Depth and/or Color frame was duplicate
       {
         if (camera_publisher_[(uint32_t) RS_STREAM_DEPTH].getNumSubscribers() <= 0)
         {
-          prepareStreamData (RS_STREAM_DEPTH);
+          prepareStreamData(RS_STREAM_DEPTH);
         }
         if (camera_publisher_[(uint32_t) RS_STREAM_COLOR].getNumSubscribers() <= 0)
         {
-          prepareStreamData (RS_STREAM_COLOR);
+          prepareStreamData(RS_STREAM_COLOR);
         }
-        publishPointCloud (image_[(uint32_t) RS_STREAM_COLOR]);
+        publishPointCloud(image_[(uint32_t) RS_STREAM_COLOR]);
       }
     }
   }
