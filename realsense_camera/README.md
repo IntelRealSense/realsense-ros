@@ -19,8 +19,10 @@ If this does not work, you should first fix this issue before continuing with th
 
 #####Building package:
 
-* Install ROS and create a local catkin workspace (see [wiki.ros.org](http://wiki.ros.org/) for instructions)
-* Run `rosdep install realsense_camera` to install package dependencies
+* Install ROS and create a local catkin workspace (see [wiki.ros.org](http://wiki.ros.org/) for instructions).
+* Clone the source from https://github.com/intel-ros/realsense.git.
+  Checkout the 'stable' tag for the most stable version (E.g. `git checkout stable`).
+* Run `rosdep install realsense_camera` to install package dependencies.
 * Compile the realsense_camera package by executing the `catkin_make` command.
 
 Successful execution of command will build target <b>“realsense_camera_nodelet”</b>

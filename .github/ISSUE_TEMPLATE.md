@@ -7,8 +7,8 @@ Please complete Your Configuration detail below.
 | Kernel           | 4.4.0-040400-generic | ?-?-?                |
 | Backend          | video4linux          | ?                    |
 | ROS              | indigo               | ?                    |
-| ROS RealSense    | Latest Release       | ?.?.?                |
-| librealsense     | 0.9.1                | ?.?.?                |
+| ROS RealSense    | 'stable' Release     | ?.?.?                |
+| librealsense     | 0.9.2                | ?.?.?                |
 | R200 Firmware    | 1.0.72.06            | ?.?.?.?              |
 
 ---
