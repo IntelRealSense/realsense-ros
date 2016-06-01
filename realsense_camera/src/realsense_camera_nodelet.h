@@ -165,6 +165,7 @@ private:
   std::string mode_;
   std::map<std::string, std::string> config_;
   int stream_step_[STREAM_COUNT];
+  int stream_ts_[STREAM_COUNT];
 
   struct CameraOptions
   {
