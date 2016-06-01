@@ -50,7 +50,7 @@ include_directories(
 add_library(realsense_camera_nodelet src/realsense_camera_nodelet.cpp)
 target_link_libraries(realsense_camera_nodelet
   ${catkin_LIBRARIES}
-  /usr/local/lib/librealsense.so
+  realsense
 )
 add_dependencies(realsense_camera_nodelet realsense_camera_generate_messages_cpp ${PROJECT_NAME}_gencfg)
 
