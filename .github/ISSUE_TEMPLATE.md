@@ -1,15 +1,15 @@
 ### System Configuration
-Please complete Your Configuration detail below.
+Please complete Your Configuration detail below. Refer to the BKC at [Configuration](../realsense_camera/README.md#configuration).
 
-| Version          | Best Known           | Your Configuration   |
-|:---------------- |:---------------------|:---------------------|
-| Operating System | Ubuntu 14.04.4 LTS   | ? ? ?                |
-| Kernel           | 4.4.0-040400-generic | ?-?-?                |
-| Backend          | video4linux          | ?                    |
-| ROS              | indigo               | ?                    |
-| ROS RealSense    | 'stable' Release     | ?.?.?                |
-| librealsense     | 0.9.2                | ?.?.?                |
-| R200 Firmware    | 1.0.72.06            | ?.?.?.?              |
+| Version          | Your Configuration   |
+|:---------------- |:---------------------|
+| Operating System | ? ? ?                |
+| Kernel           | ?-?-?                |
+| Backend          | ?                    |
+| ROS              | ?                    |
+| ROS RealSense    | ?.?.?                |
+| librealsense     | ?.?.?                |
+| R200 Firmware    | ?.?.?.?              |
 
 ---
 #### How to collect Configuration Data
