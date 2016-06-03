@@ -83,6 +83,10 @@ Infrared2 camera
             Specify the serial_no to uniquely connect to a camera, especially if multiple cameras are detected by the nodelet.
             You may get the serial_no from the info stream by launching "realsense_r200_nodelet_standalone_preset.launch"
             one at a time for each camera.
+        usb_port_id (string, default: blank)
+            Alternatively to serial_no, this can be used to connect to a camera by its USB Port ID, which is a 
+            Bus Number-Port Number in the format "Bus#-Port#". If used with serial_no, both must match correctly for 
+            camera to be connected.
 	    mode (string, default: preset)
 	        Specify the mode to start camera streams. Mode comprises of height, width and fps. 
 	        Preset mode enables default values whereas Manual mode enables the specified parameter values.
@@ -229,16 +233,19 @@ For viewing supported camera settings with current values:
 For running multiple cameras simultaneously:  
 <b>Option 1:</b> Using single nodelet manager for all the cameras
 * Use "realsense_r200_multiple_cameras.launch".
-    * Update the "camera" and "serial_no" arguments with unique values for each camera.
-      "camera" should be a user friendly string that follows the ROS Names convention. (E.g. "camera1")
     * For the "num_worker_threads" argument, allocate at least 1 thread for each camera.
 
 <b>Option 2:</b> Using separate nodelet manager for each camera
 * Create ".launch" files similar to "realsense_r200_rgbd.launch" for each camera.
-    * Update the "camera" and "serial_no" arguments with unique values for each camera.
-      "camera" should be a user friendly string that follows the ROS Names convention. (E.g. "camera1")
     * You may choose to include (or not) the "processing.launch.xml" based on your requirement.
 * Launch the ".launch" files for each camera in separate terminals.
+
+<b> For either option you must:</b>
+* Update the "camera" and either the "serial_no" or "usb_port_id" argument with unique values for each camera.
+  * "camera" should be a user friendly string that follows the ROS Names convention. (E.g. "camera1")
+  * "serial_no" is the camera serial number and can be found by running the nodelet and viewing the terminal output
+  * "usb_port_id" is Bus Number-Port Number in "Bus#-Port#" format, and can be found by using `lsusb -t` 
+  * if both "serial_no" and "usb_port_id" are set, both much match the same camera
 
 ###Unit Tests
 The Unit Tests can be executed using either of the methods:

@@ -14,6 +14,7 @@
 
 <!-- RealSense -->
     <arg name="serial_no"           default="" />
+    <arg name="usb_port_id"         default="" />
     <arg name="mode"                default="" />
     <arg name="color_width"         default="" />
     <arg name="color_height"        default="" />
@@ -29,31 +30,32 @@
     <arg name="enable_depth_ir"     value="$(arg depth_processing)" unless="$(arg depth_processing)" />
 
      <!-- "enable_pointcloud" is set to false by default because rgbd launch uses standard ROS packages
-          to generate point clouds. -->          
+          to generate point clouds. -->
     <arg name="enable_pointcloud"   default="false" />
 <!-- RealSense -->
 
     <node pkg="nodelet" type="nodelet" name="camera_nodelet"
         args="load realsense_camera/RealsenseNodelet $(arg manager)">
-        <param name="serial_no"         type="str"  value="$(arg serial_no)" />
-        <param name="mode"              type="str"  value="$(arg mode)" />
-        <param name="enable_depth"      type="bool" value="$(arg enable_depth_ir)" />
-        <param name="enable_color"      type="bool" value="$(arg rgb_processing)" />
-        <param name="enable_pointcloud" type="bool" value="$(arg enable_pointcloud)" />
-        <param name="enable_tf"         type="bool" value="$(arg publish_tf)" />
-        <param name="depth_width"       type="int"  value="$(arg depth_width)" />
-        <param name="depth_height"      type="int"  value="$(arg depth_height)" />
-        <param name="color_width"       type="int"  value="$(arg color_width)" />
-        <param name="color_height"      type="int"  value="$(arg color_height)" />
-        <param name="depth_fps"         type="int"  value="$(arg depth_fps)" />
-        <param name="color_fps"         type="int"  value="$(arg color_fps)" />
-        <param name="base_frame_id"     type="str"  value="$(arg camera)_link" />
-        <param name="depth_frame_id"    type="str"  value="$(arg camera)_$(arg depth)_frame" />
-        <param name="color_frame_id"    type="str"  value="$(arg camera)_$(arg rgb)_frame" /> 
+        <param name="serial_no"               type="str"  value="$(arg serial_no)" />
+        <param name="usb_port_id"             type="str"  value="$(arg usb_port_id)" />
+        <param name="mode"                    type="str"  value="$(arg mode)" />
+        <param name="enable_depth"            type="bool" value="$(arg enable_depth_ir)" />
+        <param name="enable_color"            type="bool" value="$(arg rgb_processing)" />
+        <param name="enable_pointcloud"       type="bool" value="$(arg enable_pointcloud)" />
+        <param name="enable_tf"               type="bool" value="$(arg publish_tf)" />
+        <param name="depth_width"             type="int"  value="$(arg depth_width)" />
+        <param name="depth_height"            type="int"  value="$(arg depth_height)" />
+        <param name="color_width"             type="int"  value="$(arg color_width)" />
+        <param name="color_height"            type="int"  value="$(arg color_height)" />
+        <param name="depth_fps"               type="int"  value="$(arg depth_fps)" />
+        <param name="color_fps"               type="int"  value="$(arg color_fps)" />
+        <param name="base_frame_id"           type="str"  value="$(arg camera)_link" />
+        <param name="depth_frame_id"          type="str"  value="$(arg camera)_$(arg depth)_frame" />
+        <param name="color_frame_id"          type="str"  value="$(arg camera)_$(arg rgb)_frame" />
         <param name="depth_optical_frame_id"  type="str"  value="$(arg camera)_$(arg depth)_optical_frame" />
         <param name="color_optical_frame_id"  type="str"  value="$(arg camera)_$(arg rgb)_optical_frame" />
-        <param name="ir_frame_id"       type="str"  value="$(arg camera)_$(arg ir)_frame" />
-        <param name="ir2_frame_id"      type="str"  value="$(arg camera)_$(arg ir2)_frame" />
+        <param name="ir_frame_id"             type="str"  value="$(arg camera)_$(arg ir)_frame" />
+        <param name="ir2_frame_id"            type="str"  value="$(arg camera)_$(arg ir2)_frame" />
 
         <remap from="camera/depth/image_raw"        to="$(arg depth)/image_raw" />
         <remap from="camera/color/image_raw"        to="$(arg rgb)/image_raw" />
@@ -65,4 +67,4 @@
         <remap from="camera/infrared1/camera_info"  to="$(arg ir)/camera_info" />
         <remap from="camera/infrared2/camera_info"  to="$(arg ir2)/camera_info" />
     </node>
-</launch> 
+</launch>
