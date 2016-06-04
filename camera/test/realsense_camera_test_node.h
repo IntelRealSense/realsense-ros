@@ -42,10 +42,10 @@
 #include <camera_info_manager/camera_info_manager.h>
 #include "std_msgs/String.h"
 #include <ros/ros.h>
-#include <pcl-1.7/pcl/conversions.h>
-#include <pcl-1.7/pcl/point_cloud.h>
-#include <pcl-1.7/pcl/point_types.h>
-#include <pcl-1.7/pcl/PCLPointCloud2.h>
+#include <pcl/conversions.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/PCLPointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include "std_msgs/Float32MultiArray.h"
 #include <cv_bridge/cv_bridge.h>
