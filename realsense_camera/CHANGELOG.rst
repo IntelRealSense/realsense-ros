@@ -2,8 +2,8 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.1.0 (2016-06-03)
+------------------
 * Fix white space issues in test files
 * Updated docs with Kinetic Kame details and for consistency
 * Added usb_port_id for selecting camera
