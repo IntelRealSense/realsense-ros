@@ -117,6 +117,8 @@ private:
   rs_device *rs_device_;
   std::vector<rs_device *> rs_detected_devices_;
 
+  float depth_scale_meters;
+
   int num_of_cameras_;
   std::string serial_no_;
   int color_height_;

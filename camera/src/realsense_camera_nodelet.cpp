@@ -396,6 +396,7 @@ namespace realsense_camera
       enableDepthStream();
       enableInfraredStream();
       enableInfrared2Stream();
+      depth_scale_meters = rs_get_device_depth_scale(rs_device_, &rs_error_);
     }
 
     getCameraOptions();
@@ -655,6 +656,8 @@ namespace realsense_camera
    */
   void RealsenseNodelet::prepareStreamData(rs_stream rs_strm)
   {
+    static Mat cvWrapper;
+    const float MILLIMETER_METERS  = 0.001;
     switch (rs_strm)
     {
       case RS_STREAM_COLOR:
@@ -662,7 +665,9 @@ namespace realsense_camera
       break;
       case RS_STREAM_DEPTH:
       image_depth16_ = reinterpret_cast <const uint16_t * >(rs_get_frame_data(rs_device_, RS_STREAM_DEPTH, 0));
-      image_[(uint32_t) RS_STREAM_DEPTH].data = (unsigned char *) image_depth16_;
+      // convert depth stream to mm, expected by ROS for CV_16UC1 depth format
+      cvWrapper = Mat(image_[(uint32_t) RS_STREAM_DEPTH].size(), CV_16UC1, (void *) image_depth16_, depth_width_ * sizeof(uint16_t));
+      cvWrapper.convertTo(image_[(uint32_t) RS_STREAM_DEPTH], CV_16UC1, depth_scale_meters / MILLIMETER_METERS);
       break;
       case RS_STREAM_INFRARED:
       image_[(uint32_t) RS_STREAM_INFRARED].data =
