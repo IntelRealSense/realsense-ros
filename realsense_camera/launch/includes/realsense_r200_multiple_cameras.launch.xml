@@ -1,0 +1,31 @@
+<!-- Basic multiple camera example -->
+<launch>
+  <arg name="manager" />
+  <arg name="camera" />
+  <arg name="serial_no" />
+  <arg name="usb_port_id" />
+
+  <node pkg="nodelet" type="nodelet" name="$(arg camera)_nodelet"
+      args="load realsense_camera/RealsenseNodelet $(arg manager)">
+      <param name="serial_no"               type="str"  value="$(arg serial_no)" />
+      <param name="usb_port_id"             type="str"  value="$(arg usb_port_id)" />
+      <param name="base_frame_id"           type="str"  value="$(arg camera)_link" />
+      <param name="depth_frame_id"          type="str"  value="$(arg camera)_depth_frame" />
+      <param name="color_frame_id"          type="str"  value="$(arg camera)_rgb_frame" />
+      <param name="depth_optical_frame_id"  type="str"  value="$(arg camera)_depth_optical_frame" />
+      <param name="color_optical_frame_id"  type="str"  value="$(arg camera)_rgb_optical_frame" />
+      <param name="ir_frame_id"             type="str"  value="$(arg camera)_ir_frame" />
+      <param name="ir2_frame_id"            type="str"  value="$(arg camera)_ir2_frame" />
+
+      <remap from="camera/depth/image_raw"        to="$(arg camera)/depth/image_raw" />
+      <remap from="camera/color/image_raw"        to="$(arg camera)/rgb/image_raw" />
+      <remap from="camera/infrared1/image_raw"    to="$(arg camera)/ir/image_raw" />
+      <remap from="camera/infrared2/image_raw"    to="$(arg camera)/ir2/image_raw" />
+      <remap from="camera/depth/points"           to="$(arg camera)/depth/points" />
+      <remap from="camera/depth/camera_info"      to="$(arg camera)/depth/camera_info" />
+      <remap from="camera/color/camera_info"      to="$(arg camera)/rgb/camera_info" />
+      <remap from="camera/infrared1/camera_info"  to="$(arg camera)/ir/camera_info" />
+      <remap from="camera/infrared2/camera_info"  to="$(arg camera)/ir2/camera_info" />
+      <remap from="camera/get_settings"           to="$(arg camera)/get_settings" />
+  </node>
+</launch>

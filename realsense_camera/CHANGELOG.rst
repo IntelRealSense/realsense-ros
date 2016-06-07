@@ -2,6 +2,29 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.1.0 (2016-06-03)
+------------------
+* Fix white space issues in test files
+* Updated docs with Kinetic Kame details and for consistency
+* Added usb_port_id for selecting camera
+* Updated artifacts to reflect 'stable' tag
+* Added code to skip publishing PointCloud frame if Depth and/or Color has duplicate frames
+* Added code to skip publishing duplicate frames for native streams
+* Added example for launching multiple cameras from a single launch file (#22)
+* Fixed transformation origin bug for base frame to depth frame
+* Rename package directory (#33)
+* Update README to include rosdep install
+* Resolved testTransform unit test issue
+* Refined the log messages and made them consistent
+* Removed extra space before ROS Log function calls
+* Added nodelet name to log messages
+* Remove hard-coded paths
+* Fixed README bug to show correct depth format Z16
+* Fixed unit conversion bug in the projection matrix
+* Added unit test to check camera_info distortion-parameter
+* adding D to camera info
+* Contributors: Mark D Horn, Matthew Hansen, Reagan Lopez, Rajvi Jingar, Natalia Lyubova, Michael Gorner
+
 1.0.4 (2016-04-25)
 ------------------
 * Updated RGBD Launch File for Manual Mode (#25)

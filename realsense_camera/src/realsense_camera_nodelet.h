@@ -119,6 +119,7 @@ private:
 
   int num_of_cameras_;
   std::string serial_no_;
+  std::string usb_port_id_;
   int color_height_;
   int color_width_;
   int depth_height_;
@@ -138,6 +139,7 @@ private:
   std::string ir_frame_id_;
   std::string ir2_frame_id_;
   std::string camera_ = "R200";
+  std::string nodelet_name_;
   const uint16_t *image_depth16_;
 
   cv::Mat image_[STREAM_COUNT];
@@ -164,6 +166,7 @@ private:
   std::string mode_;
   std::map<std::string, std::string> config_;
   int stream_step_[STREAM_COUNT];
+  int stream_ts_[STREAM_COUNT];
 
   struct CameraOptions
   {
@@ -189,12 +192,12 @@ private:
   void getCameraOptions();
   void allocateResources();
   bool connectToCamera();
-  rs_device * getCameraBySerialNumber();
   void fillStreamEncoding();
   void setStreamOptions();
   void setStaticCameraOptions();
   bool getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req, realsense_camera::cameraConfiguration::Response & res);
   void configCallback(realsense_camera::camera_paramsConfig &config, uint32_t level);
+  void listCameras();
 
 };
 }

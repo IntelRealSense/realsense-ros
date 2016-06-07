@@ -1,0 +1,28 @@
+<!-- Basic multiple camera example with 2 cameras -->
+<launch>
+    <arg name="manager"             value="nodelet_manager" />   <!-- Single nodelet manager for all cameras -->
+    <arg name="num_worker_threads"  default="3" /> <!-- Allocate at least 1 thread for each camera -->
+    <arg name="debug"               default="false" /> <!-- Run manager in GDB? -->
+    <include file="$(find rgbd_launch)/launch/includes/manager.launch.xml">
+      <arg name="name"                value="$(arg manager)" />
+      <arg name="debug"               value="$(arg debug)" />
+      <arg name="num_worker_threads"  value="$(arg num_worker_threads)" />
+    </include>
+
+    <!-- User must include the .xml file for each camera with unique values for "camera" and 
+       either the "serial_no" or "usb_port_id" of the camera
+       "camera" should be a user friendly string that follows the ROS Names convention. -->
+    <include file="$(find realsense_camera)/launch/includes/realsense_r200_multiple_cameras.launch.xml">
+        <arg name="manager"     value="$(arg manager)" />
+        <arg name="camera"      value="camera1" />
+        <arg name="serial_no"   value="1" /> <!-- Note: Replace with actual serial number -->
+        <arg name="usb_port_id" value="" /> <!-- USB "Bus#-Port#" -->
+    </include>
+
+    <include file="$(find realsense_camera)/launch/includes/realsense_r200_multiple_cameras.launch.xml">
+        <arg name="manager"     value="$(arg manager)" />
+        <arg name="camera"      value="camera2" />
+        <arg name="serial_no"   value="2" /> <!-- Note: Replace with actual serial number -->
+        <arg name="usb_port_id" value="" /> <!-- USB "Bus#-Port#" -->
+    </include>
+</launch>
