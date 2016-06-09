@@ -2,8 +2,8 @@
     Launch file for testing if the static camera options get set correctly using params.
 
     Steps:
-    roslaunch realsense_camera realsense_r200_static_camera_options_params.launch
-    rosrun realsense_camera realsense_camera_test r200_depth_units 2 r200_depth_clamp_min 3 r200_depth_clamp_max 4 r200_depth_control_estimate_median_decrement 5 r200_depth_control_estimate_median_increment 6 r200_depth_control_median_threshold 7 r200_depth_control_score_minimum_threshold 8 r200_depth_control_score_maximum_threshold 9 r200_depth_control_texture_count_threshold 10 r200_depth_control_texture_difference_threshold 11 r200_depth_control_second_peak_threshold 12 r200_depth_control_neighbor_threshold 13 r200_depth_control_lr_threshold 14
+    roslaunch realsense_camera r200_nodelet_static_params.launch
+    rosrun realsense_camera tests_camera_core r200_depth_units 2 r200_depth_clamp_min 3 r200_depth_clamp_max 4 r200_depth_control_estimate_median_decrement 5 r200_depth_control_estimate_median_increment 6 r200_depth_control_median_threshold 7 r200_depth_control_score_minimum_threshold 8 r200_depth_control_score_maximum_threshold 9 r200_depth_control_texture_count_threshold 10 r200_depth_control_texture_difference_threshold 11 r200_depth_control_second_peak_threshold 12 r200_depth_control_neighbor_threshold 13 r200_depth_control_lr_threshold 14
     Verify that the "testCameraOptions" test pass.
 -->
 
@@ -27,8 +27,8 @@
 
   <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
 
-  <node pkg="nodelet" type="nodelet" name="realsense_nodelet"
-    args="load realsense_camera/RealsenseNodelet standalone_nodelet">
+  <node pkg="nodelet" type="nodelet" name="R200Nodelet"
+    args="load realsense_camera/R200Nodelet standalone_nodelet">
     <param name="mode"                                              type="str"  value="$(arg mode)" />
 
     <param name="r200_depth_units"                                  type="int" value="$(arg r200_depth_units)" />

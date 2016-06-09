@@ -1,7 +1,7 @@
+<!-- Entry point for using realsense_camera with rgbd_launch -->
 <launch>
 <!-- rgbd_launch -->
-    <!-- Name of nodelet manager, must be fully resolved -->
-    <arg name="manager" />
+    <arg name="manager" /> <!-- Name of nodelet manager must be fully resolved -->
     <arg name="camera"              default="camera" />
     <arg name="publish_tf"          default="true" />
     <arg name="depth"               default="depth" />
@@ -12,37 +12,38 @@
     <arg name="ir_processing"       default="" />
 <!-- rgbd_launch -->
 
-<!-- RealSense -->
+<!-- realsense_camera -->
+    <arg name="camera_type" /> <!-- Type of camera must be fully resolved -->
     <arg name="serial_no"           default="" />
     <arg name="usb_port_id"         default="" />
     <arg name="mode"                default="" />
-    <arg name="color_width"         default="" />
-    <arg name="color_height"        default="" />
     <arg name="depth_width"         default="" />
     <arg name="depth_height"        default="" />
+    <arg name="color_width"         default="" />
+    <arg name="color_height"        default="" />
     <arg name="depth_fps"           default="" />
     <arg name="color_fps"           default="" />
     <arg name="ir2"                 default="ir2" />
 
-    <!-- "enable_depth_ir" will take the value of "enable_ir" only if "enable_ir" is true.
-         Else "enable_depth_ir" will take the value of "enable_depth" -->
-    <arg name="enable_depth_ir"     value="$(arg ir_processing)"    if="$(arg ir_processing)" />
-    <arg name="enable_depth_ir"     value="$(arg depth_processing)" unless="$(arg depth_processing)" />
+    <!-- "enable_depth" will take the value of "ir_processing" only if "ir_processing" is true.
+         Else "enable_depth" will take the value of "depth_processing" -->
+    <arg name="enable_depth"     value="$(arg ir_processing)"    if="$(arg ir_processing)" />
+    <arg name="enable_depth"     value="$(arg depth_processing)" unless="$(arg ir_processing)" />
 
-     <!-- "enable_pointcloud" is set to false by default because rgbd launch uses standard ROS packages
+     <!-- "enable_pointcloud" is set to false by default because rgbd_launch uses standard ROS packages
           to generate point clouds. -->
     <arg name="enable_pointcloud"   default="false" />
-<!-- RealSense -->
+<!-- realsense_camera -->
 
-    <node pkg="nodelet" type="nodelet" name="camera_nodelet"
-        args="load realsense_camera/RealsenseNodelet $(arg manager)">
+    <node pkg="nodelet" type="nodelet" name="$(arg camera)"
+        args="load realsense_camera/$(arg camera_type)Nodelet $(arg manager)">
         <param name="serial_no"               type="str"  value="$(arg serial_no)" />
         <param name="usb_port_id"             type="str"  value="$(arg usb_port_id)" />
-        <param name="mode"                    type="str"  value="$(arg mode)" />
-        <param name="enable_depth"            type="bool" value="$(arg enable_depth_ir)" />
+        <param name="enable_depth"            type="bool" value="$(arg enable_depth)" />
         <param name="enable_color"            type="bool" value="$(arg rgb_processing)" />
         <param name="enable_pointcloud"       type="bool" value="$(arg enable_pointcloud)" />
         <param name="enable_tf"               type="bool" value="$(arg publish_tf)" />
+        <param name="mode"                    type="str"  value="$(arg mode)" />
         <param name="depth_width"             type="int"  value="$(arg depth_width)" />
         <param name="depth_height"            type="int"  value="$(arg depth_height)" />
         <param name="color_width"             type="int"  value="$(arg color_width)" />
@@ -59,12 +60,12 @@
 
         <remap from="camera/depth/image_raw"        to="$(arg depth)/image_raw" />
         <remap from="camera/color/image_raw"        to="$(arg rgb)/image_raw" />
-        <remap from="camera/infrared1/image_raw"    to="$(arg ir)/image_raw" />
-        <remap from="camera/infrared2/image_raw"    to="$(arg ir2)/image_raw" />
+        <remap from="camera/ir/image_raw"           to="$(arg ir)/image_raw" />
+        <remap from="camera/ir2/image_raw"          to="$(arg ir2)/image_raw" />
         <remap from="camera/depth/points"           to="$(arg depth)/points" />
         <remap from="camera/depth/camera_info"      to="$(arg depth)/camera_info" />
         <remap from="camera/color/camera_info"      to="$(arg rgb)/camera_info" />
-        <remap from="camera/infrared1/camera_info"  to="$(arg ir)/camera_info" />
-        <remap from="camera/infrared2/camera_info"  to="$(arg ir2)/camera_info" />
+        <remap from="camera/ir/camera_info"         to="$(arg ir)/camera_info" />
+        <remap from="camera/ir2/camera_info"        to="$(arg ir2)/camera_info" />
     </node>
 </launch>

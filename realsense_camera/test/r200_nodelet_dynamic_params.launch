@@ -2,8 +2,8 @@
     Launch file for testing if the dynamic camera options get set correctly using params.
 
     Steps:
-    roslaunch realsense_camera realsense_r200_dynamic_camera_options_params.launch
-    rosrun realsense_camera realsense_camera_test color_backlight_compensation 3 color_brightness 10 color_contrast 16 color_gain 18 color_gamma 100 color_hue 20 color_saturation 21 color_sharpness 7 color_enable_auto_white_balance 0 color_white_balance 3000 r200_lr_gain 200 r200_emitter_enabled 1 r200_lr_exposure 27
+    roslaunch realsense_camera r200_nodelet_dynamic_params.launch
+    rosrun realsense_camera tests_camera_core color_backlight_compensation 3 color_brightness 10 color_contrast 16 color_gain 18 color_gamma 100 color_hue 20 color_saturation 21 color_sharpness 7 color_enable_auto_white_balance 0 color_white_balance 3000 r200_lr_gain 200 r200_emitter_enabled 1 r200_lr_exposure 27
     Verify that the "testCameraOptions" test pass.
 -->
 
@@ -39,8 +39,8 @@
 
   <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
 
-  <node pkg="nodelet" type="nodelet" name="realsense_nodelet"
-    args="load realsense_camera/RealsenseNodelet standalone_nodelet">
+  <node pkg="nodelet" type="nodelet" name="R200Nodelet"
+    args="load realsense_camera/R200Nodelet standalone_nodelet">
     <param name="mode"                                              type="str"  value="$(arg mode)" />
     <param name="enable_depth"                                      type="bool" value="$(arg enable_depth)" />
     <param name="enable_color"                                      type="bool" value="$(arg enable_color)" />
