@@ -37,6 +37,8 @@ using namespace std;
 #include <pluginlib/class_list_macros.h>
 #include <tf/transform_broadcaster.h>
 
+BUILD FAIL
+
 PLUGINLIB_EXPORT_CLASS (realsense_camera::RealsenseNodelet, nodelet::Nodelet)
 namespace realsense_camera
 {
