@@ -51,6 +51,9 @@
 #include <cv_bridge/cv_bridge.h>
 #include <realsense_camera/cameraConfiguration.h>
 #include <tf/transform_listener.h>
+#include <librealsense/rs.h>
+
+#define R200_STREAMS_COUNT 4
 
 const char *DEPTH_TOPIC = "camera/depth/image_raw";
 const char *COLOR_TOPIC = "camera/color/image_raw";
@@ -69,84 +72,55 @@ const char *COLOR_OPTICAL_DEF_FRAME = "camera_rgb_optical_frame";
 const double ROTATION_IDENTITY[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
 //utest commandline args
-int color_height_exp = 0;
-int color_width_exp = 0;
-int depth_height_exp = 0;
-int depth_width_exp = 0;
-uint32_t depth_step_exp; 	// Expected depth step.
-uint32_t color_step_exp; 	// Expected color step.
-uint32_t infrared1_step_exp; 	// Expected infrared1 step.
-uint32_t infrared2_step_exp; 	// Expected infrared2 step.
+int g_color_height_exp = 0;
+int g_color_width_exp = 0;
+int g_depth_height_exp = 0;
+int g_depth_width_exp = 0;
+uint32_t g_depth_step_exp; 	// Expected depth step.
+uint32_t g_color_step_exp; 	// Expected color step.
+uint32_t g_infrared1_step_exp; 	// Expected infrared1 step.
+uint32_t g_infrared2_step_exp; 	// Expected infrared2 step.
 
-bool enable_color = true;
-bool enable_depth = true;
-bool enable_pointcloud = true;
+bool g_enable_color = true;
+bool g_enable_depth = true;
+bool g_enable_pointcloud = true;
 
-std::string depth_encoding_exp; // Expected depth encoding.
-std::string color_encoding_exp; // Expected color encoding.
-std::string infrared1_encoding_exp; // Expected infrared1 encoding.
-std::string infrared2_encoding_exp; // Expected infrared2 encoding.
+std::string g_depth_encoding_exp; // Expected depth encoding.
+std::string g_color_encoding_exp; // Expected color encoding.
+std::string g_infrared1_encoding_exp; // Expected infrared1 encoding.
+std::string g_infrared2_encoding_exp; // Expected infrared2 encoding.
 
-image_transport::CameraSubscriber camera_subscriber[4];
-ros::Subscriber m_sub_pc;
+image_transport::CameraSubscriber g_camera_subscriber[R200_STREAMS_COUNT];
+ros::Subscriber g_sub_pc;
 
-std::map<std::string, std::string> config_args;
+std::map<std::string, std::string> g_config_args;
 
-bool depth_recv = false;
-bool color_recv = false;
-bool infrared1_recv = false;
-bool infrared2_recv = false;
-bool pc_recv = false;
+bool g_depth_recv = false;
+bool g_color_recv = false;
+bool g_infrared1_recv = false;
+bool g_infrared2_recv = false;
+bool g_pc_recv = false;
 
-float depth_avg = 0;
-float color_avg = 0;
-float infrared1_avg = 0;
-float infrared2_avg = 0;
-float pc_depth_avg = 0;
+float g_depth_avg = 0;
+float g_color_avg = 0;
+float g_infrared1_avg = 0;
+float g_infrared2_avg = 0;
+float g_pc_depth_avg = 0;
 
-int depth_height_recv = 0;
-int depth_width_recv = 0;
-int color_height_recv = 0;
-int color_width_recv = 0;
-int infrared1_width_recv = 0;
-int infrared1_height_recv = 0;
-int infrared2_width_recv = 0;
-int infrared2_height_recv = 0;
+int g_height_recv[R200_STREAMS_COUNT] = {0};
+int g_width_recv[R200_STREAMS_COUNT] = {0};
+uint32_t g_step_recv[R200_STREAMS_COUNT] = {0};	// Received stream step.
 
-uint32_t depth_step_recv = 0;	// Received depth step.
-uint32_t color_step_recv = 0;	// Received depth step.
-uint32_t infrared1_step_recv = 0;	// Received depth step.
-uint32_t infrared2_step_recv = 0;	// Received depth step.
+std::string g_encoding_recv[R200_STREAMS_COUNT]; // Expected stream encoding.
 
-std::string depth_encoding_recv; // Expected depth encoding.
-std::string infrared1_encoding_recv; // Expected depth encoding.
-std::string infrared2_encoding_recv; // Expected depth encoding.
-std::string color_encoding_recv; // Expected color encoding.
+int g_caminfo_height_recv[R200_STREAMS_COUNT] = {0};
+int g_caminfo_width_recv[R200_STREAMS_COUNT] = {0};
+float g_color_caminfo_D_recv[5] = {0};
 
+double g_caminfo_rotation_recv[R200_STREAMS_COUNT][9] = {0};
+double g_caminfo_projection_recv[R200_STREAMS_COUNT][12] = {0};
 
-int depth_caminfo_height_recv = 0;
-int depth_caminfo_width_recv = 0;
-double depth_caminfo_rotation_recv[9] = {0};
-double depth_caminfo_projection_recv[12] = {0};
-int color_caminfo_height_recv = 0;
-int color_caminfo_width_recv = 0;
-double color_caminfo_rotation_recv[9] = {0};
-double color_caminfo_projection_recv[12] = {0};
-float color_caminfo_D_recv[5] = {0};
-int inf1_caminfo_height_recv = 0;
-int inf1_caminfo_width_recv = 0;
-double inf1_caminfo_rotation_recv[9] = {0};
-double inf1_caminfo_projection_recv[12] = {0};
-int inf2_caminfo_height_recv = 0;
-int inf2_caminfo_width_recv = 0;
-double inf2_caminfo_rotation_recv[9] = {0};
-double inf2_caminfo_projection_recv[12] = {0};
+std::string g_dmodel_recv[R200_STREAMS_COUNT];
+std::string g_camera = "R200";
 
-std::string inf1_dmodel_recv;
-std::string inf2_dmodel_recv;
-std::string depth_dmodel_recv;
-std::string color_dmodel_recv;
-std::string camera = "R200";
-
-realsense_camera::cameraConfiguration srv;
-
+realsense_camera::cameraConfiguration g_srv;
