@@ -60,146 +60,141 @@
 
 #include <librealsense/rs.hpp>
 #include <realsense_camera/cameraConfiguration.h>
-#include <dynamic_reconfigure/server.h>
-#include <realsense_camera/camera_paramsConfig.h>
-
+#include <pluginlib/class_list_macros.h>
+#include <tf/transform_broadcaster.h>
 
 namespace realsense_camera
 {
-class RealsenseNodelet: public nodelet::Nodelet
-{
-public:
-
-  // Interfaces.
-  virtual void onInit();
-  virtual ~ RealsenseNodelet();
-
-  // Default Constants.
-  const int MAX_Z = 8;	// in meters
-  const std::string DEFAULT_MODE = "preset";
-  const int DEPTH_HEIGHT = 360;
-  const int DEPTH_WIDTH = 480;
-  const int COLOR_HEIGHT = 480;
-  const int COLOR_WIDTH = 640;
-  const int DEPTH_FPS = 60;
-  const int COLOR_FPS = 60;
-  const bool ENABLE_DEPTH = true;
-  const bool ENABLE_COLOR = true;
-  const bool ENABLE_PC = true;
-  const bool ENABLE_TF = true;
-  const rs_format DEPTH_FORMAT = RS_FORMAT_Z16;
-  const rs_format COLOR_FORMAT = RS_FORMAT_RGB8;
-  const rs_format IR1_FORMAT = RS_FORMAT_Y8;
-  const rs_format IR2_FORMAT = RS_FORMAT_Y8;
-  const std::string DEFAULT_BASE_FRAME_ID = "camera_link";
-  const std::string DEFAULT_DEPTH_FRAME_ID = "camera_depth_frame";
-  const std::string DEFAULT_COLOR_FRAME_ID = "camera_rgb_frame";
-  const std::string DEFAULT_DEPTH_OPTICAL_FRAME_ID = "camera_depth_optical_frame";
-  const std::string DEFAULT_COLOR_OPTICAL_FRAME_ID = "camera_rgb_optical_frame";
-  const std::string DEFAULT_IR_FRAME_ID = "camera_infrared_frame";
-  const std::string DEFAULT_IR2_FRAME_ID = "camera_infrared2_frame";
-  const char *DEPTH_TOPIC = "camera/depth/image_raw";
-  const char *COLOR_TOPIC = "camera/color/image_raw";
-  const char *IR1_TOPIC = "camera/infrared1/image_raw";
-  const char *IR2_TOPIC = "camera/infrared2/image_raw";
-  const char *PC_TOPIC = "camera/depth/points";
-  const char *SETTINGS_SERVICE = "camera/get_settings";
-  const char *R200 = "R200";
-  const static int STREAM_COUNT = 4;
-
-private:
-  // Member Variables.
-  boost::shared_ptr<boost::thread> device_thread_;
-  boost::shared_ptr<boost::thread> transform_thread_;
-
-  rs_error *rs_error_ = 0;
-  rs_context *rs_context_;
-  rs_device *rs_device_;
-  std::vector<rs_device *> rs_detected_devices_;
-
-  int num_of_cameras_;
-  std::string serial_no_;
-  std::string usb_port_id_;
-  int color_height_;
-  int color_width_;
-  int depth_height_;
-  int depth_width_;
-  int depth_fps_;
-  int color_fps_;
-  bool is_device_started_;
-  bool enable_color_;
-  bool enable_depth_;
-  bool enable_pointcloud_;
-  bool enable_tf_;
-  std::string base_frame_id_;
-  std::string depth_frame_id_;
-  std::string color_frame_id_;
-  std::string depth_optical_frame_id_;
-  std::string color_optical_frame_id_;
-  std::string ir_frame_id_;
-  std::string ir2_frame_id_;
-  std::string camera_ = "R200";
-  std::string nodelet_name_;
-  const uint16_t *image_depth16_;
-
-  cv::Mat image_[STREAM_COUNT];
-
-  rs_option edge_options_[4] = {
-    RS_OPTION_R200_AUTO_EXPOSURE_LEFT_EDGE,
-    RS_OPTION_R200_AUTO_EXPOSURE_TOP_EDGE,
-    RS_OPTION_R200_AUTO_EXPOSURE_RIGHT_EDGE,
-    RS_OPTION_R200_AUTO_EXPOSURE_BOTTOM_EDGE
-  };
-  double edge_values_[4];
-
-  sensor_msgs::CameraInfoPtr camera_info_ptr_[STREAM_COUNT];
-  sensor_msgs::CameraInfo * camera_info_[STREAM_COUNT];
-  image_transport::CameraPublisher camera_publisher_[STREAM_COUNT];
-
-  ros::Time time_stamp_;
-  ros::Publisher pointcloud_publisher_;
-  ros::ServiceServer get_options_service_;
-  ros::NodeHandle pnh_;
-
-  std::string frame_id_[STREAM_COUNT];
-  std::string stream_encoding_[STREAM_COUNT];
-  std::string mode_;
-  std::map<std::string, std::string> config_;
-  int stream_step_[STREAM_COUNT];
-  int stream_ts_[STREAM_COUNT];
-
-  struct CameraOptions
+  class RealsenseNodelet: public nodelet::Nodelet
   {
-    rs_option opt;
-    double min, max, step, value;
+  public:
+
+    // Interfaces.
+    virtual void onInit();
+    virtual ~RealsenseNodelet();
+    virtual void publishTransforms();
+    virtual void publishStreams();
+    virtual bool getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req, realsense_camera::cameraConfiguration::Response & res);
+
+  protected:
+    // Default Constants.
+    const int MAX_Z = 8;	// in meters
+    const std::string DEFAULT_MODE = "preset";
+    const int DEPTH_HEIGHT = 360;
+    const int DEPTH_WIDTH = 480;
+    const int COLOR_HEIGHT = 480;
+    const int COLOR_WIDTH = 640;
+    const int DEPTH_FPS = 60;
+    const int COLOR_FPS = 60;
+    const bool ENABLE_DEPTH = true;
+    const bool ENABLE_COLOR = true;
+    const bool ENABLE_PC = true;
+    const bool ENABLE_TF = true;
+    const rs_format DEPTH_FORMAT = RS_FORMAT_Z16;
+    const rs_format COLOR_FORMAT = RS_FORMAT_RGB8;
+    const rs_format IR1_FORMAT = RS_FORMAT_Y8;
+    const std::string DEFAULT_BASE_FRAME_ID = "camera_link";
+    const std::string DEFAULT_DEPTH_FRAME_ID = "camera_depth_frame";
+    const std::string DEFAULT_COLOR_FRAME_ID = "camera_rgb_frame";
+    const std::string DEFAULT_DEPTH_OPTICAL_FRAME_ID = "camera_depth_optical_frame";
+    const std::string DEFAULT_COLOR_OPTICAL_FRAME_ID = "camera_rgb_optical_frame";
+    const std::string DEFAULT_IR_FRAME_ID = "camera_infrared_frame";
+    const char *DEPTH_TOPIC = "camera/depth/image_raw";
+    const char *COLOR_TOPIC = "camera/color/image_raw";
+    const char *IR1_TOPIC = "camera/infrared1/image_raw";
+    const char *PC_TOPIC = "camera/depth/points";
+    const char *SETTINGS_SERVICE = "camera/get_settings";
+
+    const static int STREAM_COUNT = 4;
+
+    // Member Variables.
+    boost::shared_ptr<boost::thread> stream_thread_;
+    boost::shared_ptr<boost::thread> transform_thread_;
+
+    rs_error *rs_error_ = 0;
+    rs_context *rs_context_;
+    rs_device *rs_device_;
+    std::vector<rs_device *> rs_detected_devices_;
+
+    int num_of_cameras_;
+    std::string serial_no_;
+    std::string usb_port_id_;
+    int color_height_;
+    int color_width_;
+    int depth_height_;
+    int depth_width_;
+    int depth_fps_;
+    int color_fps_;
+    bool is_device_started_;
+    bool enable_color_;
+    bool enable_depth_;
+    bool enable_pointcloud_;
+    bool enable_tf_;
+    std::string base_frame_id_;
+    std::string depth_frame_id_;
+    std::string color_frame_id_;
+    std::string depth_optical_frame_id_;
+    std::string color_optical_frame_id_;
+    std::string ir_frame_id_;
+    std::string camera_;
+    std::string nodelet_name_;
+    const uint16_t *image_depth16_;
+    int num_streams_ = 3;
+
+    cv::Mat image_[STREAM_COUNT];
+
+    rs_option edge_options_[4] = {
+      RS_OPTION_R200_AUTO_EXPOSURE_LEFT_EDGE,
+      RS_OPTION_R200_AUTO_EXPOSURE_TOP_EDGE,
+      RS_OPTION_R200_AUTO_EXPOSURE_RIGHT_EDGE,
+      RS_OPTION_R200_AUTO_EXPOSURE_BOTTOM_EDGE
+    };
+    double edge_values_[4];
+
+    sensor_msgs::CameraInfoPtr camera_info_ptr_[STREAM_COUNT];
+    sensor_msgs::CameraInfo * camera_info_[STREAM_COUNT];
+    image_transport::CameraPublisher camera_publisher_[STREAM_COUNT];
+
+    ros::Time time_stamp_;
+    ros::Publisher pointcloud_publisher_;
+    ros::ServiceServer get_options_service_;
+    ros::NodeHandle nh_;
+    ros::NodeHandle pnh_;
+
+    std::string frame_id_[STREAM_COUNT];
+    std::string stream_encoding_[STREAM_COUNT];
+    std::string mode_;
+    std::map<std::string, std::string> config_;
+    int stream_step_[STREAM_COUNT];
+    int stream_ts_[STREAM_COUNT];
+
+    struct CameraOptions
+    {
+      rs_option opt;
+      double min, max, step, value;
+    };
+    std::vector<CameraOptions> camera_options_;
+
+    // Member Functions.
+    virtual void enableStreams();
+    virtual void enableColorStream();
+    virtual void enableDepthStream();
+    virtual void disableDepthStream();
+    virtual void enableInfraredStream();
+    virtual void disableInfraredStream();
+    virtual void fillStreamEncoding();
+    virtual void setStreamOptions();
+    virtual void prepareStreamCalibData(rs_stream calib_data);
+    virtual void prepareStreamData(rs_stream rs_strm);
+
+    virtual void getCameraOptions();
+    virtual void allocateResources();
+    virtual void listCameras();
+    virtual bool connectToCamera();
+    virtual void setStaticCameraOptions() { return; } // must be defined in derived class
+    virtual void checkError();
+
+    virtual void publishPointCloud(cv::Mat & image_rgb);
   };
-  std::vector<CameraOptions> camera_options_;
-  boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::camera_paramsConfig>> dynamic_reconf_server_;
-
-  // Member Functions.
-  void enableColorStream();
-  void enableDepthStream();
-  void enableInfraredStream();
-  void enableInfrared2Stream();
-  void checkError();
-  void fetchCalibData();
-  void prepareStreamCalibData(rs_stream calib_data);
-  void prepareStreamData(rs_stream rs_strm);
-  void publishStreams();
-  void publishPointCloud(cv::Mat & image_rgb);
-  void publishTransforms();
-  void devicePoll();
-  void getCameraOptions();
-  void allocateResources();
-  bool connectToCamera();
-  void fillStreamEncoding();
-  void setStreamOptions();
-  void setStaticCameraOptions();
-  bool getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req, realsense_camera::cameraConfiguration::Response & res);
-  void configCallback(realsense_camera::camera_paramsConfig &config, uint32_t level);
-  void listCameras();
-
-};
 }
-
 #endif

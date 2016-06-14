@@ -1,7 +1,7 @@
 <library path="lib/librealsense_camera_nodelet">
-  <class name="realsense_camera/RealsenseNodelet" type="realsense_camera::RealsenseNodelet" base_class_type="nodelet::Nodelet">
+  <class name="realsense_camera/RealsenseNodeletR200" type="realsense_camera::RealsenseNodeletR200" base_class_type="nodelet::Nodelet">
   <description>
-  Intel(R) RealSense(TM) Camera nodelet.
+  Intel(R) RealSense(TM) R200 Camera nodelet.
   </description>
   </class>
 </library>
