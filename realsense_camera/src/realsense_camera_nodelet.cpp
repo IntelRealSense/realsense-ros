@@ -78,6 +78,12 @@ namespace realsense_camera
 
     setStreamOptions();
 
+    if (enable_depth_ == false && enable_color_ == false)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - None of the streams are enabled. Exiting!");
+      ros::shutdown();
+    }
+
     // Set up the topics.
     frame_id_[RS_STREAM_DEPTH] = depth_optical_frame_id_;
     frame_id_[RS_STREAM_COLOR] = color_optical_frame_id_;
@@ -93,29 +99,23 @@ namespace realsense_camera
 
     get_options_service_ = nh_.advertiseService(SETTINGS_SERVICE, &RealsenseNodelet::getCameraOptionValues, this);
 
-    bool connected = false;
-
-    connected = connectToCamera();
-
-    if (connected == true)
+    // Poll for camera and connect if found
+    while (!connectToCamera())
     {
-      // Start working thread.
-      stream_thread_ =
-          boost::shared_ptr <boost::thread>(new boost::thread (boost::bind(&RealsenseNodelet::publishStreams, this)));
-
-      if (enable_tf_ == true)
-      {
-        transform_thread_ =
-        boost::shared_ptr<boost::thread>(new boost::thread (boost::bind(&RealsenseNodelet::publishTransforms, this)));
-      }
-
+      ROS_INFO_STREAM(nodelet_name_ << " - Sleeping 5 seconds then retrying to connect");
+      ros::Duration(5).sleep();
     }
-    else
+
+    // Start working thread.
+    stream_thread_ =
+        boost::shared_ptr <boost::thread>(new boost::thread (boost::bind(&RealsenseNodelet::publishStreams, this)));
+
+    if (enable_tf_ == true)
     {
-      ROS_ERROR_STREAM(nodelet_name_ << " - Couldn't connect to camera! Shutting down...");
-      ros::shutdown();
+      transform_thread_ =
+      boost::shared_ptr<boost::thread>(new boost::thread (boost::bind(&RealsenseNodelet::publishTransforms, this)));
     }
-}
+  }
 
   /*
    *Protected Methods.
@@ -223,27 +223,21 @@ namespace realsense_camera
     }
   }
 
-void RealsenseNodelet::enableStreams()
-{
-  // Enable streams.
-  if (enable_color_ == true)
+  void RealsenseNodelet::enableStreams()
   {
-    enableColorStream();
+    // Enable streams.
+    if (enable_color_ == true)
+    {
+      enableColorStream();
+    }
+    if (enable_depth_ == true)
+    {
+      enableDepthStream();
+    }
   }
-  if (enable_depth_ == true)
-  {
-    enableDepthStream();
-  }
-}
 
   bool RealsenseNodelet::connectToCamera()
   {
-    if (enable_depth_ == false && enable_color_ == false)
-    {
-      ROS_ERROR_STREAM(nodelet_name_ << " - None of the streams are enabled. Exiting!");
-      return false;
-    }
-
     rs_context_ = rs_create_context(RS_API_VERSION, &rs_error_);
     checkError();
 
@@ -253,7 +247,9 @@ void RealsenseNodelet::enableStreams()
     // Exit with error if no cameras are connected.
     if (num_of_cameras_ < 1)
     {
-      ROS_ERROR_STREAM(nodelet_name_ << " - No cameras detected. Exiting!");
+      ROS_ERROR_STREAM(nodelet_name_ << " - No cameras detected!");
+      rs_delete_context(rs_context_, &rs_error_);
+      checkError();
       return false;
     }
 
@@ -263,7 +259,9 @@ void RealsenseNodelet::enableStreams()
     // Exit with error if no serial number or usb_port_id is specified and multiple cameras are detected.
     if (serial_no_.empty() && usb_port_id_.empty() && num_of_cameras_ > 1)
     {
-      ROS_ERROR_STREAM(nodelet_name_ << " - Multiple cameras detected but no input serial_no or usb_port_id specified. Exiting!");
+      ROS_ERROR_STREAM(nodelet_name_ << " - Multiple cameras detected but no input serial_no or usb_port_id specified");
+      rs_delete_context(rs_context_, &rs_error_);
+      checkError();
       return false;
     }
 
@@ -291,6 +289,8 @@ void RealsenseNodelet::enableStreams()
       error_msg += "serial_no = " + serial_no_ + ", ";
       error_msg += "usb_port_id = " + usb_port_id_;
       ROS_ERROR_STREAM(nodelet_name_ << error_msg);
+      rs_delete_context(rs_context_, &rs_error_);
+      checkError();
       return false;
     }
 
