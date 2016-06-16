@@ -40,14 +40,14 @@ generate_messages(
 
 #add dynamic reconfigure api
 generate_dynamic_reconfigure_options(
-  cfg/camera_params.cfg
+  cfg/camera_params_r200.cfg
 )
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(realsense_camera_nodelet src/realsense_camera_nodelet.cpp)
+add_library(realsense_camera_nodelet src/realsense_camera_nodelet.cpp src/realsense_camera_nodelet_r200.cpp)
 target_link_libraries(realsense_camera_nodelet
   ${catkin_LIBRARIES}
   realsense

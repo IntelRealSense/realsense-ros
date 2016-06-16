@@ -178,7 +178,7 @@ Command to launch GUI:
 Command to change dynamic parameters using commandline:
 
     $ rosrun dynamic_reconfigure dynparam set /<node> <parameter_name> <value>
-    E.g. $ rosrun dynamic_reconfigure dynparam set /RealsenseNodelet color_backlight_compensation 2
+    E.g. $ rosrun dynamic_reconfigure dynparam set /RealsenseNodeletR200 color_backlight_compensation 2
 
 
 ###Running the R200 nodelet:
@@ -186,6 +186,8 @@ Command to change dynamic parameters using commandline:
 Use the following command to launch the camera nodelet. You will notice the camera light up.
 
     $ roslaunch realsense_camera realsense_r200_nodelet_standalone_preset.launch
+    
+If you would like to create or use your own launch files, the nodelet name for the R200 camera is RealsenseNodeletR200. See the sample launch files for examples of how to launch the nodelet.
 
 View using RVIZ:
 
