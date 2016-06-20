@@ -1,8 +1,8 @@
 <link rel="stylesheet" href="style-doc.css" />
+#Intel&reg; RealSense&trade; Technology - Navigation
+This ROS package is a lightly modified version of turtlebot_apps/turtlebot_navigation, and highlights the differences when using the **R200** camera with the ROS Navigation stack.
 
-# Navigation with Intel&reg; RealSense&trade; **R200** camera
-This document presents the transition from a **Kinect** to the **R200** for the ROS Navigation stack.
-It assumes the **R200** drivers were already installed, and that the navigation using the Kinect is working.
+It assumes that the realsense_camera package is installed and verified working.
 
 #### Document outline
 Click on the following links to navigate this document
@@ -19,38 +19,33 @@ First, make sure you have the latest versions of the ROS navigation stack. Speci
 - **turtlebot_description**
 - **turtlebot_bringup**
 
-Before being able to use the navigation stack with the **R200**, you need to set a few things up.
-
-The `install_realsense_navigation.sh` script (located in the `install_resources` folder) will do everything needed. It will place the required files in their respective locations.
-
-From now on, if you want to use the **R200** as your turtlebot 3d sensor, you need to change environment variables:
+Before being able to use the navigation stack with the **R200** camera, you'll need to change the environment variable TURTLEBOT_3D_SENSOR:
 
 ```bash
 export TURTLEBOT_3D_SENSOR=r200
-export TURTLEBOT_STACKS=minimal
 ```
 
 To have quick shortcuts, consider pasting this code snippet in your `~/.bash_aliases` file:
 
 ```bash
-alias setr200='export TURTLEBOT_3D_SENSOR=r200 && export TURTLEBOT_STACKS=minimal'
-alias setkinect='export TURTLEBOT_3D_SENSOR=kinect && export TURTLEBOT_STACKS=hexagons'
+alias setr200='export TURTLEBOT_3D_SENSOR=r200'
 ```
 
 ## B - Mapping
 
-The only difference from the kinect version of the navigation stack is that you need to start the camera driver before the navigation: `roslaunch realsense_camera realsense_r200_navigation.launch`.
-
-So, the normal flow would be :
+The normal startup sequence is:
 
 ```bash
 roslaunch turtlebot_bringup minimal.launch
-roslaunch realsense_camera realsense_r200_navigation.launch
-roslaunch realsense_navigation gmapping.launch
+roslaunch realsense_navigation gmapping_demo.launch
 roslaunch turtlebot_rviz_launchers view_navigation.launch
 ```
 
-You may also want to teleoperate the robot, for instance with the keyboard.
+You may also want to teleoperate the robot, for instance with the keyboard:
+
+```bash
+roslaunch turtlebot_teleop keyboard_teleop.launch --screen
+```
 
 ![](doc/img/mapping_screen.png)
 
@@ -69,7 +64,6 @@ Once you have a map, you can start the navigation with the following commands
 
 ```bash
 roslaunch turtlebot_bringup minimal.launch
-roslaunch realsense_camera realsense_r200_navigation.launch
 roslaunch realsense_navigation navigation_demo.launch map:=<map-file>
 ```
 
@@ -83,7 +77,7 @@ So we first need to start the turtlebot (+ the teleop of your choice) and the ca
 
 ```bash
 roslaunch turtlebot_bringup minimal.launch
-roslaunch realsense_camera realsense_r200_navigation.launch
+roslaunch realsense_camera realsense_r200_launch.launch
 ```
 
 Then, we will store the relevent topics in a bag file:
@@ -114,7 +108,7 @@ roslaunch realsense_navigation simulate_mapping.launch bag_file:=<output.bag>
 > The path to the bagfile is relative to the user `~` folder. To change this, use the *home* argument as follows: 
 >
 > ```bash
-> roslaunch realsense simulate_mapping.launch home:=/tmp bag_file:=<output.bag>
+> roslaunch realsense_navigation simulated_gmapping_demo.launch home:=/tmp bag_file:=<output.bag>
 > ```
 
 When the RVIZ window is up, you can press `SPACE` in your terminal to start the playback.
