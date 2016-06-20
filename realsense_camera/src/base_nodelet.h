@@ -29,8 +29,8 @@
  *******************************************************************************/
 
 #pragma once
-#ifndef REALSENSE_NODELET
-#define REALSENSE_NODELET
+#ifndef BASE_NODELET
+#define BASE_NODELET
 
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
@@ -65,13 +65,13 @@
 
 namespace realsense_camera
 {
-  class RealsenseNodelet: public nodelet::Nodelet
+  class BaseNodelet: public nodelet::Nodelet
   {
   public:
 
     // Interfaces.
     virtual void onInit();
-    virtual ~RealsenseNodelet();
+    virtual ~BaseNodelet();
     virtual void publishTransforms();
     virtual void publishStreams();
     virtual bool getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req, realsense_camera::cameraConfiguration::Response & res);

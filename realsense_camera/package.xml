@@ -44,6 +44,6 @@
   <run_depend>rgbd_launch</run_depend>
 
   <export>
-    <nodelet plugin="${prefix}/realsense_camera_nodelet_plugins.xml" />
+    <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>
 </package>

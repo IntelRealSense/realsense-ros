@@ -28,9 +28,9 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
-#include "realsense_camera_nodelet_r200.h"
+#include "r200_nodelet.h"
 
-PLUGINLIB_EXPORT_CLASS (realsense_camera::RealsenseNodeletR200, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS (realsense_camera::R200Nodelet, nodelet::Nodelet)
 
 namespace realsense_camera
 {
@@ -41,7 +41,7 @@ namespace realsense_camera
   /*
    * Initialize the realsense camera
    */
-  void RealsenseNodeletR200::onInit()
+  void R200Nodelet::onInit()
   {
     // set member vars used in base class
     nodelet_name_ = getName();
@@ -51,10 +51,10 @@ namespace realsense_camera
 
     // create dynamic reconfigure server - this must be done before calling base class onInit()
     // onInit() calls setStaticCameraOptions() which relies on this being set already
-    dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::camera_params_r200Config>(pnh_));
+    dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::r200_paramsConfig>(pnh_));
 
     // call base class onInit() method
-    RealsenseNodelet::onInit();
+    BaseNodelet::onInit();
 
     // Set up the IR2 frame and topics
     frame_id_[RS_STREAM_INFRARED2] = ir2_frame_id_;
@@ -62,29 +62,29 @@ namespace realsense_camera
     camera_publisher_[RS_STREAM_INFRARED2] = it.advertiseCamera(IR2_TOPIC, 1);
 
     // setCallback can only be called after rs_device_ is set by base class connectToCamera()
-    dynamic_reconf_server_->setCallback(boost::bind(&RealsenseNodeletR200::configCallback, this, _1, _2));
+    dynamic_reconf_server_->setCallback(boost::bind(&R200Nodelet::configCallback, this, _1, _2));
   }
 
   /*
    *Protected Methods.
    */
-  void RealsenseNodeletR200::enableDepthStream()
+  void R200Nodelet::enableDepthStream()
   {
     // call the base class method first
-    RealsenseNodelet::enableDepthStream();
+    BaseNodelet::enableDepthStream();
     // enable IR2 stream
     enableInfrared2Stream();
   }
 
-  void RealsenseNodeletR200::disableDepthStream()
+  void R200Nodelet::disableDepthStream()
   {
     // call the base class method first
-    RealsenseNodelet::disableDepthStream();
+    BaseNodelet::disableDepthStream();
     // disable IR2 stream
     disableInfrared2Stream();
   }
 
-  void RealsenseNodeletR200::enableInfrared2Stream()
+  void R200Nodelet::enableInfrared2Stream()
   {
     // Enable streams.
     if (mode_.compare ("manual") == 0)
@@ -107,14 +107,14 @@ namespace realsense_camera
     }
   }
 
-  void RealsenseNodeletR200::disableInfrared2Stream()
+  void R200Nodelet::disableInfrared2Stream()
   {
     ROS_INFO_STREAM(nodelet_name_ << " - Disabling Infrared2 stream");
     rs_disable_stream(rs_device_, RS_STREAM_INFRARED2, &rs_error_);
     checkError();
   }
 
-  void RealsenseNodeletR200::configCallback(realsense_camera::camera_params_r200Config &config, uint32_t level)
+  void R200Nodelet::configCallback(realsense_camera::r200_paramsConfig &config, uint32_t level)
   {
     // Set common options
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_BACKLIGHT_COMPENSATION, config.color_backlight_compensation, 0);
@@ -190,10 +190,10 @@ namespace realsense_camera
   /*
    * Define buffer for images and prepare camera info for each enabled stream.
    */
-  void RealsenseNodeletR200::allocateResources()
+  void R200Nodelet::allocateResources()
   {
     // call base class method first
-    RealsenseNodelet::allocateResources();
+    BaseNodelet::allocateResources();
     // set IR2 image buffer
     image_[(uint32_t) RS_STREAM_INFRARED2] = cv::Mat(depth_height_, depth_width_, CV_8UC1, cv::Scalar (0));
   }
@@ -201,10 +201,10 @@ namespace realsense_camera
   /*
    * Set the stream options based on input params.
    */
-  void RealsenseNodeletR200::setStreamOptions()
+  void R200Nodelet::setStreamOptions()
   {
     // call base class method first
-    RealsenseNodelet::setStreamOptions();
+    BaseNodelet::setStreamOptions();
     // setup R200 specific frame
     pnh_.param("ir2_frame_id", ir2_frame_id_, DEFAULT_IR2_FRAME_ID);
   }
@@ -212,10 +212,10 @@ namespace realsense_camera
   /*
    * Populate the encodings for each stream.
    */
-  void RealsenseNodeletR200::fillStreamEncoding()
+  void R200Nodelet::fillStreamEncoding()
   {
     // Call base class method first
-    RealsenseNodelet::fillStreamEncoding();
+    BaseNodelet::fillStreamEncoding();
     // Setup IR2 stream
     stream_encoding_[(uint32_t) RS_STREAM_INFRARED2] = sensor_msgs::image_encodings::TYPE_8UC1;
     stream_step_[(uint32_t) RS_STREAM_INFRARED2] = depth_width_ * sizeof (unsigned char);
@@ -224,15 +224,15 @@ namespace realsense_camera
   /*
    * Set the static camera options.
    */
-  void RealsenseNodeletR200::setStaticCameraOptions()
+  void R200Nodelet::setStaticCameraOptions()
   {
     ROS_INFO_STREAM(nodelet_name_ << " - Setting camera options");
 
     // Get dynamic options from the dynamic reconfigure server.
-    realsense_camera::camera_params_r200Config params_config;
+    realsense_camera::r200_paramsConfig params_config;
     dynamic_reconf_server_->getConfigDefault(params_config);
 
-    std::vector<realsense_camera::camera_params_r200Config::AbstractParamDescriptionConstPtr> param_desc = params_config.__getParamDescriptions__();
+    std::vector<realsense_camera::r200_paramsConfig::AbstractParamDescriptionConstPtr> param_desc = params_config.__getParamDescriptions__();
 
     // Iterate through the supported camera options
     for (CameraOptions o: camera_options_)
@@ -240,8 +240,8 @@ namespace realsense_camera
       std::string opt_name = rs_option_to_string(o.opt);
       bool found = false;
 
-      std::vector<realsense_camera::camera_params_r200Config::AbstractParamDescriptionConstPtr>::iterator it;
-      for (realsense_camera::camera_params_r200Config::AbstractParamDescriptionConstPtr param_desc_ptr: param_desc)
+      std::vector<realsense_camera::r200_paramsConfig::AbstractParamDescriptionConstPtr>::iterator it;
+      for (realsense_camera::r200_paramsConfig::AbstractParamDescriptionConstPtr param_desc_ptr: param_desc)
       {
         std::transform(opt_name.begin(), opt_name.end(), opt_name.begin(), ::tolower);
         if (opt_name.compare((* param_desc_ptr).name) == 0)

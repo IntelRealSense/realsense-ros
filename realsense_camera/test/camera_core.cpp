@@ -29,7 +29,7 @@
  *******************************************************************************/
 #include "gtest/gtest.h"
 
-#include "realsense_camera_test_node.h"
+#include "camera_core.h"
 using namespace std;
 
 
@@ -622,7 +622,7 @@ void fillConfigMap(int argc, char **argv)
   }
 }
 
-int main(int argc, char **argv)
+int main(int argc, char **argv) try
 {
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "utest");
@@ -651,3 +651,4 @@ int main(int argc, char **argv)
 
   return RUN_ALL_TESTS();
 }
+catch(...) {} // catch the "testing::internal::<unnamed>::ClassUniqueToAlwaysTrue" from gtest

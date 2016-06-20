@@ -9,8 +9,8 @@
 
   <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
 
-  <node pkg="nodelet" type="nodelet" name="RealsenseNodelet"
-      args="load realsense_camera/RealsenseNodeletR200 standalone_nodelet" >
+  <node pkg="nodelet" type="nodelet" name="R200Nodelet"
+      args="load realsense_camera/R200Nodelet standalone_nodelet" >
       <param name="serial_no"         type="str"  value="$(arg serial_no)" />
       <param name="usb_port_id"       type="str"  value="$(arg usb_port_id)" />
       <param name="mode"              type="str"  value="$(arg mode)" />
