@@ -28,7 +28,7 @@
   <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
 
   <node pkg="nodelet" type="nodelet" name="realsense_nodelet"
-    args="load realsense_camera/RealsenseNodelet standalone_nodelet">
+    args="load realsense_camera/RealsenseNodeletR200 standalone_nodelet">
     <param name="mode"                                              type="str"  value="$(arg mode)" />
 
     <param name="r200_depth_units"                                  type="int" value="$(arg r200_depth_units)" />
