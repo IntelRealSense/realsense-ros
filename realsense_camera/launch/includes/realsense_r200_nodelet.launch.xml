@@ -34,8 +34,8 @@
     <arg name="enable_pointcloud"   default="false" />
 <!-- RealSense -->
 
-    <node pkg="nodelet" type="nodelet" name="camera_nodelet"
-        args="load realsense_camera/RealsenseNodeletR200 $(arg manager)">
+    <node pkg="nodelet" type="nodelet" name="R200Nodelet"
+        args="load realsense_camera/R200Nodelet $(arg manager)">
         <param name="serial_no"               type="str"  value="$(arg serial_no)" />
         <param name="usb_port_id"             type="str"  value="$(arg usb_port_id)" />
         <param name="mode"                    type="str"  value="$(arg mode)" />

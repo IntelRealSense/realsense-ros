@@ -9,6 +9,6 @@
   </include>
 
   <!-- Test -->
-    <test pkg="realsense_camera" type="realsense_camera_test" test-name="realsense_camera_test"
+    <test pkg="realsense_camera" type="tests_camera_core" test-name="realsense_camera_test"
       args="color_height 1080 color_width 1920 depth_height 468 depth_width 628 color_fps 30 depth_fps 30" />
 </launch>

@@ -29,17 +29,17 @@
  *******************************************************************************/
 
 #pragma once
-#ifndef REALSENSE_NODELET_R200
-#define REALSENSE_NODELET_R200
+#ifndef R200_NODELET
+#define R200_NODELET
 
 #include <dynamic_reconfigure/server.h>
 
-#include "realsense_camera/camera_params_r200Config.h"
-#include "realsense_camera_nodelet.h"
+#include "realsense_camera/r200_paramsConfig.h"
+#include "base_nodelet.h"
 
 namespace realsense_camera
 {
-  class RealsenseNodeletR200: public realsense_camera::RealsenseNodelet
+  class R200Nodelet: public realsense_camera::BaseNodelet
   {
   public:
 
@@ -55,7 +55,7 @@ namespace realsense_camera
 
     // Member Variables.
     std::string ir2_frame_id_;
-    boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::camera_params_r200Config>> dynamic_reconf_server_;
+    boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::r200_paramsConfig>> dynamic_reconf_server_;
 
     // Member Functions.
     void enableDepthStream();
@@ -66,7 +66,7 @@ namespace realsense_camera
     void fillStreamEncoding();
     void allocateResources();
     void setStaticCameraOptions();
-    void configCallback(realsense_camera::camera_params_r200Config &config, uint32_t level);
+    void configCallback(realsense_camera::r200_paramsConfig &config, uint32_t level);
   };
 }
 

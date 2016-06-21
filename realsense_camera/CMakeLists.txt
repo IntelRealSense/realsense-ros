@@ -40,36 +40,36 @@ generate_messages(
 
 #add dynamic reconfigure api
 generate_dynamic_reconfigure_options(
-  cfg/camera_params_r200.cfg
+  cfg/r200_params.cfg
 )
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(realsense_camera_nodelet src/realsense_camera_nodelet.cpp src/realsense_camera_nodelet_r200.cpp)
-target_link_libraries(realsense_camera_nodelet
+add_library(${PROJECT_NAME}_nodelet src/base_nodelet.cpp src/r200_nodelet.cpp)
+target_link_libraries(${PROJECT_NAME}_nodelet
   ${catkin_LIBRARIES}
   realsense
 )
-add_dependencies(realsense_camera_nodelet realsense_camera_generate_messages_cpp ${PROJECT_NAME}_gencfg)
+add_dependencies(${PROJECT_NAME}_nodelet ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
 
-add_executable(realsense_camera_test test/realsense_camera_test_node.cpp)
-target_link_libraries(realsense_camera_test
+add_executable(tests_camera_core test/camera_core.cpp)
+target_link_libraries(tests_camera_core
   ${catkin_LIBRARIES}
   ${GTEST_LIBRARIES}
 )
-add_dependencies(realsense_camera_test realsense_camera_generate_messages_cpp ${PROJECT_NAME}_gencfg)
+add_dependencies(tests_camera_core ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
 
-add_executable(realsense_camera_test_rgbd test/realsense_camera_test_rgbd_node.cpp)
-target_link_libraries(realsense_camera_test_rgbd
+add_executable(tests_rgbd_topics test/rgbd_topics.cpp)
+target_link_libraries(tests_rgbd_topics
   ${catkin_LIBRARIES}
   ${GTEST_LIBRARIES}
 )
-add_dependencies(realsense_camera_test_rgbd realsense_camera_generate_messages_cpp)
+add_dependencies(tests_rgbd_topics ${PROJECT_NAME}_generate_messages_cpp)
 
 # Install nodelet library
-install(TARGETS realsense_camera_nodelet LIBRARY
+install(TARGETS ${PROJECT_NAME}_nodelet LIBRARY
     DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
@@ -84,6 +84,6 @@ install(DIRECTORY rviz/
 )
 
 # Install xml files
-install(FILES package.xml realsense_camera_nodelet_plugins.xml
+install(FILES package.xml nodelet_plugins.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

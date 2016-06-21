@@ -8,12 +8,12 @@
  1. Redistributions of source code must retain the above copyright notice, this
  list of conditions and the following disclaimer.
 
- 2. Redistributions in binary form must reproduce the above copyright notice, 
- this list of conditions and the following disclaimer in the documentation 
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
  and/or other materials provided with the distribution.
 
- 3. Neither the name of the copyright holder nor the names of its contributors 
- may be used to endorse or promote products derived from this software without 
+ 3. Neither the name of the copyright holder nor the names of its contributors
+ may be used to endorse or promote products derived from this software without
  specific prior written permission.
 
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -76,10 +76,10 @@ int g_color_height_exp = 0;
 int g_color_width_exp = 0;
 int g_depth_height_exp = 0;
 int g_depth_width_exp = 0;
-uint32_t g_depth_step_exp; 	// Expected depth step.
-uint32_t g_color_step_exp; 	// Expected color step.
-uint32_t g_infrared1_step_exp; 	// Expected infrared1 step.
-uint32_t g_infrared2_step_exp; 	// Expected infrared2 step.
+uint32_t g_depth_step_exp; // Expected depth step.
+uint32_t g_color_step_exp; // Expected color step.
+uint32_t g_infrared1_step_exp; // Expected infrared1 step.
+uint32_t g_infrared2_step_exp; // Expected infrared2 step.
 
 bool g_enable_color = true;
 bool g_enable_depth = true;
@@ -109,7 +109,7 @@ float g_pc_depth_avg = 0;
 
 int g_height_recv[R200_STREAMS_COUNT] = {0};
 int g_width_recv[R200_STREAMS_COUNT] = {0};
-uint32_t g_step_recv[R200_STREAMS_COUNT] = {0};	// Received stream step.
+uint32_t g_step_recv[R200_STREAMS_COUNT] = {0}; // Received stream step.
 
 std::string g_encoding_recv[R200_STREAMS_COUNT]; // Expected stream encoding.
 

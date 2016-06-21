@@ -28,19 +28,19 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
-#include "realsense_camera_nodelet.h"
+#include "base_nodelet.h"
 
 using namespace cv;
 using namespace std;
 
-PLUGINLIB_EXPORT_CLASS (realsense_camera::RealsenseNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS (realsense_camera::BaseNodelet, nodelet::Nodelet)
 namespace realsense_camera
 {
 
   /*
    * Public Methods.
    */
-  RealsenseNodelet::~RealsenseNodelet()
+  BaseNodelet::~BaseNodelet()
   {
     stream_thread_->join();
 
@@ -65,7 +65,7 @@ namespace realsense_camera
   /*
    * Initialize the realsense camera
    */
-  void RealsenseNodelet::onInit()
+  void BaseNodelet::onInit()
   {
     // Set default configurations.
     is_device_started_ = false;
@@ -97,7 +97,7 @@ namespace realsense_camera
 
     pointcloud_publisher_ = nh_.advertise<sensor_msgs::PointCloud2>(PC_TOPIC, 1);
 
-    get_options_service_ = nh_.advertiseService(SETTINGS_SERVICE, &RealsenseNodelet::getCameraOptionValues, this);
+    get_options_service_ = nh_.advertiseService(SETTINGS_SERVICE, &BaseNodelet::getCameraOptionValues, this);
 
     // Poll for camera and connect if found
     while (!connectToCamera())
@@ -108,19 +108,19 @@ namespace realsense_camera
 
     // Start working thread.
     stream_thread_ =
-        boost::shared_ptr <boost::thread>(new boost::thread (boost::bind(&RealsenseNodelet::publishStreams, this)));
+        boost::shared_ptr <boost::thread>(new boost::thread (boost::bind(&BaseNodelet::publishStreams, this)));
 
     if (enable_tf_ == true)
     {
       transform_thread_ =
-      boost::shared_ptr<boost::thread>(new boost::thread (boost::bind(&RealsenseNodelet::publishTransforms, this)));
+      boost::shared_ptr<boost::thread>(new boost::thread (boost::bind(&BaseNodelet::publishTransforms, this)));
     }
   }
 
   /*
    *Protected Methods.
    */
-  void RealsenseNodelet::enableColorStream()
+  void BaseNodelet::enableColorStream()
   {
     // Enable streams.
     if (mode_.compare ("manual") == 0)
@@ -143,7 +143,7 @@ namespace realsense_camera
     }
   }
 
-  void RealsenseNodelet::enableDepthStream()
+  void BaseNodelet::enableDepthStream()
   {
     // Enable streams.
     if (mode_.compare ("manual") == 0)
@@ -168,7 +168,7 @@ namespace realsense_camera
     enableInfraredStream();
   }
 
-  void RealsenseNodelet::enableInfraredStream()
+  void BaseNodelet::enableInfraredStream()
   {
     // Enable streams.
     if (mode_.compare ("manual") == 0)
@@ -191,7 +191,7 @@ namespace realsense_camera
     }
   }
 
-  void RealsenseNodelet::disableDepthStream()
+  void BaseNodelet::disableDepthStream()
   {
   // disable depth stream
   ROS_INFO_STREAM(nodelet_name_ << " - Disabling Depth stream");
@@ -202,14 +202,14 @@ namespace realsense_camera
   disableInfraredStream();
   }
 
-  void RealsenseNodelet::disableInfraredStream()
+  void BaseNodelet::disableInfraredStream()
   {
     ROS_INFO_STREAM(nodelet_name_ << " - Disabling Infrared stream");
     rs_disable_stream(rs_device_, RS_STREAM_INFRARED, &rs_error_);
     checkError();
   }
 
-  void RealsenseNodelet::checkError()
+  void BaseNodelet::checkError()
   {
     if (rs_error_)
     {
@@ -223,7 +223,7 @@ namespace realsense_camera
     }
   }
 
-  void RealsenseNodelet::enableStreams()
+  void BaseNodelet::enableStreams()
   {
     // Enable streams.
     if (enable_color_ == true)
@@ -236,7 +236,7 @@ namespace realsense_camera
     }
   }
 
-  bool RealsenseNodelet::connectToCamera()
+  bool BaseNodelet::connectToCamera()
   {
     rs_context_ = rs_create_context(RS_API_VERSION, &rs_error_);
     checkError();
@@ -317,7 +317,7 @@ namespace realsense_camera
     return true;
   }
 
-  void RealsenseNodelet::listCameras()
+  void BaseNodelet::listCameras()
   {
     // print list of detected cameras
     std::string detected_camera_msg = " - Detected the following cameras:";
@@ -339,7 +339,7 @@ namespace realsense_camera
   /*
    * Gets the options supported by the camera along with their min, max and step values.
    */
-  void RealsenseNodelet::getCameraOptions()
+  void BaseNodelet::getCameraOptions()
   {
     for (int i = 0; i < RS_OPTION_COUNT; ++i)
     {
@@ -361,7 +361,7 @@ namespace realsense_camera
   /*
    * Define buffer for images and prepare camera info for each enabled stream.
    */
-  void RealsenseNodelet::allocateResources()
+  void BaseNodelet::allocateResources()
   {
     // Prepare camera for enabled streams (color/depth/infrared)
     fillStreamEncoding();
@@ -374,7 +374,7 @@ namespace realsense_camera
   /*
    * Prepare camera_info for each enabled stream.
    */
-  void RealsenseNodelet::prepareStreamCalibData(rs_stream rs_strm)
+  void BaseNodelet::prepareStreamCalibData(rs_stream rs_strm)
   {
     uint32_t stream_index = (uint32_t) rs_strm;
     rs_intrinsics intrinsic;
@@ -442,7 +442,7 @@ namespace realsense_camera
   /*
    * Get the latest values of the camera options.
    */
-  bool RealsenseNodelet::getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req,
+  bool BaseNodelet::getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req,
       realsense_camera::cameraConfiguration::Response & res)
   {
     std::string get_options_result_str;
@@ -464,7 +464,7 @@ namespace realsense_camera
   /*
    * Set the stream options based on input params.
    */
-  void RealsenseNodelet::setStreamOptions()
+  void BaseNodelet::setStreamOptions()
   {
     pnh_.getParam("serial_no", serial_no_);
     pnh_.getParam("usb_port_id", usb_port_id_);
@@ -492,7 +492,7 @@ namespace realsense_camera
   /*
    * Copy frame data from realsense to member cv images.
    */
-  void RealsenseNodelet::prepareStreamData(rs_stream rs_strm)
+  void BaseNodelet::prepareStreamData(rs_stream rs_strm)
   {
     if (rs_strm == RS_STREAM_DEPTH)
     {
@@ -506,7 +506,7 @@ namespace realsense_camera
   /*
    * Populate the encodings for each stream.
    */
-  void RealsenseNodelet::fillStreamEncoding()
+  void BaseNodelet::fillStreamEncoding()
   {
     stream_encoding_[(uint32_t) RS_STREAM_COLOR] = "rgb8";
     stream_step_[(uint32_t) RS_STREAM_COLOR] = color_width_ * sizeof (unsigned char) * 3;
@@ -519,7 +519,7 @@ namespace realsense_camera
   /*
    * Publish streams.
    */
-  void RealsenseNodelet::publishStreams()
+  void BaseNodelet::publishStreams()
   {
     while (ros::ok())
     {
@@ -626,7 +626,7 @@ namespace realsense_camera
   /*
    * Publish pointcloud.
    */
-  void RealsenseNodelet::publishPointCloud (cv::Mat & image_color)
+  void BaseNodelet::publishPointCloud (cv::Mat & image_color)
   {
     // Publish pointcloud only if there is at least one subscriber.
     if (pointcloud_publisher_.getNumSubscribers() > 0)
@@ -739,7 +739,7 @@ namespace realsense_camera
   /*
    * Publish camera transforms
    */
-  void RealsenseNodelet::publishTransforms()
+  void BaseNodelet::publishTransforms()
   {
     // publish transforms for the cameras
     ROS_INFO_STREAM(nodelet_name_ << " - Publishing camera transforms");

@@ -6,7 +6,7 @@
   <arg name="usb_port_id" />
 
   <node pkg="nodelet" type="nodelet" name="$(arg camera)_nodelet"
-      args="load realsense_camera/RealsenseNodeletR200 $(arg manager)">
+      args="load realsense_camera/R200Nodelet $(arg manager)">
       <param name="serial_no"               type="str"  value="$(arg serial_no)" />
       <param name="usb_port_id"             type="str"  value="$(arg usb_port_id)" />
       <param name="base_frame_id"           type="str"  value="$(arg camera)_link" />
