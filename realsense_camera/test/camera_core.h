@@ -52,24 +52,9 @@
 #include <realsense_camera/cameraConfiguration.h>
 #include <tf/transform_listener.h>
 #include <librealsense/rs.h>
+#include "constants.h"
 
-#define R200_STREAMS_COUNT 4
-
-const char *DEPTH_TOPIC = "camera/depth/image_raw";
-const char *COLOR_TOPIC = "camera/color/image_raw";
-const char *IR1_TOPIC = "camera/infrared1/image_raw";
-const char *IR2_TOPIC = "camera/infrared2/image_raw";
-const char *PC_TOPIC = "camera/depth/points";
-const char *SETTINGS_SERVICE = "camera/get_settings";
-const char *R200 = "R200";
-const int R200_DEPTH_MAX = 10000;
-
-const char *BASE_DEF_FRAME = "camera_link";
-const char *DEPTH_DEF_FRAME = "camera_depth_frame";
-const char *COLOR_DEF_FRAME = "camera_rgb_frame";
-const char *DEPTH_OPTICAL_DEF_FRAME = "camera_depth_optical_frame";
-const char *COLOR_OPTICAL_DEF_FRAME = "camera_rgb_optical_frame";
-const double ROTATION_IDENTITY[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+using namespace realsense_camera;
 
 //utest commandline args
 int g_color_height_exp = 0;
@@ -90,10 +75,11 @@ std::string g_color_encoding_exp; // Expected color encoding.
 std::string g_infrared1_encoding_exp; // Expected infrared1 encoding.
 std::string g_infrared2_encoding_exp; // Expected infrared2 encoding.
 
-image_transport::CameraSubscriber g_camera_subscriber[R200_STREAMS_COUNT];
+image_transport::CameraSubscriber g_camera_subscriber[STREAM_COUNT];
 ros::Subscriber g_sub_pc;
 
 std::map<std::string, std::string> g_config_args;
+int g_max_z = R200_MAX_Z * 1000; // Converting meter to mm.
 
 bool g_depth_recv = false;
 bool g_color_recv = false;
@@ -107,20 +93,20 @@ float g_infrared1_avg = 0;
 float g_infrared2_avg = 0;
 float g_pc_depth_avg = 0;
 
-int g_height_recv[R200_STREAMS_COUNT] = {0};
-int g_width_recv[R200_STREAMS_COUNT] = {0};
-uint32_t g_step_recv[R200_STREAMS_COUNT] = {0}; // Received stream step.
+int g_height_recv[STREAM_COUNT] = {0};
+int g_width_recv[STREAM_COUNT] = {0};
+uint32_t g_step_recv[STREAM_COUNT] = {0}; // Received stream step.
 
-std::string g_encoding_recv[R200_STREAMS_COUNT]; // Expected stream encoding.
+std::string g_encoding_recv[STREAM_COUNT]; // Expected stream encoding.
 
-int g_caminfo_height_recv[R200_STREAMS_COUNT] = {0};
-int g_caminfo_width_recv[R200_STREAMS_COUNT] = {0};
+int g_caminfo_height_recv[STREAM_COUNT] = {0};
+int g_caminfo_width_recv[STREAM_COUNT] = {0};
 float g_color_caminfo_D_recv[5] = {0};
 
-double g_caminfo_rotation_recv[R200_STREAMS_COUNT][9] = {0};
-double g_caminfo_projection_recv[R200_STREAMS_COUNT][12] = {0};
+double g_caminfo_rotation_recv[STREAM_COUNT][9] = {0};
+double g_caminfo_projection_recv[STREAM_COUNT][12] = {0};
 
-std::string g_dmodel_recv[R200_STREAMS_COUNT];
+std::string g_dmodel_recv[STREAM_COUNT];
 std::string g_camera = "R200";
 
 realsense_camera::cameraConfiguration g_srv;

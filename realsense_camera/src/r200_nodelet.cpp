@@ -45,7 +45,8 @@ namespace realsense_camera
   {
     // set member vars used in base class
     nodelet_name_ = getName();
-    num_streams_ = NUM_STREAMS_R200;
+    num_streams_ = R200_STREAM_COUNT;
+    max_z_ = R200_MAX_Z;
     nh_ = getNodeHandle();
     pnh_ = getPrivateNodeHandle();
 
@@ -90,7 +91,7 @@ namespace realsense_camera
     if (mode_.compare ("manual") == 0)
     {
       ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared2 stream: manual mode");
-      rs_enable_stream(rs_device_, RS_STREAM_INFRARED2, depth_width_, depth_height_, IR2_FORMAT, depth_fps_, &rs_error_);
+      rs_enable_stream(rs_device_, RS_STREAM_INFRARED2, depth_width_, depth_height_, IR_FORMAT, depth_fps_, &rs_error_);
       checkError();
     }
     else

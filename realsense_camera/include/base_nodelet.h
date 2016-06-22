@@ -62,6 +62,7 @@
 #include <realsense_camera/cameraConfiguration.h>
 #include <pluginlib/class_list_macros.h>
 #include <tf/transform_broadcaster.h>
+#include "constants.h"
 
 namespace realsense_camera
 {
@@ -77,35 +78,6 @@ namespace realsense_camera
     virtual bool getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req, realsense_camera::cameraConfiguration::Response & res);
 
   protected:
-    // Default Constants.
-    const int MAX_Z = 8;	// in meters
-    const std::string DEFAULT_MODE = "preset";
-    const int DEPTH_HEIGHT = 360;
-    const int DEPTH_WIDTH = 480;
-    const int COLOR_HEIGHT = 480;
-    const int COLOR_WIDTH = 640;
-    const int DEPTH_FPS = 60;
-    const int COLOR_FPS = 60;
-    const bool ENABLE_DEPTH = true;
-    const bool ENABLE_COLOR = true;
-    const bool ENABLE_PC = true;
-    const bool ENABLE_TF = true;
-    const rs_format DEPTH_FORMAT = RS_FORMAT_Z16;
-    const rs_format COLOR_FORMAT = RS_FORMAT_RGB8;
-    const rs_format IR1_FORMAT = RS_FORMAT_Y8;
-    const std::string DEFAULT_BASE_FRAME_ID = "camera_link";
-    const std::string DEFAULT_DEPTH_FRAME_ID = "camera_depth_frame";
-    const std::string DEFAULT_COLOR_FRAME_ID = "camera_rgb_frame";
-    const std::string DEFAULT_DEPTH_OPTICAL_FRAME_ID = "camera_depth_optical_frame";
-    const std::string DEFAULT_COLOR_OPTICAL_FRAME_ID = "camera_rgb_optical_frame";
-    const std::string DEFAULT_IR_FRAME_ID = "camera_infrared_frame";
-    const char *DEPTH_TOPIC = "camera/depth/image_raw";
-    const char *COLOR_TOPIC = "camera/color/image_raw";
-    const char *IR1_TOPIC = "camera/infrared1/image_raw";
-    const char *PC_TOPIC = "camera/depth/points";
-    const char *SETTINGS_SERVICE = "camera/get_settings";
-
-    const static int STREAM_COUNT = 4;
 
     // Member Variables.
     boost::shared_ptr<boost::thread> stream_thread_;
@@ -140,6 +112,7 @@ namespace realsense_camera
     std::string nodelet_name_;
     const uint16_t *image_depth16_;
     int num_streams_ = 3;
+    int max_z_ = -1;
 
     cv::Mat image_[STREAM_COUNT];
 
