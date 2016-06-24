@@ -53,10 +53,8 @@ namespace realsense_camera
     boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::r200_paramsConfig>> dynamic_reconf_server_;
 
     // Member Functions.
-    void enableDepthStream();
-    void disableDepthStream();
-    void enableInfrared2Stream();
-    void disableInfrared2Stream();
+    void enableStream(rs_stream stream_index, int width, int height, rs_format format, int fps);
+    void disableStream(rs_stream stream_index);
     void setStreamOptions();
     void fillStreamEncoding();
     void allocateResources();

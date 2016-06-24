@@ -634,7 +634,7 @@ int main(int argc, char **argv) try
   image_transport::ImageTransport it(nh);
   g_camera_subscriber[0] = it.subscribeCamera(DEPTH_TOPIC, 1, imageDepthCallback, 0);
   g_camera_subscriber[1] = it.subscribeCamera(COLOR_TOPIC, 1, imageColorCallback, 0);
-  g_camera_subscriber[2] = it.subscribeCamera(IR1_TOPIC, 1, imageInfrared1Callback, 0);
+  g_camera_subscriber[2] = it.subscribeCamera(IR_TOPIC, 1, imageInfrared1Callback, 0);
   if (g_camera.find("R200") != std::string::npos)
   {
     g_camera_subscriber[3] = it.subscribeCamera(IR2_TOPIC, 1, imageInfrared2Callback, 0);
