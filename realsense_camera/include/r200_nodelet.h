@@ -47,11 +47,6 @@ namespace realsense_camera
     void onInit();
 
   protected:
-    // R200 Constants.
-    const rs_format IR2_FORMAT = RS_FORMAT_Y8;
-    const std::string DEFAULT_IR2_FRAME_ID = "camera_infrared2_frame";
-    const char *IR2_TOPIC = "camera/infrared2/image_raw";
-    const int NUM_STREAMS_R200 = 4;
 
     // Member Variables.
     std::string ir2_frame_id_;

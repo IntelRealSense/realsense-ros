@@ -174,7 +174,7 @@ namespace realsense_camera
     if (mode_.compare ("manual") == 0)
     {
       ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared stream: manual mode");
-      rs_enable_stream(rs_device_, RS_STREAM_INFRARED, depth_width_, depth_height_, IR1_FORMAT, depth_fps_, &rs_error_);
+      rs_enable_stream(rs_device_, RS_STREAM_INFRARED, depth_width_, depth_height_, IR_FORMAT, depth_fps_, &rs_error_);
       checkError();
     }
     else
@@ -686,7 +686,7 @@ namespace realsense_camera
           { (float) x, (float) y};
           rs_deproject_pixel_to_point(depth_point, &z_intrinsic, depth_pixel, scaled_depth);
 
-          if (depth_point[2] <= 0 || depth_point[2] > MAX_Z)
+          if (depth_point[2] <= 0 || depth_point[2] > max_z_)
           {
             depth_point[0] = 0;
             depth_point[1] = 0;

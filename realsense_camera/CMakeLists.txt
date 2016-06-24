@@ -7,6 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 # View the makefile commands during build
 #set(CMAKE_VERBOSE_MAKEFILE on)
 
+# Set compile flags
 set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -O2 -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
 # Flags executables
 set(CMAKE_EXE_LINKER_FLAGS "-pie -z noexecstack -z relro -z now")
@@ -43,7 +44,22 @@ generate_dynamic_reconfigure_options(
   cfg/r200_params.cfg
 )
 
+#################################
+# catkin specific configuration #
+#################################
+# The catkin_package macro generates cmake config files for your package
+# Declare things to be passed to dependent projects
+# INCLUDE_DIRS: uncomment this if you package contains header files
+# LIBRARIES: libraries you create in this project that dependent projects also need
+# CATKIN_DEPENDS: catkin_packages dependent projects also need
+# DEPENDS: system dependencies of this project that dependent projects also need
+catkin_package(
+  INCLUDE_DIRS include
+)
+
+# Specify additional locations of header files
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -71,6 +87,11 @@ add_dependencies(tests_rgbd_topics ${PROJECT_NAME}_generate_messages_cpp)
 # Install nodelet library
 install(TARGETS ${PROJECT_NAME}_nodelet LIBRARY
     DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+# Install header files
+install(DIRECTORY include/
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/include
 )
 
 # Install launch files

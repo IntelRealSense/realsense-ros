@@ -28,10 +28,10 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 #include "gtest/gtest.h"
-
 #include "camera_core.h"
-using namespace std;
 
+using namespace std;
+using namespace realsense_camera;
 
 void getMsgInfo(rs_stream stream, const sensor_msgs::ImageConstPtr &msg)
 {
@@ -126,7 +126,7 @@ void imageDepthCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs
   int depth_count = 0;
   for (unsigned int i = 0; i < msg->height * msg->width; ++i)
   {
-    if ((0 < *image_data) && (*image_data <= R200_DEPTH_MAX))
+    if ((0 < *image_data) && (*image_data <= g_max_z))
     {
       depth_total += *image_data;
       depth_count++;
@@ -156,7 +156,7 @@ void pcCallback(const sensor_msgs::PointCloud2ConstPtr pc)
   {
     pcl::PointXYZRGB point = pointcloud.points[i];
     float pc_depth = (float) std::ceil(point.z);
-    if ((0 < pc_depth) && (pc_depth <= R200_DEPTH_MAX))
+    if ((0 < pc_depth) && (pc_depth <= g_max_z))
     {
       pc_depth_total += pc_depth;
       pc_depth_count++;
@@ -507,10 +507,10 @@ TEST(RealsenseTests, testTransforms)
   // make sure all transforms are being broadcast as expected
   tf::TransformListener tf_listener;
 
-  EXPECT_TRUE(tf_listener.waitForTransform (DEPTH_DEF_FRAME, BASE_DEF_FRAME, ros::Time(0), ros::Duration(3.0)));
-  EXPECT_TRUE(tf_listener.waitForTransform (DEPTH_OPTICAL_DEF_FRAME, DEPTH_DEF_FRAME, ros::Time(0), ros::Duration(3.0)));
-  EXPECT_TRUE(tf_listener.waitForTransform (COLOR_DEF_FRAME, BASE_DEF_FRAME, ros::Time(0), ros::Duration(3.0)));
-  EXPECT_TRUE(tf_listener.waitForTransform (COLOR_OPTICAL_DEF_FRAME, COLOR_DEF_FRAME, ros::Time(0), ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform (DEFAULT_DEPTH_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0), ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform (DEFAULT_DEPTH_OPTICAL_FRAME_ID, DEFAULT_DEPTH_FRAME_ID, ros::Time(0), ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform (DEFAULT_COLOR_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0), ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform (DEFAULT_COLOR_OPTICAL_FRAME_ID, DEFAULT_COLOR_FRAME_ID, ros::Time(0), ros::Duration(3.0)));
 }
 
 TEST(RealsenseTests, testCameraOptions)
@@ -635,7 +635,7 @@ int main(int argc, char **argv) try
   g_camera_subscriber[0] = it.subscribeCamera(DEPTH_TOPIC, 1, imageDepthCallback, 0);
   g_camera_subscriber[1] = it.subscribeCamera(COLOR_TOPIC, 1, imageColorCallback, 0);
   g_camera_subscriber[2] = it.subscribeCamera(IR1_TOPIC, 1, imageInfrared1Callback, 0);
-  if (g_camera.find(R200) != std::string::npos)
+  if (g_camera.find("R200") != std::string::npos)
   {
     g_camera_subscriber[3] = it.subscribeCamera(IR2_TOPIC, 1, imageInfrared2Callback, 0);
   }
