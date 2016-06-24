@@ -55,14 +55,15 @@ namespace realsense_camera
     const std::string DEFAULT_COLOR_FRAME_ID = "camera_rgb_frame";
     const std::string DEFAULT_DEPTH_OPTICAL_FRAME_ID = "camera_depth_optical_frame";
     const std::string DEFAULT_COLOR_OPTICAL_FRAME_ID = "camera_rgb_optical_frame";
-    const std::string DEFAULT_IR_FRAME_ID = "camera_infrared_frame";
-    const std::string DEFAULT_IR2_FRAME_ID = "camera_infrared2_frame";
+    const std::string DEFAULT_IR_FRAME_ID = "camera_ir_frame";
+    const std::string DEFAULT_IR2_FRAME_ID = "camera_ir2_frame";
     const std::string DEPTH_TOPIC = "camera/depth/image_raw";
     const std::string COLOR_TOPIC = "camera/color/image_raw";
-    const std::string IR1_TOPIC = "camera/infrared1/image_raw";
-    const std::string IR2_TOPIC = "camera/infrared2/image_raw";
+    const std::string IR_TOPIC = "camera/ir/image_raw";
+    const std::string IR2_TOPIC = "camera/ir2/image_raw";
     const std::string PC_TOPIC = "camera/depth/points";
     const std::string SETTINGS_SERVICE = "camera/get_settings";
+    const std::string STREAM_DESC[STREAM_COUNT] = {"Depth", "Color", "IR", "IR2"};
     const double ROTATION_IDENTITY[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
     // R200 Constants.

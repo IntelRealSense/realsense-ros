@@ -93,7 +93,7 @@ namespace realsense_camera
     image_transport::ImageTransport it (nh_);
     camera_publisher_[RS_STREAM_COLOR] = it.advertiseCamera(COLOR_TOPIC, 1);
     camera_publisher_[RS_STREAM_DEPTH] = it.advertiseCamera(DEPTH_TOPIC, 1);
-    camera_publisher_[RS_STREAM_INFRARED] = it.advertiseCamera(IR1_TOPIC, 1);
+    camera_publisher_[RS_STREAM_INFRARED] = it.advertiseCamera(IR_TOPIC, 1);
 
     pointcloud_publisher_ = nh_.advertise<sensor_msgs::PointCloud2>(PC_TOPIC, 1);
 
@@ -120,92 +120,32 @@ namespace realsense_camera
   /*
    *Protected Methods.
    */
-  void BaseNodelet::enableColorStream()
+  void BaseNodelet::enableStream(rs_stream stream_index, int width, int height, rs_format format, int fps)
   {
     // Enable streams.
-    if (mode_.compare ("manual") == 0)
+    if (mode_.compare("manual") == 0)
     {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Color stream: manual mode");
-      rs_enable_stream(rs_device_, RS_STREAM_COLOR, color_width_, color_height_, COLOR_FORMAT, color_fps_, &rs_error_);
+      ROS_INFO_STREAM(nodelet_name_ << " - Enabling " << STREAM_DESC[stream_index] << " stream: manual mode");
+      rs_enable_stream(rs_device_, stream_index, width, height, format, fps, &rs_error_);
       checkError();
     }
     else
     {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Color stream: preset mode");
-      rs_enable_stream_preset(rs_device_, RS_STREAM_COLOR, RS_PRESET_BEST_QUALITY, &rs_error_);
+      ROS_INFO_STREAM(nodelet_name_ << " - Enabling " << STREAM_DESC[stream_index] << " stream: preset mode");
+      rs_enable_stream_preset(rs_device_, stream_index, RS_PRESET_BEST_QUALITY, &rs_error_);
       checkError();
     }
 
-    uint32_t stream_index = (uint32_t) RS_STREAM_COLOR;
     if (camera_info_[stream_index] == NULL)
     {
-      prepareStreamCalibData (RS_STREAM_COLOR);
+      prepareStreamCalibData(stream_index);
     }
   }
 
-  void BaseNodelet::enableDepthStream()
+  void BaseNodelet::disableStream(rs_stream stream_index)
   {
-    // Enable streams.
-    if (mode_.compare ("manual") == 0)
-    {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Depth stream: manual mode");
-      rs_enable_stream(rs_device_, RS_STREAM_DEPTH, depth_width_, depth_height_, DEPTH_FORMAT, depth_fps_, &rs_error_);
-      checkError();
-    }
-    else
-    {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Depth stream: preset mode");
-      rs_enable_stream_preset(rs_device_, RS_STREAM_DEPTH, RS_PRESET_BEST_QUALITY, &rs_error_);
-      checkError();
-    }
-
-    uint32_t stream_index = (uint32_t) RS_STREAM_DEPTH;
-    if (camera_info_[stream_index] == NULL)
-    {
-      prepareStreamCalibData (RS_STREAM_DEPTH);
-    }
-    // must enable IR stream also
-    enableInfraredStream();
-  }
-
-  void BaseNodelet::enableInfraredStream()
-  {
-    // Enable streams.
-    if (mode_.compare ("manual") == 0)
-    {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared stream: manual mode");
-      rs_enable_stream(rs_device_, RS_STREAM_INFRARED, depth_width_, depth_height_, IR_FORMAT, depth_fps_, &rs_error_);
-      checkError();
-    }
-    else
-    {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared stream: preset mode");
-      rs_enable_stream_preset(rs_device_, RS_STREAM_INFRARED, RS_PRESET_BEST_QUALITY, &rs_error_);
-      checkError();
-    }
-
-    uint32_t stream_index = (uint32_t) RS_STREAM_INFRARED;
-    if (camera_info_[stream_index] == NULL)
-    {
-      prepareStreamCalibData (RS_STREAM_INFRARED);
-    }
-  }
-
-  void BaseNodelet::disableDepthStream()
-  {
-  // disable depth stream
-  ROS_INFO_STREAM(nodelet_name_ << " - Disabling Depth stream");
-  rs_disable_stream(rs_device_, RS_STREAM_DEPTH, &rs_error_);
-  checkError();
-
-  // disable IR stream
-  disableInfraredStream();
-  }
-
-  void BaseNodelet::disableInfraredStream()
-  {
-    ROS_INFO_STREAM(nodelet_name_ << " - Disabling Infrared stream");
-    rs_disable_stream(rs_device_, RS_STREAM_INFRARED, &rs_error_);
+    ROS_INFO_STREAM(nodelet_name_ << " - Disabling " << STREAM_DESC[stream_index] << " stream");
+    rs_disable_stream(rs_device_, stream_index, &rs_error_);
     checkError();
   }
 
@@ -220,19 +160,6 @@ namespace realsense_camera
       ros::shutdown();
 
       exit (EXIT_FAILURE);
-    }
-  }
-
-  void BaseNodelet::enableStreams()
-  {
-    // Enable streams.
-    if (enable_color_ == true)
-    {
-      enableColorStream();
-    }
-    if (enable_depth_ == true)
-    {
-      enableDepthStream();
     }
   }
 
@@ -301,7 +228,15 @@ namespace realsense_camera
     checkError();
 
     // Enable streams.
-    enableStreams();
+    if (enable_color_ == true)
+    {
+      enableStream(RS_STREAM_COLOR, color_width_, color_height_, COLOR_FORMAT, color_fps_);
+    }
+    if (enable_depth_ == true)
+    {
+      enableStream(RS_STREAM_DEPTH, depth_width_, depth_height_, DEPTH_FORMAT, depth_fps_);
+      enableStream(RS_STREAM_INFRARED, depth_width_, depth_height_, IR_FORMAT, depth_fps_);
+    }
     getCameraOptions();
     setStaticCameraOptions();
 
@@ -374,11 +309,10 @@ namespace realsense_camera
   /*
    * Prepare camera_info for each enabled stream.
    */
-  void BaseNodelet::prepareStreamCalibData(rs_stream rs_strm)
+  void BaseNodelet::prepareStreamCalibData(rs_stream stream_index)
   {
-    uint32_t stream_index = (uint32_t) rs_strm;
     rs_intrinsics intrinsic;
-    rs_get_stream_intrinsics(rs_device_, rs_strm, &intrinsic, &rs_error_);
+    rs_get_stream_intrinsics(rs_device_, stream_index, &intrinsic, &rs_error_);
     checkError();
 
     camera_info_[stream_index] = new sensor_msgs::CameraInfo();
@@ -532,8 +466,9 @@ namespace realsense_camera
           checkError();
         }
 
-        // disable depth stream
-        disableDepthStream();
+        // disable Depth and IR stream
+        disableStream(RS_STREAM_DEPTH);
+        disableStream(RS_STREAM_INFRARED);
 
         if (rs_is_device_streaming(rs_device_, 0) == 0)
         {
@@ -552,7 +487,8 @@ namespace realsense_camera
           checkError();
         }
 
-        enableDepthStream();
+        enableStream(RS_STREAM_DEPTH, depth_width_, depth_height_, DEPTH_FORMAT, depth_fps_);
+        enableStream(RS_STREAM_INFRARED, depth_width_, depth_height_, IR_FORMAT, depth_fps_);
 
         if (rs_is_device_streaming(rs_device_, 0) == 0)
         {

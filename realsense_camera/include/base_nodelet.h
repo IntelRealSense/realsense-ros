@@ -149,15 +149,11 @@ namespace realsense_camera
     std::vector<CameraOptions> camera_options_;
 
     // Member Functions.
-    virtual void enableStreams();
-    virtual void enableColorStream();
-    virtual void enableDepthStream();
-    virtual void disableDepthStream();
-    virtual void enableInfraredStream();
-    virtual void disableInfraredStream();
+    virtual void enableStream(rs_stream stream_index, int width, int height, rs_format format, int fps);
+    virtual void prepareStreamCalibData(rs_stream stream_index);
+    virtual void disableStream(rs_stream stream_index);
     virtual void fillStreamEncoding();
     virtual void setStreamOptions();
-    virtual void prepareStreamCalibData(rs_stream calib_data);
     virtual void prepareStreamData(rs_stream rs_strm);
 
     virtual void getCameraOptions();

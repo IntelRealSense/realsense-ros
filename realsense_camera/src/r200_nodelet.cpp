@@ -69,50 +69,22 @@ namespace realsense_camera
   /*
    *Protected Methods.
    */
-  void R200Nodelet::enableDepthStream()
+  void R200Nodelet::enableStream(rs_stream stream_index, int width, int height, rs_format format, int fps)
   {
-    // call the base class method first
-    BaseNodelet::enableDepthStream();
-    // enable IR2 stream
-    enableInfrared2Stream();
-  }
-
-  void R200Nodelet::disableDepthStream()
-  {
-    // call the base class method first
-    BaseNodelet::disableDepthStream();
-    // disable IR2 stream
-    disableInfrared2Stream();
-  }
-
-  void R200Nodelet::enableInfrared2Stream()
-  {
-    // Enable streams.
-    if (mode_.compare ("manual") == 0)
+    BaseNodelet::enableStream(stream_index, width, height, format, fps);
+    if (stream_index == RS_STREAM_INFRARED)
     {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared2 stream: manual mode");
-      rs_enable_stream(rs_device_, RS_STREAM_INFRARED2, depth_width_, depth_height_, IR_FORMAT, depth_fps_, &rs_error_);
-      checkError();
-    }
-    else
-    {
-      ROS_INFO_STREAM(nodelet_name_ << " - Enabling Infrared2 stream: preset mode");
-      rs_enable_stream_preset(rs_device_, RS_STREAM_INFRARED2, RS_PRESET_BEST_QUALITY, &rs_error_);
-      checkError();
-    }
-
-    uint32_t stream_index = (uint32_t) RS_STREAM_INFRARED2;
-    if (camera_info_[stream_index] == NULL)
-    {
-      prepareStreamCalibData (RS_STREAM_INFRARED2);
+      enableStream(RS_STREAM_INFRARED2, depth_width_, depth_height_, IR_FORMAT, depth_fps_);
     }
   }
 
-  void R200Nodelet::disableInfrared2Stream()
+  void R200Nodelet::disableStream(rs_stream stream_index)
   {
-    ROS_INFO_STREAM(nodelet_name_ << " - Disabling Infrared2 stream");
-    rs_disable_stream(rs_device_, RS_STREAM_INFRARED2, &rs_error_);
-    checkError();
+    BaseNodelet::disableStream(stream_index);
+    if (stream_index == RS_STREAM_INFRARED)
+    {
+      disableStream(RS_STREAM_INFRARED2);
+    }
   }
 
   void R200Nodelet::configCallback(realsense_camera::r200_paramsConfig &config, uint32_t level)

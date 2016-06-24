@@ -19,13 +19,13 @@
 
       <remap from="camera/depth/image_raw"        to="$(arg camera)/depth/image_raw" />
       <remap from="camera/color/image_raw"        to="$(arg camera)/rgb/image_raw" />
-      <remap from="camera/infrared1/image_raw"    to="$(arg camera)/ir/image_raw" />
-      <remap from="camera/infrared2/image_raw"    to="$(arg camera)/ir2/image_raw" />
+      <remap from="camera/ir/image_raw"           to="$(arg camera)/ir/image_raw" />
+      <remap from="camera/ir2/image_raw"          to="$(arg camera)/ir2/image_raw" />
       <remap from="camera/depth/points"           to="$(arg camera)/depth/points" />
       <remap from="camera/depth/camera_info"      to="$(arg camera)/depth/camera_info" />
       <remap from="camera/color/camera_info"      to="$(arg camera)/rgb/camera_info" />
-      <remap from="camera/infrared1/camera_info"  to="$(arg camera)/ir/camera_info" />
-      <remap from="camera/infrared2/camera_info"  to="$(arg camera)/ir2/camera_info" />
+      <remap from="camera/ir/camera_info"         to="$(arg camera)/ir/camera_info" />
+      <remap from="camera/ir2/camera_info"        to="$(arg camera)/ir2/camera_info" />
       <remap from="camera/get_settings"           to="$(arg camera)/get_settings" />
   </node>
 </launch>
