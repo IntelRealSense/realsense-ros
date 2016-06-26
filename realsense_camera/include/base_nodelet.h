@@ -80,66 +80,38 @@ namespace realsense_camera
   protected:
 
     // Member Variables.
-    boost::shared_ptr<boost::thread> stream_thread_;
-    boost::shared_ptr<boost::thread> transform_thread_;
+    ros::NodeHandle nh_;
+    ros::NodeHandle pnh_;
 
     rs_error *rs_error_ = 0;
     rs_context *rs_context_;
     rs_device *rs_device_;
-    std::vector<rs_device *> rs_detected_devices_;
-
-    int num_of_cameras_;
-    std::string serial_no_;
-    std::string usb_port_id_;
-    int color_height_;
-    int color_width_;
-    int depth_height_;
-    int depth_width_;
-    int depth_fps_;
-    int color_fps_;
+    int height_[STREAM_COUNT];
+    int width_[STREAM_COUNT];
+    int fps_[STREAM_COUNT];
+    int stream_step_[STREAM_COUNT];
+    int stream_ts_[STREAM_COUNT];
+    int num_streams_ = 3;
+    int max_z_ = -1;
     bool is_device_started_;
     bool enable_color_;
     bool enable_depth_;
     bool enable_pointcloud_;
     bool enable_tf_;
-    std::string base_frame_id_;
-    std::string depth_frame_id_;
-    std::string color_frame_id_;
-    std::string depth_optical_frame_id_;
-    std::string color_optical_frame_id_;
-    std::string ir_frame_id_;
-    std::string camera_;
-    std::string nodelet_name_;
-    const uint16_t *image_depth16_;
-    int num_streams_ = 3;
-    int max_z_ = -1;
-
-    cv::Mat image_[STREAM_COUNT];
-
-    rs_option edge_options_[4] = {
-      RS_OPTION_R200_AUTO_EXPOSURE_LEFT_EDGE,
-      RS_OPTION_R200_AUTO_EXPOSURE_TOP_EDGE,
-      RS_OPTION_R200_AUTO_EXPOSURE_RIGHT_EDGE,
-      RS_OPTION_R200_AUTO_EXPOSURE_BOTTOM_EDGE
-    };
-    double edge_values_[4];
-
-    sensor_msgs::CameraInfoPtr camera_info_ptr_[STREAM_COUNT];
-    sensor_msgs::CameraInfo * camera_info_[STREAM_COUNT];
-    image_transport::CameraPublisher camera_publisher_[STREAM_COUNT];
-
-    ros::Time time_stamp_;
-    ros::Publisher pointcloud_publisher_;
-    ros::ServiceServer get_options_service_;
-    ros::NodeHandle nh_;
-    ros::NodeHandle pnh_;
 
     std::string frame_id_[STREAM_COUNT];
     std::string stream_encoding_[STREAM_COUNT];
-    std::string mode_;
-    std::map<std::string, std::string> config_;
-    int stream_step_[STREAM_COUNT];
-    int stream_ts_[STREAM_COUNT];
+    std::string nodelet_name_;
+    const uint16_t *image_depth16_;
+
+    cv::Mat image_[STREAM_COUNT];
+
+    image_transport::CameraPublisher camera_publisher_[STREAM_COUNT];
+    sensor_msgs::CameraInfoPtr camera_info_ptr_[STREAM_COUNT];
+    ros::Publisher pointcloud_publisher_;
+
+    boost::shared_ptr<boost::thread> stream_thread_;
+    boost::shared_ptr<boost::thread> transform_thread_;
 
     struct CameraOptions
     {
@@ -149,21 +121,20 @@ namespace realsense_camera
     std::vector<CameraOptions> camera_options_;
 
     // Member Functions.
+    virtual void listCameras(int num_of_camera);
+    virtual bool connectToCamera();
     virtual void enableStream(rs_stream stream_index, int width, int height, rs_format format, int fps);
-    virtual void prepareStreamCalibData(rs_stream stream_index);
     virtual void disableStream(rs_stream stream_index);
+    virtual void prepareStreamCalibData(rs_stream stream_index);
+    virtual void prepareStreamData(rs_stream rs_strm);
+    virtual void allocateResources();
     virtual void fillStreamEncoding();
     virtual void setStreamOptions();
-    virtual void prepareStreamData(rs_stream rs_strm);
-
-    virtual void getCameraOptions();
-    virtual void allocateResources();
-    virtual void listCameras();
-    virtual bool connectToCamera();
     virtual void setStaticCameraOptions() { return; } // must be defined in derived class
+    virtual void getCameraOptions();
     virtual void checkError();
 
-    virtual void publishPointCloud(cv::Mat & image_rgb);
+    virtual void publishPointCloud(cv::Mat & image_rgb, ros::Time time_stamp);
   };
 }
 #endif

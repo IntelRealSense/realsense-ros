@@ -49,7 +49,12 @@ namespace realsense_camera
   protected:
 
     // Member Variables.
-    std::string ir2_frame_id_;
+    rs_option edge_options_[4] = {
+      RS_OPTION_R200_AUTO_EXPOSURE_LEFT_EDGE,
+      RS_OPTION_R200_AUTO_EXPOSURE_TOP_EDGE,
+      RS_OPTION_R200_AUTO_EXPOSURE_RIGHT_EDGE,
+      RS_OPTION_R200_AUTO_EXPOSURE_BOTTOM_EDGE
+    };
     boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::r200_paramsConfig>> dynamic_reconf_server_;
 
     // Member Functions.
