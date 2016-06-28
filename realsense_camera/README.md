@@ -51,7 +51,7 @@ Depth camera
     camera/depth/camera_info
         Calibration data
     camera/depth/points (sensor_msgs/PointCloud2)
-        Registered XYZRGB point cloud.
+        Registered XYZRGB point cloud. By default, pointcloud is disabled.
 
 IR camera
 
@@ -101,8 +101,9 @@ IR2 camera
             Specify the depth camera FPS
         enable_color (bool, default: true) 
             Specify if to enable or not the color camera.
-        enable_pointcloud (bool, default: true) 
+        enable_pointcloud (bool, default: false) 
             Specify if to enable or not the point cloud camera.
+            By default, it is set to false due to performance issues.
         enable_tf (bool, default: true) 
             Specify if to enable or not the transform frames.
         base_frame_id (string, default: camera_link)
