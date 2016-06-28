@@ -45,10 +45,10 @@ namespace realsense_camera
   {
     // set member vars used in base class
     nodelet_name_ = getName();
-    num_streams_ = R200_STREAM_COUNT;
-    max_z_ = R200_MAX_Z;
     nh_ = getNodeHandle();
     pnh_ = getPrivateNodeHandle();
+    num_streams_ = R200_STREAM_COUNT;
+    max_z_ = R200_MAX_Z;
 
     // create dynamic reconfigure server - this must be done before calling base class onInit()
     // onInit() calls setStaticCameraOptions() which relies on this being set already
@@ -58,7 +58,6 @@ namespace realsense_camera
     BaseNodelet::onInit();
 
     // Set up the IR2 frame and topics
-    frame_id_[RS_STREAM_INFRARED2] = ir2_frame_id_;
     image_transport::ImageTransport it (nh_);
     camera_publisher_[RS_STREAM_INFRARED2] = it.advertiseCamera(IR2_TOPIC, 1);
 
@@ -74,7 +73,7 @@ namespace realsense_camera
     BaseNodelet::enableStream(stream_index, width, height, format, fps);
     if (stream_index == RS_STREAM_INFRARED)
     {
-      enableStream(RS_STREAM_INFRARED2, depth_width_, depth_height_, IR_FORMAT, depth_fps_);
+      enableStream(RS_STREAM_INFRARED2, width_[RS_STREAM_DEPTH], height_[RS_STREAM_DEPTH], IR_FORMAT, fps_[RS_STREAM_DEPTH]);
     }
   }
 
@@ -135,22 +134,24 @@ namespace realsense_camera
 
     if (config.r200_lr_auto_exposure_enabled == 1)
     {
-      if (config.r200_auto_exposure_top_edge >= depth_height_)
+      if (config.r200_auto_exposure_top_edge >= height_[RS_STREAM_DEPTH])
       {
-        config.r200_auto_exposure_top_edge = depth_height_ - 1;
+        config.r200_auto_exposure_top_edge = height_[RS_STREAM_DEPTH] - 1;
       }
-      if (config.r200_auto_exposure_bottom_edge >= depth_height_)
+      if (config.r200_auto_exposure_bottom_edge >= height_[RS_STREAM_DEPTH])
       {
-        config.r200_auto_exposure_bottom_edge = depth_height_ - 1;
+        config.r200_auto_exposure_bottom_edge = height_[RS_STREAM_DEPTH] - 1;
       }
-      if (config.r200_auto_exposure_left_edge >= depth_width_)
+      if (config.r200_auto_exposure_left_edge >= width_[RS_STREAM_DEPTH])
       {
-        config.r200_auto_exposure_left_edge = depth_width_ - 1;
+        config.r200_auto_exposure_left_edge = width_[RS_STREAM_DEPTH] - 1;
       }
-      if (config.r200_auto_exposure_right_edge >= depth_width_)
+      if (config.r200_auto_exposure_right_edge >= width_[RS_STREAM_DEPTH])
       {
-        config.r200_auto_exposure_right_edge = depth_width_ - 1;
+        config.r200_auto_exposure_right_edge = width_[RS_STREAM_DEPTH] - 1;
       }
+
+      double edge_values_[4];
       edge_values_[0] = config.r200_auto_exposure_left_edge;
       edge_values_[1] = config.r200_auto_exposure_top_edge;
       edge_values_[2] = config.r200_auto_exposure_right_edge;
@@ -168,7 +169,7 @@ namespace realsense_camera
     // call base class method first
     BaseNodelet::allocateResources();
     // set IR2 image buffer
-    image_[(uint32_t) RS_STREAM_INFRARED2] = cv::Mat(depth_height_, depth_width_, CV_8UC1, cv::Scalar (0));
+    image_[(uint32_t) RS_STREAM_INFRARED2] = cv::Mat(height_[RS_STREAM_DEPTH], width_[RS_STREAM_DEPTH], CV_8UC1, cv::Scalar (0));
   }
 
   /*
@@ -179,7 +180,7 @@ namespace realsense_camera
     // call base class method first
     BaseNodelet::setStreamOptions();
     // setup R200 specific frame
-    pnh_.param("ir2_frame_id", ir2_frame_id_, DEFAULT_IR2_FRAME_ID);
+    pnh_.param("ir2_frame_id", frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_FRAME_ID);
   }
 
   /*
@@ -191,7 +192,7 @@ namespace realsense_camera
     BaseNodelet::fillStreamEncoding();
     // Setup IR2 stream
     stream_encoding_[(uint32_t) RS_STREAM_INFRARED2] = sensor_msgs::image_encodings::TYPE_8UC1;
-    stream_step_[(uint32_t) RS_STREAM_INFRARED2] = depth_width_ * sizeof (unsigned char);
+    stream_step_[(uint32_t) RS_STREAM_INFRARED2] = width_[RS_STREAM_DEPTH] * sizeof (unsigned char);
   }
 
   /*
