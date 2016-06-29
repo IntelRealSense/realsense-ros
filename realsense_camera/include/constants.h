@@ -44,7 +44,7 @@ namespace realsense_camera
     const int COLOR_FPS = 60;
     const bool ENABLE_DEPTH = true;
     const bool ENABLE_COLOR = true;
-    const bool ENABLE_PC = true;
+    const bool ENABLE_PC = false;
     const bool ENABLE_TF = true;
     const rs_format DEPTH_FORMAT = RS_FORMAT_Z16;
     const rs_format COLOR_FORMAT = RS_FORMAT_RGB8;
