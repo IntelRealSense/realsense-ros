@@ -31,5 +31,5 @@
   </group>
 
   <!-- Not such a good idea to automatically launch the R200, but the day the firmware bug is corrected this can be useful -->
-  <include if="$(arg launch_camera)" file="$(find realsense_camera)/realsense_r200_nodelet_standalone_preset.launch" />                                                                                 
+  <include if="$(arg launch_camera)" file="$(find realsense_camera)/r200_nodelet_navigation.launch" />
 </launch>

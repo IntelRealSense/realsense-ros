@@ -39,13 +39,13 @@ alias setkinect='export TURTLEBOT_3D_SENSOR=kinect && export TURTLEBOT_STACKS=he
 
 ## B - Mapping
 
-The only difference from the kinect version of the navigation stack is that you need to start the camera driver before the navigation: `roslaunch realsense_camera realsense_r200_navigation.launch`.
+The only difference from the kinect version of the navigation stack is that you need to start the camera driver before the navigation: `roslaunch realsense_camera r200_nodelet_navigation.launch`.
 
 So, the normal flow would be :
 
 ```bash
 roslaunch turtlebot_bringup minimal.launch
-roslaunch realsense_camera realsense_r200_navigation.launch
+roslaunch realsense_camera r200_nodelet_navigation.launch
 roslaunch realsense_navigation gmapping.launch
 roslaunch turtlebot_rviz_launchers view_navigation.launch
 ```
