@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<!--
+  Minimal stacks
+ -->
+<robot name="stack_minimal" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="$(find turtlebot_description)/urdf/common_properties.urdf.xacro"/>
+  
+  <!-- Xacro properties -->
+  <xacro:property name="M_SCALE" value="0.001"/>
+  
+  <!-- Xacro macros -->
+  <!-- Pole macros -->
+  <xacro:macro name="stack_bottom_pole" params="parent number x_loc y_loc z_loc">
+    <joint name="pole_bottom_${number}_joint" type="fixed">
+      <origin xyz="${x_loc} ${y_loc} ${z_loc}" rpy="0 0 0"/>
+      <parent link="${parent}"/>
+      <child link="pole_bottom_${number}_link"/>
+    </joint>
+    <link name="pole_bottom_${number}_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://turtlebot_description/meshes/stacks/hexagons/pole_bottom.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="0.0492" radius="0.006"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.008"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.000001686" ixy="0.0" ixz="0.0"
+                 iyy="0.000001686" iyz="0.0"
+                 izz="0.000000144"/>
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="stack_bottom_big_pole" params="parent number x_loc y_loc z_loc">
+    <joint name="pole_bottom_big_${number}_joint" type="fixed">
+      <origin xyz="${x_loc} ${y_loc} ${z_loc + 0.0101/2 - 0.0002}" rpy="0 0 0"/>
+      <parent link="${parent}"/>
+      <child link="pole_bottom_big_${number}_link"/>
+    </joint>
+    <link name="pole_bottom_big_${number}_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="0.0391" radius="0.012"/>
+        </geometry>
+        <material name="grey">
+          <color rgba="0.5 0.5 0.5 1"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="0.0391" radius="0.012"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.05"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.000001686" ixy="0.0" ixz="0.0"
+                 iyy="0.000001686" iyz="0.0"
+                 izz="0.000000144"/>
+      </inertial>
+    </link>
+  </xacro:macro>
+  <!-- 
+    Stack macro - all the components relative transforms are made with respect 
+    to the parent link (usually base_link). They could be made relative to each
+    other, but there is no necessary reason to do so.
+  -->
+  <xacro:macro name="stack_minimal" params="parent">
+    <stack_bottom_big_pole parent="${parent}" number="1" x_loc= "0.120" y_loc="-0.082" z_loc="0.1028"/>
+    <stack_bottom_big_pole parent="${parent}" number="2" x_loc= "0.120" y_loc="0.082" z_loc="0.1028"/>
+    <stack_bottom_pole parent="${parent}" number="1" x_loc= "0.120" y_loc="-0.082" z_loc="0.1028"/>
+    <stack_bottom_pole parent="${parent}" number="2" x_loc= "0.120" y_loc="0.082" z_loc="0.1028"/>
+  </xacro:macro>
+</robot>
