@@ -1,10 +1,29 @@
 <launch>
-  <!-- Updated version tuned with support for Intel(R) RealSense R200 3d camera, copied from gmapping.launch.xml file (turtlebot_navigation) -->
+  <arg name="3d_sensor" default="$(env TURTLEBOT_3D_SENSOR)" />
+  <arg name="custom_param_file" default="$(find realsense_navigation)/robot_description/custom_costmap_params.yaml"/>
+
+  <include file="$(find turtlebot_bringup)/launch/3dsensor.launch">
+    <arg name="rgb_processing" value="false" />
+    <arg name="depth_registration" value="false" />
+    <arg name="depth_processing" value="false" />
+    <arg name="3d_sensor"     value="$(arg 3d_sensor)"/>
+    
+    <!-- We must specify an absolute topic name because if not it will be prefixed by "$(arg camera)".
+         Probably is a bug in the nodelet manager: https://github.com/ros/nodelet_core/issues/7 --> 
+    <arg name="scan_topic" value="/scan" />
+  </include>
+
+  <!-- Map server -->
+  <arg name="map_file" default="$(find turtlebot_navigation)/maps/willow-2010-02-18-0.10.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+
+  <!-- Start position on the map -->
+  <arg name="initial_pose_x" default="0.0"/>
+  <arg name="initial_pose_y" default="0.0"/>
+  <arg name="initial_pose_a" default="0.0"/>
+
   <arg name="use_map_topic"   default="false"/>
   <arg name="scan_topic"      default="scan"/> 
-  <arg name="initial_pose_x"  default="0.0"/>
-  <arg name="initial_pose_y"  default="0.0"/>
-  <arg name="initial_pose_a"  default="0.0"/>
   <arg name="odom_frame_id"   default="odom"/>
   <arg name="base_frame_id"   default="base_footprint"/>
   <arg name="global_frame_id" default="map"/>
@@ -50,4 +69,10 @@
     <param name="initial_pose_a"            value="$(arg initial_pose_a)"/>
     <remap from="scan"                      to="$(arg scan_topic)"/>
   </node>
+
+  <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml">
+    <arg name="custom_param_file" value="$(arg custom_param_file)"/>
+  </include>
+
 </launch>
+

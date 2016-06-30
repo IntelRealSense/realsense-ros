@@ -1,4 +1,4 @@
-#Intel&reg; RealSense&trade; Technology - Camera 
+#Intel&reg; RealSense&trade; Technology - ROS Integration 
 ###Configuration:
 | Version          | Best Known (indigo)  | Best Known (kinetic) |
 |:---------------- |:---------------------|:---------------------|
