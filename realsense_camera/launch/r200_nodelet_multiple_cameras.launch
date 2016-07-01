@@ -1,0 +1,24 @@
+<!-- Sample launch file for using multiple RealSense R200 cameras -->
+<launch>
+  <arg name="manager" value="nodelet_manager" /> <!-- Single nodelet manager for all cameras -->
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
+
+  <!-- User must include the .xml file for each camera with unique values for "camera" and 
+       either the "serial_no" or "usb_port_id" of the camera.
+       "camera" should be a user friendly string that follows the ROS Names convention. -->
+  <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
+    <arg name="manager"      value="$(arg manager)" />
+    <arg name="camera"       value="camera1" />
+    <arg name="camera_type"  value="R200" /> <!-- Type of camera -->
+    <arg name="serial_no"    value="1" /> <!-- Note: Replace with actual serial number -->
+    <arg name="usb_port_id"  value="" /> <!-- USB "Bus#-Port#" -->
+  </include>
+
+  <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
+    <arg name="manager"      value="$(arg manager)" />
+    <arg name="camera"       value="camera2" />
+    <arg name="camera_type"  default="R200" /> <!-- Type of camera -->
+    <arg name="serial_no"    value="2" /> <!-- Note: Replace with actual serial number -->
+    <arg name="usb_port_id"  value="" /> <!-- USB "Bus#-Port#" -->
+  </include>
+</launch>

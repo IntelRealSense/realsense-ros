@@ -80,7 +80,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /camera/infrared1/image_raw
+      Image Topic: /camera/ir/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -102,7 +102,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: false
-      Image Topic: /camera/infrared2/image_raw
+      Image Topic: /camera/ir2/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0

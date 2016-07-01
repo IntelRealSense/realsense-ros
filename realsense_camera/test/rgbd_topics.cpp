@@ -28,7 +28,7 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
-#include "realsense_camera_test_rgbd_node.h"
+#include "rgbd_topics.h"
 using namespace std;
 
 void topic0Callback(const sensor_msgs::ImageConstPtr msg)
@@ -227,7 +227,7 @@ void setTopics()
   depth_reg_sw_reg_image_rect = "/" + camera + "/" + depth_registered + "/" + DEPTH_REG_SW_REG_IMAGE_RECT;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char **argv) try
 {
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "utest");
@@ -259,3 +259,4 @@ int main(int argc, char **argv)
 
   return RUN_ALL_TESTS();
 }
+catch(...) {} // catch the "testing::internal::<unnamed>::ClassUniqueToAlwaysTrue" from gtest

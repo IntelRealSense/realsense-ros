@@ -1,11 +1,12 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>realsense_camera</name>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
   <description>RealSense Camera package allowing access to Intel 3D cameras and advanced modules</description>
 
   <maintainer email="rajvi.jingar@intel.com">Rajvi Jingar</maintainer>
   <maintainer email="reagan.lopez@intel.com">Reagan Lopez</maintainer>
+  <maintainer email="mark.d.horn@intel.com">Mark Horn</maintainer>
 
   <license>BSD 3-clause. See license attached</license>
 
@@ -16,34 +17,29 @@
   <author email="matthew.k.hansen@intel.com">Matt Hansen</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>nodelet</build_depend>
-  <build_depend>cv_bridge</build_depend>
-  <build_depend>image_transport</build_depend>
-  <build_depend>camera_info_manager</build_depend>
-  <build_depend>tf</build_depend>
-  <build_depend>message_generation</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>rostest</build_depend>
-  <build_depend>pcl_ros</build_depend>
-  <build_depend>dynamic_reconfigure</build_depend>
 
-  <run_depend>roscpp</run_depend>
-  <run_depend>nodelet</run_depend>
-  <run_depend>cv_bridge</run_depend>
-  <run_depend>image_transport</run_depend>
-  <run_depend>camera_info_manager</run_depend>
-  <run_depend>tf</run_depend>
-  <run_depend>message_generation</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>rostest</run_depend>
-  <run_depend>pcl_ros</run_depend>
-  <run_depend>dynamic_reconfigure</run_depend>
-  <run_depend>rgbd_launch</run_depend>
+  <build_export_depend>message_runtime</build_export_depend>
+
+  <depend>roscpp</depend>
+  <depend>rostest</depend>
+  <depend>nodelet</depend>
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
+  <depend>camera_info_manager</depend>
+  <depend>tf</depend>
+  <depend>message_generation</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>pcl_ros</depend>
+  <depend>dynamic_reconfigure</depend>
+
+  <exec_depend>rgbd_launch</exec_depend>
+
+  <build_depend version_gte="0.9.2">librealsense</build_depend>
+  <build_export_depend>librealsense</build_export_depend>
+  <exec_depend>librealsense</exec_depend>
 
   <export>
-    <nodelet plugin="${prefix}/realsense_camera_nodelet_plugins.xml" />
+    <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>
 </package>

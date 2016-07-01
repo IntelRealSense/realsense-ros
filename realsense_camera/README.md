@@ -26,10 +26,10 @@ If this does not work, you should first fix this issue before continuing with th
   Successful execution of command will build target <b>“realsense_camera_nodelet”</b>
 
 Sample launch files are available in "realsense_camera/launch" directory
-* realsense_r200_rgbd.launch
-* realsense_r200_nodelet_standalone_preset.launch
-* realsense_r200_nodelet_standalone_manual.launch
-* realsense_r200_multiple_cameras.launch
+* r200_nodelet_rgbd.launch
+* r200_nodelet_default.launch
+* r200_nodelet_modify_params.launch
+* r200_nodelet_multiple_cameras.launch
 
 ###Package Features:
 
@@ -51,18 +51,18 @@ Depth camera
     camera/depth/camera_info
         Calibration data
     camera/depth/points (sensor_msgs/PointCloud2)
-        Registered XYZRGB point cloud.
+        Registered XYZRGB point cloud. By default, pointcloud is disabled.
 
-Infrared1 camera
+IR camera
 
-    camera/infrared1/image_raw (sensor_msgs/Image)
-    camera/infrared1/camera_info
+    camera/ir/image_raw (sensor_msgs/Image)
+    camera/ir/camera_info
         Calibration data
 
-Infrared2 camera
+IR2 camera
 
-    camera/infrared2/image_raw (sensor_msgs/Image)
-    camera/infrared2/camera_info
+    camera/ir2/image_raw (sensor_msgs/Image)
+    camera/ir2/camera_info
         Calibration data
 
 ####Services
@@ -79,8 +79,7 @@ Infrared2 camera
     Stream parameters:
         serial_no (string, default: blank)
             Specify the serial_no to uniquely connect to a camera, especially if multiple cameras are detected by the nodelet.
-            You may get the serial_no from the info stream by launching "realsense_r200_nodelet_standalone_preset.launch"
-            one at a time for each camera.
+            You may get the serial_no from the info stream by launching "r200_nodelet_default.launch"
         usb_port_id (string, default: blank)
             Alternatively to serial_no, this can be used to connect to a camera by its USB Port ID, which is a 
             Bus Number-Port Number in the format "Bus#-Port#". If used with serial_no, both must match correctly for 
@@ -102,8 +101,9 @@ Infrared2 camera
             Specify the depth camera FPS
         enable_color (bool, default: true) 
             Specify if to enable or not the color camera.
-        enable_pointcloud (bool, default: true) 
+        enable_pointcloud (bool, default: false) 
             Specify if to enable or not the point cloud camera.
+            By default, it is set to false due to performance issues.
         enable_tf (bool, default: true) 
             Specify if to enable or not the transform frames.
         base_frame_id (string, default: camera_link)
@@ -116,9 +116,9 @@ Infrared2 camera
             Specify the depth optical frame id of the camera.
         color_optical_frame_id (string, default: camera_rgb_optical_frame)
             Specify the color optical frame id of the camera.
-        ir_frame_id (string, default: camera_infrared_frame)
+        ir_frame_id (string, default: camera_ir_frame)
             Specify the IR frame id of the camera.
-        ir2_frame_id (string, default: camera_infrared2_frame)
+        ir2_frame_id (string, default: camera_ir2_frame)
             Specify the IR2 frame id of the camera.
         camera (string, default: "R200")
             Specify the camera name.
@@ -142,8 +142,8 @@ Infrared2 camera
 
     Stream parameters:
         enable_depth (bool, default: true) 
-          Specify if to enable or not the depth and infrared camera.
-          Note: Infrared streams will be enabled or disabled along with depth stream.
+          Specify if to enable or not the depth and infrared camera(s).
+          Note: Infrared stream(s) will be enabled or disabled along with depth stream.
 
     Camera parameters: 
     Following are the parameters that can be set dynamically as well as statically in the R200 camera.
@@ -178,18 +178,20 @@ Command to launch GUI:
 Command to change dynamic parameters using commandline:
 
     $ rosrun dynamic_reconfigure dynparam set /<node> <parameter_name> <value>
-    E.g. $ rosrun dynamic_reconfigure dynparam set /RealsenseNodelet color_backlight_compensation 2
+    E.g. $ rosrun dynamic_reconfigure dynparam set /R200Nodelet color_backlight_compensation 2
 
 
 ###Running the R200 nodelet:
 ####Getting Started
 Use the following command to launch the camera nodelet. You will notice the camera light up.
 
-    $ roslaunch realsense_camera realsense_r200_nodelet_standalone_preset.launch
+    $ roslaunch realsense_camera r200_nodelet_default.launch
+    
+If you would like to create or use your own launch files, the nodelet name for the R200 camera is R200Nodelet. See the sample launch files for examples of how to launch the nodelet.
 
 View using RVIZ:
 
-For color, infrared1 and infrared2 streams, you can open <b>RVIZ</b> and load the published topics.
+For color and infrared stream(s), you can open <b>RVIZ</b> and load the published topics.
 
 You can also open RVIZ and load the provided RVIZ configuration file: realsenseRvizConfiguration1.rviz.
 ```
@@ -225,11 +227,10 @@ For viewing supported camera settings with current values:
 ####Launching Multiple Cameras
 For running multiple cameras simultaneously:  
 <b>Option 1:</b> Using single nodelet manager for all the cameras
-* Use "realsense_r200_multiple_cameras.launch".
-    * For the "num_worker_threads" argument, allocate at least 1 thread for each camera.
+* Use "r200_nodelet_multiple_cameras.launch".
 
 <b>Option 2:</b> Using separate nodelet manager for each camera
-* Create ".launch" files similar to "realsense_r200_rgbd.launch" for each camera.
+* Create ".launch" files similar to "r200_nodelet_rgbd.launch" for each camera.
     * You may choose to include (or not) the "processing.launch.xml" based on your requirement.
 * Launch the ".launch" files for each camera in separate terminals.
 
@@ -246,11 +247,11 @@ The Unit Tests can be executed using either of the methods:
 Using `rostest` command with test files
 
     $ rostest realsense_camera <test_filename>
-    E.g. rostest realsense_camera realsense_r200_depth_only.test 
+    E.g. rostest realsense_camera r200_nodelet_disable_color.test 
 
 Using `rosrun` command
 
-    $ roslaunch realsense_camera realsense_r200_nodelet_standalone_manual.launch
+    $ roslaunch realsense_camera r200_nodelet_modify_params.launch
 
     $ rosrun realsense_camera realsense_camera_test <args>
     E.g. rosrun realsense_camera realsense_camera_test enable_depth 1 depth_encoding 16UC1 depth_height 360 depth_width 480 depth_step 960 enable_color 1 color_encoding rgb8 color_height 480 color_width 640 color_step 1920
@@ -258,13 +259,11 @@ Using `rosrun` command
 Both these methods first starts the nodelet and then executes all the unit tests.
 
 Sample test files are available in "realsense_camera/test" directory
-* realsense_r200_rgbd.test
-* realsense_r200_color_only.test
-* realsense_r200_depth_only.test
-* realsense_r200_resolution.test
 
 ###Developer API:
-Refer to the function definitions in [realsense_camera_nodelet.h](src/realsense_camera_nodelet.h)
+Refer to the following:
+* [base_nodelet.h](include/base_nodelet.h)
+* [r200_nodelet.h](include/r200_nodelet.h)
 
 ###Limitations:
 * Currently, the camera nodelet has been tested to work only for R200 cameras.
@@ -272,15 +271,15 @@ Refer to the function definitions in [realsense_camera_nodelet.h](src/realsense_
 * Currently, the camera nodelet only supports the following formats:
     * Color stream:    RGB8
     * Depth stream:    Z16
-    * Infrared stream: Y8
+    * Infrared stream(s): Y8
 
 * Generating a Depth Registered Point Cloud is very memory intensive.
 The topic /camera/depth_registered/points, generated by launch file
-"realsense_r200_rgbd.launch", works best at 30 fps using 640x480 resolution
+"r200_nodelet_rgbd.launch", works best at 30 fps using 640x480 resolution
 on a system with 16GB of RAM.
 
 * The camera does not provide hardware based depth registration/projector data.
-Hence the launch file "realsense_r200_rgbd.launch" will not generate data for the following topics:
+Hence the launch file "r200_nodelet_rgbd.launch" will not generate data for the following topics:
     * /camera/depth_registered/hw_registered/image_rect_raw
     * /camera/depth_registered/hw_registered/image_rect
     * /camera/depth_registered/image

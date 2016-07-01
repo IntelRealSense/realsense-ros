@@ -1,0 +1,8 @@
+<launch>
+  <include file="$(find realsense_camera)/launch/r200_nodelet_rgbd.launch">
+    <arg name="camera_type" value="R200" />
+  </include>
+
+  <!-- Test -->
+  <test pkg="realsense_camera" type="tests_rgbd_topics" test-name="realsense_camera_test_rgbd" />
+</launch>
