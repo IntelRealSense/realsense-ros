@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>realsense_camera</name>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
   <description>RealSense Camera package allowing access to Intel 3D cameras and advanced modules</description>
 
   <maintainer email="rajvi.jingar@intel.com">Rajvi Jingar</maintainer>
