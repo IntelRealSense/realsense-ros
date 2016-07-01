@@ -2,6 +2,16 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.2.0 (2016-06-30)
+------------------
+* Update for ROS librealsense Package Release
+* Added navigation package changes related to camera package refactor
+* Updated artifacts to disable native pointcloud by default
+* Refactored R200 code into derived class
+* Added polling for camera
+* Refactored launch and test files
+* Contributors: Mark D Horn, Matthew Hansen, Reagan Lopez, Rajvi Jingar
+
 1.1.0 (2016-06-03)
 ------------------
 * Fix white space issues in test files
