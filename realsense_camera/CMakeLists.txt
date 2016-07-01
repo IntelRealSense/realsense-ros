@@ -14,6 +14,10 @@ set(CMAKE_EXE_LINKER_FLAGS "-pie -z noexecstack -z relro -z now")
 # Flags shared libraries
 set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now")
 
+find_library(REALSENSE_LIB realsense)
+
+# This is optional until the first release of librealsense as a ROS package
+find_package(catkin OPTIONAL_COMPONENTS librealsense)
 find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   roscpp
@@ -55,6 +59,8 @@ generate_dynamic_reconfigure_options(
 # DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
+  CATKIN_DEPENDS librealsense std_msgs message_runtime sensor_msgs
+  LIBRARIES ${PROJECT_NAME}_nodelet
 )
 
 # Specify additional locations of header files
@@ -66,9 +72,11 @@ include_directories(
 add_library(${PROJECT_NAME}_nodelet src/base_nodelet.cpp src/r200_nodelet.cpp)
 target_link_libraries(${PROJECT_NAME}_nodelet
   ${catkin_LIBRARIES}
-  realsense
+  # This should be removed once librealsense is a required component
+  ${REALSENSE_LIB}
 )
 add_dependencies(${PROJECT_NAME}_nodelet ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
+add_dependencies(${PROJECT_NAME}_nodelet ${catkin_EXPORTED_TARGETS})
 
 add_executable(tests_camera_core test/camera_core.cpp)
 target_link_libraries(tests_camera_core
@@ -76,6 +84,7 @@ target_link_libraries(tests_camera_core
   ${GTEST_LIBRARIES}
 )
 add_dependencies(tests_camera_core ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
+add_dependencies(tests_camera_core ${catkin_EXPORTED_TARGETS})
 
 add_executable(tests_rgbd_topics test/rgbd_topics.cpp)
 target_link_libraries(tests_rgbd_topics
@@ -83,6 +92,7 @@ target_link_libraries(tests_rgbd_topics
   ${GTEST_LIBRARIES}
 )
 add_dependencies(tests_rgbd_topics ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(tests_rgbd_topics ${catkin_EXPORTED_TARGETS})
 
 # Install nodelet library
 install(TARGETS ${PROJECT_NAME}_nodelet LIBRARY
@@ -105,6 +115,6 @@ install(DIRECTORY rviz/
 )
 
 # Install xml files
-install(FILES package.xml nodelet_plugins.xml
+install(FILES nodelet_plugins.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
