@@ -109,6 +109,7 @@ namespace realsense_camera
     image_transport::CameraPublisher camera_publisher_[STREAM_COUNT];
     sensor_msgs::CameraInfoPtr camera_info_ptr_[STREAM_COUNT];
     ros::Publisher pointcloud_publisher_;
+    ros::ServiceServer get_options_service_;
 
     boost::shared_ptr<boost::thread> stream_thread_;
     boost::shared_ptr<boost::thread> transform_thread_;

@@ -78,6 +78,8 @@ std::string g_infrared2_encoding_exp; // Expected infrared2 encoding.
 image_transport::CameraSubscriber g_camera_subscriber[STREAM_COUNT];
 ros::Subscriber g_sub_pc;
 
+ros::ServiceClient g_service_client;
+
 std::map<std::string, std::string> g_config_args;
 int g_max_z = R200_MAX_Z * 1000; // Converting meter to mm.
 

@@ -92,7 +92,7 @@ namespace realsense_camera
 
     pointcloud_publisher_ = nh_.advertise<sensor_msgs::PointCloud2>(PC_TOPIC, 1);
 
-    ros::ServiceServer get_options_service = nh_.advertiseService(SETTINGS_SERVICE, &BaseNodelet::getCameraOptionValues, this);
+    get_options_service_ = nh_.advertiseService(SETTINGS_SERVICE, &BaseNodelet::getCameraOptionValues, this);
 
     // Poll for camera and connect if found
     while (!connectToCamera())
