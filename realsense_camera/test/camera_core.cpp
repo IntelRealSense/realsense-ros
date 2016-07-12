@@ -534,6 +534,12 @@ TEST(RealsenseTests, testCameraOptions)
   }
 }
 
+TEST(RealsenseTests, testGetSettingsService)
+{
+  // Verify the service is available
+  EXPECT_TRUE(g_service_client.call(g_srv));
+}
+
 void fillConfigMap(int argc, char **argv)
 {
   std::vector < std::string > args;
@@ -641,8 +647,7 @@ int main(int argc, char **argv) try
   }
 
   g_sub_pc = nh.subscribe <sensor_msgs::PointCloud2> (PC_TOPIC, 1, pcCallback);
-  ros::ServiceClient client = nh.serviceClient < realsense_camera::cameraConfiguration > (SETTINGS_SERVICE);
-  client.call(g_srv);
+  g_service_client = nh.serviceClient < realsense_camera::cameraConfiguration > (SETTINGS_SERVICE);
 
   ros::Duration duration;
   duration.sec = 10;
