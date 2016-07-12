@@ -35,6 +35,7 @@
 #include <vector>
 
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/Imu.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <sensor_msgs/image_encodings.h>
 #include <image_transport/image_transport.h>
@@ -67,18 +68,19 @@ int g_depth_width_exp = 0;
 uint32_t g_depth_step_exp; // Expected depth step.
 uint32_t g_color_step_exp; // Expected color step.
 uint32_t g_infrared1_step_exp; // Expected infrared1 step.
-uint32_t g_infrared2_step_exp; // Expected infrared2 step.
 
 bool g_enable_color = true;
 bool g_enable_depth = true;
+bool g_enable_fisheye = true;
+bool g_enable_imu = true;
 bool g_enable_pointcloud = false;
 
 std::string g_depth_encoding_exp; // Expected depth encoding.
 std::string g_color_encoding_exp; // Expected color encoding.
 std::string g_infrared1_encoding_exp; // Expected infrared1 encoding.
-std::string g_infrared2_encoding_exp; // Expected infrared2 encoding.
 
 image_transport::CameraSubscriber g_camera_subscriber[STREAM_COUNT];
+ros::Subscriber g_sub_imu;
 ros::Subscriber g_sub_pc;
 
 ros::ServiceClient g_settings_srv_client;
@@ -93,12 +95,15 @@ bool g_depth_recv = false;
 bool g_color_recv = false;
 bool g_infrared1_recv = false;
 bool g_infrared2_recv = false;
+bool g_fisheye_recv = false;
+bool g_imu_recv = false;
 bool g_pc_recv = false;
 
 float g_depth_avg = 0.0f;
 float g_color_avg = 0.0f;
 float g_infrared1_avg = 0.0f;
 float g_infrared2_avg = 0.0f;
+float g_fisheye_avg = 0.0f;
 float g_pc_depth_avg = 0.0f;
 
 int g_height_recv[STREAM_COUNT] = {0};
@@ -113,6 +118,7 @@ double g_color_caminfo_D_recv[5] = {0.0};
 double g_depth_caminfo_D_recv[5] = {0.0};
 double g_infrared1_caminfo_D_recv[5] = {0.0};
 double g_infrared2_caminfo_D_recv[5] = {0.0};
+double g_fisheye_caminfo_D_recv[5] = {0.0};
 
 double g_caminfo_rotation_recv[STREAM_COUNT][9] = {{0.0}};
 double g_caminfo_projection_recv[STREAM_COUNT][12] = {{0.0}};

@@ -73,6 +73,7 @@ namespace realsense_camera
   {
     BaseNodelet::getParameters();
     pnh_.param("ir2_frame_id", frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_FRAME_ID);
+    pnh_.param("ir2_optical_frame_id", optical_frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_OPTICAL_FRAME_ID);
   }
 
   /*
@@ -444,4 +445,49 @@ namespace realsense_camera
 
     publishTopic(RS_STREAM_INFRARED2);
   }
+
+  /*
+   * Prepare and publish transforms.
+   */
+  void R200Nodelet::publishStaticTransforms()
+  {
+    BaseNodelet::publishStaticTransforms();
+
+    tf::Quaternion q_i2io;
+    rs_extrinsics z_extrinsic;
+    geometry_msgs::TransformStamped b2i_msg;
+    geometry_msgs::TransformStamped i2io_msg;
+
+    // Get offset between base frame and infrared2 frame
+    rs_get_device_extrinsics(rs_device_, RS_STREAM_INFRARED2, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
+    checkError();
+
+    // Transform base frame to infrared2 frame
+    b2i_msg.header.stamp = static_transform_ts_;
+    b2i_msg.header.frame_id = base_frame_id_;
+    b2i_msg.child_frame_id = frame_id_[RS_STREAM_INFRARED2];
+    b2i_msg.transform.translation.x =  z_extrinsic.translation[2];
+    b2i_msg.transform.translation.y = -z_extrinsic.translation[0];
+    b2i_msg.transform.translation.z = -z_extrinsic.translation[1];
+    b2i_msg.transform.rotation.x = 0;
+    b2i_msg.transform.rotation.y = 0;
+    b2i_msg.transform.rotation.z = 0;
+    b2i_msg.transform.rotation.w = 1;
+    static_tf_broadcaster_.sendTransform(b2i_msg);
+
+    // Transform infrared2 frame to infrared2 optical frame
+    q_i2io.setEuler(M_PI/2, 0.0, -M_PI/2);
+    i2io_msg.header.stamp = static_transform_ts_;
+    i2io_msg.header.frame_id = frame_id_[RS_STREAM_INFRARED2];
+    i2io_msg.child_frame_id = optical_frame_id_[RS_STREAM_INFRARED2];
+    i2io_msg.transform.translation.x = 0;
+    i2io_msg.transform.translation.y = 0;
+    i2io_msg.transform.translation.z = 0;
+    i2io_msg.transform.rotation.x = q_i2io.getX();
+    i2io_msg.transform.rotation.y = q_i2io.getY();
+    i2io_msg.transform.rotation.z = q_i2io.getZ();
+    i2io_msg.transform.rotation.w = q_i2io.getW();
+    static_tf_broadcaster_.sendTransform(i2io_msg);
+  }
+
 }  // end namespace

@@ -93,6 +93,7 @@ namespace realsense_camera
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
     ros::Time topic_ts_;
+    ros::Time static_transform_ts_;
     ros::Publisher pointcloud_publisher_;
     ros::ServiceServer get_options_service_;
     ros::ServiceServer set_power_service_;
@@ -116,14 +117,13 @@ namespace realsense_camera
     int cv_type_[STREAM_COUNT];
     int unit_step_size_[STREAM_COUNT];
     int step_[STREAM_COUNT];
-    int ts_[STREAM_COUNT];
+    double ts_[STREAM_COUNT];
     std::string frame_id_[STREAM_COUNT];
+    std::string optical_frame_id_[STREAM_COUNT];
     cv::Mat image_[STREAM_COUNT] = {};
     image_transport::CameraPublisher camera_publisher_[STREAM_COUNT] = {};
     sensor_msgs::CameraInfoPtr camera_info_ptr_[STREAM_COUNT] = {};
     std::string base_frame_id_;
-    std::string depth_frame_id_;
-    std::string color_frame_id_;
     float max_z_ = -1.0f;
     bool enable_pointcloud_;
     bool enable_tf_;
