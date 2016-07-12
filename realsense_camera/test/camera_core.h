@@ -68,7 +68,7 @@ uint32_t g_infrared2_step_exp; // Expected infrared2 step.
 
 bool g_enable_color = true;
 bool g_enable_depth = true;
-bool g_enable_pointcloud = true;
+bool g_enable_pointcloud = false;
 
 std::string g_depth_encoding_exp; // Expected depth encoding.
 std::string g_color_encoding_exp; // Expected color encoding.
@@ -109,6 +109,6 @@ double g_caminfo_rotation_recv[STREAM_COUNT][9] = {0};
 double g_caminfo_projection_recv[STREAM_COUNT][12] = {0};
 
 std::string g_dmodel_recv[STREAM_COUNT];
-std::string g_camera = "R200";
+std::string g_camera_type;
 
 realsense_camera::cameraConfiguration g_srv;

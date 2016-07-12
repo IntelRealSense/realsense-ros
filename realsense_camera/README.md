@@ -1,4 +1,6 @@
-#Intel&reg; RealSense&trade; Technology - ROS Integration 
+#Intel&reg; RealSense&trade; Technology - ROS Integration
+##TODO: Refactor the structure of the README file to include new cameras.
+
 ###Configuration:
 | Version          | Best Known (indigo)  | Best Known (kinetic) |
 |:---------------- |:---------------------|:---------------------|

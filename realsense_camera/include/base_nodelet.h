@@ -73,45 +73,47 @@ namespace realsense_camera
     // Interfaces.
     virtual void onInit();
     virtual ~BaseNodelet();
-    virtual void publishTransforms();
-    virtual void publishStreams();
-    virtual bool getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req, realsense_camera::cameraConfiguration::Response & res);
+    virtual void prepareTopics();
+    virtual void prepareTransforms();
+    virtual bool getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req,
+        realsense_camera::cameraConfiguration::Response & res);
 
   protected:
 
     // Member Variables.
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
-
+    ros::Time topic_ts_;
+    ros::Publisher pointcloud_publisher_;
+    ros::ServiceServer get_options_service_;
     rs_error *rs_error_ = 0;
     rs_context *rs_context_;
     rs_device *rs_device_;
-    int height_[STREAM_COUNT];
+    std::string nodelet_name_;
+    std::string serial_no_;
+    std::string usb_port_id_;
+    std::string camera_type_;
+    std::string mode_;
+    bool enable_[STREAM_COUNT];
     int width_[STREAM_COUNT];
+    int height_[STREAM_COUNT];
     int fps_[STREAM_COUNT];
-    int stream_step_[STREAM_COUNT];
-    int stream_ts_[STREAM_COUNT];
-    int num_streams_ = 3;
+    int step_[STREAM_COUNT];
+    int ts_[STREAM_COUNT];
+    std::string frame_id_[STREAM_COUNT];
+    std::string encoding_[STREAM_COUNT];
+    cv::Mat image_[STREAM_COUNT] = {};
+    image_transport::CameraPublisher camera_publisher_[STREAM_COUNT] = {};
+    sensor_msgs::CameraInfoPtr camera_info_ptr_[STREAM_COUNT] = {};
+    std::string base_frame_id_;
+    std::string depth_frame_id_;
+    std::string color_frame_id_;
     int max_z_ = -1;
-    bool is_device_started_;
-    bool enable_color_;
-    bool enable_depth_;
     bool enable_pointcloud_;
     bool enable_tf_;
-
-    std::string frame_id_[STREAM_COUNT];
-    std::string stream_encoding_[STREAM_COUNT];
-    std::string nodelet_name_;
+    bool duplicate_depth_color_;
     const uint16_t *image_depth16_;
-
-    cv::Mat image_[STREAM_COUNT];
-
-    image_transport::CameraPublisher camera_publisher_[STREAM_COUNT];
-    sensor_msgs::CameraInfoPtr camera_info_ptr_[STREAM_COUNT];
-    ros::Publisher pointcloud_publisher_;
-    ros::ServiceServer get_options_service_;
-
-    boost::shared_ptr<boost::thread> stream_thread_;
+    boost::shared_ptr<boost::thread> topic_thread_;
     boost::shared_ptr<boost::thread> transform_thread_;
 
     struct CameraOptions
@@ -122,20 +124,26 @@ namespace realsense_camera
     std::vector<CameraOptions> camera_options_;
 
     // Member Functions.
-    virtual void listCameras(int num_of_camera);
+    virtual void getParameters();
     virtual bool connectToCamera();
-    virtual void enableStream(rs_stream stream_index, int width, int height, rs_format format, int fps);
-    virtual void disableStream(rs_stream stream_index);
-    virtual void prepareStreamCalibData(rs_stream stream_index);
-    virtual void prepareStreamData(rs_stream rs_strm);
-    virtual void allocateResources();
-    virtual void fillStreamEncoding();
-    virtual void setStreamOptions();
-    virtual void setStaticCameraOptions() { return; } // must be defined in derived class
+    virtual std::vector<int> listCameras(int num_of_camera);
+    virtual void advertiseTopics();
+    virtual void advertiseServices();
+    virtual std::vector<std::string> setDynamicReconfServer() { return {}; }; // must be defined in derived class
+    virtual void startDynamicReconfCallback() { return; } // must be defined in derived class
     virtual void getCameraOptions();
+    virtual void setStaticCameraOptions(std::vector<std::string> dynamic_params);
+    virtual void setStreams();
+    virtual void enableStream(rs_stream stream_index, int width, int height, rs_format format, int fps);
+    virtual void getStreamCalibData(rs_stream stream_index);
+    virtual void disableStream(rs_stream stream_index);
+    virtual void startCamera();
+    virtual void stopCamera();
+    virtual void publishTopics();
+    virtual void publishTopic(rs_stream stream_index);
+    virtual void getStreamData(rs_stream stream_index);
+    virtual void publishPCTopic();
     virtual void checkError();
-
-    virtual void publishPointCloud(cv::Mat & image_rgb, ros::Time time_stamp);
   };
 }
 #endif

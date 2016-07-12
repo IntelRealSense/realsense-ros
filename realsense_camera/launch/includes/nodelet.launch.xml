@@ -13,6 +13,7 @@
     args="load realsense_camera/$(arg camera_type)Nodelet $(arg manager)">
     <param name="serial_no"               type="str"  value="$(arg serial_no)" />
     <param name="usb_port_id"             type="str"  value="$(arg usb_port_id)" />
+    <param name="camera_type"             type="str"  value="$(arg camera_type)" />
     <param name="base_frame_id"           type="str"  value="$(arg camera)_link" />
     <param name="depth_frame_id"          type="str"  value="$(arg camera)_depth_frame" />
     <param name="color_frame_id"          type="str"  value="$(arg camera)_rgb_frame" />
