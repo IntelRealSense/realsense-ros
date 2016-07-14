@@ -2,6 +2,11 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.2.1 (2016-07-13)
+------------------
+* Fix starting /camera/get_settings Service
+* Correct ROS Dependencies Install command
+
 1.2.0 (2016-06-30)
 ------------------
 * Update for ROS librealsense Package Release
