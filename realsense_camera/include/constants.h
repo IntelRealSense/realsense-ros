@@ -68,5 +68,8 @@ namespace realsense_camera
 
     // R200 Constants.
     const int R200_MAX_Z = 10;      // in meters
+
+    // F200 Constants.
+    const int F200_MAX_Z = 1;      // in meters
 }
 #endif

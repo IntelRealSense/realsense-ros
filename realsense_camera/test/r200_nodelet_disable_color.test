@@ -1,6 +1,6 @@
 <launch>
   <arg name="camera"       value="camera" />
-  <arg name="camera_type"  value="R200" />
+  <arg name="camera_type"  default="R200" />
   <arg name="enable_color" value="false" />
 
   <!-- Start camera -->

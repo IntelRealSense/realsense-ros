@@ -1,12 +1,12 @@
 <launch>
   <arg name="camera"            value="camera" />
-  <arg name="camera_type"       value="R200" />
+  <arg name="camera_type"       default="R200" />
   <arg name="enable_depth"      value="true" />
   <arg name="enable_color"      value="true" />
   <arg name="enable_pointcloud" value="true" />
   <arg name="mode"              value="manual" />
-  <arg name="depth_width"       value="320" />
-  <arg name="depth_height"      value="240" />
+  <arg name="depth_width"       default="320" />
+  <arg name="depth_height"      default="240" />
   <arg name="color_width"       value="320" />
   <arg name="color_height"      value="240" />
 

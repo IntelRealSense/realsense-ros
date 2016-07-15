@@ -104,6 +104,9 @@ std::string g_encoding_recv[STREAM_COUNT]; // Expected stream encoding.
 int g_caminfo_height_recv[STREAM_COUNT] = {0};
 int g_caminfo_width_recv[STREAM_COUNT] = {0};
 float g_color_caminfo_D_recv[5] = {0};
+float g_depth_caminfo_D_recv[5] = {0};
+float g_infrared1_caminfo_D_recv[5] = {0};
+float g_infrared2_caminfo_D_recv[5] = {0};
 
 double g_caminfo_rotation_recv[STREAM_COUNT][9] = {0};
 double g_caminfo_projection_recv[STREAM_COUNT][12] = {0};

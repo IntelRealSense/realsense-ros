@@ -1,0 +1,70 @@
+<launch>
+  <arg name="manager"      value="nodelet_manager" />
+  <arg name="camera"       default="camera" />
+  <arg name="camera_type"  default="F200" /> <!-- Type of camera -->
+  <arg name="serial_no"    default="" />
+  <arg name="usb_port_id"  default="" /> <!-- USB "Bus#-Port#" -->
+  <arg name="mode"                                            default="preset" />
+
+  <arg name="color_backlight_compensation"                    default="2" />
+  <arg name="color_brightness"                                default="56" />
+  <arg name="color_contrast"                                  default="34" />
+  <arg name="color_gain"                                      default="66" />
+  <arg name="color_gamma"                                     default="222" />
+  <arg name="color_hue"                                       default="2" />
+  <arg name="color_saturation"                                default="130" />
+  <arg name="color_sharpness"                                 default="2" />
+  <arg name="color_enable_auto_white_balance"                 default="0" />
+  <arg name="color_white_balance"                             default="3400" />
+  <arg name="f200_laser_power"                                default="14" />
+  <arg name="f200_accuracy"                                   default="3" />
+  <arg name="f200_motion_range"                               default="2" />
+  <arg name="f200_filter_option"                              default="6" />
+  <arg name="f200_confidence_threshold"                       default="8" />
+
+  <param name="$(arg camera)/mode"                            type="str"  value="$(arg mode)" />
+  <param name="$(arg camera)/color_backlight_compensation"    type="int" value="$(arg color_backlight_compensation)" />
+  <param name="$(arg camera)/color_brightness"                type="int" value="$(arg color_brightness)" />
+  <param name="$(arg camera)/color_contrast"                  type="int" value="$(arg color_contrast)" />
+  <param name="$(arg camera)/color_gain"                      type="int" value="$(arg color_gain)" />
+  <param name="$(arg camera)/color_gamma"                     type="int" value="$(arg color_gamma)" />
+  <param name="$(arg camera)/color_hue"                       type="int" value="$(arg color_hue)" />
+  <param name="$(arg camera)/color_saturation"                type="int" value="$(arg color_saturation)" />
+  <param name="$(arg camera)/color_sharpness"                 type="int" value="$(arg color_sharpness)" />
+  <param name="$(arg camera)/color_enable_auto_white_balance" type="int" value="$(arg color_enable_auto_white_balance)" />
+  <param name="$(arg camera)/color_white_balance"             type="int" value="$(arg color_white_balance)" />
+  <param name="$(arg camera)/f200_laser_power"                type="int" value="$(arg f200_laser_power)" />
+  <param name="$(arg camera)/f200_accuracy"                   type="int" value="$(arg f200_accuracy)" />
+  <param name="$(arg camera)/f200_motion_range"               type="int" value="$(arg f200_motion_range)" />
+  <param name="$(arg camera)/f200_filter_option"              type="int" value="$(arg f200_filter_option)" />
+  <param name="$(arg camera)/f200_confidence_threshold"       type="int" value="$(arg f200_confidence_threshold)" />
+
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
+
+  <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
+    <arg name="manager"      value="$(arg manager)" />
+    <arg name="camera"       value="$(arg camera)" />
+    <arg name="camera_type"  value="$(arg camera_type)" />
+    <arg name="serial_no"    value="$(arg serial_no)" />
+    <arg name="usb_port_id"  value="$(arg usb_port_id)" />
+  </include>
+
+  <!-- Start test -->
+  <test pkg="realsense_camera" type="tests_camera_core" test-name="realsense_camera_test"
+    args="camera_type $(arg camera_type)
+    color_backlight_compensation $(arg color_backlight_compensation)
+    color_brightness $(arg color_brightness)
+    color_contrast $(arg color_contrast)
+    color_gain $(arg color_gain)
+    color_gamma $(arg color_gamma)
+    color_hue $(arg color_hue)
+    color_saturation $(arg color_saturation)
+    color_sharpness $(arg color_sharpness)
+    color_enable_auto_white_balance $(arg color_enable_auto_white_balance)
+    color_white_balance $(arg color_white_balance)
+    f200_laser_power $(arg f200_laser_power)
+    f200_accuracy $(arg f200_accuracy)
+    f200_motion_range $(arg f200_motion_range)
+    f200_filter_option $(arg f200_filter_option)
+    f200_confidence_threshold $(arg f200_confidence_threshold) "/>
+</launch>

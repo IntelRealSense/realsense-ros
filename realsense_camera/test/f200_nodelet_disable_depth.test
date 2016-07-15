@@ -1,0 +1,6 @@
+<launch>
+  <arg name="camera_type"  value="F200" />
+  <include file="$(find realsense_camera)/test/r200_nodelet_disable_depth.test">
+    <arg name="camera_type" value="$(arg camera_type)" />
+  </include>
+</launch>

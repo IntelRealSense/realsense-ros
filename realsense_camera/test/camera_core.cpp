@@ -86,6 +86,11 @@ void imageInfrared1Callback(const sensor_msgs::ImageConstPtr &msg, const sensor_
   getMsgInfo(RS_STREAM_INFRARED, msg);
   getCameraInfo(RS_STREAM_INFRARED, info_msg);
 
+  for (unsigned int i = 0; i < 5; i++)
+  {
+    g_infrared1_caminfo_D_recv[i] = info_msg->D[i];
+  }
+
   g_infrared1_recv = true;
 }
 
@@ -114,6 +119,11 @@ void imageInfrared2Callback(const sensor_msgs::ImageConstPtr &msg, const sensor_
   getMsgInfo(RS_STREAM_INFRARED2, msg);
   getCameraInfo(RS_STREAM_INFRARED2, info_msg);
 
+  for (unsigned int i = 0; i < 5; i++)
+  {
+    g_infrared2_caminfo_D_recv[i] = info_msg->D[i];
+  }
+
   g_infrared2_recv = true;
 }
 
@@ -140,6 +150,11 @@ void imageDepthCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs
 
   getMsgInfo(RS_STREAM_DEPTH, msg);
   getCameraInfo(RS_STREAM_DEPTH, info_msg);
+
+  for (unsigned int i = 0; i < 5; i++)
+  {
+    g_depth_caminfo_D_recv[i] = info_msg->D[i];
+  }
 
   g_depth_recv = true;
 }
@@ -268,14 +283,17 @@ TEST(RealsenseTests, testColorCameraInfo)
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][10] != (double) 0);
     EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][11], (double) 0);
 
-    float color_caminfo_D = 1;
-    // ignoring the 5th value since it always appears to be 0.0 on tested R200 cameras
-    for (unsigned int i = 0; i < 4; i++)
+    // R200 camera has Color distortion parameters
+    if (g_camera_type == "R200")
     {
-      color_caminfo_D = color_caminfo_D && g_color_caminfo_D_recv[i];
+      float color_caminfo_D = 1;
+      // Ignoring the 5th value since it always appears to be 0.0
+      for (unsigned int i = 0; i < 4; i++)
+      {
+        color_caminfo_D = color_caminfo_D && g_color_caminfo_D_recv[i];
+      }
+      EXPECT_TRUE(color_caminfo_D != (float) 0);
     }
-
-    EXPECT_TRUE(color_caminfo_D != (float) 0);
 
   }
 }
@@ -286,6 +304,7 @@ TEST(RealsenseTests, testIsDepthStreamEnabled)
   {
     EXPECT_TRUE(g_depth_recv);
     EXPECT_TRUE(g_infrared1_recv);
+    // R200 camera has IR2
     if (g_camera_type == "R200")
     {
       EXPECT_TRUE(g_infrared2_recv);
@@ -295,6 +314,7 @@ TEST(RealsenseTests, testIsDepthStreamEnabled)
   {
     EXPECT_FALSE(g_depth_recv);
     EXPECT_FALSE(g_infrared1_recv);
+    // R200 camera has IR2
     if (g_camera_type == "R200")
     {
       EXPECT_FALSE(g_infrared2_recv);
@@ -366,6 +386,18 @@ TEST(RealsenseTests, testDepthCameraInfo)
     EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_DEPTH][9], (double) 0);
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][10] != (double) 0);
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][11] != (double) 0);
+
+    // F200 camera has Depth distortion parameters
+    if (g_camera_type == "F200")
+    {
+      float depth_caminfo_D = 1;
+      for (unsigned int i = 0; i < 5; i++)
+      {
+        depth_caminfo_D = depth_caminfo_D && g_depth_caminfo_D_recv[i];
+      }
+      EXPECT_TRUE(depth_caminfo_D != (float) 0);
+    }
+
   }
 }
 
@@ -432,64 +464,88 @@ TEST(RealsenseTests, testInfrared1CameraInfo)
     EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][9], (double) 0);
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][10] != (double) 0);
     EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][11], (double) 0);
+
+    // F200 camera has IR distortion parameters
+    if (g_camera_type == "F200")
+    {
+      float infrared1_caminfo_D = 1;
+      for (unsigned int i = 0; i < 5; i++)
+      {
+        infrared1_caminfo_D = infrared1_caminfo_D && g_infrared1_caminfo_D_recv[i];
+      }
+      EXPECT_TRUE(infrared1_caminfo_D != (float) 0);
+    }
+
   }
 }
 
 TEST(RealsenseTests, testInfrared2Stream)
 {
-  if (g_enable_depth)
+  // R200 camera has IR2
+  if (g_camera_type == "R200")
   {
-    EXPECT_TRUE(g_infrared2_avg > 0);
-    EXPECT_TRUE(g_infrared2_recv);
-  }
-  else
-  {
-    EXPECT_FALSE(g_infrared2_recv);
+    if (g_enable_depth)
+    {
+      EXPECT_TRUE(g_infrared2_avg > 0);
+      EXPECT_TRUE(g_infrared2_recv);
+    }
+    else
+    {
+      EXPECT_FALSE(g_infrared2_recv);
+    }
   }
 }
 
 TEST(RealsenseTests, testInfrared2Resolution)
 {
-  if (g_enable_depth)
+  // R200 camera has IR2
+  if (g_camera_type == "R200")
   {
-    if (g_depth_width_exp > 0)
+    if (g_enable_depth)
     {
-      EXPECT_EQ(g_depth_width_exp, g_width_recv[RS_STREAM_INFRARED2]);
-    }
-    if (g_depth_height_exp > 0)
-    {
-      EXPECT_EQ(g_depth_height_exp, g_height_recv[RS_STREAM_INFRARED2]);
+      if (g_depth_width_exp > 0)
+      {
+        EXPECT_EQ(g_depth_width_exp, g_width_recv[RS_STREAM_INFRARED2]);
+      }
+      if (g_depth_height_exp > 0)
+      {
+        EXPECT_EQ(g_depth_height_exp, g_height_recv[RS_STREAM_INFRARED2]);
+      }
     }
   }
 }
 
 TEST(RealsenseTests, testInfrared2CameraInfo)
 {
-  if (g_enable_depth)
+  // R200 camera has IR2
+  if (g_camera_type == "R200")
   {
-    EXPECT_EQ(g_width_recv[RS_STREAM_INFRARED2], g_caminfo_width_recv[RS_STREAM_INFRARED2]);
-    EXPECT_EQ(g_height_recv[RS_STREAM_INFRARED2], g_caminfo_height_recv[RS_STREAM_INFRARED2]);
-    EXPECT_STREQ(g_dmodel_recv[RS_STREAM_INFRARED2].c_str (), "plumb_bob");
-
-    // verify rotation is equal to identity matrix
-    for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
+    if (g_enable_depth)
     {
-      EXPECT_EQ(ROTATION_IDENTITY[i], g_caminfo_rotation_recv[RS_STREAM_INFRARED2][i]);
-    }
+      EXPECT_EQ(g_width_recv[RS_STREAM_INFRARED2], g_caminfo_width_recv[RS_STREAM_INFRARED2]);
+      EXPECT_EQ(g_height_recv[RS_STREAM_INFRARED2], g_caminfo_height_recv[RS_STREAM_INFRARED2]);
+      EXPECT_STREQ(g_dmodel_recv[RS_STREAM_INFRARED2].c_str (), "plumb_bob");
 
-    // check projection matrix values are set
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][0] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][1], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][2] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][3], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][4], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][5] != (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][6] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][7], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][8], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][9], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][10] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][11], (double) 0);
+      // verify rotation is equal to identity matrix
+      for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
+      {
+        EXPECT_EQ(ROTATION_IDENTITY[i], g_caminfo_rotation_recv[RS_STREAM_INFRARED2][i]);
+      }
+
+      // check projection matrix values are set
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][0] != (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][1], (double) 0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][2] != (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][3], (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][4], (double) 0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][5] != (double) 0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][6] != (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][7], (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][8], (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][9], (double) 0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][10] != (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][11], (double) 0);
+    }
   }
 }
 
@@ -673,6 +729,7 @@ int main(int argc, char **argv) try
   g_camera_subscriber[0] = it.subscribeCamera(DEPTH_TOPIC, 1, imageDepthCallback, 0);
   g_camera_subscriber[1] = it.subscribeCamera(COLOR_TOPIC, 1, imageColorCallback, 0);
   g_camera_subscriber[2] = it.subscribeCamera(IR_TOPIC, 1, imageInfrared1Callback, 0);
+  // R200 camera has IR2
   if (g_camera_type == "R200")
   {
     g_camera_subscriber[3] = it.subscribeCamera(IR2_TOPIC, 1, imageInfrared2Callback, 0);

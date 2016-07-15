@@ -1,6 +1,11 @@
 <launch>
+  <arg name="camera_type"  default="R200" />
+  <arg name="depth_width"  default="480" />
+  <arg name="depth_height" default="360" />
   <include file="$(find realsense_camera)/launch/r200_nodelet_rgbd.launch">
-    <arg name="camera_type" value="R200" />
+    <arg name="camera_type"  value="$(arg camera_type)" />
+    <arg name="depth_width"  value="$(arg depth_width)" />
+    <arg name="depth_height" value="$(arg depth_height)" />
   </include>
 
   <!-- Test -->
