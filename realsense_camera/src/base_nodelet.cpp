@@ -28,7 +28,7 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
-#include "base_nodelet.h"
+#include <realsense_camera/base_nodelet.h>
 
 using namespace cv;
 using namespace std;
