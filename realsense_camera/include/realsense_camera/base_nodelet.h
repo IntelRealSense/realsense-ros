@@ -62,7 +62,7 @@
 #include <realsense_camera/cameraConfiguration.h>
 #include <pluginlib/class_list_macros.h>
 #include <tf/transform_broadcaster.h>
-#include "constants.h"
+#include <realsense_camera/constants.h>
 
 namespace realsense_camera
 {
