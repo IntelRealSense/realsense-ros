@@ -14,10 +14,26 @@ set(CMAKE_EXE_LINKER_FLAGS "-pie -z noexecstack -z relro -z now")
 # Flags shared libraries
 set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now")
 
-find_library(REALSENSE_LIB realsense)
-
 # This is optional until the first release of librealsense as a ROS package
-find_package(catkin OPTIONAL_COMPONENTS librealsense)
+find_package(librealsense)
+
+# This should be removed once librealsense is a required component
+if(NOT librealsense_FOUND)
+  find_library(REALSENSE_LIB realsense)
+  if(NOT REALSENSE_LIB)
+    message(FATAL_ERROR "librealsense library not found")
+  endif()
+  find_path(REALSENSE_INCLUDE_DIR
+    NAMES rs rsutil
+    PATHS /usr/include /usr/local/include
+    PATH_SUFFIXES include)
+  if(REALSENSE_INCLUDE_DIR)
+    include_directories(${REALSENSE_INCLUDE_DIR})
+  else()
+    message(FATAL_ERROR "librealsense header files not found")
+  endif()
+endif()
+
 find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   roscpp
