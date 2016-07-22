@@ -1,0 +1,103 @@
+<launch>
+  <arg name="manager"      value="nodelet_manager" />
+  <arg name="camera"       default="camera" />
+  <arg name="camera_type"  default="R200" /> <!-- Type of camera -->
+  <arg name="serial_no"    default="" />
+  <arg name="usb_port_id"  default="" /> <!-- USB "Bus#-Port#" -->
+  <arg name="mode"                                            default="preset" />
+
+  <arg name="color_backlight_compensation"                    default="3" />
+  <arg name="color_brightness"                                default="10" />
+  <arg name="color_contrast"                                  default="16" />
+  <arg name="color_gain"                                      default="18" />
+  <arg name="color_gamma"                                     default="102" />
+  <arg name="color_hue"                                       default="20" />
+  <arg name="color_saturation"                                default="21" />
+  <arg name="color_sharpness"                                 default="6" />
+  <arg name="color_enable_auto_white_balance"                 default="0" />
+  <arg name="color_white_balance"                             default="3000" />
+  <arg name="r200_lr_gain"                                    default="200" />
+  <arg name="r200_emitter_enabled"                            default="1" />
+  <arg name="r200_lr_exposure"                                default="27" />
+  <arg name="r200_depth_units"                                default="1002" />
+  <arg name="r200_depth_clamp_min"                            default="2" />
+  <arg name="r200_depth_clamp_max"                            default="65532" />
+  <arg name="r200_depth_control_estimate_median_decrement"    default="6" />
+  <arg name="r200_depth_control_estimate_median_increment"    default="6" />
+  <arg name="r200_depth_control_median_threshold"             default="194" />
+  <arg name="r200_depth_control_score_minimum_threshold"      default="2" />
+  <arg name="r200_depth_control_score_maximum_threshold"      default="510" />
+  <arg name="r200_depth_control_texture_count_threshold"      default="4" />
+  <arg name="r200_depth_control_texture_difference_threshold" default="22" />
+  <arg name="r200_depth_control_second_peak_threshold"        default="26" />
+  <arg name="r200_depth_control_neighbor_threshold"           default="8" />
+  <arg name="r200_depth_control_lr_threshold"                 default="22" />
+
+  <param name="$(arg camera)/mode"                                              type="str"  value="$(arg mode)" />
+  <param name="$(arg camera)/color_backlight_compensation"                      type="int" value="$(arg color_backlight_compensation)" />
+  <param name="$(arg camera)/color_brightness"                                  type="int" value="$(arg color_brightness)" />
+  <param name="$(arg camera)/color_contrast"                                    type="int" value="$(arg color_contrast)" />
+  <param name="$(arg camera)/color_gain"                                        type="int" value="$(arg color_gain)" />
+  <param name="$(arg camera)/color_gamma"                                       type="int" value="$(arg color_gamma)" />
+  <param name="$(arg camera)/color_hue"                                         type="int" value="$(arg color_hue)" />
+  <param name="$(arg camera)/color_saturation"                                  type="int" value="$(arg color_saturation)" />
+  <param name="$(arg camera)/color_sharpness"                                   type="int" value="$(arg color_sharpness)" />
+  <param name="$(arg camera)/color_enable_auto_white_balance"                   type="int" value="$(arg color_enable_auto_white_balance)" />
+  <param name="$(arg camera)/color_white_balance"                               type="int" value="$(arg color_white_balance)" />
+  <param name="$(arg camera)/r200_lr_gain"                                      type="int" value="$(arg r200_lr_gain)" />
+  <param name="$(arg camera)/r200_emitter_enabled"                              type="bool" value="$(arg r200_emitter_enabled)" />
+  <param name="$(arg camera)/r200_lr_exposure"                                  type="int" value="$(arg r200_lr_exposure)" />
+  <param name="$(arg camera)/r200_depth_units"                                  type="int" value="$(arg r200_depth_units)" />
+  <param name="$(arg camera)/r200_depth_clamp_min"                              type="int" value="$(arg r200_depth_clamp_min)" />
+  <param name="$(arg camera)/r200_depth_clamp_max"                              type="int" value="$(arg r200_depth_clamp_max)" />
+  <param name="$(arg camera)/r200_depth_control_estimate_median_decrement"      type="int" value="$(arg r200_depth_control_estimate_median_decrement)" />
+  <param name="$(arg camera)/r200_depth_control_estimate_median_increment"      type="int" value="$(arg r200_depth_control_estimate_median_increment)" />
+  <param name="$(arg camera)/r200_depth_control_median_threshold"               type="int" value="$(arg r200_depth_control_median_threshold)" />
+  <param name="$(arg camera)/r200_depth_control_score_minimum_threshold"        type="int" value="$(arg r200_depth_control_score_minimum_threshold)" />
+  <param name="$(arg camera)/r200_depth_control_score_maximum_threshold"        type="int" value="$(arg r200_depth_control_score_maximum_threshold)" />
+  <param name="$(arg camera)/r200_depth_control_texture_count_threshold"        type="int" value="$(arg r200_depth_control_texture_count_threshold)" />
+  <param name="$(arg camera)/r200_depth_control_texture_difference_threshold"   type="int" value="$(arg r200_depth_control_texture_difference_threshold)" />
+  <param name="$(arg camera)/r200_depth_control_second_peak_threshold"          type="int" value="$(arg r200_depth_control_second_peak_threshold)" />
+  <param name="$(arg camera)/r200_depth_control_neighbor_threshold"             type="int" value="$(arg r200_depth_control_neighbor_threshold)" />
+  <param name="$(arg camera)/r200_depth_control_lr_threshold"                   type="int" value="$(arg r200_depth_control_lr_threshold)" />
+
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
+
+  <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
+    <arg name="manager"      value="$(arg manager)" />
+    <arg name="camera"       value="$(arg camera)" />
+    <arg name="camera_type"  value="$(arg camera_type)" />
+    <arg name="serial_no"    value="$(arg serial_no)" />
+    <arg name="usb_port_id"  value="$(arg usb_port_id)" />
+  </include>
+
+  <!-- Start test -->
+  <test pkg="realsense_camera" type="tests_camera_core" test-name="realsense_camera_test"
+    args="camera_type $(arg camera_type)
+    color_backlight_compensation $(arg color_backlight_compensation)
+    color_brightness $(arg color_brightness)
+    color_contrast $(arg color_contrast)
+    color_gain $(arg color_gain)
+    color_gamma $(arg color_gamma)
+    color_hue $(arg color_hue)
+    color_saturation $(arg color_saturation)
+    color_sharpness $(arg color_sharpness)
+    color_enable_auto_white_balance $(arg color_enable_auto_white_balance)
+    color_white_balance $(arg color_white_balance)
+    r200_lr_gain $(arg r200_lr_gain)
+    r200_emitter_enabled $(arg r200_emitter_enabled)
+    r200_lr_exposure $(arg r200_lr_exposure)
+    r200_depth_units $(arg r200_depth_units)
+    r200_depth_clamp_min $(arg r200_depth_clamp_min)
+    r200_depth_clamp_max $(arg r200_depth_clamp_max)
+    r200_depth_control_estimate_median_decrement $(arg r200_depth_control_estimate_median_decrement)
+    r200_depth_control_estimate_median_increment $(arg r200_depth_control_estimate_median_increment)
+    r200_depth_control_median_threshold $(arg r200_depth_control_median_threshold)
+    r200_depth_control_score_minimum_threshold $(arg r200_depth_control_score_minimum_threshold)
+    r200_depth_control_score_maximum_threshold $(arg r200_depth_control_score_maximum_threshold)
+    r200_depth_control_texture_count_threshold $(arg r200_depth_control_texture_count_threshold)
+    r200_depth_control_texture_difference_threshold $(arg r200_depth_control_texture_difference_threshold)
+    r200_depth_control_second_peak_threshold $(arg r200_depth_control_second_peak_threshold)
+    r200_depth_control_neighbor_threshold $(arg r200_depth_control_neighbor_threshold)
+    r200_depth_control_lr_threshold $(arg r200_depth_control_lr_threshold) "/>
+</launch>

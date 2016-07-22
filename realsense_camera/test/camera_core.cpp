@@ -286,13 +286,19 @@ TEST(RealsenseTests, testIsDepthStreamEnabled)
   {
     EXPECT_TRUE(g_depth_recv);
     EXPECT_TRUE(g_infrared1_recv);
-    EXPECT_TRUE(g_infrared2_recv);
+    if (g_camera_type == "R200")
+    {
+      EXPECT_TRUE(g_infrared2_recv);
+    }
   }
   else
   {
     EXPECT_FALSE(g_depth_recv);
     EXPECT_FALSE(g_infrared1_recv);
-    EXPECT_FALSE(g_infrared2_recv);
+    if (g_camera_type == "R200")
+    {
+      EXPECT_FALSE(g_infrared2_recv);
+    }
   }
 }
 
@@ -490,7 +496,7 @@ TEST(RealsenseTests, testInfrared2CameraInfo)
 
  TEST(RealsenseTests, testPointCloud)
 {
-  if (g_enable_depth)
+  if (g_enable_pointcloud)
   {
     ROS_INFO_STREAM("RealSense Camera - pc_depth_avg: " << g_pc_depth_avg);
     EXPECT_TRUE(g_pc_depth_avg > 0);
@@ -507,14 +513,19 @@ TEST(RealsenseTests, testTransforms)
   // make sure all transforms are being broadcast as expected
   tf::TransformListener tf_listener;
 
-  EXPECT_TRUE(tf_listener.waitForTransform (DEFAULT_DEPTH_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0), ros::Duration(3.0)));
-  EXPECT_TRUE(tf_listener.waitForTransform (DEFAULT_DEPTH_OPTICAL_FRAME_ID, DEFAULT_DEPTH_FRAME_ID, ros::Time(0), ros::Duration(3.0)));
-  EXPECT_TRUE(tf_listener.waitForTransform (DEFAULT_COLOR_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0), ros::Duration(3.0)));
-  EXPECT_TRUE(tf_listener.waitForTransform (DEFAULT_COLOR_OPTICAL_FRAME_ID, DEFAULT_COLOR_FRAME_ID, ros::Time(0), ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_DEPTH_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0),
+      ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_DEPTH_OPTICAL_FRAME_ID, DEFAULT_DEPTH_FRAME_ID, ros::Time(0),
+      ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_COLOR_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0),
+      ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_COLOR_OPTICAL_FRAME_ID, DEFAULT_COLOR_FRAME_ID, ros::Time(0),
+      ros::Duration(3.0)));
 }
 
 TEST(RealsenseTests, testCameraOptions)
 {
+  g_service_client.call(g_srv);
   stringstream settings_ss (g_srv.response.configuration_str);
   string setting;
   string setting_name;
@@ -527,9 +538,9 @@ TEST(RealsenseTests, testCameraOptions)
     setting_value = (setting.substr (setting.rfind (":") + 1));
     if (g_config_args.find (setting_name) != g_config_args.end ())
     {
-      int actual_value = atoi (setting_value.c_str ());
-      int expected_value = atoi (g_config_args.at (setting_name).c_str ());
-      EXPECT_EQ(expected_value, actual_value);
+      int option_recv = atoi(setting_value.c_str());
+      int option_exp = atoi(g_config_args.at (setting_name).c_str());
+      EXPECT_EQ(option_exp, option_recv) << setting_name;
     }
   }
 }
@@ -558,6 +569,12 @@ void fillConfigMap(int argc, char **argv)
 
   if (argc > 1)
   {
+    if (g_config_args.find("camera_type") != g_config_args.end())
+    {
+      ROS_INFO("RealSense Camera - Setting %s to %s", "camera_type", g_config_args.at("camera_type").c_str());
+      g_camera_type = g_config_args.at("camera_type").c_str();
+    }
+
     // Set depth arguments.
     if (g_config_args.find("enable_depth") != g_config_args.end())
     {
@@ -625,6 +642,21 @@ void fillConfigMap(int argc, char **argv)
       ROS_INFO("RealSense Camera - Setting %s to %s", "color_step", g_config_args.at("color_step").c_str());
       g_color_step_exp = atoi(g_config_args.at("color_step").c_str());
     }
+
+    // Set pointcloud arguments.
+    if (g_config_args.find("enable_pointcloud") != g_config_args.end())
+    {
+      ROS_INFO("RealSense Camera - Setting %s to %s", "enable_pointcloud",
+          g_config_args.at("enable_pointcloud").c_str());
+      if (strcmp((g_config_args.at("enable_pointcloud").c_str()),"true") == 0)
+      {
+        g_enable_pointcloud = true;
+      }
+      else
+      {
+        g_enable_pointcloud = false;
+      }
+    }
   }
 }
 
@@ -641,7 +673,7 @@ int main(int argc, char **argv) try
   g_camera_subscriber[0] = it.subscribeCamera(DEPTH_TOPIC, 1, imageDepthCallback, 0);
   g_camera_subscriber[1] = it.subscribeCamera(COLOR_TOPIC, 1, imageColorCallback, 0);
   g_camera_subscriber[2] = it.subscribeCamera(IR_TOPIC, 1, imageInfrared1Callback, 0);
-  if (g_camera.find("R200") != std::string::npos)
+  if (g_camera_type == "R200")
   {
     g_camera_subscriber[3] = it.subscribeCamera(IR2_TOPIC, 1, imageInfrared2Callback, 0);
   }

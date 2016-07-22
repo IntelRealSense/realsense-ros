@@ -43,7 +43,6 @@ namespace realsense_camera
   {
   public:
 
-    // Initialize camera
     void onInit();
 
   protected:
@@ -58,14 +57,13 @@ namespace realsense_camera
     boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::r200_paramsConfig>> dynamic_reconf_server_;
 
     // Member Functions.
-    void enableStream(rs_stream stream_index, int width, int height, rs_format format, int fps);
-    void disableStream(rs_stream stream_index);
-    void setStreamOptions();
-    void fillStreamEncoding();
-    void allocateResources();
-    void setStaticCameraOptions();
+    void getParameters();
+    void advertiseTopics();
+    std::vector<std::string> setDynamicReconfServer();
+    void startDynamicReconfCallback();
     void configCallback(realsense_camera::r200_paramsConfig &config, uint32_t level);
+    void setStreams();
+    void publishTopics();
   };
 }
-
 #endif

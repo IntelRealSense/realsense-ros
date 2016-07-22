@@ -35,59 +35,87 @@ PLUGINLIB_EXPORT_CLASS (realsense_camera::R200Nodelet, nodelet::Nodelet)
 namespace realsense_camera
 {
   /*
-   * Public Methods.
-   */
-
-  /*
-   * Initialize the realsense camera
+   * Initialize the nodelet.
    */
   void R200Nodelet::onInit()
   {
-    // set member vars used in base class
-    nodelet_name_ = getName();
-    nh_ = getNodeHandle();
-    pnh_ = getPrivateNodeHandle();
-    num_streams_ = R200_STREAM_COUNT;
     max_z_ = R200_MAX_Z;
+    BaseNodelet::onInit();
+  }
 
-    // create dynamic reconfigure server - this must be done before calling base class onInit()
-    // onInit() calls setStaticCameraOptions() which relies on this being set already
+  /*
+   * Get the nodelet parameters.
+   */
+  void R200Nodelet::getParameters()
+  {
+    BaseNodelet::getParameters();
+    pnh_.param("ir2_frame_id", frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_FRAME_ID);
+  }
+
+  /*
+   * Advertise topics.
+   */
+  void R200Nodelet::advertiseTopics()
+  {
+    BaseNodelet::advertiseTopics();
+
+    image_transport::ImageTransport image_transport(nh_);
+    camera_publisher_[RS_STREAM_INFRARED2] = image_transport.advertiseCamera(IR2_TOPIC, 1);
+  }
+
+  /*
+   * Set Dynamic Reconfigure Server and return the dynamic params.
+   */
+  std::vector<std::string> R200Nodelet::setDynamicReconfServer()
+  {
     dynamic_reconf_server_.reset(new dynamic_reconfigure::Server<realsense_camera::r200_paramsConfig>(pnh_));
 
-    // call base class onInit() method
-    BaseNodelet::onInit();
+    // Get dynamic options from the dynamic reconfigure server.
+    realsense_camera::r200_paramsConfig params_config;
+    dynamic_reconf_server_->getConfigDefault(params_config);
+    std::vector<realsense_camera::r200_paramsConfig::AbstractParamDescriptionConstPtr> param_desc =
+        params_config.__getParamDescriptions__();
+    std::vector<std::string> dynamic_params;
+    for (realsense_camera::r200_paramsConfig::AbstractParamDescriptionConstPtr param_desc_ptr: param_desc)
+    {
+      dynamic_params.push_back((* param_desc_ptr).name);
+    }
 
-    // Set up the IR2 frame and topics
-    image_transport::ImageTransport it (nh_);
-    camera_publisher_[RS_STREAM_INFRARED2] = it.advertiseCamera(IR2_TOPIC, 1);
+    return dynamic_params;
+  }
 
-    // setCallback can only be called after rs_device_ is set by base class connectToCamera()
+  /*
+   * Start Dynamic Reconfigure Callback.
+   */
+  void R200Nodelet::startDynamicReconfCallback()
+  {
     dynamic_reconf_server_->setCallback(boost::bind(&R200Nodelet::configCallback, this, _1, _2));
   }
 
   /*
-   *Protected Methods.
+   * Get the dynamic param values.
    */
-  void R200Nodelet::enableStream(rs_stream stream_index, int width, int height, rs_format format, int fps)
-  {
-    BaseNodelet::enableStream(stream_index, width, height, format, fps);
-    if (stream_index == RS_STREAM_INFRARED)
-    {
-      enableStream(RS_STREAM_INFRARED2, width_[RS_STREAM_DEPTH], height_[RS_STREAM_DEPTH], IR_FORMAT, fps_[RS_STREAM_DEPTH]);
-    }
-  }
-
-  void R200Nodelet::disableStream(rs_stream stream_index)
-  {
-    BaseNodelet::disableStream(stream_index);
-    if (stream_index == RS_STREAM_INFRARED)
-    {
-      disableStream(RS_STREAM_INFRARED2);
-    }
-  }
-
   void R200Nodelet::configCallback(realsense_camera::r200_paramsConfig &config, uint32_t level)
   {
+    ROS_INFO_STREAM(nodelet_name_ << " - Setting dynamic camera options");
+    // Set flags
+    if (config.enable_depth == false)
+    {
+      if (enable_[RS_STREAM_COLOR] == false)
+      {
+        ROS_INFO_STREAM(nodelet_name_ << " - Color stream is also disabled. Cannot disable depth stream");
+        config.enable_depth = true;
+      }
+      else
+      {
+        enable_[RS_STREAM_DEPTH] = false;
+      }
+    }
+    else
+    {
+      enable_[RS_STREAM_DEPTH] = true;
+    }
+
     // Set common options
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_BACKLIGHT_COMPENSATION, config.color_backlight_compensation, 0);
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_BRIGHTNESS, config.color_brightness, 0);
@@ -97,41 +125,21 @@ namespace realsense_camera
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_HUE, config.color_hue, 0);
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_SATURATION, config.color_saturation, 0);
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_SHARPNESS, config.color_sharpness, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_COLOR_ENABLE_AUTO_WHITE_BALANCE, config.color_enable_auto_white_balance, 0);
-
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_ENABLE_AUTO_WHITE_BALANCE,
+        config.color_enable_auto_white_balance, 0);
     if (config.color_enable_auto_white_balance == 0)
     {
       rs_set_device_option(rs_device_, RS_OPTION_COLOR_WHITE_BALANCE, config.color_white_balance, 0);
     }
 
-    if (config.enable_depth == false)
-    {
-      if (enable_color_ == false)
-      {
-        ROS_INFO_STREAM(nodelet_name_ << " - Color stream is also disabled. Cannot disable depth stream");
-        config.enable_depth = true;
-      }
-      else
-      {
-        enable_depth_ = false;
-      }
-    }
-    else
-    {
-      enable_depth_ = true;
-    }
-
-    //R200 camera specific options
+    // Set R200 specific options
     rs_set_device_option(rs_device_, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, config.r200_lr_auto_exposure_enabled, 0);
-
     if (config.r200_lr_auto_exposure_enabled == 0)
     {
       rs_set_device_option(rs_device_, RS_OPTION_R200_LR_EXPOSURE, config.r200_lr_exposure, 0);
     }
-
     rs_set_device_option(rs_device_, RS_OPTION_R200_LR_GAIN, config.r200_lr_gain, 0);
     rs_set_device_option(rs_device_, RS_OPTION_R200_EMITTER_ENABLED, config.r200_emitter_enabled, 0);
-
     if (config.r200_lr_auto_exposure_enabled == 1)
     {
       if (config.r200_auto_exposure_top_edge >= height_[RS_STREAM_DEPTH])
@@ -150,110 +158,51 @@ namespace realsense_camera
       {
         config.r200_auto_exposure_right_edge = width_[RS_STREAM_DEPTH] - 1;
       }
-
       double edge_values_[4];
       edge_values_[0] = config.r200_auto_exposure_left_edge;
       edge_values_[1] = config.r200_auto_exposure_top_edge;
       edge_values_[2] = config.r200_auto_exposure_right_edge;
       edge_values_[3] = config.r200_auto_exposure_bottom_edge;
-
       rs_set_device_options(rs_device_, edge_options_, 4, edge_values_, 0);
     }
   }
 
   /*
-   * Define buffer for images and prepare camera info for each enabled stream.
+   * Set the streams according to their corresponding flag values.
    */
-  void R200Nodelet::allocateResources()
+  void R200Nodelet::setStreams()
   {
-    // call base class method first
-    BaseNodelet::allocateResources();
-    // set IR2 image buffer
-    image_[(uint32_t) RS_STREAM_INFRARED2] = cv::Mat(height_[RS_STREAM_DEPTH], width_[RS_STREAM_DEPTH], CV_8UC1, cv::Scalar (0));
-  }
+    BaseNodelet::setStreams();
 
-  /*
-   * Set the stream options based on input params.
-   */
-  void R200Nodelet::setStreamOptions()
-  {
-    // call base class method first
-    BaseNodelet::setStreamOptions();
-    // setup R200 specific frame
-    pnh_.param("ir2_frame_id", frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_FRAME_ID);
-  }
-
-  /*
-   * Populate the encodings for each stream.
-   */
-  void R200Nodelet::fillStreamEncoding()
-  {
-    // Call base class method first
-    BaseNodelet::fillStreamEncoding();
-    // Setup IR2 stream
-    stream_encoding_[(uint32_t) RS_STREAM_INFRARED2] = sensor_msgs::image_encodings::TYPE_8UC1;
-    stream_step_[(uint32_t) RS_STREAM_INFRARED2] = width_[RS_STREAM_DEPTH] * sizeof (unsigned char);
-  }
-
-  /*
-   * Set the static camera options.
-   */
-  void R200Nodelet::setStaticCameraOptions()
-  {
-    ROS_INFO_STREAM(nodelet_name_ << " - Setting camera options");
-
-    // Get dynamic options from the dynamic reconfigure server.
-    realsense_camera::r200_paramsConfig params_config;
-    dynamic_reconf_server_->getConfigDefault(params_config);
-
-    std::vector<realsense_camera::r200_paramsConfig::AbstractParamDescriptionConstPtr> param_desc = params_config.__getParamDescriptions__();
-
-    // Iterate through the supported camera options
-    for (CameraOptions o: camera_options_)
+    if (enable_[RS_STREAM_DEPTH] == true)
     {
-      std::string opt_name = rs_option_to_string(o.opt);
-      bool found = false;
-
-      std::vector<realsense_camera::r200_paramsConfig::AbstractParamDescriptionConstPtr>::iterator it;
-      for (realsense_camera::r200_paramsConfig::AbstractParamDescriptionConstPtr param_desc_ptr: param_desc)
+      enableStream(RS_STREAM_INFRARED2, width_[RS_STREAM_DEPTH], height_[RS_STREAM_DEPTH], IR_FORMAT,
+          fps_[RS_STREAM_DEPTH]);
+      if (camera_info_ptr_[RS_STREAM_INFRARED2] == NULL)
       {
-        std::transform(opt_name.begin(), opt_name.end(), opt_name.begin(), ::tolower);
-        if (opt_name.compare((* param_desc_ptr).name) == 0)
-        {
-          found = true;
-          break;
-        }
+        ROS_DEBUG_STREAM(nodelet_name_ << " - Allocating resources for " << STREAM_DESC[RS_STREAM_INFRARED2]);
+        getStreamCalibData(RS_STREAM_INFRARED2);
+        step_[RS_STREAM_INFRARED2] = camera_info_ptr_[RS_STREAM_INFRARED2]->width * sizeof(unsigned char);
+        image_[RS_STREAM_INFRARED2] = cv::Mat(camera_info_ptr_[RS_STREAM_INFRARED2]->height,
+            camera_info_ptr_[RS_STREAM_INFRARED2]->width, CV_8UC1, cv::Scalar(0, 0, 0));
       }
-      // Skip the dynamic options and set only the static camera options.
-      if (found == false)
-      {
-        std::string key;
-        double val;
-
-        if (pnh_.searchParam(opt_name, key))
-        {
-          double opt_val;
-          pnh_.getParam(key, val);
-
-          // Validate and set the input values within the min-max range
-          if (val < o.min)
-          {
-            opt_val = o.min;
-          }
-          else if (val > o.max)
-          {
-            opt_val = o.max;
-          }
-          else
-          {
-            opt_val = val;
-          }
-          ROS_INFO_STREAM(nodelet_name_ << " - Static Options: " << opt_name << " = " << opt_val);
-          rs_set_device_option(rs_device_, o.opt, opt_val, &rs_error_);
-          checkError();
-        }
-      }
+      ts_[RS_STREAM_INFRARED2] = -1;
+      encoding_[RS_STREAM_INFRARED2] = sensor_msgs::image_encodings::TYPE_8UC1;
     }
+    else if (enable_[RS_STREAM_DEPTH] == false)
+    {
+      disableStream(RS_STREAM_INFRARED2);
+    }
+  }
+
+  /*
+   * Publish topics for native streams.
+   */
+  void R200Nodelet::publishTopics()
+  {
+    BaseNodelet::publishTopics();
+
+    publishTopic(RS_STREAM_INFRARED2);
   }
 }  // end namespace
 
