@@ -1,6 +1,6 @@
 <launch>
   <arg name="camera"       value="camera" />
-  <arg name="camera_type"  value="R200" />
+  <arg name="camera_type"  default="R200" />
   <arg name="enable_depth" value="false" />
 
   <!-- Start camera -->
@@ -12,5 +12,5 @@
 
   <!-- Start test -->
   <test pkg="realsense_camera" type="tests_camera_core" test-name="realsense_camera_test"
-    args="enable_depth $(arg enable_depth)" />
+    args="camera_type $(arg camera_type) enable_depth $(arg enable_depth)" />
 </launch>

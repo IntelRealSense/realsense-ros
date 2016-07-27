@@ -86,6 +86,11 @@ void imageInfrared1Callback(const sensor_msgs::ImageConstPtr &msg, const sensor_
   getMsgInfo(RS_STREAM_INFRARED, msg);
   getCameraInfo(RS_STREAM_INFRARED, info_msg);
 
+  for (unsigned int i = 0; i < 5; i++)
+  {
+    g_infrared1_caminfo_D_recv[i] = info_msg->D[i];
+  }
+
   g_infrared1_recv = true;
 }
 
@@ -114,6 +119,11 @@ void imageInfrared2Callback(const sensor_msgs::ImageConstPtr &msg, const sensor_
   getMsgInfo(RS_STREAM_INFRARED2, msg);
   getCameraInfo(RS_STREAM_INFRARED2, info_msg);
 
+  for (unsigned int i = 0; i < 5; i++)
+  {
+    g_infrared2_caminfo_D_recv[i] = info_msg->D[i];
+  }
+
   g_infrared2_recv = true;
 }
 
@@ -140,6 +150,11 @@ void imageDepthCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs
 
   getMsgInfo(RS_STREAM_DEPTH, msg);
   getCameraInfo(RS_STREAM_DEPTH, info_msg);
+
+  for (unsigned int i = 0; i < 5; i++)
+  {
+    g_depth_caminfo_D_recv[i] = info_msg->D[i];
+  }
 
   g_depth_recv = true;
 }
@@ -268,14 +283,17 @@ TEST(RealsenseTests, testColorCameraInfo)
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][10] != (double) 0);
     EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][11], (double) 0);
 
-    float color_caminfo_D = 1;
-    // ignoring the 5th value since it always appears to be 0.0 on tested R200 cameras
-    for (unsigned int i = 0; i < 4; i++)
+    // R200 camera has Color distortion parameters
+    if (g_camera_type == "R200")
     {
-      color_caminfo_D = color_caminfo_D && g_color_caminfo_D_recv[i];
+      float color_caminfo_D = 1;
+      // Ignoring the 5th value since it always appears to be 0.0
+      for (unsigned int i = 0; i < 4; i++)
+      {
+        color_caminfo_D = color_caminfo_D && g_color_caminfo_D_recv[i];
+      }
+      EXPECT_TRUE(color_caminfo_D != (float) 0);
     }
-
-    EXPECT_TRUE(color_caminfo_D != (float) 0);
 
   }
 }
@@ -286,13 +304,21 @@ TEST(RealsenseTests, testIsDepthStreamEnabled)
   {
     EXPECT_TRUE(g_depth_recv);
     EXPECT_TRUE(g_infrared1_recv);
-    EXPECT_TRUE(g_infrared2_recv);
+    // R200 camera has IR2
+    if (g_camera_type == "R200")
+    {
+      EXPECT_TRUE(g_infrared2_recv);
+    }
   }
   else
   {
     EXPECT_FALSE(g_depth_recv);
     EXPECT_FALSE(g_infrared1_recv);
-    EXPECT_FALSE(g_infrared2_recv);
+    // R200 camera has IR2
+    if (g_camera_type == "R200")
+    {
+      EXPECT_FALSE(g_infrared2_recv);
+    }
   }
 }
 
@@ -360,6 +386,18 @@ TEST(RealsenseTests, testDepthCameraInfo)
     EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_DEPTH][9], (double) 0);
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][10] != (double) 0);
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][11] != (double) 0);
+
+    // F200 camera has Depth distortion parameters
+    if (g_camera_type == "F200")
+    {
+      float depth_caminfo_D = 1;
+      for (unsigned int i = 0; i < 5; i++)
+      {
+        depth_caminfo_D = depth_caminfo_D && g_depth_caminfo_D_recv[i];
+      }
+      EXPECT_TRUE(depth_caminfo_D != (float) 0);
+    }
+
   }
 }
 
@@ -426,71 +464,95 @@ TEST(RealsenseTests, testInfrared1CameraInfo)
     EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][9], (double) 0);
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][10] != (double) 0);
     EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][11], (double) 0);
+
+    // F200 camera has IR distortion parameters
+    if (g_camera_type == "F200")
+    {
+      float infrared1_caminfo_D = 1;
+      for (unsigned int i = 0; i < 5; i++)
+      {
+        infrared1_caminfo_D = infrared1_caminfo_D && g_infrared1_caminfo_D_recv[i];
+      }
+      EXPECT_TRUE(infrared1_caminfo_D != (float) 0);
+    }
+
   }
 }
 
 TEST(RealsenseTests, testInfrared2Stream)
 {
-  if (g_enable_depth)
+  // R200 camera has IR2
+  if (g_camera_type == "R200")
   {
-    EXPECT_TRUE(g_infrared2_avg > 0);
-    EXPECT_TRUE(g_infrared2_recv);
-  }
-  else
-  {
-    EXPECT_FALSE(g_infrared2_recv);
+    if (g_enable_depth)
+    {
+      EXPECT_TRUE(g_infrared2_avg > 0);
+      EXPECT_TRUE(g_infrared2_recv);
+    }
+    else
+    {
+      EXPECT_FALSE(g_infrared2_recv);
+    }
   }
 }
 
 TEST(RealsenseTests, testInfrared2Resolution)
 {
-  if (g_enable_depth)
+  // R200 camera has IR2
+  if (g_camera_type == "R200")
   {
-    if (g_depth_width_exp > 0)
+    if (g_enable_depth)
     {
-      EXPECT_EQ(g_depth_width_exp, g_width_recv[RS_STREAM_INFRARED2]);
-    }
-    if (g_depth_height_exp > 0)
-    {
-      EXPECT_EQ(g_depth_height_exp, g_height_recv[RS_STREAM_INFRARED2]);
+      if (g_depth_width_exp > 0)
+      {
+        EXPECT_EQ(g_depth_width_exp, g_width_recv[RS_STREAM_INFRARED2]);
+      }
+      if (g_depth_height_exp > 0)
+      {
+        EXPECT_EQ(g_depth_height_exp, g_height_recv[RS_STREAM_INFRARED2]);
+      }
     }
   }
 }
 
 TEST(RealsenseTests, testInfrared2CameraInfo)
 {
-  if (g_enable_depth)
+  // R200 camera has IR2
+  if (g_camera_type == "R200")
   {
-    EXPECT_EQ(g_width_recv[RS_STREAM_INFRARED2], g_caminfo_width_recv[RS_STREAM_INFRARED2]);
-    EXPECT_EQ(g_height_recv[RS_STREAM_INFRARED2], g_caminfo_height_recv[RS_STREAM_INFRARED2]);
-    EXPECT_STREQ(g_dmodel_recv[RS_STREAM_INFRARED2].c_str (), "plumb_bob");
-
-    // verify rotation is equal to identity matrix
-    for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
+    if (g_enable_depth)
     {
-      EXPECT_EQ(ROTATION_IDENTITY[i], g_caminfo_rotation_recv[RS_STREAM_INFRARED2][i]);
-    }
+      EXPECT_EQ(g_width_recv[RS_STREAM_INFRARED2], g_caminfo_width_recv[RS_STREAM_INFRARED2]);
+      EXPECT_EQ(g_height_recv[RS_STREAM_INFRARED2], g_caminfo_height_recv[RS_STREAM_INFRARED2]);
+      EXPECT_STREQ(g_dmodel_recv[RS_STREAM_INFRARED2].c_str (), "plumb_bob");
 
-    // check projection matrix values are set
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][0] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][1], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][2] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][3], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][4], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][5] != (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][6] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][7], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][8], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][9], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][10] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][11], (double) 0);
+      // verify rotation is equal to identity matrix
+      for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
+      {
+        EXPECT_EQ(ROTATION_IDENTITY[i], g_caminfo_rotation_recv[RS_STREAM_INFRARED2][i]);
+      }
+
+      // check projection matrix values are set
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][0] != (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][1], (double) 0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][2] != (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][3], (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][4], (double) 0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][5] != (double) 0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][6] != (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][7], (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][8], (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][9], (double) 0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][10] != (double) 0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][11], (double) 0);
+    }
   }
 }
 
 
  TEST(RealsenseTests, testPointCloud)
 {
-  if (g_enable_depth)
+  if (g_enable_pointcloud)
   {
     ROS_INFO_STREAM("RealSense Camera - pc_depth_avg: " << g_pc_depth_avg);
     EXPECT_TRUE(g_pc_depth_avg > 0);
@@ -507,14 +569,19 @@ TEST(RealsenseTests, testTransforms)
   // make sure all transforms are being broadcast as expected
   tf::TransformListener tf_listener;
 
-  EXPECT_TRUE(tf_listener.waitForTransform (DEFAULT_DEPTH_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0), ros::Duration(3.0)));
-  EXPECT_TRUE(tf_listener.waitForTransform (DEFAULT_DEPTH_OPTICAL_FRAME_ID, DEFAULT_DEPTH_FRAME_ID, ros::Time(0), ros::Duration(3.0)));
-  EXPECT_TRUE(tf_listener.waitForTransform (DEFAULT_COLOR_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0), ros::Duration(3.0)));
-  EXPECT_TRUE(tf_listener.waitForTransform (DEFAULT_COLOR_OPTICAL_FRAME_ID, DEFAULT_COLOR_FRAME_ID, ros::Time(0), ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_DEPTH_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0),
+      ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_DEPTH_OPTICAL_FRAME_ID, DEFAULT_DEPTH_FRAME_ID, ros::Time(0),
+      ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_COLOR_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0),
+      ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_COLOR_OPTICAL_FRAME_ID, DEFAULT_COLOR_FRAME_ID, ros::Time(0),
+      ros::Duration(3.0)));
 }
 
 TEST(RealsenseTests, testCameraOptions)
 {
+  g_service_client.call(g_srv);
   stringstream settings_ss (g_srv.response.configuration_str);
   string setting;
   string setting_name;
@@ -527,9 +594,9 @@ TEST(RealsenseTests, testCameraOptions)
     setting_value = (setting.substr (setting.rfind (":") + 1));
     if (g_config_args.find (setting_name) != g_config_args.end ())
     {
-      int actual_value = atoi (setting_value.c_str ());
-      int expected_value = atoi (g_config_args.at (setting_name).c_str ());
-      EXPECT_EQ(expected_value, actual_value);
+      int option_recv = atoi(setting_value.c_str());
+      int option_exp = atoi(g_config_args.at (setting_name).c_str());
+      EXPECT_EQ(option_exp, option_recv) << setting_name;
     }
   }
 }
@@ -558,6 +625,12 @@ void fillConfigMap(int argc, char **argv)
 
   if (argc > 1)
   {
+    if (g_config_args.find("camera_type") != g_config_args.end())
+    {
+      ROS_INFO("RealSense Camera - Setting %s to %s", "camera_type", g_config_args.at("camera_type").c_str());
+      g_camera_type = g_config_args.at("camera_type").c_str();
+    }
+
     // Set depth arguments.
     if (g_config_args.find("enable_depth") != g_config_args.end())
     {
@@ -625,6 +698,21 @@ void fillConfigMap(int argc, char **argv)
       ROS_INFO("RealSense Camera - Setting %s to %s", "color_step", g_config_args.at("color_step").c_str());
       g_color_step_exp = atoi(g_config_args.at("color_step").c_str());
     }
+
+    // Set pointcloud arguments.
+    if (g_config_args.find("enable_pointcloud") != g_config_args.end())
+    {
+      ROS_INFO("RealSense Camera - Setting %s to %s", "enable_pointcloud",
+          g_config_args.at("enable_pointcloud").c_str());
+      if (strcmp((g_config_args.at("enable_pointcloud").c_str()),"true") == 0)
+      {
+        g_enable_pointcloud = true;
+      }
+      else
+      {
+        g_enable_pointcloud = false;
+      }
+    }
   }
 }
 
@@ -641,7 +729,8 @@ int main(int argc, char **argv) try
   g_camera_subscriber[0] = it.subscribeCamera(DEPTH_TOPIC, 1, imageDepthCallback, 0);
   g_camera_subscriber[1] = it.subscribeCamera(COLOR_TOPIC, 1, imageColorCallback, 0);
   g_camera_subscriber[2] = it.subscribeCamera(IR_TOPIC, 1, imageInfrared1Callback, 0);
-  if (g_camera.find("R200") != std::string::npos)
+  // R200 camera has IR2
+  if (g_camera_type == "R200")
   {
     g_camera_subscriber[3] = it.subscribeCamera(IR2_TOPIC, 1, imageInfrared2Callback, 0);
   }

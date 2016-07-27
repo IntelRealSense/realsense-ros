@@ -4,4 +4,10 @@
   Intel(R) RealSense(TM) R200 Camera nodelet.
   </description>
   </class>
+
+  <class name="realsense_camera/F200Nodelet" type="realsense_camera::F200Nodelet" base_class_type="nodelet::Nodelet">
+  <description>
+  Intel(R) RealSense(TM) F200 Camera nodelet.
+  </description>
+  </class>
 </library>

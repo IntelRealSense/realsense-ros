@@ -29,17 +29,17 @@
  *******************************************************************************/
 
 #pragma once
-#ifndef R200_NODELET
-#define R200_NODELET
+#ifndef F200_NODELET
+#define F200_NODELET
 
 #include <dynamic_reconfigure/server.h>
 
-#include "realsense_camera/r200_paramsConfig.h"
+#include "realsense_camera/f200_paramsConfig.h"
 #include "base_nodelet.h"
 
 namespace realsense_camera
 {
-  class R200Nodelet: public realsense_camera::BaseNodelet
+  class F200Nodelet: public realsense_camera::BaseNodelet
   {
   public:
 
@@ -48,22 +48,12 @@ namespace realsense_camera
   protected:
 
     // Member Variables.
-    rs_option edge_options_[4] = {
-      RS_OPTION_R200_AUTO_EXPOSURE_LEFT_EDGE,
-      RS_OPTION_R200_AUTO_EXPOSURE_TOP_EDGE,
-      RS_OPTION_R200_AUTO_EXPOSURE_RIGHT_EDGE,
-      RS_OPTION_R200_AUTO_EXPOSURE_BOTTOM_EDGE
-    };
-    boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::r200_paramsConfig>> dynamic_reconf_server_;
+    boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::f200_paramsConfig>> dynamic_reconf_server_;
 
     // Member Functions.
-    void getParameters();
-    void advertiseTopics();
     std::vector<std::string> setDynamicReconfServer();
     void startDynamicReconfCallback();
-    void configCallback(realsense_camera::r200_paramsConfig &config, uint32_t level);
-    void setStreams();
-    void publishTopics();
+    void configCallback(realsense_camera::f200_paramsConfig &config, uint32_t level);
   };
 }
 #endif

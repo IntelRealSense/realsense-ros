@@ -36,10 +36,10 @@ namespace realsense_camera
 {
     // Default Constants.
     const int STREAM_COUNT = 4;
-    const int DEPTH_HEIGHT = 360;
     const int DEPTH_WIDTH = 480;
-    const int COLOR_HEIGHT = 480;
+    const int DEPTH_HEIGHT = 360;
     const int COLOR_WIDTH = 640;
+    const int COLOR_HEIGHT = 480;
     const int DEPTH_FPS = 60;
     const int COLOR_FPS = 60;
     const bool ENABLE_DEPTH = true;
@@ -67,7 +67,9 @@ namespace realsense_camera
     const double ROTATION_IDENTITY[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
     // R200 Constants.
-    const int R200_STREAM_COUNT = 4;
     const int R200_MAX_Z = 10;      // in meters
+
+    // F200 Constants.
+    const int F200_MAX_Z = 1;      // in meters
 }
 #endif

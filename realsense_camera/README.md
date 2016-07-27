@@ -1,4 +1,5 @@
-#Intel&reg; RealSense&trade; Technology - ROS Integration 
+#Intel&reg; RealSense&trade; Technology - ROS Integration
+## Supported Camera Types: R200 and F200
 ###Configuration:
 | Version          | Best Known (indigo)  | Best Known (kinetic) |
 |:---------------- |:---------------------|:---------------------|
@@ -7,6 +8,7 @@
 | Backend          | video4linux          | video4linux          |
 | librealsense     | 0.9.2                | 0.9.2                |
 | R200 Firmware    | 1.0.72.06            | 1.0.72.06            |
+| F200 Firmware    | 2.60.0.0             | 2.60.0.0             |
 
 ###Installation:
 #####Getting the camera to work on Linux
@@ -25,11 +27,7 @@ If this does not work, you should first fix this issue before continuing with th
 * Compile the realsense_camera package by executing the `catkin_make` command.
   Successful execution of command will build target <b>“realsense_camera_nodelet”</b>
 
-Sample launch files are available in "realsense_camera/launch" directory
-* r200_nodelet_rgbd.launch
-* r200_nodelet_default.launch
-* r200_nodelet_modify_params.launch
-* r200_nodelet_multiple_cameras.launch
+Sample launch files are available in [launch](launch/)
 
 ###Package Features:
 
@@ -59,7 +57,7 @@ IR camera
     camera/ir/camera_info
         Calibration data
 
-IR2 camera
+IR2 camera: Available only for <b>R200</b> cameras.
 
     camera/ir2/image_raw (sensor_msgs/Image)
     camera/ir2/camera_info
@@ -76,29 +74,33 @@ IR2 camera
 
 ####Static Parameters
 
-    Stream parameters:
         serial_no (string, default: blank)
             Specify the serial_no to uniquely connect to a camera, especially if multiple cameras are detected by the nodelet.
-            You may get the serial_no from the info stream by launching "r200_nodelet_default.launch"
+            You may get the serial_no from the info stream by launching the default launch file.
         usb_port_id (string, default: blank)
             Alternatively to serial_no, this can be used to connect to a camera by its USB Port ID, which is a 
             Bus Number-Port Number in the format "Bus#-Port#". If used with serial_no, both must match correctly for 
             camera to be connected.
+        camera_type (string, default: blank)
+            Specify the type of the camera - "R200" or "F200".
         mode (string, default: preset)
             Specify the mode to start camera streams. Mode comprises of height, width and fps. 
             Preset mode enables default values whereas Manual mode enables the specified parameter values.
-        color_height (int, default: 480)
-            Specify the color camera height resolution.
+        depth_width (int, default: 480 for R200, 640 for F200)
+            Specify the depth camera width resolution.
+        depth_height (int, default: 360 for R200, 480 for F200)
+            Specify the depth camera height resolution.
         color_width (int, default: 640)
             Specify the color camera width resolution.
-        depth_height (int, default: 360)
-            Specify the depth camera height resolution.
-        depth_width (int, default: 480)
-            Specify the depth camera width resolution.
+        color_height (int, default: 480)
+            Specify the color camera height resolution.
         color_fps (int, default: 60)
             Specify the color camera FPS
         depth_fps (int, default: 60)
             Specify the depth camera FPS
+        enable_depth (bool, default: true) 
+          Specify if to enable or not the depth and infrared camera(s).
+          Note: Infrared stream(s) will be enabled or disabled along with depth stream.
         enable_color (bool, default: true) 
             Specify if to enable or not the color camera.
         enable_pointcloud (bool, default: false) 
@@ -118,12 +120,11 @@ IR2 camera
             Specify the color optical frame id of the camera.
         ir_frame_id (string, default: camera_ir_frame)
             Specify the IR frame id of the camera.
-        ir2_frame_id (string, default: camera_ir2_frame)
+
+Available only for <b>R200</b> cameras.
+
+        ir2_frame_id (string, default: camera_ir2_frame):
             Specify the IR2 frame id of the camera.
-        camera (string, default: "R200")
-            Specify the camera name.
-    Camera parameters: 
-    Following are the parameters that can be set only statically in the R200 camera:
         r200_depth_units : [1, 2147483647]
         r200_depth_clamp_min : [0, 65535]
         r200_depth_clamp_max : [0, 65535]
@@ -140,32 +141,9 @@ IR2 camera
 
 ####Dynamic Parameters
 
-    Stream parameters:
-        enable_depth (bool, default: true) 
-          Specify if to enable or not the depth and infrared camera(s).
-          Note: Infrared stream(s) will be enabled or disabled along with depth stream.
+For <b>R200</b> cameras, refer to [r200_params.cfg](cfg/r200_params.cfg)
 
-    Camera parameters: 
-    Following are the parameters that can be set dynamically as well as statically in the R200 camera.
-        color_backlight_compensation
-        color_brightness
-        color_contrast
-        color_gain
-        color_gamma
-        color_hue
-        color_saturation
-        color_sharpness
-        color_enable_auto_white_balance
-        color_white_balance            (Must be set only if color_enable_auto_white_balance is disabled)
-        r200_lr_gain
-        r200_emitter_enabled
-        r200_lr_exposure               (Must be set only if r200_lr_auto_exposure_enabled is disabled)
-    Following are the parameters that can only be set dynamically in the R200 camera.
-        r200_lr_auto_exposure_enabled
-        r200_auto_exposure_top_edge    (Must be set only if r200_lr_auto_exposure_enabled is enabled)
-        r200_auto_exposure_bottom_edge (Must be set only if r200_lr_auto_exposure_enabled is enabled)
-        r200_auto_exposure_left_edge   (Must be set only if r200_lr_auto_exposure_enabled is enabled)
-        r200_auto_exposure_right_edge  (Must be set only if r200_lr_auto_exposure_enabled is enabled)
+For <b>F200</b> cameras, refer to [f200_params.cfg](cfg/f200_params.cfg)
 
 Note: For Autoexposure edge parameters, max value will go only upto the bounds of the infrared image.
 E.g. For 320x240 infrared image, valid values are within 0-319 and 0-239)
@@ -181,13 +159,20 @@ Command to change dynamic parameters using commandline:
     E.g. $ rosrun dynamic_reconfigure dynparam set /R200Nodelet color_backlight_compensation 2
 
 
-###Running the R200 nodelet:
+###Running the nodelet:
 ####Getting Started
 Use the following command to launch the camera nodelet. You will notice the camera light up.
 
+For <b>R200</b> cameras
+
     $ roslaunch realsense_camera r200_nodelet_default.launch
-    
-If you would like to create or use your own launch files, the nodelet name for the R200 camera is R200Nodelet. See the sample launch files for examples of how to launch the nodelet.
+
+For <b>F200</b> cameras
+
+    $ roslaunch realsense_camera f200_nodelet_default.launch
+
+Sample launch files are available in [launch](launch/). 
+Make sure the correct "camera_type" is specified to launch the desired camera.
 
 View using RVIZ:
 
@@ -198,10 +183,6 @@ You can also open RVIZ and load the provided RVIZ configuration file: realsenseR
    $ roscd realsense_camera
    $ rosrun rviz rviz -d rviz/realsenseRvizConfiguration1.rviz
 ```
-For the point cloud stream, before loading its corresponding topic, set the camera_depth_optical_frame using following command:
-
-    $ rosrun tf static_transform_publisher 0.0 0.0 0.0 0.0 0.0 0.0 map camera_depth_optical_frame 100
-
 
 View using other commands:
 For color stream
@@ -225,6 +206,9 @@ For viewing supported camera settings with current values:
     $ rosservice call /camera/get_settings
 
 ####Launching Multiple Cameras
+<b>Note:</b> The following example is based on <b>R200</b> cameras. 
+Similar options are applicable to F200 cameras too just by updating the "camera_type".
+
 For running multiple cameras simultaneously:  
 <b>Option 1:</b> Using single nodelet manager for all the cameras
 * Use "r200_nodelet_multiple_cameras.launch".
@@ -264,9 +248,9 @@ Sample test files are available in "realsense_camera/test" directory
 Refer to the following:
 * [base_nodelet.h](include/base_nodelet.h)
 * [r200_nodelet.h](include/r200_nodelet.h)
+* [f200_nodelet.h](include/f200_nodelet.h)
 
 ###Limitations:
-* Currently, the camera nodelet has been tested to work only for R200 cameras.
 
 * Currently, the camera nodelet only supports the following formats:
     * Color stream:    RGB8
@@ -274,7 +258,7 @@ Refer to the following:
     * Infrared stream(s): Y8
 
 * Generating a Depth Registered Point Cloud is very memory intensive.
-The topic /camera/depth_registered/points, generated by launch file
+E.g. The topic /camera/depth_registered/points, generated by launch file
 "r200_nodelet_rgbd.launch", works best at 30 fps using 640x480 resolution
 on a system with 16GB of RAM.
 
@@ -287,3 +271,6 @@ Hence the launch file "r200_nodelet_rgbd.launch" will not generate data for the 
     * /camera/depth_registered/disparity
 
 * The performance benchmark for multiple cameras launched at the same time has not been defined yet.
+
+* The usb-port-id logic does not work for F200 cameras due to a known librealsense [bug] (https://github.com/IntelRealSense/librealsense/issues/220). Until it gets fixed,
+ use serial_no when multiple F200 cameras are connected to the system.

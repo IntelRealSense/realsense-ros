@@ -1,14 +1,10 @@
 <launch>
   <arg name="camera"       value="camera" />
-  <arg name="camera_type"  value="R200" />
+  <arg name="camera_type"  default="R200" />
   <arg name="enable_color" value="false" />
 
-  <!-- By default pointcloud is disabled due to performance issues.
-       Explicitly enabling pointcloud so that the test does not fail for the pointcloud topic -->
-  <arg name="enable_pointcloud" value="true" /> 
   <!-- Start camera -->
   <param name="$(arg camera)/enable_color" type="bool" value="$(arg enable_color)" />
-  <param name="$(arg camera)/enable_pointcloud" type="bool" value="$(arg enable_pointcloud)" />
   <include file="$(find realsense_camera)/launch/r200_nodelet_default.launch">
     <arg name="camera"      value="$(arg camera)" />
     <arg name="camera_type" value="$(arg camera_type)" />
@@ -16,5 +12,5 @@
 
   <!-- Start test -->
   <test pkg="realsense_camera" type="tests_camera_core" test-name="realsense_camera_test"
-    args="enable_color $(arg enable_color)" />
+    args="camera_type $(arg camera_type) enable_color $(arg enable_color)" />
 </launch>
