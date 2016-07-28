@@ -28,7 +28,7 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
-#include "f200_nodelet.h"
+#include <realsense_camera/f200_nodelet.h>
 
 PLUGINLIB_EXPORT_CLASS (realsense_camera::F200Nodelet, nodelet::Nodelet)
 
