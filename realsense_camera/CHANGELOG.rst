@@ -2,8 +2,8 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.3.0 (2016-07-28)
+------------------
 * Fix the Install for Includes
 * Move header files
 * Updated README for F200 cameras
