@@ -2,6 +2,15 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix the Install for Includes
+* Move header files
+* Updated README for F200 cameras
+* Added initial support for F200 cameras
+* Refactored code for new cameras
+* Contributors: Mark D Horn, Reagan Lopez, Yuki Furuta
+
 1.2.1 (2016-07-13)
 ------------------
 * Fix starting /camera/get_settings Service
