@@ -1,0 +1,110 @@
+<launch>
+  <arg name="manager"      value="nodelet_manager" />
+  <arg name="camera"       default="camera" />
+  <arg name="camera_type"  default="SR300" /> <!-- Type of camera -->
+  <arg name="serial_no"    default="" />
+  <arg name="usb_port_id"  default="" /> <!-- USB "Bus#-Port#" -->
+  <arg name="mode"                                            default="preset" />
+
+  <arg name="color_backlight_compensation"                    default="2" />
+  <arg name="color_brightness"                                default="56" />
+  <arg name="color_contrast"                                  default="34" />
+  <arg name="color_gain"                                      default="66" />
+  <arg name="color_gamma"                                     default="222" />
+  <arg name="color_hue"                                       default="2" />
+  <arg name="color_saturation"                                default="90" />
+  <arg name="color_sharpness"                                 default="2" />
+  <arg name="color_enable_auto_white_balance"                 default="0" />
+  <arg name="color_white_balance"                             default="3400" />
+  <arg name="sr300_dynamic_fps"                               default="60"/>
+  <arg name="sr300_auto_range_enable_motion_versus_range"     default="1"/>
+  <arg name="sr300_auto_range_enable_laser"                   default="0"/>
+  <arg name="sr300_auto_range_min_motion_versus_range"        default="1"/>
+  <arg name="sr300_auto_range_max_motion_versus_range"        default="800"/>
+  <arg name="sr300_auto_range_start_motion_versus_range"      default="5"/>
+  <arg name="sr300_auto_range_min_laser"                      default="4"/>
+  <arg name="sr300_auto_range_max_laser"                      default="16"/>
+  <arg name="sr300_auto_range_start_laser"                    default="-1"/>
+  <arg name="sr300_auto_range_upper_threshold"                default="60"/>
+  <arg name="sr300_auto_range_lower_threshold"                default="2"/>
+  <arg name="sr300_wakeup_dev_phase1_period"                  default="2"/>
+  <arg name="sr300_wakeup_dev_phase1_fps"                     default="2"/>
+  <arg name="sr300_wakeup_dev_phase2_period"                  default="2"/>
+  <arg name="sr300_wakeup_dev_phase2_fps"                     default="2"/>
+  <arg name="sr300_wakeup_dev_reset"                          default="1"/>
+  <arg name="sr300_wake_on_usb_reason"                        default="0"/>
+  <arg name="sr300_wake_on_usb_confidence"                    default="0"/>
+
+  <param name="$(arg camera)/mode"                            type="str"  value="$(arg mode)" />
+  <param name="$(arg camera)/color_backlight_compensation"    type="int" value="$(arg color_backlight_compensation)" />
+  <param name="$(arg camera)/color_brightness"                type="int" value="$(arg color_brightness)" />
+  <param name="$(arg camera)/color_contrast"                  type="int" value="$(arg color_contrast)" />
+  <param name="$(arg camera)/color_gain"                      type="int" value="$(arg color_gain)" />
+  <param name="$(arg camera)/color_gamma"                     type="int" value="$(arg color_gamma)" />
+  <param name="$(arg camera)/color_hue"                       type="int" value="$(arg color_hue)" />
+  <param name="$(arg camera)/color_saturation"                type="int" value="$(arg color_saturation)" />
+  <param name="$(arg camera)/color_sharpness"                 type="int" value="$(arg color_sharpness)" />
+  <param name="$(arg camera)/color_enable_auto_white_balance" type="int" value="$(arg color_enable_auto_white_balance)" />
+  <param name="$(arg camera)/color_white_balance"             type="int" value="$(arg color_white_balance)" />
+  <param name="$(arg camera)/sr300_dynamic_fps"                           type="int" value="$(arg sr300_dynamic_fps)"/>
+  <param name="$(arg camera)/sr300_auto_range_enable_motion_versus_range" type="int" value="$(arg sr300_auto_range_enable_motion_versus_range)"/>
+  <param name="$(arg camera)/sr300_auto_range_enable_laser"               type="int" value="$(arg sr300_auto_range_enable_laser)"/>
+  <param name="$(arg camera)/sr300_auto_range_min_motion_versus_range"    type="int" value="$(arg sr300_auto_range_min_motion_versus_range)"/>
+  <param name="$(arg camera)/sr300_auto_range_max_motion_versus_range"    type="int" value="$(arg sr300_auto_range_max_motion_versus_range)"/>
+  <param name="$(arg camera)/sr300_auto_range_start_motion_versus_range"  type="int" value="$(arg sr300_auto_range_start_motion_versus_range)"/>
+  <param name="$(arg camera)/sr300_auto_range_min_laser"                  type="int" value="$(arg sr300_auto_range_min_laser)"/>
+  <param name="$(arg camera)/sr300_auto_range_max_laser"                  type="int" value="$(arg sr300_auto_range_max_laser)"/>
+  <param name="$(arg camera)/sr300_auto_range_start_laser"                type="int" value="$(arg sr300_auto_range_start_laser)"/>
+  <param name="$(arg camera)/sr300_auto_range_upper_threshold"            type="int" value="$(arg sr300_auto_range_upper_threshold)"/>
+  <param name="$(arg camera)/sr300_auto_range_lower_threshold"            type="int" value="$(arg sr300_auto_range_lower_threshold)"/>
+  <param name="$(arg camera)/sr300_wakeup_dev_phase1_period"              type="int" value="$(arg sr300_wakeup_dev_phase1_period)"/>
+  <param name="$(arg camera)/sr300_wakeup_dev_phase1_period"              type="int" value="$(arg sr300_wakeup_dev_phase1_period)"/>
+  <param name="$(arg camera)/sr300_wakeup_dev_phase1_fps"                 type="int" value="$(arg sr300_wakeup_dev_phase1_fps)"/>
+  <param name="$(arg camera)/sr300_wakeup_dev_phase2_period"              type="int" value="$(arg sr300_wakeup_dev_phase2_period)"/>
+  <param name="$(arg camera)/sr300_wakeup_dev_phase2_fps"                 type="int" value="$(arg sr300_wakeup_dev_phase2_fps)"/>
+  <param name="$(arg camera)/sr300_wakeup_dev_reset"                      type="int" value="$(arg sr300_wakeup_dev_reset)"/>
+  <param name="$(arg camera)/sr300_wake_on_usb_reason"                    type="int" value="$(arg sr300_wake_on_usb_reason)"/>
+  <param name="$(arg camera)/sr300_wake_on_usb_confidence"                type="int" value="$(arg sr300_wake_on_usb_confidence)"/>
+
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
+
+  <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
+    <arg name="manager"      value="$(arg manager)" />
+    <arg name="camera"       value="$(arg camera)" />
+    <arg name="camera_type"  value="$(arg camera_type)" />
+    <arg name="serial_no"    value="$(arg serial_no)" />
+    <arg name="usb_port_id"  value="$(arg usb_port_id)" />
+  </include>
+
+  <!-- Start test -->
+  <test pkg="realsense_camera" type="tests_camera_core" test-name="realsense_camera_test"
+    args="camera_type $(arg camera_type)
+    color_backlight_compensation $(arg color_backlight_compensation)
+    color_brightness $(arg color_brightness)
+    color_contrast $(arg color_contrast)
+    color_gain $(arg color_gain)
+    color_gamma $(arg color_gamma)
+    color_hue $(arg color_hue)
+    color_saturation $(arg color_saturation)
+    color_sharpness $(arg color_sharpness)
+    color_enable_auto_white_balance $(arg color_enable_auto_white_balance)
+    color_white_balance $(arg color_white_balance)
+    sr300_dynamic_fps $(arg sr300_dynamic_fps)
+    sr300_auto_range_enable_motion_versus_range $(arg sr300_auto_range_enable_motion_versus_range)
+    sr300_auto_range_enable_laser $(arg sr300_auto_range_enable_laser)
+    sr300_auto_range_min_motion_versus_range $(arg sr300_auto_range_min_motion_versus_range)
+    sr300_auto_range_max_motion_versus_range $(arg sr300_auto_range_max_motion_versus_range)
+    sr300_auto_range_start_motion_versus_range $(arg sr300_auto_range_start_motion_versus_range)
+    sr300_auto_range_min_laser $(arg sr300_auto_range_min_laser)
+    sr300_auto_range_max_laser $(arg sr300_auto_range_max_laser)
+    sr300_auto_range_start_laser $(arg sr300_auto_range_start_laser)
+    sr300_auto_range_upper_threshold $(arg sr300_auto_range_upper_threshold)
+    sr300_auto_range_lower_threshold $(arg sr300_auto_range_lower_threshold)
+    sr300_wakeup_dev_phase1_period $(arg sr300_wakeup_dev_phase1_period)
+    sr300_wakeup_dev_phase1_fps $(arg sr300_wakeup_dev_phase1_fps)
+    sr300_wakeup_dev_phase2_period $(arg sr300_wakeup_dev_phase2_period)
+    sr300_wakeup_dev_phase2_fps $(arg sr300_wakeup_dev_phase2_fps)
+    sr300_wakeup_dev_reset $(arg sr300_wakeup_dev_reset)
+    sr300_wake_on_usb_reason $(arg sr300_wake_on_usb_reason)
+    sr300_wake_on_usb_confidence $(arg sr300_wake_on_usb_confidence)"/>
+</launch>

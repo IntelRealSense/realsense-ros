@@ -47,6 +47,7 @@ generate_messages(
 generate_dynamic_reconfigure_options(
   cfg/r200_params.cfg
   cfg/f200_params.cfg
+  cfg/sr300_params.cfg
 )
 
 #################################
@@ -70,7 +71,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(${PROJECT_NAME}_nodelet src/base_nodelet.cpp src/r200_nodelet.cpp src/f200_nodelet.cpp)
+add_library(${PROJECT_NAME}_nodelet src/base_nodelet.cpp src/r200_nodelet.cpp src/f200_nodelet.cpp src/sr300_nodelet.cpp)
 target_link_libraries(${PROJECT_NAME}_nodelet
   ${catkin_LIBRARIES}
   # This should be removed once librealsense is a required component
