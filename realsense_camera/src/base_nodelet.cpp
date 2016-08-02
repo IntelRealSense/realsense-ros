@@ -43,11 +43,6 @@ namespace realsense_camera
   {
     topic_thread_->join();
 
-    if (enable_tf_ == true)
-    {
-      transform_thread_->join();
-    }
-
     stopCamera();
 
     rs_delete_context(rs_context_, &rs_error_);
@@ -70,7 +65,7 @@ namespace realsense_camera
       ros::shutdown();
     }
 
-    while (!connectToCamera()) // Poll for camera and connect if found
+    while (false == connectToCamera()) // Poll for camera and connect if found
     {
       ROS_INFO_STREAM(nodelet_name_ << " - Sleeping 5 seconds then retrying to connect");
       ros::Duration(5).sleep();
@@ -88,11 +83,10 @@ namespace realsense_camera
     topic_thread_ =
         boost::shared_ptr <boost::thread>(new boost::thread (boost::bind(&BaseNodelet::prepareTopics, this)));
 
-    // Start tranform thread.
+    // Start publishing tranforms
     if (enable_tf_ == true)
     {
-      transform_thread_ =
-      boost::shared_ptr<boost::thread>(new boost::thread (boost::bind(&BaseNodelet::prepareTransforms, this)));
+      publishStaticTransforms();
     }
 
     // Start dynamic reconfigure callback
@@ -196,7 +190,7 @@ namespace realsense_camera
       // camera not found
       string error_msg = " - Couldn't find camera to connect with ";
       error_msg += "serial_no = " + serial_no_ + ", ";
-      error_msg += "usb_port_id = " + usb_port_id_ ;
+      error_msg += "usb_port_id = " + usb_port_id_;
 
       ROS_ERROR_STREAM(nodelet_name_ << error_msg);
 
@@ -779,50 +773,80 @@ namespace realsense_camera
   /*
    * Prepare and publish transforms.
    */
-  void BaseNodelet::prepareTransforms()
+  void BaseNodelet::publishStaticTransforms()
   {
     // publish transforms for the cameras
     ROS_INFO_STREAM(nodelet_name_ << " - Publishing camera transforms");
-    tf::Transform tr;
-    tf::Quaternion q;
-    tf::TransformBroadcaster tf_broadcaster;
+
+    tf::Quaternion q_c;
+    tf::Quaternion q_d2do;
     rs_extrinsics z_extrinsic;
+    geometry_msgs::TransformStamped b2d_msg;
+    geometry_msgs::TransformStamped d2do_msg;
+    geometry_msgs::TransformStamped b2c_msg;
+    geometry_msgs::TransformStamped c2co_msg;
+
 
     // extrinsics are offsets between the cameras
     rs_get_device_extrinsics(rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
     checkError();
 
-    ros::Duration sleeper(0.1); // 100ms
+    // Get the current timestamp for all static transforms
+    ros::Time static_transform_ts = ros::Time::now();
 
-    while (ros::ok())
-    {
-      // time stamp is future dated to be valid for given duration
-      ros::Time transform_ts = ros::Time::now() + sleeper;
+    // transform base frame to depth frame
+    b2d_msg.header.stamp = static_transform_ts;
+    b2d_msg.header.frame_id = base_frame_id_;
+    b2d_msg.child_frame_id = depth_frame_id_;
+    b2d_msg.transform.translation.x =  z_extrinsic.translation[2];
+    b2d_msg.transform.translation.y = -z_extrinsic.translation[0];
+    b2d_msg.transform.translation.z = -z_extrinsic.translation[1];
+    b2d_msg.transform.rotation.x = 0;
+    b2d_msg.transform.rotation.y = 0;
+    b2d_msg.transform.rotation.z = 0;
+    b2d_msg.transform.rotation.w = 1;
+    static_tf_broadcaster_.sendTransform(b2d_msg);
 
-      // transform base frame to depth frame
-      tr.setOrigin(tf::Vector3(z_extrinsic.translation[2], -z_extrinsic.translation[0], -z_extrinsic.translation[1]));
-      tr.setRotation(tf::Quaternion(0, 0, 0, 1));
-      tf_broadcaster.sendTransform(tf::StampedTransform(tr, transform_ts, base_frame_id_, depth_frame_id_));
+    // transform depth frame to depth optical frame
+    q_d2do.setEuler(M_PI/2, 0.0, -M_PI/2);
+    d2do_msg.header.stamp = static_transform_ts;
+    d2do_msg.header.frame_id = depth_frame_id_;
+    d2do_msg.child_frame_id = frame_id_[RS_STREAM_DEPTH];
+    d2do_msg.transform.translation.x = 0;
+    d2do_msg.transform.translation.y = 0;
+    d2do_msg.transform.translation.z = 0;
+    d2do_msg.transform.rotation.x = q_d2do.getX();
+    d2do_msg.transform.rotation.y = q_d2do.getY();
+    d2do_msg.transform.rotation.z = q_d2do.getZ();
+    d2do_msg.transform.rotation.w = q_d2do.getW();
+    static_tf_broadcaster_.sendTransform(d2do_msg);
 
-      // transform depth frame to depth optical frame
-      tr.setOrigin(tf::Vector3(0,0,0));
-      q.setEuler( M_PI/2, 0.0, -M_PI/2 );
-      tr.setRotation( q );
-      tf_broadcaster.sendTransform(tf::StampedTransform(tr, transform_ts, depth_frame_id_, frame_id_[RS_STREAM_DEPTH]));
+    // transform base frame to color frame (these are the same)
+    b2c_msg.header.stamp = static_transform_ts;
+    b2c_msg.header.frame_id = base_frame_id_;
+    b2c_msg.child_frame_id = color_frame_id_;
+    b2c_msg.transform.translation.x = 0;
+    b2c_msg.transform.translation.y = 0;
+    b2c_msg.transform.translation.z = 0;
+    b2c_msg.transform.rotation.x = 0;
+    b2c_msg.transform.rotation.y = 0;
+    b2c_msg.transform.rotation.z = 0;
+    b2c_msg.transform.rotation.w = 1;
+    static_tf_broadcaster_.sendTransform(b2c_msg);
 
-      // transform base frame to color frame (these are the same)
-      tr.setOrigin(tf::Vector3(0,0,0));
-      tr.setRotation(tf::Quaternion(0, 0, 0, 1));
-      tf_broadcaster.sendTransform(tf::StampedTransform(tr, transform_ts, base_frame_id_, color_frame_id_));
-
-      // transform color frame to color optical frame
-      tr.setOrigin(tf::Vector3(0,0,0));
-      q.setEuler( M_PI/2, 0.0, -M_PI/2 );
-      tr.setRotation( q );
-      tf_broadcaster.sendTransform(tf::StampedTransform(tr, transform_ts, color_frame_id_, frame_id_[RS_STREAM_COLOR]));
-
-      sleeper.sleep(); // need sleep or transform won't publish correctly
-    }
+    // transform color frame to color optical frame
+    q_c.setEuler(M_PI/2, 0.0, -M_PI/2);
+    c2co_msg.header.stamp = static_transform_ts;
+    c2co_msg.header.frame_id = color_frame_id_;
+    c2co_msg.child_frame_id = frame_id_[RS_STREAM_COLOR];
+    c2co_msg.transform.translation.x = 0;
+    c2co_msg.transform.translation.y = 0;
+    c2co_msg.transform.translation.z = 0;
+    c2co_msg.transform.rotation.x = q_c.getX();
+    c2co_msg.transform.rotation.y = q_c.getY();
+    c2co_msg.transform.rotation.z = q_c.getZ();
+    c2co_msg.transform.rotation.w = q_c.getW();
+    static_tf_broadcaster_.sendTransform(c2co_msg);
   }
 
   /*

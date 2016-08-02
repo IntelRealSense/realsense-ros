@@ -62,6 +62,7 @@
 #include <realsense_camera/cameraConfiguration.h>
 #include <pluginlib/class_list_macros.h>
 #include <tf/transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 #include <realsense_camera/constants.h>
 
 namespace realsense_camera
@@ -74,7 +75,6 @@ namespace realsense_camera
     virtual void onInit();
     virtual ~BaseNodelet();
     virtual void prepareTopics();
-    virtual void prepareTransforms();
     virtual bool getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req,
         realsense_camera::cameraConfiguration::Response & res);
 
@@ -86,6 +86,7 @@ namespace realsense_camera
     ros::Time topic_ts_;
     ros::Publisher pointcloud_publisher_;
     ros::ServiceServer get_options_service_;
+    tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
     rs_error *rs_error_ = 0;
     rs_context *rs_context_;
     rs_device *rs_device_;
@@ -114,7 +115,6 @@ namespace realsense_camera
     bool duplicate_depth_color_;
     const uint16_t *image_depth16_;
     boost::shared_ptr<boost::thread> topic_thread_;
-    boost::shared_ptr<boost::thread> transform_thread_;
 
     struct CameraOptions
     {
@@ -143,6 +143,7 @@ namespace realsense_camera
     virtual void publishTopic(rs_stream stream_index);
     virtual void getStreamData(rs_stream stream_index);
     virtual void publishPCTopic();
+    virtual void publishStaticTransforms();
     virtual void checkError();
   };
 }
