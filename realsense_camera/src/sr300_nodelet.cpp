@@ -112,6 +112,13 @@ namespace realsense_camera
       rs_set_device_option(rs_device_, RS_OPTION_COLOR_WHITE_BALANCE, config.color_white_balance, 0);
     }
 
+    // Set F200 specific options
+    rs_set_device_option(rs_device_, RS_OPTION_F200_LASER_POWER, config.f200_laser_power, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_F200_ACCURACY, config.f200_accuracy, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_F200_MOTION_RANGE, config.f200_motion_range, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_F200_FILTER_OPTION, config.f200_filter_option, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_F200_CONFIDENCE_THRESHOLD, config.f200_confidence_threshold, 0);
+
     // Set sr300 specific options
     rs_set_device_option(rs_device_, RS_OPTION_SR300_DYNAMIC_FPS, config.sr300_dynamic_fps, 0);
     rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_ENABLE_MOTION_VERSUS_RANGE, config.sr300_auto_range_enable_motion_versus_range, 0);

@@ -16,6 +16,11 @@
   <arg name="color_sharpness"                                 default="2" />
   <arg name="color_enable_auto_white_balance"                 default="0" />
   <arg name="color_white_balance"                             default="3400" />
+  <arg name="f200_laser_power"                                default="14" />
+  <arg name="f200_accuracy"                                   default="3" />
+  <arg name="f200_motion_range"                               default="2" />
+  <arg name="f200_filter_option"                              default="6" />
+  <arg name="f200_confidence_threshold"                       default="8" />
   <arg name="sr300_dynamic_fps"                               default="60"/>
   <arg name="sr300_auto_range_enable_motion_versus_range"     default="1"/>
   <arg name="sr300_auto_range_enable_laser"                   default="0"/>
@@ -46,6 +51,11 @@
   <param name="$(arg camera)/color_sharpness"                 type="int" value="$(arg color_sharpness)" />
   <param name="$(arg camera)/color_enable_auto_white_balance" type="int" value="$(arg color_enable_auto_white_balance)" />
   <param name="$(arg camera)/color_white_balance"             type="int" value="$(arg color_white_balance)" />
+  <param name="$(arg camera)/f200_laser_power"                type="int" value="$(arg f200_laser_power)" />
+  <param name="$(arg camera)/f200_accuracy"                   type="int" value="$(arg f200_accuracy)" />
+  <param name="$(arg camera)/f200_motion_range"               type="int" value="$(arg f200_motion_range)" />
+  <param name="$(arg camera)/f200_filter_option"              type="int" value="$(arg f200_filter_option)" />
+  <param name="$(arg camera)/f200_confidence_threshold"       type="int" value="$(arg f200_confidence_threshold)" />
   <param name="$(arg camera)/sr300_dynamic_fps"                           type="int" value="$(arg sr300_dynamic_fps)"/>
   <param name="$(arg camera)/sr300_auto_range_enable_motion_versus_range" type="int" value="$(arg sr300_auto_range_enable_motion_versus_range)"/>
   <param name="$(arg camera)/sr300_auto_range_enable_laser"               type="int" value="$(arg sr300_auto_range_enable_laser)"/>
@@ -89,6 +99,11 @@
     color_sharpness $(arg color_sharpness)
     color_enable_auto_white_balance $(arg color_enable_auto_white_balance)
     color_white_balance $(arg color_white_balance)
+    f200_laser_power $(arg f200_laser_power)
+    f200_accuracy $(arg f200_accuracy)
+    f200_motion_range $(arg f200_motion_range)
+    f200_filter_option $(arg f200_filter_option)
+    f200_confidence_threshold $(arg f200_confidence_threshold)
     sr300_dynamic_fps $(arg sr300_dynamic_fps)
     sr300_auto_range_enable_motion_versus_range $(arg sr300_auto_range_enable_motion_versus_range)
     sr300_auto_range_enable_laser $(arg sr300_auto_range_enable_laser)

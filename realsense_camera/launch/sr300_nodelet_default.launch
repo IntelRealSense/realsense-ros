@@ -1,4 +1,4 @@
-<!-- Sample launch file for using RealSense F200 camera with default configurations -->
+<!-- Sample launch file for using RealSense SR300 camera with default configurations -->
 <launch>
   <arg name="manager"      value="nodelet_manager" />
   <arg name="camera"       default="camera" />
