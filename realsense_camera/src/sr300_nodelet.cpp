@@ -122,13 +122,19 @@ namespace realsense_camera
     // Set sr300 specific options
     rs_set_device_option(rs_device_, RS_OPTION_SR300_DYNAMIC_FPS, config.sr300_dynamic_fps, 0);
     rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_ENABLE_MOTION_VERSUS_RANGE, config.sr300_auto_range_enable_motion_versus_range, 0);
+    if (config.sr300_auto_range_enable_motion_versus_range == 1)
+    {
+      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MIN_MOTION_VERSUS_RANGE, config.sr300_auto_range_min_motion_versus_range, 0);
+      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MAX_MOTION_VERSUS_RANGE, config.sr300_auto_range_max_motion_versus_range, 0);
+      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_START_MOTION_VERSUS_RANGE, config.sr300_auto_range_start_motion_versus_range, 0);
+    }
     rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_ENABLE_LASER, config.sr300_auto_range_enable_laser, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MIN_MOTION_VERSUS_RANGE, config.sr300_auto_range_min_motion_versus_range, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MAX_MOTION_VERSUS_RANGE, config.sr300_auto_range_max_motion_versus_range, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_START_MOTION_VERSUS_RANGE, config.sr300_auto_range_start_motion_versus_range, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MIN_LASER, config.sr300_auto_range_min_laser, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MAX_LASER, config.sr300_auto_range_max_laser, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_START_LASER, config.sr300_auto_range_start_laser, 0);
+    if (config.sr300_auto_range_enable_laser == 1)
+    {
+      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MIN_LASER, config.sr300_auto_range_min_laser, 0);
+      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MAX_LASER, config.sr300_auto_range_max_laser, 0);
+      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_START_LASER, config.sr300_auto_range_start_laser, 0);
+    }
     rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_UPPER_THRESHOLD, config.sr300_auto_range_upper_threshold, 0);
     rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_LOWER_THRESHOLD, config.sr300_auto_range_lower_threshold, 0);
     rs_set_device_option(rs_device_, RS_OPTION_SR300_WAKEUP_DEV_PHASE1_PERIOD, config.sr300_wakeup_dev_phase1_period, 0);
