@@ -39,7 +39,23 @@ namespace realsense_camera
    */
   void SR300Nodelet::onInit()
   {
+    format_[RS_STREAM_COLOR] = RS_FORMAT_RGB8;
+    encoding_[RS_STREAM_COLOR] = sensor_msgs::image_encodings::RGB8;
+    cv_type_[RS_STREAM_COLOR] = CV_8UC3;
+    unit_step_size_[RS_STREAM_COLOR] = sizeof(unsigned char) * 3;
+
+    format_[RS_STREAM_DEPTH] = RS_FORMAT_Z16;
+    encoding_[RS_STREAM_DEPTH] = sensor_msgs::image_encodings::TYPE_16UC1;
+    cv_type_[RS_STREAM_DEPTH] = CV_16UC1;
+    unit_step_size_[RS_STREAM_DEPTH] = sizeof(uint16_t);
+
+    format_[RS_STREAM_INFRARED] = RS_FORMAT_Y16;
+    encoding_[RS_STREAM_INFRARED] = sensor_msgs::image_encodings::TYPE_16UC1;
+    cv_type_[RS_STREAM_INFRARED] = CV_16UC1;
+    unit_step_size_[RS_STREAM_INFRARED] = sizeof(uint16_t);
+
     max_z_ = SR300_MAX_Z;
+
     BaseNodelet::onInit();
   }
 
