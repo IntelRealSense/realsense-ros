@@ -387,8 +387,8 @@ TEST(RealsenseTests, testDepthCameraInfo)
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][10] != (double) 0);
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][11] != (double) 0);
 
-    // F200 camera has Depth distortion parameters
-    if (g_camera_type == "F200")
+    // F200 and SR300 cameras have Depth distortion parameters
+    if ((g_camera_type == "F200") || (g_camera_type == "SR300"))
     {
       float depth_caminfo_D = 1;
       for (unsigned int i = 0; i < 5; i++)
@@ -465,8 +465,8 @@ TEST(RealsenseTests, testInfrared1CameraInfo)
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][10] != (double) 0);
     EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][11], (double) 0);
 
-    // F200 camera has IR distortion parameters
-    if (g_camera_type == "F200")
+    // F200 and SR300 cameras have IR distortion parameters
+    if ((g_camera_type == "F200") || (g_camera_type == "SR300"))
     {
       float infrared1_caminfo_D = 1;
       for (unsigned int i = 0; i < 5; i++)

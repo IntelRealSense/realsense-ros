@@ -99,10 +99,13 @@ namespace realsense_camera
     int width_[STREAM_COUNT];
     int height_[STREAM_COUNT];
     int fps_[STREAM_COUNT];
+    rs_format format_[STREAM_COUNT];
+    std::string encoding_[STREAM_COUNT];
+    int cv_type_[STREAM_COUNT];
+    int unit_step_size_[STREAM_COUNT];
     int step_[STREAM_COUNT];
     int ts_[STREAM_COUNT];
     std::string frame_id_[STREAM_COUNT];
-    std::string encoding_[STREAM_COUNT];
     cv::Mat image_[STREAM_COUNT] = {};
     image_transport::CameraPublisher camera_publisher_[STREAM_COUNT] = {};
     sensor_msgs::CameraInfoPtr camera_info_ptr_[STREAM_COUNT] = {};

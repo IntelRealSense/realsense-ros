@@ -39,7 +39,28 @@ namespace realsense_camera
    */
   void R200Nodelet::onInit()
   {
+    format_[RS_STREAM_COLOR] = RS_FORMAT_RGB8;
+    encoding_[RS_STREAM_COLOR] = sensor_msgs::image_encodings::RGB8;
+    cv_type_[RS_STREAM_COLOR] = CV_8UC3;
+    unit_step_size_[RS_STREAM_COLOR] = sizeof(unsigned char) * 3;
+
+    format_[RS_STREAM_DEPTH] = RS_FORMAT_Z16;
+    encoding_[RS_STREAM_DEPTH] = sensor_msgs::image_encodings::TYPE_16UC1;
+    cv_type_[RS_STREAM_DEPTH] = CV_16UC1;
+    unit_step_size_[RS_STREAM_DEPTH] = sizeof(uint16_t);
+
+    format_[RS_STREAM_INFRARED] = RS_FORMAT_Y8;
+    encoding_[RS_STREAM_INFRARED] = sensor_msgs::image_encodings::TYPE_8UC1;
+    cv_type_[RS_STREAM_INFRARED] = CV_8UC1;
+    unit_step_size_[RS_STREAM_INFRARED] = sizeof(unsigned char);
+
+    format_[RS_STREAM_INFRARED2] = RS_FORMAT_Y8;
+    encoding_[RS_STREAM_INFRARED2] = sensor_msgs::image_encodings::TYPE_8UC1;
+    cv_type_[RS_STREAM_INFRARED2] = CV_8UC1;
+    unit_step_size_[RS_STREAM_INFRARED2] = sizeof(unsigned char);
+
     max_z_ = R200_MAX_Z;
+
     BaseNodelet::onInit();
   }
 
@@ -176,18 +197,17 @@ namespace realsense_camera
 
     if (enable_[RS_STREAM_DEPTH] == true)
     {
-      enableStream(RS_STREAM_INFRARED2, width_[RS_STREAM_DEPTH], height_[RS_STREAM_DEPTH], IR_FORMAT,
+      enableStream(RS_STREAM_INFRARED2, width_[RS_STREAM_DEPTH], height_[RS_STREAM_DEPTH], format_[RS_STREAM_INFRARED2],
           fps_[RS_STREAM_DEPTH]);
       if (camera_info_ptr_[RS_STREAM_INFRARED2] == NULL)
       {
         ROS_DEBUG_STREAM(nodelet_name_ << " - Allocating resources for " << STREAM_DESC[RS_STREAM_INFRARED2]);
         getStreamCalibData(RS_STREAM_INFRARED2);
-        step_[RS_STREAM_INFRARED2] = camera_info_ptr_[RS_STREAM_INFRARED2]->width * sizeof(unsigned char);
+        step_[RS_STREAM_INFRARED2] = camera_info_ptr_[RS_STREAM_INFRARED2]->width * unit_step_size_[RS_STREAM_INFRARED2];
         image_[RS_STREAM_INFRARED2] = cv::Mat(camera_info_ptr_[RS_STREAM_INFRARED2]->height,
-            camera_info_ptr_[RS_STREAM_INFRARED2]->width, CV_8UC1, cv::Scalar(0, 0, 0));
+            camera_info_ptr_[RS_STREAM_INFRARED2]->width, cv_type_[RS_STREAM_INFRARED2], cv::Scalar(0, 0, 0));
       }
       ts_[RS_STREAM_INFRARED2] = -1;
-      encoding_[RS_STREAM_INFRARED2] = sensor_msgs::image_encodings::TYPE_8UC1;
     }
     else if (enable_[RS_STREAM_DEPTH] == false)
     {
