@@ -112,7 +112,7 @@ namespace realsense_camera
     std::string base_frame_id_;
     std::string depth_frame_id_;
     std::string color_frame_id_;
-    int max_z_ = -1;
+    float max_z_ = -1.0f;
     bool enable_pointcloud_;
     bool enable_tf_;
     bool duplicate_depth_color_;

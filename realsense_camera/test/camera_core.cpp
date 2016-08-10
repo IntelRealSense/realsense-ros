@@ -67,7 +67,7 @@ void imageInfrared1Callback(const sensor_msgs::ImageConstPtr &msg, const sensor_
 
   uchar *infrared1_data = image.data;
 
-  long infrared1_total = 0;
+  double infrared1_total = 0.0;
   int infrared1_count = 1;
   for (unsigned int i = 0; i < msg->height * msg->width; i++)
   {
@@ -78,9 +78,9 @@ void imageInfrared1Callback(const sensor_msgs::ImageConstPtr &msg, const sensor_
     }
     infrared1_data++;
   }
-  if (infrared1_count != 0)
+  if (infrared1_count != 1)
   {
-    g_infrared1_avg = infrared1_total / infrared1_count;
+    g_infrared1_avg = static_cast<float>(infrared1_total / infrared1_count);
   }
 
   getMsgInfo(RS_STREAM_INFRARED, msg);
@@ -100,7 +100,7 @@ void imageInfrared2Callback(const sensor_msgs::ImageConstPtr &msg, const sensor_
 
   uchar *infrared2_data = image.data;
 
-  long infrared2_total = 0;
+  double infrared2_total = 0.0;
   int infrared2_count = 1;
   for (unsigned int i = 0; i < msg->height * msg->width; i++)
   {
@@ -113,7 +113,7 @@ void imageInfrared2Callback(const sensor_msgs::ImageConstPtr &msg, const sensor_
   }
   if (infrared2_count != 0)
   {
-    g_infrared2_avg = infrared2_total / infrared2_count;
+    g_infrared2_avg = static_cast<float>(infrared2_total / infrared2_count);
   }
 
   getMsgInfo(RS_STREAM_INFRARED2, msg);
@@ -132,7 +132,7 @@ void imageDepthCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs
   cv::Mat image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::TYPE_16UC1)->image;
   uint16_t *image_data = (uint16_t *) image.data;
 
-  long depth_total = 0;
+  double depth_total = 0;
   int depth_count = 0;
   for (unsigned int i = 0; i < msg->height * msg->width; ++i)
   {
@@ -145,7 +145,7 @@ void imageDepthCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs
   }
   if (depth_count != 0)
   {
-    g_depth_avg = depth_total / depth_count;
+    g_depth_avg = static_cast<float>(depth_total / depth_count);
   }
 
   getMsgInfo(RS_STREAM_DEPTH, msg);
@@ -165,13 +165,13 @@ void pcCallback(const sensor_msgs::PointCloud2ConstPtr pc)
   pcl::PointCloud < pcl::PointXYZRGB > pointcloud;
   pcl::fromROSMsg(*pc, pointcloud);
 
-  long pc_depth_total = 0;
+  double pc_depth_total = 0.0;
   int pc_depth_count = 0;
   for (unsigned int i = 0; i < pointcloud.width * pointcloud.height; ++i)
   {
     pcl::PointXYZRGB point = pointcloud.points[i];
-    float pc_depth = (float) std::ceil(point.z);
-    if ((0 < pc_depth) && (pc_depth <= g_max_z))
+    double pc_depth = std::ceil(point.z);
+    if ((0.0 < pc_depth) && (pc_depth <= g_max_z))
     {
       pc_depth_total += pc_depth;
       pc_depth_count++;
@@ -179,7 +179,7 @@ void pcCallback(const sensor_msgs::PointCloud2ConstPtr pc)
   }
   if (pc_depth_count != 0)
   {
-    g_pc_depth_avg = pc_depth_total / pc_depth_count;
+    g_pc_depth_avg = static_cast<float>(pc_depth_total / pc_depth_count);
   }
 
   g_pc_recv = true;
@@ -204,7 +204,7 @@ void imageColorCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs
   }
   if (color_count != 0)
   {
-    g_color_avg = color_total / color_count;
+    g_color_avg = static_cast<float>(color_total / color_count);
   }
 
   getMsgInfo(RS_STREAM_COLOR, msg);
@@ -270,31 +270,33 @@ TEST(RealsenseTests, testColorCameraInfo)
     }
 
     // check projection matrix values are set
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][0] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][1], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][2] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][3], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][4], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][5] != (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][6] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][7], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][8], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][9], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][10] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][11], (double) 0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][0] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][1], 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][2] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][3], 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][4], 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][5] != 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][6] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][7], 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][8], 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][9], 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][10] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][11], 0.0);
 
     // R200 camera has Color distortion parameters
     if (g_camera_type == "R200")
     {
-      float color_caminfo_D = 1;
+      bool any_are_zero = false;
       // Ignoring the 5th value since it always appears to be 0.0
       for (unsigned int i = 0; i < 4; i++)
       {
-        color_caminfo_D = color_caminfo_D && g_color_caminfo_D_recv[i];
+        if (g_color_caminfo_D_recv[i] == 0.0)
+        {
+          any_are_zero = true;
+        }
       }
-      EXPECT_TRUE(color_caminfo_D != (float) 0);
+      EXPECT_FALSE(any_are_zero);
     }
-
   }
 }
 
@@ -374,30 +376,32 @@ TEST(RealsenseTests, testDepthCameraInfo)
     }
 
     // check projection matrix values are set
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][0] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_DEPTH][1], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][2] != (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][3] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_DEPTH][4], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][5] != (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][6] != (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][7] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_DEPTH][8], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_DEPTH][9], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][10] != (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][11] != (double) 0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][0] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_DEPTH][1], 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][2] != 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][3] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_DEPTH][4], 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][5] != 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][6] != 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][7] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_DEPTH][8], 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_DEPTH][9], 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][10] != 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_DEPTH][11] != 0.0);
 
     // F200 and SR300 cameras have Depth distortion parameters
     if ((g_camera_type == "F200") || (g_camera_type == "SR300"))
     {
-      float depth_caminfo_D = 1;
+      bool any_are_zero = false;
       for (unsigned int i = 0; i < 5; i++)
       {
-        depth_caminfo_D = depth_caminfo_D && g_depth_caminfo_D_recv[i];
+        if (g_depth_caminfo_D_recv[i] == 0.0)
+        {
+          any_are_zero = true;
+        }
       }
-      EXPECT_TRUE(depth_caminfo_D != (float) 0);
+      EXPECT_FALSE(any_are_zero);
     }
-
   }
 }
 
@@ -452,30 +456,32 @@ TEST(RealsenseTests, testInfrared1CameraInfo)
     }
 
     // check projection matrix values are set
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][0] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][1], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][2] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][3], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][4], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][5] != (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][6] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][7], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][8], (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][9], (double) 0);
-    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][10] != (double) 0);
-    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][11], (double) 0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][0] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][1], 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][2] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][3], 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][4], 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][5] != 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][6] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][7], 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][8], 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][9], 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED][10] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED][11], 0.0);
 
     // F200 and SR300 cameras have IR distortion parameters
     if ((g_camera_type == "F200") || (g_camera_type == "SR300"))
     {
-      float infrared1_caminfo_D = 1;
+      bool any_are_zero = false;
       for (unsigned int i = 0; i < 5; i++)
       {
-        infrared1_caminfo_D = infrared1_caminfo_D && g_infrared1_caminfo_D_recv[i];
+        if (g_infrared1_caminfo_D_recv[i] == 0.0)
+        {
+          any_are_zero = true;
+        }
       }
-      EXPECT_TRUE(infrared1_caminfo_D != (float) 0);
+      EXPECT_FALSE(any_are_zero);
     }
-
   }
 }
 
@@ -533,24 +539,24 @@ TEST(RealsenseTests, testInfrared2CameraInfo)
       }
 
       // check projection matrix values are set
-      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][0] != (double) 0);
-      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][1], (double) 0);
-      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][2] != (double) 0);
-      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][3], (double) 0);
-      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][4], (double) 0);
-      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][5] != (double) 0);
-      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][6] != (double) 0);
-      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][7], (double) 0);
-      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][8], (double) 0);
-      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][9], (double) 0);
-      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][10] != (double) 0);
-      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][11], (double) 0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][0] != 0.0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][1], 0.0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][2] != 0.0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][3], 0.0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][4], 0.0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][5] != 0.0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][6] != 0.0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][7], 0.0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][8], 0.0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][9], 0.0);
+      EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_INFRARED2][10] != 0.0);
+      EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_INFRARED2][11], 0.0);
     }
   }
 }
 
 
- TEST(RealsenseTests, testPointCloud)
+TEST(RealsenseTests, testPointCloud)
 {
   if (g_enable_pointcloud)
   {

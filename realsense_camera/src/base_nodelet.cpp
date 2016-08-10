@@ -491,15 +491,15 @@ namespace realsense_camera
     camera_info->distortion_model = "plumb_bob";
 
     // set R (rotation matrix) values to identity matrix
-    camera_info->R.at(0) = (double) 1;
-    camera_info->R.at(1) = (double) 0;
-    camera_info->R.at(2) = (double) 0;
-    camera_info->R.at(3) = (double) 0;
-    camera_info->R.at(4) = (double) 1;
-    camera_info->R.at(5) = (double) 0;
-    camera_info->R.at(6) = (double) 0;
-    camera_info->R.at(7) = (double) 0;
-    camera_info->R.at(8) = (double) 1;
+    camera_info->R.at(0) = 1.0;
+    camera_info->R.at(1) = 0.0;
+    camera_info->R.at(2) = 0.0;
+    camera_info->R.at(3) = 0.0;
+    camera_info->R.at(4) = 1.0;
+    camera_info->R.at(5) = 0.0;
+    camera_info->R.at(6) = 0.0;
+    camera_info->R.at(7) = 0.0;
+    camera_info->R.at(8) = 1.0;
 
     for (int i = 0; i < 5; i++)
     {
@@ -710,16 +710,15 @@ namespace realsense_camera
       {
         for (int x = 0; x < z_intrinsic.width; x++)
         {
-          scaled_depth = ((float) *image_depth16_) * depth_scale;
-          float depth_pixel[2] =
-          { (float) x, (float) y};
+          scaled_depth = static_cast<float>(*image_depth16_) * depth_scale;
+          float depth_pixel[2] = {static_cast<float>(x), static_cast<float>(y)};
           rs_deproject_pixel_to_point(depth_point, &z_intrinsic, depth_pixel, scaled_depth);
 
-          if (depth_point[2] <= 0 || depth_point[2] > max_z_)
+          if (depth_point[2] <= 0.0f || depth_point[2] > max_z_)
           {
-            depth_point[0] = 0;
-            depth_point[1] = 0;
-            depth_point[2] = 0;
+            depth_point[0] = 0.0f;
+            depth_point[1] = 0.0f;
+            depth_point[2] = 0.0f;
           }
 
           *iter_x = depth_point[0];
@@ -727,32 +726,32 @@ namespace realsense_camera
           *iter_z = depth_point[2];
 
           // Default to white color.
-          *iter_r = (uint8_t) 255;
-          *iter_g = (uint8_t) 255;
-          *iter_b = (uint8_t) 255;
+          *iter_r = static_cast<uint8_t>(255);
+          *iter_g = static_cast<uint8_t>(255);
+          *iter_b = static_cast<uint8_t>(255);
 
           if (enable_[RS_STREAM_COLOR] == true)
           {
             rs_transform_point_to_point(color_point, &z_extrinsic, depth_point);
             rs_project_point_to_pixel(color_pixel, &color_intrinsic, color_point);
 
-            if (color_pixel[1] < 0 || color_pixel[1] > image_color.rows
-                || color_pixel[0] < 0 || color_pixel[0] > image_color.cols)
+            if (color_pixel[1] < 0.0f || color_pixel[1] > image_color.rows
+                || color_pixel[0] < 0.0f || color_pixel[0] > image_color.cols)
             {
               // For out of bounds color data, default to a shade of blue in order to visually distinguish holes.
               // This color value is same as the librealsense out of bounds color value.
-              *iter_r = 96;
-              *iter_g = 157;
-              *iter_b = 198;
+              *iter_r = static_cast<uint8_t>(96);
+              *iter_g = static_cast<uint8_t>(157);
+              *iter_b = static_cast<uint8_t>(198);
             }
             else
             {
-              int i = (int) color_pixel[0];
-              int j = (int) color_pixel[1];
+              int i = static_cast<int>(color_pixel[0]);
+              int j = static_cast<int>(color_pixel[1]);
 
-              *iter_r = (uint8_t) color_data[i * 3 + j * image_color.cols * 3];
-              *iter_g = (uint8_t) color_data[i * 3 + j * image_color.cols * 3 + 1];
-              *iter_b = (uint8_t) color_data[i * 3 + j * image_color.cols * 3 + 2];
+              *iter_r = static_cast<uint8_t>(color_data[i * 3 + j * image_color.cols * 3]);
+              *iter_g = static_cast<uint8_t>(color_data[i * 3 + j * image_color.cols * 3 + 1]);
+              *iter_b = static_cast<uint8_t>(color_data[i * 3 + j * image_color.cols * 3 + 2]);
             }
           }
 
