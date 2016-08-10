@@ -153,6 +153,7 @@ namespace realsense_camera
     }
     rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_UPPER_THRESHOLD, config.sr300_auto_range_upper_threshold, 0);
     rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_LOWER_THRESHOLD, config.sr300_auto_range_lower_threshold, 0);
+/*
     rs_set_device_option(rs_device_, RS_OPTION_SR300_WAKEUP_DEV_PHASE1_PERIOD, config.sr300_wakeup_dev_phase1_period, 0);
     rs_set_device_option(rs_device_, RS_OPTION_SR300_WAKEUP_DEV_PHASE1_FPS, config.sr300_wakeup_dev_phase1_fps, 0);
     rs_set_device_option(rs_device_, RS_OPTION_SR300_WAKEUP_DEV_PHASE2_PERIOD, config.sr300_wakeup_dev_phase2_period, 0);
@@ -160,6 +161,7 @@ namespace realsense_camera
     rs_set_device_option(rs_device_, RS_OPTION_SR300_WAKEUP_DEV_RESET, config.sr300_wakeup_dev_reset, 0);
     rs_set_device_option(rs_device_, RS_OPTION_SR300_WAKE_ON_USB_REASON, config.sr300_wake_on_usb_reason, 0);
     rs_set_device_option(rs_device_, RS_OPTION_SR300_WAKE_ON_USB_CONFIDENCE, config.sr300_wake_on_usb_confidence, 0);
+*/
   }
 }  // end namespace
 

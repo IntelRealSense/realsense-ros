@@ -283,5 +283,3 @@ Hence the launch file "r200_nodelet_rgbd.launch" will not generate data for the 
 * The usb-port-id logic does not work for F200 and SR300 cameras due to a known librealsense [bug] (https://github.com/IntelRealSense/librealsense/issues/220). Until it gets fixed,
  use serial_no when multiple F200 or SR300 cameras are connected to the system.
 
-* The get_settings service returns invalid values for certain SR300 camera options due to a known librealsense [bug] (https://github.com/IntelRealSense/librealsense/issues/231).
-
