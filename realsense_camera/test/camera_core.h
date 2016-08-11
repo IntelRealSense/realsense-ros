@@ -81,7 +81,7 @@ ros::Subscriber g_sub_pc;
 ros::ServiceClient g_service_client;
 
 std::map<std::string, std::string> g_config_args;
-int g_max_z = R200_MAX_Z * 1000; // Converting meter to mm.
+double g_max_z = R200_MAX_Z * 1000.0f; // Converting meter to mm.
 
 bool g_depth_recv = false;
 bool g_color_recv = false;
@@ -89,11 +89,11 @@ bool g_infrared1_recv = false;
 bool g_infrared2_recv = false;
 bool g_pc_recv = false;
 
-float g_depth_avg = 0;
-float g_color_avg = 0;
-float g_infrared1_avg = 0;
-float g_infrared2_avg = 0;
-float g_pc_depth_avg = 0;
+float g_depth_avg = 0.0f;
+float g_color_avg = 0.0f;
+float g_infrared1_avg = 0.0f;
+float g_infrared2_avg = 0.0f;
+float g_pc_depth_avg = 0.0f;
 
 int g_height_recv[STREAM_COUNT] = {0};
 int g_width_recv[STREAM_COUNT] = {0};
@@ -103,13 +103,13 @@ std::string g_encoding_recv[STREAM_COUNT]; // Expected stream encoding.
 
 int g_caminfo_height_recv[STREAM_COUNT] = {0};
 int g_caminfo_width_recv[STREAM_COUNT] = {0};
-float g_color_caminfo_D_recv[5] = {0};
-float g_depth_caminfo_D_recv[5] = {0};
-float g_infrared1_caminfo_D_recv[5] = {0};
-float g_infrared2_caminfo_D_recv[5] = {0};
+double g_color_caminfo_D_recv[5] = {0.0};
+double g_depth_caminfo_D_recv[5] = {0.0};
+double g_infrared1_caminfo_D_recv[5] = {0.0};
+double g_infrared2_caminfo_D_recv[5] = {0.0};
 
-double g_caminfo_rotation_recv[STREAM_COUNT][9] = {0};
-double g_caminfo_projection_recv[STREAM_COUNT][12] = {0};
+double g_caminfo_rotation_recv[STREAM_COUNT][9] = {{0.0}};
+double g_caminfo_projection_recv[STREAM_COUNT][12] = {{0.0}};
 
 std::string g_dmodel_recv[STREAM_COUNT];
 std::string g_camera_type;

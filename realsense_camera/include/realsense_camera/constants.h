@@ -28,6 +28,8 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
+#include <iostream>
+
 #pragma once
 #ifndef NODELET_CONSTANTS
 #define NODELET_CONSTANTS
@@ -64,12 +66,15 @@ namespace realsense_camera
 
     // R200 Constants.
     const std::string IR2_TOPIC = "camera/ir2/image_raw";
-    const int R200_MAX_Z = 10;   // in meters
+    // Indoor Range: 0.7m - 3.5m, Outdoor Range: 10m
+    const float R200_MAX_Z = 10.0f;   // in meters
 
     // F200 Constants.
-    const int F200_MAX_Z = 1;    // in meters
+    // Indoor Range: 0.2m – 1.0m, Outdoor Range: n/a
+    const float F200_MAX_Z = 1.0f;    // in meters
 
     // SR300 Constants.
-    const int SR300_MAX_Z = 1.5; // in meters
+    // Indoor Range: 0.2m – 1.5m, Outdoor Range: n/a
+    const float SR300_MAX_Z = 1.5f; // in meters
 }
 #endif
