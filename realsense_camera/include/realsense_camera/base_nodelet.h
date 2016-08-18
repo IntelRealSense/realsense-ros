@@ -118,6 +118,8 @@ namespace realsense_camera
     bool duplicate_depth_color_;
     const uint16_t *image_depth16_;
     boost::shared_ptr<boost::thread> topic_thread_;
+    float depth_scale_meters_;
+    cv::Mat cvWrapper_;
 
     struct CameraOptions
     {

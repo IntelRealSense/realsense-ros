@@ -410,6 +410,8 @@ namespace realsense_camera
             camera_info_ptr_[RS_STREAM_INFRARED]->width, cv_type_[RS_STREAM_INFRARED], cv::Scalar(0, 0, 0));
       }
       ts_[RS_STREAM_INFRARED] = -1;
+      depth_scale_meters_ = rs_get_device_depth_scale(rs_device_, &rs_error_);
+      checkError();
     }
     else if (enable_[RS_STREAM_DEPTH] == false)
     {
@@ -554,10 +556,23 @@ namespace realsense_camera
     if (stream_index == RS_STREAM_DEPTH)
     {
       // fill depth buffer
-      image_depth16_ = reinterpret_cast <const uint16_t * >(rs_get_frame_data(rs_device_, RS_STREAM_DEPTH, 0));
+      image_depth16_ = reinterpret_cast<const uint16_t *>(rs_get_frame_data(rs_device_, stream_index, 0));
+      if (depth_scale_meters_ == MILLIMETER_METERS)
+      {
+        image_[stream_index].data = (unsigned char *) (rs_get_frame_data(rs_device_, stream_index, 0));
+      }
+      else
+      {
+        cvWrapper_ = cv::Mat(image_[stream_index].size(), cv_type_[stream_index], (void *) image_depth16_,
+              step_[stream_index]);
+        cvWrapper_.convertTo(image_[stream_index], cv_type_[stream_index],
+              static_cast<double>(depth_scale_meters_) / static_cast<double>(MILLIMETER_METERS));
+      }
     }
-    // fill image buffer for stream
-    image_[stream_index].data = (unsigned char *) (rs_get_frame_data(rs_device_, stream_index, 0));
+    else
+    {
+      image_[stream_index].data = (unsigned char *) (rs_get_frame_data(rs_device_, stream_index, 0));
+    }
   }
 
   /*
@@ -702,7 +717,6 @@ namespace realsense_camera
 
       float depth_point[3], color_point[3], color_pixel[2], scaled_depth;
       unsigned char *color_data = image_color.data;
-      const float depth_scale = rs_get_device_depth_scale(rs_device_, &rs_error_);
       checkError();// Default value is 0.001
 
       // Fill the PointCloud2 fields.
@@ -710,7 +724,7 @@ namespace realsense_camera
       {
         for (int x = 0; x < z_intrinsic.width; x++)
         {
-          scaled_depth = static_cast<float>(*image_depth16_) * depth_scale;
+          scaled_depth = static_cast<float>(*image_depth16_) * depth_scale_meters_;
           float depth_pixel[2] = {static_cast<float>(x), static_cast<float>(y)};
           rs_deproject_pixel_to_point(depth_point, &z_intrinsic, depth_pixel, scaled_depth);
 

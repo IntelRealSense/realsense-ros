@@ -63,6 +63,7 @@ namespace realsense_camera
     const std::string SETTINGS_SERVICE = "camera/get_settings";
     const std::string STREAM_DESC[STREAM_COUNT] = {"Depth", "Color", "IR", "IR2"};
     const double ROTATION_IDENTITY[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    const float MILLIMETER_METERS  = 0.001;
 
     // R200 Constants.
     const std::string IR2_TOPIC = "camera/ir2/image_raw";
