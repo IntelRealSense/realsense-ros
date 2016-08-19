@@ -4,7 +4,7 @@
 | Version          | Best Known (indigo)  | Best Known (kinetic) |
 |:---------------- |:---------------------|:---------------------|
 | Operating System | Ubuntu 14.04.4 LTS   | Ubuntu 16.04 LTS     |
-| Kernel           | 4.4.0-040400-generic | 4.4.0-22-generic     |
+| Kernel           | 4.4.0-34-generic     | 4.4.0-34-generic     |
 | Backend          | video4linux          | video4linux          |
 | librealsense     | 0.9.2                | 0.9.2                |
 | R200 Firmware    | 1.0.72.06            | 1.0.72.06            |
@@ -12,16 +12,39 @@
 | SR300 Firmware   | 3.10.10.0            | 3.10.10.0            |
 
 ###Installation:
-#####Getting the camera to work on Linux
+####ROS Debian Packages
 
-* Clone the source from the librealsense git repository https://github.com/IntelRealSense/librealsense.git and follow the "Installation Guide" for installing the library.
-* Make sure that the software stack is installed properly and that the camera is working. This can be checked by connecting the camera to a USB3 port and running the "cpp-capture" sample program in the "librealsense/bin" folder.
-If this does not work, you should first fix this issue before continuing with the ROS integration.
-* Make sure "/usr/local/lib" is set in your "LD_LIBRARY_PATH".
+* Install ROS (see [wiki.ros.org/ROS/Installation](http://wiki.ros.org/ROS/Installation) for instructions).
 
-#####Building the package
+* Install the realsense_sense camera package
 
-* Install ROS and create a local catkin workspace (see [wiki.ros.org](http://wiki.ros.org/) for instructions).
+  `sudo apt-get install ros-<*distro*>-realsense-camera`
+
+  This will also install the required `ros-<*distro*>-librealsense` library on your system.
+
+**NOTE:** Replace `<*distro*>` with `kinetic` or `indigo`.
+
+##### Librealsense REQUIRED Manual Installation Steps
+librealsense 0.9.2 and earlier require a few extra, manual steps to enable the use of the library.
+
+* Clone the librealsense GitHub repository:
+
+```
+  git clone https://github.com/IntelRealSense/librealsense.git
+  cd librealsense
+  git checkout -b b0.9.2 v0.9.2
+```
+
+* Follow the instructions for [Video4Linux
+  backend](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md#video4linux-backend) **ONLY** 
+
+  **NOTE:** Only one of the three options for Step 3 should be completed
+
+**NOTE:** The next release of `ros-<*distro*>-librealsense` will no longer require these manual steps.
+
+####Building the Package from Source
+
+* Create a local catkin workspace (see [wiki.ros.org](http://wiki.ros.org/) for instructions).
 * Clone the source from https://github.com/intel-ros/realsense.git.
   Checkout the 'stable' tag for the most stable version (E.g. `git checkout stable`).
 * Run `rosdep install --skip-keys=librealsense --from-paths -i <src-dir of cloned realsense repo>` to install package dependencies.
