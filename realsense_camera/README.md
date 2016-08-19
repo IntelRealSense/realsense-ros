@@ -280,6 +280,18 @@ Hence the launch file "r200_nodelet_rgbd.launch" will not generate data for the 
 
 * The performance benchmark for multiple cameras launched at the same time has not been defined yet.
 
-* The usb-port-id logic does not work for F200 and SR300 cameras due to a known librealsense [bug] (https://github.com/IntelRealSense/librealsense/issues/220). Until it gets fixed,
- use serial_no when multiple F200 or SR300 cameras are connected to the system.
+###Errata:
 
+* The usb-port-id logic does not work for F200 and SR300 cameras due to a known
+[librealsense Issue #220](https://github.com/IntelRealSense/librealsense/issues/220).
+Until it gets fixed, use serial_no when multiple F200 or SR300 cameras are connected to the system.
+
+* Multiple cameras can only be started from a single launch file for F200 and SR300 camera types;
+see [Issue #93](https://github.com/intel-ros/realsense/issues/92). This appears to be linked to the
+usb-port-id [librealsense Issue #220](https://github.com/IntelRealSense/librealsense/issues/220).
+Until it gets fixed, use a single launch file for multiple F200 or SR300 cameras.
+
+* For F200 and SR300 cameras, native pointcloud is not generated even after enabling pointcloud
+[Issue #89](https://github.com/intel-ros/realsense/issues/89).
+Unlikely to be fixed as current plan is to
+[remove native point cloud generation](https://github.com/intel-ros/realsense/issues/47).
