@@ -21,7 +21,6 @@
   <arg name="f200_motion_range"                               default="0" />
   <arg name="f200_filter_option"                              default="5" />
   <arg name="f200_confidence_threshold"                       default="6" />
-  <arg name="sr300_dynamic_fps"                               default="0"/>
   <arg name="sr300_auto_range_enable_motion_versus_range"     default="1"/>
   <arg name="sr300_auto_range_enable_laser"                   default="1"/>
   <arg name="sr300_auto_range_min_motion_versus_range"        default="180"/>
@@ -49,7 +48,6 @@
   <param name="$(arg camera)/f200_motion_range"               type="int" value="$(arg f200_motion_range)" />
   <param name="$(arg camera)/f200_filter_option"              type="int" value="$(arg f200_filter_option)" />
   <param name="$(arg camera)/f200_confidence_threshold"       type="int" value="$(arg f200_confidence_threshold)" />
-  <param name="$(arg camera)/sr300_dynamic_fps"                           type="int" value="$(arg sr300_dynamic_fps)"/>
   <param name="$(arg camera)/sr300_auto_range_enable_motion_versus_range" type="int" value="$(arg sr300_auto_range_enable_motion_versus_range)"/>
   <param name="$(arg camera)/sr300_auto_range_enable_laser"               type="int" value="$(arg sr300_auto_range_enable_laser)"/>
   <param name="$(arg camera)/sr300_auto_range_min_motion_versus_range"    type="int" value="$(arg sr300_auto_range_min_motion_versus_range)"/>
@@ -89,7 +87,6 @@
     f200_motion_range $(arg f200_motion_range)
     f200_filter_option $(arg f200_filter_option)
     f200_confidence_threshold $(arg f200_confidence_threshold)
-    sr300_dynamic_fps $(arg sr300_dynamic_fps)
     sr300_auto_range_enable_motion_versus_range $(arg sr300_auto_range_enable_motion_versus_range)
     sr300_auto_range_enable_laser $(arg sr300_auto_range_enable_laser)
     sr300_auto_range_min_motion_versus_range $(arg sr300_auto_range_min_motion_versus_range)
