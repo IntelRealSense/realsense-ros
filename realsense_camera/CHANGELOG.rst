@@ -2,6 +2,21 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Updated Install Instructions for ROS Packages
+* Added Errata for F200/SR300 Camera Types
+* Make librealsense pkg required
+* Added code to read depth scale from camera (intel-ros/realsense#46)
+* Fix SR300 Max Z + Type casting
+* Updated default values for SR300 camera options
+* Updated documentation with SR300 camera details
+* Updated tests to include SR300 distortion parameters
+* Added fix to remove blurriness from SR300 IR stream
+* Added initial support for SR300 cameras (#6)
+* Change to Static Transforms for camera (#84)
+* Contributors: Mark D Horn, Reagan Lopez, Salah-Eddine Missri, Lincoln Lorenz
+
 1.3.0 (2016-07-28)
 ------------------
 * Fix the Install for Includes
