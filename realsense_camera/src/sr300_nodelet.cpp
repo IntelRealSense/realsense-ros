@@ -136,7 +136,6 @@ namespace realsense_camera
     rs_set_device_option(rs_device_, RS_OPTION_F200_CONFIDENCE_THRESHOLD, config.f200_confidence_threshold, 0);
 
     // Set SR300 specific options
-    rs_set_device_option(rs_device_, RS_OPTION_SR300_DYNAMIC_FPS, config.sr300_dynamic_fps, 0);
     rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_ENABLE_MOTION_VERSUS_RANGE, config.sr300_auto_range_enable_motion_versus_range, 0);
     if (config.sr300_auto_range_enable_motion_versus_range == 1)
     {
