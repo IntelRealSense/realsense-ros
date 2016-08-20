@@ -2,8 +2,8 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.4.0 (2016-08-19)
+------------------
 * Updated Install Instructions for ROS Packages
 * Added Errata for F200/SR300 Camera Types
 * Make librealsense pkg required
