@@ -246,11 +246,18 @@ namespace realsense_camera
    */
   void BaseNodelet::advertiseTopics()
   {
-    image_transport::ImageTransport image_transport(nh_);
-    camera_publisher_[RS_STREAM_COLOR] = image_transport.advertiseCamera(COLOR_TOPIC, 1);
-    camera_publisher_[RS_STREAM_DEPTH] = image_transport.advertiseCamera(DEPTH_TOPIC, 1);
-    camera_publisher_[RS_STREAM_INFRARED] = image_transport.advertiseCamera(IR_TOPIC, 1);
-    pointcloud_publisher_ = nh_.advertise<sensor_msgs::PointCloud2>(PC_TOPIC, 1);
+    ros::NodeHandle color_nh(nh_, COLOR_NAMESPACE);
+    image_transport::ImageTransport color_image_transport(color_nh);
+    camera_publisher_[RS_STREAM_COLOR] = color_image_transport.advertiseCamera(COLOR_TOPIC, 1);
+
+    ros::NodeHandle depth_nh(nh_, DEPTH_NAMESPACE);
+    image_transport::ImageTransport depth_image_transport(depth_nh);
+    camera_publisher_[RS_STREAM_DEPTH] = depth_image_transport.advertiseCamera(DEPTH_TOPIC, 1);
+    pointcloud_publisher_ = depth_nh.advertise<sensor_msgs::PointCloud2>(PC_TOPIC, 1);
+
+    ros::NodeHandle ir_nh(nh_, IR_NAMESPACE);
+    image_transport::ImageTransport ir_image_transport(ir_nh);
+    camera_publisher_[RS_STREAM_INFRARED] = ir_image_transport.advertiseCamera(IR_TOPIC, 1);
   }
 
   /*
@@ -258,7 +265,7 @@ namespace realsense_camera
    */
   void BaseNodelet::advertiseServices()
   {
-    get_options_service_ = nh_.advertiseService(SETTINGS_SERVICE, &BaseNodelet::getCameraOptionValues, this);
+    get_options_service_ = pnh_.advertiseService(SETTINGS_SERVICE, &BaseNodelet::getCameraOptionValues, this);
   }
 
   /*

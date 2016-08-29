@@ -56,17 +56,21 @@ namespace realsense_camera
     const std::string DEFAULT_COLOR_OPTICAL_FRAME_ID = "camera_rgb_optical_frame";
     const std::string DEFAULT_IR_FRAME_ID = "camera_ir_frame";
     const std::string DEFAULT_IR2_FRAME_ID = "camera_ir2_frame";
-    const std::string DEPTH_TOPIC = "camera/depth/image_raw";
-    const std::string COLOR_TOPIC = "camera/color/image_raw";
-    const std::string IR_TOPIC = "camera/ir/image_raw";
-    const std::string PC_TOPIC = "camera/depth/points";
-    const std::string SETTINGS_SERVICE = "camera/get_settings";
+    const std::string DEPTH_NAMESPACE = "depth";
+    const std::string DEPTH_TOPIC = "image_raw";
+    const std::string PC_TOPIC = "points";
+    const std::string COLOR_NAMESPACE = "color";
+    const std::string COLOR_TOPIC = "image_raw";
+    const std::string IR_NAMESPACE = "ir";
+    const std::string IR_TOPIC = "image_raw";
+    const std::string SETTINGS_SERVICE = "get_settings";
     const std::string STREAM_DESC[STREAM_COUNT] = {"Depth", "Color", "IR", "IR2"};
     const double ROTATION_IDENTITY[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
     const float MILLIMETER_METERS  = 0.001;
 
     // R200 Constants.
-    const std::string IR2_TOPIC = "camera/ir2/image_raw";
+    const std::string IR2_NAMESPACE = "ir2";
+    const std::string IR2_TOPIC = "image_raw";
     // Indoor Range: 0.7m - 3.5m, Outdoor Range: 10m
     const float R200_MAX_Z = 10.0f;   // in meters
 
