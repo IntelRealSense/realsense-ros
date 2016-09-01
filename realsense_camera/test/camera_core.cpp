@@ -587,8 +587,8 @@ TEST(RealsenseTests, testTransforms)
 
 TEST(RealsenseTests, testCameraOptions)
 {
-  g_service_client.call(g_srv);
-  stringstream settings_ss (g_srv.response.configuration_str);
+  g_settings_srv_client.call(g_setting_srv);
+  stringstream settings_ss (g_setting_srv.response.configuration_str);
   string setting;
   string setting_name;
   string setting_value;
@@ -610,7 +610,50 @@ TEST(RealsenseTests, testCameraOptions)
 TEST(RealsenseTests, testGetSettingsService)
 {
   // Verify the service is available
-  EXPECT_TRUE(g_service_client.call(g_srv));
+  EXPECT_TRUE(g_settings_srv_client.call(g_setting_srv));
+}
+
+TEST(RealsenseTests, testSetPowerOffService)
+{
+  g_setpower_srv.request.power_on = false;
+
+  EXPECT_FALSE(g_setpower_srv_client.call(g_setpower_srv));
+  ros::Duration(5).sleep();
+
+  EXPECT_FALSE(g_setpower_srv.response.success);
+}
+
+TEST(RealsenseTests, testSetPowerOnService)
+{
+  g_setpower_srv.request.power_on = true;
+
+  EXPECT_TRUE(g_setpower_srv_client.call(g_setpower_srv));
+  ros::Duration(5).sleep();
+
+  EXPECT_TRUE(g_setpower_srv.response.success);
+}
+
+TEST(RealsenseTests, testForcePowerOffService)
+{
+  g_forcepower_srv.request.power_on = false;
+
+  EXPECT_TRUE(g_forcepower_srv_client.call(g_forcepower_srv));
+  ros::Duration(5).sleep();
+}
+
+TEST(RealsenseTests, testIsPoweredService)
+{
+  EXPECT_TRUE(g_ispowered_srv_client.call(g_ispowered_srv));
+  EXPECT_FALSE(g_ispowered_srv.response.is_powered);
+}
+
+
+TEST(RealsenseTests, testForcePowerOnService)
+{
+  g_forcepower_srv.request.power_on = true;
+
+  EXPECT_TRUE(g_forcepower_srv_client.call(g_forcepower_srv));
+  ros::Duration(5).sleep();
 }
 
 void fillConfigMap(int argc, char **argv)
@@ -742,7 +785,10 @@ int main(int argc, char **argv) try
   }
 
   g_sub_pc = nh.subscribe <sensor_msgs::PointCloud2> (PC_TOPIC, 1, pcCallback);
-  g_service_client = nh.serviceClient < realsense_camera::cameraConfiguration > (SETTINGS_SERVICE);
+  g_settings_srv_client = nh.serviceClient<realsense_camera::CameraConfiguration>(SETTINGS_SERVICE);
+  g_ispowered_srv_client = nh.serviceClient<realsense_camera::IsPowered>(CAMERA_IS_POWERED_SERVICE);
+  g_setpower_srv_client = nh.serviceClient<realsense_camera::SetPower>(CAMERA_SET_POWER_SERVICE);
+  g_forcepower_srv_client = nh.serviceClient<realsense_camera::ForcePower>(CAMERA_FORCE_POWER_SERVICE);
 
   ros::Duration duration;
   duration.sec = 10;

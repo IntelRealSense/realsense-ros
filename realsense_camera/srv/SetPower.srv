@@ -1,0 +1,3 @@
+bool power_on         # true - to power on camera, false - to power off camera
+---
+bool success          # false - only if camera has subscribers, and attempted power off

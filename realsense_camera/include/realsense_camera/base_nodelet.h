@@ -59,7 +59,10 @@
 #include <map>
 
 #include <librealsense/rs.hpp>
-#include <realsense_camera/cameraConfiguration.h>
+#include <realsense_camera/CameraConfiguration.h>
+#include <realsense_camera/IsPowered.h>
+#include <realsense_camera/SetPower.h>
+#include <realsense_camera/ForcePower.h>
 #include <pluginlib/class_list_macros.h>
 #include <tf/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
@@ -75,8 +78,14 @@ namespace realsense_camera
     virtual void onInit();
     virtual ~BaseNodelet();
     virtual void prepareTopics();
-    virtual bool getCameraOptionValues(realsense_camera::cameraConfiguration::Request & req,
-        realsense_camera::cameraConfiguration::Response & res);
+    virtual bool getCameraOptionValues(realsense_camera::CameraConfiguration::Request & req,
+        realsense_camera::CameraConfiguration::Response & res);
+    virtual bool setPowerCameraService(realsense_camera::SetPower::Request & req,
+        realsense_camera::SetPower::Response & res);
+    virtual bool forcePowerCameraService(realsense_camera::ForcePower::Request & req,
+        realsense_camera::ForcePower::Response & res);
+    virtual bool isPoweredCameraService(realsense_camera::IsPowered::Request & req,
+        realsense_camera::IsPowered::Response & res);
 
   protected:
 
@@ -86,6 +95,9 @@ namespace realsense_camera
     ros::Time topic_ts_;
     ros::Publisher pointcloud_publisher_;
     ros::ServiceServer get_options_service_;
+    ros::ServiceServer set_power_service_;
+    ros::ServiceServer force_power_service_;
+    ros::ServiceServer is_powered_service_;
     tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
     rs_error *rs_error_ = 0;
     rs_context *rs_context_;
@@ -120,6 +132,8 @@ namespace realsense_camera
     boost::shared_ptr<boost::thread> topic_thread_;
     float depth_scale_meters_;
     cv::Mat cvWrapper_;
+    bool start_camera_ = true;
+    bool start_stop_srv_called_ = false;
 
     struct CameraOptions
     {
@@ -142,14 +156,15 @@ namespace realsense_camera
     virtual void enableStream(rs_stream stream_index, int width, int height, rs_format format, int fps);
     virtual void getStreamCalibData(rs_stream stream_index);
     virtual void disableStream(rs_stream stream_index);
-    virtual void startCamera();
-    virtual void stopCamera();
+    virtual std::string startCamera();
+    virtual std::string stopCamera();
     virtual void publishTopics();
     virtual void publishTopic(rs_stream stream_index);
     virtual void getStreamData(rs_stream stream_index);
     virtual void publishPCTopic();
     virtual void publishStaticTransforms();
     virtual void checkError();
+    virtual bool checkForSubscriber();
   };
 }
 #endif

@@ -49,7 +49,10 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <cv_bridge/cv_bridge.h>
-#include <realsense_camera/cameraConfiguration.h>
+#include <realsense_camera/CameraConfiguration.h>
+#include <realsense_camera/IsPowered.h>
+#include <realsense_camera/SetPower.h>
+#include <realsense_camera/ForcePower.h>
 #include <tf/transform_listener.h>
 #include <librealsense/rs.h>
 #include <realsense_camera/constants.h>
@@ -78,7 +81,10 @@ std::string g_infrared2_encoding_exp; // Expected infrared2 encoding.
 image_transport::CameraSubscriber g_camera_subscriber[STREAM_COUNT];
 ros::Subscriber g_sub_pc;
 
-ros::ServiceClient g_service_client;
+ros::ServiceClient g_settings_srv_client;
+ros::ServiceClient g_ispowered_srv_client;
+ros::ServiceClient g_setpower_srv_client;
+ros::ServiceClient g_forcepower_srv_client;
 
 std::map<std::string, std::string> g_config_args;
 double g_max_z = R200_MAX_Z * 1000.0f; // Converting meter to mm.
@@ -114,4 +120,7 @@ double g_caminfo_projection_recv[STREAM_COUNT][12] = {{0.0}};
 std::string g_dmodel_recv[STREAM_COUNT];
 std::string g_camera_type;
 
-realsense_camera::cameraConfiguration g_srv;
+realsense_camera::CameraConfiguration g_setting_srv;
+realsense_camera::IsPowered g_ispowered_srv;
+realsense_camera::SetPower g_setpower_srv;
+realsense_camera::ForcePower g_forcepower_srv;
