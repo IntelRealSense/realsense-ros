@@ -79,9 +79,9 @@ namespace realsense_camera
   void R200Nodelet::advertiseTopics()
   {
     BaseNodelet::advertiseTopics();
-
-    image_transport::ImageTransport image_transport(nh_);
-    camera_publisher_[RS_STREAM_INFRARED2] = image_transport.advertiseCamera(IR2_TOPIC, 1);
+    ros::NodeHandle ir2_nh(nh_, IR2_NAMESPACE);
+    image_transport::ImageTransport ir2_image_transport(ir2_nh);
+    camera_publisher_[RS_STREAM_INFRARED2] = ir2_image_transport.advertiseCamera(IR2_TOPIC, 1);
   }
 
   /*
@@ -225,4 +225,3 @@ namespace realsense_camera
     publishTopic(RS_STREAM_INFRARED2);
   }
 }  // end namespace
-

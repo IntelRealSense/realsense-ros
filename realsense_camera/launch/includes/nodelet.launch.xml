@@ -21,16 +21,5 @@
     <param name="color_optical_frame_id"  type="str"  value="$(arg camera)_rgb_optical_frame" />
     <param name="ir_frame_id"             type="str"  value="$(arg camera)_ir_frame" />
     <param name="ir2_frame_id"            type="str"  value="$(arg camera)_ir2_frame" />
-
-    <remap from="camera/depth/image_raw"    to="$(arg camera)/$(arg depth)/image_raw" />
-    <remap from="camera/color/image_raw"    to="$(arg camera)/$(arg rgb)/image_raw" />
-    <remap from="camera/ir/image_raw"       to="$(arg camera)/$(arg ir)/image_raw" />
-    <remap from="camera/ir2/image_raw"      to="$(arg camera)/$(arg ir2)/image_raw" />
-    <remap from="camera/depth/points"       to="$(arg camera)/$(arg depth)/points" />
-    <remap from="camera/depth/camera_info"  to="$(arg camera)/$(arg depth)/camera_info" />
-    <remap from="camera/color/camera_info"  to="$(arg camera)/$(arg rgb)/camera_info" />
-    <remap from="camera/ir/camera_info"     to="$(arg camera)/$(arg ir)/camera_info" />
-    <remap from="camera/ir2/camera_info"    to="$(arg camera)/$(arg ir2)/camera_info" />
-    <remap from="camera/get_settings"       to="$(arg camera)/get_settings" />
   </node>
 </launch>
