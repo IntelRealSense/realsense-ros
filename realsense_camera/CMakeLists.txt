@@ -34,7 +34,10 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_service_files(
   FILES
-  cameraConfiguration.srv
+  CameraConfiguration.srv
+  ForcePower.srv
+  SetPower.srv
+  IsPowered.srv
 )
 
 generate_messages(

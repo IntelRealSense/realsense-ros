@@ -1,0 +1,2 @@
+bool power_on         # true - to power on camera, false - to power off camera
+---
