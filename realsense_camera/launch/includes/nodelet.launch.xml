@@ -32,5 +32,8 @@
     <remap from="camera/ir/camera_info"     to="$(arg camera)/$(arg ir)/camera_info" />
     <remap from="camera/ir2/camera_info"    to="$(arg camera)/$(arg ir2)/camera_info" />
     <remap from="camera/get_settings"       to="$(arg camera)/get_settings" />
+    <remap from="camera/set_power"          to="$(arg camera)/set_power" />
+    <remap from="camera/force_power"        to="$(arg camera)/force_power" />
+    <remap from="camera/is_powered"         to="$(arg camera)/is_powered" />
   </node>
 </launch>
