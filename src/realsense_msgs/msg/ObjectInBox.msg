@@ -1,0 +1,3 @@
+ObjectArray object_array
+Rect object_bbox
+geometry_msgs/Point32 location

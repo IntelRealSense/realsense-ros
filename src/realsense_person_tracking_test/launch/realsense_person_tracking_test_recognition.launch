@@ -1,0 +1,14 @@
+<launch>
+
+	<node pkg="nodelet" type="nodelet" name="person_tracking_test_nodelet"  args="manager" output="screen"/>
+  	
+    	<node pkg="realsense_person_tracking_test" type="realsense_person_tracking_test" name="realsense_person_tracking_test"
+        	args="load realsense_person_tracking_test/realsense_person_tracking_test node">
+		<param name="recognition"	type="bool"  	value="true" />
+		<param name="skeleton"		type="bool"  	value="false" />
+		<param name="gestures"		type="bool"  	value="false" />
+		<param name="segmentation"    	type="int"  	value="0" />
+		<param name="trackingMode"	type="int"  	value="0" />
+    	</node>
+
+</launch> 

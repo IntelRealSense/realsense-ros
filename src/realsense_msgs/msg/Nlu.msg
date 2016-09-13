@@ -1,0 +1,6 @@
+string nlu_action
+string nlu_object
+string nlu_location_head
+string nlu_location_reference
+string nlu_location_location_type
+string nlu_org_transcript

@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<package>
+	<name>realsense_msgs</name>
+	<version>0.0.1</version>
+	<description>Intel(r) RealSense(tm) Technology package realsense msg</description>
+
+	<maintainer email="artyom.popov@intel.com">Artyom Popov</maintainer>
+
+	<license>Under NDA release only. See license attached</license>
+
+	<url type="website">http://www.intel.com/realsense</url>
+
+
+	<buildtool_depend>catkin</buildtool_depend>
+	<build_depend>roscpp</build_depend>
+	<build_depend>rospy</build_depend>
+	<build_depend>std_msgs</build_depend>
+	<build_depend>genmsg</build_depend>
+	<build_depend>sensor_msgs</build_depend>
+	<build_depend>message_generation</build_depend>
+	<build_depend>nodelet</build_depend>
+	<build_depend>geometry_msgs</build_depend>
+	<build_depend>libpcl-all-dev</build_depend>
+
+  
+
+	<run_depend>roscpp</run_depend>
+	<run_depend>rospy</run_depend>
+	<run_depend>std_msgs</run_depend>
+	<run_depend>genmsg</run_depend> 
+	<run_depend>sensor_msgs</run_depend>
+	<run_depend>message_runtime</run_depend>
+	<run_depend>nodelet</run_depend>
+	<run_depend>geometry_msgs</run_depend>
+	<run_depend>libpcl-all</run_depend>
+
+
+</package>
