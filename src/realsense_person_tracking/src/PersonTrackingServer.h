@@ -1,6 +1,5 @@
 #pragma once
 
-#include "PtOpencvAdapter.h"
 #include "PersonTrackingConfigurator.h"
 #include "ros/ros.h"
 #include <realsense_srvs/RecognitionRequest.h>
@@ -8,6 +7,8 @@
 #include <realsense_srvs/LoadRecognitionDB.h>
 #include <realsense_srvs/SaveRecognitionDB.h>
 #include <realsense_srvs/ResetTrackingRequest.h>
+#include <rs/core/video_module_interface.h>
+#include <person_tracking_video_module_interface.h>
 
 namespace PT = Intel::RealSense::PersonTracking;
 
@@ -17,7 +18,7 @@ public:
 
     PersonTrackingServer();
 
-    void onInit(ros::NodeHandle& nodeHandle, PtOpencvAdapter* personTracking, PersonTrackingConfigurator* configurator);
+    void onInit(ros::NodeHandle& nodeHandle, rs::person_tracking::person_tracking_video_module_interface* personTracking, PersonTrackingConfigurator* configurator);
 
 private:
 
@@ -49,6 +50,6 @@ private:
     ros::ServiceServer mLoadRecognitionDbService;
     ros::ServiceServer mResetTrackingRequestService;
 
-    PtOpencvAdapter* mPersonTracking;
+    rs::person_tracking::person_tracking_video_module_interface* mPersonTrackingVideoModule;
     PersonTrackingConfigurator* mConfigurator;
 };

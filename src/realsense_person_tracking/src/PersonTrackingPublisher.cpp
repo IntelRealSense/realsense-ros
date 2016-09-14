@@ -1,3 +1,4 @@
+#include <person_tracking_video_module_interface.h>
 #include "PersonTrackingPublisher.h"
 #include "realsense_person_tracking/PersonTrackingOut.h"
 
@@ -5,11 +6,11 @@ using namespace PT;
 using namespace Intel::RealSense;
 
 PersonTrackingPublisher::PersonTrackingPublisher()
-    : mPersonTracking(nullptr), mSegmentationEnabled(false), mBlobEnabled(false), mDebug(false) {}
+    : mPersonTrackingVideoModule(nullptr), mSegmentationEnabled(false), mBlobEnabled(false), mDebug(false) {}
 
-void PersonTrackingPublisher::onInit(ros::NodeHandle& nodeHandle, PtOpencvAdapter* personTracking)
+void PersonTrackingPublisher::onInit(ros::NodeHandle& nodeHandle, rs::person_tracking::person_tracking_video_module_interface* personTracking)
 {
-    mPersonTracking = personTracking;
+    mPersonTrackingVideoModule = personTracking;
 
     std::string toStream = "person_tracking/person_tracking_output";
     ROS_INFO_STREAM("Publishing to " << toStream);
@@ -49,7 +50,7 @@ void PersonTrackingPublisher::publishOutput(const sensor_msgs::ImageConstPtr& co
 
             PersonTrackingData::PersonTracking* personTrackingData = personData->QueryTracking();
             PersonTrackingData::BoundingBox2D box = personTrackingData->Query2DBoundingBox();
-            PersonTrackingData::PersonTracking::PointCombined centerMass = personTrackingData->QueryCenterMass();
+            auto centerMass = personTrackingData->QueryCenterMass();
 
             user.userInfo.Id = personTrackingData->QueryId();
 //            user.userInfo.recognitionId = (personData->QueryRecognition() != nullptr) ? personData->QueryRecognition()->QueryRecognitionID() : -1;
@@ -99,7 +100,7 @@ void PersonTrackingPublisher::publishOutput(const sensor_msgs::ImageConstPtr& co
 
 void PersonTrackingPublisher::addBlobToOutput(PersonTrackingData::PersonTracking* personTrackingData, realsense_msgs::User& user)
 {
-    if (!mPersonTracking->QueryConfiguration()->QueryTracking()->IsSegmentationEnabled()) return;
+    if (!mPersonTrackingVideoModule->QueryConfiguration()->QueryTracking()->IsSegmentationEnabled()) return;
 
     if (mBlobEnabled)
     {
@@ -144,7 +145,7 @@ void PersonTrackingPublisher::addBlobToOutput(PersonTrackingData::PersonTracking
 
 void PersonTrackingPublisher::addSkeletonToOutput(PersonTrackingData::Person* personData, realsense_msgs::User& user)
 {
-    if (!mPersonTracking->QueryConfiguration()->QuerySkeletonJoints()->IsEnabled()) return;
+    if (!mPersonTrackingVideoModule->QueryConfiguration()->QuerySkeletonJoints()->IsEnabled()) return;
 
     PersonTrackingData::PersonJoints* personJoints = personData->QuerySkeletonJoints();
     int numberOfJoints = personJoints->QueryNumJoints();
@@ -154,16 +155,15 @@ void PersonTrackingPublisher::addSkeletonToOutput(PersonTrackingData::Person* pe
     std::vector<PersonTrackingData::PersonJoints::SkeletonPoint> skeletonPoints(numberOfJoints);
     personJoints->QueryJoints(skeletonPoints.data());
 
-    /*skeletonPoints.erase(std::remove_if(
+    skeletonPoints.erase(std::remove_if(
             skeletonPoints.begin(), skeletonPoints.end(),
-            [] (PersonTrackingData::PersonJoints::SkeletonPoint& skeletonPoint) { return skeletonPoint.confidenceImage < 100; }),
-        skeletonPoints.end());*/
+            [] (PersonTrackingData::PersonJoints::SkeletonPoint& skeletonPoint) { return skeletonPoint.confidenceImage < 50; }),
+        skeletonPoints.end());
 
     //ROS_DEBUG_STREAM("Number of confidence joints: " << skeletonPoints.size());
 
     for (PersonTrackingData::PersonJoints::SkeletonPoint& skeletonPoint : skeletonPoints)
     {
-        //ROS_DEBUG("Joint of type: %d -> [%.0f,%.0f]", skeletonPoint.jointType, skeletonPoint.image.x, skeletonPoint.image.y);
         realsense_msgs::Landmark landmark;
         landmark.type = skeletonPoint.jointType;
         landmark.location.x = skeletonPoint.image.x;
@@ -177,7 +177,7 @@ void PersonTrackingPublisher::addSkeletonToOutput(PersonTrackingData::Person* pe
 
 void PersonTrackingPublisher::addGesturesToOutout(PersonTrackingData::Person* personData, realsense_msgs::User& user)
 {
-    if (!mPersonTracking->QueryConfiguration()->QueryGestures()->IsEnabled()) return;
+    if (!mPersonTrackingVideoModule->QueryConfiguration()->QueryGestures()->IsEnabled()) return;
 
     PersonTrackingData::PersonGestures* personGestures = personData->QueryGestures();
     if (personGestures == nullptr)

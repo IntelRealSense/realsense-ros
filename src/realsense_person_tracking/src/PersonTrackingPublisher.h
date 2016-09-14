@@ -1,6 +1,5 @@
 #pragma once
 #include "ros/ros.h"
-#include "PtOpencvAdapter.h"
 #include <sensor_msgs/Image.h>
 #include "realsense_msgs/User.h"
 
@@ -12,7 +11,7 @@ public:
 
     PersonTrackingPublisher();
 
-    void onInit(ros::NodeHandle& nodeHandle, PtOpencvAdapter* personTracking);
+    void onInit(ros::NodeHandle& nodeHandle, rs::person_tracking::person_tracking_video_module_interface* personTracking);
 
     void setDebug(bool debug);
 
@@ -31,7 +30,7 @@ private:
     ros::Publisher mPublisher;
     ros::Publisher mDebugPublisher;
 
-    PtOpencvAdapter* mPersonTracking;
+    rs::person_tracking::person_tracking_video_module_interface* mPersonTrackingVideoModule;
 
     bool mBlobEnabled;
     bool mSegmentationEnabled;

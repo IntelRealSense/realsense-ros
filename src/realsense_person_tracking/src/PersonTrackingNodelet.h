@@ -8,7 +8,9 @@
 
 #pragma once
 
-#include "PtOpencvAdapter.h"
+#include "person_tracking_video_module_interface.h"
+#include <rs/core/projection_interface.h>
+
 #include "PersonTrackingServer.h"
 #include "PersonTrackingPublisher.h"
 #include "PersonTrackingConfigurator.h"
@@ -22,28 +24,27 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 
-#include "opencv2/core/core.hpp"
-
 #include <vector>
 #include <string>
 #include <memory>
 #include <mutex>
 
+
 namespace person_tracking
 {
     class PersonTrackingNodelet : public PersonTrackingConfigurator
-	{
+    {
         public:
 
-			PersonTrackingNodelet();
+            PersonTrackingNodelet();
 
-			~PersonTrackingNodelet();			
+            ~PersonTrackingNodelet();
 
             void onInit(ros::NodeHandle& nodeHandle);
 
             void configureTracking(realsense_srvs::TrackingConfig::Request& request) override;
 
-		private:
+        private:
 
             /***********************
              *  Configuration
@@ -57,8 +58,8 @@ namespace person_tracking
              * *********************/
 
             void initPublishSubscribe(ros::NodeHandle& nodeHandle);
-			
-			void subscribeFrameMessages();
+            
+            void subscribeFrameMessages();
 
             /***********************
              *  Info callbacks
@@ -66,10 +67,7 @@ namespace person_tracking
 
             void colorCameraInfoCallback(const sensor_msgs::CameraInfo colorCameraInfo);
             void depthCameraInfoCallback(const sensor_msgs::CameraInfo depthCameraInfo);
-
-            void setCalibrationData(const sensor_msgs::CameraInfo& cameraInfoMsg, PtProjection::CameraInfo& cameraInfo);
-
-            void setCaptureProfile();
+            void ConfigurePersonTrackingVideoModule();
 
             /***********************
              *  Image callbacks
@@ -89,13 +87,17 @@ namespace person_tracking
 
             PT::PersonTrackingData* processFrame();
             void handleTrackFirst(PT::PersonTrackingData* trackingData);
-
+            void SimulateInteractiveTrackingMode(PT::PersonTrackingData* trackingData);
             /***********************
              *  Output
              * *********************/
 
             void publishOutput(const sensor_msgs::ImageConstPtr& colorImageMsg, PT::PersonTrackingData& trackingData);
 
+             /***********************
+             *  Helper functions
+             * *********************/
+             void CameraInfo2Intrinsics(const sensor_msgs::CameraInfo& colorCameraInfo, rs::core::intrinsics& intrinsics);
             /***********************
              *  Members
              * *********************/
@@ -103,33 +105,30 @@ namespace person_tracking
             PersonTrackingServer mServer;
             PersonTrackingPublisher mPublisher;
 
-			ros::NodeHandle* mNodeHandle;
+            ros::NodeHandle* mNodeHandle;
 
-            cv::Mat mDepthImage;
-            cv::Mat mColorImage;
-            cv::Mat mLeftImage;
-            cv::Mat mRightImage;
+            rs::core::correlated_sample_set mSampleSet;
 
             ros::Subscriber mColorCameraInfoSubscriber;
             ros::Subscriber mDepthCameraInfoSubscriber;
 
-            std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>> 			mDepthSubscriber;
-			std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>>			mColorSubscriber;
+            std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>>            mDepthSubscriber;
+            std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>>            mColorSubscriber;
             std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>>            m_LeftSubscriber;
             std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>>            m_RightSubscriber;
             std::unique_ptr<message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image>> mTimeSynchronizer;
             std::unique_ptr<message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image>> mTimeSynchronizerIr;
-			
-            PtProjection::CalibrationData mCalibrationData;
 
             std::mutex mProcessingMutex;
-            std::shared_ptr<PtOpencvAdapter> mPersonTracking;
-
+            std::unique_ptr<rs::person_tracking::person_tracking_video_module_interface> mPersonTrackingVideoModule;
+            rs::core::projection_interface* mProjection;
             bool mColorInfoReceived;
             bool mDepthInfoReceived;
-
+            sensor_msgs::CameraInfo mColorCameraInfo;
+            sensor_msgs::CameraInfo mDepthCameraInfo;
             bool mTrackFirstMode;
             bool mIrStreamsEnabled;
+            bool mIsTrackingModeInteractive;
 	};
 }
 

@@ -6,11 +6,11 @@
 using namespace PT;
 
 PersonTrackingServer::PersonTrackingServer()
-    : mConfigurator(nullptr), mPersonTracking(nullptr) {}
+    : mConfigurator(nullptr), mPersonTrackingVideoModule(nullptr) {}
 
-void PersonTrackingServer::onInit(ros::NodeHandle& nodeHandle, PtOpencvAdapter* personTracking, PersonTrackingConfigurator* configurator)
+void PersonTrackingServer::onInit(ros::NodeHandle& nodeHandle, rs::person_tracking::person_tracking_video_module_interface* personTracking, PersonTrackingConfigurator* configurator)
 {
-    mPersonTracking = personTracking;
+    mPersonTrackingVideoModule = personTracking;
     mConfigurator = configurator;
 
     mTrackingConfigService = nodeHandle.advertiseService("person_tracking/tracking_config", &PersonTrackingServer::trackingConfigRequestCallback, this);
@@ -31,7 +31,7 @@ bool PersonTrackingServer::trackingConfigRequestCallback(   realsense_srvs::Trac
 bool PersonTrackingServer::recognitionRequestCallback(  realsense_srvs::RecognitionRequest::Request& request,
                                                         realsense_srvs::RecognitionRequest::Response& response)
 {
-    if (!mPersonTracking->QueryConfiguration()->QueryRecognition()->IsEnabled())
+    if (!mPersonTrackingVideoModule->QueryConfiguration()->QueryRecognition()->IsEnabled())
     {
         ROS_INFO("Recognition is not enabled");
         return false;
@@ -39,7 +39,7 @@ bool PersonTrackingServer::recognitionRequestCallback(  realsense_srvs::Recognit
 
     ROS_INFO_STREAM("Received recognition request for person: " << request.personId);
 
-    PersonTrackingData* trackingData = mPersonTracking->QueryOutput();
+    PersonTrackingData* trackingData = mPersonTrackingVideoModule->QueryOutput();
     PersonTrackingData::Person* personData = trackingData->QueryPersonDataById(request.personId);
 
     if (!personData)
@@ -99,7 +99,7 @@ bool PersonTrackingServer::trackingRequestCallback( realsense_srvs::TrackingRequ
 {
     ROS_INFO_STREAM("Received tracking request for person: " << request.personId);
 
-    PersonTrackingData* trackingData = mPersonTracking->QueryOutput();
+    PersonTrackingData* trackingData = mPersonTrackingVideoModule->QueryOutput();
     PersonTrackingData::Person* personData = trackingData->QueryPersonDataById(request.personId);
 
     if (!personData)
@@ -127,14 +127,14 @@ bool PersonTrackingServer::trackingRequestCallback( realsense_srvs::TrackingRequ
 bool PersonTrackingServer::saveRecognitionDbCallback(   realsense_srvs::SaveRecognitionDB::Request& request,
                                                         realsense_srvs::SaveRecognitionDB::Response& response)
 {
-    PersonTrackingData* personTrackingData = mPersonTracking->QueryOutput();
+    PersonTrackingData* personTrackingData = mPersonTrackingVideoModule->QueryOutput();
     if (!personTrackingData)
     {
         ROS_WARN("personTrackingData == null");
         return false;
     }
 
-    auto config = mPersonTracking->QueryConfiguration();
+    auto config = mPersonTrackingVideoModule->QueryConfiguration();
     auto db = config->QueryRecognition()->QueryDatabase();
     auto dbUtils = config->QueryRecognition()->QueryDatabaseUtilities();
 
@@ -165,8 +165,8 @@ bool PersonTrackingServer::loadRecognitionDbCallback(   realsense_srvs::LoadReco
         return false;
     }
 
-    auto database = mPersonTracking->QueryConfiguration()->QueryRecognition()->QueryDatabase();
-    auto dbUtils = mPersonTracking->QueryConfiguration()->QueryRecognition()->QueryDatabaseUtilities();
+    auto database = mPersonTrackingVideoModule->QueryConfiguration()->QueryRecognition()->QueryDatabase();
+    auto dbUtils = mPersonTrackingVideoModule->QueryConfiguration()->QueryRecognition()->QueryDatabaseUtilities();
 
     dbUtils->DeserializeDatabase(database, (unsigned char*)buffer.data(), (int)buffer.size());
 
@@ -179,6 +179,6 @@ bool PersonTrackingServer::resetTrackingCallback(   realsense_srvs::ResetTrackin
                                                     realsense_srvs::ResetTrackingRequest::Response& response)
 {
     ROS_INFO("Received reset tracking request");
-    mPersonTracking->QueryOutput()->ResetTracking();
+    mPersonTrackingVideoModule->QueryOutput()->ResetTracking();
     return true;
 }

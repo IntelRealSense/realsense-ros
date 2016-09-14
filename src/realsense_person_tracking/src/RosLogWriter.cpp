@@ -1,4 +1,4 @@
-#include "PtLogWriter.h"
+/*#include "PtLogWriter.h"
 #include "ros/ros.h"
 
 void PtLogWriter::Write(Level level, const std::string& message)
@@ -23,4 +23,4 @@ void PtLogWriter::Write(Level level, const std::string& message)
 
 void PtLogWriter::Write(Level level, const std::wstring& message)
 {
-}
+}*/

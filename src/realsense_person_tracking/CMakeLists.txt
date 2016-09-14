@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(realsense_person_tracking)
 
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPT_MW_DEV")
 
@@ -9,14 +8,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPT_MW_DEV")
 ##############
 # Variables ##
 ##############
-
-
-set(LIBS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/persontracking")
-
-set(PERSON_TRACKING_LIB "${LIBS_DIR}/lib/libpxcpersontracking.so")
-
-set(IPP_LIBS "${LIBS_DIR}/lib/ipp")
-
+set(PERSON_TRACKING_LIB "librealsense_persontracking.so")
 
 ########
 # ROS ##
@@ -60,9 +52,7 @@ catkin_package(
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  ${LIBS_DIR}/include/adapter
-  ${LIBS_DIR}/include/pxcinclude
-  ${LIBS_DIR}/include
+  /usr/include/librealsense/pt/
 )
 
 add_executable(realsense_person_tracking
@@ -76,16 +66,7 @@ add_executable(realsense_person_tracking
 target_link_libraries(realsense_person_tracking
   ${catkin_LIBRARIES} 
   ${PERSON_TRACKING_LIB}
-  ${IPP_LIBS}/libipprs.a
-  ${IPP_LIBS}/libippi.a
-  ${IPP_LIBS}/libipps.a
-  ${IPP_LIBS}/libippdc.a
-  ${IPP_LIBS}/libippcv.a
-  ${IPP_LIBS}/libippcc.a
-  ${IPP_LIBS}/libippch.a
-  ${IPP_LIBS}/libippvm.a
-  ${IPP_LIBS}/libippcore.a
-
+  rs_projection
   /usr/lib/x86_64-linux-gnu/libpng.a
   /usr/lib/x86_64-linux-gnu/libjpeg.a
 

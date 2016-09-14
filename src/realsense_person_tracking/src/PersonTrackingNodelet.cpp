@@ -9,9 +9,11 @@
 #include "ros/ros.h"
 
 #include "PersonTrackingNodelet.h"
+#include "person_tracking_video_module_factory.h"
+#include "rs/core/projection_interface.h"
 #include "opencv2/imgproc/imgproc.hpp"
-
 #include <std_msgs/String.h>
+
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 
@@ -24,10 +26,20 @@ using namespace Intel::RealSense;
 namespace person_tracking
 {
     PersonTrackingNodelet::PersonTrackingNodelet()
-        : mNodeHandle(nullptr), mPersonTracking(PtOpencvAdapter::CreateInstance(L"/usr/local")),
-          mColorInfoReceived(false), mDepthInfoReceived(false), mIrStreamsEnabled(false) {}
+        : mNodeHandle(nullptr),
+          mProjection(nullptr),
+          mColorInfoReceived(false), mDepthInfoReceived(false), mIrStreamsEnabled(false), mIsTrackingModeInteractive(true)
+{
+    mPersonTrackingVideoModule.reset(rs::person_tracking::person_tracking_video_module_factory::create_person_tracking_video_module(L"/usr/share/librealsense/pt/data/"));
+}
 
-    PersonTrackingNodelet::~PersonTrackingNodelet(){}
+    PersonTrackingNodelet::~PersonTrackingNodelet()
+    {
+        if (mProjection != nullptr)
+        {
+            mProjection->release();
+        }
+    }
 
     void PersonTrackingNodelet::onInit(ros::NodeHandle& nodeHandle)
     {
@@ -80,23 +92,23 @@ namespace person_tracking
         if (request.enableRecognition)
         {
             ROS_INFO("Enable recognition");
-            mPersonTracking->QueryConfiguration()->QueryRecognition()->Enable();
+            mPersonTrackingVideoModule->QueryConfiguration()->QueryRecognition()->Enable();
         }
         if (request.enableSegmentation || request.enableBlob)
         {
             ROS_INFO("Enable segmentation");
-            mPersonTracking->QueryConfiguration()->QueryTracking()->EnableSegmentation();
+            mPersonTrackingVideoModule->QueryConfiguration()->QueryTracking()->EnableSegmentation();
         }
         if (request.enableSkeleton)
         {
             ROS_INFO("Enable skeleton");
-            mPersonTracking->QueryConfiguration()->QuerySkeletonJoints()->Enable();
+            mPersonTrackingVideoModule->QueryConfiguration()->QuerySkeletonJoints()->Enable();
         }
         if (request.enableGestures)
         {
             ROS_INFO("Enable gestures");
-            mPersonTracking->QueryConfiguration()->QueryGestures()->Enable();
-            mPersonTracking->QueryConfiguration()->QueryGestures()->EnableGesture(PersonTrackingData::PersonGestures::Pointing);
+            mPersonTrackingVideoModule->QueryConfiguration()->QueryGestures()->Enable();
+            mPersonTrackingVideoModule->QueryConfiguration()->QueryGestures()->EnableGesture(PersonTrackingData::PersonGestures::Pointing);
         }
         mPublisher.enableBlob(request.enableBlob, request.enableSegmentation);
         configureTrackingMode(request.trackingMode);
@@ -104,9 +116,7 @@ namespace person_tracking
 
     void PersonTrackingNodelet::configureTrackingMode(int trackingMode)
     {
-        mTrackFirstMode = trackingMode == 2;
-        trackingMode = mTrackFirstMode ? 0 : trackingMode;
-        mPersonTracking->QueryConfiguration()->QueryTracking()->SetTrackingMode(PersonTrackingConfiguration::TrackingConfiguration::TrackingMode(trackingMode));
+        mIsTrackingModeInteractive = (trackingMode == 1);
     }
 
     void PersonTrackingNodelet::initPublishSubscribe(ros::NodeHandle& nodeHandle)
@@ -125,10 +135,10 @@ namespace person_tracking
         mDepthCameraInfoSubscriber = nodeHandle.subscribe(depthCameraInfoStream, 1, &PersonTrackingNodelet::depthCameraInfoCallback, this);
 
         // Init server
-        mServer.onInit(nodeHandle, mPersonTracking.get(), this);
+        mServer.onInit(nodeHandle, mPersonTrackingVideoModule.get(), this);
 
         // Init publisher
-        mPublisher.onInit(nodeHandle, mPersonTracking.get());
+        mPublisher.onInit(nodeHandle, mPersonTrackingVideoModule.get());
     }
 
     void PersonTrackingNodelet::colorCameraInfoCallback(const sensor_msgs::CameraInfo colorCameraInfo)
@@ -136,8 +146,8 @@ namespace person_tracking
         if (mColorInfoReceived) return;
         mColorInfoReceived = true;
         ROS_INFO("Received color camera info. %dx%d", colorCameraInfo.width, colorCameraInfo.height);
-        setCalibrationData(colorCameraInfo, mCalibrationData.colorInfo);
-        setCaptureProfile();
+        mColorCameraInfo = colorCameraInfo;
+        ConfigurePersonTrackingVideoModule();
     }
 
     void PersonTrackingNodelet::depthCameraInfoCallback(const sensor_msgs::CameraInfo depthCameraInfo)
@@ -145,50 +155,61 @@ namespace person_tracking
         if (mDepthInfoReceived) return;
         mDepthInfoReceived = true;
         ROS_INFO("Received depth camera info. %dx%d", depthCameraInfo.width, depthCameraInfo.height);
-        setCalibrationData(depthCameraInfo, mCalibrationData.depthInfo);
-
-        mCalibrationData.irInfo.width = (mIrStreamsEnabled) ? mCalibrationData.depthInfo.width : 0;
-        mCalibrationData.irInfo.height = (mIrStreamsEnabled) ? mCalibrationData.depthInfo.height : 0;
-
-        setCaptureProfile();
+        mDepthCameraInfo = depthCameraInfo;
+        ConfigurePersonTrackingVideoModule();
     }
 
-    void PersonTrackingNodelet::setCalibrationData(const sensor_msgs::CameraInfo& cameraInfoMsg, PtProjection::CameraInfo& cameraInfo)
+    void PersonTrackingNodelet::ConfigurePersonTrackingVideoModule()
     {
-        cameraInfo.width = cameraInfoMsg.width;
-        cameraInfo.height = cameraInfoMsg.height;
-
-        cameraInfo.cameraMatrix.focalLengthX = (float)cameraInfoMsg.K[0];
-        cameraInfo.cameraMatrix.focalLengthY = (float)cameraInfoMsg.K[4];
-        cameraInfo.cameraMatrix.opticalCenterX = (float)cameraInfoMsg.K[2];
-        cameraInfo.cameraMatrix.opticalCenterY = (float)cameraInfoMsg.K[5];
-
-        memcpy(cameraInfo.distortionMatrix, cameraInfoMsg.D.data(), sizeof(double) * 5);
-        memcpy(cameraInfo.rotationMatrix, cameraInfoMsg.R.data(), sizeof(double) * 9);
-
-        cameraInfo.translationMatrix[0] = (float)cameraInfoMsg.P[3] * 1000;
-        cameraInfo.translationMatrix[1] = (float)cameraInfoMsg.P[7] * 1000;
-        cameraInfo.translationMatrix[2] = (float)cameraInfoMsg.P[11] * 1000;
-    }
-
-    void PersonTrackingNodelet::setCaptureProfile()
-    {
-        if (!mColorInfoReceived || !mDepthInfoReceived) return;
-
-        Status status = mPersonTracking->SetCalibrationData(mCalibrationData);
-        if (status != PXC_STATUS_NO_ERROR)
+        if (!mColorInfoReceived || !mDepthInfoReceived)
         {
-            ROS_ERROR_STREAM("Failed to set capture profile with error: " << status);
-            mColorInfoReceived = false;
-            mDepthInfoReceived = false;
+            return;
         }
-        else
+
+        rs::core::intrinsics colorIntrinsics = {};
+        rs::core::intrinsics depthIntrinsics = {};
+        rs::core::extrinsics extrisincs = {};
+        memset(&colorIntrinsics, 0, sizeof(colorIntrinsics));
+        memset(&depthIntrinsics, 0, sizeof(depthIntrinsics));
+        memset(&extrisincs, 0, sizeof(extrisincs));
+
+        CameraInfo2Intrinsics(mColorCameraInfo, colorIntrinsics);
+        CameraInfo2Intrinsics(mDepthCameraInfo, depthIntrinsics);
+
+        extrisincs.translation[0] = mDepthCameraInfo.P.at(3);
+        extrisincs.translation[1] = mDepthCameraInfo.P.at(7);
+        extrisincs.translation[2] = mDepthCameraInfo.P.at(11);
+        for(int idx = 0; idx < 9; ++idx)
         {
-            ROS_INFO("Done set capture profile - subscribing to frame messages");
-            subscribeFrameMessages();
-            mColorCameraInfoSubscriber.shutdown();
-            mDepthCameraInfoSubscriber.shutdown();
+            extrisincs.rotation[idx] = mDepthCameraInfo.R.at(idx);
         }
+
+        //configure person tracking video module
+        rs::core::video_module_interface::actual_module_config actualModuleConfig = {};
+        actualModuleConfig.image_streams_configs[static_cast<uint32_t>(rs::core::stream_type::color)].size.height = colorIntrinsics.height;
+        actualModuleConfig.image_streams_configs[static_cast<uint32_t>(rs::core::stream_type::color)].size.width = colorIntrinsics.width;
+        actualModuleConfig.image_streams_configs[static_cast<uint32_t>(rs::core::stream_type::color)].frame_rate = 30;
+        actualModuleConfig.image_streams_configs[static_cast<uint32_t>(rs::core::stream_type::color)].is_enabled = true;
+        //not extrinsics
+        //no intrinsics
+        //no flags
+
+        actualModuleConfig.image_streams_configs[static_cast<uint32_t>(rs::core::stream_type::depth)].size.height = depthIntrinsics.height;
+        actualModuleConfig.image_streams_configs[static_cast<uint32_t>(rs::core::stream_type::depth)].size.width = depthIntrinsics.width;
+        actualModuleConfig.image_streams_configs[static_cast<uint32_t>(rs::core::stream_type::depth)].frame_rate = 30;
+        actualModuleConfig.image_streams_configs[static_cast<uint32_t>(rs::core::stream_type::depth)].is_enabled = true;
+        //not extrinsics
+        //no intrinsics
+        //no flags
+
+        actualModuleConfig.projection = rs::core::projection_interface::create_instance(&colorIntrinsics, &depthIntrinsics, &extrisincs);
+        mProjection = actualModuleConfig.projection;
+        mPersonTrackingVideoModule->set_module_config(actualModuleConfig);
+
+        ROS_INFO("Done set capture profile - subscribing to frame messages");
+        subscribeFrameMessages();
+        mColorCameraInfoSubscriber.shutdown();
+        mDepthCameraInfoSubscriber.shutdown();
     }
 
     void PersonTrackingNodelet::subscribeFrameMessages()
@@ -270,38 +291,57 @@ namespace person_tracking
             ROS_INFO_STREAM("Depth image: size " << depthImageMsg->width << "x" << depthImageMsg->height << ". encoding: " << depthImageMsg->encoding);
         }
 
-        mColorImage = cv::Mat(colorImageMsg->height, colorImageMsg->width, CV_8UC3, (void*)colorImageMsg->data.data());
-        mDepthImage = cv::Mat(depthImageMsg->height, depthImageMsg->width, CV_16UC1, (void*)depthImageMsg->data.data());
-        if (mIrStreamsEnabled)
-        {
-            mLeftImage  = cv::Mat(leftImageMsg->height, leftImageMsg->width, CV_8UC1, (void*)leftImageMsg->data.data());
-            mRightImage  = cv::Mat(rightImageMsg->height, rightImageMsg->width, CV_8UC1, (void*)rightImageMsg->data.data());
-        }
+        //fill color image at mSampleSet - all images from mSampleSet will be released while callling to process_sample_set_sync
+        rs::core::image_info colorInfo = {
+               static_cast<int32_t>(colorImageMsg->width),
+               static_cast<int32_t>(colorImageMsg->height),
+               rs::core::pixel_format::rgb8, //TODO assumes that color format is RGB
+               colorImageMsg->step
+        };
+        mSampleSet[rs::core::stream_type::color] = rs::core::image_interface::create_instance_from_raw_data(
+                &colorInfo,
+                rs::core::image_interface::image_data_with_data_releaser(colorImageMsg->data.data(), nullptr),
+                rs::core::stream_type::color,
+                rs::core::image_interface::flag::any,
+                0,
+                0,
+                nullptr);
 
+        //fill depth image at mSampleSet - all images from mSampleSet will be released while callling to process_sample_set_sync
+        rs::core::image_info depthInfo = {
+               static_cast<int32_t>(depthImageMsg->width),
+               static_cast<int32_t>(depthImageMsg->height),
+               rs::core::pixel_format::z16,
+               depthImageMsg->step
+        };
+        mSampleSet[rs::core::stream_type::depth] = rs::core::image_interface::create_instance_from_raw_data(
+                &depthInfo,
+                rs::core::image_interface::image_data_with_data_releaser(depthImageMsg->data.data(), nullptr),
+                rs::core::stream_type::depth,
+                rs::core::image_interface::flag::any,
+                0,
+                0,
+                nullptr);
         return true;
     }
 
     PersonTrackingData* PersonTrackingNodelet::processFrame()
     {
-        cv::Mat bgrImage;
-        cv::cvtColor(mColorImage, bgrImage, CV_RGB2BGR);
-
-        PtOpencvAdapter::Images images = { bgrImage, mDepthImage, mLeftImage, mRightImage };
-
-        Status status = mPersonTracking->ProcessImage(images);
-        if (status != PXC_STATUS_NO_ERROR)
+        auto status = mPersonTrackingVideoModule->process_sample_set_sync(&mSampleSet);
+        if (status != rs::core::status::status_no_error)
         {
             ROS_ERROR_STREAM("Error in process image: " << status);
             return nullptr;
         }
 
-        PersonTrackingData* trackingData = mPersonTracking->QueryOutput();
+        PersonTrackingData* trackingData = mPersonTrackingVideoModule->QueryOutput();
         if (!trackingData)
         {
             ROS_ERROR("trackingData == null");
             return nullptr;
         }
 
+        SimulateInteractiveTrackingMode(trackingData);
         int numDetectedPeople = trackingData->QueryNumberOfPeople();
         ROS_DEBUG_STREAM("Detected " << numDetectedPeople << " people");
 
@@ -328,6 +368,32 @@ namespace person_tracking
     void PersonTrackingNodelet::publishOutput(const sensor_msgs::ImageConstPtr& colorImageMsg, PersonTrackingData& trackingData)
     {
         mPublisher.publishOutput(colorImageMsg, trackingData);
+    }
+
+    void PersonTrackingNodelet::CameraInfo2Intrinsics(const sensor_msgs::CameraInfo& colorCameraInfo, rs::core::intrinsics& intrinsics)
+    {
+        memset(&intrinsics, sizeof(intrinsics), 0);
+        intrinsics.width = colorCameraInfo.width;
+        intrinsics.height = colorCameraInfo.height;
+        intrinsics.fx = colorCameraInfo.K[0];
+        intrinsics.fy = colorCameraInfo.K[1*3 + 1];;
+        intrinsics.ppx = colorCameraInfo.K[2];
+        intrinsics.ppy = colorCameraInfo.K[1*3 + 2];
+    }
+
+
+    void PersonTrackingNodelet::SimulateInteractiveTrackingMode(PT::PersonTrackingData* trackingData)
+    {
+        if (mIsTrackingModeInteractive &&
+            trackingData->GetTrackingState() == PT::PersonTrackingData::TrackingState::TRACKING_STATE_DETECTING &&
+            trackingData->QueryNumberOfPeople() > 0)
+        {
+            auto personData = trackingData->QueryPersonData(PT::PersonTrackingData::ACCESS_ORDER_BY_ID, 0);
+            if (personData)
+            {
+                trackingData->StartTracking(personData->QueryTracking()->QueryId());
+            }
+        }
     }
 }
 
