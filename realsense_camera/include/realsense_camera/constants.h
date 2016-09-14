@@ -65,9 +65,9 @@ namespace realsense_camera
     const std::string IR_TOPIC = "image_raw";
     const std::string SETTINGS_SERVICE = "get_settings";
     const std::string STREAM_DESC[STREAM_COUNT] = {"Depth", "Color", "IR", "IR2"};
-    const std::string CAMERA_IS_POWERED_SERVICE = "camera/is_powered";
-    const std::string CAMERA_SET_POWER_SERVICE = "camera/set_power";
-    const std::string CAMERA_FORCE_POWER_SERVICE = "camera/force_power";
+    const std::string CAMERA_IS_POWERED_SERVICE = "is_powered";
+    const std::string CAMERA_SET_POWER_SERVICE = "set_power";
+    const std::string CAMERA_FORCE_POWER_SERVICE = "force_power";
     const double ROTATION_IDENTITY[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
     const float MILLIMETER_METERS  = 0.001;
 
