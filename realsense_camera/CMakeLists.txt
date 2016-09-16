@@ -14,8 +14,6 @@ set(CMAKE_EXE_LINKER_FLAGS "-pie -z noexecstack -z relro -z now")
 # Flags shared libraries
 set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now")
 
-find_library(REALSENSE_LIB realsense)
-
 find_package(catkin REQUIRED COMPONENTS
   librealsense
   dynamic_reconfigure
