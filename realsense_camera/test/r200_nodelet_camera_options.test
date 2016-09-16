@@ -24,14 +24,14 @@
   <arg name="r200_depth_clamp_max"                            default="65532" />
   <arg name="r200_depth_control_estimate_median_decrement"    default="5" />
   <arg name="r200_depth_control_estimate_median_increment"    default="5" />
-  <arg name="r200_depth_control_median_threshold"             default="185" />
-  <arg name="r200_depth_control_score_minimum_threshold"      default="5" />
-  <arg name="r200_depth_control_score_maximum_threshold"      default="505" />
-  <arg name="r200_depth_control_texture_count_threshold"      default="6" />
-  <arg name="r200_depth_control_texture_difference_threshold" default="35" />
-  <arg name="r200_depth_control_second_peak_threshold"        default="45" />
-  <arg name="r200_depth_control_neighbor_threshold"           default="45" />
-  <arg name="r200_depth_control_lr_threshold"                 default="14" />
+  <arg name="r200_depth_control_median_threshold"             default="235" />
+  <arg name="r200_depth_control_score_minimum_threshold"      default="27" />
+  <arg name="r200_depth_control_score_maximum_threshold"      default="420" />
+  <arg name="r200_depth_control_texture_count_threshold"      default="8" />
+  <arg name="r200_depth_control_texture_difference_threshold" default="80" />
+  <arg name="r200_depth_control_second_peak_threshold"        default="70" />
+  <arg name="r200_depth_control_neighbor_threshold"           default="90" />
+  <arg name="r200_depth_control_lr_threshold"                 default="12" />
 
   <param name="$(arg camera)/mode"                                              type="str"  value="$(arg mode)" />
   <param name="$(arg camera)/color_backlight_compensation"                      type="int" value="$(arg color_backlight_compensation)" />

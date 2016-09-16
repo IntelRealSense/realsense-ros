@@ -61,7 +61,6 @@ namespace realsense_camera
 
     max_z_ = R200_MAX_Z;
 
-
     BaseNodelet::onInit();
   }
 
@@ -153,9 +152,9 @@ namespace realsense_camera
     {
       rs_set_device_option(rs_device_, RS_OPTION_COLOR_WHITE_BALANCE, config.color_white_balance, 0);
     }
-    rs_apply_depth_control_preset(rs_device_, config.depth_control_preset);
 
     // Set R200 specific options
+    rs_apply_depth_control_preset(rs_device_, config.depth_control_preset);
     rs_set_device_option(rs_device_, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, config.r200_lr_auto_exposure_enabled, 0);
     if (config.r200_lr_auto_exposure_enabled == 0)
     {
