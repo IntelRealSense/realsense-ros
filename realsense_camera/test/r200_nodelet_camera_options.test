@@ -1,5 +1,4 @@
 <launch>
-  <arg name="manager"      value="nodelet_manager" />
   <arg name="camera"       default="camera" />
   <arg name="camera_type"  default="R200" /> <!-- Type of camera -->
   <arg name="serial_no"    default="" />
@@ -33,42 +32,39 @@
   <arg name="r200_depth_control_neighbor_threshold"           default="90" />
   <arg name="r200_depth_control_lr_threshold"                 default="12" />
 
-  <param name="$(arg camera)/mode"                                              type="str"  value="$(arg mode)" />
-  <param name="$(arg camera)/color_backlight_compensation"                      type="int" value="$(arg color_backlight_compensation)" />
-  <param name="$(arg camera)/color_brightness"                                  type="int" value="$(arg color_brightness)" />
-  <param name="$(arg camera)/color_contrast"                                    type="int" value="$(arg color_contrast)" />
-  <param name="$(arg camera)/color_gain"                                        type="int" value="$(arg color_gain)" />
-  <param name="$(arg camera)/color_gamma"                                       type="int" value="$(arg color_gamma)" />
-  <param name="$(arg camera)/color_hue"                                         type="int" value="$(arg color_hue)" />
-  <param name="$(arg camera)/color_saturation"                                  type="int" value="$(arg color_saturation)" />
-  <param name="$(arg camera)/color_sharpness"                                   type="int" value="$(arg color_sharpness)" />
-  <param name="$(arg camera)/color_enable_auto_white_balance"                   type="int" value="$(arg color_enable_auto_white_balance)" />
-  <param name="$(arg camera)/color_white_balance"                               type="int" value="$(arg color_white_balance)" />
-  <param name="$(arg camera)/r200_lr_gain"                                      type="int" value="$(arg r200_lr_gain)" />
-  <param name="$(arg camera)/r200_emitter_enabled"                              type="bool" value="$(arg r200_emitter_enabled)" />
-  <param name="$(arg camera)/r200_lr_exposure"                                  type="int" value="$(arg r200_lr_exposure)" />
-  <param name="$(arg camera)/r200_depth_units"                                  type="int" value="$(arg r200_depth_units)" />
-  <param name="$(arg camera)/r200_depth_clamp_min"                              type="int" value="$(arg r200_depth_clamp_min)" />
-  <param name="$(arg camera)/r200_depth_clamp_max"                              type="int" value="$(arg r200_depth_clamp_max)" />
-  <param name="$(arg camera)/r200_depth_control_estimate_median_decrement"      type="int" value="$(arg r200_depth_control_estimate_median_decrement)" />
-  <param name="$(arg camera)/r200_depth_control_estimate_median_increment"      type="int" value="$(arg r200_depth_control_estimate_median_increment)" />
-  <param name="$(arg camera)/r200_depth_control_median_threshold"               type="int" value="$(arg r200_depth_control_median_threshold)" />
-  <param name="$(arg camera)/r200_depth_control_score_minimum_threshold"        type="int" value="$(arg r200_depth_control_score_minimum_threshold)" />
-  <param name="$(arg camera)/r200_depth_control_score_maximum_threshold"        type="int" value="$(arg r200_depth_control_score_maximum_threshold)" />
-  <param name="$(arg camera)/r200_depth_control_texture_count_threshold"        type="int" value="$(arg r200_depth_control_texture_count_threshold)" />
-  <param name="$(arg camera)/r200_depth_control_texture_difference_threshold"   type="int" value="$(arg r200_depth_control_texture_difference_threshold)" />
-  <param name="$(arg camera)/r200_depth_control_second_peak_threshold"          type="int" value="$(arg r200_depth_control_second_peak_threshold)" />
-  <param name="$(arg camera)/r200_depth_control_neighbor_threshold"             type="int" value="$(arg r200_depth_control_neighbor_threshold)" />
-  <param name="$(arg camera)/r200_depth_control_lr_threshold"                   type="int" value="$(arg r200_depth_control_lr_threshold)" />
+  <param name="$(arg camera)/driver/mode"                                              type="str"  value="$(arg mode)" />
+  <param name="$(arg camera)/driver/color_backlight_compensation"                      type="int" value="$(arg color_backlight_compensation)" />
+  <param name="$(arg camera)/driver/color_brightness"                                  type="int" value="$(arg color_brightness)" />
+  <param name="$(arg camera)/driver/color_contrast"                                    type="int" value="$(arg color_contrast)" />
+  <param name="$(arg camera)/driver/color_gain"                                        type="int" value="$(arg color_gain)" />
+  <param name="$(arg camera)/driver/color_gamma"                                       type="int" value="$(arg color_gamma)" />
+  <param name="$(arg camera)/driver/color_hue"                                         type="int" value="$(arg color_hue)" />
+  <param name="$(arg camera)/driver/color_saturation"                                  type="int" value="$(arg color_saturation)" />
+  <param name="$(arg camera)/driver/color_sharpness"                                   type="int" value="$(arg color_sharpness)" />
+  <param name="$(arg camera)/driver/color_enable_auto_white_balance"                   type="int" value="$(arg color_enable_auto_white_balance)" />
+  <param name="$(arg camera)/driver/color_white_balance"                               type="int" value="$(arg color_white_balance)" />
+  <param name="$(arg camera)/driver/r200_lr_gain"                                      type="int" value="$(arg r200_lr_gain)" />
+  <param name="$(arg camera)/driver/r200_emitter_enabled"                              type="bool" value="$(arg r200_emitter_enabled)" />
+  <param name="$(arg camera)/driver/r200_lr_exposure"                                  type="int" value="$(arg r200_lr_exposure)" />
+  <param name="$(arg camera)/driver/r200_depth_units"                                  type="int" value="$(arg r200_depth_units)" />
+  <param name="$(arg camera)/driver/r200_depth_clamp_min"                              type="int" value="$(arg r200_depth_clamp_min)" />
+  <param name="$(arg camera)/driver/r200_depth_clamp_max"                              type="int" value="$(arg r200_depth_clamp_max)" />
+  <param name="$(arg camera)/driver/r200_depth_control_estimate_median_decrement"      type="int" value="$(arg r200_depth_control_estimate_median_decrement)" />
+  <param name="$(arg camera)/driver/r200_depth_control_estimate_median_increment"      type="int" value="$(arg r200_depth_control_estimate_median_increment)" />
+  <param name="$(arg camera)/driver/r200_depth_control_median_threshold"               type="int" value="$(arg r200_depth_control_median_threshold)" />
+  <param name="$(arg camera)/driver/r200_depth_control_score_minimum_threshold"        type="int" value="$(arg r200_depth_control_score_minimum_threshold)" />
+  <param name="$(arg camera)/driver/r200_depth_control_score_maximum_threshold"        type="int" value="$(arg r200_depth_control_score_maximum_threshold)" />
+  <param name="$(arg camera)/driver/r200_depth_control_texture_count_threshold"        type="int" value="$(arg r200_depth_control_texture_count_threshold)" />
+  <param name="$(arg camera)/driver/r200_depth_control_texture_difference_threshold"   type="int" value="$(arg r200_depth_control_texture_difference_threshold)" />
+  <param name="$(arg camera)/driver/r200_depth_control_second_peak_threshold"          type="int" value="$(arg r200_depth_control_second_peak_threshold)" />
+  <param name="$(arg camera)/driver/r200_depth_control_neighbor_threshold"             type="int" value="$(arg r200_depth_control_neighbor_threshold)" />
+  <param name="$(arg camera)/driver/r200_depth_control_lr_threshold"                   type="int" value="$(arg r200_depth_control_lr_threshold)" />
 
-  <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
-
-  <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
-    <arg name="manager"      value="$(arg manager)" />
-    <arg name="camera"       value="$(arg camera)" />
-    <arg name="camera_type"  value="$(arg camera_type)" />
-    <arg name="serial_no"    value="$(arg serial_no)" />
-    <arg name="usb_port_id"  value="$(arg usb_port_id)" />
+  <include file="$(find realsense_camera)/launch/r200_nodelet_default.launch">
+    <arg name="camera"      value="$(arg camera)" />
+    <arg name="camera_type" value="$(arg camera_type)" />
+    <arg name="serial_no"   value="$(arg serial_no)" />
+    <arg name="usb_port_id" value="$(arg usb_port_id)" />
   </include>
 
   <!-- Start test -->

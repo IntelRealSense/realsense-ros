@@ -88,13 +88,13 @@ IR2 camera: Available only for <b>R200</b> cameras.
         Calibration data
 
 ####Services
-    get_settings (camera/get_settings)
+    get_settings (camera/driver/get_settings)
         Gets the current value of the supported camera options in "options:value" format separated by semicolon.
-    set_power < true/false > (camera/set_power < true/false >) # true - to power on the camera, false - to power off the camera
+    set_power < true/false > (camera/driver/set_power < true/false >) # true - to power on the camera, false - to power off the camera
         Sets camera power to turn camera on/off. It turns off the camera only if camera has no subscribers. Otherwise it returns false.
-    force_power < true/false > (camera/force_power < true/false >) # true - to power on the camera, false - to forcefully power off the camera
+    force_power < true/false > (camera/driver/force_power < true/false >) # true - to power on the camera, false - to forcefully power off the camera
         Sets camera power to turn camera on/off. It turns off the camera regardless of number of subscribers.
-    is_powered (camera/is_powered)
+    is_powered (camera/driver/is_powered)
         Gets current state of camera power. It checks whether camera is on or off and returns true or false respectively.
 
 ####Transform Frames

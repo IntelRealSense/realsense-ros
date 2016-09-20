@@ -773,22 +773,33 @@ int main(int argc, char **argv) try
 
   ROS_INFO_STREAM("RealSense Camera - Starting Tests...");
 
-  ros::NodeHandle nh;
-  image_transport::ImageTransport it(nh);
-  g_camera_subscriber[0] = it.subscribeCamera(DEPTH_TOPIC, 1, imageDepthCallback, 0);
-  g_camera_subscriber[1] = it.subscribeCamera(COLOR_TOPIC, 1, imageColorCallback, 0);
-  g_camera_subscriber[2] = it.subscribeCamera(IR_TOPIC, 1, imageInfrared1Callback, 0);
+  ros::NodeHandle nh_base;
+  ros::NodeHandle nh(nh_base, "camera");
+  ros::NodeHandle depth_nh(nh, DEPTH_NAMESPACE);
+  image_transport::ImageTransport depth_image_transport(depth_nh);
+  g_camera_subscriber[0] = depth_image_transport.subscribeCamera(DEPTH_TOPIC, 1, imageDepthCallback, 0);
+  
+  ros::NodeHandle color_nh(nh, COLOR_NAMESPACE);
+  image_transport::ImageTransport color_image_transport(color_nh);
+  g_camera_subscriber[1] = color_image_transport.subscribeCamera(COLOR_TOPIC, 1, imageColorCallback, 0);
+
+  ros::NodeHandle ir_nh(nh, IR_NAMESPACE);
+  image_transport::ImageTransport ir_image_transport(ir_nh);
+  g_camera_subscriber[2] = ir_image_transport.subscribeCamera(IR_TOPIC, 1, imageInfrared1Callback, 0);
+
   // R200 camera has IR2
   if (g_camera_type == "R200")
   {
-    g_camera_subscriber[3] = it.subscribeCamera(IR2_TOPIC, 1, imageInfrared2Callback, 0);
+    ros::NodeHandle ir2_nh(nh, IR2_NAMESPACE);
+    image_transport::ImageTransport ir2_image_transport(ir2_nh);
+    g_camera_subscriber[3] = ir2_image_transport.subscribeCamera(IR2_TOPIC, 1, imageInfrared2Callback, 0);
   }
 
-  g_sub_pc = nh.subscribe <sensor_msgs::PointCloud2> (PC_TOPIC, 1, pcCallback);
-  g_settings_srv_client = nh.serviceClient<realsense_camera::CameraConfiguration>(SETTINGS_SERVICE);
-  g_ispowered_srv_client = nh.serviceClient<realsense_camera::IsPowered>(CAMERA_IS_POWERED_SERVICE);
-  g_setpower_srv_client = nh.serviceClient<realsense_camera::SetPower>(CAMERA_SET_POWER_SERVICE);
-  g_forcepower_srv_client = nh.serviceClient<realsense_camera::ForcePower>(CAMERA_FORCE_POWER_SERVICE);
+  g_sub_pc = depth_nh.subscribe <sensor_msgs::PointCloud2> (PC_TOPIC, 1, pcCallback);
+  g_settings_srv_client = nh.serviceClient<realsense_camera::CameraConfiguration>("/camera/driver/" + SETTINGS_SERVICE);
+  g_ispowered_srv_client = nh.serviceClient<realsense_camera::IsPowered>("/camera/driver/" + CAMERA_IS_POWERED_SERVICE);
+  g_setpower_srv_client = nh.serviceClient<realsense_camera::SetPower>("/camera/driver/" + CAMERA_SET_POWER_SERVICE);
+  g_forcepower_srv_client = nh.serviceClient<realsense_camera::ForcePower>("/camera/driver/" + CAMERA_FORCE_POWER_SERVICE);
 
   ros::Duration duration;
   duration.sec = 10;

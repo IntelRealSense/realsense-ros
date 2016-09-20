@@ -4,7 +4,7 @@
   <arg name="enable_color" value="false" />
 
   <!-- Start camera -->
-  <param name="$(arg camera)/enable_color" type="bool" value="$(arg enable_color)" />
+  <param name="$(arg camera)/driver/enable_color" type="bool" value="$(arg enable_color)" />
   <include file="$(find realsense_camera)/launch/r200_nodelet_default.launch">
     <arg name="camera"      value="$(arg camera)" />
     <arg name="camera_type" value="$(arg camera_type)" />

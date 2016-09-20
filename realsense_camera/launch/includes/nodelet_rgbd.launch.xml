@@ -35,7 +35,7 @@
     <arg name="enable_pointcloud"   default="false" />
 <!-- realsense_camera -->
 
-    <node pkg="nodelet" type="nodelet" name="$(arg camera)"
+    <node pkg="nodelet" type="nodelet" name="driver"
         args="load realsense_camera/$(arg camera_type)Nodelet $(arg manager)">
         <param name="serial_no"               type="str"  value="$(arg serial_no)" />
         <param name="usb_port_id"             type="str"  value="$(arg usb_port_id)" />
@@ -59,14 +59,9 @@
         <param name="ir_frame_id"             type="str"  value="$(arg camera)_$(arg ir)_frame" />
         <param name="ir2_frame_id"            type="str"  value="$(arg camera)_$(arg ir2)_frame" />
 
-        <remap from="camera/depth/image_raw"        to="$(arg depth)/image_raw" />
-        <remap from="camera/color/image_raw"        to="$(arg rgb)/image_raw" />
-        <remap from="camera/ir/image_raw"           to="$(arg ir)/image_raw" />
-        <remap from="camera/ir2/image_raw"          to="$(arg ir2)/image_raw" />
-        <remap from="camera/depth/points"           to="$(arg depth)/points" />
-        <remap from="camera/depth/camera_info"      to="$(arg depth)/camera_info" />
-        <remap from="camera/color/camera_info"      to="$(arg rgb)/camera_info" />
-        <remap from="camera/ir/camera_info"         to="$(arg ir)/camera_info" />
-        <remap from="camera/ir2/camera_info"        to="$(arg ir2)/camera_info" />
+        <remap from="depth"    to="$(arg depth)" />
+        <remap from="color"    to="$(arg rgb)" />
+        <remap from="ir"       to="$(arg ir)" />
+        <remap from="ir2"      to="$(arg ir2)" />
     </node>
 </launch>

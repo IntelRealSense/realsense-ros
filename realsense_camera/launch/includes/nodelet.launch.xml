@@ -9,7 +9,7 @@
   <arg name="ir2"          default="ir2" />
   <arg name="serial_no"    default="" />
   <arg name="usb_port_id"  default="" />
-  <node pkg="nodelet" type="nodelet" name="$(arg camera)"
+  <node pkg="nodelet" type="nodelet" name="driver"
     args="load realsense_camera/$(arg camera_type)Nodelet $(arg manager)">
     <param name="serial_no"               type="str"  value="$(arg serial_no)" />
     <param name="usb_port_id"             type="str"  value="$(arg usb_port_id)" />
@@ -22,18 +22,9 @@
     <param name="ir_frame_id"             type="str"  value="$(arg camera)_ir_frame" />
     <param name="ir2_frame_id"            type="str"  value="$(arg camera)_ir2_frame" />
 
-    <remap from="camera/depth/image_raw"    to="$(arg camera)/$(arg depth)/image_raw" />
-    <remap from="camera/color/image_raw"    to="$(arg camera)/$(arg rgb)/image_raw" />
-    <remap from="camera/ir/image_raw"       to="$(arg camera)/$(arg ir)/image_raw" />
-    <remap from="camera/ir2/image_raw"      to="$(arg camera)/$(arg ir2)/image_raw" />
-    <remap from="camera/depth/points"       to="$(arg camera)/$(arg depth)/points" />
-    <remap from="camera/depth/camera_info"  to="$(arg camera)/$(arg depth)/camera_info" />
-    <remap from="camera/color/camera_info"  to="$(arg camera)/$(arg rgb)/camera_info" />
-    <remap from="camera/ir/camera_info"     to="$(arg camera)/$(arg ir)/camera_info" />
-    <remap from="camera/ir2/camera_info"    to="$(arg camera)/$(arg ir2)/camera_info" />
-    <remap from="camera/get_settings"       to="$(arg camera)/get_settings" />
-    <remap from="camera/set_power"          to="$(arg camera)/set_power" />
-    <remap from="camera/force_power"        to="$(arg camera)/force_power" />
-    <remap from="camera/is_powered"         to="$(arg camera)/is_powered" />
+    <remap from="depth"    to="$(arg depth)" />
+    <remap from="color"    to="$(arg rgb)" />
+    <remap from="ir"       to="$(arg ir)" />
+    <remap from="ir2"      to="$(arg ir2)" />
   </node>
 </launch>
