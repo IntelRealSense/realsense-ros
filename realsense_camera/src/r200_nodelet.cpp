@@ -29,6 +29,8 @@
  *******************************************************************************/
 
 #include <realsense_camera/r200_nodelet.h>
+#include <cstdlib>
+#include <bitset>
 
 PLUGINLIB_EXPORT_CLASS (realsense_camera::R200Nodelet, nodelet::Nodelet)
 
@@ -114,11 +116,150 @@ namespace realsense_camera
   }
 
   /*
+   * Change the Depth Control Preset
+   */
+  void R200Nodelet::setDynamicReconfigDepthControlPreset(int preset)
+  {
+    // There is not a C++ API for dynamic reconfig so we need to use a system call
+    // Adding the sleep to ensure the current callback can end before we
+    // attempt the next callback from the system call.
+    std::string system_cmd = "(sleep 1 ; rosrun dynamic_reconfigure dynparam set "
+      + nodelet_name_ + " r200_dc_preset " + std::to_string(preset) + ")&";
+
+    int status = std::system(system_cmd.c_str());
+    if (status < 0)
+    {
+      ROS_WARN_STREAM(nodelet_name_ <<
+          " - Failed to set dynamic_reconfigure dc preset via system:"
+          << strerror(errno));
+    }
+    else
+    {
+      if (!WIFEXITED(status))
+      {
+        ROS_WARN_STREAM(nodelet_name_ <<
+            " - Failed to set dynamic_reconfigure dc preset via system");
+      }
+    }
+  }
+
+  /*
+   * Change the Depth Control Individual values
+   * GET ALL of the DC options from librealsense
+   * Call dynamic reconfig and set all 10 values as a set
+   */
+  std::string R200Nodelet::setDynamicReconfigDepthControlIndividuals()
+  {
+    std::string current_dc;
+    std::string option_value;
+
+    // There is not a C++ API for dynamic reconfig so we need to use a system call
+    // Adding the sleep to ensure the current callback can end before we
+    // attempt the next callback from the system call.
+    std::string system_cmd =
+      "(sleep 1 ; rosrun dynamic_reconfigure dynparam set ";
+    system_cmd += nodelet_name_ + " " +
+      "\"{" +
+      "'r200_dc_estimate_median_decrement':";
+    option_value =
+      std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
+              RS_OPTION_R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_DECREMENT, 0)));
+    current_dc += option_value + ":";
+    system_cmd += option_value +
+      ", 'r200_dc_estimate_median_increment':";
+    option_value =
+      std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
+              RS_OPTION_R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_INCREMENT, 0)));
+    current_dc += option_value + ":";
+    system_cmd += option_value +
+      ", 'r200_dc_median_threshold':";
+    option_value =
+      std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
+              RS_OPTION_R200_DEPTH_CONTROL_MEDIAN_THRESHOLD, 0)));
+    current_dc += option_value + ":";
+    system_cmd += option_value +
+      ", 'r200_dc_score_minimum_threshold':";
+    option_value =
+      std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
+              RS_OPTION_R200_DEPTH_CONTROL_SCORE_MINIMUM_THRESHOLD, 0)));
+    current_dc += option_value + ":";
+    system_cmd += option_value +
+      ", 'r200_dc_score_maximum_threshold':";
+    option_value =
+      std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
+              RS_OPTION_R200_DEPTH_CONTROL_SCORE_MAXIMUM_THRESHOLD, 0)));
+    current_dc += option_value + ":";
+    system_cmd += option_value +
+      ", 'r200_dc_texture_count_threshold':";
+    option_value =
+      std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
+              RS_OPTION_R200_DEPTH_CONTROL_TEXTURE_COUNT_THRESHOLD, 0)));
+    current_dc += option_value + ":";
+    system_cmd += option_value +
+      ", 'r200_dc_texture_difference_threshold':";
+    option_value =
+      std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
+              RS_OPTION_R200_DEPTH_CONTROL_TEXTURE_DIFFERENCE_THRESHOLD, 0)));
+    current_dc += option_value + ":";
+    system_cmd += option_value +
+      ", 'r200_dc_second_peak_threshold':";
+    option_value =
+      std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
+              RS_OPTION_R200_DEPTH_CONTROL_SECOND_PEAK_THRESHOLD, 0)));
+    current_dc += option_value + ":";
+    system_cmd += option_value +
+      ", 'r200_dc_neighbor_threshold':";
+    option_value =
+      std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
+              RS_OPTION_R200_DEPTH_CONTROL_NEIGHBOR_THRESHOLD, 0)));
+    current_dc += option_value + ":";
+    system_cmd += option_value +
+      ", 'r200_dc_lr_threshold':";
+    option_value =
+      std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
+              RS_OPTION_R200_DEPTH_CONTROL_LR_THRESHOLD, 0)));
+    current_dc += option_value;
+    system_cmd += option_value +
+      "}\")&";
+
+    ROS_DEBUG_STREAM(nodelet_name_ << " - Setting DC: " << system_cmd);
+
+    int status = std::system(system_cmd.c_str());
+    if (status < 0)
+    {
+      ROS_WARN_STREAM(nodelet_name_ <<
+          " - Failed to set dynamic_reconfigure dc manual via system:"
+          << strerror(errno));
+    }
+    else
+    {
+      if (!WIFEXITED(status))
+      {
+        ROS_WARN_STREAM(nodelet_name_ <<
+            " - Failed to set dynamic_reconfigure dc manual via system");
+      }
+    }
+
+    return current_dc;
+  }
+
+  /*
    * Get the dynamic param values.
    */
   void R200Nodelet::configCallback(realsense_camera::r200_paramsConfig &config, uint32_t level)
   {
+    // Save the dc_preset value as there is no getter API for this value
+    static int dc_preset = -2;
+    int previous_dc_preset = dc_preset;
+    // Save the last depth control preset values as a string
+    static std::string last_dc;
+
+    // level is the ORing of all levels which have a changed value
+    std::bitset<32> bit_level{level};
+
+
     ROS_INFO_STREAM(nodelet_name_ << " - Setting dynamic camera options");
+
     // Set flags
     if (config.enable_depth == false)
     {
@@ -185,6 +326,85 @@ namespace realsense_camera
       edge_values_[2] = config.r200_auto_exposure_right_edge;
       edge_values_[3] = config.r200_auto_exposure_bottom_edge;
       rs_set_device_options(rs_device_, edge_options_, 4, edge_values_, 0);
+    }
+
+    // Depth Control Group Settings
+    // NOTE: do NOT use the config.groups values as they are zero the first time called
+    if (bit_level.test(5)) // 2^5 = 32 : Individual Depth Control settings
+    {
+      std::string current_dc;
+
+      ROS_DEBUG_STREAM(nodelet_name_ << " - Setting Individual Depth Control");
+
+      rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_DECREMENT,
+          config.r200_dc_estimate_median_decrement, 0);
+      current_dc += std::to_string(static_cast<uint32_t>(config.r200_dc_estimate_median_decrement)) + ":";
+      rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_INCREMENT,
+          config.r200_dc_estimate_median_increment, 0);
+      current_dc += std::to_string(static_cast<uint32_t>(config.r200_dc_estimate_median_increment)) + ":";
+      rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CONTROL_MEDIAN_THRESHOLD,
+          config.r200_dc_median_threshold, 0);
+      current_dc += std::to_string(static_cast<uint32_t>(config.r200_dc_median_threshold)) + ":";
+      rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CONTROL_SCORE_MINIMUM_THRESHOLD,
+          config.r200_dc_score_minimum_threshold, 0);
+      current_dc += std::to_string(static_cast<uint32_t>(config.r200_dc_score_minimum_threshold)) + ":";
+      rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CONTROL_SCORE_MAXIMUM_THRESHOLD,
+          config.r200_dc_score_maximum_threshold, 0);
+      current_dc += std::to_string(static_cast<uint32_t>(config.r200_dc_score_maximum_threshold)) + ":";
+      rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CONTROL_TEXTURE_COUNT_THRESHOLD,
+          config.r200_dc_texture_count_threshold, 0);
+      current_dc += std::to_string(static_cast<uint32_t>(config.r200_dc_texture_count_threshold)) + ":";
+      rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CONTROL_TEXTURE_DIFFERENCE_THRESHOLD,
+          config.r200_dc_texture_difference_threshold, 0);
+      current_dc += std::to_string(static_cast<uint32_t>(config.r200_dc_texture_difference_threshold)) + ":";
+      rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CONTROL_SECOND_PEAK_THRESHOLD,
+          config.r200_dc_second_peak_threshold, 0);
+      current_dc += std::to_string(static_cast<uint32_t>(config.r200_dc_second_peak_threshold)) + ":";
+      rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CONTROL_NEIGHBOR_THRESHOLD,
+          config.r200_dc_neighbor_threshold, 0);
+      current_dc += std::to_string(static_cast<uint32_t>(config.r200_dc_neighbor_threshold)) + ":";
+      rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CONTROL_LR_THRESHOLD,
+          config.r200_dc_lr_threshold, 0);
+      current_dc += std::to_string(static_cast<uint32_t>(config.r200_dc_lr_threshold));
+
+      // Preset also change in the same update callback?
+      if (bit_level.test(6)) // 2^6 = 64 : Depth Control Preset
+      {
+        dc_preset = config.r200_dc_preset;
+
+        if (previous_dc_preset != -2 && // not the first pass special case (-2)
+            dc_preset != -1) // not already set to unused (-1)
+        {
+          ROS_DEBUG_STREAM(nodelet_name_ << " - Forcing Depth Control Preset to Unused");
+          setDynamicReconfigDepthControlPreset(-1);
+        }
+      }
+      else
+      {
+        // Changing individual Depth Control params means preset is Unused/Invalid
+        // if the individual values are not the same as the preset values
+        if (dc_preset != -1 && current_dc != last_dc)
+        {
+          ROS_DEBUG_STREAM(nodelet_name_ << " - Setting Depth Control Preset to Unused");
+          setDynamicReconfigDepthControlPreset(-1);
+        }
+      }
+    }
+    else
+    { // Individual Depth Control not set
+      if (bit_level.test(6)) // 2^6 = 64 : Depth Control Preset
+      {
+        dc_preset = config.r200_dc_preset;
+
+        if (dc_preset != -1)
+        {
+          ROS_DEBUG_STREAM(nodelet_name_ << " - Set Depth Control Preset to " << dc_preset);
+          rs_apply_depth_control_preset(rs_device_, dc_preset);
+
+          // Save the preset value string
+          last_dc = setDynamicReconfigDepthControlIndividuals();
+        }
+      }
     }
   }
 
