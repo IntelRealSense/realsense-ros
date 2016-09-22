@@ -2,6 +2,19 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Remove obsolete realsense_navigation files.
+* Add depth control preset option (#106)
+* Modify launch files for topic remapping.
+* Use node handles to enable easier remapping
+* Remove invalid SR300 Camera option
+* Added multiple cameras support for camera power services
+* Added services to start and stop the camera (#85)
+* Added a RGBD launch file for SR300
+* Clean-up CMakeLists.txt for librealsense
+* Contributors: Amber Elliot, Kevin C Wells, Mark D Horn, Séverin Lemaignan, Tully Foote, Rajvi Jingar
+
 1.4.0 (2016-08-19)
 ------------------
 * Updated Install Instructions for ROS Packages
