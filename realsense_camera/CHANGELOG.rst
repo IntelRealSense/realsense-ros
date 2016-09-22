@@ -2,8 +2,8 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.5.0 (2016-09-22)
+------------------
 * Remove obsolete realsense_navigation files.
 * Add depth control preset option (#106)
 * Modify launch files for topic remapping.
