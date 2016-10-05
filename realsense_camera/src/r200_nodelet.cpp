@@ -258,7 +258,6 @@ namespace realsense_camera
     // level is the ORing of all levels which have a changed value
     std::bitset<32> bit_level{level};
 
-
     ROS_INFO_STREAM(nodelet_name_ << " - Setting dynamic camera options");
 
     // Set flags

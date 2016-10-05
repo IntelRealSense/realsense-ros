@@ -51,12 +51,6 @@ namespace realsense_camera
   protected:
 
     // Member Variables.
-    rs_option edge_options_[4] = {
-      RS_OPTION_R200_AUTO_EXPOSURE_LEFT_EDGE,
-      RS_OPTION_R200_AUTO_EXPOSURE_TOP_EDGE,
-      RS_OPTION_R200_AUTO_EXPOSURE_RIGHT_EDGE,
-      RS_OPTION_R200_AUTO_EXPOSURE_BOTTOM_EDGE
-    };
     ros::ServiceServer get_imu_info_;
     boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::zr300_paramsConfig>> dynamic_reconf_server_;
     bool enable_imu_;
@@ -78,12 +72,10 @@ namespace realsense_camera
     void advertiseTopics();
     void advertiseServices();
     bool getIMUInfo(realsense_camera::GetIMUInfo::Request & req,realsense_camera::GetIMUInfo::Response & res);
-/*TODO
-    void getIMUSensorInfo(realsense_camera::IMUInfo * imu_info,
-        rs_motion_device_intrinsic imu_intrinsic, ros::Time header_stamp, std::string header_frame_id);
-*/
     std::vector<std::string> setDynamicReconfServer();
     void startDynamicReconfCallback();
+    void setDynamicReconfigDepthControlPreset(int preset);
+    std::string setDynamicReconfigDepthControlIndividuals();
     void configCallback(realsense_camera::zr300_paramsConfig &config, uint32_t level);
     void setStreams();
     void publishTopics();

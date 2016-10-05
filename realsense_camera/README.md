@@ -351,5 +351,3 @@ Until it gets fixed, use a single launch file for multiple F200 or SR300 cameras
 [Issue #89](https://github.com/intel-ros/realsense/issues/89).
 Unlikely to be fixed as current plan is to
 [remove native point cloud generation](https://github.com/intel-ros/realsense/issues/47).
-
-* The service "get_imu_info" is yet to be tested.
