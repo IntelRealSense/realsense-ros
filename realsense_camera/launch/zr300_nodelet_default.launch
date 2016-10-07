@@ -1,0 +1,20 @@
+<!-- Sample launch file for using RealSense ZR300 camera with default configurations -->
+<launch>
+  <arg name="manager"      value="nodelet_manager" />
+  <arg name="camera"       default="camera" />
+  <arg name="camera_type"  default="ZR300" /> <!-- Type of camera -->
+  <arg name="serial_no"    default="" />
+  <arg name="usb_port_id"  default="" /> <!-- USB "Bus#-Port#" -->
+
+  <group ns="$(arg camera)">
+    <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
+
+    <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="manager"      value="$(arg manager)" />
+      <arg name="camera"       value="$(arg camera)" />
+      <arg name="camera_type"  value="$(arg camera_type)" />
+      <arg name="serial_no"    value="$(arg serial_no)" />
+      <arg name="usb_port_id"  value="$(arg usb_port_id)" />
+    </include>
+  </group>
+</launch>

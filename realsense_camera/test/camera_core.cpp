@@ -159,33 +159,6 @@ void imageDepthCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs
   g_depth_recv = true;
 }
 
-
-void pcCallback(const sensor_msgs::PointCloud2ConstPtr pc)
-{
-  pcl::PointCloud < pcl::PointXYZRGB > pointcloud;
-  pcl::fromROSMsg(*pc, pointcloud);
-
-  double pc_depth_total = 0.0;
-  int pc_depth_count = 0;
-  for (unsigned int i = 0; i < pointcloud.width * pointcloud.height; ++i)
-  {
-    pcl::PointXYZRGB point = pointcloud.points[i];
-    double pc_depth = std::ceil(point.z);
-    if ((0.0 < pc_depth) && (pc_depth <= g_max_z))
-    {
-      pc_depth_total += pc_depth;
-      pc_depth_count++;
-    }
-  }
-  if (pc_depth_count != 0)
-  {
-    g_pc_depth_avg = static_cast<float>(pc_depth_total / pc_depth_count);
-  }
-
-  g_pc_recv = true;
-}
-
-
 void imageColorCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs::CameraInfoConstPtr &info_msg)
 {
   cv::Mat image = cv_bridge::toCvShare(msg, "rgb8")->image;
@@ -216,6 +189,82 @@ void imageColorCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs
   }
 
   g_color_recv = true;
+}
+
+void imageFisheyeCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs::CameraInfoConstPtr &info_msg)
+{
+  cv::Mat image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::TYPE_8UC1)->image;
+
+  uchar *fisheye_data = image.data;
+
+  double fisheye_total = 0.0;
+  int fisheye_count = 1;
+  for (unsigned int i = 0; i < msg->height * msg->width; i++)
+  {
+    if (*fisheye_data > 0 && *fisheye_data < 255)
+    {
+      fisheye_total += *fisheye_data;
+      fisheye_count++;
+    }
+    fisheye_data++;
+  }
+  if (fisheye_count != 0)
+  {
+    g_fisheye_avg = static_cast<float>(fisheye_total / fisheye_count);
+  }
+
+  getMsgInfo(RS_STREAM_FISHEYE, msg);
+  getCameraInfo(RS_STREAM_FISHEYE, info_msg);
+
+  for (unsigned int i = 0; i < 5; i++)
+  {
+    g_fisheye_caminfo_D_recv[i] = info_msg->D[i];
+  }
+
+  g_fisheye_recv = true;
+}
+
+void imuCallback(const sensor_msgs::ImuConstPtr &imu)
+{
+  g_imu_recv = false;
+  if (imu->angular_velocity_covariance[0] != -1.0)
+  {
+    if ((imu->angular_velocity.x != 0.0) || (imu->angular_velocity.y != 0.0) || (imu->angular_velocity.z != 0.0))
+    {
+      g_imu_recv = true;
+    }
+  } else if (imu->linear_acceleration_covariance[0] != -1.0)
+  {
+    if ((imu->linear_acceleration.x != 0.000) || (imu->linear_acceleration.y != 0.000) || (imu->linear_acceleration.z != 0.000))
+    {
+      g_imu_recv = true;
+    }
+  }
+}
+
+void pcCallback(const sensor_msgs::PointCloud2ConstPtr pc)
+{
+  pcl::PointCloud < pcl::PointXYZRGB > pointcloud;
+  pcl::fromROSMsg(*pc, pointcloud);
+
+  double pc_depth_total = 0.0;
+  int pc_depth_count = 0;
+  for (unsigned int i = 0; i < pointcloud.width * pointcloud.height; ++i)
+  {
+    pcl::PointXYZRGB point = pointcloud.points[i];
+    double pc_depth = std::ceil(point.z);
+    if ((0.0 < pc_depth) && (pc_depth <= g_max_z))
+    {
+      pc_depth_total += pc_depth;
+      pc_depth_count++;
+    }
+  }
+  if (pc_depth_count != 0)
+  {
+    g_pc_depth_avg = static_cast<float>(pc_depth_total / pc_depth_count);
+  }
+
+  g_pc_recv = true;
 }
 
 TEST(RealsenseTests, testColorStream)
@@ -283,8 +332,8 @@ TEST(RealsenseTests, testColorCameraInfo)
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_COLOR][10] != 0.0);
     EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_COLOR][11], 0.0);
 
-    // R200 camera has Color distortion parameters
-    if (g_camera_type == "R200")
+    // R200 and ZR300 cameras have Color distortion parameters
+    if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
     {
       bool any_are_zero = false;
       // Ignoring the 5th value since it always appears to be 0.0
@@ -306,8 +355,8 @@ TEST(RealsenseTests, testIsDepthStreamEnabled)
   {
     EXPECT_TRUE(g_depth_recv);
     EXPECT_TRUE(g_infrared1_recv);
-    // R200 camera has IR2
-    if (g_camera_type == "R200")
+    // R200 and ZR300 cameras have IR2
+    if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
     {
       EXPECT_TRUE(g_infrared2_recv);
     }
@@ -316,8 +365,8 @@ TEST(RealsenseTests, testIsDepthStreamEnabled)
   {
     EXPECT_FALSE(g_depth_recv);
     EXPECT_FALSE(g_infrared1_recv);
-    // R200 camera has IR2
-    if (g_camera_type == "R200")
+    // R200 and ZR300 cameras have IR2
+    if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
     {
       EXPECT_FALSE(g_infrared2_recv);
     }
@@ -487,8 +536,8 @@ TEST(RealsenseTests, testInfrared1CameraInfo)
 
 TEST(RealsenseTests, testInfrared2Stream)
 {
-  // R200 camera has IR2
-  if (g_camera_type == "R200")
+  // R200 and ZR300 cameras have IR2
+  if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
   {
     if (g_enable_depth)
     {
@@ -504,8 +553,8 @@ TEST(RealsenseTests, testInfrared2Stream)
 
 TEST(RealsenseTests, testInfrared2Resolution)
 {
-  // R200 camera has IR2
-  if (g_camera_type == "R200")
+  // R200 and ZR300 cameras have IR2
+  if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
   {
     if (g_enable_depth)
     {
@@ -523,8 +572,8 @@ TEST(RealsenseTests, testInfrared2Resolution)
 
 TEST(RealsenseTests, testInfrared2CameraInfo)
 {
-  // R200 camera has IR2
-  if (g_camera_type == "R200")
+  // R200 and ZR300 cameras have IR2
+  if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
   {
     if (g_enable_depth)
     {
@@ -555,6 +604,74 @@ TEST(RealsenseTests, testInfrared2CameraInfo)
   }
 }
 
+TEST(RealsenseTests, testFisheyeStream)
+{
+  if (g_enable_fisheye)
+  {
+    EXPECT_TRUE(g_fisheye_avg > 0);
+    EXPECT_TRUE(g_fisheye_recv);
+  }
+  else
+  {
+    EXPECT_FALSE(g_fisheye_recv);
+  }
+}
+
+TEST(RealsenseTests, testFisheyeCameraInfo)
+{
+  if (g_enable_imu)
+  {
+    EXPECT_EQ(g_width_recv[RS_STREAM_FISHEYE], g_caminfo_width_recv[RS_STREAM_FISHEYE]);
+    EXPECT_EQ(g_height_recv[RS_STREAM_FISHEYE], g_caminfo_height_recv[RS_STREAM_FISHEYE]);
+    EXPECT_STREQ(g_dmodel_recv[RS_STREAM_FISHEYE].c_str (), "plumb_bob");
+
+    // verify rotation is equal to identity matrix
+    for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
+    {
+      EXPECT_EQ(ROTATION_IDENTITY[i], g_caminfo_rotation_recv[RS_STREAM_FISHEYE][i]);
+    }
+
+    // check projection matrix values are set
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_FISHEYE][0] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_FISHEYE][1], 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_FISHEYE][2] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_FISHEYE][3], 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_FISHEYE][4], 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_FISHEYE][5] != 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_FISHEYE][6] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_FISHEYE][7], 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_FISHEYE][8], 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_FISHEYE][9], 0.0);
+    EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_FISHEYE][10] != 0.0);
+    EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_FISHEYE][11], 0.0);
+
+    // SR300 cameras have Fisheye distortion parameters
+    if (g_camera_type == "SR300")
+    {
+      bool any_are_zero = false;
+      for (unsigned int i = 0; i < 5; i++)
+      {
+        if (g_fisheye_caminfo_D_recv[i] == 0.0)
+        {
+          any_are_zero = true;
+        }
+      }
+      EXPECT_FALSE(any_are_zero);
+    }
+  }
+}
+
+TEST(RealsenseTests, testImu)
+{
+  if (g_enable_imu)
+  {
+    EXPECT_TRUE(g_imu_recv);
+  }
+  else
+  {
+    EXPECT_FALSE(g_imu_recv);
+  }
+}
 
 TEST(RealsenseTests, testPointCloud)
 {
@@ -583,6 +700,28 @@ TEST(RealsenseTests, testTransforms)
       ros::Duration(3.0)));
   EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_COLOR_OPTICAL_FRAME_ID, DEFAULT_COLOR_FRAME_ID, ros::Time(0),
       ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_IR_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0),
+      ros::Duration(3.0)));
+  EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_IR_OPTICAL_FRAME_ID, DEFAULT_IR_FRAME_ID, ros::Time(0),
+      ros::Duration(3.0)));
+  if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
+  {
+    EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_IR2_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0),
+        ros::Duration(3.0)));
+    EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_IR2_OPTICAL_FRAME_ID, DEFAULT_IR2_FRAME_ID, ros::Time(0),
+        ros::Duration(3.0)));
+  }
+  if (g_camera_type == "ZR300")
+  {
+    EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_FISHEYE_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0),
+        ros::Duration(3.0)));
+    EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_FISHEYE_OPTICAL_FRAME_ID, DEFAULT_FISHEYE_FRAME_ID, ros::Time(0),
+        ros::Duration(3.0)));
+    EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_IMU_FRAME_ID, DEFAULT_BASE_FRAME_ID, ros::Time(0),
+        ros::Duration(3.0)));
+    EXPECT_TRUE(tf_listener.waitForTransform(DEFAULT_IMU_OPTICAL_FRAME_ID, DEFAULT_IMU_FRAME_ID, ros::Time(0),
+        ros::Duration(3.0)));
+  }
 }
 
 TEST(RealsenseTests, testCameraOptions)
@@ -748,6 +887,36 @@ void fillConfigMap(int argc, char **argv)
       g_color_step_exp = atoi(g_config_args.at("color_step").c_str());
     }
 
+    // Set fisheye arguments.
+    if (g_config_args.find("enable_fisheye") != g_config_args.end())
+    {
+      ROS_INFO("RealSense Camera - Setting %s to %s", "enable_fisheye",
+          g_config_args.at("enable_fisheye").c_str());
+      if (strcmp((g_config_args.at("enable_fisheye").c_str()),"true") == 0)
+      {
+        g_enable_fisheye = true;
+      }
+      else
+      {
+        g_enable_fisheye = false;
+      }
+    }
+
+    // Set imu arguments.
+    if (g_config_args.find("enable_imu") != g_config_args.end())
+    {
+      ROS_INFO("RealSense Camera - Setting %s to %s", "enable_imu",
+          g_config_args.at("enable_imu").c_str());
+      if (strcmp((g_config_args.at("enable_imu").c_str()),"true") == 0)
+      {
+        g_enable_imu = true;
+      }
+      else
+      {
+        g_enable_imu = false;
+      }
+    }
+
     // Set pointcloud arguments.
     if (g_config_args.find("enable_pointcloud") != g_config_args.end())
     {
@@ -778,7 +947,7 @@ int main(int argc, char **argv) try
   ros::NodeHandle depth_nh(nh, DEPTH_NAMESPACE);
   image_transport::ImageTransport depth_image_transport(depth_nh);
   g_camera_subscriber[0] = depth_image_transport.subscribeCamera(DEPTH_TOPIC, 1, imageDepthCallback, 0);
-  
+
   ros::NodeHandle color_nh(nh, COLOR_NAMESPACE);
   image_transport::ImageTransport color_image_transport(color_nh);
   g_camera_subscriber[1] = color_image_transport.subscribeCamera(COLOR_TOPIC, 1, imageColorCallback, 0);
@@ -787,12 +956,23 @@ int main(int argc, char **argv) try
   image_transport::ImageTransport ir_image_transport(ir_nh);
   g_camera_subscriber[2] = ir_image_transport.subscribeCamera(IR_TOPIC, 1, imageInfrared1Callback, 0);
 
-  // R200 camera has IR2
-  if (g_camera_type == "R200")
+  // R200 and ZR300 cameras have IR2
+  if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
   {
     ros::NodeHandle ir2_nh(nh, IR2_NAMESPACE);
     image_transport::ImageTransport ir2_image_transport(ir2_nh);
     g_camera_subscriber[3] = ir2_image_transport.subscribeCamera(IR2_TOPIC, 1, imageInfrared2Callback, 0);
+  }
+
+  // ZR300 cameras have Fisheye and IMU
+  if (g_camera_type == "ZR300")
+  {
+    ros::NodeHandle fisheye_nh(nh, FISHEYE_NAMESPACE);
+    image_transport::ImageTransport fisheye_image_transport(fisheye_nh);
+    g_camera_subscriber[4] = fisheye_image_transport.subscribeCamera(FISHEYE_TOPIC, 1, imageFisheyeCallback, 0);
+
+    ros::NodeHandle imu_nh(nh, IMU_NAMESPACE);
+    g_sub_imu = imu_nh.subscribe<sensor_msgs::Imu>(IMU_TOPIC, 1, imuCallback);
   }
 
   g_sub_pc = depth_nh.subscribe <sensor_msgs::PointCloud2> (PC_TOPIC, 1, pcCallback);
