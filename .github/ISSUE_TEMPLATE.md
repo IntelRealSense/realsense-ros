@@ -22,7 +22,7 @@ Please complete Your Configuration detail below. Refer to the BKC at [Configurat
 | Backend               | `ls /sys/class | grep video4linux` |
 | ROS                   | `rosversion -d` |
 | ROS RealSense         | `rosversion realsense_camera` |
-| librealsense          | `cat <path to librealsense>/librealsense/readme.md | grep release-image | awk -F- '{print $3}'` |
+| librealsense          | `rosversion librealsense` or `cat <src path>/librealsense/readme.md | grep release-image | awk -F- '{print $3}'` |
 | Camera Type-Firmware  | View the ROS log from running nodelet |
 
 ---
