@@ -258,7 +258,15 @@ namespace realsense_camera
     // level is the ORing of all levels which have a changed value
     std::bitset<32> bit_level{level};
 
-    ROS_INFO_STREAM(nodelet_name_ << " - Setting dynamic camera options");
+    if (bit_level.test(6)) // 2^6 = 64 : Depth Control Preset
+    {
+      ROS_INFO_STREAM(nodelet_name_ << " - Setting dynamic camera options" <<
+          " (dc_preset=" << config.r200_dc_preset << ")");
+    }
+    else
+    {
+      ROS_INFO_STREAM(nodelet_name_ << " - Setting dynamic camera options");
+    }
 
     // Set flags
     if (config.enable_depth == false)
@@ -377,6 +385,14 @@ namespace realsense_camera
         {
           ROS_DEBUG_STREAM(nodelet_name_ << " - Forcing Depth Control Preset to Unused");
           setDynamicReconfigDepthControlPreset(-1);
+        }
+        else
+        {
+          ROS_DEBUG_STREAM(nodelet_name_ << " - Initialize Depth Control Preset to " << dc_preset);
+          rs_apply_depth_control_preset(rs_device_, dc_preset);
+
+          // Save the preset value string
+          last_dc = setDynamicReconfigDepthControlIndividuals();
         }
       }
       else
