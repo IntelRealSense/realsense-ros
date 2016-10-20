@@ -2,6 +2,12 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Set DC defaults based on the configured preset (#132)
+* Added initial support for ZR300 camera
+* Contributors: Mark Horn, Reagan Lopez
+
 1.5.0 (2016-09-22)
 ------------------
 * Remove obsolete realsense_navigation files.
