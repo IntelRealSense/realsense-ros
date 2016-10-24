@@ -2,7 +2,7 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.6.0 (2016-10-20)
+1.6.0 (2016-10-24)
 ------------------
 * Set DC defaults based on the configured preset (#132)
 * Added initial support for ZR300 camera
