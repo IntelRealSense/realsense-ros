@@ -344,7 +344,7 @@ namespace realsense_camera
     if (bit_level.test(6)) // 2^6 = 64 : Depth Control Preset
     {
       ROS_INFO_STREAM(nodelet_name_ << " - Setting dynamic camera options" <<
-          " (dc_preset=" << config.r200_dc_preset << ")");
+          " (r200_dc_preset=" << config.r200_dc_preset << ")");
     }
     else
     {
@@ -434,24 +434,38 @@ namespace realsense_camera
           config.r200_dc_lr_threshold, 0);
       current_dc += std::to_string(static_cast<uint32_t>(config.r200_dc_lr_threshold));
 
-      // Preset also change in the same update callback?
+      // Preset also changed in the same update callback
+      // This is either First callback special case, or both set via
+      // dynamic configure command line.
       if (bit_level.test(6)) // 2^6 = 64 : Depth Control Preset
       {
         dc_preset = config.r200_dc_preset;
 
-        if (previous_dc_preset != -2 && // not the first pass special case (-2)
-            dc_preset != -1) // not already set to unused (-1)
+        if (previous_dc_preset != -2) // not the first pass special case (-2)
         {
-          ROS_DEBUG_STREAM(nodelet_name_ << " - Forcing Depth Control Preset to Unused");
-          setDynamicReconfigDepthControlPreset(-1);
+          // Changing individual Depth Control params means preset is Unused/Invalid
+          // if the individual values are not the same as the preset values
+          if (dc_preset != -1 && current_dc != last_dc)
+          {
+            ROS_DEBUG_STREAM(nodelet_name_ << " - Forcing Depth Control Preset to Unused");
+            setDynamicReconfigDepthControlPreset(-1);
+          }
         }
         else
         {
-          ROS_DEBUG_STREAM(nodelet_name_ << " - Initialize Depth Control Preset to " << dc_preset);
-          rs_apply_depth_control_preset(rs_device_, dc_preset);
+          // This is the first pass callback, in this instance we allow the
+          // dc_preset to trump the individual values as it might have been
+          // set from the launch file. To allow override of individual values,
+          // set dc_preset to -1 (Unused) in the launch file.
+          if (dc_preset != -1)
+          {
+            ROS_INFO_STREAM(nodelet_name_ << " - Initializing Depth Control Preset to " << dc_preset);
+            ROS_INFO_STREAM(nodelet_name_ << " - NOTICE: Individual Depth Control values set by params will be ignored; set r200_dc_preset=-1 to override.");
+            rs_apply_depth_control_preset(rs_device_, dc_preset);
 
-          // Save the preset value string
-          last_dc = setDynamicReconfigDepthControlIndividuals();
+            // Save the preset value string
+            last_dc = setDynamicReconfigDepthControlIndividuals();
+          }
         }
       }
       else
@@ -460,7 +474,7 @@ namespace realsense_camera
         // if the individual values are not the same as the preset values
         if (dc_preset != -1 && current_dc != last_dc)
         {
-          ROS_DEBUG_STREAM(nodelet_name_ << " - Setting Depth Control Preset to Unused");
+          ROS_DEBUG_STREAM(nodelet_name_ << " - Forcing Depth Control Preset to Unused");
           setDynamicReconfigDepthControlPreset(-1);
         }
       }
