@@ -11,6 +11,7 @@
   <license>BSD 3-clause. See license attached</license>
 
   <url type="website">http://www.ros.org/wiki/RealSense</url>
+  <url type="bugtracker">https://github.com/intel-ros/realsense/issues</url>
 
   <author email="rajvi.jingar@intel.com">Rajvi Jingar</author>
   <author email="reagan.lopez@intel.com">Reagan Lopez</author>
@@ -35,7 +36,7 @@
 
   <exec_depend>rgbd_launch</exec_depend>
 
-  <build_depend version_gte="0.9.2">librealsense</build_depend>
+  <build_depend version_gte="1.11.0">librealsense</build_depend>
   <build_export_depend>librealsense</build_export_depend>
   <exec_depend>librealsense</exec_depend>
 
