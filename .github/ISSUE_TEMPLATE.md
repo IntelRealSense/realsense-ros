@@ -5,7 +5,6 @@ Please complete Your Configuration detail below. Refer to the BKC at [Configurat
 |:--------------------- |:---------------------|
 | Operating System      | ? ? ?                |
 | Kernel                | ?-?-?                |
-| Backend               | ?                    |
 | ROS                   | ?                    |
 | ROS RealSense         | ?.?.?                |
 | librealsense          | ?.?.?                |
@@ -17,12 +16,11 @@ Please complete Your Configuration detail below. Refer to the BKC at [Configurat
 
 | Version               | Method |
 |:--------------------- |:------------ |
-| Operating System      | `grep DISTRIB_DESCRIPTION /etc/*elease*` |
+| Operating System      | `grep DISTRIB_DESCRIPTION /etc/*elease*` or `lsb_release -d` |
 | Kernel                | `uname -r` |
-| Backend               | `ls /sys/class | grep video4linux` |
 | ROS                   | `rosversion -d` |
 | ROS RealSense         | `rosversion realsense_camera` |
-| librealsense          | `rosversion librealsense` or `cat <src path>/librealsense/readme.md | grep release-image | awk -F- '{print $3}'` |
+| librealsense          | `rosversion librealsense` |
 | Camera Type-Firmware  | View the ROS log from running nodelet |
 
 ---
