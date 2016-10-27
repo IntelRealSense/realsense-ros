@@ -71,8 +71,8 @@ uint32_t g_infrared1_step_exp; // Expected infrared1 step.
 
 bool g_enable_color = true;
 bool g_enable_depth = true;
-bool g_enable_fisheye = true;
-bool g_enable_imu = true;
+bool g_enable_fisheye = false;
+bool g_enable_imu = false;
 bool g_enable_pointcloud = false;
 
 std::string g_depth_encoding_exp; // Expected depth encoding.
