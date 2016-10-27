@@ -608,6 +608,7 @@ TEST(RealsenseTests, testFisheyeStream)
 {
   if (g_enable_fisheye)
   {
+    ROS_INFO_STREAM("RealSense Camera - fisheye_avg: " << g_fisheye_avg);
     EXPECT_TRUE(g_fisheye_avg > 0);
     EXPECT_TRUE(g_fisheye_recv);
   }
@@ -619,7 +620,7 @@ TEST(RealsenseTests, testFisheyeStream)
 
 TEST(RealsenseTests, testFisheyeCameraInfo)
 {
-  if (g_enable_imu)
+  if (g_enable_fisheye)
   {
     EXPECT_EQ(g_width_recv[RS_STREAM_FISHEYE], g_caminfo_width_recv[RS_STREAM_FISHEYE]);
     EXPECT_EQ(g_height_recv[RS_STREAM_FISHEYE], g_caminfo_height_recv[RS_STREAM_FISHEYE]);
@@ -645,11 +646,12 @@ TEST(RealsenseTests, testFisheyeCameraInfo)
     EXPECT_TRUE(g_caminfo_projection_recv[RS_STREAM_FISHEYE][10] != 0.0);
     EXPECT_EQ(g_caminfo_projection_recv[RS_STREAM_FISHEYE][11], 0.0);
 
-    // SR300 cameras have Fisheye distortion parameters
-    if (g_camera_type == "SR300")
+    // ZR300 cameras have Fisheye distortion parameters
+    // Only the first coefficient is used/valid
+    if (g_camera_type == "ZR300")
     {
       bool any_are_zero = false;
-      for (unsigned int i = 0; i < 5; i++)
+      for (unsigned int i = 0; i < 1; i++)
       {
         if (g_fisheye_caminfo_D_recv[i] == 0.0)
         {
