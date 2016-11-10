@@ -9,6 +9,8 @@
   <!-- These 'arg' tags are just place-holders for passing values from test files.
   The recommended way is to pass the values directly into the 'param' tags. -->
   <arg name="enable_depth"      default="true" />
+  <arg name="enable_ir"         default="true" />
+  <arg name="enable_ir2"        default="true" />
   <arg name="enable_color"      default="true" />
   <arg name="enable_pointcloud" default="true" />
   <arg name="enable_tf"         default="true" />
@@ -21,6 +23,8 @@
   <arg name="color_fps"         default="30" />
 
   <param name="$(arg camera)/driver/enable_depth"      type="bool" value="$(arg enable_depth)" />
+  <param name="$(arg camera)/driver/enable_ir"         type="bool" value="$(arg enable_ir)" />
+  <param name="$(arg camera)/driver/enable_ir2"        type="bool" value="$(arg enable_ir2)" />
   <param name="$(arg camera)/driver/enable_color"      type="bool" value="$(arg enable_color)" />
   <param name="$(arg camera)/driver/enable_pointcloud" type="bool" value="$(arg enable_pointcloud)" />
   <param name="$(arg camera)/driver/enable_tf"         type="bool" value="$(arg enable_tf)" />
