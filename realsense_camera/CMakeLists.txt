@@ -26,7 +26,6 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   std_msgs
   sensor_msgs
-  rostest
   pcl_ros
 )
 
@@ -86,21 +85,25 @@ target_link_libraries(${PROJECT_NAME}_nodelet
 add_dependencies(${PROJECT_NAME}_nodelet ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
 add_dependencies(${PROJECT_NAME}_nodelet ${catkin_EXPORTED_TARGETS})
 
-add_executable(tests_camera_core test/camera_core.cpp)
-target_link_libraries(tests_camera_core
-  ${catkin_LIBRARIES}
-  ${GTEST_LIBRARIES}
-)
-add_dependencies(tests_camera_core ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
-add_dependencies(tests_camera_core ${catkin_EXPORTED_TARGETS})
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
 
-add_executable(tests_rgbd_topics test/rgbd_topics.cpp)
-target_link_libraries(tests_rgbd_topics
-  ${catkin_LIBRARIES}
-  ${GTEST_LIBRARIES}
-)
-add_dependencies(tests_rgbd_topics ${PROJECT_NAME}_generate_messages_cpp)
-add_dependencies(tests_rgbd_topics ${catkin_EXPORTED_TARGETS})
+  add_executable(tests_camera_core test/camera_core.cpp)
+  target_link_libraries(tests_camera_core
+    ${catkin_LIBRARIES}
+    ${GTEST_LIBRARIES}
+    )
+  add_dependencies(tests_camera_core ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
+  add_dependencies(tests_camera_core ${catkin_EXPORTED_TARGETS})
+
+  add_executable(tests_rgbd_topics test/rgbd_topics.cpp)
+  target_link_libraries(tests_rgbd_topics
+    ${catkin_LIBRARIES}
+    ${GTEST_LIBRARIES}
+    )
+  add_dependencies(tests_rgbd_topics ${PROJECT_NAME}_generate_messages_cpp)
+  add_dependencies(tests_rgbd_topics ${catkin_EXPORTED_TARGETS})
+endif()
 
 # Install nodelet library
 install(TARGETS ${PROJECT_NAME}_nodelet
