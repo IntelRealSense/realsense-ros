@@ -1,0 +1,11 @@
+<launch>
+  <arg name="camera_type"  value="F200" />
+  <arg name="enable_ir"    value="true" />
+  <arg name="enable_ir2"   value="false" />
+  
+    <include file="$(find realsense_camera)/test/r200_nodelet_enable_ir.test">
+    <arg name="camera_type" value="$(arg camera_type)" />
+    <arg name="enable_ir"   value="$(arg enable_ir)" />
+    <arg name="enable_ir2"  value="$(arg enable_ir2)" />
+  </include>
+</launch>
