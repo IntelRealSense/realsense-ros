@@ -25,10 +25,9 @@
     <arg name="color_fps"           default="" />
     <arg name="ir2"                 default="ir2" />
 
-    <!-- "enable_depth" will take the value of "ir_processing" only if "ir_processing" is true.
-         Else "enable_depth" will take the value of "depth_processing" -->
-    <arg name="enable_depth"     value="$(arg ir_processing)"    if="$(arg ir_processing)" />
-    <arg name="enable_depth"     value="$(arg depth_processing)" unless="$(arg ir_processing)" />
+    <arg name="enable_ir"           value="$(arg ir_processing)" />
+    <arg name="enable_ir2"          value="$(arg ir_processing)" />
+    <arg name="enable_depth"        value="$(arg depth_processing)" />
 
      <!-- "enable_pointcloud" is set to false by default because rgbd_launch uses standard ROS packages
           to generate point clouds. -->
@@ -42,6 +41,8 @@
         <param name="camera_type"             type="str"  value="$(arg camera_type)" />
         <param name="enable_depth"            type="bool" value="$(arg enable_depth)" />
         <param name="enable_color"            type="bool" value="$(arg rgb_processing)" />
+        <param name="enable_ir"               type="bool" value="$(arg enable_ir)" />
+        <param name="enable_ir2"              type="bool" value="$(arg enable_ir2)" />
         <param name="enable_pointcloud"       type="bool" value="$(arg enable_pointcloud)" />
         <param name="enable_tf"               type="bool" value="$(arg publish_tf)" />
         <param name="mode"                    type="str"  value="$(arg mode)" />
