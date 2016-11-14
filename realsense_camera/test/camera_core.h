@@ -74,6 +74,8 @@ bool g_enable_depth = true;
 bool g_enable_fisheye = false;
 bool g_enable_imu = false;
 bool g_enable_pointcloud = false;
+bool g_enable_ir = false;
+bool g_enable_ir2 = false;
 
 std::string g_depth_encoding_exp; // Expected depth encoding.
 std::string g_color_encoding_exp; // Expected color encoding.
