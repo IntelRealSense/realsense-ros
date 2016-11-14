@@ -74,6 +74,7 @@ namespace realsense_camera
     BaseNodelet::getParameters();
     pnh_.param("ir2_frame_id", frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_FRAME_ID);
     pnh_.param("ir2_optical_frame_id", optical_frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_OPTICAL_FRAME_ID);
+    pnh_.param("enable_ir2", enable_[RS_STREAM_INFRARED2], ENABLE_IR2);
   }
 
   /*
@@ -445,7 +446,7 @@ namespace realsense_camera
   {
     BaseNodelet::setStreams();
 
-    if (enable_[RS_STREAM_DEPTH] == true)
+    if (enable_[RS_STREAM_INFRARED2] == true)
     {
       enableStream(RS_STREAM_INFRARED2, width_[RS_STREAM_DEPTH], height_[RS_STREAM_DEPTH], format_[RS_STREAM_INFRARED2],
           fps_[RS_STREAM_DEPTH]);
@@ -459,7 +460,7 @@ namespace realsense_camera
       }
       ts_[RS_STREAM_INFRARED2] = -1;
     }
-    else if (enable_[RS_STREAM_DEPTH] == false)
+    else if (enable_[RS_STREAM_INFRARED] == false)
     {
       disableStream(RS_STREAM_INFRARED2);
     }
@@ -471,7 +472,6 @@ namespace realsense_camera
   void R200Nodelet::publishTopics()
   {
     BaseNodelet::publishTopics();
-
     publishTopic(RS_STREAM_INFRARED2);
   }
 
