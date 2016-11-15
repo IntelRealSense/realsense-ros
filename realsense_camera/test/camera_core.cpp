@@ -354,22 +354,10 @@ TEST(RealsenseTests, testIsDepthStreamEnabled)
   if (g_enable_depth)
   {
     EXPECT_TRUE(g_depth_recv);
-    EXPECT_TRUE(g_infrared1_recv);
-    // R200 and ZR300 cameras have IR2
-    if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
-    {
-      EXPECT_TRUE(g_infrared2_recv);
-    }
   }
   else
   {
     EXPECT_FALSE(g_depth_recv);
-    EXPECT_FALSE(g_infrared1_recv);
-    // R200 and ZR300 cameras have IR2
-    if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
-    {
-      EXPECT_FALSE(g_infrared2_recv);
-    }
   }
 }
 
@@ -456,7 +444,7 @@ TEST(RealsenseTests, testDepthCameraInfo)
 
 TEST(RealsenseTests, testInfrared1Stream)
 {
-  if (g_enable_depth)
+  if (g_enable_ir)
   {
     EXPECT_TRUE(g_infrared1_avg > 0);
     EXPECT_TRUE(g_infrared1_recv);
@@ -477,7 +465,7 @@ TEST(RealsenseTests, testInfrared1Stream)
 
 TEST(RealsenseTests, testInfrared1Resolution)
 {
-  if (g_enable_depth)
+  if (g_enable_ir)
   {
     if (g_depth_width_exp > 0)
     {
@@ -492,7 +480,7 @@ TEST(RealsenseTests, testInfrared1Resolution)
 
 TEST(RealsenseTests, testInfrared1CameraInfo)
 {
-  if (g_enable_depth)
+  if (g_enable_ir)
   {
     EXPECT_EQ(g_width_recv[RS_STREAM_INFRARED], g_caminfo_width_recv[RS_STREAM_INFRARED]);
     EXPECT_EQ(g_height_recv[RS_STREAM_INFRARED], g_caminfo_height_recv[RS_STREAM_INFRARED]);
@@ -539,7 +527,7 @@ TEST(RealsenseTests, testInfrared2Stream)
   // R200 and ZR300 cameras have IR2
   if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
   {
-    if (g_enable_depth)
+    if (g_enable_ir2)
     {
       EXPECT_TRUE(g_infrared2_avg > 0);
       EXPECT_TRUE(g_infrared2_recv);
@@ -556,7 +544,7 @@ TEST(RealsenseTests, testInfrared2Resolution)
   // R200 and ZR300 cameras have IR2
   if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
   {
-    if (g_enable_depth)
+    if (g_enable_ir2)
     {
       if (g_depth_width_exp > 0)
       {
@@ -575,7 +563,7 @@ TEST(RealsenseTests, testInfrared2CameraInfo)
   // R200 and ZR300 cameras have IR2
   if ((g_camera_type == "R200") || (g_camera_type == "ZR300"))
   {
-    if (g_enable_depth)
+    if (g_enable_ir2)
     {
       EXPECT_EQ(g_width_recv[RS_STREAM_INFRARED2], g_caminfo_width_recv[RS_STREAM_INFRARED2]);
       EXPECT_EQ(g_height_recv[RS_STREAM_INFRARED2], g_caminfo_height_recv[RS_STREAM_INFRARED2]);
@@ -834,6 +822,35 @@ void fillConfigMap(int argc, char **argv)
         g_enable_depth = false;
       }
     }
+
+    // Set infrared arguments.
+    if (g_config_args.find("enable_ir") != g_config_args.end())
+    {
+      ROS_INFO("RealSense Camera - Setting %s to %s", "enable_ir", g_config_args.at("enable_ir").c_str());
+      if (strcmp((g_config_args.at("enable_ir").c_str ()),"true") == 0)
+      {
+        g_enable_ir = true;
+      }
+      else
+      {
+        g_enable_ir = false;
+      }
+    }
+
+    // Set infrared2 arguments.
+    if (g_config_args.find("enable_ir2") != g_config_args.end())
+    {
+      ROS_INFO("RealSense Camera - Setting %s to %s", "enable_ir2", g_config_args.at("enable_ir2").c_str());
+      if (strcmp((g_config_args.at("enable_ir2").c_str ()),"true") == 0)
+      {
+        g_enable_ir2 = true;
+      }
+      else
+      {
+        g_enable_ir2 = false;
+      }
+    }
+
     if (g_config_args.find("depth_encoding") != g_config_args.end())
     {
       ROS_INFO("RealSense Camera - Setting %s to %s", "depth_encoding", g_config_args.at("depth_encoding").c_str());

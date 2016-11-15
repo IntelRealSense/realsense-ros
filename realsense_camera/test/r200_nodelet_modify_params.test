@@ -3,6 +3,8 @@
   <arg name="camera_type"       default="R200" />
   <arg name="enable_depth"      value="true" />
   <arg name="enable_color"      value="true" />
+  <arg name="enable_ir"         default="true" />
+  <arg name="enable_ir2"        default="true" />
   <arg name="enable_pointcloud" value="true" />
   <arg name="mode"              value="manual" />
   <arg name="depth_width"       default="320" />
@@ -16,6 +18,8 @@
     <arg name="camera_type"       value="$(arg camera_type)" />
     <arg name="enable_depth"      value="$(arg enable_depth)" />
     <arg name="enable_color"      value="$(arg enable_color)" />
+    <arg name="enable_ir"         value="$(arg enable_ir)" />
+    <arg name="enable_ir2"        value="$(arg enable_ir2)" />
     <arg name="enable_pointcloud" value="$(arg enable_pointcloud)" />
     <arg name="mode"              value="$(arg mode)" />
     <arg name="depth_width"       value="$(arg depth_width)" />
@@ -29,6 +33,8 @@
     args="camera_type $(arg camera_type)
     enable_depth $(arg enable_depth)
     enable_color $(arg enable_color)
+    enable_ir $(arg enable_ir)
+    enable_ir2 $(arg enable_ir2)
     enable_pointcloud $(arg enable_pointcloud)
     depth_width $(arg depth_width)
     depth_height $(arg depth_height)

@@ -107,6 +107,7 @@ namespace realsense_camera
     pnh_.param("mode", mode_, DEFAULT_MODE);
     pnh_.param("enable_depth", enable_[RS_STREAM_DEPTH], ENABLE_DEPTH);
     pnh_.param("enable_color", enable_[RS_STREAM_COLOR], ENABLE_COLOR);
+    pnh_.param("enable_ir", enable_[RS_STREAM_INFRARED], ENABLE_IR);
     pnh_.param("enable_pointcloud", enable_pointcloud_, ENABLE_PC);
     pnh_.param("enable_tf", enable_tf_, ENABLE_TF);
     pnh_.param("depth_width", width_[RS_STREAM_DEPTH], DEPTH_WIDTH);
@@ -511,7 +512,16 @@ namespace realsense_camera
             camera_info_ptr_[RS_STREAM_DEPTH]->width, cv_type_[RS_STREAM_DEPTH], cv::Scalar(0, 0, 0));
       }
       ts_[RS_STREAM_DEPTH] = -1;
+      depth_scale_meters_ = rs_get_device_depth_scale(rs_device_, &rs_error_);
+      checkError();
+    }
+    else if (enable_[RS_STREAM_DEPTH] == false)
+    {
+      disableStream(RS_STREAM_DEPTH);
+    }
 
+    if (enable_[RS_STREAM_INFRARED] == true)
+    {
       enableStream(RS_STREAM_INFRARED, width_[RS_STREAM_DEPTH], height_[RS_STREAM_DEPTH], format_[RS_STREAM_INFRARED],
           fps_[RS_STREAM_DEPTH]);
       if (camera_info_ptr_[RS_STREAM_INFRARED] == NULL)
@@ -523,13 +533,10 @@ namespace realsense_camera
             camera_info_ptr_[RS_STREAM_INFRARED]->width, cv_type_[RS_STREAM_INFRARED], cv::Scalar(0, 0, 0));
       }
       ts_[RS_STREAM_INFRARED] = -1;
-      depth_scale_meters_ = rs_get_device_depth_scale(rs_device_, &rs_error_);
-      checkError();
     }
-    else if (enable_[RS_STREAM_DEPTH] == false)
+    else if (enable_[RS_STREAM_INFRARED] == false)
     {
-      disableStream(RS_STREAM_DEPTH);
-      disableStream(RS_STREAM_INFRARED);
+    	disableStream(RS_STREAM_INFRARED);
     }
   }
 
