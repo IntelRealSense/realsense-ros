@@ -2,9 +2,14 @@
   <arg name="camera_type"  value="SR300" />
   <arg name="depth_width"  value="640" />
   <arg name="depth_height" value="480" />
+  <arg name="enable_ir"    value="true" />
+  <arg name="enable_ir2"   value="false" />
+
   <include file="$(find realsense_camera)/test/r200_nodelet_modify_params.test">
     <arg name="camera_type"  value="$(arg camera_type)" />
     <arg name="depth_width"  value="$(arg depth_width)" />
     <arg name="depth_height" value="$(arg depth_height)" />
+    <arg name="enable_ir"   value="$(arg enable_ir)" />
+    <arg name="enable_ir2"  value="$(arg enable_ir2)" />
   </include>
 </launch>
