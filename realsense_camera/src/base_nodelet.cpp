@@ -135,6 +135,10 @@ namespace realsense_camera
   bool BaseNodelet::connectToCamera()
   {
     rs_context_ = rs_create_context(RS_API_VERSION, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - No cameras detected!");
+    }
     checkError();
 
     int num_of_cameras = rs_get_device_count(rs_context_, &rs_error_);
