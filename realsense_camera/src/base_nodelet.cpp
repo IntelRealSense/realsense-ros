@@ -1040,6 +1040,7 @@ namespace realsense_camera
       ROS_ERROR_STREAM(nodelet_name_ << " - Error calling " << rs_get_failed_function(rs_error_) << " ( "
           << rs_get_failed_args(rs_error_) << " ): \n" << rs_get_error_message(rs_error_) << " \n");
       rs_free_error(rs_error_);
+      rs_error_ = NULL;
       ros::shutdown();
       exit (EXIT_FAILURE);
     }
