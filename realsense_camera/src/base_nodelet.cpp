@@ -1050,7 +1050,6 @@ namespace realsense_camera
       rs_free_error(rs_error_);
       rs_error_ = NULL;
       ros::shutdown();
-      exit (EXIT_FAILURE);
     }
   }
 }  // end namespace
