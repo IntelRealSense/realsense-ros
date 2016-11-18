@@ -59,7 +59,7 @@ namespace realsense_camera
   /*
    * Initialize the nodelet.
    */
-  void BaseNodelet::onInit()
+  void BaseNodelet::onInit() try
   {
     getParameters();
 
@@ -95,6 +95,23 @@ namespace realsense_camera
 
     // Start dynamic reconfigure callback
     startDynamicReconfCallback();
+  }
+  catch(const rs::error & e)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - " << "RealSense error calling "
+        << e.get_failed_function() << "(" << e.get_failed_args() << "):\n    "
+        << e.what());
+    ros::shutdown();
+  }
+  catch(const std::exception & e)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - " << e.what());
+    ros::shutdown();
+  }
+  catch(...)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - Caught unknown expection...shutting down!");
+    ros::shutdown();
   }
 
   /*
@@ -723,7 +740,7 @@ namespace realsense_camera
   /*
    * Prepare and publish topics.
    */
-  void BaseNodelet::prepareTopics()
+  void BaseNodelet::prepareTopics() try
   {
     while (ros::ok())
     {
@@ -773,6 +790,23 @@ namespace realsense_camera
         }
       }
     }
+  }
+  catch(const rs::error & e)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - " << "RealSense error calling "
+        << e.get_failed_function() << "(" << e.get_failed_args() << "):\n    "
+        << e.what());
+    ros::shutdown();
+  }
+  catch(const std::exception & e)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - " << e.what());
+    ros::shutdown();
+  }
+  catch(...)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - Caught unknown expection...shutting down!");
+    ros::shutdown();
   }
 
   /*
