@@ -53,7 +53,10 @@ namespace realsense_camera
     }
 
     ROS_INFO_STREAM(nodelet_name_ << " - Stopping...");
-    ros::shutdown();
+    if (! ros::isShuttingDown())
+    {
+      ros::shutdown();
+    }
   }
 
   /*
