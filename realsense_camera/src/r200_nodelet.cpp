@@ -125,24 +125,16 @@ namespace realsense_camera
     // There is not a C++ API for dynamic reconfig so we need to use a system call
     // Adding the sleep to ensure the current callback can end before we
     // attempt the next callback from the system call.
-    std::string system_cmd = "(sleep 1 ; rosrun dynamic_reconfigure dynparam set "
-      + nodelet_name_ + " r200_dc_preset " + std::to_string(preset) + ")&";
+    std::vector<std::string> argv;
+    argv.push_back("rosrun");
+    argv.push_back("dynamic_reconfigure");
+    argv.push_back("dynparam");
+    argv.push_back("set");
+    argv.push_back(nodelet_name_);
+    argv.push_back("r200_dc_preset");
+    argv.push_back(std::to_string(preset));
 
-    int status = std::system(system_cmd.c_str());
-    if (status < 0)
-    {
-      ROS_WARN_STREAM(nodelet_name_ <<
-          " - Failed to set dynamic_reconfigure dc preset via system:"
-          << strerror(errno));
-    }
-    else
-    {
-      if (!WIFEXITED(status))
-      {
-        ROS_WARN_STREAM(nodelet_name_ <<
-            " - Failed to set dynamic_reconfigure dc preset via system");
-      }
-    }
+    wrappedSystem(argv);
   }
 
   /*
@@ -152,95 +144,87 @@ namespace realsense_camera
    */
   std::string R200Nodelet::setDynamicReconfigDepthControlIndividuals()
   {
+    std::string current_param;
     std::string current_dc;
     std::string option_value;
 
     // There is not a C++ API for dynamic reconfig so we need to use a system call
     // Adding the sleep to ensure the current callback can end before we
     // attempt the next callback from the system call.
-    std::string system_cmd =
-      "(sleep 1 ; rosrun dynamic_reconfigure dynparam set ";
-    system_cmd += nodelet_name_ + " " +
-      "\"{" +
-      "'r200_dc_estimate_median_decrement':";
+    std::vector<std::string> argv;
+    argv.push_back("rosrun");
+    argv.push_back("dynamic_reconfigure");
+    argv.push_back("dynparam");
+    argv.push_back("set");
+    argv.push_back(nodelet_name_);
+
+    current_param = "{";
+
     option_value =
       std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
               RS_OPTION_R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_DECREMENT, 0)));
+    current_param += "'r200_dc_estimate_median_decrement':" + option_value + ", ";
     current_dc += option_value + ":";
-    system_cmd += option_value +
-      ", 'r200_dc_estimate_median_increment':";
+
     option_value =
       std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
               RS_OPTION_R200_DEPTH_CONTROL_ESTIMATE_MEDIAN_INCREMENT, 0)));
+    current_param += "'r200_dc_estimate_median_increment':" + option_value + ", ";
     current_dc += option_value + ":";
-    system_cmd += option_value +
-      ", 'r200_dc_median_threshold':";
+
     option_value =
       std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
               RS_OPTION_R200_DEPTH_CONTROL_MEDIAN_THRESHOLD, 0)));
+    current_param += "'r200_dc_median_threshold':" + option_value + ", ";
     current_dc += option_value + ":";
-    system_cmd += option_value +
-      ", 'r200_dc_score_minimum_threshold':";
+
     option_value =
       std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
               RS_OPTION_R200_DEPTH_CONTROL_SCORE_MINIMUM_THRESHOLD, 0)));
+    current_param += "'r200_dc_score_minimum_threshold':" + option_value + ", ";
     current_dc += option_value + ":";
-    system_cmd += option_value +
-      ", 'r200_dc_score_maximum_threshold':";
+
     option_value =
       std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
               RS_OPTION_R200_DEPTH_CONTROL_SCORE_MAXIMUM_THRESHOLD, 0)));
+    current_param += "'r200_dc_score_maximum_threshold':" + option_value + ", ";
     current_dc += option_value + ":";
-    system_cmd += option_value +
-      ", 'r200_dc_texture_count_threshold':";
+
     option_value =
       std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
               RS_OPTION_R200_DEPTH_CONTROL_TEXTURE_COUNT_THRESHOLD, 0)));
+    current_param += "'r200_dc_texture_count_threshold':" + option_value + ", ";
     current_dc += option_value + ":";
-    system_cmd += option_value +
-      ", 'r200_dc_texture_difference_threshold':";
+
     option_value =
       std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
               RS_OPTION_R200_DEPTH_CONTROL_TEXTURE_DIFFERENCE_THRESHOLD, 0)));
+    current_param += "'r200_dc_texture_difference_threshold':" + option_value + ", ";
     current_dc += option_value + ":";
-    system_cmd += option_value +
-      ", 'r200_dc_second_peak_threshold':";
+
     option_value =
       std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
               RS_OPTION_R200_DEPTH_CONTROL_SECOND_PEAK_THRESHOLD, 0)));
+    current_param += "'r200_dc_second_peak_threshold':" + option_value + ", ";
     current_dc += option_value + ":";
-    system_cmd += option_value +
-      ", 'r200_dc_neighbor_threshold':";
+
     option_value =
       std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
               RS_OPTION_R200_DEPTH_CONTROL_NEIGHBOR_THRESHOLD, 0)));
+    current_param += "'r200_dc_neighbor_threshold':" + option_value + ", ";
     current_dc += option_value + ":";
-    system_cmd += option_value +
-      ", 'r200_dc_lr_threshold':";
+
     option_value =
       std::to_string(static_cast<uint32_t>(rs_get_device_option(rs_device_,
               RS_OPTION_R200_DEPTH_CONTROL_LR_THRESHOLD, 0)));
+    current_param += "'r200_dc_lr_threshold':" + option_value + "}";
     current_dc += option_value;
-    system_cmd += option_value +
-      "}\")&";
 
-    ROS_DEBUG_STREAM(nodelet_name_ << " - Setting DC: " << system_cmd);
+    ROS_DEBUG_STREAM(nodelet_name_ << " - Setting DC: " << current_param);
 
-    int status = std::system(system_cmd.c_str());
-    if (status < 0)
-    {
-      ROS_WARN_STREAM(nodelet_name_ <<
-          " - Failed to set dynamic_reconfigure dc manual via system:"
-          << strerror(errno));
-    }
-    else
-    {
-      if (!WIFEXITED(status))
-      {
-        ROS_WARN_STREAM(nodelet_name_ <<
-            " - Failed to set dynamic_reconfigure dc manual via system");
-      }
-    }
+    argv.push_back(current_param);
+
+    wrappedSystem(argv);
 
     return current_dc;
   }
