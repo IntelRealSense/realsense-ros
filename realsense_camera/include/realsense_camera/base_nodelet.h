@@ -100,8 +100,8 @@ namespace realsense_camera
     ros::ServiceServer force_power_service_;
     ros::ServiceServer is_powered_service_;
     tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
-    rs_error *rs_error_ = 0;
-    rs_context *rs_context_;
+    rs_error *rs_error_ = NULL;
+    rs_context *rs_context_ = NULL;
     rs_device *rs_device_;
     std::string nodelet_name_;
     std::string serial_no_;

@@ -45,17 +45,24 @@ namespace realsense_camera
 
     stopCamera();
 
-    rs_delete_context(rs_context_, &rs_error_);
-    checkError();
+    if (rs_context_)
+    {
+      rs_delete_context(rs_context_, &rs_error_);
+      rs_context_ = NULL;
+      checkError();
+    }
 
     ROS_INFO_STREAM(nodelet_name_ << " - Stopping...");
-    ros::shutdown();
+    if (! ros::isShuttingDown())
+    {
+      ros::shutdown();
+    }
   }
 
   /*
    * Initialize the nodelet.
    */
-  void BaseNodelet::onInit()
+  void BaseNodelet::onInit() try
   {
     getParameters();
 
@@ -91,6 +98,23 @@ namespace realsense_camera
 
     // Start dynamic reconfigure callback
     startDynamicReconfCallback();
+  }
+  catch(const rs::error & e)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - " << "RealSense error calling "
+        << e.get_failed_function() << "(" << e.get_failed_args() << "):\n    "
+        << e.what());
+    ros::shutdown();
+  }
+  catch(const std::exception & e)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - " << e.what());
+    ros::shutdown();
+  }
+  catch(...)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - Caught unknown expection...shutting down!");
+    ros::shutdown();
   }
 
   /*
@@ -131,6 +155,10 @@ namespace realsense_camera
   bool BaseNodelet::connectToCamera()
   {
     rs_context_ = rs_create_context(RS_API_VERSION, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - No cameras detected!");
+    }
     checkError();
 
     int num_of_cameras = rs_get_device_count(rs_context_, &rs_error_);
@@ -141,6 +169,7 @@ namespace realsense_camera
     {
       ROS_ERROR_STREAM(nodelet_name_ << " - No cameras detected!");
       rs_delete_context(rs_context_, &rs_error_);
+      rs_context_ = NULL;
       checkError();
       return false;
     }
@@ -153,6 +182,7 @@ namespace realsense_camera
     {
       ROS_ERROR_STREAM(nodelet_name_ << " - No '" << camera_type_ << "' cameras detected!");
       rs_delete_context(rs_context_, &rs_error_);
+      rs_context_ = NULL;
       checkError();
       return false;
     }
@@ -163,6 +193,7 @@ namespace realsense_camera
       ROS_ERROR_STREAM(nodelet_name_ <<
           " - Multiple cameras of same type detected but no input serial_no or usb_port_id specified");
       rs_delete_context(rs_context_, &rs_error_);
+      rs_context_ = NULL;
       checkError();
       return false;
     }
@@ -197,6 +228,7 @@ namespace realsense_camera
       ROS_ERROR_STREAM(nodelet_name_ << error_msg);
 
       rs_delete_context(rs_context_, &rs_error_);
+      rs_context_ = NULL;
       checkError();
       return false;
     }
@@ -569,6 +601,10 @@ namespace realsense_camera
   {
     rs_intrinsics intrinsic;
     rs_get_stream_intrinsics(rs_device_, stream_index, &intrinsic, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera firmware version and/or calibration data!");
+    }
     checkError();
 
     sensor_msgs::CameraInfo * camera_info = new sensor_msgs::CameraInfo();
@@ -604,6 +640,10 @@ namespace realsense_camera
       // set depth to color translation values in Projection matrix (P)
       rs_extrinsics z_extrinsic;
       rs_get_device_extrinsics(rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
+      if (rs_error_)
+      {
+        ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+      }
       checkError();
       camera_info->P.at(3) = z_extrinsic.translation[0];     // Tx
       camera_info->P.at(7) = z_extrinsic.translation[1];     // Ty
@@ -703,7 +743,7 @@ namespace realsense_camera
   /*
    * Prepare and publish topics.
    */
-  void BaseNodelet::prepareTopics()
+  void BaseNodelet::prepareTopics() try
   {
     while (ros::ok())
     {
@@ -753,6 +793,23 @@ namespace realsense_camera
         }
       }
     }
+  }
+  catch(const rs::error & e)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - " << "RealSense error calling "
+        << e.get_failed_function() << "(" << e.get_failed_args() << "):\n    "
+        << e.what());
+    ros::shutdown();
+  }
+  catch(const std::exception & e)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - " << e.what());
+    ros::shutdown();
+  }
+  catch(...)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - Caught unknown expection...shutting down!");
+    ros::shutdown();
   }
 
   /*
@@ -969,6 +1026,10 @@ namespace realsense_camera
 
     // Get offset between base frame and depth frame
     rs_get_device_extrinsics(rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
     checkError();
 
     // Transform base frame to depth frame
@@ -1000,6 +1061,10 @@ namespace realsense_camera
 
     // Get offset between base frame and infrared frame
     rs_get_device_extrinsics(rs_device_, RS_STREAM_INFRARED, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
     checkError();
 
     // Transform base frame to infrared frame
@@ -1040,8 +1105,8 @@ namespace realsense_camera
       ROS_ERROR_STREAM(nodelet_name_ << " - Error calling " << rs_get_failed_function(rs_error_) << " ( "
           << rs_get_failed_args(rs_error_) << " ): \n" << rs_get_error_message(rs_error_) << " \n");
       rs_free_error(rs_error_);
+      rs_error_ = NULL;
       ros::shutdown();
-      exit (EXIT_FAILURE);
     }
   }
 }  // end namespace

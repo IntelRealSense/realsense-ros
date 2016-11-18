@@ -489,6 +489,10 @@ namespace realsense_camera
 
     // Get offset between base frame and infrared2 frame
     rs_get_device_extrinsics(rs_device_, RS_STREAM_INFRARED2, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
     checkError();
 
     // Transform base frame to infrared2 frame
