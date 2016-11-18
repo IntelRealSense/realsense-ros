@@ -774,18 +774,21 @@ namespace realsense_camera
 
 
     // Get offset between base frame and imu frame
-/*  Temporarily commenting out the code. Instead, hardcoding the values until fully supported by librealsense API.
 
     rs_get_motion_extrinsics_from(rs_device_, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
     if (rs_error_)
     {
-      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+/*  Temporarily hardcoding the values until fully supported by librealsense API.  */
+      // ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+      ROS_WARN_STREAM(nodelet_name_ << " - Using Hardcoded extrinsic for IMU.");
+      rs_free_error(rs_error_);
+      rs_error_ = NULL;
+
+      z_extrinsic.translation[0] = -0.07;
+      z_extrinsic.translation[1] = 0.0;
+      z_extrinsic.translation[2] = 0.0;
     }
-    checkError();
-*/
-    z_extrinsic.translation[0] = -0.07;
-    z_extrinsic.translation[1] = 0.0;
-    z_extrinsic.translation[2] = 0.0;
+    //checkError();
 
     // Transform base frame to imu frame
     b2imu_msg.header.stamp = static_transform_ts_;
