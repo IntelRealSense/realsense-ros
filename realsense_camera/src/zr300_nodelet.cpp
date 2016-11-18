@@ -134,6 +134,10 @@ namespace realsense_camera
 
     rs_motion_intrinsics imu_intrinsics;
     rs_get_motion_intrinsics(rs_device_, &imu_intrinsics, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera firmware version!");
+    }
     checkError();
 
     int index = 0;
@@ -700,6 +704,10 @@ namespace realsense_camera
 
     // Get offset between base frame and infrared2 frame
     rs_get_device_extrinsics(rs_device_, RS_STREAM_INFRARED2, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
     checkError();
 
     // Transform base frame to infrared2 frame
@@ -731,6 +739,10 @@ namespace realsense_camera
 
     // Get offset between base frame and fisheye frame
     rs_get_device_extrinsics(rs_device_, RS_STREAM_FISHEYE, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
     checkError();
 
     // Transform base frame to fisheye frame
@@ -765,6 +777,10 @@ namespace realsense_camera
 /*  Temporarily commenting out the code. Instead, hardcoding the values until fully supported by librealsense API.
 
     rs_get_motion_extrinsics_from(rs_device_, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
     checkError();
 */
     z_extrinsic.translation[0] = -0.07;

@@ -581,6 +581,10 @@ namespace realsense_camera
   {
     rs_intrinsics intrinsic;
     rs_get_stream_intrinsics(rs_device_, stream_index, &intrinsic, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera firmware version and/or calibration data!");
+    }
     checkError();
 
     sensor_msgs::CameraInfo * camera_info = new sensor_msgs::CameraInfo();
@@ -616,6 +620,10 @@ namespace realsense_camera
       // set depth to color translation values in Projection matrix (P)
       rs_extrinsics z_extrinsic;
       rs_get_device_extrinsics(rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
+      if (rs_error_)
+      {
+        ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+      }
       checkError();
       camera_info->P.at(3) = z_extrinsic.translation[0];     // Tx
       camera_info->P.at(7) = z_extrinsic.translation[1];     // Ty
@@ -981,6 +989,10 @@ namespace realsense_camera
 
     // Get offset between base frame and depth frame
     rs_get_device_extrinsics(rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
     checkError();
 
     // Transform base frame to depth frame
@@ -1012,6 +1024,10 @@ namespace realsense_camera
 
     // Get offset between base frame and infrared frame
     rs_get_device_extrinsics(rs_device_, RS_STREAM_INFRARED, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
     checkError();
 
     // Transform base frame to infrared frame
