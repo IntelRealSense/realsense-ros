@@ -45,8 +45,12 @@ namespace realsense_camera
 
     stopCamera();
 
-    rs_delete_context(rs_context_, &rs_error_);
-    checkError();
+    if (rs_context_)
+    {
+      rs_delete_context(rs_context_, &rs_error_);
+      rs_context_ = NULL;
+      checkError();
+    }
 
     ROS_INFO_STREAM(nodelet_name_ << " - Stopping...");
     ros::shutdown();
@@ -141,6 +145,7 @@ namespace realsense_camera
     {
       ROS_ERROR_STREAM(nodelet_name_ << " - No cameras detected!");
       rs_delete_context(rs_context_, &rs_error_);
+      rs_context_ = NULL;
       checkError();
       return false;
     }
@@ -153,6 +158,7 @@ namespace realsense_camera
     {
       ROS_ERROR_STREAM(nodelet_name_ << " - No '" << camera_type_ << "' cameras detected!");
       rs_delete_context(rs_context_, &rs_error_);
+      rs_context_ = NULL;
       checkError();
       return false;
     }
@@ -163,6 +169,7 @@ namespace realsense_camera
       ROS_ERROR_STREAM(nodelet_name_ <<
           " - Multiple cameras of same type detected but no input serial_no or usb_port_id specified");
       rs_delete_context(rs_context_, &rs_error_);
+      rs_context_ = NULL;
       checkError();
       return false;
     }
@@ -197,6 +204,7 @@ namespace realsense_camera
       ROS_ERROR_STREAM(nodelet_name_ << error_msg);
 
       rs_delete_context(rs_context_, &rs_error_);
+      rs_context_ = NULL;
       checkError();
       return false;
     }
