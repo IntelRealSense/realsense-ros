@@ -2,8 +2,8 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.6.1 (2016-11-18)
+------------------
 * Clean up system process calls
 * Display warning for hardcoded extrinsic
 * Added exception handling
