@@ -2,6 +2,23 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Clean up system process calls
+* Display warning for hardcoded extrinsic
+* Added exception handling
+* Improve error messages
+* Prevent double freeing of error data
+* Added enable_ir args to modify_params tests for R200,SR300,F200
+* Added enable IR and IR2 flags to rgbd launch file
+* Added RVIZ file for viewing RGBD pointcloud
+* Added realsense_default rviz file
+* Added ability to enable IR2 stream for ZR300
+* Added ability to enable IR streams independent of depth
+* Make building ROS unit tests optional
+* Add ROS Issue Tracking to ROS Wiki
+* Contributors: Dmitry Rozhkov, Mark D Horn, Matt Hansen
+
 1.6.0 (2016-10-27)
 ------------------
 * Set DC defaults based on the configured preset (#132)
