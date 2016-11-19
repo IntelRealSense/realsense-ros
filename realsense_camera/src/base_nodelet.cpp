@@ -52,6 +52,13 @@ namespace realsense_camera
       checkError();
     }
 
+    // Kill all old system progress groups
+    while (! system_proc_groups_.empty())
+    {
+      killpg(system_proc_groups_.front(), SIGHUP);
+      system_proc_groups_.pop();
+    }
+
     ROS_INFO_STREAM(nodelet_name_ << " - Stopping...");
     if (! ros::isShuttingDown())
     {
@@ -1107,6 +1114,54 @@ namespace realsense_camera
       rs_free_error(rs_error_);
       rs_error_ = NULL;
       ros::shutdown();
+    }
+  }
+
+  void BaseNodelet::wrappedSystem(std::vector<std::string> string_argv)
+  {
+    pid_t pid;
+
+    // Convert the args to char * const * for exec
+    char * argv[string_argv.size() + 1];
+
+    for(size_t i = 0; i < string_argv.size(); ++i)
+    {
+      argv[i] = const_cast<char*>(string_argv[i].c_str());
+    }
+    argv[string_argv.size()] = NULL;
+
+    pid = fork();
+
+    if (pid == -1)
+    { // failed to fork
+        ROS_WARN_STREAM(nodelet_name_ <<
+            " - Failed to set dynamic_reconfigure dc preset via system:"
+            << strerror(errno));
+    }
+    else if (pid == 0)
+    { // child process
+      // set to it's own process group
+      setpgid(getpid(), getpid());
+
+      // sleep for 1 second to ensure previous calls are completed
+      sleep(1);
+      // environ is the current environment from <unistd.h>
+      execvpe(argv[0], argv, environ);
+
+      _exit(EXIT_FAILURE);   // exec never returns
+    }
+    else
+    { // parent process
+      // Save the progress pid (process group)
+      system_proc_groups_.push(pid);
+
+      // If more than 10, process the oldest now
+      if (system_proc_groups_.size() > 10)
+      {
+        killpg(system_proc_groups_.front(), SIGHUP);
+        system_proc_groups_.pop();
+      }
+      // do not wait as this is the main thread
     }
   }
 }  // end namespace

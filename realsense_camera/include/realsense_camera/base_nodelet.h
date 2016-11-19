@@ -68,6 +68,10 @@
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <realsense_camera/constants.h>
 
+#include <queue>
+#include <unistd.h>
+#include <signal.h>
+
 namespace realsense_camera
 {
   class BaseNodelet: public nodelet::Nodelet
@@ -142,6 +146,8 @@ namespace realsense_camera
     };
     std::vector<CameraOptions> camera_options_;
 
+    std::queue<pid_t> system_proc_groups_;
+
     // Member Functions.
     virtual void getParameters();
     virtual bool connectToCamera();
@@ -165,6 +171,7 @@ namespace realsense_camera
     virtual void publishStaticTransforms();
     virtual void checkError();
     virtual bool checkForSubscriber();
+    virtual void wrappedSystem(std::vector<std::string> string_argv);
   };
 }
 #endif
