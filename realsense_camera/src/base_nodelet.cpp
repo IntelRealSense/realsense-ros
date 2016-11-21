@@ -699,6 +699,7 @@ namespace realsense_camera
       ROS_INFO_STREAM(nodelet_name_ << " - Starting camera");
       rs_start_device(rs_device_, &rs_error_);
       checkError();
+      camera_start_ts_ = ros::Time::now();
       return "Camera Started Succesfully";
     }
     return "Camera is already Started";
@@ -779,7 +780,6 @@ namespace realsense_camera
         rs_wait_for_frames(rs_device_, &rs_error_);
         checkError();
 
-        topic_ts_ = ros::Time::now();
         duplicate_depth_color_ = false;
 
         publishTopics();
@@ -838,8 +838,8 @@ namespace realsense_camera
     if (camera_publisher_[stream_index].getNumSubscribers() > 0 &&
         rs_is_stream_enabled(rs_device_, (rs_stream) stream_index, 0) == 1)
     {
-      double current_ts = rs_get_frame_timestamp(rs_device_, (rs_stream) stream_index, 0);
-      if (ts_[stream_index] != current_ts) // Publish frames only if its not duplicate
+      double frame_ts = rs_get_frame_timestamp(rs_device_, (rs_stream) stream_index, 0);
+      if (ts_[stream_index] != frame_ts) // Publish frames only if its not duplicate
       {
         getStreamData(stream_index);
 
@@ -848,7 +848,7 @@ namespace realsense_camera
             image_[stream_index]).toImageMsg();
 
         msg->header.frame_id = optical_frame_id_[stream_index];
-        msg->header.stamp = topic_ts_; // Publish timestamp to synchronize frames.
+        msg->header.stamp = ros::Time(camera_start_ts_) + ros::Duration(frame_ts * 0.001); // Publish timestamp to synchronize frames.
         msg->width = image_[stream_index].cols;
         msg->height = image_[stream_index].rows;
         msg->is_bigendian = false;
@@ -864,7 +864,7 @@ namespace realsense_camera
           duplicate_depth_color_ = true; // Set this flag to true if Depth and/or Color frame is duplicate
         }
       }
-      ts_[stream_index] = current_ts;
+      ts_[stream_index] = frame_ts;
     }
   }
 
@@ -896,7 +896,7 @@ namespace realsense_camera
       sensor_msgs::PointCloud2 msg_pointcloud;
       msg_pointcloud.width = width_[RS_STREAM_DEPTH];
       msg_pointcloud.height = height_[RS_STREAM_DEPTH];
-      msg_pointcloud.header.stamp = topic_ts_;
+      msg_pointcloud.header.stamp = ros::Time::now();
       msg_pointcloud.is_dense = true;
 
       sensor_msgs::PointCloud2Modifier modifier(msg_pointcloud);
