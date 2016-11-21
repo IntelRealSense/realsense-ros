@@ -514,6 +514,41 @@ namespace realsense_camera
   }
 
   /*
+  * Set up the callbacks for the camera streams
+  */
+  void BaseNodelet::setFrameCallbacks()
+  {
+    depth_frame_handler_ = [&](rs::frame  frame)
+    {
+      publishTopic(RS_STREAM_DEPTH, frame);
+
+      if (enable_pointcloud_ == true)
+      {
+        publishPCTopic();
+      }
+    };
+
+    color_frame_handler_ = [&](rs::frame  frame)
+    {
+      publishTopic(RS_STREAM_COLOR, frame);
+    };
+
+    ir_frame_handler_ = [&](rs::frame  frame)
+    {
+      publishTopic(RS_STREAM_INFRARED, frame);
+    };
+
+    rs_set_frame_callback_cpp(rs_device_, RS_STREAM_DEPTH, new rs::frame_callback(depth_frame_handler_), &rs_error_);
+    checkError();
+
+    rs_set_frame_callback_cpp(rs_device_, RS_STREAM_COLOR, new rs::frame_callback(color_frame_handler_), &rs_error_);
+    checkError();
+
+    rs_set_frame_callback_cpp(rs_device_, RS_STREAM_INFRARED, new rs::frame_callback(ir_frame_handler_), &rs_error_);
+    checkError();
+  }
+
+  /*
    * Set the streams according to their corresponding flag values.
    */
   void BaseNodelet::setStreams()
@@ -697,6 +732,8 @@ namespace realsense_camera
     if (rs_is_device_streaming(rs_device_, 0) == 0)
     {
       ROS_INFO_STREAM(nodelet_name_ << " - Starting camera");
+      // Set up the callbacks for each stream
+      setFrameCallbacks();
       rs_start_device(rs_device_, &rs_error_);
       checkError();
       camera_start_ts_ = ros::Time::now();
@@ -724,15 +761,16 @@ namespace realsense_camera
   /*
    * Copy frame data from realsense to member cv images.
    */
-  void BaseNodelet::getStreamData(rs_stream stream_index)
+  void BaseNodelet::getStreamData(rs_stream stream_index, rs::frame & frame)
   {
     if (stream_index == RS_STREAM_DEPTH)
     {
       // fill depth buffer
-      image_depth16_ = reinterpret_cast<const uint16_t *>(rs_get_frame_data(rs_device_, stream_index, 0));
+      image_depth16_ = reinterpret_cast<const uint16_t *>(frame.get_data());
+      
       if (depth_scale_meters_ == MILLIMETER_METERS)
       {
-        image_[stream_index].data = (unsigned char *) (rs_get_frame_data(rs_device_, stream_index, 0));
+        image_[stream_index].data = (unsigned char *) image_depth16_;               
       }
       else
       {
@@ -744,7 +782,7 @@ namespace realsense_camera
     }
     else
     {
-      image_[stream_index].data = (unsigned char *) (rs_get_frame_data(rs_device_, stream_index, 0));
+      image_[stream_index].data = (unsigned char *) (frame.get_data());
     }
   }
 
@@ -774,31 +812,6 @@ namespace realsense_camera
         setStreams();
         startCamera();
       }
-
-      if (rs_is_device_streaming(rs_device_, 0) == 1)
-      {
-        rs_wait_for_frames(rs_device_, &rs_error_);
-        checkError();
-
-        duplicate_depth_color_ = false;
-
-        publishTopics();
-
-        if (pointcloud_publisher_.getNumSubscribers() > 0 &&
-            rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0) == 1 && enable_pointcloud_ == true &&
-            (duplicate_depth_color_ == false)) // Skip publishing PointCloud if Depth and/or Color frame was duplicate
-        {
-          if (camera_publisher_[RS_STREAM_DEPTH].getNumSubscribers() <= 0)
-          {
-            getStreamData(RS_STREAM_DEPTH);
-          }
-          if (camera_publisher_[RS_STREAM_COLOR].getNumSubscribers() <= 0)
-          {
-            getStreamData(RS_STREAM_COLOR);
-          }
-          publishPCTopic();
-        }
-      }
     }
   }
   catch(const rs::error & e)
@@ -820,52 +833,34 @@ namespace realsense_camera
   }
 
   /*
-   * Call publicTopic() for all streams.
-   */
-  void BaseNodelet::publishTopics()
-  {
-    publishTopic(RS_STREAM_DEPTH);
-    publishTopic(RS_STREAM_COLOR);
-    publishTopic(RS_STREAM_INFRARED);
-  }
-
-  /*
    * Publish topic.
    */
-  void BaseNodelet::publishTopic(rs_stream stream_index)
+  void BaseNodelet::publishTopic(rs_stream stream_index, rs::frame &frame)
   {
-    // Publish stream only if there is at least one subscriber.
-    if (camera_publisher_[stream_index].getNumSubscribers() > 0 &&
-        rs_is_stream_enabled(rs_device_, (rs_stream) stream_index, 0) == 1)
+	// mutex to ensure only one frame per stream is processed at a time
+    boost::mutex::scoped_lock lock(frame_mutex_[stream_index]);
+
+    double frame_ts = frame.get_timestamp();
+    if (ts_[stream_index] != frame_ts) // Publish frames only if its not duplicate
     {
-      double frame_ts = rs_get_frame_timestamp(rs_device_, (rs_stream) stream_index, 0);
-      if (ts_[stream_index] != frame_ts) // Publish frames only if its not duplicate
+      getStreamData(stream_index, frame);
+      // Publish stream only if there is at least one subscriber.
+      if (camera_publisher_[stream_index].getNumSubscribers() > 0)
       {
-        getStreamData(stream_index);
-
         sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(),
-            encoding_[stream_index],
-            image_[stream_index]).toImageMsg();
-
+                        encoding_[stream_index],
+                                image_[stream_index]).toImageMsg();
         msg->header.frame_id = optical_frame_id_[stream_index];
         msg->header.stamp = ros::Time(camera_start_ts_) + ros::Duration(frame_ts * 0.001); // Publish timestamp to synchronize frames.
         msg->width = image_[stream_index].cols;
         msg->height = image_[stream_index].rows;
         msg->is_bigendian = false;
         msg->step = step_[stream_index];
-
         camera_info_ptr_[stream_index]->header.stamp = msg->header.stamp;
         camera_publisher_[stream_index].publish (msg, camera_info_ptr_[stream_index]);
       }
-      else
-      {
-        if ((stream_index == RS_STREAM_DEPTH) || (stream_index == RS_STREAM_COLOR))
-        {
-          duplicate_depth_color_ = true; // Set this flag to true if Depth and/or Color frame is duplicate
-        }
-      }
-      ts_[stream_index] = frame_ts;
     }
+    ts_[stream_index] = frame_ts;
   }
 
   /*
@@ -875,7 +870,7 @@ namespace realsense_camera
   {
     cv::Mat & image_color = image_[RS_STREAM_COLOR];
     // Publish pointcloud only if there is at least one subscriber.
-    if (pointcloud_publisher_.getNumSubscribers() > 0)
+    if (pointcloud_publisher_.getNumSubscribers() > 0 && rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0) == 1)
     {
       rs_intrinsics color_intrinsic;
       rs_extrinsics z_extrinsic;

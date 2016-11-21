@@ -451,12 +451,20 @@ namespace realsense_camera
   }
 
   /*
-   * Publish topics for native streams.
-   */
-  void R200Nodelet::publishTopics()
+  * Set up the callbacks for the camera streams
+  */
+  void R200Nodelet::setFrameCallbacks()
   {
-    BaseNodelet::publishTopics();
-    publishTopic(RS_STREAM_INFRARED2);
+    // call base nodelet method
+	BaseNodelet::setFrameCallbacks();
+
+    ir2_frame_handler_ = [&](rs::frame  frame)
+    {
+      publishTopic(RS_STREAM_INFRARED2, frame);
+    };
+
+    rs_set_frame_callback_cpp(rs_device_, RS_STREAM_INFRARED2, new rs::frame_callback(ir2_frame_handler_), &rs_error_);
+    checkError();
   }
 
   /*

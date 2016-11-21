@@ -132,13 +132,13 @@ namespace realsense_camera
     float max_z_ = -1.0f;
     bool enable_pointcloud_;
     bool enable_tf_;
-    bool duplicate_depth_color_;
     const uint16_t *image_depth16_;
     boost::shared_ptr<boost::thread> topic_thread_;
     float depth_scale_meters_;
     cv::Mat cvWrapper_;
     bool start_camera_ = true;
     bool start_stop_srv_called_ = false;
+    boost::mutex frame_mutex_[STREAM_COUNT];
 
     struct CameraOptions
     {
@@ -165,14 +165,15 @@ namespace realsense_camera
     virtual void disableStream(rs_stream stream_index);
     virtual std::string startCamera();
     virtual std::string stopCamera();
-    virtual void publishTopics();
-    virtual void publishTopic(rs_stream stream_index);
-    virtual void getStreamData(rs_stream stream_index);
+    virtual void publishTopic(rs_stream stream_index, rs::frame &  frame);
+    virtual void getStreamData(rs_stream stream_index, rs::frame &  frame);
     virtual void publishPCTopic();
     virtual void publishStaticTransforms();
     virtual void checkError();
     virtual bool checkForSubscriber();
     virtual void wrappedSystem(std::vector<std::string> string_argv);
+    virtual void setFrameCallbacks();
+    std::function<void(rs::frame f)> depth_frame_handler_, color_frame_handler_, ir_frame_handler_;
   };
 }
 #endif

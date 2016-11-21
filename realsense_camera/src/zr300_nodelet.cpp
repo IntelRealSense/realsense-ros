@@ -549,17 +549,6 @@ namespace realsense_camera
   }
 
   /*
-   * Publish topics for native streams.
-   */
-  void ZR300Nodelet::publishTopics()
-  {
-    BaseNodelet::publishTopics();
-
-    publishTopic(RS_STREAM_INFRARED2);
-    publishTopic(RS_STREAM_FISHEYE);
-  }
-
-  /*
    * Prepare IMU.
    */
   void ZR300Nodelet::prepareIMU()
@@ -666,6 +655,31 @@ namespace realsense_camera
             << "\tsource: " << (rs::event)entry.source_id
             << "\tframe_num: " << entry.frame_number);
     };
+  }
+
+  /*
+  * Set up the callbacks for the camera streams
+  */
+  void ZR300Nodelet::setFrameCallbacks()
+  {
+    // call base nodelet method
+	BaseNodelet::setFrameCallbacks();
+
+    fisheye_frame_handler_ = [&](rs::frame  frame)
+    {
+      publishTopic(RS_STREAM_FISHEYE, frame);
+    };
+
+    ir2_frame_handler_ = [&](rs::frame  frame)
+    {
+      publishTopic(RS_STREAM_INFRARED2, frame);
+    };
+
+    rs_set_frame_callback_cpp(rs_device_, RS_STREAM_FISHEYE,  new rs::frame_callback(fisheye_frame_handler_), &rs_error_);
+    checkError();
+
+    rs_set_frame_callback_cpp(rs_device_, RS_STREAM_INFRARED2, new rs::frame_callback(ir2_frame_handler_), &rs_error_);
+    checkError();
   }
 
   /*
