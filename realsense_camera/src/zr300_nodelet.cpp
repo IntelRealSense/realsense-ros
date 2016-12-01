@@ -567,6 +567,7 @@ namespace realsense_camera
     {
       if (imu_publisher_.getNumSubscribers() > 0)
       {
+        boost::mutex::scoped_lock lock(imu_mutex_);
         if (prev_imu_ts_ != imu_ts_)
         {
           sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
@@ -612,7 +613,7 @@ namespace realsense_camera
   {
     motion_handler_ = [&](rs::motion_data entry)
     {
-        imu_ts_ = (double) entry.timestamp_data.timestamp;
+    	boost::mutex::scoped_lock lock(imu_mutex_);
 
         if (entry.timestamp_data.source_id == RS_EVENT_IMU_GYRO)
         {
@@ -634,6 +635,7 @@ namespace realsense_camera
           imu_angular_vel_cov_[0] = -1.0;
           imu_linear_accel_cov_[0] = 0.0;
         }
+        imu_ts_ = (double) entry.timestamp_data.timestamp;
 
         ROS_DEBUG_STREAM(" - Motion,\t host time " << imu_ts_
             << "\ttimestamp: " << std::setprecision(8) << (double)entry.timestamp_data.timestamp*IMU_UNITS_TO_MSEC
