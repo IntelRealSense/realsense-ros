@@ -580,7 +580,7 @@ namespace realsense_camera
         if (prev_imu_ts_ != imu_ts_)
         {
           sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
-          imu_msg.header.stamp = ros::Time::now();
+          imu_msg.header.stamp = ros::Time(camera_start_ts_) + ros::Duration(imu_ts_ * 0.001);
           imu_msg.header.frame_id = imu_optical_frame_id_;
 
           imu_msg.orientation.x = 0.0;
@@ -622,9 +622,8 @@ namespace realsense_camera
   {
     motion_handler_ = [&](rs::motion_data entry)
     {
-        auto now = std::chrono::system_clock::now().time_since_epoch();
-        auto sys_time = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
-        imu_ts_ = sys_time;
+        imu_ts_ = (double) entry.timestamp_data.timestamp;
+
         if (entry.timestamp_data.source_id == RS_EVENT_IMU_GYRO)
         {
           for (int i = 0; i < 3; ++i)
@@ -646,7 +645,7 @@ namespace realsense_camera
           imu_linear_accel_cov_[0] = 0.0;
         }
 
-        ROS_DEBUG_STREAM(" - Motion,\t host time " << sys_time
+        ROS_DEBUG_STREAM(" - Motion,\t host time " << imu_ts_
             << "\ttimestamp: " << std::setprecision(8) << (double)entry.timestamp_data.timestamp*IMU_UNITS_TO_MSEC
             << "\tsource: " << (rs::event)entry.timestamp_data.source_id
             << "\tframe_num: " << entry.timestamp_data.frame_number

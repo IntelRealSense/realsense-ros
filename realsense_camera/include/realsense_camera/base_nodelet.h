@@ -96,7 +96,7 @@ namespace realsense_camera
     // Member Variables.
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
-    ros::Time topic_ts_;
+    ros::Time camera_start_ts_;
     ros::Time static_transform_ts_;
     ros::Publisher pointcloud_publisher_;
     ros::ServiceServer get_options_service_;
