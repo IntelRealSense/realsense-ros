@@ -340,23 +340,8 @@ namespace realsense_camera
       ROS_INFO_STREAM(nodelet_name_ << " - Setting dynamic camera options");
     }
 
-    // Set flags
-    if (config.enable_depth == false)
-    {
-      if (enable_[RS_STREAM_COLOR] == false)
-      {
-        ROS_INFO_STREAM(nodelet_name_ << " - Color stream is also disabled. Cannot disable depth stream");
-        config.enable_depth = true;
-      }
-      else
-      {
-        enable_[RS_STREAM_DEPTH] = false;
-      }
-    }
-    else
-    {
-      enable_[RS_STREAM_DEPTH] = true;
-    }
+    // set the depth enable
+    BaseNodelet::setDepthEnable(config.enable_depth);
 
     // Set common options
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_BACKLIGHT_COMPENSATION, config.color_backlight_compensation, 0);

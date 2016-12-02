@@ -82,7 +82,7 @@ namespace realsense_camera
     // Interfaces.
     virtual void onInit();
     virtual ~BaseNodelet();
-    virtual void prepareTopics();
+    virtual void setDepthEnable(bool &enable_depth);
     virtual bool getCameraOptionValues(realsense_camera::CameraConfiguration::Request & req,
         realsense_camera::CameraConfiguration::Response & res);
     virtual bool setPowerCameraService(realsense_camera::SetPower::Request & req,
@@ -133,11 +133,8 @@ namespace realsense_camera
     bool enable_pointcloud_;
     bool enable_tf_;
     const uint16_t *image_depth16_;
-    boost::shared_ptr<boost::thread> topic_thread_;
     float depth_scale_meters_;
     cv::Mat cvWrapper_;
-    bool start_camera_ = true;
-    bool start_stop_srv_called_ = false;
     boost::mutex frame_mutex_[STREAM_COUNT];
 
     struct CameraOptions

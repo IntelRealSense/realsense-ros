@@ -41,8 +41,6 @@ namespace realsense_camera
    */
   BaseNodelet::~BaseNodelet()
   {
-    topic_thread_->join();
-
     stopCamera();
 
     if (rs_context_)
@@ -92,10 +90,6 @@ namespace realsense_camera
     setStaticCameraOptions(dynamic_params);
     setStreams();
     startCamera();
-
-    // Start topic thread.
-    topic_thread_ =
-        boost::shared_ptr <boost::thread>(new boost::thread (boost::bind(&BaseNodelet::prepareTopics, this)));
 
     // Start publishing tranforms
     if (enable_tf_ == true)
@@ -397,8 +391,7 @@ namespace realsense_camera
 
     if (req.power_on == true)
     {
-      start_camera_ = true;
-      start_stop_srv_called_ = true;
+      ROS_INFO_STREAM(nodelet_name_ << " - " << startCamera());
     }
     else
     {
@@ -410,8 +403,7 @@ namespace realsense_camera
       {
         if (checkForSubscriber() == false)
         {
-          start_camera_ = false;
-          start_stop_srv_called_ = true;
+          ROS_INFO_STREAM(nodelet_name_ << " - " << stopCamera());
         }
         else
         {
@@ -430,8 +422,14 @@ namespace realsense_camera
   bool BaseNodelet::forcePowerCameraService(realsense_camera::ForcePower::Request & req,
       realsense_camera::ForcePower::Response & res)
   {
-    start_camera_ = req.power_on;
-    start_stop_srv_called_ = true;
+    if (req.power_on == true)
+    {
+      ROS_INFO_STREAM(nodelet_name_ << " - " << startCamera());
+    }
+    else
+    {
+      ROS_INFO_STREAM(nodelet_name_ << " - " << stopCamera());
+    }
     return true;
   }
 
@@ -737,7 +735,7 @@ namespace realsense_camera
       rs_start_device(rs_device_, &rs_error_);
       checkError();
       camera_start_ts_ = ros::Time::now();
-      return "Camera Started Succesfully";
+      return "Camera Started Successfully";
     }
     return "Camera is already Started";
   }
@@ -752,7 +750,7 @@ namespace realsense_camera
       ROS_INFO_STREAM(nodelet_name_ << " - Stopping camera");
       rs_stop_device(rs_device_, 0);
       checkError();
-      return "Camera Stopped Succesfully";
+      return "Camera Stopped Successfully";
     }
     return "Camera is already Stopped";
   }
@@ -787,55 +785,40 @@ namespace realsense_camera
   }
 
   /*
-   * Prepare and publish topics.
+   * Set depth enable
    */
-  void BaseNodelet::prepareTopics() try
+  void BaseNodelet::setDepthEnable(bool &enable_depth)
   {
-    while (ros::ok())
+    // Set flags
+    if (enable_depth == false)
     {
-      if (start_stop_srv_called_ == true)
+      if (enable_[RS_STREAM_COLOR] == false)
       {
-        if (start_camera_ == true)
-        {
-          ROS_INFO_STREAM(nodelet_name_ << " - " << startCamera());
-        }
-        else
-        {
-          ROS_INFO_STREAM(nodelet_name_ << " - " << stopCamera());
-        }
-        start_stop_srv_called_ = false;
+        ROS_INFO_STREAM(nodelet_name_ << " - Color stream is also disabled. Cannot disable depth stream");
+        enable_depth = true;
       }
-
-      if (enable_[RS_STREAM_DEPTH] != rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0))
+      else
       {
-        stopCamera();
-        setStreams();
-        startCamera();
+        enable_[RS_STREAM_DEPTH] = false;
       }
     }
-  }
-  catch(const rs::error & e)
-  {
-    ROS_ERROR_STREAM(nodelet_name_ << " - " << "RealSense error calling "
-        << e.get_failed_function() << "(" << e.get_failed_args() << "):\n    "
-        << e.what());
-    ros::shutdown();
-  }
-  catch(const std::exception & e)
-  {
-    ROS_ERROR_STREAM(nodelet_name_ << " - " << e.what());
-    ros::shutdown();
-  }
-  catch(...)
-  {
-    ROS_ERROR_STREAM(nodelet_name_ << " - Caught unknown expection...shutting down!");
-    ros::shutdown();
+    else
+    {
+      enable_[RS_STREAM_DEPTH] = true;
+    }
+
+    if (enable_[RS_STREAM_DEPTH] != rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0))
+    {
+      stopCamera();
+      setStreams();
+      startCamera();
+    }
   }
 
   /*
    * Publish topic.
    */
-  void BaseNodelet::publishTopic(rs_stream stream_index, rs::frame &frame)
+  void BaseNodelet::publishTopic(rs_stream stream_index, rs::frame &frame) try
   {
     // mutex to ensure only one frame per stream is processed at a time
     boost::mutex::scoped_lock lock(frame_mutex_[stream_index]);
@@ -861,6 +844,23 @@ namespace realsense_camera
       }
     }
     ts_[stream_index] = frame_ts;
+  }
+  catch(const rs::error & e)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - " << "RealSense error calling "
+        << e.get_failed_function() << "(" << e.get_failed_args() << "):\n    "
+        << e.what());
+    ros::shutdown();
+  }
+  catch(const std::exception & e)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - " << e.what());
+    ros::shutdown();
+  }
+  catch(...)
+  {
+    ROS_ERROR_STREAM(nodelet_name_ << " - Caught unknown expection...shutting down!");
+    ros::shutdown();
   }
 
   /*
