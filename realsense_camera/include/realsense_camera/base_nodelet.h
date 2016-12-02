@@ -113,7 +113,7 @@ namespace realsense_camera
     std::string usb_port_id_;
     std::string camera_type_;
     std::string mode_;
-    bool enable_[STREAM_COUNT];
+    bool enable_[STREAM_COUNT] = {false};
     int width_[STREAM_COUNT];
     int height_[STREAM_COUNT];
     int fps_[STREAM_COUNT];

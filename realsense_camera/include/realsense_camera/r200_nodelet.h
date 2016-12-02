@@ -64,7 +64,6 @@ namespace realsense_camera
     void setDynamicReconfigDepthControlPreset(int preset);
     std::string setDynamicReconfigDepthControlIndividuals();
     void configCallback(realsense_camera::r200_paramsConfig &config, uint32_t level);
-    void setStreams();
     void publishStaticTransforms();
     void setFrameCallbacks();
     std::function<void(rs::frame f)> ir2_frame_handler_;

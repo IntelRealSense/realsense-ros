@@ -148,6 +148,11 @@ namespace realsense_camera
     pnh_.param("depth_optical_frame_id", optical_frame_id_[RS_STREAM_DEPTH], DEFAULT_DEPTH_OPTICAL_FRAME_ID);
     pnh_.param("color_optical_frame_id", optical_frame_id_[RS_STREAM_COLOR], DEFAULT_COLOR_OPTICAL_FRAME_ID);
     pnh_.param("ir_optical_frame_id", optical_frame_id_[RS_STREAM_INFRARED], DEFAULT_IR_OPTICAL_FRAME_ID);
+
+    // set IR stream to match depth
+    width_[RS_STREAM_INFRARED] = width_[RS_STREAM_DEPTH];
+    height_[RS_STREAM_INFRARED] = height_[RS_STREAM_DEPTH];
+    fps_[RS_STREAM_INFRARED] = fps_[RS_STREAM_DEPTH];
   }
 
   /*
@@ -551,64 +556,17 @@ namespace realsense_camera
    */
   void BaseNodelet::setStreams()
   {
-    // Enable streams.
-    if (enable_[RS_STREAM_COLOR] == true)
+    // Enable streams
+    for (int stream=0; stream < STREAM_COUNT; stream++)
     {
-      enableStream(RS_STREAM_COLOR, width_[RS_STREAM_COLOR], height_[RS_STREAM_COLOR], format_[RS_STREAM_COLOR],
-          fps_[RS_STREAM_COLOR]);
-      if (camera_info_ptr_[RS_STREAM_COLOR] == NULL)
+      if (enable_[stream] == true)
       {
-        ROS_DEBUG_STREAM(nodelet_name_ << " - Allocating resources for " << STREAM_DESC[RS_STREAM_COLOR]);
-        getStreamCalibData(RS_STREAM_COLOR);
-        step_[RS_STREAM_COLOR] = camera_info_ptr_[RS_STREAM_COLOR]->width * unit_step_size_[RS_STREAM_COLOR];
-        image_[RS_STREAM_COLOR] = cv::Mat(camera_info_ptr_[RS_STREAM_COLOR]->height,
-            camera_info_ptr_[RS_STREAM_COLOR]->width, cv_type_[RS_STREAM_COLOR], cv::Scalar(0, 0, 0));
+        enableStream(static_cast<rs_stream>(stream), width_[stream], height_[stream], format_[stream], fps_[stream]);
       }
-      ts_[RS_STREAM_COLOR] = -1;
-    }
-    else if (enable_[RS_STREAM_COLOR] == false)
-    {
-      disableStream(RS_STREAM_COLOR);
-    }
-
-    if (enable_[RS_STREAM_DEPTH] == true)
-    {
-      enableStream(RS_STREAM_DEPTH, width_[RS_STREAM_DEPTH], height_[RS_STREAM_DEPTH], format_[RS_STREAM_DEPTH],
-          fps_[RS_STREAM_DEPTH]);
-      if (camera_info_ptr_[RS_STREAM_DEPTH] == NULL)
+      else if (enable_[stream] == false)
       {
-        ROS_DEBUG_STREAM(nodelet_name_ << " - Allocating resources for " << STREAM_DESC[RS_STREAM_DEPTH]);
-        getStreamCalibData(RS_STREAM_DEPTH);
-        step_[RS_STREAM_DEPTH] = camera_info_ptr_[RS_STREAM_DEPTH]->width * unit_step_size_[RS_STREAM_DEPTH];
-        image_[RS_STREAM_DEPTH] = cv::Mat(camera_info_ptr_[RS_STREAM_DEPTH]->height,
-            camera_info_ptr_[RS_STREAM_DEPTH]->width, cv_type_[RS_STREAM_DEPTH], cv::Scalar(0, 0, 0));
+        disableStream(static_cast<rs_stream>(stream));
       }
-      ts_[RS_STREAM_DEPTH] = -1;
-      depth_scale_meters_ = rs_get_device_depth_scale(rs_device_, &rs_error_);
-      checkError();
-    }
-    else if (enable_[RS_STREAM_DEPTH] == false)
-    {
-      disableStream(RS_STREAM_DEPTH);
-    }
-
-    if (enable_[RS_STREAM_INFRARED] == true)
-    {
-      enableStream(RS_STREAM_INFRARED, width_[RS_STREAM_DEPTH], height_[RS_STREAM_DEPTH], format_[RS_STREAM_INFRARED],
-          fps_[RS_STREAM_DEPTH]);
-      if (camera_info_ptr_[RS_STREAM_INFRARED] == NULL)
-      {
-        ROS_DEBUG_STREAM(nodelet_name_ << " - Allocating resources for " << STREAM_DESC[RS_STREAM_INFRARED]);
-        getStreamCalibData(RS_STREAM_INFRARED);
-        step_[RS_STREAM_INFRARED] = camera_info_ptr_[RS_STREAM_INFRARED]->width * unit_step_size_[RS_STREAM_INFRARED];
-        image_[RS_STREAM_INFRARED] = cv::Mat(camera_info_ptr_[RS_STREAM_INFRARED]->height,
-            camera_info_ptr_[RS_STREAM_INFRARED]->width, cv_type_[RS_STREAM_INFRARED], cv::Scalar(0, 0, 0));
-      }
-      ts_[RS_STREAM_INFRARED] = -1;
-    }
-    else if (enable_[RS_STREAM_INFRARED] == false)
-    {
-    	disableStream(RS_STREAM_INFRARED);
     }
   }
 
@@ -632,6 +590,15 @@ namespace realsense_camera
         checkError();
       }
     }
+    if (camera_info_ptr_[stream_index] == NULL)
+    {
+      // Allocate image resources
+      getStreamCalibData(stream_index);
+      step_[stream_index] = camera_info_ptr_[stream_index]->width * unit_step_size_[stream_index];
+      image_[stream_index] = cv::Mat(camera_info_ptr_[stream_index]->height,
+          camera_info_ptr_[stream_index]->width, cv_type_[stream_index], cv::Scalar(0, 0, 0));
+    }
+    ts_[stream_index] = -1;
   }
 
   /*
