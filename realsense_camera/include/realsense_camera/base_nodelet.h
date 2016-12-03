@@ -133,7 +133,6 @@ namespace realsense_camera
     bool enable_pointcloud_;
     bool enable_tf_;
     const uint16_t *image_depth16_;
-    float depth_scale_meters_;
     cv::Mat cvWrapper_;
     boost::mutex frame_mutex_[STREAM_COUNT];
 

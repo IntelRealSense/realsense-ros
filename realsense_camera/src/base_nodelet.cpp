@@ -732,8 +732,8 @@ namespace realsense_camera
     {
       // fill depth buffer
       image_depth16_ = reinterpret_cast<const uint16_t *>(frame.get_data());
-      
-      if (depth_scale_meters_ == MILLIMETER_METERS)
+      float depth_scale_meters = rs_get_device_depth_scale(rs_device_, &rs_error_);
+      if (depth_scale_meters == MILLIMETER_METERS)
       {
         image_[stream_index].data = (unsigned char *) image_depth16_;               
       }
@@ -742,7 +742,7 @@ namespace realsense_camera
         cvWrapper_ = cv::Mat(image_[stream_index].size(), cv_type_[stream_index], (void *) image_depth16_,
               step_[stream_index]);
         cvWrapper_.convertTo(image_[stream_index], cv_type_[stream_index],
-              static_cast<double>(depth_scale_meters_) / static_cast<double>(MILLIMETER_METERS));
+              static_cast<double>(depth_scale_meters) / static_cast<double>(MILLIMETER_METERS));
       }
     }
     else
@@ -883,12 +883,13 @@ namespace realsense_camera
       unsigned char *color_data = image_color.data;
       checkError();// Default value is 0.001
 
+      float depth_scale_meters = rs_get_device_depth_scale(rs_device_, &rs_error_);
       // Fill the PointCloud2 fields.
       for (int y = 0; y < z_intrinsic.height; y++)
       {
         for (int x = 0; x < z_intrinsic.width; x++)
         {
-          scaled_depth = static_cast<float>(*image_depth16_) * depth_scale_meters_;
+          scaled_depth = static_cast<float>(*image_depth16_) * depth_scale_meters;
           float depth_pixel[2] = {static_cast<float>(x), static_cast<float>(y)};
           rs_deproject_pixel_to_point(depth_point, &z_intrinsic, depth_pixel, scaled_depth);
 
