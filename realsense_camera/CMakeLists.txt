@@ -12,7 +12,7 @@ set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -O2 -D_FORTIFY_SOURCE=2 -fstack-prot
 # Flags executables
 set(CMAKE_EXE_LINKER_FLAGS "-pie -z noexecstack -z relro -z now")
 # Flags shared libraries
-set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now")
+set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now ${CMAKE_SHARED_LINKER_FLAGS}")
 
 find_package(catkin REQUIRED COMPONENTS
   librealsense
