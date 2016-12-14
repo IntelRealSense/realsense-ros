@@ -50,6 +50,7 @@
 
 #include <iostream>
 #include <boost/thread.hpp>
+#include <boost/algorithm/string/join.hpp>
 #include <thread>
 #include <cstdlib>
 #include <cctype>
