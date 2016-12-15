@@ -570,6 +570,7 @@ namespace realsense_camera
     rs_enable_motion_tracking_cpp(rs_device_, new rs::motion_callback(motion_handler_),
         new rs::timestamp_callback(timestamp_handler_), &rs_error_);
     checkError();
+    ros::Time imu_start_ts = ros::Time::now();
     rs_start_source(rs_device_, (rs_source)rs::source::motion_data, &rs_error_);
     checkError();
     prev_imu_ts_ = -1;
@@ -580,7 +581,7 @@ namespace realsense_camera
         if (prev_imu_ts_ != imu_ts_)
         {
           sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
-          imu_msg.header.stamp = ros::Time(camera_start_ts_) + ros::Duration(imu_ts_ * 0.001);
+          imu_msg.header.stamp = ros::Time(imu_start_ts) + ros::Duration(imu_ts_ * 0.001);
           imu_msg.header.frame_id = imu_optical_frame_id_;
 
           imu_msg.orientation.x = 0.0;
