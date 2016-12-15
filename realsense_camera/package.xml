@@ -33,6 +33,7 @@
   <depend>sensor_msgs</depend>
   <depend>pcl_ros</depend>
   <depend>dynamic_reconfigure</depend>
+  <depend>boost</depend>
 
   <exec_depend>rgbd_launch</exec_depend>
 

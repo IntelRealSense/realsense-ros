@@ -1135,7 +1135,8 @@ namespace realsense_camera
     if (pid == -1)
     { // failed to fork
         ROS_WARN_STREAM(nodelet_name_ <<
-            " - Failed to set dynamic_reconfigure dc preset via system:"
+            " - Failed to fork system command:"
+            << boost::algorithm::join(string_argv, " ")
             << strerror(errno));
     }
     else if (pid == 0)
