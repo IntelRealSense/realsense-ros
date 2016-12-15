@@ -17,7 +17,7 @@
        "camera" should be a user friendly string that follows the ROS Names convention. -->
   <group ns="$(arg camera1)">
     <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
-      <arg name="manager"      value="/$(arg manager)" />
+      <arg name="manager"      value="$(arg manager)" />
       <arg name="camera"       value="$(arg camera1)" />
       <arg name="camera_type"  value="$(arg camera1_camera_type)" />
       <arg name="serial_no"    value="$(arg camera1_serial_no)" />
@@ -27,7 +27,7 @@
 
   <group ns="$(arg camera2)">
     <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
-      <arg name="manager"      value="/$(arg manager)" />
+      <arg name="manager"      value="$(arg manager)" />
       <arg name="camera"       value="$(arg camera2)" />
       <arg name="camera_type"  value="$(arg camera2_camera_type)" />
       <arg name="serial_no"    value="$(arg camera2_serial_no)" />

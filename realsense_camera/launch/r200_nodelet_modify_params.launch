@@ -1,18 +1,18 @@
 <!-- Sample launch file for modifying the parameters of RealSense R200 camera -->
 <launch>
-  <arg name="manager"      value="nodelet_manager" />
   <arg name="camera"       default="camera" />
   <arg name="camera_type"  default="R200" /> <!-- Type of camera -->
   <arg name="serial_no"    default="" />
   <arg name="usb_port_id"  default="" /> <!-- USB "Bus#-Port#" -->
+  <arg name="manager"      default="nodelet_manager" />
 
   <!-- These 'arg' tags are just place-holders for passing values from test files.
   The recommended way is to pass the values directly into the 'param' tags. -->
   <arg name="enable_depth"      default="true" />
-  <arg name="enable_ir"         default="true" />
-  <arg name="enable_ir2"        default="true" />
+  <arg name="enable_ir"         default="false" />
+  <arg name="enable_ir2"        default="false" />
   <arg name="enable_color"      default="true" />
-  <arg name="enable_pointcloud" default="true" />
+  <arg name="enable_pointcloud" default="false" />
   <arg name="enable_tf"         default="true" />
   <arg name="mode"              default="manual" />
   <arg name="depth_width"       default="640" />
@@ -35,7 +35,7 @@
   <param name="$(arg camera)/driver/color_height"      type="int"  value="$(arg color_height)" />
   <param name="$(arg camera)/driver/depth_fps"         type="int"  value="$(arg depth_fps)" />
   <param name="$(arg camera)/driver/color_fps"         type="int"  value="$(arg color_fps)" />
-  <!-- Refer to the README file for list of supported parameters -->
+  <!-- Refer to the Wiki http://wiki.ros.org/realsense_camera for list of supported parameters -->
 
   <group ns="$(arg camera)">
     <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
