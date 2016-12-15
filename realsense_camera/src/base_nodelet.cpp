@@ -726,7 +726,7 @@ namespace realsense_camera
   /*
    * Copy frame data from realsense to member cv images.
    */
-  void BaseNodelet::getStreamData(rs_stream stream_index, rs::frame & frame)
+  void BaseNodelet::setImageData(rs_stream stream_index, rs::frame & frame)
   {
     if (stream_index == RS_STREAM_DEPTH)
     {
@@ -793,7 +793,7 @@ namespace realsense_camera
     double frame_ts = frame.get_timestamp();
     if (ts_[stream_index] != frame_ts) // Publish frames only if its not duplicate
     {
-      getStreamData(stream_index, frame);
+      setImageData(stream_index, frame);
       // Publish stream only if there is at least one subscriber.
       if (camera_publisher_[stream_index].getNumSubscribers() > 0)
       {

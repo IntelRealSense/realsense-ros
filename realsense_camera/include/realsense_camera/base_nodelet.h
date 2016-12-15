@@ -162,7 +162,7 @@ namespace realsense_camera
     virtual std::string startCamera();
     virtual std::string stopCamera();
     virtual void publishTopic(rs_stream stream_index, rs::frame &  frame);
-    virtual void getStreamData(rs_stream stream_index, rs::frame &  frame);
+    virtual void setImageData(rs_stream stream_index, rs::frame &  frame);
     virtual void publishPCTopic();
     virtual void publishStaticTransforms();
     virtual void checkError();
