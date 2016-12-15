@@ -75,6 +75,11 @@ namespace realsense_camera
     pnh_.param("ir2_frame_id", frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_FRAME_ID);
     pnh_.param("ir2_optical_frame_id", optical_frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_OPTICAL_FRAME_ID);
     pnh_.param("enable_ir2", enable_[RS_STREAM_INFRARED2], ENABLE_IR2);
+
+    // set IR2 stream to match depth
+    width_[RS_STREAM_INFRARED2] = width_[RS_STREAM_DEPTH];
+    height_[RS_STREAM_INFRARED2] = height_[RS_STREAM_DEPTH];
+    fps_[RS_STREAM_INFRARED2] = fps_[RS_STREAM_DEPTH];
   }
 
   /*
@@ -253,23 +258,8 @@ namespace realsense_camera
       ROS_INFO_STREAM(nodelet_name_ << " - Setting dynamic camera options");
     }
 
-    // Set flags
-    if (config.enable_depth == false)
-    {
-      if (enable_[RS_STREAM_COLOR] == false)
-      {
-        ROS_INFO_STREAM(nodelet_name_ << " - Color stream is also disabled. Cannot disable depth stream");
-        config.enable_depth = true;
-      }
-      else
-      {
-        enable_[RS_STREAM_DEPTH] = false;
-      }
-    }
-    else
-    {
-      enable_[RS_STREAM_DEPTH] = true;
-    }
+    // set the depth enable
+    BaseNodelet::setDepthEnable(config.enable_depth);
 
     // Set common options
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_BACKLIGHT_COMPENSATION, config.color_backlight_compensation, 0);
@@ -424,39 +414,20 @@ namespace realsense_camera
   }
 
   /*
-   * Set the streams according to their corresponding flag values.
-   */
-  void R200Nodelet::setStreams()
+  * Set up the callbacks for the camera streams
+  */
+  void R200Nodelet::setFrameCallbacks()
   {
-    BaseNodelet::setStreams();
+    // call base nodelet method
+	BaseNodelet::setFrameCallbacks();
 
-    if (enable_[RS_STREAM_INFRARED2] == true)
+    ir2_frame_handler_ = [&](rs::frame  frame)
     {
-      enableStream(RS_STREAM_INFRARED2, width_[RS_STREAM_DEPTH], height_[RS_STREAM_DEPTH], format_[RS_STREAM_INFRARED2],
-          fps_[RS_STREAM_DEPTH]);
-      if (camera_info_ptr_[RS_STREAM_INFRARED2] == NULL)
-      {
-        ROS_DEBUG_STREAM(nodelet_name_ << " - Allocating resources for " << STREAM_DESC[RS_STREAM_INFRARED2]);
-        getStreamCalibData(RS_STREAM_INFRARED2);
-        step_[RS_STREAM_INFRARED2] = camera_info_ptr_[RS_STREAM_INFRARED2]->width * unit_step_size_[RS_STREAM_INFRARED2];
-        image_[RS_STREAM_INFRARED2] = cv::Mat(camera_info_ptr_[RS_STREAM_INFRARED2]->height,
-            camera_info_ptr_[RS_STREAM_INFRARED2]->width, cv_type_[RS_STREAM_INFRARED2], cv::Scalar(0, 0, 0));
-      }
-      ts_[RS_STREAM_INFRARED2] = -1;
-    }
-    else if (enable_[RS_STREAM_INFRARED2] == false)
-    {
-      disableStream(RS_STREAM_INFRARED2);
-    }
-  }
+      publishTopic(RS_STREAM_INFRARED2, frame);
+    };
 
-  /*
-   * Publish topics for native streams.
-   */
-  void R200Nodelet::publishTopics()
-  {
-    BaseNodelet::publishTopics();
-    publishTopic(RS_STREAM_INFRARED2);
+    rs_set_frame_callback_cpp(rs_device_, RS_STREAM_INFRARED2, new rs::frame_callback(ir2_frame_handler_), &rs_error_);
+    checkError();
   }
 
   /*

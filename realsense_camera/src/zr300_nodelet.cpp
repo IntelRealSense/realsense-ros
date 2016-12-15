@@ -93,6 +93,11 @@ namespace realsense_camera
     pnh_.param("fisheye_optical_frame_id", optical_frame_id_[RS_STREAM_FISHEYE], DEFAULT_FISHEYE_OPTICAL_FRAME_ID);
     pnh_.param("imu_frame_id", imu_frame_id_, DEFAULT_IMU_FRAME_ID);
     pnh_.param("imu_optical_frame_id", imu_optical_frame_id_, DEFAULT_IMU_OPTICAL_FRAME_ID);
+
+    // set IR2 stream to match depth
+    width_[RS_STREAM_INFRARED2] = width_[RS_STREAM_DEPTH];
+    height_[RS_STREAM_INFRARED2] = height_[RS_STREAM_DEPTH];
+    fps_[RS_STREAM_INFRARED2] = fps_[RS_STREAM_DEPTH];
   }
 
   /*
@@ -340,23 +345,8 @@ namespace realsense_camera
       ROS_INFO_STREAM(nodelet_name_ << " - Setting dynamic camera options");
     }
 
-    // Set flags
-    if (config.enable_depth == false)
-    {
-      if (enable_[RS_STREAM_COLOR] == false)
-      {
-        ROS_INFO_STREAM(nodelet_name_ << " - Color stream is also disabled. Cannot disable depth stream");
-        config.enable_depth = true;
-      }
-      else
-      {
-        enable_[RS_STREAM_DEPTH] = false;
-      }
-    }
-    else
-    {
-      enable_[RS_STREAM_DEPTH] = true;
-    }
+    // set the depth enable
+    BaseNodelet::setDepthEnable(config.enable_depth);
 
     // Set common options
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_BACKLIGHT_COMPENSATION, config.color_backlight_compensation, 0);
@@ -503,63 +493,6 @@ namespace realsense_camera
   }
 
   /*
-   * Set the streams according to their corresponding flag values.
-   */
-  void ZR300Nodelet::setStreams()
-  {
-    BaseNodelet::setStreams();
-
-    if (enable_[RS_STREAM_INFRARED2] == true)
-    {
-      enableStream(RS_STREAM_INFRARED2, width_[RS_STREAM_DEPTH], height_[RS_STREAM_DEPTH], format_[RS_STREAM_INFRARED2],
-          fps_[RS_STREAM_DEPTH]);
-      if (camera_info_ptr_[RS_STREAM_INFRARED2] == NULL)
-      {
-        ROS_DEBUG_STREAM(nodelet_name_ << " - Allocating resources for " << STREAM_DESC[RS_STREAM_INFRARED2]);
-        getStreamCalibData(RS_STREAM_INFRARED2);
-        step_[RS_STREAM_INFRARED2] = camera_info_ptr_[RS_STREAM_INFRARED2]->width * unit_step_size_[RS_STREAM_INFRARED2];
-        image_[RS_STREAM_INFRARED2] = cv::Mat(camera_info_ptr_[RS_STREAM_INFRARED2]->height,
-            camera_info_ptr_[RS_STREAM_INFRARED2]->width, cv_type_[RS_STREAM_INFRARED2], cv::Scalar(0, 0, 0));
-      }
-      ts_[RS_STREAM_INFRARED2] = -1;
-    }
-    else if (enable_[RS_STREAM_INFRARED2] == false)
-    {
-      disableStream(RS_STREAM_INFRARED2);
-    }
-
-    if (enable_[RS_STREAM_FISHEYE] == true)
-    {
-      enableStream(RS_STREAM_FISHEYE, width_[RS_STREAM_FISHEYE], height_[RS_STREAM_FISHEYE], format_[RS_STREAM_FISHEYE],
-              fps_[RS_STREAM_FISHEYE]);
-      if (camera_info_ptr_[RS_STREAM_FISHEYE] == NULL)
-      {
-        ROS_DEBUG_STREAM(nodelet_name_ << " - Allocating resources for " << STREAM_DESC[RS_STREAM_FISHEYE]);
-        getStreamCalibData(RS_STREAM_FISHEYE);
-        step_[RS_STREAM_FISHEYE] = camera_info_ptr_[RS_STREAM_FISHEYE]->width * unit_step_size_[RS_STREAM_FISHEYE];
-        image_[RS_STREAM_FISHEYE] = cv::Mat(camera_info_ptr_[RS_STREAM_FISHEYE]->height,
-            camera_info_ptr_[RS_STREAM_FISHEYE]->width, cv_type_[RS_STREAM_FISHEYE], cv::Scalar(0, 0, 0));
-      }
-      ts_[RS_STREAM_FISHEYE] = -1;
-    }
-    else if (enable_[RS_STREAM_FISHEYE] == false)
-    {
-      disableStream(RS_STREAM_FISHEYE);
-    }
-  }
-
-  /*
-   * Publish topics for native streams.
-   */
-  void ZR300Nodelet::publishTopics()
-  {
-    BaseNodelet::publishTopics();
-
-    publishTopic(RS_STREAM_INFRARED2);
-    publishTopic(RS_STREAM_FISHEYE);
-  }
-
-  /*
    * Prepare IMU.
    */
   void ZR300Nodelet::prepareIMU()
@@ -578,6 +511,7 @@ namespace realsense_camera
     {
       if (imu_publisher_.getNumSubscribers() > 0)
       {
+        boost::mutex::scoped_lock lock(imu_mutex_);
         if (prev_imu_ts_ != imu_ts_)
         {
           sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
@@ -623,7 +557,7 @@ namespace realsense_camera
   {
     motion_handler_ = [&](rs::motion_data entry)
     {
-        imu_ts_ = (double) entry.timestamp_data.timestamp;
+    	boost::mutex::scoped_lock lock(imu_mutex_);
 
         if (entry.timestamp_data.source_id == RS_EVENT_IMU_GYRO)
         {
@@ -645,6 +579,7 @@ namespace realsense_camera
           imu_angular_vel_cov_[0] = -1.0;
           imu_linear_accel_cov_[0] = 0.0;
         }
+        imu_ts_ = (double) entry.timestamp_data.timestamp;
 
         ROS_DEBUG_STREAM(" - Motion,\t host time " << imu_ts_
             << "\ttimestamp: " << std::setprecision(8) << (double)entry.timestamp_data.timestamp*IMU_UNITS_TO_MSEC
@@ -666,6 +601,31 @@ namespace realsense_camera
             << "\tsource: " << (rs::event)entry.source_id
             << "\tframe_num: " << entry.frame_number);
     };
+  }
+
+  /*
+  * Set up the callbacks for the camera streams
+  */
+  void ZR300Nodelet::setFrameCallbacks()
+  {
+    // call base nodelet method
+	BaseNodelet::setFrameCallbacks();
+
+    fisheye_frame_handler_ = [&](rs::frame  frame)
+    {
+      publishTopic(RS_STREAM_FISHEYE, frame);
+    };
+
+    ir2_frame_handler_ = [&](rs::frame  frame)
+    {
+      publishTopic(RS_STREAM_INFRARED2, frame);
+    };
+
+    rs_set_frame_callback_cpp(rs_device_, RS_STREAM_FISHEYE,  new rs::frame_callback(fisheye_frame_handler_), &rs_error_);
+    checkError();
+
+    rs_set_frame_callback_cpp(rs_device_, RS_STREAM_INFRARED2, new rs::frame_callback(ir2_frame_handler_), &rs_error_);
+    checkError();
   }
 
   /*
