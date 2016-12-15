@@ -4,7 +4,20 @@
   <arg name="camera_type"  default="F200" /> <!-- Type of camera -->
   <arg name="serial_no"    default="" />
   <arg name="usb_port_id"  default="" /> <!-- USB "Bus#-Port#" -->
-  <arg name="manager"      value="$(arg camera)_nodelet_manager" />
+  <arg name="manager"      default="nodelet_manager" />
+
+  <!-- These 'arg' tags are just place-holders for passing values from test files.
+  The recommended way is to pass the values directly into the 'param' tags. -->
+  <arg name="mode"              default="manual" />
+  <arg name="depth_width"       default="640" />
+  <arg name="depth_height"      default="480" />
+  <arg name="color_fps"         default="30" />
+
+  <param name="$(arg camera)/driver/mode"              type="str"  value="$(arg mode)" />
+  <param name="$(arg camera)/driver/depth_width"       type="int"  value="$(arg depth_width)" />
+  <param name="$(arg camera)/driver/depth_height"      type="int"  value="$(arg depth_height)" />
+  <param name="$(arg camera)/driver/color_fps"         type="int"  value="$(arg color_fps)" />
+  <!-- Refer to the Wiki http://wiki.ros.org/realsense_camera for list of supported parameters -->
 
   <group ns="$(arg camera)">
     <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
