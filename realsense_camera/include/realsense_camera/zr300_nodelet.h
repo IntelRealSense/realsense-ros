@@ -66,7 +66,7 @@ namespace realsense_camera
     boost::shared_ptr<boost::thread> imu_thread_;
     std::function<void(rs::motion_data)> motion_handler_;
     std::function<void(rs::timestamp_data)> timestamp_handler_;
-    boost::mutex imu_mutex_;
+    std::mutex imu_mutex_;
 
     // Member Functions.
     void getParameters();
