@@ -35,6 +35,16 @@ PLUGINLIB_EXPORT_CLASS (realsense_camera::ZR300Nodelet, nodelet::Nodelet)
 namespace realsense_camera
 {
   /*
+   * Nodelet Destructor.
+   */
+  ZR300Nodelet::~ZR300Nodelet()
+  {
+    stopIMU();
+    // clean up imu thread
+    imu_thread_->join();
+  }
+
+  /*
    * Initialize the nodelet.
    */
   void ZR300Nodelet::onInit()
@@ -511,7 +521,8 @@ namespace realsense_camera
     {
       if (imu_publisher_.getNumSubscribers() > 0)
       {
-        boost::mutex::scoped_lock lock(imu_mutex_);
+        std::unique_lock<std::mutex> lock(imu_mutex_);
+
         if (prev_imu_ts_ != imu_ts_)
         {
           sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
@@ -543,11 +554,7 @@ namespace realsense_camera
         }
       }
     }
-
-    rs_stop_source(rs_device_, (rs_source)rs::source::motion_data, &rs_error_);
-    checkError();
-    rs_disable_motion_tracking(rs_device_, &rs_error_);
-    checkError();
+    stopIMU();
   }
 
   /*
@@ -557,37 +564,37 @@ namespace realsense_camera
   {
     motion_handler_ = [&](rs::motion_data entry)
     {
-    	boost::mutex::scoped_lock lock(imu_mutex_);
+      std::unique_lock<std::mutex> lock(imu_mutex_);
 
-        if (entry.timestamp_data.source_id == RS_EVENT_IMU_GYRO)
+      if (entry.timestamp_data.source_id == RS_EVENT_IMU_GYRO)
+      {
+        for (int i = 0; i < 3; ++i)
         {
-          for (int i = 0; i < 3; ++i)
-          {
-            imu_angular_vel_[i] = entry.axes[i];
-            imu_linear_accel_[i] = 0.0;
-          }
-          imu_angular_vel_cov_[0] = 0.0;
-          imu_linear_accel_cov_[0] = -1.0;
+          imu_angular_vel_[i] = entry.axes[i];
+          imu_linear_accel_[i] = 0.0;
         }
-        else if (entry.timestamp_data.source_id == RS_EVENT_IMU_ACCEL)
+        imu_angular_vel_cov_[0] = 0.0;
+        imu_linear_accel_cov_[0] = -1.0;
+      }
+      else if (entry.timestamp_data.source_id == RS_EVENT_IMU_ACCEL)
+      {
+        for (int i = 0; i < 3; ++i)
         {
-          for (int i = 0; i < 3; ++i)
-          {
-            imu_angular_vel_[i] = 0.0;
-            imu_linear_accel_[i] = entry.axes[i];
-          }
-          imu_angular_vel_cov_[0] = -1.0;
-          imu_linear_accel_cov_[0] = 0.0;
+          imu_angular_vel_[i] = 0.0;
+          imu_linear_accel_[i] = entry.axes[i];
         }
-        imu_ts_ = (double) entry.timestamp_data.timestamp;
+        imu_angular_vel_cov_[0] = -1.0;
+        imu_linear_accel_cov_[0] = 0.0;
+      }
+      imu_ts_ = (double) entry.timestamp_data.timestamp;
 
-        ROS_DEBUG_STREAM(" - Motion,\t host time " << imu_ts_
-            << "\ttimestamp: " << std::setprecision(8) << (double)entry.timestamp_data.timestamp*IMU_UNITS_TO_MSEC
-            << "\tsource: " << (rs::event)entry.timestamp_data.source_id
-            << "\tframe_num: " << entry.timestamp_data.frame_number
-            << "\tx: " << std::setprecision(5) <<  entry.axes[0]
-            << "\ty: " << entry.axes[1]
-            << "\tz: " << entry.axes[2]);
+      ROS_DEBUG_STREAM(" - Motion,\t host time " << imu_ts_
+          << "\ttimestamp: " << std::setprecision(8) << (double)entry.timestamp_data.timestamp*IMU_UNITS_TO_MSEC
+          << "\tsource: " << (rs::event)entry.timestamp_data.source_id
+          << "\tframe_num: " << entry.timestamp_data.frame_number
+          << "\tx: " << std::setprecision(5) <<  entry.axes[0]
+          << "\ty: " << entry.axes[1]
+          << "\tz: " << entry.axes[2]);
     };
 
     // Get timestamp that syncs all sensors.
@@ -761,6 +768,17 @@ namespace realsense_camera
     imu2imuo_msg.transform.rotation.w = q_imu2imuo.getW();
     static_tf_broadcaster_.sendTransform(imu2imuo_msg);
 
+  }
+
+  /*
+   * Stop the IMU and motion tracking
+   */
+  void ZR300Nodelet::stopIMU()
+  {
+    rs_stop_source(rs_device_, (rs_source)rs::source::motion_data, &rs_error_);
+    checkError();
+    rs_disable_motion_tracking(rs_device_, &rs_error_);
+    checkError();
   }
 }  // end namespace
 

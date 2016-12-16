@@ -788,7 +788,7 @@ namespace realsense_camera
   void BaseNodelet::publishTopic(rs_stream stream_index, rs::frame &frame) try
   {
     // mutex to ensure only one frame per stream is processed at a time
-    boost::mutex::scoped_lock lock(frame_mutex_[stream_index]);
+    std::unique_lock<std::mutex> lock(frame_mutex_[stream_index]);
 
     double frame_ts = frame.get_timestamp();
     if (ts_[stream_index] != frame_ts) // Publish frames only if its not duplicate

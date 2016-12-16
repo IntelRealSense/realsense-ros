@@ -134,7 +134,7 @@ namespace realsense_camera
     bool enable_tf_;
     const uint16_t *image_depth16_;
     cv::Mat cvWrapper_;
-    boost::mutex frame_mutex_[STREAM_COUNT];
+    std::mutex frame_mutex_[STREAM_COUNT];
 
     struct CameraOptions
     {
