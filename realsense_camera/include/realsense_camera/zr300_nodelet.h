@@ -46,6 +46,7 @@ namespace realsense_camera
   {
   public:
 
+    ~ZR300Nodelet();
     void onInit();
 
   protected:
@@ -83,6 +84,7 @@ namespace realsense_camera
     void setIMUCallbacks();
     void setFrameCallbacks();
     std::function<void(rs::frame f)> fisheye_frame_handler_, ir2_frame_handler_;
+    void stopIMU();
 
   };
 }

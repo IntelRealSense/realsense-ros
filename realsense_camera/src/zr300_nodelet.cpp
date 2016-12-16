@@ -35,6 +35,16 @@ PLUGINLIB_EXPORT_CLASS (realsense_camera::ZR300Nodelet, nodelet::Nodelet)
 namespace realsense_camera
 {
   /*
+   * Nodelet Destructor.
+   */
+  ZR300Nodelet::~ZR300Nodelet()
+  {
+    stopIMU();
+    // clean up imu thread
+    imu_thread_->join();
+  }
+
+  /*
    * Initialize the nodelet.
    */
   void ZR300Nodelet::onInit()
@@ -544,11 +554,7 @@ namespace realsense_camera
         }
       }
     }
-
-    rs_stop_source(rs_device_, (rs_source)rs::source::motion_data, &rs_error_);
-    checkError();
-    rs_disable_motion_tracking(rs_device_, &rs_error_);
-    checkError();
+    stopIMU();
   }
 
   /*
@@ -762,6 +768,17 @@ namespace realsense_camera
     imu2imuo_msg.transform.rotation.w = q_imu2imuo.getW();
     static_tf_broadcaster_.sendTransform(imu2imuo_msg);
 
+  }
+
+  /*
+   * Stop the IMU and motion tracking
+   */
+  void ZR300Nodelet::stopIMU()
+  {
+    rs_stop_source(rs_device_, (rs_source)rs::source::motion_data, &rs_error_);
+    checkError();
+    rs_disable_motion_tracking(rs_device_, &rs_error_);
+    checkError();
   }
 }  // end namespace
 
