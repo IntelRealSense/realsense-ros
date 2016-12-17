@@ -41,6 +41,8 @@
   <build_export_depend>librealsense</build_export_depend>
   <exec_depend>librealsense</exec_depend>
 
+  <build_depend>roslint</build_depend>
+
   <export>
     <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>

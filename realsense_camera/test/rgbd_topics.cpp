@@ -28,8 +28,7 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
-#include "rgbd_topics.h"
-using namespace std;
+#include "rgbd_topics.h"  // NOLINT(build/include)
 
 void topic0Callback(const sensor_msgs::ImageConstPtr msg)
 {
@@ -135,69 +134,69 @@ void topic12Callback(const sensor_msgs::ImageConstPtr msg)
   }
 }
 
-TEST (RealsenseTests, rgb_image_mono)
+TEST(RealsenseTests, rgb_image_mono)
 {
-  EXPECT_TRUE (topic_0_recv);
+  EXPECT_TRUE(topic_0_recv);
 }
 
-TEST (RealsenseTests, rgb_image_color)
+TEST(RealsenseTests, rgb_image_color)
 {
-  EXPECT_TRUE (topic_1_recv);
+  EXPECT_TRUE(topic_1_recv);
 }
 
-TEST (RealsenseTests, rgb_image_rect_mono)
+TEST(RealsenseTests, rgb_image_rect_mono)
 {
-  EXPECT_TRUE (topic_2_recv);
+  EXPECT_TRUE(topic_2_recv);
 }
 
-TEST (RealsenseTests, rgb_image_rect_color)
+TEST(RealsenseTests, rgb_image_rect_color)
 {
-  EXPECT_TRUE (topic_3_recv);
+  EXPECT_TRUE(topic_3_recv);
 }
 
-TEST (RealsenseTests, depth_image_rect_raw)
+TEST(RealsenseTests, depth_image_rect_raw)
 {
-  EXPECT_TRUE (topic_4_recv);
+  EXPECT_TRUE(topic_4_recv);
 }
 
-TEST (RealsenseTests, depth_image_rect)
+TEST(RealsenseTests, depth_image_rect)
 {
-  EXPECT_TRUE (topic_5_recv);
+  EXPECT_TRUE(topic_5_recv);
 }
 
-TEST (RealsenseTests, depth_image)
+TEST(RealsenseTests, depth_image)
 {
-  EXPECT_TRUE (topic_6_recv);
+  EXPECT_TRUE(topic_6_recv);
 }
 
-TEST (RealsenseTests, depth_points)
+TEST(RealsenseTests, depth_points)
 {
-  EXPECT_TRUE (topic_7_recv);
+  EXPECT_TRUE(topic_7_recv);
 }
 
-TEST (RealsenseTests, ir_image_rect_ir)
+TEST(RealsenseTests, ir_image_rect_ir)
 {
-  EXPECT_TRUE (topic_8_recv);
+  EXPECT_TRUE(topic_8_recv);
 }
 
-TEST (RealsenseTests, depth_reg_sw_reg_image_rect_raw)
+TEST(RealsenseTests, depth_reg_sw_reg_image_rect_raw)
 {
-  EXPECT_TRUE (topic_9_recv);
+  EXPECT_TRUE(topic_9_recv);
 }
 
-TEST (RealsenseTests, depth_reg_sw_reg_camera_info)
+TEST(RealsenseTests, depth_reg_sw_reg_camera_info)
 {
-  EXPECT_TRUE (topic_10_recv);
+  EXPECT_TRUE(topic_10_recv);
 }
 
-TEST (RealsenseTests, depth_reg_points)
+TEST(RealsenseTests, depth_reg_points)
 {
-  EXPECT_TRUE (topic_11_recv);
+  EXPECT_TRUE(topic_11_recv);
 }
 
-TEST (RealsenseTests, depth_reg_sw_reg_image_rect)
+TEST(RealsenseTests, depth_reg_sw_reg_image_rect)
 {
-  EXPECT_TRUE (topic_12_recv);
+  EXPECT_TRUE(topic_12_recv);
 }
 
 void getParams()
@@ -259,4 +258,4 @@ int main(int argc, char **argv) try
 
   return RUN_ALL_TESTS();
 }
-catch(...) {} // catch the "testing::internal::<unnamed>::ClassUniqueToAlwaysTrue" from gtest
+catch(...) {}  // catch the "testing::internal::<unnamed>::ClassUniqueToAlwaysTrue" from gtest

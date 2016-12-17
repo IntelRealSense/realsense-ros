@@ -29,9 +29,11 @@
  *******************************************************************************/
 
 #pragma once
-#ifndef F200_NODELET
-#define F200_NODELET
+#ifndef REALSENSE_CAMERA_F200_NODELET_H
+#define REALSENSE_CAMERA_F200_NODELET_H
 
+#include <string>
+#include <vector>
 #include <dynamic_reconfigure/server.h>
 
 #include <realsense_camera/f200_paramsConfig.h>
@@ -39,21 +41,19 @@
 
 namespace realsense_camera
 {
-  class F200Nodelet: public realsense_camera::BaseNodelet
-  {
-  public:
+class F200Nodelet: public realsense_camera::BaseNodelet
+{
+public:
+  void onInit();
 
-    void onInit();
+protected:
+  // Member Variables.
+  boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::f200_paramsConfig>> dynamic_reconf_server_;
 
-  protected:
-
-    // Member Variables.
-    boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::f200_paramsConfig>> dynamic_reconf_server_;
-
-    // Member Functions.
-    std::vector<std::string> setDynamicReconfServer();
-    void startDynamicReconfCallback();
-    void configCallback(realsense_camera::f200_paramsConfig &config, uint32_t level);
-  };
-}
-#endif
+  // Member Functions.
+  std::vector<std::string> setDynamicReconfServer();
+  void startDynamicReconfCallback();
+  void configCallback(realsense_camera::f200_paramsConfig &config, uint32_t level);
+};
+}  // namespace realsense_camera
+#endif  // REALSENSE_CAMERA_F200_NODELET_H

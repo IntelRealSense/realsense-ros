@@ -28,10 +28,45 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 #include <gtest/gtest.h>
-#include "camera_core.h"
+#include "camera_core.h"  // NOLINT(build/include)
+#include <string>  // Added to satisfy roslint
+#include <vector>  // Added to satisfy roslint
 
-using namespace std;
-using namespace realsense_camera;
+using std::string;
+using std::stringstream;
+using std::vector;
+
+using realsense_camera::CAMERA_FORCE_POWER_SERVICE;
+using realsense_camera::CAMERA_IS_POWERED_SERVICE;
+using realsense_camera::CAMERA_SET_POWER_SERVICE;
+using realsense_camera::COLOR_NAMESPACE;
+using realsense_camera::COLOR_TOPIC;
+using realsense_camera::DEFAULT_BASE_FRAME_ID;
+using realsense_camera::DEFAULT_COLOR_FRAME_ID;
+using realsense_camera::DEFAULT_COLOR_OPTICAL_FRAME_ID;
+using realsense_camera::DEFAULT_DEPTH_FRAME_ID;
+using realsense_camera::DEFAULT_DEPTH_OPTICAL_FRAME_ID;
+using realsense_camera::DEFAULT_FISHEYE_FRAME_ID;
+using realsense_camera::DEFAULT_FISHEYE_OPTICAL_FRAME_ID;
+using realsense_camera::DEFAULT_IMU_FRAME_ID;
+using realsense_camera::DEFAULT_IMU_OPTICAL_FRAME_ID;
+using realsense_camera::DEFAULT_IR2_FRAME_ID;
+using realsense_camera::DEFAULT_IR2_OPTICAL_FRAME_ID;
+using realsense_camera::DEFAULT_IR_FRAME_ID;
+using realsense_camera::DEFAULT_IR_OPTICAL_FRAME_ID;
+using realsense_camera::DEPTH_NAMESPACE;
+using realsense_camera::DEPTH_TOPIC;
+using realsense_camera::FISHEYE_NAMESPACE;
+using realsense_camera::FISHEYE_TOPIC;
+using realsense_camera::IMU_NAMESPACE;
+using realsense_camera::IMU_TOPIC;
+using realsense_camera::IR2_NAMESPACE;
+using realsense_camera::IR2_TOPIC;
+using realsense_camera::IR_NAMESPACE;
+using realsense_camera::IR_TOPIC;
+using realsense_camera::PC_TOPIC;
+using realsense_camera::ROTATION_IDENTITY;
+using realsense_camera::SETTINGS_SERVICE;
 
 void getMsgInfo(rs_stream stream, const sensor_msgs::ImageConstPtr &msg)
 {
@@ -130,7 +165,7 @@ void imageInfrared2Callback(const sensor_msgs::ImageConstPtr &msg, const sensor_
 void imageDepthCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs::CameraInfoConstPtr &info_msg)
 {
   cv::Mat image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::TYPE_16UC1)->image;
-  uint16_t *image_data = (uint16_t *) image.data;
+  uint16_t *image_data = reinterpret_cast<uint16_t *>(image.data);
 
   double depth_total = 0;
   int depth_count = 0;
@@ -164,7 +199,7 @@ void imageColorCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs
   cv::Mat image = cv_bridge::toCvShare(msg, "rgb8")->image;
 
   uchar *color_data = image.data;
-  long color_total = 0;
+  int64 color_total = 0;
   int color_count = 1;
   for (unsigned int i = 0; i < msg->height * msg->width * 3; i++)
   {
@@ -229,13 +264,18 @@ void imuCallback(const sensor_msgs::ImuConstPtr &imu)
   g_imu_recv = false;
   if (imu->angular_velocity_covariance[0] != -1.0)
   {
-    if ((imu->angular_velocity.x != 0.0) || (imu->angular_velocity.y != 0.0) || (imu->angular_velocity.z != 0.0))
+    if ((imu->angular_velocity.x != 0.0) ||
+        (imu->angular_velocity.y != 0.0) ||
+        (imu->angular_velocity.z != 0.0))
     {
       g_imu_recv = true;
     }
-  } else if (imu->linear_acceleration_covariance[0] != -1.0)
+  }
+  else if (imu->linear_acceleration_covariance[0] != -1.0)
   {
-    if ((imu->linear_acceleration.x != 0.000) || (imu->linear_acceleration.y != 0.000) || (imu->linear_acceleration.z != 0.000))
+    if ((imu->linear_acceleration.x != 0.000) ||
+        (imu->linear_acceleration.y != 0.000) ||
+        (imu->linear_acceleration.z != 0.000))
     {
       g_imu_recv = true;
     }
@@ -271,7 +311,7 @@ TEST(RealsenseTests, testColorStream)
 {
   if (g_enable_color)
   {
-    EXPECT_TRUE(g_color_avg > 0);
+    EXPECT_GT(g_color_avg, 0);
     EXPECT_TRUE(g_color_recv);
 
     if (!g_color_encoding_exp.empty ())
@@ -366,7 +406,7 @@ TEST(RealsenseTests, testDepthStream)
   if (g_enable_depth)
   {
     ROS_INFO_STREAM("RealSense Camera - depth_avg: " << g_depth_avg << " mm");
-    EXPECT_TRUE(g_depth_avg > 0);
+    EXPECT_GT(g_depth_avg, 0);
     EXPECT_TRUE(g_depth_recv);
     if (!g_depth_encoding_exp.empty ())
     {
@@ -404,7 +444,7 @@ TEST(RealsenseTests, testDepthCameraInfo)
   {
     EXPECT_EQ(g_width_recv[RS_STREAM_DEPTH], g_caminfo_width_recv[RS_STREAM_DEPTH]);
     EXPECT_EQ(g_height_recv[RS_STREAM_DEPTH], g_caminfo_height_recv[RS_STREAM_DEPTH]);
-    EXPECT_STREQ(g_dmodel_recv[RS_STREAM_DEPTH].c_str (), "plumb_bob");
+    EXPECT_STREQ(g_dmodel_recv[RS_STREAM_DEPTH].c_str(), "plumb_bob");
 
     // verify rotation is equal to identity matrix
     for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
@@ -446,7 +486,7 @@ TEST(RealsenseTests, testInfrared1Stream)
 {
   if (g_enable_ir)
   {
-    EXPECT_TRUE(g_infrared1_avg > 0);
+    EXPECT_GT(g_infrared1_avg, 0);
     EXPECT_TRUE(g_infrared1_recv);
     if (!g_infrared1_encoding_exp.empty ())
     {
@@ -484,7 +524,7 @@ TEST(RealsenseTests, testInfrared1CameraInfo)
   {
     EXPECT_EQ(g_width_recv[RS_STREAM_INFRARED], g_caminfo_width_recv[RS_STREAM_INFRARED]);
     EXPECT_EQ(g_height_recv[RS_STREAM_INFRARED], g_caminfo_height_recv[RS_STREAM_INFRARED]);
-    EXPECT_STREQ(g_dmodel_recv[RS_STREAM_INFRARED].c_str (), "plumb_bob");
+    EXPECT_STREQ(g_dmodel_recv[RS_STREAM_INFRARED].c_str(), "plumb_bob");
 
     // verify rotation is equal to identity matrix
     for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
@@ -529,7 +569,7 @@ TEST(RealsenseTests, testInfrared2Stream)
   {
     if (g_enable_ir2)
     {
-      EXPECT_TRUE(g_infrared2_avg > 0);
+      EXPECT_GT(g_infrared2_avg, 0);
       EXPECT_TRUE(g_infrared2_recv);
     }
     else
@@ -567,7 +607,7 @@ TEST(RealsenseTests, testInfrared2CameraInfo)
     {
       EXPECT_EQ(g_width_recv[RS_STREAM_INFRARED2], g_caminfo_width_recv[RS_STREAM_INFRARED2]);
       EXPECT_EQ(g_height_recv[RS_STREAM_INFRARED2], g_caminfo_height_recv[RS_STREAM_INFRARED2]);
-      EXPECT_STREQ(g_dmodel_recv[RS_STREAM_INFRARED2].c_str (), "plumb_bob");
+      EXPECT_STREQ(g_dmodel_recv[RS_STREAM_INFRARED2].c_str(), "plumb_bob");
 
       // verify rotation is equal to identity matrix
       for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
@@ -597,7 +637,7 @@ TEST(RealsenseTests, testFisheyeStream)
   if (g_enable_fisheye)
   {
     ROS_INFO_STREAM("RealSense Camera - fisheye_avg: " << g_fisheye_avg);
-    EXPECT_TRUE(g_fisheye_avg > 0);
+    EXPECT_GT(g_fisheye_avg, 0);
     EXPECT_TRUE(g_fisheye_recv);
   }
   else
@@ -612,7 +652,7 @@ TEST(RealsenseTests, testFisheyeCameraInfo)
   {
     EXPECT_EQ(g_width_recv[RS_STREAM_FISHEYE], g_caminfo_width_recv[RS_STREAM_FISHEYE]);
     EXPECT_EQ(g_height_recv[RS_STREAM_FISHEYE], g_caminfo_height_recv[RS_STREAM_FISHEYE]);
-    EXPECT_STREQ(g_dmodel_recv[RS_STREAM_FISHEYE].c_str (), "plumb_bob");
+    EXPECT_STREQ(g_dmodel_recv[RS_STREAM_FISHEYE].c_str(), "plumb_bob");
 
     // verify rotation is equal to identity matrix
     for (unsigned int i = 0; i < sizeof(ROTATION_IDENTITY)/sizeof(double); i++)
@@ -668,7 +708,7 @@ TEST(RealsenseTests, testPointCloud)
   if (g_enable_pointcloud)
   {
     ROS_INFO_STREAM("RealSense Camera - pc_depth_avg: " << g_pc_depth_avg);
-    EXPECT_TRUE(g_pc_depth_avg > 0);
+    EXPECT_GT(g_pc_depth_avg, 0);
     EXPECT_TRUE(g_pc_recv);
   }
   else
@@ -717,20 +757,20 @@ TEST(RealsenseTests, testTransforms)
 TEST(RealsenseTests, testCameraOptions)
 {
   g_settings_srv_client.call(g_setting_srv);
-  stringstream settings_ss (g_setting_srv.response.configuration_str);
+  stringstream settings_ss(g_setting_srv.response.configuration_str);
   string setting;
   string setting_name;
   string setting_value;
 
   while (getline (settings_ss, setting, ';'))
   {
-    stringstream setting_ss (setting);
-    getline (setting_ss, setting_name, ':');
-    setting_value = (setting.substr (setting.rfind (":") + 1));
-    if (g_config_args.find (setting_name) != g_config_args.end ())
+    stringstream setting_ss(setting);
+    getline(setting_ss, setting_name, ':');
+    setting_value = (setting.substr(setting.rfind(":") + 1));
+    if (g_config_args.find(setting_name) != g_config_args.end())
     {
       int option_recv = atoi(setting_value.c_str());
-      int option_exp = atoi(g_config_args.at (setting_name).c_str());
+      int option_exp = atoi(g_config_args.at(setting_name).c_str());
       EXPECT_EQ(option_exp, option_recv) << setting_name;
     }
   }
@@ -787,7 +827,7 @@ TEST(RealsenseTests, testForcePowerOnService)
 
 void fillConfigMap(int argc, char **argv)
 {
-  std::vector < std::string > args;
+  std::vector<std::string> args;
 
   for (int i = 1; i < argc; ++i)
   {
@@ -813,7 +853,7 @@ void fillConfigMap(int argc, char **argv)
     if (g_config_args.find("enable_depth") != g_config_args.end())
     {
       ROS_INFO("RealSense Camera - Setting %s to %s", "enable_depth", g_config_args.at("enable_depth").c_str());
-      if (strcmp((g_config_args.at("enable_depth").c_str ()),"true") == 0)
+      if (strcmp((g_config_args.at("enable_depth").c_str ()), "true") == 0)
       {
         g_enable_depth = true;
       }
@@ -827,7 +867,7 @@ void fillConfigMap(int argc, char **argv)
     if (g_config_args.find("enable_ir") != g_config_args.end())
     {
       ROS_INFO("RealSense Camera - Setting %s to %s", "enable_ir", g_config_args.at("enable_ir").c_str());
-      if (strcmp((g_config_args.at("enable_ir").c_str ()),"true") == 0)
+      if (strcmp((g_config_args.at("enable_ir").c_str ()), "true") == 0)
       {
         g_enable_ir = true;
       }
@@ -841,7 +881,7 @@ void fillConfigMap(int argc, char **argv)
     if (g_config_args.find("enable_ir2") != g_config_args.end())
     {
       ROS_INFO("RealSense Camera - Setting %s to %s", "enable_ir2", g_config_args.at("enable_ir2").c_str());
-      if (strcmp((g_config_args.at("enable_ir2").c_str ()),"true") == 0)
+      if (strcmp((g_config_args.at("enable_ir2").c_str ()), "true") == 0)
       {
         g_enable_ir2 = true;
       }
@@ -876,7 +916,7 @@ void fillConfigMap(int argc, char **argv)
     if (g_config_args.find("enable_color") != g_config_args.end())
     {
       ROS_INFO("RealSense Camera - Setting %s to %s", "enable_color", g_config_args.at("enable_color").c_str());
-      if (strcmp((g_config_args.at("enable_color").c_str ()),"true") == 0)
+      if (strcmp((g_config_args.at("enable_color").c_str ()), "true") == 0)
       {
         g_enable_color = true;
       }
@@ -911,7 +951,7 @@ void fillConfigMap(int argc, char **argv)
     {
       ROS_INFO("RealSense Camera - Setting %s to %s", "enable_fisheye",
           g_config_args.at("enable_fisheye").c_str());
-      if (strcmp((g_config_args.at("enable_fisheye").c_str()),"true") == 0)
+      if (strcmp((g_config_args.at("enable_fisheye").c_str()), "true") == 0)
       {
         g_enable_fisheye = true;
       }
@@ -926,7 +966,7 @@ void fillConfigMap(int argc, char **argv)
     {
       ROS_INFO("RealSense Camera - Setting %s to %s", "enable_imu",
           g_config_args.at("enable_imu").c_str());
-      if (strcmp((g_config_args.at("enable_imu").c_str()),"true") == 0)
+      if (strcmp((g_config_args.at("enable_imu").c_str()), "true") == 0)
       {
         g_enable_imu = true;
       }
@@ -941,7 +981,7 @@ void fillConfigMap(int argc, char **argv)
     {
       ROS_INFO("RealSense Camera - Setting %s to %s", "enable_pointcloud",
           g_config_args.at("enable_pointcloud").c_str());
-      if (strcmp((g_config_args.at("enable_pointcloud").c_str()),"true") == 0)
+      if (strcmp((g_config_args.at("enable_pointcloud").c_str()), "true") == 0)
       {
         g_enable_pointcloud = true;
       }
@@ -995,10 +1035,14 @@ int main(int argc, char **argv) try
   }
 
   g_sub_pc = depth_nh.subscribe <sensor_msgs::PointCloud2> (PC_TOPIC, 1, pcCallback);
-  g_settings_srv_client = nh.serviceClient<realsense_camera::CameraConfiguration>("/camera/driver/" + SETTINGS_SERVICE);
-  g_ispowered_srv_client = nh.serviceClient<realsense_camera::IsPowered>("/camera/driver/" + CAMERA_IS_POWERED_SERVICE);
-  g_setpower_srv_client = nh.serviceClient<realsense_camera::SetPower>("/camera/driver/" + CAMERA_SET_POWER_SERVICE);
-  g_forcepower_srv_client = nh.serviceClient<realsense_camera::ForcePower>("/camera/driver/" + CAMERA_FORCE_POWER_SERVICE);
+  g_settings_srv_client =
+    nh.serviceClient<realsense_camera::CameraConfiguration>("/camera/driver/" + SETTINGS_SERVICE);
+  g_ispowered_srv_client =
+    nh.serviceClient<realsense_camera::IsPowered>("/camera/driver/" + CAMERA_IS_POWERED_SERVICE);
+  g_setpower_srv_client =
+    nh.serviceClient<realsense_camera::SetPower>("/camera/driver/" + CAMERA_SET_POWER_SERVICE);
+  g_forcepower_srv_client =
+    nh.serviceClient<realsense_camera::ForcePower>("/camera/driver/" + CAMERA_FORCE_POWER_SERVICE);
 
   ros::Duration duration;
   duration.sec = 10;
@@ -1007,4 +1051,4 @@ int main(int argc, char **argv) try
 
   return RUN_ALL_TESTS();
 }
-catch(...) {} // catch the "testing::internal::<unnamed>::ClassUniqueToAlwaysTrue" from gtest
+catch(...) {}  // catch the "testing::internal::<unnamed>::ClassUniqueToAlwaysTrue" from gtest

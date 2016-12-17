@@ -29,8 +29,11 @@
  *******************************************************************************/
 
 #pragma once
-#ifndef R200_NODELET
-#define R200_NODELET
+#ifndef REALSENSE_CAMERA_R200_NODELET_H
+#define REALSENSE_CAMERA_R200_NODELET_H
+
+#include <string>
+#include <vector>
 
 #include <dynamic_reconfigure/server.h>
 
@@ -39,38 +42,37 @@
 
 namespace realsense_camera
 {
-  class R200Nodelet: public realsense_camera::BaseNodelet
+class R200Nodelet: public realsense_camera::BaseNodelet
+{
+public:
+  void onInit();
+
+protected:
+  // Member Variables.
+  rs_option edge_options_[4] =
   {
-  public:
-
-    void onInit();
-
-  protected:
-
-    // Member Variables.
-    rs_option edge_options_[4] = {
-      RS_OPTION_R200_AUTO_EXPOSURE_LEFT_EDGE,
-      RS_OPTION_R200_AUTO_EXPOSURE_TOP_EDGE,
-      RS_OPTION_R200_AUTO_EXPOSURE_RIGHT_EDGE,
-      RS_OPTION_R200_AUTO_EXPOSURE_BOTTOM_EDGE
-    };
-    boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::r200_paramsConfig>> dynamic_reconf_server_;
-
-    rs_extrinsics color2ir2_extrinsic_; // color frame is base frame
-
-    // Member Functions.
-    void getParameters();
-    void advertiseTopics();
-    std::vector<std::string> setDynamicReconfServer();
-    void startDynamicReconfCallback();
-    void setDynamicReconfigDepthControlPreset(int preset);
-    std::string setDynamicReconfigDepthControlIndividuals();
-    void configCallback(realsense_camera::r200_paramsConfig &config, uint32_t level);
-    void getCameraExtrinsics();
-    void publishStaticTransforms();
-    void publishDynamicTransforms();
-    void setFrameCallbacks();
-    std::function<void(rs::frame f)> ir2_frame_handler_;
+    RS_OPTION_R200_AUTO_EXPOSURE_LEFT_EDGE,
+    RS_OPTION_R200_AUTO_EXPOSURE_TOP_EDGE,
+    RS_OPTION_R200_AUTO_EXPOSURE_RIGHT_EDGE,
+    RS_OPTION_R200_AUTO_EXPOSURE_BOTTOM_EDGE
   };
-}
-#endif
+  boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::r200_paramsConfig>> dynamic_reconf_server_;
+
+  rs_extrinsics color2ir2_extrinsic_;  // color frame is base frame
+
+  // Member Functions.
+  void getParameters();
+  void advertiseTopics();
+  std::vector<std::string> setDynamicReconfServer();
+  void startDynamicReconfCallback();
+  void setDynamicReconfigDepthControlPreset(int preset);
+  std::string setDynamicReconfigDepthControlIndividuals();
+  void configCallback(realsense_camera::r200_paramsConfig &config, uint32_t level);
+  void getCameraExtrinsics();
+  void publishStaticTransforms();
+  void publishDynamicTransforms();
+  void setFrameCallbacks();
+  std::function<void(rs::frame f)> ir2_frame_handler_;
+};
+}  // namespace realsense_camera
+#endif  // REALSENSE_CAMERA_R200_NODELET_H

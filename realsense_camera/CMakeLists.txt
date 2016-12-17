@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   pcl_ros
+  roslint
 )
 
 add_message_files(
@@ -55,6 +56,10 @@ generate_dynamic_reconfigure_options(
   cfg/sr300_params.cfg
   cfg/zr300_params.cfg
 )
+
+# ROS Lint the code
+roslint_cpp()
+roslint_add_test()
 
 #################################
 # catkin specific configuration #
