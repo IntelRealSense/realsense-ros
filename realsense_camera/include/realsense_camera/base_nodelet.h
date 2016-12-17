@@ -98,13 +98,11 @@ namespace realsense_camera
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
     ros::Time camera_start_ts_;
-    ros::Time static_transform_ts_;
     ros::Publisher pointcloud_publisher_;
     ros::ServiceServer get_options_service_;
     ros::ServiceServer set_power_service_;
     ros::ServiceServer force_power_service_;
     ros::ServiceServer is_powered_service_;
-    tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
     rs_error *rs_error_ = NULL;
     rs_context *rs_context_ = NULL;
     rs_device *rs_device_;
@@ -132,9 +130,17 @@ namespace realsense_camera
     float max_z_ = -1.0f;
     bool enable_pointcloud_;
     bool enable_tf_;
+    bool enable_tf_dynamic_;
     const uint16_t *image_depth16_;
     cv::Mat cvWrapper_;
     std::mutex frame_mutex_[STREAM_COUNT];
+
+    boost::shared_ptr<boost::thread> transform_thread_;
+    ros::Time transform_ts_;
+    tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
+    tf::TransformBroadcaster dynamic_tf_broadcaster_;
+    rs_extrinsics color2depth_extrinsic_; // color frame is base frame
+    rs_extrinsics color2ir_extrinsic_; // color frame is base frame
 
     struct CameraOptions
     {
@@ -164,7 +170,10 @@ namespace realsense_camera
     virtual void publishTopic(rs_stream stream_index, rs::frame &  frame);
     virtual void setImageData(rs_stream stream_index, rs::frame &  frame);
     virtual void publishPCTopic();
+    virtual void getCameraExtrinsics();
     virtual void publishStaticTransforms();
+    virtual void publishDynamicTransforms();
+    virtual void prepareTransforms();
     virtual void checkError();
     virtual bool checkForSubscriber();
     virtual void wrappedSystem(std::vector<std::string> string_argv);

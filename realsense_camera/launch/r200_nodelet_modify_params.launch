@@ -14,6 +14,7 @@
   <arg name="enable_color"      default="true" />
   <arg name="enable_pointcloud" default="false" />
   <arg name="enable_tf"         default="true" />
+  <arg name="enable_tf_dynamic" default="false" />
   <arg name="mode"              default="manual" />
   <arg name="depth_width"       default="640" />
   <arg name="depth_height"      default="480" />
@@ -28,6 +29,7 @@
   <param name="$(arg camera)/driver/enable_color"      type="bool" value="$(arg enable_color)" />
   <param name="$(arg camera)/driver/enable_pointcloud" type="bool" value="$(arg enable_pointcloud)" />
   <param name="$(arg camera)/driver/enable_tf"         type="bool" value="$(arg enable_tf)" />
+  <param name="$(arg camera)/driver/enable_tf_dynamic" type="bool" value="$(arg enable_tf_dynamic)" />
   <param name="$(arg camera)/driver/mode"              type="str"  value="$(arg mode)" />
   <param name="$(arg camera)/driver/depth_width"       type="int"  value="$(arg depth_width)" />
   <param name="$(arg camera)/driver/depth_height"      type="int"  value="$(arg depth_height)" />

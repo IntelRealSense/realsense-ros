@@ -431,32 +431,39 @@ namespace realsense_camera
   }
 
   /*
-   * Prepare and publish transforms.
+   * Get the camera extrinsics
+   */
+  void R200Nodelet::getCameraExtrinsics()
+  {
+    BaseNodelet::getCameraExtrinsics();
+
+    // Get offset between base frame and infrared2 frame
+    rs_get_device_extrinsics(rs_device_, RS_STREAM_INFRARED2, RS_STREAM_COLOR, &color2ir2_extrinsic_, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
+    checkError();
+  }
+
+  /*
+   * Publish Static transforms.
    */
   void R200Nodelet::publishStaticTransforms()
   {
     BaseNodelet::publishStaticTransforms();
 
     tf::Quaternion q_i2io;
-    rs_extrinsics z_extrinsic;
     geometry_msgs::TransformStamped b2i_msg;
     geometry_msgs::TransformStamped i2io_msg;
 
-    // Get offset between base frame and infrared2 frame
-    rs_get_device_extrinsics(rs_device_, RS_STREAM_INFRARED2, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
-    if (rs_error_)
-    {
-      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
-    }
-    checkError();
-
     // Transform base frame to infrared2 frame
-    b2i_msg.header.stamp = static_transform_ts_;
+    b2i_msg.header.stamp = transform_ts_;
     b2i_msg.header.frame_id = base_frame_id_;
     b2i_msg.child_frame_id = frame_id_[RS_STREAM_INFRARED2];
-    b2i_msg.transform.translation.x =  z_extrinsic.translation[2];
-    b2i_msg.transform.translation.y = -z_extrinsic.translation[0];
-    b2i_msg.transform.translation.z = -z_extrinsic.translation[1];
+    b2i_msg.transform.translation.x =  color2ir2_extrinsic_.translation[2];
+    b2i_msg.transform.translation.y = -color2ir2_extrinsic_.translation[0];
+    b2i_msg.transform.translation.z = -color2ir2_extrinsic_.translation[1];
     b2i_msg.transform.rotation.x = 0;
     b2i_msg.transform.rotation.y = 0;
     b2i_msg.transform.rotation.z = 0;
@@ -465,7 +472,7 @@ namespace realsense_camera
 
     // Transform infrared2 frame to infrared2 optical frame
     q_i2io.setEuler(M_PI/2, 0.0, -M_PI/2);
-    i2io_msg.header.stamp = static_transform_ts_;
+    i2io_msg.header.stamp = transform_ts_;
     i2io_msg.header.frame_id = frame_id_[RS_STREAM_INFRARED2];
     i2io_msg.child_frame_id = optical_frame_id_[RS_STREAM_INFRARED2];
     i2io_msg.transform.translation.x = 0;
@@ -478,4 +485,30 @@ namespace realsense_camera
     static_tf_broadcaster_.sendTransform(i2io_msg);
   }
 
+  /*
+   * Publish Dynamic transforms.
+   */
+  void R200Nodelet::publishDynamicTransforms()
+  {
+    tf::Transform tr;
+    tf::Quaternion q;
+
+    BaseNodelet::publishDynamicTransforms();
+
+    // Transform base frame to infrared2 frame
+    tr.setOrigin(tf::Vector3(
+           color2ir2_extrinsic_.translation[2],
+          -color2ir2_extrinsic_.translation[0],
+          -color2ir2_extrinsic_.translation[1]));
+    tr.setRotation(tf::Quaternion(0, 0, 0, 1));
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          base_frame_id_, frame_id_[RS_STREAM_INFRARED2]));
+
+    // Transform infrared2 frame to infrared2 optical frame
+    tr.setOrigin(tf::Vector3(0,0,0));
+    q.setEuler(M_PI/2, 0.0, -M_PI/2);
+    tr.setRotation(q);
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          frame_id_[RS_STREAM_INFRARED2], optical_frame_id_[RS_STREAM_INFRARED2]));
+  }
 }  // end namespace

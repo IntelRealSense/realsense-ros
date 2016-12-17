@@ -636,7 +636,47 @@ namespace realsense_camera
   }
 
   /*
-   * Prepare and publish transforms.
+   * Get the camera extrinsics
+   */
+  void ZR300Nodelet::getCameraExtrinsics()
+  {
+    BaseNodelet::getCameraExtrinsics();
+
+    // Get offset between base frame and infrared2 frame
+    rs_get_device_extrinsics(rs_device_, RS_STREAM_INFRARED2, RS_STREAM_COLOR, &color2ir2_extrinsic_, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
+    checkError();
+
+    // Get offset between base frame and fisheye frame
+    rs_get_device_extrinsics(rs_device_, RS_STREAM_FISHEYE, RS_STREAM_COLOR, &color2fisheye_extrinsic_, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
+    checkError();
+
+    // Get offset between base frame and imu frame
+    rs_get_motion_extrinsics_from(rs_device_, RS_STREAM_COLOR, &color2imu_extrinsic_, &rs_error_);
+    if (rs_error_)
+    {
+/*  Temporarily hardcoding the values until fully supported by librealsense API.  */
+      // ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+      ROS_WARN_STREAM(nodelet_name_ << " - Using Hardcoded extrinsic for IMU.");
+      rs_free_error(rs_error_);
+      rs_error_ = NULL;
+
+      color2imu_extrinsic_.translation[0] = -0.07;
+      color2imu_extrinsic_.translation[1] = 0.0;
+      color2imu_extrinsic_.translation[2] = 0.0;
+    }
+    //checkError();
+  }
+
+  /*
+   * Publish Static transforms.
    */
   void ZR300Nodelet::publishStaticTransforms()
   {
@@ -645,7 +685,6 @@ namespace realsense_camera
     tf::Quaternion q_i2io;
     tf::Quaternion q_f2fo;
     tf::Quaternion q_imu2imuo;
-    rs_extrinsics z_extrinsic;
     geometry_msgs::TransformStamped b2i_msg;
     geometry_msgs::TransformStamped i2io_msg;
     geometry_msgs::TransformStamped b2f_msg;
@@ -653,21 +692,13 @@ namespace realsense_camera
     geometry_msgs::TransformStamped b2imu_msg;
     geometry_msgs::TransformStamped imu2imuo_msg;
 
-    // Get offset between base frame and infrared2 frame
-    rs_get_device_extrinsics(rs_device_, RS_STREAM_INFRARED2, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
-    if (rs_error_)
-    {
-      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
-    }
-    checkError();
-
     // Transform base frame to infrared2 frame
-    b2i_msg.header.stamp = static_transform_ts_;
+    b2i_msg.header.stamp = transform_ts_;
     b2i_msg.header.frame_id = base_frame_id_;
     b2i_msg.child_frame_id = frame_id_[RS_STREAM_INFRARED2];
-    b2i_msg.transform.translation.x =  z_extrinsic.translation[2];
-    b2i_msg.transform.translation.y = -z_extrinsic.translation[0];
-    b2i_msg.transform.translation.z = -z_extrinsic.translation[1];
+    b2i_msg.transform.translation.x =  color2ir2_extrinsic_.translation[2];
+    b2i_msg.transform.translation.y = -color2ir2_extrinsic_.translation[0];
+    b2i_msg.transform.translation.z = -color2ir2_extrinsic_.translation[1];
     b2i_msg.transform.rotation.x = 0;
     b2i_msg.transform.rotation.y = 0;
     b2i_msg.transform.rotation.z = 0;
@@ -676,7 +707,7 @@ namespace realsense_camera
 
     // Transform infrared2 frame to infrared2 optical frame
     q_i2io.setEuler(M_PI/2, 0.0, -M_PI/2);
-    i2io_msg.header.stamp = static_transform_ts_;
+    i2io_msg.header.stamp = transform_ts_;
     i2io_msg.header.frame_id = frame_id_[RS_STREAM_INFRARED2];
     i2io_msg.child_frame_id = optical_frame_id_[RS_STREAM_INFRARED2];
     i2io_msg.transform.translation.x = 0;
@@ -688,21 +719,13 @@ namespace realsense_camera
     i2io_msg.transform.rotation.w = q_i2io.getW();
     static_tf_broadcaster_.sendTransform(i2io_msg);
 
-    // Get offset between base frame and fisheye frame
-    rs_get_device_extrinsics(rs_device_, RS_STREAM_FISHEYE, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
-    if (rs_error_)
-    {
-      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
-    }
-    checkError();
-
     // Transform base frame to fisheye frame
-    b2f_msg.header.stamp = static_transform_ts_;
+    b2f_msg.header.stamp = transform_ts_;
     b2f_msg.header.frame_id = base_frame_id_;
     b2f_msg.child_frame_id = frame_id_[RS_STREAM_FISHEYE];
-    b2f_msg.transform.translation.x =  z_extrinsic.translation[2];
-    b2f_msg.transform.translation.y = -z_extrinsic.translation[0];
-    b2f_msg.transform.translation.z = -z_extrinsic.translation[1];
+    b2f_msg.transform.translation.x =  color2fisheye_extrinsic_.translation[2];
+    b2f_msg.transform.translation.y = -color2fisheye_extrinsic_.translation[0];
+    b2f_msg.transform.translation.z = -color2fisheye_extrinsic_.translation[1];
     b2f_msg.transform.rotation.x = 0;
     b2f_msg.transform.rotation.y = 0;
     b2f_msg.transform.rotation.z = 0;
@@ -711,7 +734,7 @@ namespace realsense_camera
 
     // Transform fisheye frame to fisheye optical frame
     q_f2fo.setEuler(M_PI/2, 0.0, -M_PI/2);
-    f2fo_msg.header.stamp = static_transform_ts_;
+    f2fo_msg.header.stamp = transform_ts_;
     f2fo_msg.header.frame_id = frame_id_[RS_STREAM_FISHEYE];
     f2fo_msg.child_frame_id = optical_frame_id_[RS_STREAM_FISHEYE];
     f2fo_msg.transform.translation.x = 0;
@@ -723,31 +746,13 @@ namespace realsense_camera
     f2fo_msg.transform.rotation.w = q_f2fo.getW();
     static_tf_broadcaster_.sendTransform(f2fo_msg);
 
-
-    // Get offset between base frame and imu frame
-
-    rs_get_motion_extrinsics_from(rs_device_, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
-    if (rs_error_)
-    {
-/*  Temporarily hardcoding the values until fully supported by librealsense API.  */
-      // ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
-      ROS_WARN_STREAM(nodelet_name_ << " - Using Hardcoded extrinsic for IMU.");
-      rs_free_error(rs_error_);
-      rs_error_ = NULL;
-
-      z_extrinsic.translation[0] = -0.07;
-      z_extrinsic.translation[1] = 0.0;
-      z_extrinsic.translation[2] = 0.0;
-    }
-    //checkError();
-
     // Transform base frame to imu frame
-    b2imu_msg.header.stamp = static_transform_ts_;
+    b2imu_msg.header.stamp = transform_ts_;
     b2imu_msg.header.frame_id = base_frame_id_;
     b2imu_msg.child_frame_id = imu_frame_id_;
-    b2imu_msg.transform.translation.x =  z_extrinsic.translation[2];
-    b2imu_msg.transform.translation.y = -z_extrinsic.translation[0];
-    b2imu_msg.transform.translation.z = -z_extrinsic.translation[1];
+    b2imu_msg.transform.translation.x =  color2imu_extrinsic_.translation[2];
+    b2imu_msg.transform.translation.y = -color2imu_extrinsic_.translation[0];
+    b2imu_msg.transform.translation.z = -color2imu_extrinsic_.translation[1];
     b2imu_msg.transform.rotation.x = 0;
     b2imu_msg.transform.rotation.y = 0;
     b2imu_msg.transform.rotation.z = 0;
@@ -756,7 +761,7 @@ namespace realsense_camera
 
     // Transform imu frame to imu optical frame
     q_imu2imuo.setEuler(M_PI/2, 0.0, -M_PI/2);
-    imu2imuo_msg.header.stamp = static_transform_ts_;
+    imu2imuo_msg.header.stamp = transform_ts_;
     imu2imuo_msg.header.frame_id = imu_frame_id_;
     imu2imuo_msg.child_frame_id = imu_optical_frame_id_;
     imu2imuo_msg.transform.translation.x = 0;
@@ -767,7 +772,65 @@ namespace realsense_camera
     imu2imuo_msg.transform.rotation.z = q_imu2imuo.getZ();
     imu2imuo_msg.transform.rotation.w = q_imu2imuo.getW();
     static_tf_broadcaster_.sendTransform(imu2imuo_msg);
+  }
 
+  /*
+   * Publish Dynamic transforms.
+   */
+  void ZR300Nodelet::publishDynamicTransforms()
+  {
+    tf::Transform tr;
+    tf::Quaternion q;
+
+    BaseNodelet::publishDynamicTransforms();
+
+    // Transform base frame to infrared2 frame
+    tr.setOrigin(tf::Vector3(
+           color2ir2_extrinsic_.translation[2],
+          -color2ir2_extrinsic_.translation[0],
+          -color2ir2_extrinsic_.translation[1]));
+    tr.setRotation(tf::Quaternion(0, 0, 0, 1));
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          base_frame_id_, frame_id_[RS_STREAM_INFRARED2]));
+
+    // Transform infrared2 frame to infrared2 optical frame
+    tr.setOrigin(tf::Vector3(0,0,0));
+    q.setEuler(M_PI/2, 0.0, -M_PI/2);
+    tr.setRotation(q);
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          frame_id_[RS_STREAM_INFRARED2], optical_frame_id_[RS_STREAM_INFRARED2]));
+
+    // Transform base frame to fisheye frame
+    tr.setOrigin(tf::Vector3(
+           color2fisheye_extrinsic_.translation[2],
+          -color2fisheye_extrinsic_.translation[0],
+          -color2fisheye_extrinsic_.translation[1]));
+    tr.setRotation(tf::Quaternion(0, 0, 0, 1));
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          base_frame_id_, frame_id_[RS_STREAM_FISHEYE]));
+
+    // Transform fisheye frame to fisheye optical frame
+    tr.setOrigin(tf::Vector3(0,0,0));
+    q.setEuler(M_PI/2, 0.0, -M_PI/2);
+    tr.setRotation(q);
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          frame_id_[RS_STREAM_FISHEYE], optical_frame_id_[RS_STREAM_FISHEYE]));
+
+    // Transform base frame to imu frame
+    tr.setOrigin(tf::Vector3(
+           color2imu_extrinsic_.translation[2],
+          -color2imu_extrinsic_.translation[0],
+          -color2imu_extrinsic_.translation[1]));
+    tr.setRotation(tf::Quaternion(0, 0, 0, 1));
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          base_frame_id_, imu_frame_id_));
+
+    // Transform imu frame to imu optical frame
+    tr.setOrigin(tf::Vector3(0,0,0));
+    q.setEuler(M_PI/2, 0.0, -M_PI/2);
+    tr.setRotation(q);
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          imu_frame_id_, imu_optical_frame_id_));
   }
 
   /*
