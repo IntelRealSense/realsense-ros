@@ -41,6 +41,11 @@ namespace realsense_camera
    */
   BaseNodelet::~BaseNodelet()
   {
+    if (enable_tf_ == true && enable_tf_dynamic_ == false)
+    {
+      transform_thread_->join();
+    }
+
     stopCamera();
 
     if (rs_context_)
@@ -91,10 +96,20 @@ namespace realsense_camera
     setStreams();
     startCamera();
 
-    // Start publishing tranforms
+    // Start tranforms thread
     if (enable_tf_ == true)
     {
-      publishStaticTransforms();
+      getCameraExtrinsics();
+
+      if (enable_tf_dynamic_ == true)
+      {
+        transform_thread_ =
+          boost::shared_ptr<boost::thread>(new boost::thread (boost::bind(&BaseNodelet::prepareTransforms, this)));
+      }
+      else
+      {
+        publishStaticTransforms();
+      }
     }
 
     // Start dynamic reconfigure callback
@@ -135,6 +150,7 @@ namespace realsense_camera
     pnh_.param("enable_ir", enable_[RS_STREAM_INFRARED], ENABLE_IR);
     pnh_.param("enable_pointcloud", enable_pointcloud_, ENABLE_PC);
     pnh_.param("enable_tf", enable_tf_, ENABLE_TF);
+    pnh_.param("enable_tf_dynamic", enable_tf_dynamic_, ENABLE_TF_DYNAMIC);
     pnh_.param("depth_width", width_[RS_STREAM_DEPTH], DEPTH_WIDTH);
     pnh_.param("depth_height", height_[RS_STREAM_DEPTH], DEPTH_HEIGHT);
     pnh_.param("color_width", width_[RS_STREAM_COLOR], COLOR_WIDTH);
@@ -945,17 +961,38 @@ namespace realsense_camera
   }
 
   /*
-   * Prepare and publish transforms.
+   * Get the camera extrinsics
+   */
+  void BaseNodelet::getCameraExtrinsics()
+  {
+    // Get offset between base frame and depth frame
+    rs_get_device_extrinsics(rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &color2depth_extrinsic_, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
+    checkError();
+
+    // Get offset between base frame and infrared frame
+    rs_get_device_extrinsics(rs_device_, RS_STREAM_INFRARED, RS_STREAM_COLOR, &color2ir_extrinsic_, &rs_error_);
+    if (rs_error_)
+    {
+      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
+    }
+    checkError();
+  }
+
+  /*
+   * Publish Static transforms.
    */
   void BaseNodelet::publishStaticTransforms()
   {
     // Publish transforms for the cameras
-    ROS_INFO_STREAM(nodelet_name_ << " - Publishing camera transforms");
+    ROS_INFO_STREAM(nodelet_name_ << " - Publishing camera transforms (/tf_static)");
 
     tf::Quaternion q_c2co;
     tf::Quaternion q_d2do;
     tf::Quaternion q_i2io;
-    rs_extrinsics z_extrinsic;
     geometry_msgs::TransformStamped b2d_msg;
     geometry_msgs::TransformStamped d2do_msg;
     geometry_msgs::TransformStamped b2c_msg;
@@ -964,11 +1001,11 @@ namespace realsense_camera
     geometry_msgs::TransformStamped i2io_msg;
 
     // Get the current timestamp for all static transforms
-    static_transform_ts_ = ros::Time::now();
+    transform_ts_ = ros::Time::now();
 
     // The color frame is used as the base frame.
     // Hence no additional transformation is done from base frame to color frame.
-    b2c_msg.header.stamp = static_transform_ts_;
+    b2c_msg.header.stamp = transform_ts_;
     b2c_msg.header.frame_id = base_frame_id_;
     b2c_msg.child_frame_id = frame_id_[RS_STREAM_COLOR];
     b2c_msg.transform.translation.x = 0;
@@ -982,7 +1019,7 @@ namespace realsense_camera
 
     // Transform color frame to color optical frame
     q_c2co.setEuler(M_PI/2, 0.0, -M_PI/2);
-    c2co_msg.header.stamp = static_transform_ts_;
+    c2co_msg.header.stamp = transform_ts_;
     c2co_msg.header.frame_id = frame_id_[RS_STREAM_COLOR];
     c2co_msg.child_frame_id = optical_frame_id_[RS_STREAM_COLOR];
     c2co_msg.transform.translation.x = 0;
@@ -994,21 +1031,13 @@ namespace realsense_camera
     c2co_msg.transform.rotation.w = q_c2co.getW();
     static_tf_broadcaster_.sendTransform(c2co_msg);
 
-    // Get offset between base frame and depth frame
-    rs_get_device_extrinsics(rs_device_, RS_STREAM_DEPTH, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
-    if (rs_error_)
-    {
-      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
-    }
-    checkError();
-
     // Transform base frame to depth frame
-    b2d_msg.header.stamp = static_transform_ts_;
+    b2d_msg.header.stamp = transform_ts_;
     b2d_msg.header.frame_id = base_frame_id_;
     b2d_msg.child_frame_id = frame_id_[RS_STREAM_DEPTH];
-    b2d_msg.transform.translation.x =  z_extrinsic.translation[2];
-    b2d_msg.transform.translation.y = -z_extrinsic.translation[0];
-    b2d_msg.transform.translation.z = -z_extrinsic.translation[1];
+    b2d_msg.transform.translation.x =  color2depth_extrinsic_.translation[2];
+    b2d_msg.transform.translation.y = -color2depth_extrinsic_.translation[0];
+    b2d_msg.transform.translation.z = -color2depth_extrinsic_.translation[1];
     b2d_msg.transform.rotation.x = 0;
     b2d_msg.transform.rotation.y = 0;
     b2d_msg.transform.rotation.z = 0;
@@ -1017,7 +1046,7 @@ namespace realsense_camera
 
     // Transform depth frame to depth optical frame
     q_d2do.setEuler(M_PI/2, 0.0, -M_PI/2);
-    d2do_msg.header.stamp = static_transform_ts_;
+    d2do_msg.header.stamp = transform_ts_;
     d2do_msg.header.frame_id = frame_id_[RS_STREAM_DEPTH];
     d2do_msg.child_frame_id = optical_frame_id_[RS_STREAM_DEPTH];
     d2do_msg.transform.translation.x = 0;
@@ -1029,21 +1058,13 @@ namespace realsense_camera
     d2do_msg.transform.rotation.w = q_d2do.getW();
     static_tf_broadcaster_.sendTransform(d2do_msg);
 
-    // Get offset between base frame and infrared frame
-    rs_get_device_extrinsics(rs_device_, RS_STREAM_INFRARED, RS_STREAM_COLOR, &z_extrinsic, &rs_error_);
-    if (rs_error_)
-    {
-      ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera is calibrated!");
-    }
-    checkError();
-
     // Transform base frame to infrared frame
-    b2i_msg.header.stamp = static_transform_ts_;
+    b2i_msg.header.stamp = transform_ts_;
     b2i_msg.header.frame_id = base_frame_id_;
     b2i_msg.child_frame_id = frame_id_[RS_STREAM_INFRARED];
-    b2i_msg.transform.translation.x =  z_extrinsic.translation[2];
-    b2i_msg.transform.translation.y = -z_extrinsic.translation[0];
-    b2i_msg.transform.translation.z = -z_extrinsic.translation[1];
+    b2i_msg.transform.translation.x =  color2ir_extrinsic_.translation[2];
+    b2i_msg.transform.translation.y = -color2ir_extrinsic_.translation[0];
+    b2i_msg.transform.translation.z = -color2ir_extrinsic_.translation[1];
     b2i_msg.transform.rotation.x = 0;
     b2i_msg.transform.rotation.y = 0;
     b2i_msg.transform.rotation.z = 0;
@@ -1052,7 +1073,7 @@ namespace realsense_camera
 
     // Transform infrared frame to infrared optical frame
     q_i2io.setEuler(M_PI/2, 0.0, -M_PI/2);
-    i2io_msg.header.stamp = static_transform_ts_;
+    i2io_msg.header.stamp = transform_ts_;
     i2io_msg.header.frame_id = frame_id_[RS_STREAM_INFRARED];
     i2io_msg.child_frame_id = optical_frame_id_[RS_STREAM_INFRARED];
     i2io_msg.transform.translation.x = 0;
@@ -1063,6 +1084,82 @@ namespace realsense_camera
     i2io_msg.transform.rotation.z = q_i2io.getZ();
     i2io_msg.transform.rotation.w = q_i2io.getW();
     static_tf_broadcaster_.sendTransform(i2io_msg);
+  }
+
+  /*
+   * Publish Dynamic transforms.
+   */
+  void BaseNodelet::publishDynamicTransforms()
+  {
+    tf::Transform tr;
+    tf::Quaternion q;
+
+    // The color frame is used as the base frame.
+    // Hence no additional transformation is done from base frame to color frame.
+    tr.setOrigin(tf::Vector3(0,0,0));
+    tr.setRotation(tf::Quaternion(0, 0, 0, 1));
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          base_frame_id_, frame_id_[RS_STREAM_COLOR]));
+
+    // Transform color frame to color optical frame
+    tr.setOrigin(tf::Vector3(0,0,0));
+    q.setEuler(M_PI/2, 0.0, -M_PI/2);
+    tr.setRotation(q);
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          frame_id_[RS_STREAM_COLOR], optical_frame_id_[RS_STREAM_COLOR]));
+
+    // Transform base frame to depth frame
+    tr.setOrigin(tf::Vector3(
+           color2depth_extrinsic_.translation[2],
+          -color2depth_extrinsic_.translation[0],
+          -color2depth_extrinsic_.translation[1]));
+    tr.setRotation(tf::Quaternion(0, 0, 0, 1));
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          base_frame_id_, frame_id_[RS_STREAM_DEPTH]));
+
+    // Transform depth frame to depth optical frame
+    tr.setOrigin(tf::Vector3(0,0,0));
+    q.setEuler(M_PI/2, 0.0, -M_PI/2);
+    tr.setRotation(q);
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          frame_id_[RS_STREAM_DEPTH], optical_frame_id_[RS_STREAM_DEPTH]));
+
+    // Transform base frame to infrared frame
+    tr.setOrigin(tf::Vector3(
+           color2ir_extrinsic_.translation[2],
+          -color2ir_extrinsic_.translation[0],
+          -color2ir_extrinsic_.translation[1]));
+    tr.setRotation(tf::Quaternion(0, 0, 0, 1));
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          base_frame_id_, frame_id_[RS_STREAM_INFRARED]));
+
+    // Transform infrared frame to infrared optical frame
+    tr.setOrigin(tf::Vector3(0,0,0));
+    q.setEuler(M_PI/2, 0.0, -M_PI/2);
+    tr.setRotation(q);
+    dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
+          frame_id_[RS_STREAM_INFRARED], optical_frame_id_[RS_STREAM_INFRARED]));
+  }
+
+  /*
+   * Prepare transforms.
+   */
+  void BaseNodelet::prepareTransforms()
+  {
+    // Publish transforms for the cameras
+    ROS_INFO_STREAM(nodelet_name_ << " - Publishing camera transforms (/tf)");
+
+    ros::Rate loop_rate(1);
+
+    while (ros::ok())
+    {
+      // update the time stamp for publication
+      transform_ts_ = ros::Time::now();
+
+      publishDynamicTransforms();
+
+      loop_rate.sleep();
+    }
   }
 
   /*

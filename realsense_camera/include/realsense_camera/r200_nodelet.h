@@ -56,6 +56,8 @@ namespace realsense_camera
     };
     boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::r200_paramsConfig>> dynamic_reconf_server_;
 
+    rs_extrinsics color2ir2_extrinsic_; // color frame is base frame
+
     // Member Functions.
     void getParameters();
     void advertiseTopics();
@@ -64,7 +66,9 @@ namespace realsense_camera
     void setDynamicReconfigDepthControlPreset(int preset);
     std::string setDynamicReconfigDepthControlIndividuals();
     void configCallback(realsense_camera::r200_paramsConfig &config, uint32_t level);
+    void getCameraExtrinsics();
     void publishStaticTransforms();
+    void publishDynamicTransforms();
     void setFrameCallbacks();
     std::function<void(rs::frame f)> ir2_frame_handler_;
   };

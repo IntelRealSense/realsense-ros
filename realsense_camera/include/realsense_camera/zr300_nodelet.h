@@ -69,6 +69,10 @@ namespace realsense_camera
     std::function<void(rs::timestamp_data)> timestamp_handler_;
     std::mutex imu_mutex_;
 
+    rs_extrinsics color2ir2_extrinsic_; // color frame is base frame
+    rs_extrinsics color2fisheye_extrinsic_; // color frame is base frame
+    rs_extrinsics color2imu_extrinsic_; // color frame is base frame
+
     // Member Functions.
     void getParameters();
     void advertiseTopics();
@@ -79,13 +83,14 @@ namespace realsense_camera
     void setDynamicReconfigDepthControlPreset(int preset);
     std::string setDynamicReconfigDepthControlIndividuals();
     void configCallback(realsense_camera::zr300_paramsConfig &config, uint32_t level);
+    void getCameraExtrinsics();
     void publishStaticTransforms();
+    void publishDynamicTransforms();
     void prepareIMU();
     void setIMUCallbacks();
     void setFrameCallbacks();
     std::function<void(rs::frame f)> fisheye_frame_handler_, ir2_frame_handler_;
     void stopIMU();
-
   };
 }
 #endif
