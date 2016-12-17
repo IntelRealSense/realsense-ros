@@ -28,9 +28,11 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
+#include <string>
+#include <vector>
 #include <realsense_camera/sr300_nodelet.h>
 
-PLUGINLIB_EXPORT_CLASS (realsense_camera::SR300Nodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(realsense_camera::SR300Nodelet, nodelet::Nodelet)
 
 namespace realsense_camera
 {
@@ -72,7 +74,7 @@ namespace realsense_camera
     std::vector<realsense_camera::sr300_paramsConfig::AbstractParamDescriptionConstPtr> param_desc =
         params_config.__getParamDescriptions__();
     std::vector<std::string> dynamic_params;
-    for (realsense_camera::sr300_paramsConfig::AbstractParamDescriptionConstPtr param_desc_ptr: param_desc)
+    for (realsense_camera::sr300_paramsConfig::AbstractParamDescriptionConstPtr param_desc_ptr : param_desc)
     {
       dynamic_params.push_back((* param_desc_ptr).name);
     }
@@ -122,22 +124,32 @@ namespace realsense_camera
     rs_set_device_option(rs_device_, RS_OPTION_F200_CONFIDENCE_THRESHOLD, config.f200_confidence_threshold, 0);
 
     // Set SR300 specific options
-    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_ENABLE_MOTION_VERSUS_RANGE, config.sr300_auto_range_enable_motion_versus_range, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_ENABLE_MOTION_VERSUS_RANGE,
+        config.sr300_auto_range_enable_motion_versus_range, 0);
     if (config.sr300_auto_range_enable_motion_versus_range == 1)
     {
-      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MIN_MOTION_VERSUS_RANGE, config.sr300_auto_range_min_motion_versus_range, 0);
-      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MAX_MOTION_VERSUS_RANGE, config.sr300_auto_range_max_motion_versus_range, 0);
-      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_START_MOTION_VERSUS_RANGE, config.sr300_auto_range_start_motion_versus_range, 0);
+      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MIN_MOTION_VERSUS_RANGE,
+          config.sr300_auto_range_min_motion_versus_range, 0);
+      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MAX_MOTION_VERSUS_RANGE,
+          config.sr300_auto_range_max_motion_versus_range, 0);
+      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_START_MOTION_VERSUS_RANGE,
+          config.sr300_auto_range_start_motion_versus_range, 0);
     }
-    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_ENABLE_LASER, config.sr300_auto_range_enable_laser, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_ENABLE_LASER,
+        config.sr300_auto_range_enable_laser, 0);
     if (config.sr300_auto_range_enable_laser == 1)
     {
-      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MIN_LASER, config.sr300_auto_range_min_laser, 0);
-      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MAX_LASER, config.sr300_auto_range_max_laser, 0);
-      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_START_LASER, config.sr300_auto_range_start_laser, 0);
+      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MIN_LASER,
+          config.sr300_auto_range_min_laser, 0);
+      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_MAX_LASER,
+          config.sr300_auto_range_max_laser, 0);
+      rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_START_LASER,
+          config.sr300_auto_range_start_laser, 0);
     }
-    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_UPPER_THRESHOLD, config.sr300_auto_range_upper_threshold, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_LOWER_THRESHOLD, config.sr300_auto_range_lower_threshold, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_UPPER_THRESHOLD,
+        config.sr300_auto_range_upper_threshold, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_SR300_AUTO_RANGE_LOWER_THRESHOLD,
+        config.sr300_auto_range_lower_threshold, 0);
 /*
     rs_set_device_option(rs_device_, RS_OPTION_SR300_WAKEUP_DEV_PHASE1_PERIOD, config.sr300_wakeup_dev_phase1_period, 0);
     rs_set_device_option(rs_device_, RS_OPTION_SR300_WAKEUP_DEV_PHASE1_FPS, config.sr300_wakeup_dev_phase1_fps, 0);
@@ -148,5 +160,4 @@ namespace realsense_camera
     rs_set_device_option(rs_device_, RS_OPTION_SR300_WAKE_ON_USB_CONFIDENCE, config.sr300_wake_on_usb_confidence, 0);
 */
   }
-}  // end namespace
-
+}  // namespace realsense_camera

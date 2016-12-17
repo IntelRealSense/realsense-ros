@@ -28,11 +28,14 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
-#include <realsense_camera/r200_nodelet.h>
+#include <string>
+#include <vector>
 #include <cstdlib>
 #include <bitset>
 
-PLUGINLIB_EXPORT_CLASS (realsense_camera::R200Nodelet, nodelet::Nodelet)
+#include <realsense_camera/r200_nodelet.h>
+
+PLUGINLIB_EXPORT_CLASS(realsense_camera::R200Nodelet, nodelet::Nodelet)
 
 namespace realsense_camera
 {
@@ -106,7 +109,7 @@ namespace realsense_camera
     std::vector<realsense_camera::r200_paramsConfig::AbstractParamDescriptionConstPtr> param_desc =
         params_config.__getParamDescriptions__();
     std::vector<std::string> dynamic_params;
-    for (realsense_camera::r200_paramsConfig::AbstractParamDescriptionConstPtr param_desc_ptr: param_desc)
+    for (realsense_camera::r200_paramsConfig::AbstractParamDescriptionConstPtr param_desc_ptr : param_desc)
     {
       dynamic_params.push_back((* param_desc_ptr).name);
     }
@@ -248,7 +251,7 @@ namespace realsense_camera
     // level is the ORing of all levels which have a changed value
     std::bitset<32> bit_level{level};
 
-    if (bit_level.test(6)) // 2^6 = 64 : Depth Control Preset
+    if (bit_level.test(6))  // 2^6 = 64 : Depth Control Preset
     {
       ROS_INFO_STREAM(nodelet_name_ << " - Setting dynamic camera options" <<
           " (r200_dc_preset=" << config.r200_dc_preset << ")");
@@ -313,7 +316,7 @@ namespace realsense_camera
 
     // Depth Control Group Settings
     // NOTE: do NOT use the config.groups values as they are zero the first time called
-    if (bit_level.test(5)) // 2^5 = 32 : Individual Depth Control settings
+    if (bit_level.test(5))  // 2^5 = 32 : Individual Depth Control settings
     {
       std::string current_dc;
 
@@ -353,11 +356,11 @@ namespace realsense_camera
       // Preset also changed in the same update callback
       // This is either First callback special case, or both set via
       // dynamic configure command line.
-      if (bit_level.test(6)) // 2^6 = 64 : Depth Control Preset
+      if (bit_level.test(6))  // 2^6 = 64 : Depth Control Preset
       {
         dc_preset = config.r200_dc_preset;
 
-        if (previous_dc_preset != -2) // not the first pass special case (-2)
+        if (previous_dc_preset != -2)  // not the first pass special case (-2)
         {
           // Changing individual Depth Control params means preset is Unused/Invalid
           // if the individual values are not the same as the preset values
@@ -376,7 +379,8 @@ namespace realsense_camera
           if (dc_preset != -1)
           {
             ROS_INFO_STREAM(nodelet_name_ << " - Initializing Depth Control Preset to " << dc_preset);
-            ROS_INFO_STREAM(nodelet_name_ << " - NOTICE: Individual Depth Control values set by params will be ignored; set r200_dc_preset=-1 to override.");
+            ROS_DEBUG_STREAM(nodelet_name_ << " - NOTICE: Individual Depth Control values " <<
+                "set by params will be ignored; set r200_dc_preset=-1 to override.");
             rs_apply_depth_control_preset(rs_device_, dc_preset);
 
             // Save the preset value string
@@ -397,7 +401,7 @@ namespace realsense_camera
     }
     else
     { // Individual Depth Control not set
-      if (bit_level.test(6)) // 2^6 = 64 : Depth Control Preset
+      if (bit_level.test(6))  // 2^6 = 64 : Depth Control Preset
       {
         dc_preset = config.r200_dc_preset;
 
@@ -419,7 +423,7 @@ namespace realsense_camera
   void R200Nodelet::setFrameCallbacks()
   {
     // call base nodelet method
-	BaseNodelet::setFrameCallbacks();
+    BaseNodelet::setFrameCallbacks();
 
     ir2_frame_handler_ = [&](rs::frame  frame)
     {
@@ -505,10 +509,10 @@ namespace realsense_camera
           base_frame_id_, frame_id_[RS_STREAM_INFRARED2]));
 
     // Transform infrared2 frame to infrared2 optical frame
-    tr.setOrigin(tf::Vector3(0,0,0));
+    tr.setOrigin(tf::Vector3(0, 0, 0));
     q.setEuler(M_PI/2, 0.0, -M_PI/2);
     tr.setRotation(q);
     dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
           frame_id_[RS_STREAM_INFRARED2], optical_frame_id_[RS_STREAM_INFRARED2]));
   }
-}  // end namespace
+}  // namespace realsense_camera

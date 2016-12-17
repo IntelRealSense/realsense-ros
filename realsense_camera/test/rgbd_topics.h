@@ -28,6 +28,12 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
+#pragma once
+#ifndef RGBD_TOPICS_H  // NOLINT(build/header_guard)
+#define RGBD_TOPICS_H
+
+#include <string>
+
 #include <sensor_msgs/image_encodings.h>
 #include <camera_info_manager/camera_info_manager.h>
 #include <std_msgs/String.h>
@@ -35,7 +41,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <gtest/gtest.h>
 
-const static int TOPIC_COUNT = 13;
+static const int TOPIC_COUNT = 13;
 
 std::string RGB_IMAGE_MONO = "image_mono";
 std::string RGB_IMAGE_COLOR = "image_color";
@@ -92,3 +98,4 @@ bool topic_11_recv = false;
 bool topic_12_recv = false;
 
 ros::Subscriber subscriber[TOPIC_COUNT];
+#endif  // RGBD_TOPICS_H  // NOLINT(build/header_guard)

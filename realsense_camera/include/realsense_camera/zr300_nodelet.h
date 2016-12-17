@@ -29,68 +29,69 @@
  *******************************************************************************/
 
 #pragma once
-#ifndef ZR300_NODELET
-#define ZR300_NODELET
+#ifndef REALSENSE_CAMERA_ZR300_NODELET_H
+#define REALSENSE_CAMERA_ZR300_NODELET_H
+
+#include <string>
+#include <vector>
 
 #include <dynamic_reconfigure/server.h>
+#include <sensor_msgs/Imu.h>
 
 #include <realsense_camera/zr300_paramsConfig.h>
 #include <realsense_camera/IMUInfo.h>
 #include <realsense_camera/GetIMUInfo.h>
 #include <realsense_camera/base_nodelet.h>
-#include <sensor_msgs/Imu.h>
 
 namespace realsense_camera
 {
-  class ZR300Nodelet: public realsense_camera::BaseNodelet
-  {
-  public:
+class ZR300Nodelet: public realsense_camera::BaseNodelet
+{
+public:
+  ~ZR300Nodelet();
+  void onInit();
 
-    ~ZR300Nodelet();
-    void onInit();
+protected:
+  // Member Variables.
+  ros::ServiceServer get_imu_info_;
+  boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::zr300_paramsConfig>> dynamic_reconf_server_;
+  bool enable_imu_;
+  std::string imu_frame_id_;
+  std::string imu_optical_frame_id_;
+  float imu_angular_vel_[3];
+  float imu_linear_accel_[3];
+  float imu_angular_vel_cov_[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  float imu_linear_accel_cov_[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double imu_ts_;
+  double prev_imu_ts_;
+  ros::Publisher imu_publisher_;
+  boost::shared_ptr<boost::thread> imu_thread_;
+  std::function<void(rs::motion_data)> motion_handler_;
+  std::function<void(rs::timestamp_data)> timestamp_handler_;
+  std::mutex imu_mutex_;
 
-  protected:
+  rs_extrinsics color2ir2_extrinsic_;      // color frame is base frame
+  rs_extrinsics color2fisheye_extrinsic_;  // color frame is base frame
+  rs_extrinsics color2imu_extrinsic_;      // color frame is base frame
 
-    // Member Variables.
-    ros::ServiceServer get_imu_info_;
-    boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::zr300_paramsConfig>> dynamic_reconf_server_;
-    bool enable_imu_;
-    std::string imu_frame_id_;
-    std::string imu_optical_frame_id_;
-    float imu_angular_vel_[3];
-    float imu_linear_accel_[3];
-    float imu_angular_vel_cov_[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    float imu_linear_accel_cov_[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    double imu_ts_;
-    double prev_imu_ts_;
-    ros::Publisher imu_publisher_;
-    boost::shared_ptr<boost::thread> imu_thread_;
-    std::function<void(rs::motion_data)> motion_handler_;
-    std::function<void(rs::timestamp_data)> timestamp_handler_;
-    std::mutex imu_mutex_;
-
-    rs_extrinsics color2ir2_extrinsic_; // color frame is base frame
-    rs_extrinsics color2fisheye_extrinsic_; // color frame is base frame
-    rs_extrinsics color2imu_extrinsic_; // color frame is base frame
-
-    // Member Functions.
-    void getParameters();
-    void advertiseTopics();
-    void advertiseServices();
-    bool getIMUInfo(realsense_camera::GetIMUInfo::Request & req,realsense_camera::GetIMUInfo::Response & res);
-    std::vector<std::string> setDynamicReconfServer();
-    void startDynamicReconfCallback();
-    void setDynamicReconfigDepthControlPreset(int preset);
-    std::string setDynamicReconfigDepthControlIndividuals();
-    void configCallback(realsense_camera::zr300_paramsConfig &config, uint32_t level);
-    void getCameraExtrinsics();
-    void publishStaticTransforms();
-    void publishDynamicTransforms();
-    void prepareIMU();
-    void setIMUCallbacks();
-    void setFrameCallbacks();
-    std::function<void(rs::frame f)> fisheye_frame_handler_, ir2_frame_handler_;
-    void stopIMU();
-  };
-}
-#endif
+  // Member Functions.
+  void getParameters();
+  void advertiseTopics();
+  void advertiseServices();
+  bool getIMUInfo(realsense_camera::GetIMUInfo::Request & req, realsense_camera::GetIMUInfo::Response & res);
+  std::vector<std::string> setDynamicReconfServer();
+  void startDynamicReconfCallback();
+  void setDynamicReconfigDepthControlPreset(int preset);
+  std::string setDynamicReconfigDepthControlIndividuals();
+  void configCallback(realsense_camera::zr300_paramsConfig &config, uint32_t level);
+  void getCameraExtrinsics();
+  void publishStaticTransforms();
+  void publishDynamicTransforms();
+  void prepareIMU();
+  void setIMUCallbacks();
+  void setFrameCallbacks();
+  std::function<void(rs::frame f)> fisheye_frame_handler_, ir2_frame_handler_;
+  void stopIMU();
+};
+}  // namespace realsense_camera
+#endif  // REALSENSE_CAMERA_ZR300_NODELET_H

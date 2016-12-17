@@ -28,12 +28,17 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
+#include <string>
+#include <algorithm>
+#include <vector>
 #include <realsense_camera/base_nodelet.h>
 
-using namespace cv;
-using namespace std;
+using cv::Mat;
+using cv::Scalar;
+using std::string;
+using std::vector;
 
-PLUGINLIB_EXPORT_CLASS (realsense_camera::BaseNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(realsense_camera::BaseNodelet, nodelet::Nodelet)
 namespace realsense_camera
 {
   /*
@@ -56,14 +61,14 @@ namespace realsense_camera
     }
 
     // Kill all old system progress groups
-    while (! system_proc_groups_.empty())
+    while (!system_proc_groups_.empty())
     {
       killpg(system_proc_groups_.front(), SIGHUP);
       system_proc_groups_.pop();
     }
 
     ROS_INFO_STREAM(nodelet_name_ << " - Stopping...");
-    if (! ros::isShuttingDown())
+    if (!ros::isShuttingDown())
     {
       ros::shutdown();
     }
@@ -82,7 +87,7 @@ namespace realsense_camera
       ros::shutdown();
     }
 
-    while (false == connectToCamera()) // Poll for camera and connect if found
+    while (false == connectToCamera())  // Poll for camera and connect if found
     {
       ROS_INFO_STREAM(nodelet_name_ << " - Sleeping 5 seconds then retrying to connect");
       ros::Duration(5).sleep();
@@ -224,7 +229,7 @@ namespace realsense_camera
     rs_device_ = nullptr;
 
     // find camera
-    for (int i: camera_type_index)
+    for (int i : camera_type_index)
     {
       rs_device* rs_detected_device = rs_get_device(rs_context_, i, &rs_error_);
       checkError();
@@ -234,7 +239,7 @@ namespace realsense_camera
           (usb_port_id_.empty() || usb_port_id_ == rs_get_device_usb_port_id(rs_detected_device, &rs_error_)))
       {
         // device found
-        rs_device_= rs_detected_device;
+        rs_device_ = rs_detected_device;
         break;
       }
       // continue loop
@@ -268,7 +273,6 @@ namespace realsense_camera
    */
   std::vector<int> BaseNodelet::listCameras(int num_of_cameras)
   {
-
     // print list of detected cameras
     std::vector<int> camera_type_index;
     std::string detected_camera_msg = " - Detected the following cameras:";
@@ -295,16 +299,16 @@ namespace realsense_camera
 
       if (rs_supports(rs_detected_device, RS_CAPABILITIES_ADAPTER_BOARD, &rs_error_))
       {
-        const char * adapter_fw = rs_get_device_info(rs_detected_device, RS_CAMERA_INFO_ADAPTER_BOARD_FIRMWARE_VERSION,
-            &rs_error_);
+        const char * adapter_fw = rs_get_device_info(rs_detected_device,
+            RS_CAMERA_INFO_ADAPTER_BOARD_FIRMWARE_VERSION, &rs_error_);
         checkError();
         detected_camera_msg = detected_camera_msg + ", Adapter FW: " + adapter_fw;
       }
 
       if (rs_supports(rs_detected_device, RS_CAPABILITIES_MOTION_EVENTS, &rs_error_))
       {
-        const char * motion_module_fw = rs_get_device_info(rs_detected_device, RS_CAMERA_INFO_MOTION_MODULE_FIRMWARE_VERSION,
-            &rs_error_);
+        const char * motion_module_fw = rs_get_device_info(rs_detected_device,
+            RS_CAMERA_INFO_MOTION_MODULE_FIRMWARE_VERSION, &rs_error_);
         checkError();
         detected_camera_msg = detected_camera_msg + ", Motion Module FW: " + motion_module_fw;
       }
@@ -338,10 +342,14 @@ namespace realsense_camera
    */
   void BaseNodelet::advertiseServices()
   {
-    get_options_service_ = pnh_.advertiseService(SETTINGS_SERVICE, &BaseNodelet::getCameraOptionValues, this);
-    set_power_service_ = pnh_.advertiseService(CAMERA_SET_POWER_SERVICE, &BaseNodelet::setPowerCameraService, this);
-    force_power_service_ = pnh_.advertiseService(CAMERA_FORCE_POWER_SERVICE, &BaseNodelet::forcePowerCameraService, this);
-    is_powered_service_ = pnh_.advertiseService(CAMERA_IS_POWERED_SERVICE, &BaseNodelet::isPoweredCameraService, this);
+    get_options_service_ = pnh_.advertiseService(SETTINGS_SERVICE,
+        &BaseNodelet::getCameraOptionValues, this);
+    set_power_service_ = pnh_.advertiseService(CAMERA_SET_POWER_SERVICE,
+        &BaseNodelet::setPowerCameraService, this);
+    force_power_service_ = pnh_.advertiseService(CAMERA_FORCE_POWER_SERVICE,
+        &BaseNodelet::forcePowerCameraService, this);
+    is_powered_service_ = pnh_.advertiseService(CAMERA_IS_POWERED_SERVICE,
+        &BaseNodelet::isPoweredCameraService, this);
   }
 
   /*
@@ -353,7 +361,7 @@ namespace realsense_camera
     std::string get_options_result_str;
     std::string opt_name, opt_value;
 
-    for (CameraOptions o: camera_options_)
+    for (CameraOptions o : camera_options_)
     {
       opt_name = rs_option_to_string(o.opt);
       std::transform(opt_name.begin(), opt_name.end(), opt_name.begin(), ::tolower);
@@ -486,12 +494,12 @@ namespace realsense_camera
     ROS_INFO_STREAM(nodelet_name_ << " - Setting static camera options");
 
     // Iterate through the supported camera options
-    for (CameraOptions o: camera_options_)
+    for (CameraOptions o : camera_options_)
     {
       std::string opt_name = rs_option_to_string(o.opt);
       bool found = false;
 
-      for (std::string param_name: dynamic_params)
+      for (std::string param_name : dynamic_params)
       {
         std::transform(opt_name.begin(), opt_name.end(), opt_name.begin(), ::tolower);
         if (opt_name.compare(param_name) == 0)
@@ -537,7 +545,7 @@ namespace realsense_camera
   */
   void BaseNodelet::setFrameCallbacks()
   {
-    depth_frame_handler_ = [&](rs::frame  frame)
+    depth_frame_handler_ = [&](rs::frame frame)
     {
       publishTopic(RS_STREAM_DEPTH, frame);
 
@@ -547,12 +555,12 @@ namespace realsense_camera
       }
     };
 
-    color_frame_handler_ = [&](rs::frame  frame)
+    color_frame_handler_ = [&](rs::frame frame)
     {
       publishTopic(RS_STREAM_COLOR, frame);
     };
 
-    ir_frame_handler_ = [&](rs::frame  frame)
+    ir_frame_handler_ = [&](rs::frame frame)
     {
       publishTopic(RS_STREAM_INFRARED, frame);
     };
@@ -631,7 +639,7 @@ namespace realsense_camera
     checkError();
 
     sensor_msgs::CameraInfo * camera_info = new sensor_msgs::CameraInfo();
-    camera_info_ptr_[stream_index] = sensor_msgs::CameraInfoPtr (camera_info);
+    camera_info_ptr_[stream_index] = sensor_msgs::CameraInfoPtr(camera_info);
 
     camera_info->header.frame_id = optical_frame_id_[stream_index];
     camera_info->width = intrinsic.width;
@@ -751,14 +759,14 @@ namespace realsense_camera
       float depth_scale_meters = rs_get_device_depth_scale(rs_device_, &rs_error_);
       if (depth_scale_meters == MILLIMETER_METERS)
       {
-        image_[stream_index].data = (unsigned char *) image_depth16_;               
+        image_[stream_index].data = (unsigned char *) image_depth16_;
       }
       else
       {
-        cvWrapper_ = cv::Mat(image_[stream_index].size(), cv_type_[stream_index], (void *) image_depth16_,
-              step_[stream_index]);
+        cvWrapper_ = cv::Mat(image_[stream_index].size(), cv_type_[stream_index],
+            const_cast<void *>(reinterpret_cast<const void *>(image_depth16_)), step_[stream_index]);
         cvWrapper_.convertTo(image_[stream_index], cv_type_[stream_index],
-              static_cast<double>(depth_scale_meters) / static_cast<double>(MILLIMETER_METERS));
+            static_cast<double>(depth_scale_meters) / static_cast<double>(MILLIMETER_METERS));
       }
     }
     else
@@ -807,7 +815,7 @@ namespace realsense_camera
     std::unique_lock<std::mutex> lock(frame_mutex_[stream_index]);
 
     double frame_ts = frame.get_timestamp();
-    if (ts_[stream_index] != frame_ts) // Publish frames only if its not duplicate
+    if (ts_[stream_index] != frame_ts)  // Publish frames only if its not duplicate
     {
       setImageData(stream_index, frame);
       // Publish stream only if there is at least one subscriber.
@@ -817,13 +825,14 @@ namespace realsense_camera
                         encoding_[stream_index],
                                 image_[stream_index]).toImageMsg();
         msg->header.frame_id = optical_frame_id_[stream_index];
-        msg->header.stamp = ros::Time(camera_start_ts_) + ros::Duration(frame_ts * 0.001); // Publish timestamp to synchronize frames.
+        // Publish timestamp to synchronize frames.
+        msg->header.stamp = ros::Time(camera_start_ts_) + ros::Duration(frame_ts * 0.001);
         msg->width = image_[stream_index].cols;
         msg->height = image_[stream_index].rows;
         msg->is_bigendian = false;
         msg->step = step_[stream_index];
         camera_info_ptr_[stream_index]->header.stamp = msg->header.stamp;
-        camera_publisher_[stream_index].publish (msg, camera_info_ptr_[stream_index]);
+        camera_publisher_[stream_index].publish(msg, camera_info_ptr_[stream_index]);
       }
     }
     ts_[stream_index] = frame_ts;
@@ -897,7 +906,7 @@ namespace realsense_camera
 
       float depth_point[3], color_point[3], color_pixel[2], scaled_depth;
       unsigned char *color_data = image_color.data;
-      checkError();// Default value is 0.001
+      checkError();  // Default value is 0.001
 
       float depth_scale_meters = rs_get_device_depth_scale(rs_device_, &rs_error_);
       // Fill the PointCloud2 fields.
@@ -1096,13 +1105,13 @@ namespace realsense_camera
 
     // The color frame is used as the base frame.
     // Hence no additional transformation is done from base frame to color frame.
-    tr.setOrigin(tf::Vector3(0,0,0));
+    tr.setOrigin(tf::Vector3(0, 0, 0));
     tr.setRotation(tf::Quaternion(0, 0, 0, 1));
     dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
           base_frame_id_, frame_id_[RS_STREAM_COLOR]));
 
     // Transform color frame to color optical frame
-    tr.setOrigin(tf::Vector3(0,0,0));
+    tr.setOrigin(tf::Vector3(0, 0, 0));
     q.setEuler(M_PI/2, 0.0, -M_PI/2);
     tr.setRotation(q);
     dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
@@ -1118,7 +1127,7 @@ namespace realsense_camera
           base_frame_id_, frame_id_[RS_STREAM_DEPTH]));
 
     // Transform depth frame to depth optical frame
-    tr.setOrigin(tf::Vector3(0,0,0));
+    tr.setOrigin(tf::Vector3(0, 0, 0));
     q.setEuler(M_PI/2, 0.0, -M_PI/2);
     tr.setRotation(q);
     dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
@@ -1134,7 +1143,7 @@ namespace realsense_camera
           base_frame_id_, frame_id_[RS_STREAM_INFRARED]));
 
     // Transform infrared frame to infrared optical frame
-    tr.setOrigin(tf::Vector3(0,0,0));
+    tr.setOrigin(tf::Vector3(0, 0, 0));
     q.setEuler(M_PI/2, 0.0, -M_PI/2);
     tr.setRotation(q);
     dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
@@ -1184,7 +1193,7 @@ namespace realsense_camera
     // Convert the args to char * const * for exec
     char * argv[string_argv.size() + 1];
 
-    for(size_t i = 0; i < string_argv.size(); ++i)
+    for (size_t i = 0; i < string_argv.size(); ++i)
     {
       argv[i] = const_cast<char*>(string_argv[i].c_str());
     }
@@ -1193,14 +1202,14 @@ namespace realsense_camera
     pid = fork();
 
     if (pid == -1)
-    { // failed to fork
-        ROS_WARN_STREAM(nodelet_name_ <<
-            " - Failed to fork system command:"
-            << boost::algorithm::join(string_argv, " ")
-            << strerror(errno));
+    {  // failed to fork
+      ROS_WARN_STREAM(nodelet_name_ <<
+          " - Failed to fork system command:"
+          << boost::algorithm::join(string_argv, " ")
+          << strerror(errno));
     }
     else if (pid == 0)
-    { // child process
+    {  // child process
       // set to it's own process group
       setpgid(getpid(), getpid());
 
@@ -1209,7 +1218,7 @@ namespace realsense_camera
       // environ is the current environment from <unistd.h>
       execvpe(argv[0], argv, environ);
 
-      _exit(EXIT_FAILURE);   // exec never returns
+      _exit(EXIT_FAILURE);  // exec never returns
     }
     else
     { // parent process
@@ -1225,4 +1234,4 @@ namespace realsense_camera
       // do not wait as this is the main thread
     }
   }
-}  // end namespace
+}  // namespace realsense_camera

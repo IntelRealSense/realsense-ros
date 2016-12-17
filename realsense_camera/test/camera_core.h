@@ -28,11 +28,17 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
+#pragma once
+#ifndef CAMERA_CORE_H  // NOLINT(build/header_guard)
+#define CAMERA_CORE_H
+
 #include <cstdlib>
 #include <cctype>
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <map>
+#include <string>
 
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/Imu.h>
@@ -58,16 +64,17 @@
 #include <librealsense/rs.h>
 #include <realsense_camera/constants.h>
 
-using namespace realsense_camera;
+using realsense_camera::STREAM_COUNT;
+using realsense_camera::R200_MAX_Z;
 
-//utest commandline args
+// utest commandline args
 int g_color_height_exp = 0;
 int g_color_width_exp = 0;
 int g_depth_height_exp = 0;
 int g_depth_width_exp = 0;
-uint32_t g_depth_step_exp; // Expected depth step.
-uint32_t g_color_step_exp; // Expected color step.
-uint32_t g_infrared1_step_exp; // Expected infrared1 step.
+uint32_t g_depth_step_exp;  // Expected depth step.
+uint32_t g_color_step_exp;  // Expected color step.
+uint32_t g_infrared1_step_exp;  // Expected infrared1 step.
 
 bool g_enable_color = true;
 bool g_enable_depth = true;
@@ -77,9 +84,9 @@ bool g_enable_pointcloud = false;
 bool g_enable_ir = false;
 bool g_enable_ir2 = false;
 
-std::string g_depth_encoding_exp; // Expected depth encoding.
-std::string g_color_encoding_exp; // Expected color encoding.
-std::string g_infrared1_encoding_exp; // Expected infrared1 encoding.
+std::string g_depth_encoding_exp;  // Expected depth encoding.
+std::string g_color_encoding_exp;  // Expected color encoding.
+std::string g_infrared1_encoding_exp;  // Expected infrared1 encoding.
 
 image_transport::CameraSubscriber g_camera_subscriber[STREAM_COUNT];
 ros::Subscriber g_sub_imu;
@@ -91,7 +98,7 @@ ros::ServiceClient g_setpower_srv_client;
 ros::ServiceClient g_forcepower_srv_client;
 
 std::map<std::string, std::string> g_config_args;
-double g_max_z = R200_MAX_Z * 1000.0f; // Converting meter to mm.
+double g_max_z = R200_MAX_Z * 1000.0f;  // Converting meter to mm.
 
 bool g_depth_recv = false;
 bool g_color_recv = false;
@@ -110,9 +117,9 @@ float g_pc_depth_avg = 0.0f;
 
 int g_height_recv[STREAM_COUNT] = {0};
 int g_width_recv[STREAM_COUNT] = {0};
-uint32_t g_step_recv[STREAM_COUNT] = {0}; // Received stream step.
+uint32_t g_step_recv[STREAM_COUNT] = {0};  // Received stream step.
 
-std::string g_encoding_recv[STREAM_COUNT]; // Expected stream encoding.
+std::string g_encoding_recv[STREAM_COUNT];  // Expected stream encoding.
 
 int g_caminfo_height_recv[STREAM_COUNT] = {0};
 int g_caminfo_width_recv[STREAM_COUNT] = {0};
@@ -132,3 +139,5 @@ realsense_camera::CameraConfiguration g_setting_srv;
 realsense_camera::IsPowered g_ispowered_srv;
 realsense_camera::SetPower g_setpower_srv;
 realsense_camera::ForcePower g_forcepower_srv;
+
+#endif  // CAMERA_CORE_H  // NOLINT(build/header_guard)
