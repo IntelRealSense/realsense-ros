@@ -35,7 +35,7 @@
 #include <iostream>
 #include <boost/thread.hpp>
 #include <boost/algorithm/string/join.hpp>
-#include <thread>
+#include <thread>  // NOLINT(build/c++11)
 #include <cstdlib>
 #include <cctype>
 #include <algorithm>

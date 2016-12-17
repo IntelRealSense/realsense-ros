@@ -425,7 +425,7 @@ namespace realsense_camera
     // call base nodelet method
     BaseNodelet::setFrameCallbacks();
 
-    ir2_frame_handler_ = [&](rs::frame  frame)
+    ir2_frame_handler_ = [&](rs::frame  frame)  // NOLINT(build/c++11)
     {
       publishTopic(RS_STREAM_INFRARED2, frame);
     };

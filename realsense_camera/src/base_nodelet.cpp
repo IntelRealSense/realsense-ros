@@ -545,7 +545,7 @@ namespace realsense_camera
   */
   void BaseNodelet::setFrameCallbacks()
   {
-    depth_frame_handler_ = [&](rs::frame frame)
+    depth_frame_handler_ = [&](rs::frame frame)  // NOLINT(build/c++11)
     {
       publishTopic(RS_STREAM_DEPTH, frame);
 
@@ -555,12 +555,12 @@ namespace realsense_camera
       }
     };
 
-    color_frame_handler_ = [&](rs::frame frame)
+    color_frame_handler_ = [&](rs::frame frame)  // NOLINT(build/c++11)
     {
       publishTopic(RS_STREAM_COLOR, frame);
     };
 
-    ir_frame_handler_ = [&](rs::frame frame)
+    ir_frame_handler_ = [&](rs::frame frame)  // NOLINT(build/c++11)
     {
       publishTopic(RS_STREAM_INFRARED, frame);
     };

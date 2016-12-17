@@ -569,7 +569,7 @@ namespace realsense_camera
    */
   void ZR300Nodelet::setIMUCallbacks()
   {
-    motion_handler_ = [&](rs::motion_data entry)
+    motion_handler_ = [&](rs::motion_data entry)  // NOLINT(build/c++11)
     {
       std::unique_lock<std::mutex> lock(imu_mutex_);
 
@@ -625,12 +625,12 @@ namespace realsense_camera
     // call base nodelet method
     BaseNodelet::setFrameCallbacks();
 
-    fisheye_frame_handler_ = [&](rs::frame frame)
+    fisheye_frame_handler_ = [&](rs::frame frame)  // NOLINT(build/c++11)
     {
       publishTopic(RS_STREAM_FISHEYE, frame);
     };
 
-    ir2_frame_handler_ = [&](rs::frame frame)
+    ir2_frame_handler_ = [&](rs::frame frame)  // NOLINT(build/c++11)
     {
       publishTopic(RS_STREAM_INFRARED2, frame);
     };
