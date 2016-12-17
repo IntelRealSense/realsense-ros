@@ -41,7 +41,7 @@ namespace realsense_camera
    */
   BaseNodelet::~BaseNodelet()
   {
-    if (enable_tf_ == true && enable_tf_dynamic_ == false)
+    if (enable_tf_ == true && enable_tf_dynamic_ == true)
     {
       transform_thread_->join();
     }
@@ -96,7 +96,7 @@ namespace realsense_camera
     setStreams();
     startCamera();
 
-    // Start tranforms thread
+    // Start transforms thread
     if (enable_tf_ == true)
     {
       getCameraExtrinsics();
