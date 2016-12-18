@@ -2,6 +2,19 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Enable ROS Lint
+* Add Dynamic Transforms support -- multi-cam (#120)
+* Change color stream default to 30fps
+* Major code refactor to use librealsense callbacks
+* Added imu_start_ts for imu sync
+* Make system wrapper function generic
+* Don't ignore linker flags set by user (Yocto fix)
+* Changed nodelet to use camera timestamps
+* Migrate README.md content to ROS wiki
+* Contributors: Dmitry Rozhkov, Mark D Horn, Matt Hansen
+
 1.6.1 (2016-11-18)
 ------------------
 * Clean up system process calls
