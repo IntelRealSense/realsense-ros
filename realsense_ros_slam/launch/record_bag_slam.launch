@@ -1,0 +1,22 @@
+<!--
+
+Record a test stream from the camera, into a ROS bag for later playback with SLAM
+roslaunch realsense_ros_camera record_bag_slam.launch bag_path:=my_value
+
+--> 
+<launch>
+  <arg name="bag_path" default="$(env HOME)/test_slam_320x240d_640x480f_imu.bag" />
+  <arg name="bag_topics" default="/camera/depth/image_raw/compressedDepth /camera/depth/camera_info /camera/fisheye/camera_info /camera/fisheye/image_raw /camera/accel/sample /camera/gyro/sample /camera/accel/imu_info /camera/gyro/imu_info /camera/extrinsics/fisheye2imu /camera/extrinsics/fisheye2depth"/>
+
+  <node pkg="rosbag" type="record" name="rosbag" args="-O $(arg bag_path) $(arg bag_topics)"/>
+
+  <include file="$(find realsense_ros_camera)/launch/camera.launch">
+    <arg name="fisheye_width" value="640"/>
+    <arg name="fisheye_height" value="480"/>
+    <arg name="enable_fisheye" value="true"/>
+    <arg name="depth_width" value="320"/>
+    <arg name="depth_height" value="240"/>
+    <arg name="enable_depth" value="true"/>
+    <arg name="enable_color" value="false"/>
+  </include>
+</launch>

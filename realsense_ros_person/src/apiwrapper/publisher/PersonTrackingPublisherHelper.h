@@ -1,3 +1,6 @@
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2016 Intel Corporation. All Rights Reserved
+
 #pragma once
 
 #include <PersonTracking2RosHelper.h>
@@ -5,6 +8,7 @@
 #include "RealSense/PersonTracking/PersonTrackingData.h"
 
 #include "realsense_ros_person/User.h"
+#include "realsense_ros_person/PersonModuleState.h"
 
 namespace realsense_ros_person
 {
@@ -37,6 +41,11 @@ namespace realsense_ros_person
                              Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
                              realsense_ros_person::User &user);
 
-        PersonTracking2RosHelper m_pt2rosHelper;
+        virtual
+        realsense_ros_person::PersonModuleState BuildPersonModuleState(
+                Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+                Intel::RealSense::PersonTracking::PersonTrackingData &trackingData);
+
+        PersonTracking2RosHelper mPt2rosHelper;
     };
 }

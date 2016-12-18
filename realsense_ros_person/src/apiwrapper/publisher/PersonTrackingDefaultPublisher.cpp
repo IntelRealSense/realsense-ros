@@ -1,6 +1,10 @@
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2016 Intel Corporation. All Rights Reserved
+
 #include "PersonTrackingDefaultPublisher.h"
 
 #include "realsense_ros_person/FrameTest.h"
+#include "realsense_ros_person/PersonModuleState.h"
 
 namespace realsense_ros_person
 {
@@ -8,10 +12,12 @@ namespace realsense_ros_person
     {
         std::string personTrackingTopic = "person_tracking_output";
         std::string personTrackingTestTopic = "person_tracking_output_test";
+        std::string personTrackingModuleStateTopic="/person_tracking/module_state";
         ROS_INFO_STREAM("Publishing to " << personTrackingTopic);
         mPublisher = nodeHandle.advertise<realsense_ros_person::Frame>(personTrackingTopic, 1);
         mTestPublisher = nodeHandle.advertise<realsense_ros_person::FrameTest>(personTrackingTestTopic,
                                                                             1); //TODO publish only in debug mode
+        mPersonModuleStatePublisher = nodeHandle.advertise<realsense_ros_person::PersonModuleState>(personTrackingModuleStateTopic, 1);
     }
 
     void PersonTrackingDefaultPublisher::publishOutput(
@@ -22,6 +28,7 @@ namespace realsense_ros_person
         realsense_ros_person::Frame frame;
         FillFrameData(frame, ptConfiguration, trackingData);
         mPublisher.publish(frame);
+        mPersonModuleStatePublisher.publish(mPtPublisherHelper.BuildPersonModuleState(ptConfiguration, trackingData));
     }
 
     void PersonTrackingDefaultPublisher::publishTestOutput(

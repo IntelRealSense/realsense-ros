@@ -1,6 +1,20 @@
 <launch>
-     <node pkg="nodelet" type="nodelet" name="rs_slam" args="standalone realsense_ros_slam/SNodeletSlam" output="screen">
-         <rosparam file="$(find realsense_ros_slam)/launch/params.yaml" command="load"/>
-     </node>
+    <arg name="topic_camera_pose"       default="camera_pose"/>
+    <arg name="topic_pose2d"            default="pose2d" />
+    <arg name="topic_map"               default="map" />
+    <arg name="topic_tracking_accuracy" default="tracking_accuracy" />
+  
+    <node pkg="nodelet" type="nodelet" name="rs_slam" args="standalone realsense_ros_slam/SNodeletSlam" output="screen">
+        <rosparam file="$(find realsense_ros_slam)/launch/params.yaml" command="load"/>            
+        <param name="topic_camera_pose"   type="str"  value="$(arg topic_camera_pose)" />            
+        <param name="topic_pose2d"   type="str"  value="$(arg topic_pose2d)" />            
+        <param name="topic_map"   type="str"  value="$(arg topic_map)" />            
+        <param name="topic_tracking_accuracy"   type="str"  value="$(arg topic_tracking_accuracy)" />
+    </node>
      <!--launch-prefix="gdb -ex run --><!--args"/-->
+
+    <remap from="topic_camera_pose"         to="$(arg topic_camera_pose)" />
+    <remap from="topic_pose2d"              to="$(arg topic_pose2d)" />
+    <remap from="topic_map"                 to="$(arg topic_map)" />
+    <remap from="topic_tracking_accuracy"   to="$(arg topic_tracking_accuracy)" />
 </launch>

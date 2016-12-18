@@ -1,3 +1,6 @@
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2016 Intel Corporation. All Rights Reserved
+
 #pragma once
 
 #include <memory>
@@ -25,7 +28,7 @@ namespace realsense_ros_person
 
     protected:
         PersonTrackingPublisherHelper mPtPublisherHelper;
-
+        ros::Publisher mPersonModuleStatePublisher;
         void FillFrameData(realsense_ros_person::Frame &frame,
                            Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
                            Intel::RealSense::PersonTracking::PersonTrackingData &trackingData);

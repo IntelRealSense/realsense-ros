@@ -47,12 +47,14 @@ add_message_files(
     RectWithConfidence.msg
     EulerAngles.msg
     EulerAnglesWithConfidence.msg
+    PersonModuleState.msg
 )
 
 add_service_files(
     FILES
     TrackingConfig.srv
-    TrackingRequest.srv
+    StartTracking.srv
+    StopTracking.srv
     Recognition.srv
     RecognitionRegister.srv
     LoadRecognitionDB.srv
@@ -137,8 +139,7 @@ install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
 )
 
-#TODO update test_nodelet.xml
 # Install xml files
-install(FILES test_nodelet.xml
+install(FILES nodelet_plugins.xml 
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

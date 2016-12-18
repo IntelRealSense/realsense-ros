@@ -1,15 +1,20 @@
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2016 Intel Corporation. All Rights Reserved
+
 #include "PersonTrackingSample.h"
 
 #include "realsense_ros_person/TrackingConfig.h"
 #include "realsense_ros_person/Recognition.h"
-#include "realsense_ros_person/TrackingRequest.h"
+#include "realsense_ros_person/StartTracking.h"
+#include "realsense_ros_person/StopTracking.h"
 #include "realsense_ros_person/RecognitionRegister.h"
-#include <realsense_ros_person/RecognitionRegisterResponse.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 
 #include <sstream>
+#include <realsense_ros_person/PersonModuleState.h>
 
+std::string PersonTrackingSample::PERSON_MODULE_STATE_TOPIC = "/person_tracking/module_state";
 std::string RegistrationResultToString(int status);
 std::string RecognitionResultToString(int status);
 std::string WaveGestureToString(int32_t waveGestureRos);
@@ -24,22 +29,25 @@ PersonTrackingSample::PersonTrackingSample() : m_viewer(false), m_trackingRender
 void PersonTrackingSample::ProcessCommandLineArgs()
 {
     ros::NodeHandle nodeHandle("~");
-    nodeHandle.getParam("skeleton", mEnableSkeleton);
+    nodeHandle.param<bool>("skeletonEnabled", mEnableSkeleton, false);
     ROS_INFO_STREAM("mEnableSkeleton = " << mEnableSkeleton);
 
-    nodeHandle.getParam("recognition", mEnableRecognition);
+    nodeHandle.param<bool>("recognitionEnabled", mEnableRecognition, false);
     ROS_INFO_STREAM("mEnableRecognition = " << mEnableRecognition);
 
-    nodeHandle.getParam("gestures", mEnableGestures);
-    ROS_INFO_STREAM("mEnableGestures = " << mEnableGestures);
+    nodeHandle.param<bool>("pointingGestureEnabled", mEnablePointingGesture, false);
+    ROS_INFO_STREAM("mEnablePointingGesture = " << mEnablePointingGesture);
 
-    nodeHandle.getParam("landmarks", mEnableLandmarks);
+    nodeHandle.param<bool>("waveGestureEnabled", mEnableWaveGesture, false);
+    ROS_INFO_STREAM("mEnableWaveGesture = " << mEnableWaveGesture);
+
+    nodeHandle.param<bool>("landmarksEnabled", mEnableLandmarks, false);
     ROS_INFO_STREAM("mEnableLandmarks = " << mEnableLandmarks);
 
-    nodeHandle.getParam("headBoundingBox", mEnableHeadBoundingBox);
+    nodeHandle.param<bool>("headBoundingBoxEnabled", mEnableHeadBoundingBox, false);
     ROS_INFO_STREAM("headBoundingBox = " << mEnableHeadBoundingBox);
 
-    nodeHandle.getParam("headPose", mEnableHeadPose);
+    nodeHandle.param<bool>("headPoseEnabled", mEnableHeadPose, false);
     ROS_INFO_STREAM("headPose = " << mEnableHeadPose);
 }
 
@@ -49,7 +57,8 @@ void PersonTrackingSample::InitMessaging(ros::NodeHandle& nodeHandle)
     mTrackingOutputSubscriber = nodeHandle.subscribe("person_tracking_output_test", 1, &PersonTrackingSample::PersonTrackingCallback, this);
     mRecognitionRequestClient = nodeHandle.serviceClient<realsense_ros_person::Recognition>("person_tracking/recognition_request");
     mRegisterRequestClient = nodeHandle.serviceClient<realsense_ros_person::RecognitionRegister>("person_tracking/register_request");
-    mTrackingRequestClient = nodeHandle.serviceClient<realsense_ros_person::TrackingRequest>("person_tracking/tracking_request");
+    mStartTrackingRequestClient = nodeHandle.serviceClient<realsense_ros_person::StartTracking>("person_tracking/start_tracking_request");
+    mStopTrackingRequestClient = nodeHandle.serviceClient<realsense_ros_person::StopTracking>("person_tracking/stop_tracking_request");
 }
 
 void PersonTrackingSample::EnableTrackingFeatures(ros::NodeHandle& nodeHandle)
@@ -59,7 +68,8 @@ void PersonTrackingSample::EnableTrackingFeatures(ros::NodeHandle& nodeHandle)
     realsense_ros_person::TrackingConfig config;
     config.request.enableRecognition = mEnableRecognition;
     config.request.enableSkeleton = mEnableSkeleton;
-    config.request.enableGestures = mEnableGestures;
+    config.request.enablePointingGesture = mEnablePointingGesture;
+    config.request.enableWaveGesture = mEnableWaveGesture;
     config.request.enableLandmarks = mEnableLandmarks;
     config.request.enableHeadBoundingBox = mEnableHeadBoundingBox;
     config.request.enableHeadPose = mEnableHeadPose;
@@ -167,8 +177,7 @@ void PersonTrackingSample::DrawFace(cv::Mat& colorImage, realsense_ros_person::U
 
 void PersonTrackingSample::DrawPersonGestures(cv::Mat& colorImage, realsense_ros_person::User& user)
 {
-    if (!mEnableGestures) return;
-
+    if (!mEnablePointingGesture) return;
 
     if (user.gestures.pointing.confidence > 0)
     {
@@ -203,11 +212,28 @@ void PersonTrackingSample::PersonSelectedHandler(PersonData& data, TrackingRende
     }
     else if  (type == TrackingRenderer::SelectType::TRACKING)
     {
-        realsense_ros_person::TrackingRequest request;
-        request.request.personId = data.Id;
-        mTrackingRequestClient.call(request);
-        std::string res = request.response.status ? " SUCCEEDED" : " FAILED";
-        ROS_INFO_STREAM("Tracking of user ID " + std::to_string(data.Id) + res);
+        auto personState = ros::topic::waitForMessage<realsense_ros_person::PersonModuleState>(PERSON_MODULE_STATE_TOPIC, ros::Duration(5));
+        if (personState == nullptr)
+        {
+            ROS_ERROR_STREAM("Failed to get person tracking state");
+            return;
+        }
+        if (personState->trackingState == realsense_ros_person::PersonModuleState::TRACKING_STATE_DETECTING)
+        {
+            realsense_ros_person::StartTracking request;
+            request.request.personId = data.Id;
+            mStartTrackingRequestClient.call(request);
+            std::string res = request.response.status ? " SUCCEEDED" : " FAILED";
+            ROS_INFO_STREAM("Start tracking of user ID " + std::to_string(data.Id) + res);
+        }
+        else
+        {
+            realsense_ros_person::StopTracking request;
+            request.request.personId = data.Id;
+            mStopTrackingRequestClient.call(request);
+            std::string res = request.response.status ? " SUCCEEDED" : " FAILED";
+            ROS_INFO_STREAM("Stop tracking of user ID " + std::to_string(data.Id) + res);
+        }
     }
 }
 

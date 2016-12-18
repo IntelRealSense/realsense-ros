@@ -1,3 +1,6 @@
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2016 Intel Corporation. All Rights Reserved
+
 #pragma once
 #include "ros/ros.h"
 #include "realsense_ros_person/FrameTest.h"
@@ -36,10 +39,11 @@ private:
 
     bool mEnableSkeleton;
     bool mEnableRecognition;
-    bool mEnableGestures;
     bool mEnableLandmarks;
     bool mEnableHeadBoundingBox;
     bool mEnableHeadPose;
+    bool mEnablePointingGesture;
+    bool mEnableWaveGesture;
 
     const int JOINT_CONFIDENCE_THR = 90;
     const int LANDMARKS_CONFIDENCE_THR = 90;
@@ -47,7 +51,8 @@ private:
 
     ros::Subscriber mTrackingOutputSubscriber;
     ros::ServiceClient mRecognitionRequestClient;
-    ros::ServiceClient mTrackingRequestClient;
+    ros::ServiceClient mStartTrackingRequestClient;
+    ros::ServiceClient mStopTrackingRequestClient;
     ros::ServiceClient mRegisterRequestClient;
     ros::ServiceClient mConfigClient;
 
@@ -55,4 +60,6 @@ private:
 
     Viewer m_viewer;
     TrackingRenderer m_trackingRenderer;
+
+    static std::string PERSON_MODULE_STATE_TOPIC;
 };

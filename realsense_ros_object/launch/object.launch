@@ -1,7 +1,7 @@
 <launch>
   <!-- These are the three Object Library nodelets, implementing the recognition, localization, and tracking functionality -->
   <node pkg="nodelet" type="nodelet" name="realsense_ros_object_tracking" args="load realsense_ros_object/SNodeletObjectTracking realsense_ros_camera_manager" output="screen">
-    <param name="show_rgb" type="bool" value="true" />
+    <param name="show_rgb" type="bool" value="false" />
     <param name="subscribe_to_localization" type="bool" value="false" />
     <param name="estimate_center" type="bool" value="true" />
     <param name="max_number_of_objects" type="int" value="5" />	

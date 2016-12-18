@@ -22,113 +22,95 @@
 #include <realsense_ros_camera/IMUInfo.h>
 #include <realsense_ros_camera/constants.h>
 #include <sensor_msgs/Imu.h>
+#include <tf/transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 
-const int STREAM_COUNT = 5;
-ros::Publisher feInfo_publisher_,
-    colorInfo_publisher_,
-    depthInfo_publisher_,
-    accelInfo_publisher_,
-    gyroInfo_publisher_,
-    fe2imu_publisher_,
-    fe2depth_publisher_;
-image_transport::Publisher image_publishers_[STREAM_COUNT] = {};
+
+// R200 and ZR300 types
+std::map<rs::stream,image_transport::Publisher> image_publishers_;
+std::map<rs::stream,int> image_format_;
+std::map<rs::stream,rs::format> format_;
+std::map<rs::stream,ros::Publisher> info_publisher_;
+std::map<rs::stream,cv::Mat> image_;
+std::map<rs::stream,std::string> encoding_;
+std::string base_frame_id_;
+std::map<rs::stream,std::string> frame_id_;
+std::map<rs::stream,std::string> optical_frame_id_;
+std::string imu_frame_id_, optical_imu_frame_id_;
+std::map<rs::stream,int> seq_;
+std::map<rs::stream,int> unit_step_size_;
+std::map<rs::stream,std::function<void(rs::frame)>> stream_callback_per_stream; 
+std::map<rs::stream,sensor_msgs::CameraInfo> camera_info_;
+
+// ZR300 specific types
+bool isZR300 = false;
+ros::Publisher accelInfo_publisher_, gyroInfo_publisher_, fe2imu_publisher_, fe2depth_publisher_;
 ros::Publisher imu_publishers_[2] = {};//accel 0 gyro 1
 int seq_motion[2]= {0,0};
-cv::Mat image_[STREAM_COUNT] = {};
-sensor_msgs::CameraInfo camera_info_[STREAM_COUNT] = {};
-sensor_msgs::ImagePtr image_msg_[STREAM_COUNT] = {};
-int seq[STREAM_COUNT]= {0,0,0,0,0};
-
-std::string encoding_[STREAM_COUNT] = {
-    sensor_msgs::image_encodings::TYPE_16UC1,
-    sensor_msgs::image_encodings::RGB8,
-    sensor_msgs::image_encodings::TYPE_8UC1,
-    sensor_msgs::image_encodings::TYPE_8UC1,
-    sensor_msgs::image_encodings::TYPE_8UC1
-};
-
-int unit_step_size_[STREAM_COUNT] = {
-    sizeof(uint16_t),
-    sizeof(unsigned char) * 3,
-    sizeof(unsigned char),
-    sizeof(unsigned char),
-    sizeof(unsigned char)
-};
-
-int step_[STREAM_COUNT] = {};
-std::string optical_frame_id_[STREAM_COUNT] = {
-    "camera_depth_optical_frame",
-    "camera_rgb_optical_frame",
-    "camera_ir_optical_frame",
-    "camera_ir2_optical_frame",
-    "camera_fisheye_optical_frame"
-};
-
 std::string optical_imu_id_[2] = {"imu_accel_frame_id","imu_gyro_frame_id"};
-bool isZR300 = false;
-std::string serial_no;
+
 
 namespace realsense_ros_camera
 {
-
-void getImuInfo(rs::device* device, IMUInfo &accelInfo, IMUInfo &gyroInfo)
-{
-    rs::motion_intrinsics imuIntrinsics = device->get_motion_intrinsics();
-    
-    accelInfo.header.frame_id = "imu_accel";  
-    int index = 0;
-    for (int i = 0; i < 3; ++i)
+    void getImuInfo(rs::device* device, IMUInfo &accelInfo, IMUInfo &gyroInfo)
     {
-        for (int j = 0; j < 4; ++j)
+        rs::motion_intrinsics imuIntrinsics = device->get_motion_intrinsics();
+        
+        accelInfo.header.frame_id = "imu_accel";  
+        int index = 0;
+        for (int i = 0; i < 3; ++i)
         {
-            accelInfo.data[index] = imuIntrinsics.acc.data[i][j];
-            ++index;
+            for (int j = 0; j < 4; ++j)
+            {
+                accelInfo.data[index] = imuIntrinsics.acc.data[i][j];
+                ++index;
+            }
+            accelInfo.noise_variances[i] = imuIntrinsics.acc.noise_variances[i];
+            accelInfo.bias_variances[i] = imuIntrinsics.acc.bias_variances[i];
         }
-        accelInfo.noise_variances[i] = imuIntrinsics.acc.noise_variances[i];
-        accelInfo.bias_variances[i] = imuIntrinsics.acc.bias_variances[i];
-    }
-    
-    gyroInfo.header.frame_id = "imu_gyro";
-    index = 0;
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 4; ++j)
+        
+        gyroInfo.header.frame_id = "imu_gyro";
+        index = 0;
+        for (int i = 0; i < 3; ++i)
         {
-            gyroInfo.data[index] = imuIntrinsics.gyro.data[i][j];
-            ++index;
+            for (int j = 0; j < 4; ++j)
+            {
+                gyroInfo.data[index] = imuIntrinsics.gyro.data[i][j];
+                ++index;
+            }
+            gyroInfo.noise_variances[i] = imuIntrinsics.gyro.noise_variances[i];
+            gyroInfo.bias_variances[i] = imuIntrinsics.gyro.bias_variances[i];
         }
-        gyroInfo.noise_variances[i] = imuIntrinsics.gyro.noise_variances[i];
-        gyroInfo.bias_variances[i] = imuIntrinsics.gyro.bias_variances[i];
     }
-}
 
-Extrinsics rsExtrinsicsToMsg(rs::extrinsics rsExtrinsics)
-{
-    Extrinsics extrinsicsMsg;
-    
-    for (int i = 0; i < 9; ++i) 
+    Extrinsics rsExtrinsicsToMsg(rs::extrinsics rsExtrinsics)
     {
-        extrinsicsMsg.rotation[i] = rsExtrinsics.rotation[i];
-        if (i < 3) extrinsicsMsg.translation[i] = rsExtrinsics.translation[i];
+        Extrinsics extrinsicsMsg;
+        
+        for (int i = 0; i < 9; ++i) 
+        {
+            extrinsicsMsg.rotation[i] = rsExtrinsics.rotation[i];
+            if (i < 3) extrinsicsMsg.translation[i] = rsExtrinsics.translation[i];
+        }
+        
+        return extrinsicsMsg;
     }
-    
-    return extrinsicsMsg;
-}
 
-Extrinsics getFisheye2ImuExtrinsicsMsg(rs::device* device)
-{    
-    Extrinsics extrinsicsMsg = rsExtrinsicsToMsg(device->get_motion_extrinsics_from(rs::stream::fisheye));
-    extrinsicsMsg.header.frame_id = "fisheye2imu_extrinsics";
-    return extrinsicsMsg;
-}
+    Extrinsics getFisheye2ImuExtrinsicsMsg(rs::device* device)
+    {    
+        Extrinsics extrinsicsMsg = rsExtrinsicsToMsg(device->get_motion_extrinsics_from(rs::stream::fisheye));
+        extrinsicsMsg.header.frame_id = "fisheye2imu_extrinsics";
+        return extrinsicsMsg;
+    }
 
-Extrinsics getFisheye2DepthExtrinsicsMsg(rs::device* device)
-{
-    Extrinsics extrinsicsMsg =  rsExtrinsicsToMsg(device->get_extrinsics(rs::stream::depth, rs::stream::fisheye));
-    extrinsicsMsg.header.frame_id = "fisheye2depth_extrinsics";
-    return extrinsicsMsg;
-}
+    Extrinsics getFisheye2DepthExtrinsicsMsg(rs::device* device)
+    {
+        Extrinsics extrinsicsMsg =  rsExtrinsicsToMsg(device->get_extrinsics(rs::stream::depth, rs::stream::fisheye));
+        extrinsicsMsg.header.frame_id = "fisheye2depth_extrinsics";
+        return extrinsicsMsg;
+    }
 
+<<<<<<< HEAD
 class NodeletCamera:public nodelet::Nodelet
 {
 public:
@@ -178,72 +160,69 @@ private:
         std::unique_ptr< rs::context > ctx(new rs::context());
         int num_of_cams = ctx -> get_device_count();
         if (num_of_cams == 0)
+=======
+    class NodeletCamera:public nodelet::Nodelet
+    {
+    public:
+        NodeletCamera() :
+            cameraStarted(false)
+>>>>>>> master
         {
-            ROS_ERROR("error : can't find devices");
-            exit(0);
-        }
-        rs::device *detected_dev;
-        for (int i = 0; i < num_of_cams; i++)
-        {
-            detected_dev = ctx -> get_device(i);
-            detected_dev -> get_serial();
-            serial_no.empty();
-            if(serial_no.empty() || (serial_no == std::string(detected_dev -> get_serial())))
-            {
-                device = detected_dev;
-                ROS_INFO_STREAM("device serial No.: "<<std::string(device -> get_serial()));
-                break;
-            }
-        }
-        if (device == nullptr)
-        {
-            ROS_ERROR_STREAM("Couldn't find camera to connect with serial_no = " << serial_no);
-            return;
-        }
-        auto device_name = device -> get_name();
-        ROS_INFO_STREAM(device_name);
-        if (std::string(device_name).find("ZR300") == std::string::npos) {
-            isZR300 = false;
-            if ((std::string(device_name).find("R200") == std::string::npos) && (std::string(device_name).find("SR300") == std::string::npos))
-            {
-                ROS_INFO_STREAM("Please use ZR300, LR200 or SR300");
-                return;
-            }
-        }
-        else {
-            isZR300 = true;
-        }        
-        
-        // Stream publishers
-        image_publishers_[(int32_t)rs::stream::color] = image_transport.advertise("camera/color/image_raw", 1);
-        image_publishers_[(int32_t)rs::stream::depth] = image_transport.advertise("camera/depth/image_raw", 1);
+            // libRealsense format types for stream
+            format_[rs::stream::depth] = rs::format::z16;
+            format_[rs::stream::color] = rs::format::rgb8;
+            format_[rs::stream::fisheye] = rs::format::raw8;
 
-        // Latched topics            
-        colorInfo_publisher_ = node_handle.advertise< sensor_msgs::CameraInfo >("camera/color/camera_info", 1, true);
-        depthInfo_publisher_ = node_handle.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info", 1, true);
+            // CVBridge native image types
+            image_format_[rs::stream::depth] = CV_16UC1;
+            image_format_[rs::stream::color] = CV_8UC3;
+            image_format_[rs::stream::fisheye] = CV_8UC1;
 
-        if (isZR300)
+            // ROS sensor_msgs::ImagePtr encoding types
+            encoding_[rs::stream::depth] = sensor_msgs::image_encodings::TYPE_16UC1;
+            encoding_[rs::stream::color] = sensor_msgs::image_encodings::RGB8;
+            encoding_[rs::stream::fisheye] = sensor_msgs::image_encodings::TYPE_8UC1;
+
+            // ROS sensor_msgs::ImagePtr row step sizes
+            unit_step_size_[rs::stream::depth] = sizeof(uint16_t);
+            unit_step_size_[rs::stream::color] = sizeof(unsigned char) * 3;
+            unit_step_size_[rs::stream::fisheye] = sizeof(unsigned char);
+
+            stream_name_[rs::stream::depth] = "depth";
+            stream_name_[rs::stream::color] = "color";
+            stream_name_[rs::stream::fisheye] = "fisheye";
+        }
+
+        virtual ~NodeletCamera()
+        {        
+            if(cameraStarted)
+            {
+                if(isZR300)
+                    device->stop(rs::source::all_sources);
+                else
+                    device->stop();
+            }      
+            ctx.reset();
+
+            const rs::stream All[] = { rs::stream::depth, rs::stream::color, rs::stream::fisheye };
+            for ( const auto stream : All )
+            {
+                if( false == enable_[stream])
+                    continue;
+                image_publishers_[stream].shutdown();
+            }
+            image_publishers_.clear();
+        }
+
+    private:
+        virtual void onInit()
         {
-            // Stream publishers
-            image_publishers_[(int32_t)rs::stream::fisheye] = image_transport.advertise("camera/fisheye/image_raw", 1);
-            imu_publishers_[RS_EVENT_IMU_GYRO] = node_handle.advertise< sensor_msgs::Imu >("camera/gyro/sample", 100); // TODO: review queue size
-            imu_publishers_[RS_EVENT_IMU_ACCEL] = node_handle.advertise< sensor_msgs::Imu >("camera/accel/sample", 100); // TODO: review queue size
+            getParameters();
             
-            // Latched topics            
-            feInfo_publisher_ = node_handle.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info", 1, true);
-            fe2imu_publisher_ = node_handle.advertise< Extrinsics >("camera/extrinsics/fisheye2imu", 1, true);
-            fe2depth_publisher_ = node_handle.advertise< Extrinsics >("camera/extrinsics/fisheye2depth", 1, true);
-            accelInfo_publisher_ = node_handle.advertise< IMUInfo >("camera/accel/imu_info", 1, true);
-            gyroInfo_publisher_ = node_handle.advertise< IMUInfo >("camera/gyro/imu_info", 1, true);
-        }
-        // end publishers and services
-        
-        int ret = getDatas();
-        ROS_INFO_STREAM("end of onInit " << ret);
-    }//end onInit
-};//end class
-PLUGINLIB_DECLARE_CLASS(realsense_ros_camera, NodeletCamera, realsense_ros_camera::NodeletCamera, nodelet::Nodelet);
+            if(false == setupDevice())
+                return;
 
+<<<<<<< HEAD
 int NodeletCamera::getDatas()
 {
     std::map< rs::stream, std::function< void (rs::frame) > > stream_callback_per_stream;
@@ -265,192 +244,492 @@ int NodeletCamera::getDatas()
         }
 
         stream_callback_per_stream[stream] = [stream](rs::frame frame)
+=======
+            setupPublishers();        
+            setupStreams();
+            publishStaticTransforms();
+        }//end onInit
+
+
+        void getParameters()
         {
-            if (isZR300)
+          pnh_ = getPrivateNodeHandle();
+
+          pnh_.param("serial_no", serial_no, DEFAULT_SERIAL_NO);
+
+          pnh_.param("depth_width", width_[rs::stream::depth], DEPTH_WIDTH);
+          pnh_.param("depth_height", height_[rs::stream::depth], DEPTH_HEIGHT);
+          pnh_.param("depth_fps", fps_[rs::stream::depth], DEPTH_FPS);
+          pnh_.param("enable_depth", enable_[rs::stream::depth], true);
+
+          pnh_.param("color_width", width_[rs::stream::color], COLOR_WIDTH);
+          pnh_.param("color_height", height_[rs::stream::color], COLOR_HEIGHT);
+          pnh_.param("color_fps", fps_[rs::stream::color], COLOR_FPS);
+          pnh_.param("enable_color", enable_[rs::stream::color], false);
+
+          pnh_.param("fisheye_width", width_[rs::stream::fisheye], FISHEYE_WIDTH);
+          pnh_.param("fisheye_height", height_[rs::stream::fisheye], FISHEYE_HEIGHT);
+          pnh_.param("fisheye_fps", fps_[rs::stream::fisheye], FISHEYE_FPS);
+          pnh_.param("enable_fisheye", enable_[rs::stream::fisheye], false);
+
+          pnh_.param("base_frame_id", base_frame_id_, DEFAULT_BASE_FRAME_ID);
+          pnh_.param("depth_frame_id", frame_id_[rs::stream::depth], DEFAULT_DEPTH_FRAME_ID);
+          pnh_.param("color_frame_id", frame_id_[rs::stream::color], DEFAULT_COLOR_FRAME_ID);
+          pnh_.param("fisheye_frame_id", frame_id_[rs::stream::fisheye], DEFAULT_FISHEYE_FRAME_ID);
+          pnh_.param("imu_frame_id", imu_frame_id_, DEFAULT_IMU_FRAME_ID);
+          pnh_.param("depth_optical_frame_id", optical_frame_id_[rs::stream::depth], DEFAULT_DEPTH_OPTICAL_FRAME_ID);
+          pnh_.param("color_optical_frame_id", optical_frame_id_[rs::stream::color], DEFAULT_COLOR_OPTICAL_FRAME_ID);
+          pnh_.param("fisheye_optical_frame_id", optical_frame_id_[rs::stream::fisheye], DEFAULT_FISHEYE_OPTICAL_FRAME_ID);
+          pnh_.param("imu_optical_frame_id", optical_imu_frame_id_, DEFAULT_IMU_OPTICAL_FRAME_ID);
+        }//end getParameters
+
+
+        bool setupDevice()
+>>>>>>> master
+        {
+            ctx.reset(new rs::context());
+            int num_of_cams = ctx -> get_device_count();
+            if (num_of_cams == 0)
             {
-                const auto timestampDomain = frame.get_frame_timestamp_domain();
-                if (rs::timestamp_domain::microcontroller != timestampDomain)
+                ROS_ERROR("error : no RealSense R200, LR200, or ZR300 devices found.");
+                ctx.reset();
+                return false;
+            }
+
+            rs::device *detected_dev;
+            for (int i = 0; i < num_of_cams; i++)
+            {
+                detected_dev = ctx->get_device(i);
+                detected_dev->get_serial();
+                if(serial_no.empty() || (serial_no == std::string(detected_dev->get_serial())))
                 {
-                    ROS_ERROR_STREAM("error: Junk time stamp in stream:" << (int)(stream) <<
-                                     "\twith frame counter:" << frame.get_frame_number());
-                    return ;
+                    device = detected_dev;
+                    break;
                 }
             }
-            int32_t stream_nb = (int32_t) stream;
-            image_[stream_nb].data = (unsigned char *) frame.get_data();
-            image_msg_[stream_nb] = cv_bridge::CvImage(std_msgs::Header(), encoding_[stream_nb], image_[stream_nb]).toImageMsg();
-            image_msg_[stream_nb]->header.frame_id = optical_frame_id_[stream_nb];
-            image_msg_[stream_nb]->header.stamp = ros::Time(frame.get_timestamp());
-            image_msg_[stream_nb]->header.seq = seq[stream_nb];
-            image_msg_[stream_nb]->width = image_[stream_nb].cols;
-            image_msg_[stream_nb]->height = image_[stream_nb].rows;
-            image_msg_[stream_nb]->is_bigendian = false;
-            image_msg_[stream_nb]->step = image_[stream_nb].cols * unit_step_size_[stream_nb];
-            seq[stream_nb] += 1;
 
-            image_publishers_[stream_nb].publish(image_msg_[stream_nb]);
-        };
-        device->set_frame_callback(stream, stream_callback_per_stream[stream]);
-    }//end for
-    
-    if(isZR300) {
-        device->set_option(rs::option::fisheye_strobe, 1);
-        //define callback to the motion events and set it.
-        std::function<void(rs::motion_data)> motion_callback;
-        std::function<void(rs::timestamp_data)> timestamp_callback;
-        motion_callback = [](rs::motion_data entry)
+            if (device == nullptr)
+            {
+                ROS_ERROR_STREAM("error: No RealSense device with serial_no = " << serial_no << " found.");
+                ctx.reset();
+                return false;
+            }
+
+            auto device_name = device -> get_name();
+            ROS_INFO_STREAM(device_name << ", serial_no: " << std::string(device ->get_serial()));
+            if (std::string(device_name).find("ZR300") == std::string::npos) 
+            {
+                isZR300 = false;
+                enable_[rs::stream::fisheye] = false;
+
+                if ((std::string(device_name).find("R200") == std::string::npos) && (std::string(device_name).find("LR200") == std::string::npos))
+                {
+                    ROS_ERROR_STREAM("error: This ROS node supports R200, LR200, and ZR300 only.  See https://github.com/intel-ros/realsense for F200 and SR300 support.");
+                    ctx.reset();
+                    return false;
+                }
+            }
+            else 
+            {
+                // Only enable ZR300 functionality if fisheye stream is enabled.  Accel/Gyro automatically enabled when fisheye requested
+                if( true == enable_[rs::stream::fisheye])
+                    isZR300 = true;
+            }   
+
+            return true; 
+        }//end setupDevice
+
+
+        void setupPublishers()
         {
-            if ((entry.timestamp_data.source_id != RS_EVENT_IMU_GYRO) && (entry.timestamp_data.source_id != RS_EVENT_IMU_ACCEL))
-                return;
-            rs_event_source motionType = entry.timestamp_data.source_id;
-            sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
-            imu_msg.header.stamp = ros::Time::now();
-            imu_msg.header.frame_id = optical_imu_id_[motionType];
-            imu_msg.orientation.x = 0.0;
-            imu_msg.orientation.y = 0.0;
-            imu_msg.orientation.z = 0.0;
-            imu_msg.orientation.w = 0.0;
-            imu_msg.orientation_covariance = {-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-            if (motionType == RS_EVENT_IMU_GYRO) {
-                imu_msg.angular_velocity.x = entry.axes[0];
-                imu_msg.angular_velocity.y = entry.axes[1];
-                imu_msg.angular_velocity.z = entry.axes[2];
+            image_transport::ImageTransport image_transport(getNodeHandle());
+
+            // Stream publishers and latched topics
+            if(true == enable_[rs::stream::color])
+            {
+                image_publishers_[rs::stream::color] = image_transport.advertise("camera/color/image_raw", 1);
+                info_publisher_[rs::stream::color] = node_handle.advertise< sensor_msgs::CameraInfo >("camera/color/camera_info", 1);
             }
-            if (motionType == RS_EVENT_IMU_ACCEL) {
-                imu_msg.linear_acceleration.x = entry.axes[0];
-                imu_msg.linear_acceleration.y = entry.axes[1];
-                imu_msg.linear_acceleration.z = entry.axes[2];
+
+            if(true == enable_[rs::stream::depth])
+            {
+                image_publishers_[rs::stream::depth] = image_transport.advertise("camera/depth/image_raw", 1);
+                info_publisher_[rs::stream::depth] = node_handle.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info", 1);
             }
-            seq_motion[motionType] += 1;
-            imu_msg.header.seq = seq_motion[motionType];
-            imu_msg.header.stamp = ros::Time(entry.timestamp_data.timestamp);
-            imu_publishers_[motionType].publish(imu_msg);
-        };
-        timestamp_callback = [](rs::timestamp_data entry) {};
-        device->enable_motion_tracking(motion_callback, timestamp_callback);
-        getStreamCalibData(rs::stream::fisheye);
-        image_[(int32_t)rs::stream::fisheye] = cv::Mat(camera_info_[(int32_t)rs::stream::fisheye].height, camera_info_[(int32_t)rs::stream::fisheye].width, CV_8UC1, cv::Scalar(0,0,0));
+           
+            if (isZR300)
+            {
+                // Stream publishers
+                image_publishers_[rs::stream::fisheye] = image_transport.advertise("camera/fisheye/image_raw", 1);
+                info_publisher_[rs::stream::fisheye] = node_handle.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info", 1);
+
+                imu_publishers_[RS_EVENT_IMU_GYRO] = node_handle.advertise< sensor_msgs::Imu >("camera/gyro/sample", 100); // TODO: review queue size
+                imu_publishers_[RS_EVENT_IMU_ACCEL] = node_handle.advertise< sensor_msgs::Imu >("camera/accel/sample", 100); // TODO: review queue size
                 
-        // publish ZR300-specific intrinsics/extrinsics
-        IMUInfo accelInfo, gyroInfo;
-        getImuInfo(device, accelInfo, gyroInfo);
-        feInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::fisheye]);
-        fe2imu_publisher_.publish(getFisheye2ImuExtrinsicsMsg(device));
-        fe2depth_publisher_.publish(getFisheye2DepthExtrinsicsMsg(device));
-        accelInfo_publisher_.publish(accelInfo);
-        gyroInfo_publisher_.publish(gyroInfo);
-    }
-    
-    // get camera intrinsics
-    getStreamCalibData(rs::stream::depth);
-    getStreamCalibData(rs::stream::color);
-    
-    // publish camera intrinsics/extrinsics        
-    colorInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::color]);
-    depthInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::depth]);
-    
-    image_[(int32_t)rs::stream::depth]   = cv::Mat(camera_info_[(int32_t)rs::stream::depth].height, camera_info_[(int32_t)rs::stream::depth].width, CV_16UC1, cv::Scalar(0,0,0));
-    image_[(int32_t)rs::stream::color]   = cv::Mat(camera_info_[(int32_t)rs::stream::color].height, camera_info_[(int32_t)rs::stream::color].width, CV_8UC3, cv::Scalar(0,0,0));
+                // Latched topics            
+                fe2imu_publisher_ = node_handle.advertise< Extrinsics >("camera/extrinsics/fisheye2imu", 1, true);
+                fe2depth_publisher_ = node_handle.advertise< Extrinsics >("camera/extrinsics/fisheye2depth", 1, true);
+                accelInfo_publisher_ = node_handle.advertise< IMUInfo >("camera/accel/imu_info", 1, true);
+                gyroInfo_publisher_ = node_handle.advertise< IMUInfo >("camera/gyro/imu_info", 1, true);
+            }
+        }//end setupPublishers
 
-    if(isZR300)
-        device->start(rs::source::all_sources);
-    else
-        device->start();
 
-    ROS_INFO_STREAM("RealSense camera started streaming");
-    
-    ros::Rate loop_rate(30);
-    while (ros::ok())
-    {
-        loop_rate.sleep();
-    }
-    
-    if(isZR300)
-        device->stop(rs::source::all_sources);
-    else
-        device->stop();
+        void setupStreams()
+        {
+            device->set_option(rs::option::r200_lr_auto_exposure_enabled, 1);
 
-    return 0;
-}
+            const rs::stream All[] = { rs::stream::depth, rs::stream::color, rs::stream::fisheye };
+            for ( const auto stream : All )
+            {
+                if( false == enable_[stream])
+                    continue;
 
-void NodeletCamera::getStreamCalibData(rs::stream stream_index)
-{
-    rs::intrinsics intrinsic = device->get_stream_intrinsics(stream_index);
-    int32_t stream = (int32_t)stream_index;
-    camera_info_[stream].header.frame_id = optical_frame_id_[stream];
-    camera_info_[stream].width = intrinsic.width;
-    camera_info_[stream].height = intrinsic.height;
+                // Define lambda callback for receiving stream data
+                stream_callback_per_stream[stream] = [stream](rs::frame frame)
+                {
+                    if (isZR300)
+                    {
+                        const auto timestampDomain = frame.get_frame_timestamp_domain();
+                        if (rs::timestamp_domain::microcontroller != timestampDomain)
+                        {
+                            ROS_ERROR_STREAM("error: Junk time stamp in stream:" << (int)(stream) <<
+                                             "\twith frame counter:" << frame.get_frame_number());
+                            return ;
+                        }
+                    }
 
-    camera_info_[stream].K.at(0) = intrinsic.fx;
-    camera_info_[stream].K.at(2) = intrinsic.ppx;
-    camera_info_[stream].K.at(4) = intrinsic.fy;
-    camera_info_[stream].K.at(5) = intrinsic.ppy;
-    camera_info_[stream].K.at(8) = 1;
+                    image_[stream].data = (unsigned char *) frame.get_data();
 
-    camera_info_[stream].P.at(0) = camera_info_->K.at(0);
-    camera_info_[stream].P.at(1) = 0;
-    camera_info_[stream].P.at(2) = camera_info_->K.at(2);
-    camera_info_[stream].P.at(3) = 0;
-    camera_info_[stream].P.at(4) = 0;
-    camera_info_[stream].P.at(5) = camera_info_->K.at(4);
-    camera_info_[stream].P.at(6) = camera_info_->K.at(5);
-    camera_info_[stream].P.at(7) = 0;
-    camera_info_[stream].P.at(8) = 0;
-    camera_info_[stream].P.at(9) = 0;
-    camera_info_[stream].P.at(10) = 1;
-    camera_info_[stream].P.at(11) = 0;
-    
-    if (stream_index == rs::stream::depth)
-    {
-        // set depth to color translation values in Projection matrix (P)
-        rs::extrinsics extrinsic = device->get_extrinsics(rs::stream::depth, rs::stream::color);
-        camera_info_[stream].P.at(3) = extrinsic.translation[0];     // Tx
-        camera_info_[stream].P.at(7) = extrinsic.translation[1];     // Ty
-        camera_info_[stream].P.at(11) = extrinsic.translation[2];    // Tz
+                    sensor_msgs::ImagePtr img;
+                    img = cv_bridge::CvImage(std_msgs::Header(), encoding_[stream], image_[stream]).toImageMsg();
+                    img->width = image_[stream].cols;
+                    img->height = image_[stream].rows;
+                    img->is_bigendian = false;
+                    img->step = image_[stream].cols * unit_step_size_[stream];
+                    seq_[stream] += 1;
 
-        for (int i = 0; i < 9; i++)
-            camera_info_[stream].R.at(i) = extrinsic.rotation[i];
-    }
-    
-    ROS_INFO_STREAM(" model "<<(int32_t)intrinsic.model()<<" stream index "<<stream_index);
-    
-    switch((int32_t)intrinsic.model())
-    {
-    case 0:
-        camera_info_[stream].distortion_model = "none";
-        break;
-    case 1:
-        camera_info_[stream].distortion_model = "modified_brown_conrady";
-        break;
-    case 2:
-        camera_info_[stream].distortion_model = "inverse_brown_conrady";
-        break;
-    case 3:
-        camera_info_[stream].distortion_model = "distortion_ftheta";
-        break;
-    default:
-        camera_info_[stream].distortion_model = "others";
-        break;
-    }
-    
-    // set R (rotation matrix) values to identity matrix
-    if (stream_index != rs::stream::depth)
-    {
-        camera_info_[stream].R.at(0) = 1.0;
-        camera_info_[stream].R.at(1) = 0.0;
-        camera_info_[stream].R.at(2) = 0.0;
-        camera_info_[stream].R.at(3) = 0.0;
-        camera_info_[stream].R.at(4) = 1.0;
-        camera_info_[stream].R.at(5) = 0.0;
-        camera_info_[stream].R.at(6) = 0.0;
-        camera_info_[stream].R.at(7) = 0.0;
-        camera_info_[stream].R.at(8) = 1.0;
-    }
-    
-    for (int i = 0; i < 5; i++)
-    {
-        camera_info_[stream].D.push_back(intrinsic.coeffs[i]);
-    }
-}
+                    img->header.frame_id = optical_frame_id_[stream];
+                    img->header.stamp = ros::Time(frame.get_timestamp());
+                    img->header.seq = seq_[stream];
+                    image_publishers_[stream].publish(img);
+
+                    camera_info_[stream].header.stamp = img->header.stamp;
+                    camera_info_[stream].header.seq = img->header.seq;
+                    info_publisher_[stream].publish(camera_info_[stream]);
+                };
+
+                // Enable the stream
+                device->enable_stream(stream, width_[stream], height_[stream], format_[stream], fps_[stream]);
+
+                // Publish info about the stream
+                getStreamCalibData(stream);
+
+                // Setup stream callback for stream
+                image_[stream] = cv::Mat(camera_info_[stream].height, camera_info_[stream].width, image_format_[stream], cv::Scalar(0,0,0));
+                device->set_frame_callback(stream, stream_callback_per_stream[stream]);
+
+                ROS_INFO_STREAM("  enabled " << stream_name_[stream] << " stream, width: " << camera_info_[stream].width << " height: " << camera_info_[stream].height << " fps: " << fps_[stream]);
+            }//end for
+            
+
+            if(isZR300) {
+                device->set_option(rs::option::fisheye_strobe, 1); // Needed to align image timestamps to common clock-domain with the motion events
+                device->set_option(rs::option::fisheye_external_trigger, 1); // This option causes the fisheye image to be aquired in-sync with the depth image.
+                device->set_option(rs::option::fisheye_color_auto_exposure, 1);
+                
+                //define callback to the motion events and set it.
+                std::function<void(rs::motion_data)> motion_callback;
+                motion_callback = [](rs::motion_data entry)
+                {
+                    if ((entry.timestamp_data.source_id != RS_EVENT_IMU_GYRO) && (entry.timestamp_data.source_id != RS_EVENT_IMU_ACCEL))
+                        return;
+
+                    rs_event_source motionType = entry.timestamp_data.source_id;
+                    sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
+                    imu_msg.header.stamp = ros::Time::now();
+                    imu_msg.header.frame_id = optical_imu_id_[motionType];
+                    imu_msg.orientation.x = 0.0;
+                    imu_msg.orientation.y = 0.0;
+                    imu_msg.orientation.z = 0.0;
+                    imu_msg.orientation.w = 0.0;
+                    imu_msg.orientation_covariance = {-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+                    if (motionType == RS_EVENT_IMU_GYRO) {
+                        imu_msg.angular_velocity.x = entry.axes[0];
+                        imu_msg.angular_velocity.y = entry.axes[1];
+                        imu_msg.angular_velocity.z = entry.axes[2];
+                    }
+                    if (motionType == RS_EVENT_IMU_ACCEL) {
+                        imu_msg.linear_acceleration.x = entry.axes[0];
+                        imu_msg.linear_acceleration.y = entry.axes[1];
+                        imu_msg.linear_acceleration.z = entry.axes[2];
+                    }
+                    seq_motion[motionType] += 1;
+                    imu_msg.header.seq = seq_motion[motionType];
+                    imu_msg.header.stamp = ros::Time(entry.timestamp_data.timestamp);
+                    imu_publishers_[motionType].publish(imu_msg);
+                };
+                
+                std::function<void(rs::timestamp_data)> timestamp_callback;
+                timestamp_callback = [](rs::timestamp_data entry) {};
+
+                device->enable_motion_tracking(motion_callback, timestamp_callback);
+                ROS_INFO_STREAM("  enabled accel and gyro stream" );
+
+                // publish ZR300-specific intrinsics/extrinsics
+                IMUInfo accelInfo, gyroInfo;
+                getImuInfo(device, accelInfo, gyroInfo);
+                
+                fe2imu_publisher_.publish(getFisheye2ImuExtrinsicsMsg(device));
+                fe2depth_publisher_.publish(getFisheye2DepthExtrinsicsMsg(device));
+                accelInfo_publisher_.publish(accelInfo);
+                gyroInfo_publisher_.publish(gyroInfo);
+            }
+                        
+            if(isZR300)
+                device->start(rs::source::all_sources);
+            else
+                device->start();
+            cameraStarted = true;            
+        }//end setupStreams
+
+
+        void getStreamCalibData(rs::stream stream)
+        {
+            rs::intrinsics intrinsic = device->get_stream_intrinsics(stream);
+
+            camera_info_[stream].header.frame_id = optical_frame_id_[stream];
+            camera_info_[stream].width = intrinsic.width;
+            camera_info_[stream].height = intrinsic.height;
+
+            camera_info_[stream].K.at(0) = intrinsic.fx;
+            camera_info_[stream].K.at(2) = intrinsic.ppx;
+            camera_info_[stream].K.at(4) = intrinsic.fy;
+            camera_info_[stream].K.at(5) = intrinsic.ppy;
+            camera_info_[stream].K.at(8) = 1;
+
+            camera_info_[stream].P.at(0) = camera_info_[stream].K.at(0);
+            camera_info_[stream].P.at(1) = 0;
+            camera_info_[stream].P.at(2) = camera_info_[stream].K.at(2);
+            camera_info_[stream].P.at(3) = 0;
+            camera_info_[stream].P.at(4) = 0;
+            camera_info_[stream].P.at(5) = camera_info_[stream].K.at(4);
+            camera_info_[stream].P.at(6) = camera_info_[stream].K.at(5);
+            camera_info_[stream].P.at(7) = 0;
+            camera_info_[stream].P.at(8) = 0;
+            camera_info_[stream].P.at(9) = 0;
+            camera_info_[stream].P.at(10) = 1;
+            camera_info_[stream].P.at(11) = 0;
+            
+            if (stream == rs::stream::depth)
+            {
+                // set depth to color translation values in Projection matrix (P)
+                rs::extrinsics extrinsic = device->get_extrinsics(rs::stream::depth, rs::stream::color);
+                camera_info_[stream].P.at(3) = extrinsic.translation[0];     // Tx
+                camera_info_[stream].P.at(7) = extrinsic.translation[1];     // Ty
+                camera_info_[stream].P.at(11) = extrinsic.translation[2];    // Tz
+
+                for (int i = 0; i < 9; i++)
+                    camera_info_[stream].R.at(i) = extrinsic.rotation[i];
+            }
+            
+            switch((int32_t)intrinsic.model())
+            {
+            case 0:
+                camera_info_[stream].distortion_model = "none";
+                break;
+            case 1:
+                camera_info_[stream].distortion_model = "plumb_bob"; // This is the same as "modified_brown_conrady", but used by ROS
+                break;
+            case 2:
+                camera_info_[stream].distortion_model = "inverse_brown_conrady";
+                break;
+            case 3:
+                camera_info_[stream].distortion_model = "distortion_ftheta";
+                break;
+            default:
+                camera_info_[stream].distortion_model = "others";
+                break;
+            }
+            
+            // set R (rotation matrix) values to identity matrix
+            if (stream != rs::stream::depth)
+            {
+                camera_info_[stream].R.at(0) = 1.0;
+                camera_info_[stream].R.at(1) = 0.0;
+                camera_info_[stream].R.at(2) = 0.0;
+                camera_info_[stream].R.at(3) = 0.0;
+                camera_info_[stream].R.at(4) = 1.0;
+                camera_info_[stream].R.at(5) = 0.0;
+                camera_info_[stream].R.at(6) = 0.0;
+                camera_info_[stream].R.at(7) = 0.0;
+                camera_info_[stream].R.at(8) = 1.0;
+            }
+            
+            for (int i = 0; i < 5; i++)
+            {
+                camera_info_[stream].D.push_back(intrinsic.coeffs[i]);
+            }
+        }//end getStreamCalibData
+
+
+        void publishStaticTransforms()
+        {
+            // Publish transforms for the cameras
+            tf::Quaternion q_c2co;
+            tf::Quaternion q_d2do;
+            tf::Quaternion q_i2io;
+            geometry_msgs::TransformStamped b2d_msg;
+            geometry_msgs::TransformStamped d2do_msg;
+            geometry_msgs::TransformStamped b2c_msg;
+            geometry_msgs::TransformStamped c2co_msg;
+            geometry_msgs::TransformStamped b2i_msg;
+            geometry_msgs::TransformStamped i2io_msg;
+
+            // Get the current timestamp for all static transforms
+            ros::Time transform_ts_ = ros::Time::now();
+
+            // The color frame is used as the base frame.
+            // Hence no additional transformation is done from base frame to color frame.
+            b2c_msg.header.stamp = transform_ts_;
+            b2c_msg.header.frame_id = base_frame_id_;
+            b2c_msg.child_frame_id = frame_id_[rs::stream::color];
+            b2c_msg.transform.translation.x = 0;
+            b2c_msg.transform.translation.y = 0;
+            b2c_msg.transform.translation.z = 0;
+            b2c_msg.transform.rotation.x = 0;
+            b2c_msg.transform.rotation.y = 0;
+            b2c_msg.transform.rotation.z = 0;
+            b2c_msg.transform.rotation.w = 1;
+            static_tf_broadcaster_.sendTransform(b2c_msg);
+
+            // Transform color frame to color optical frame
+            q_c2co.setRPY(-M_PI/2, 0.0, -M_PI/2);
+            c2co_msg.header.stamp = transform_ts_;
+            c2co_msg.header.frame_id = frame_id_[rs::stream::color];
+            c2co_msg.child_frame_id = optical_frame_id_[rs::stream::color];
+            c2co_msg.transform.translation.x = 0;
+            c2co_msg.transform.translation.y = 0;
+            c2co_msg.transform.translation.z = 0;
+            c2co_msg.transform.rotation.x = q_c2co.getX();
+            c2co_msg.transform.rotation.y = q_c2co.getY();
+            c2co_msg.transform.rotation.z = q_c2co.getZ();
+            c2co_msg.transform.rotation.w = q_c2co.getW();
+            static_tf_broadcaster_.sendTransform(c2co_msg);
+
+            // Transform base frame to depth frame
+            rs::extrinsics color2depth_extrinsic = device->get_extrinsics(rs::stream::color, rs::stream::depth);
+            b2d_msg.header.stamp = transform_ts_;
+            b2d_msg.header.frame_id = base_frame_id_;
+            b2d_msg.child_frame_id = frame_id_[rs::stream::depth];
+            b2d_msg.transform.translation.x =  color2depth_extrinsic.translation[2];
+            b2d_msg.transform.translation.y = -color2depth_extrinsic.translation[0];
+            b2d_msg.transform.translation.z = -color2depth_extrinsic.translation[1];
+            b2d_msg.transform.rotation.x = 0;
+            b2d_msg.transform.rotation.y = 0;
+            b2d_msg.transform.rotation.z = 0;
+            b2d_msg.transform.rotation.w = 1;
+            static_tf_broadcaster_.sendTransform(b2d_msg);
+
+            // Transform depth frame to depth optical frame
+            q_d2do.setRPY(-M_PI/2, 0.0, -M_PI/2);
+            d2do_msg.header.stamp = transform_ts_;
+            d2do_msg.header.frame_id = frame_id_[rs::stream::depth];
+            d2do_msg.child_frame_id = optical_frame_id_[rs::stream::depth];
+            d2do_msg.transform.translation.x = 0;
+            d2do_msg.transform.translation.y = 0;
+            d2do_msg.transform.translation.z = 0;
+            d2do_msg.transform.rotation.x = q_d2do.getX();
+            d2do_msg.transform.rotation.y = q_d2do.getY();
+            d2do_msg.transform.rotation.z = q_d2do.getZ();
+            d2do_msg.transform.rotation.w = q_d2do.getW();
+            static_tf_broadcaster_.sendTransform(d2do_msg);
+
+            if(isZR300)
+            {
+                tf::Quaternion q_f2fo, q_imu2imuo;
+                geometry_msgs::TransformStamped b2f_msg;
+                geometry_msgs::TransformStamped f2fo_msg;
+                geometry_msgs::TransformStamped b2imu_msg;
+                geometry_msgs::TransformStamped imu2imuo_msg;
+
+                // Transform base frame to fisheye frame
+                b2f_msg.header.stamp = transform_ts_;
+                b2f_msg.header.frame_id = base_frame_id_;
+                b2f_msg.child_frame_id = frame_id_[rs::stream::fisheye];
+                rs::extrinsics color2fisheye_extrinsic = device->get_extrinsics(rs::stream::color, rs::stream::fisheye);
+                b2f_msg.transform.translation.x =  color2fisheye_extrinsic.translation[2];
+                b2f_msg.transform.translation.y = -color2fisheye_extrinsic.translation[0];
+                b2f_msg.transform.translation.z = -color2fisheye_extrinsic.translation[1];
+                b2f_msg.transform.rotation.x = 0;
+                b2f_msg.transform.rotation.y = 0;
+                b2f_msg.transform.rotation.z = 0;
+                b2f_msg.transform.rotation.w = 1;
+                static_tf_broadcaster_.sendTransform(b2f_msg);
+
+                // Transform fisheye frame to fisheye optical frame
+                q_f2fo.setRPY(-M_PI/2, 0.0, -M_PI/2);
+                f2fo_msg.header.stamp = transform_ts_;
+                f2fo_msg.header.frame_id = frame_id_[rs::stream::fisheye];
+                f2fo_msg.child_frame_id = optical_frame_id_[rs::stream::fisheye];
+                f2fo_msg.transform.translation.x = 0;
+                f2fo_msg.transform.translation.y = 0;
+                f2fo_msg.transform.translation.z = 0;
+                f2fo_msg.transform.rotation.x = q_f2fo.getX();
+                f2fo_msg.transform.rotation.y = q_f2fo.getY();
+                f2fo_msg.transform.rotation.z = q_f2fo.getZ();
+                f2fo_msg.transform.rotation.w = q_f2fo.getW();
+                static_tf_broadcaster_.sendTransform(f2fo_msg);
+
+                // // Transform base frame to imu frame
+                // b2imu_msg.header.stamp = transform_ts_;
+                // b2imu_msg.header.frame_id = base_frame_id_;
+                // b2imu_msg.child_frame_id = imu_frame_id_;
+                // rs::extrinsics color2imu_extrinsic = device->get_motion_extrinsics_from(rs::stream::color);
+                // b2imu_msg.transform.translation.x =  color2imu_extrinsic.translation[2];
+                // b2imu_msg.transform.translation.y = -color2imu_extrinsic.translation[0];
+                // b2imu_msg.transform.translation.z = -color2imu_extrinsic.translation[1];
+                // b2imu_msg.transform.rotation.x = 0;
+                // b2imu_msg.transform.rotation.y = 0;
+                // b2imu_msg.transform.rotation.z = 0;
+                // b2imu_msg.transform.rotation.w = 1;
+                // static_tf_broadcaster_.sendTransform(b2imu_msg);
+
+                // // Transform imu frame to imu optical frame
+                // q_imu2imuo.setRPY(-M_PI/2, 0.0, -M_PI/2);
+                // imu2imuo_msg.header.stamp = transform_ts_;
+                // imu2imuo_msg.header.frame_id = imu_frame_id_;
+                // imu2imuo_msg.child_frame_id = optical_imu_frame_id_;
+                // imu2imuo_msg.transform.translation.x = 0;
+                // imu2imuo_msg.transform.translation.y = 0;
+                // imu2imuo_msg.transform.translation.z = 0;
+                // imu2imuo_msg.transform.rotation.x = q_imu2imuo.getX();
+                // imu2imuo_msg.transform.rotation.y = q_imu2imuo.getY();
+                // imu2imuo_msg.transform.rotation.z = q_imu2imuo.getZ();
+                // imu2imuo_msg.transform.rotation.w = q_imu2imuo.getW();
+                // static_tf_broadcaster_.sendTransform(imu2imuo_msg);
+            }
+        }
+
+    private:
+        ros::NodeHandle node_handle, pnh_;
+        bool cameraStarted;
+        std::unique_ptr< rs::context > ctx; 
+        rs::device *device;
+
+        std::string serial_no;
+        std::string usb_port_id_;
+        std::string camera_type_;
+
+        std::map<rs::stream,int> width_;
+        std::map<rs::stream,int> height_;
+        std::map<rs::stream,int> fps_;
+        std::map<rs::stream,bool> enable_; 
+        std::map<rs::stream,std::string> stream_name_;
+        tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
+    };//end class
+
+PLUGINLIB_DECLARE_CLASS(realsense_ros_camera, NodeletCamera, realsense_ros_camera::NodeletCamera, nodelet::Nodelet);
+
 }//end namespace
 

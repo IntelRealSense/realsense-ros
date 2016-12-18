@@ -1,12 +1,10 @@
 <?xml version="1.0"?>
 <package>
   <name>realsense_ros_camera</name>
-  <version>16.0.0</version>
+  <version>1.0.0</version>
   <description>The realsense_ros_camera package</description>
-
-  <maintainer email="lu.x.lu@intel.com">Elisa_Lu</maintainer>
+  <maintainer email="realsense-sw@intel.com">Intel RealSense</maintainer>
   <license>Apache 2.0</license>
-
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>roscpp</build_depend>
@@ -16,6 +14,7 @@
   <build_depend>nodelet</build_depend>
   <build_depend>cv_bridge</build_depend>
   <build_depend>image_transport</build_depend>
+  <build_depend>tf</build_depend>
   <run_depend>image_transport</run_depend>
   <run_depend>cv_bridge</run_depend>
   <run_depend>nodelet</run_depend>  
@@ -24,8 +23,8 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
-
+  <run_depend>tf</run_depend>
   <export>
-    <nodelet plugin="${prefix}/test_nodelet.xml" />
+    <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>
 </package>

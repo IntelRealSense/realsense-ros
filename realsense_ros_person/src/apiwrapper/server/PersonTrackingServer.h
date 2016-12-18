@@ -1,6 +1,10 @@
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2016 Intel Corporation. All Rights Reserved
+
 #pragma once
 #include <ros/ros.h>
-#include <realsense_ros_person/TrackingRequest.h>
+#include <realsense_ros_person/StartTracking.h>
+#include <realsense_ros_person/StopTracking.h>
 #include <realsense_ros_person/Recognition.h>
 #include <realsense_ros_person/RecognitionRegister.h>
 #include <realsense_ros_person/TrackingConfig.h>
@@ -36,8 +40,13 @@ namespace realsense_ros_person
         bool recognitionRegisterRequestCallback(realsense_ros_person::RecognitionRegister::Request &request,
                                                 realsense_ros_person::RecognitionRegister::Response &response);
 
-        bool trackingRequestCallback(realsense_ros_person::TrackingRequest::Request &request,
-                                     realsense_ros_person::TrackingRequest::Response &response);
+        bool startTrackingRequestCallback(realsense_ros_person::StartTracking::Request &request,
+                                     realsense_ros_person::StartTracking::Response &response);
+
+        bool stopTrackingRequestCallback(realsense_ros_person::StopTracking::Request &request,
+                                          realsense_ros_person::StopTracking::Response &response);
+
+        bool startStopTracking(bool isStart, int personId);
 
         bool saveRecognitionDbCallback(realsense_ros_person::SaveRecognitionDB::Request &request,
                                        realsense_ros_person::SaveRecognitionDB::Response &response);
@@ -49,7 +58,8 @@ namespace realsense_ros_person
         ros::ServiceServer mTrackingConfigService;
         ros::ServiceServer mRecognitionRequestService;
         ros::ServiceServer mRecognitionRegisterRequestService;
-        ros::ServiceServer mTrackingRequestService;
+        ros::ServiceServer mStartTrackingService;
+        ros::ServiceServer mStopTrackingService;
         ros::ServiceServer mSaveRecognitionDbService;
         ros::ServiceServer mLoadRecognitionDbService;
         ros::ServiceServer mRecognitionImgRequestService;

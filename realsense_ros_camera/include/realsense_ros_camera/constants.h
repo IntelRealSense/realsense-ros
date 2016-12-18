@@ -13,7 +13,12 @@
 namespace realsense_ros_camera
 {
     // Default Constants.
+<<<<<<< HEAD
     const int STREAM_COUNT = 5;
+=======
+    const std::string DEFAULT_SERIAL_NO = "";
+
+>>>>>>> master
     const int DEPTH_WIDTH = 480;
     const int DEPTH_HEIGHT = 360;
     const int COLOR_WIDTH = 640;
@@ -25,6 +30,7 @@ namespace realsense_ros_camera
     const int FISHEYE_FPS = 30;
     const bool ENABLE_DEPTH = true;
     const bool ENABLE_COLOR = true;
+<<<<<<< HEAD
     const bool ENABLE_IR = false;
     const bool ENABLE_IR2 = false;
     const bool ENABLE_FISHEYE = true;
@@ -82,5 +88,21 @@ namespace realsense_ros_camera
     const std::string IMU_GYRO = "IMU_GYRO";
     const double IMU_UNITS_TO_MSEC = 0.00003125;
 
+=======
+    const bool ENABLE_FISHEYE = true;
+
+    const double ROTATION_IDENTITY[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    const float MILLIMETER_METERS  = 0.001;
+    
+    const std::string DEFAULT_BASE_FRAME_ID = "camera_link";
+    const std::string DEFAULT_DEPTH_FRAME_ID = "camera_depth_frame";
+    const std::string DEFAULT_COLOR_FRAME_ID = "camera_rgb_frame";
+    const std::string DEFAULT_FISHEYE_FRAME_ID = "camera_fisheye_frame";
+    const std::string DEFAULT_IMU_FRAME_ID = "camera_imu_frame";
+    const std::string DEFAULT_DEPTH_OPTICAL_FRAME_ID = "camera_depth_optical_frame";
+    const std::string DEFAULT_COLOR_OPTICAL_FRAME_ID = "camera_rgb_optical_frame";
+    const std::string DEFAULT_FISHEYE_OPTICAL_FRAME_ID = "camera_fisheye_optical_frame";
+    const std::string DEFAULT_IMU_OPTICAL_FRAME_ID = "camera_imu_optical_frame";
+>>>>>>> master
 }  // namespace realsense_camera
 #endif  // REALSENSE_CAMERA_CONSTANTS_H

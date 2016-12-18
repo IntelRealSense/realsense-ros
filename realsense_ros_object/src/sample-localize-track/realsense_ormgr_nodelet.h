@@ -10,92 +10,86 @@
 ///////////////////////////////////////////////
 
 #include <nodelet/nodelet.h>
-
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 
-
-
-
-
 namespace realsense_ros_object
 {
-	///////////////////////////////////////////////
-	///	CTracking - 
-	///////////////////////////////////////////////
-	class COrmgr 
-	{
-	public :
-		//===================================
-		//	Interface
-		//===================================
-	  	void getParams(ros::NodeHandle& nh);
-		void getParams(const std::vector<std::string> & argv);
-		void init(ros::NodeHandle& nh);
-  
-		COrmgr();
-		virtual ~COrmgr();
+///////////////////////////////////////////////
+///	CTracking -
+///////////////////////////////////////////////
+class COrmgr
+{
+public :
+    //===================================
+    //	Interface
+    //===================================
+    void getParams(ros::NodeHandle& nh);
+    void getParams(const std::vector<std::string> & argv);
+    void init(ros::NodeHandle& nh);
 
-	private:
-		//===================================
-		//	Member Functions
-		//===================================
+    COrmgr();
+    virtual ~COrmgr();
 
-		int initialize();
-		int unInitialize();
+private:
+    //===================================
+    //	Member Functions
+    //===================================
 
-		//Static member functions:
-		void localizeidObjectsCallback(const realsense_ros_object::ObjectsInBoxes& msg);		
-		void trackedObjectCallback(const realsense_ros_object::TrackedObjectsArray::ConstPtr & msg);
-		void UICallback(const realsense_ros_object::UI & msg);
-		
-		//===================================
-		//	Member Variables
-		//===================================
+    int initialize();
+    int unInitialize();
 
-		ros::Subscriber m_sub_localized_objects;	
-		ros::Subscriber m_sub_tracked_objects;	
-		ros::Subscriber m_sub_UI;
-	
-		ros::Publisher m_objects_to_track_pub;
-		ros::Publisher m_tracked_localized_pub;
-		
-		ros::NodeHandle m_nh;
-		
-		realsense_ros_object::ObjectsInBoxes m_objects_vector;
-		
-		bool m_debug;
-		int m_maxNumberOfObjects;	
-		int m_threshold;
-		bool m_localize_every_frame;
-	};
-	
+    //Static member functions:
+    void localizeidObjectsCallback(const realsense_ros_object::ObjectsInBoxes& msg);
+    void trackedObjectCallback(const realsense_ros_object::TrackedObjectsArray::ConstPtr & msg);
+    void UICallback(const realsense_ros_object::UI & msg);
+
+    //===================================
+    //	Member Variables
+    //===================================
+
+    ros::Subscriber sub_localized_objects_;
+    ros::Subscriber sub_tracked_objects_;
+    ros::Subscriber sub_UI_;
+
+    ros::Publisher objects_to_track_pub_;
+    ros::Publisher tracked_localized_pub_;
+
+    ros::NodeHandle nh_;
+
+    realsense_ros_object::ObjectsInBoxes objects_vector_;
+
+    bool debug_;
+    int max_number_of_objects_;
+    int threshold_;
+    bool localize_every_frame_;
+};
+
 #ifdef RUN_AS_NODELET
-	///////////////////////////////////////////////
-	///	COrmgrNodelet 
-	///////////////////////////////////////////////
-	class COrmgrNodelet : public nodelet::Nodelet
-	{
-	public :
-		//===================================
-		//	Interface
-		//===================================
-		virtual void onInit();
+///////////////////////////////////////////////
+///	COrmgrNodelet
+///////////////////////////////////////////////
+class COrmgrNodelet : public nodelet::Nodelet
+{
+public :
+    //===================================
+    //	Interface
+    //===================================
+    virtual void onInit();
 
-		~COrmgrNodelet();
+    ~COrmgrNodelet();
 
-	private:
-		//===================================
-		//	Member Functions
-		//===================================
+private:
+    //===================================
+    //	Member Functions
+    //===================================
 
-		//===================================
-		//	Member Variables
-		//===================================
+    //===================================
+    //	Member Variables
+    //===================================
 
-		COrmgr m_ManagerNodelet;
-
-	};
+    COrmgr manager_nodelet_;
+};
 #endif
 };
 

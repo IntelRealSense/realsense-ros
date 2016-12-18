@@ -1,58 +1,119 @@
-ROS Node for Intel® RealSense™ SLAM Library
-=========================================
+# ROS Node for Intel® RealSense™ SLAM Library
 
-(Ben, your AR: Update this documentation)
+This package contains a ROS wrapper for Intel's SLAM library. The realsense_ros_slam package provides a solution for SLAM as a ROS nodelet. It consumes the messages sent by the realsense_ros_camera nodelet, and publishes messages for the camera pose and occupancy map.
 
-# (Old Content) realsense_ros_slam released by Perc-China(draft)
-This package contains a ROS wrapper for Intel's SLAM library. The realsense_ros_slam package provides a solution of SLAM as a ROS nodelet. It take the messages sent by realsense_ros_camera nodelet. The objective of this module is to find out map information and 2Dpose of agent.
+## Hardware/Software Requirements
 
-1. Hardwarei/Software Requirement
-----------------------------------------------
-  To use realsense_ros_slam, you need a mobile agent with a RealSense ZR200 mounted.
-###  ubuntu requirements:
-<br /\>     Ubuntu 16.04
-<br /\>     gcc 4.9.3
-<br /\>     libeigen3-dev
-<br /\>     libc++ dev 
-###  libraries of intel used(version beta3 RC5):
-<br /\>     Linux SDK
-<br /\>     librealsense_slam
-<br /\>     Link: https://securewiki.ith.intel.com/pages/viewpage.action?pageId=510951805
-2. Example 
---------------------------------------------
-<br /\>    To start realsense_ros_slam and realsense_ros_camera with command: 
-<br /\>       roslaunch realsense_ros_slam camera_slam_nodelet.launch
-3. Nodelet
---------------------------------------------
-## 3.1 realsense_ros_slam 
-    The realsense_ros_slam nodelet takes fisheye image, imu data, color image, depth image from device, then send the information of "map" and "2Dpose" of agent as type of nav_msgs/OccupancyGrid and geometry_msgs/Pose2D messages after calculation.
-###  3.1.1 Subscribed Topics
-      camera/fisheye/camera_info (sensor_msgs/CameraInfo)
-        The intrinsic of camera (fisheye)
-      camera/depth/camera_info (sensor_msgs/CameraInfo)
-        The intrinsic (and extrinsic) of camera( depth and depth to color)
-      camera/imu/gyro (realsense_ros_camera/MotionInfo)
-        Contain the imu data of Gyroscope, timestamp and frame number corresponding
-      camera/imu/accel (realsenese_camera/MotionInfo)
-        Contain the imu data of Accelerometer, timestamp and frame number corresponding
-      camera/fisheye/fisheye_stream_and_info (realsense_ros_camera::StreamInfo)
-        Contain the fisheye stream, timestamp and frame number corresponding
-      camera/depth/depth_stream_and_info (realsense_ros_camera::StreamInfo)
-        Contain the depth stream, timestamp and frame number corresponding
-###  3.1.2 Published Topics
-      poseMatrix (realsense_ros_slam/PoseMatrix)
-          6 dof matrix 
-      pose2d (geometry_msgs/Pose2D)
-          pose of agent in 2 dimentions(x,y,theta)
-      map (nav_msgs/OccupancyGrid)
-          map info of area passed
-###  3.1.3 Parameters
-      ~trajectoryFilename: (str::string, default: 'trajectory.ppm') 
-          name of trajectory file of agent. The files will be saved in the realsense_ros_slam directory
-      ~relocalizationFilename: (str::string, default: 'relocalization.bin')
-          name of re-localization data file. The files will be saved in the realsense_ros_slam directory
-      ~occupancyFilename: (str::string, default: 'occupancy.bin')
-          name of occupancy data file. The files will be saved in the realsense_ros_slam directory
+To use realsense_ros_slam, you need a mobile agent with a RealSense ZR300 camera.
+
+###  Ubuntu requirements:
+- Ubuntu 16.04
+- gcc 4.9.3
+- libeigen3-dev
+- libc++ dev 
+
+###  Required Intel libraries:
+- Linux SDK
+- librealsense_slam
+- Link: https://securewiki.ith.intel.com/pages/viewpage.action?pageId=510951805
+
+## Inputs and Outputs
+
+### Subscribed Topics
+
+`camera/fisheye/image_raw`
+
+- Message type: `sensor_msgs::Image`
+- The fisheye image with timestamp
+
+`camera/depth/image_raw`
+
+- Message type: `sensor_msgs::Image`
+- The depth image with timestamp
+
+`camera/fisheye/camera_info`
+
+- Message type: `sensor_msgs::CameraInfo`
+- The intrinsics of the fisheye camera
+
+`camera/depth/camera_info` 
+
+- Message type: `sensor_msgs::CameraInfo`
+- The intrinsics of the depth camera
+
+`camera/gyro/sample`
+
+- Message type: `sensor_msgs::Imu`
+- Gyroscope sample with timestamp
+
+`camera/accel/sample`
+
+- Message type: `sensor_msgs::Imu`
+- Accelerometer sample with timestamp 
+
+`camera/gyro/imu_info`
+
+- Message type: `realsense_ros_camera::IMUInfo`
+- Gyroscope intrinsics, noise and bias variances
+
+`camera/accel/imu_info`
+
+- Message type: `realsense_ros_camera::IMUInfo`
+- Accelerometer intrinsics, noise and bias variances
+
+`camera/extrinsics/fisheye2imu`
+
+- Message type: `realsense_ros_camera::Extrinsics`
+- Fisheye to IMU extrinsics
+
+`camera/extrinsics/fisheye2depth`
+
+- Message type: `realsense_ros_camera::Extrinsics`
+- Fisheye to depth extrinsics
+        
+### Published Topics
+
+`camera_pose`
+
+- Message type: `geometry_msgs::PoseStamped`
+- The raw camera pose, in the camera's coordinate system (right-handed, +x right, +y down, +z forward)
+
+`pose2d`
+
+- Message type: `geometry_msgs::Pose2D`
+- The 2D camera pose, projected onto a plane corresponding to the occupancy map
+
+`tracking_accuracy`
+
+- Message type: `realsense_ros_slam::TrackingAccuracy`
+- The current 6DoF tracking accuracy (low/medium/high/failed). Currently `high` is not used.
+
+`map`
+
+- Message type: `nav_msgs::OccupancyGrid`
+- The occupancy map
+
+### Parameters
+
+`trajectoryFilename` 
+
+- `str::string`, default: 'trajectory.ppm'
+- The name of the trajectory file to output. The files will be saved in the realsense_ros_slam directory.
+
+`relocalizationFilename` 
+
+- `str::string`, default: 'relocalization.bin'
+- The name of re-localization file to output. The files will be saved in the realsense_ros_slam directory.
+
+`occupancyFilename`
+- `str::string`, default: 'occupancy.bin'
+- The name of occupancy data file to output. 
+
+`resolution`
+- `float`
+- Sets the size of the grid squares in the occupancy map, in meters.
+
+The files will be saved in the realsense_ros_slam directory.
 
 ## Usage
 
@@ -61,11 +122,34 @@ To run the slam engine:
 $ cd catkin_ws
 $ catkin_make
 $ source devel/setup.bash
-$ roslaunch rs_slam_test camera_slam_nodelet.launch
+$ roslaunch realsense_ros_salm demo_slam.launch
 ```
 
-To see estimated pos, in another window:
+To run the slam engine using a recorded bag file:
+```bash
+$ cd catkin_ws
+$ catkin_make
+$ source devel/setup.bash
+$ roslaunch realsense_ros_salm demo_slam_from_bag.launch bag_path:=~/test.bag
+```
+
+To see the estimated pose messages, in another console window:
 ```bash
 $ cd catkin-ws
 $ source devel/setup.bash
-$ rostopic echo /pose2d
+$ rostopic echo camera_pose
+```
+
+To see the camera pose and occupancy map in rviz:
+```bash
+$ sudo apt-get install ros-kinetic-rviz
+```
+
+Start the SLAM nodelet as shown above, then run rviz:
+
+```bash
+$ rviz
+```
+
+In rviz, add Pose and Map visualizations (click Add button near bottom left). Select the `camera_pose` message for the Pose and th `map` message for the Map visualization.
+

@@ -1,3 +1,6 @@
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2016 Intel Corporation. All Rights Reserved
+
 #include "PersonTrackingHelper.h"
 
 #include <fstream>
@@ -19,19 +22,29 @@ namespace realsense_ros_person
             ptConfiguration->QueryRecognition()->Disable();
         }
 
-        if (config.gesturesEnabled)
+        if (config.pointingGestureEnabled)
         {
-            ROS_INFO("gestures enabled");
+            ROS_INFO("pointing gesture enabled");
             ptConfiguration->QueryGestures()->Enable();
-            ptConfiguration->QueryGestures()->EnableAllGestures();
+            ptConfiguration->QueryGestures()->EnableGesture(Intel::RealSense::PersonTracking::GestureType::Pointing);
         }
         else
         {
-            ROS_INFO("gestures disabled");
-            ptConfiguration->QueryGestures()->Disable();
-            ptConfiguration->QueryGestures()->DisableAllGestures();
+            ROS_INFO("pointing gesture disabled");
+            ptConfiguration->QueryGestures()->DisableGesture(Intel::RealSense::PersonTracking::GestureType::Pointing);
         }
 
+        if (config.waveGestureEnabled)
+        {
+            ROS_INFO("wave gesture enabled");
+            ptConfiguration->QueryGestures()->Enable();
+            ptConfiguration->QueryGestures()->EnableGesture(Intel::RealSense::PersonTracking::GestureType::Wave);
+        }
+        else
+        {
+            ROS_INFO("wave gesture disabled");
+            ptConfiguration->QueryGestures()->DisableGesture(Intel::RealSense::PersonTracking::GestureType::Wave);
+        }
 
         if (config.skeletonEnabled)
         {

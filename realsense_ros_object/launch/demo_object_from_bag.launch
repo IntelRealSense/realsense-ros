@@ -1,5 +1,5 @@
 <launch>
-  <arg name="bag_path" default="$(env HOME)/test.bag" />
+  <arg name="bag_path" default="$(env HOME)/test_or_640x480c_320x240d.bag" />
   <include file="$(find realsense_ros_camera)/launch/play_bag.launch">
     <arg name="bag_path" value="$(arg bag_path)"/>
   </include>
