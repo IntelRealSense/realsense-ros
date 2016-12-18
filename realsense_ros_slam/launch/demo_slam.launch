@@ -2,16 +2,11 @@
   <include file="$(find realsense_ros_camera)/launch/camera.launch">
     <arg name="fisheye_width" value="640"/>
     <arg name="fisheye_height" value="480"/>
-<<<<<<< HEAD
-    <arg name="depth_width" value="320"/>
-    <arg name="depth_height" value="240"/>
-=======
     <arg name="enable_fisheye" value="true"/>
     <arg name="depth_width" value="320"/>
     <arg name="depth_height" value="240"/>
     <arg name="enable_depth" value="true"/>
     <arg name="enable_color" value="false"/>
->>>>>>> master
   </include>
   <include file="$(find realsense_ros_slam)/launch/slam_with_transforms.launch"/>
 </launch>

@@ -1,12 +1,4 @@
 <launch>
-<<<<<<< HEAD
-  <arg name="fisheye_width"       default="640" />
-  <arg name="fisheye_height"      default="480" />
-  <arg name="depth_width"         default="480" />
-  <arg name="depth_height"        default="360" />
-  <arg name="color_width"         default="640" />
-  <arg name="color_height"        default="480" />
-=======
   <arg name="manager"             default="realsense_ros_camera_manager"/>
   <arg name="serial_no"           default="" />
   <arg name="camera"              default="camera"/>
@@ -24,25 +16,10 @@
   <arg name="color_width"         default="640" />
   <arg name="color_height"        default="480" />
   <arg name="enable_color"        default="true" />
->>>>>>> master
   <arg name="fisheye_fps"         default="30" />
   <arg name="depth_fps"           default="30" />
   <arg name="color_fps"           default="30" />
 
-<<<<<<< HEAD
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_camera_manager"  args="manager" output="screen"/> 
-
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_camera" args="load realsense_ros_camera/NodeletCamera realsense_ros_camera_manager" output="screen">
-    <param name="fisheye_width"           type="int"  value="$(arg fisheye_width)" />
-    <param name="fisheye_height"          type="int"  value="$(arg fisheye_height)" />
-    <param name="depth_width"             type="int"  value="$(arg depth_width)" />
-    <param name="depth_height"            type="int"  value="$(arg depth_height)" />
-    <param name="color_width"             type="int"  value="$(arg color_width)" />
-    <param name="color_height"            type="int"  value="$(arg color_height)" />
-    <param name="fisheye_fps"             type="int"  value="$(arg fisheye_fps)" />
-    <param name="depth_fps"               type="int"  value="$(arg depth_fps)" />
-    <param name="color_fps"               type="int"  value="$(arg color_fps)" />
-=======
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/> 
   <node pkg="nodelet" type="nodelet" name="realsense_ros_$(arg camera)" args="load realsense_ros_camera/NodeletCamera $(arg manager)" output="screen">
     <param name="serial_no"                type="str"  value="$(arg serial_no)" />
@@ -67,6 +44,5 @@
     <param name="fisheye_optical_frame_id" type="str"  value="$(arg camera)_fisheye_optical_frame" />
     <param name="accel_optical_frame_id"   type="str"  value="$(arg camera)_accel_optical_frame" />
     <param name="gyro_optical_frame_id"    type="str"  value="$(arg camera)_gyro_optical_frame" />
->>>>>>> master
   </node>
 </launch>
