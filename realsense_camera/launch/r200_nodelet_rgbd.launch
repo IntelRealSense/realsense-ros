@@ -78,9 +78,6 @@
       <arg name="depth"                     value="$(arg depth)" />
       <arg name="rgb"                       value="$(arg rgb)" />
       <arg name="ir"                        value="$(arg ir)" />
-      <arg name="depth_processing"          value="$(arg depth_processing)" />
-      <arg name="rgb_processing"            value="$(arg rgb_processing)" />
-      <arg name="ir_processing"             value="$(arg ir_processing)" />
       <arg name="publish_tf"                value="$(arg publish_tf)" />
       <arg name="mode"                      value="$(arg mode)" />
       <arg name="depth_width"               value="$(arg depth_width)" />
