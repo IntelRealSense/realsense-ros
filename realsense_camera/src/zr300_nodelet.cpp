@@ -85,7 +85,7 @@ namespace realsense_camera
     if (enable_imu_ == true)
     {
       imu_thread_ =
-          boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&ZR300Nodelet::prepareIMU, this)));
+          boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&ZR300Nodelet::publishIMU, this)));
     }
   }
 
@@ -510,19 +510,10 @@ namespace realsense_camera
   }
 
   /*
-   * Prepare IMU.
+   * Publish IMU.
    */
-  void ZR300Nodelet::prepareIMU()
+  void ZR300Nodelet::publishIMU()
   {
-    setIMUCallbacks();
-
-    ROS_INFO_STREAM(nodelet_name_ << " - Enabling IMU");
-    rs_enable_motion_tracking_cpp(rs_device_, new rs::motion_callback(motion_handler_),
-        new rs::timestamp_callback(timestamp_handler_), &rs_error_);
-    checkError();
-    ros::Time imu_start_ts = ros::Time::now();
-    rs_start_source(rs_device_, (rs_source)rs::source::motion_data, &rs_error_);
-    checkError();
     prev_imu_ts_ = -1;
     while (ros::ok())
     {
@@ -533,7 +524,7 @@ namespace realsense_camera
         if (prev_imu_ts_ != imu_ts_)
         {
           sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
-          imu_msg.header.stamp = ros::Time(imu_start_ts) + ros::Duration(imu_ts_ * 0.001);
+          imu_msg.header.stamp = ros::Time(camera_start_ts_) + ros::Duration(imu_ts_ * 0.001);
           imu_msg.header.frame_id = imu_optical_frame_id_;
 
           imu_msg.orientation.x = 0.0;
@@ -562,6 +553,23 @@ namespace realsense_camera
       }
     }
     stopIMU();
+  }
+
+  /*
+   * Set up IMU -- overrides base class
+   */
+  void ZR300Nodelet::setStreams()
+  {
+    // enable camera streams
+    BaseNodelet::setStreams();
+
+    // enable IMU
+    ROS_INFO_STREAM(nodelet_name_ << " - Enabling IMU");
+    setIMUCallbacks();
+    rs_enable_motion_tracking_cpp(rs_device_, new rs::motion_callback(motion_handler_),
+        new rs::timestamp_callback(timestamp_handler_), &rs_error_);
+    checkError();
+    rs_source_ = RS_SOURCE_ALL; // overrides default to enable motion tracking
   }
 
   /*

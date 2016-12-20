@@ -87,7 +87,8 @@ protected:
   void getCameraExtrinsics();
   void publishStaticTransforms();
   void publishDynamicTransforms();
-  void prepareIMU();
+  void publishIMU();
+  void setStreams();
   void setIMUCallbacks();
   void setFrameCallbacks();
   std::function<void(rs::frame f)> fisheye_frame_handler_, ir2_frame_handler_;
