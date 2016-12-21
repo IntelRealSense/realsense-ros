@@ -2,9 +2,10 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.7.0 (2016-12-17)
+1.7.0 (2016-12-20)
 ------------------
 * Enable ROS Lint
+* Update RGBD launch files
 * Add Dynamic Transforms support -- multi-cam (#120)
 * Change color stream default to 30fps
 * Major code refactor to use librealsense callbacks
