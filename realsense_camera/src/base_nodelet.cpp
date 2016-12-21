@@ -571,8 +571,14 @@ namespace realsense_camera
     rs_set_frame_callback_cpp(rs_device_, RS_STREAM_COLOR, new rs::frame_callback(color_frame_handler_), &rs_error_);
     checkError();
 
-    rs_set_frame_callback_cpp(rs_device_, RS_STREAM_INFRARED, new rs::frame_callback(ir_frame_handler_), &rs_error_);
-    checkError();
+    // Need to add this check due to a bug in librealsense which calls the IR callback
+    // if INFRARED stream is disable AND INFRARED2 stream is enabled
+    // https://github.com/IntelRealSense/librealsense/issues/393
+    if (enable_[RS_STREAM_INFRARED])
+    {
+      rs_set_frame_callback_cpp(rs_device_, RS_STREAM_INFRARED, new rs::frame_callback(ir_frame_handler_), &rs_error_);
+      checkError();
+    }
   }
 
   /*
