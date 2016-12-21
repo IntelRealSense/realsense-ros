@@ -569,7 +569,7 @@ namespace realsense_camera
     rs_enable_motion_tracking_cpp(rs_device_, new rs::motion_callback(motion_handler_),
         new rs::timestamp_callback(timestamp_handler_), &rs_error_);
     checkError();
-    rs_source_ = RS_SOURCE_ALL; // overrides default to enable motion tracking
+    rs_source_ = RS_SOURCE_ALL;  // overrides default to enable motion tracking
   }
 
   /*
