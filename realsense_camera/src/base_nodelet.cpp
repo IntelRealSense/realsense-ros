@@ -723,7 +723,15 @@ namespace realsense_camera
       ROS_INFO_STREAM(nodelet_name_ << " - Starting camera");
       // Set up the callbacks for each stream
       setFrameCallbacks();
-      rs_device_->start(rs_source_);
+      try
+      {
+        rs_device_->start(rs_source_);
+      }
+      catch (std::runtime_error & e)
+      {
+    	  ROS_ERROR_STREAM(nodelet_name_ << " - Couldn't start camera -- " << e.what());
+    	  ros::shutdown();
+      }
       camera_start_ts_ = ros::Time::now();
       return "Camera Started Successfully";
     }
@@ -738,7 +746,15 @@ namespace realsense_camera
     if (rs_is_device_streaming(rs_device_, 0) == 1)
     {
       ROS_INFO_STREAM(nodelet_name_ << " - Stopping camera");
-      rs_device_->stop(rs_source_);
+      try
+      {
+        rs_device_->stop(rs_source_);
+      }
+      catch (std::runtime_error & e)
+      {
+    	  ROS_ERROR_STREAM(nodelet_name_ << " - Couldn't stop camera -- " << e.what());
+    	  ros::shutdown();
+      }
       return "Camera Stopped Successfully";
     }
     return "Camera is already Stopped";
