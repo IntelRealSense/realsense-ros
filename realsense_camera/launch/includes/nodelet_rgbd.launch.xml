@@ -26,6 +26,8 @@
     <arg name="enable_color"        default="true" />
     <arg name="enable_ir"           default="true" />
     <arg name="enable_ir2"          default="true" />
+    <arg name="enable_fisheye"      default="false" />
+    <arg name="enable_imu"          default="false" />
 
      <!-- "enable_pointcloud" is set to false by default because rgbd_launch uses standard ROS packages
           to generate point clouds. -->
@@ -42,6 +44,8 @@
         <param name="enable_ir"               type="bool" value="$(arg enable_ir)" />
         <param name="enable_ir2"              type="bool" value="$(arg enable_ir2)" />
         <param name="enable_pointcloud"       type="bool" value="$(arg enable_pointcloud)" />
+        <param name="enable_fisheye"          type="bool" value="$(arg enable_fisheye)" />
+        <param name="enable_imu"              type="bool" value="$(arg enable_imu)" />
         <param name="enable_tf"               type="bool" value="$(arg publish_tf)" />
         <param name="mode"                    type="str"  value="$(arg mode)" />
         <param name="depth_width"             type="int"  value="$(arg depth_width)" />
