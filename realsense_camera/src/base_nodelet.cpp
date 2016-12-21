@@ -729,8 +729,8 @@ namespace realsense_camera
       }
       catch (std::runtime_error & e)
       {
-    	  ROS_ERROR_STREAM(nodelet_name_ << " - Couldn't start camera -- " << e.what());
-    	  ros::shutdown();
+        ROS_ERROR_STREAM(nodelet_name_ << " - Couldn't start camera -- " << e.what());
+        ros::shutdown();
       }
       camera_start_ts_ = ros::Time::now();
       return "Camera Started Successfully";
@@ -752,8 +752,8 @@ namespace realsense_camera
       }
       catch (std::runtime_error & e)
       {
-    	  ROS_ERROR_STREAM(nodelet_name_ << " - Couldn't stop camera -- " << e.what());
-    	  ros::shutdown();
+        ROS_ERROR_STREAM(nodelet_name_ << " - Couldn't stop camera -- " << e.what());
+        ros::shutdown();
       }
       return "Camera Stopped Successfully";
     }
