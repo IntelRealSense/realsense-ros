@@ -138,6 +138,7 @@ protected:
   tf::TransformBroadcaster dynamic_tf_broadcaster_;
   rs_extrinsics color2depth_extrinsic_;  // color frame is base frame
   rs_extrinsics color2ir_extrinsic_;     // color frame is base frame
+  rs_source rs_source_ = RS_SOURCE_VIDEO;
 
   struct CameraOptions
   {
