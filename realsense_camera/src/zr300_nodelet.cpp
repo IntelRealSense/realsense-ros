@@ -43,9 +43,12 @@ namespace realsense_camera
    */
   ZR300Nodelet::~ZR300Nodelet()
   {
-    stopIMU();
-    // clean up imu thread
-    imu_thread_->join();
+    if (enable_imu_ == true)
+    {
+      stopIMU();
+      // clean up imu thread
+      imu_thread_->join();
+    }
   }
 
   /*
@@ -563,13 +566,16 @@ namespace realsense_camera
     // enable camera streams
     BaseNodelet::setStreams();
 
-    // enable IMU
-    ROS_INFO_STREAM(nodelet_name_ << " - Enabling IMU");
-    setIMUCallbacks();
-    rs_enable_motion_tracking_cpp(rs_device_, new rs::motion_callback(motion_handler_),
-        new rs::timestamp_callback(timestamp_handler_), &rs_error_);
-    checkError();
-    rs_source_ = RS_SOURCE_ALL;  // overrides default to enable motion tracking
+    if (enable_imu_ == true)
+    {
+      // enable IMU
+      ROS_INFO_STREAM(nodelet_name_ << " - Enabling IMU");
+      setIMUCallbacks();
+      rs_enable_motion_tracking_cpp(rs_device_, new rs::motion_callback(motion_handler_),
+          new rs::timestamp_callback(timestamp_handler_), &rs_error_);
+      checkError();
+      rs_source_ = RS_SOURCE_ALL;  // overrides default to enable motion tracking
+    }
   }
 
   /*
