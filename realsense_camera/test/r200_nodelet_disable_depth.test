@@ -12,5 +12,6 @@
 
   <!-- Start test -->
   <test pkg="realsense_camera" type="tests_camera_core" test-name="realsense_camera_test"
-    args="camera_type $(arg camera_type) enable_depth $(arg enable_depth)" />
+    args="camera_type $(arg camera_type) enable_depth $(arg enable_depth)" 
+    retry="3" />
 </launch>

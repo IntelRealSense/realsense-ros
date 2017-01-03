@@ -62,5 +62,6 @@
     f200_accuracy $(arg f200_accuracy)
     f200_motion_range $(arg f200_motion_range)
     f200_filter_option $(arg f200_filter_option)
-    f200_confidence_threshold $(arg f200_confidence_threshold) "/>
+    f200_confidence_threshold $(arg f200_confidence_threshold) "
+    retry="3" />
 </launch>

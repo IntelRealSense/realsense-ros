@@ -14,5 +14,6 @@
   <test pkg="realsense_camera" type="tests_camera_core" test-name="realsense_camera_test"
     args="camera_type $(arg camera_type)
     enable_fisheye $(arg enable_fisheye)
-    enable_imu $(arg enable_imu)" />
+    enable_imu $(arg enable_imu)"
+    retry="3" />
 </launch>
