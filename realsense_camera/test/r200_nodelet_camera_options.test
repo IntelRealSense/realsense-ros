@@ -95,5 +95,6 @@
     r200_depth_control_texture_difference_threshold $(arg r200_depth_control_texture_difference_threshold)
     r200_depth_control_second_peak_threshold $(arg r200_depth_control_second_peak_threshold)
     r200_depth_control_neighbor_threshold $(arg r200_depth_control_neighbor_threshold)
-    r200_depth_control_lr_threshold $(arg r200_depth_control_lr_threshold) "/>
+    r200_depth_control_lr_threshold $(arg r200_depth_control_lr_threshold) "
+    retry="3" />
 </launch>

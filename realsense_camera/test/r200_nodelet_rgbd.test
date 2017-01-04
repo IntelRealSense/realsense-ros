@@ -9,5 +9,5 @@
   </include>
 
   <!-- Test -->
-  <test pkg="realsense_camera" type="tests_rgbd_topics" test-name="realsense_camera_test_rgbd" />
+  <test pkg="realsense_camera" type="tests_rgbd_topics" test-name="realsense_camera_test_rgbd" retry="3" />
 </launch>

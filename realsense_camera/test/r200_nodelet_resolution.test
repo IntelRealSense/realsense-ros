@@ -29,5 +29,6 @@
     depth_width $(arg depth_width)
     depth_height $(arg depth_height)
     color_width $(arg color_width)
-    color_height $(arg color_height)" />
+    color_height $(arg color_height)"
+    retry="3" />
 </launch>

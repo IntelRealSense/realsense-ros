@@ -92,5 +92,6 @@
     sr300_auto_range_max_laser $(arg sr300_auto_range_max_laser)
     sr300_auto_range_start_laser $(arg sr300_auto_range_start_laser)
     sr300_auto_range_upper_threshold $(arg sr300_auto_range_upper_threshold)
-    sr300_auto_range_lower_threshold $(arg sr300_auto_range_lower_threshold)"/>
+    sr300_auto_range_lower_threshold $(arg sr300_auto_range_lower_threshold)"
+    retry="3" />
 </launch>
