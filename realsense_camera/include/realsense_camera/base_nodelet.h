@@ -176,6 +176,8 @@ protected:
   virtual bool checkForSubscriber();
   virtual void wrappedSystem(std::vector<std::string> string_argv);
   virtual void setFrameCallbacks();
+  virtual std::string checkFirmwareValidation(std::string fw_type, std::string current_fw, std::string camera_name,
+        std::string camera_serial_number);
   std::function<void(rs::frame f)> depth_frame_handler_, color_frame_handler_, ir_frame_handler_;
 };
 }  // namespace realsense_camera
