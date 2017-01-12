@@ -50,8 +50,11 @@ public:
 protected:
   // Member Variables.
   boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::sr300_paramsConfig>> dynamic_reconf_server_;
+  rs_stream fastest_stream_ = RS_STREAM_DEPTH;
 
   // Member Functions.
+  void setStreams();
+  ros::Time getTimestamp(rs_stream stream_index, double frame_ts);
   std::vector<std::string> setDynamicReconfServer();
   void startDynamicReconfCallback();
   void configCallback(realsense_camera::sr300_paramsConfig &config, uint32_t level);
