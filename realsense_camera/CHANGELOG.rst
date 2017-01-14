@@ -2,8 +2,8 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.7.1 (2017-01-14)
+------------------
 * Generate Warning for non-validated camera firmware
 * Use shared timestamp for SR300/F200 cameras
 * Added retry in tests to avoid random failures
