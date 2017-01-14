@@ -1299,7 +1299,7 @@ namespace realsense_camera
     if (current_fw != validated_firmware)
     {
       warning_msg = camera_serial_number + "'s current " + fw_type + " firmware is " + current_fw +
-            ". Validated " + fw_type + " firmware is " + validated_firmware;
+            ", Validated " + fw_type + " firmware is " + validated_firmware;
     }
     return warning_msg;
   }
