@@ -165,6 +165,7 @@ protected:
   virtual void disableStream(rs_stream stream_index);
   virtual std::string startCamera();
   virtual std::string stopCamera();
+  virtual ros::Time getTimestamp(rs_stream stream_index, double frame_ts);
   virtual void publishTopic(rs_stream stream_index, rs::frame &  frame);
   virtual void setImageData(rs_stream stream_index, rs::frame &  frame);
   virtual void publishPCTopic();

@@ -827,6 +827,14 @@ namespace realsense_camera
   }
 
   /*
+   * Determine the timetamp for the publish topic.
+   */
+  ros::Time BaseNodelet::getTimestamp(rs_stream stream_index, double frame_ts)
+  {
+    return ros::Time(camera_start_ts_) + ros::Duration(frame_ts * 0.001);
+  }
+
+  /*
    * Publish topic.
    */
   void BaseNodelet::publishTopic(rs_stream stream_index, rs::frame &frame) try
@@ -846,7 +854,7 @@ namespace realsense_camera
                                 image_[stream_index]).toImageMsg();
         msg->header.frame_id = optical_frame_id_[stream_index];
         // Publish timestamp to synchronize frames.
-        msg->header.stamp = ros::Time(camera_start_ts_) + ros::Duration(frame_ts * 0.001);
+        msg->header.stamp = getTimestamp(stream_index, frame_ts);
         msg->width = image_[stream_index].cols;
         msg->height = image_[stream_index].rows;
         msg->is_bigendian = false;
