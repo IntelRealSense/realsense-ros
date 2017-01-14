@@ -304,7 +304,7 @@ namespace realsense_camera
       }
       // print camera details
       detected_camera_msg = detected_camera_msg +
-            "\n\t\t\t\t - Serial No: " + camera_serial_number + ", USB Port ID: " +
+            "\n\t\t\t\t- Serial No: " + camera_serial_number + ", USB Port ID: " +
             rs_get_device_usb_port_id(rs_detected_device, &rs_error_) +
             ", Name: " + camera_name +
             ", Camera FW: " + camera_fw;
@@ -314,7 +314,7 @@ namespace realsense_camera
 
       if (!camera_warning_msg.empty())
       {
-        warning_msg = warning_msg + "\n\t\t\t\t-" + camera_warning_msg;
+        warning_msg = warning_msg + "\n\t\t\t\t- " + camera_warning_msg;
       }
 
       if (rs_supports(rs_detected_device, RS_CAPABILITIES_ADAPTER_BOARD, &rs_error_))
@@ -327,7 +327,7 @@ namespace realsense_camera
               camera_serial_number);
         if (!adapter_warning_msg.empty())
         {
-          warning_msg = warning_msg + "\n\t\t\t\t-" + adapter_warning_msg;
+          warning_msg = warning_msg + "\n\t\t\t\t- " + adapter_warning_msg;
         }
       }
 
@@ -341,7 +341,7 @@ namespace realsense_camera
               camera_serial_number);
         if (!motion_module_warning_msg.empty())
         {
-          warning_msg = warning_msg + "\n\t\t\t\t-" + motion_module_warning_msg;
+          warning_msg = warning_msg + "\n\t\t\t\t- " + motion_module_warning_msg;
         }
       }
       ROS_INFO_STREAM(nodelet_name_ + detected_camera_msg);
