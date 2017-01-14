@@ -2,6 +2,13 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Generate Warning for non-validated camera firmware
+* Use shared timestamp for SR300/F200 cameras
+* Added retry in tests to avoid random failures
+* Contributors: Amanda Brindle, Mark D Horn, Ning Wang
+
 1.7.0 (2016-12-20)
 ------------------
 * Enable ROS Lint
