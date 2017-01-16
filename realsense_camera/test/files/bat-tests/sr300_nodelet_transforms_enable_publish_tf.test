@@ -1,0 +1,24 @@
+<launch>
+  <arg name="camera"       value="camera" />
+  <arg name="camera_type"  default="SR300" />
+  <arg name="publish_tf"    value="true" />
+  <arg name="expected_messages" value="camera_link,camera_rgb_frame,camera_rgb_optical_frame,camera_depth_frame,camera_depth_optical_frame,camera_ir_frame,camera_ir_optical_frame"/>
+  <arg name="info" value="Publishing*camera*transforms"/>
+  <arg name="expected" value="true" />
+  <arg name="depth_width" value="640" />
+  <arg name="depth_height" value="480" />
+  <!-- Start camera -->
+  <include file="$(find realsense_camera)/launch/r200_nodelet_rgbd.launch">
+    <arg name="camera"      value="$(arg camera)" />
+    <arg name="camera_type" value="$(arg camera_type)" />
+    <arg name="publish_tf"  value="$(arg publish_tf)" />
+    <arg name="depth_width" value="$(arg depth_width)" />
+    <arg name="depth_height" value="$(arg depth_height)" />
+  </include>
+  <!-- Start test -->
+  <test pkg="realsense_camera" type="check_camera_transforms_publish_tf.py" test-name="test_camera_transforms_enable_publish_tf"
+    args="camera_type $(arg camera_type) 
+          expected_messages $(arg expected_messages) 
+          expected $(arg expected) 
+          info $(arg info)" />
+</launch>

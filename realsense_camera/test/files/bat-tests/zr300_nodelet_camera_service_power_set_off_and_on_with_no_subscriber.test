@@ -1,0 +1,21 @@
+<launch>
+  <arg name="camera"       value="camera" />
+  <arg name="camera_type"  default="ZR300" />
+  <arg name="start_camera_info" default="Camera*Started*Successfully" />
+  <arg name="start_started_camera_info" default="Camera*is*already*Started" />
+  <arg name="stop_camera_info" default="Camera*Stopped*Successfully" />
+  <arg name="stop_stopped_camera_info" default="Camera*is*already*Stopped" />
+  <!-- Start camera -->
+  <include file="$(find realsense_camera)/launch/zr300_nodelet_default.launch">
+    <arg name="camera"      value="$(arg camera)" />
+    <arg name="camera_type" value="$(arg camera_type)" />
+  </include>
+
+  <!-- Start test -->
+  <test pkg="realsense_camera" type="check_camera_service_power_set_off_and_on_with_no_subscriber.py" test-name="test_camera_service_power_set_off_and_on_with_no_subscriber"
+    args="camera_type $(arg camera_type)
+    start_camera_info $(arg start_camera_info)
+    start_started_camera_info $(arg start_started_camera_info)
+    stop_camera_info  $(arg stop_camera_info)
+    stop_stopped_camera_info $(arg stop_stopped_camera_info)" />
+</launch>

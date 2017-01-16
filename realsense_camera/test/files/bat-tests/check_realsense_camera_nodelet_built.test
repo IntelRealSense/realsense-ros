@@ -1,0 +1,5 @@
+<launch>
+  <!-- Start test -->
+  <test pkg="realsense_camera" type="check_realsense_camera_nodelet_built.py" test-name="check_realsense_camera_nodelet_built"
+    />
+</launch>
