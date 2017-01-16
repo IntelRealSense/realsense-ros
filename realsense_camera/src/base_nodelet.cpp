@@ -31,6 +31,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <map>
 #include <realsense_camera/base_nodelet.h>
 
 using cv::Mat;
@@ -41,6 +42,8 @@ using std::vector;
 PLUGINLIB_EXPORT_CLASS(realsense_camera::BaseNodelet, nodelet::Nodelet)
 namespace realsense_camera
 {
+  const std::map<std::string, std::string> CAMERA_NAME_TO_VALIDATED_FIRMWARE
+        (MAP_START_VALUES, MAP_START_VALUES + MAP_START_VALUES_SIZE);
   /*
    * Nodelet Destructor.
    */
@@ -275,14 +278,24 @@ namespace realsense_camera
   {
     // print list of detected cameras
     std::vector<int> camera_type_index;
-    std::string detected_camera_msg = " - Detected the following cameras:";
+
     for (int i = 0; i < num_of_cameras; i++)
     {
+      std::string detected_camera_msg = " - Detected the following camera:";
+      std::string warning_msg = " - Detected unvalidated firmware:";
       // get device
       rs_device* rs_detected_device = rs_get_device(rs_context_, i, &rs_error_);
 
+      // get camera serial number
+      std::string camera_serial_number = rs_get_device_serial(rs_detected_device, &rs_error_);
+      checkError();
+
       // get camera name
       std::string camera_name = rs_get_device_name(rs_detected_device, &rs_error_);
+      checkError();
+
+      // get camera firmware
+      std::string camera_fw = rs_get_device_firmware_version(rs_detected_device, &rs_error_);
       checkError();
 
       if (camera_name.find(camera_type_) != std::string::npos)
@@ -291,11 +304,18 @@ namespace realsense_camera
       }
       // print camera details
       detected_camera_msg = detected_camera_msg +
-            "\n\t\t\t\t- Serial No: " + rs_get_device_serial(rs_detected_device, &rs_error_) +
-            ", USB Port ID: " + rs_get_device_usb_port_id(rs_detected_device, &rs_error_) +
+            "\n\t\t\t\t- Serial No: " + camera_serial_number + ", USB Port ID: " +
+            rs_get_device_usb_port_id(rs_detected_device, &rs_error_) +
             ", Name: " + camera_name +
-            ", Camera FW: " + rs_get_device_firmware_version(rs_detected_device, &rs_error_);
+            ", Camera FW: " + camera_fw;
       checkError();
+
+      std::string camera_warning_msg = checkFirmwareValidation("camera", camera_fw, camera_name, camera_serial_number);
+
+      if (!camera_warning_msg.empty())
+      {
+        warning_msg = warning_msg + "\n\t\t\t\t- " + camera_warning_msg;
+      }
 
       if (rs_supports(rs_detected_device, RS_CAPABILITIES_ADAPTER_BOARD, &rs_error_))
       {
@@ -303,6 +323,12 @@ namespace realsense_camera
             RS_CAMERA_INFO_ADAPTER_BOARD_FIRMWARE_VERSION, &rs_error_);
         checkError();
         detected_camera_msg = detected_camera_msg + ", Adapter FW: " + adapter_fw;
+        std::string adapter_warning_msg = checkFirmwareValidation("adapter", adapter_fw, camera_name,
+              camera_serial_number);
+        if (!adapter_warning_msg.empty())
+        {
+          warning_msg = warning_msg + "\n\t\t\t\t- " + adapter_warning_msg;
+        }
       }
 
       if (rs_supports(rs_detected_device, RS_CAPABILITIES_MOTION_EVENTS, &rs_error_))
@@ -311,10 +337,20 @@ namespace realsense_camera
             RS_CAMERA_INFO_MOTION_MODULE_FIRMWARE_VERSION, &rs_error_);
         checkError();
         detected_camera_msg = detected_camera_msg + ", Motion Module FW: " + motion_module_fw;
+        std::string motion_module_warning_msg = checkFirmwareValidation("motion_module", motion_module_fw, camera_name,
+              camera_serial_number);
+        if (!motion_module_warning_msg.empty())
+        {
+          warning_msg = warning_msg + "\n\t\t\t\t- " + motion_module_warning_msg;
+        }
+      }
+      ROS_INFO_STREAM(nodelet_name_ + detected_camera_msg);
+      if (warning_msg != " - Detected unvalidated firmware:")
+      {
+        ROS_WARN_STREAM(nodelet_name_ + warning_msg);
       }
     }
 
-    ROS_INFO_STREAM(nodelet_name_ + detected_camera_msg);
     return camera_type_index;
   }
 
@@ -827,6 +863,14 @@ namespace realsense_camera
   }
 
   /*
+   * Determine the timetamp for the publish topic.
+   */
+  ros::Time BaseNodelet::getTimestamp(rs_stream stream_index, double frame_ts)
+  {
+    return ros::Time(camera_start_ts_) + ros::Duration(frame_ts * 0.001);
+  }
+
+  /*
    * Publish topic.
    */
   void BaseNodelet::publishTopic(rs_stream stream_index, rs::frame &frame) try
@@ -846,7 +890,7 @@ namespace realsense_camera
                                 image_[stream_index]).toImageMsg();
         msg->header.frame_id = optical_frame_id_[stream_index];
         // Publish timestamp to synchronize frames.
-        msg->header.stamp = ros::Time(camera_start_ts_) + ros::Duration(frame_ts * 0.001);
+        msg->header.stamp = getTimestamp(stream_index, frame_ts);
         msg->width = image_[stream_index].cols;
         msg->height = image_[stream_index].rows;
         msg->is_bigendian = false;
@@ -1254,4 +1298,18 @@ namespace realsense_camera
       // do not wait as this is the main thread
     }
   }
+
+  std::string BaseNodelet::checkFirmwareValidation(std::string fw_type, std::string current_fw, std::string camera_name,
+        std::string camera_serial_number)
+  {
+    std::string validated_firmware = CAMERA_NAME_TO_VALIDATED_FIRMWARE.find(camera_name + "_" + fw_type)->second;
+    std::string warning_msg = "";
+    if (current_fw != validated_firmware)
+    {
+      warning_msg = camera_serial_number + "'s current " + fw_type + " firmware is " + current_fw +
+            ", Validated " + fw_type + " firmware is " + validated_firmware;
+    }
+    return warning_msg;
+  }
+
 }  // namespace realsense_camera

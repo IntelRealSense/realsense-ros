@@ -30,6 +30,8 @@
 
 #include <iostream>
 #include <string>
+#include <utility>
+#include <map>
 
 #pragma once
 #ifndef REALSENSE_CAMERA_CONSTANTS_H
@@ -90,14 +92,16 @@ namespace realsense_camera
     // R200 Constants.
     // Indoor Range: 0.7m - 3.5m, Outdoor Range: 10m
     const float R200_MAX_Z = 10.0f;   // in meters
-
+    const std::string R200_CAMERA_FW_VERSION = "1.0.72.06";
     // F200 Constants.
     // Indoor Range: 0.2m – 1.0m, Outdoor Range: n/a
     const float F200_MAX_Z = 1.0f;    // in meters
+    const std::string F200_CAMERA_FW_VERSION = "2.60.0.0";
 
     // SR300 Constants.
     // Indoor Range: 0.2m – 1.5m, Outdoor Range: n/a
     const float SR300_MAX_Z = 1.5f;   // in meters
+    const std::string SR300_CAMERA_FW_VERSION = "3.10.10.0";
 
     // ZR300 Constants.
     // Indoor Range: 0.7m - 3.5m, Outdoor Range: 10m
@@ -114,5 +118,26 @@ namespace realsense_camera
     const std::string IMU_ACCEL = "IMU_ACCEL";
     const std::string IMU_GYRO = "IMU_GYRO";
     const double IMU_UNITS_TO_MSEC = 0.00003125;
+    const std::string ZR300_CAMERA_FW_VERSION = "2.0.71.26";
+    const std::string ZR300_ADAPTER_FW_VERSION = "1.28.0.0";
+    const std::string ZR300_MOTION_MODULE_FW_VERSION = "1.25.0.0";
+
+    // map the camera name to its validated firmware
+    typedef std::pair<std::string, std::string> stringpair;
+    const stringpair MAP_START_VALUES[] =
+    {
+      stringpair("Intel RealSense R200_camera", R200_CAMERA_FW_VERSION),
+      stringpair("Intel RealSense F200_camera", F200_CAMERA_FW_VERSION),
+      stringpair("Intel RealSense SR300_camera", SR300_CAMERA_FW_VERSION),
+      stringpair("Intel RealSense ZR300_camera", ZR300_CAMERA_FW_VERSION),
+      stringpair("Intel RealSense ZR300_adapter", ZR300_ADAPTER_FW_VERSION),
+      stringpair("Intel RealSense ZR300_motion_module", ZR300_MOTION_MODULE_FW_VERSION)
+    };
+
+    const int MAP_START_VALUES_SIZE = sizeof(MAP_START_VALUES) /
+          sizeof(MAP_START_VALUES[0]);
+
+    extern const std::map<std::string, std::string> CAMERA_NAME_TO_VALIDATED_FIRMWARE;
+
 }  // namespace realsense_camera
 #endif  // REALSENSE_CAMERA_CONSTANTS_H

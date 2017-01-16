@@ -62,6 +62,41 @@ namespace realsense_camera
   }
 
   /*
+   * Determine fastest stream -- overrides base class
+   */
+  void SR300Nodelet::setStreams()
+  {
+    // enable camera streams
+    BaseNodelet::setStreams();
+
+    // Find the fastest updating, enabled stream
+    fastest_stream_ = RS_STREAM_DEPTH;  // default to depth
+
+    if (fps_[RS_STREAM_COLOR] > fps_[RS_STREAM_DEPTH])
+    {
+      if (enable_[RS_STREAM_COLOR])
+      {
+        fastest_stream_ = RS_STREAM_COLOR;
+      }
+    }
+  }
+
+  /*
+   * Determine the timetamp for the publish topic. -- overrides base class
+   */
+  ros::Time SR300Nodelet::getTimestamp(rs_stream stream_index, double frame_ts)
+  {
+    static ros::Time last_common_stamp = ros::Time::now();
+
+    if (stream_index == fastest_stream_)
+    {
+      last_common_stamp = ros::Time::now();
+    }
+
+    return last_common_stamp;
+  }
+
+  /*
    * Set Dynamic Reconfigure Server and return the dynamic params.
    */
   std::vector<std::string> SR300Nodelet::setDynamicReconfServer()

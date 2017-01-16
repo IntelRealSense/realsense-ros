@@ -165,6 +165,7 @@ protected:
   virtual void disableStream(rs_stream stream_index);
   virtual std::string startCamera();
   virtual std::string stopCamera();
+  virtual ros::Time getTimestamp(rs_stream stream_index, double frame_ts);
   virtual void publishTopic(rs_stream stream_index, rs::frame &  frame);
   virtual void setImageData(rs_stream stream_index, rs::frame &  frame);
   virtual void publishPCTopic();
@@ -176,6 +177,8 @@ protected:
   virtual bool checkForSubscriber();
   virtual void wrappedSystem(std::vector<std::string> string_argv);
   virtual void setFrameCallbacks();
+  virtual std::string checkFirmwareValidation(std::string fw_type, std::string current_fw, std::string camera_name,
+        std::string camera_serial_number);
   std::function<void(rs::frame f)> depth_frame_handler_, color_frame_handler_, ir_frame_handler_;
 };
 }  // namespace realsense_camera
