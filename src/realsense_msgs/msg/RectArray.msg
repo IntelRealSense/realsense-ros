@@ -1,1 +1,0 @@
-Rect[] rect_vector

@@ -1,1 +1,0 @@
-ObjectInBox[] objects_vector

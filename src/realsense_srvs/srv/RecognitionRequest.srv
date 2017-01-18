@@ -1,6 +1,0 @@
-int32 personId
-int32 recognitionId
----
-int32 returnCode
-int32 recognitionId
-string description

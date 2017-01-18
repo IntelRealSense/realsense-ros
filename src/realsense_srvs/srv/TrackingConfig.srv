@@ -1,8 +1,0 @@
-bool enableSegmentation
-bool enableBlob
-bool enableRecognition
-bool enableSkeleton
-bool enableGestures
-uint32 trackingMode
----
-bool status
