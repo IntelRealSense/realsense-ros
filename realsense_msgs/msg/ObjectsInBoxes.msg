@@ -1,0 +1,1 @@
+ObjectInBox[] objects_vector

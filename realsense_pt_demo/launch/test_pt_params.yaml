@@ -1,0 +1,21 @@
+gesturesEnabled: true 
+skeletonEnabled: true
+recognitionEnabled: false 
+trackingEnabled: true 
+
+#0 will start the MW in detection mode. 1 will track first person in frame
+trackingMode: 1 
+
+#load Data saved 
+loadDb: false
+dbPath: '/home/elisa/testPT1.db'
+
+headPositionEnabled: true
+headBoundingBoxEnabled: true 
+landmarksEnabled: false
+
+#true: allowed image regisration by calling service /person_tracking/recognition_image_request
+#false: normal mode without regisration by image
+allowImgRegisration: false 
+
+

@@ -1,0 +1,5 @@
+int32 confidence
+geometry_msgs/Point32 originColor
+geometry_msgs/Point32 originWorld
+geometry_msgs/Point32 orientationColor
+geometry_msgs/Vector3 orientationWorld

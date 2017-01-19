@@ -1,0 +1,8 @@
+Date of version 2017. 1. 18
+
+libraries of intel used(version beta3 RC5):
+  librealsense
+  Link: https://securewiki.ith.intl.co/pages/viewpage.action?pageId=510951805
+
+Quick start:
+roslaunch realsense_camera slam_camera.launch

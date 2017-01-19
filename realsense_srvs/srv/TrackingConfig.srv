@@ -1,0 +1,6 @@
+bool enableSegmentation
+bool enableRecognition
+bool enableSkeleton
+bool enableGestures
+---
+bool status

@@ -1,0 +1,8 @@
+<library path="lib/librealsense_camera">
+	<class name="realsense_camera/NodeletCamera" type="realsense_camera::NodeletCamera" base_class_type="nodelet::Nodelet">
+        <description>
+            A nodelet of slam.
+        </description>
+        </class>
+ </library>
+
