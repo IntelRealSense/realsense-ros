@@ -249,7 +249,10 @@ namespace rs_slam_test
     sub.onInit(nh, slam.get());
     sub.subscribeStreamMessages();
     sub.subscribeMotion();
-    while (ros::ok()) {}
+    ros::Rate r(30);
+    while (ros::ok()) {
+      r.sleep();
+    }
     std::cout << "occupancy ppm:" << slam->save_occupancy_map_as_ppm(pkgpath + trajectoryFilename, true) << std::endl;
     std::cout << "Save Relocalozation:" << slam->save_relocalization_map(pkgpath + relocalizationFilename) << std::endl;
     std::cout << "Save occupancy:" << slam->save_occupancy_map(pkgpath + occupancyFilename) << std::endl;
