@@ -1,4 +1,4 @@
-realsense_pt_demo (draft)
+realsense_pt_demo released by Perc-China(draft)
 ======================================
 This package contains a ROS wrapper for Intel's realsense_persontracking library. The realsense_pt_demo package provides a image-based strategy to track and recognize the people in front of the camera as a ROS nodelet. For instance, it's guaranteed only with the RealSense device (tested with Depth and Color iages recieved from ROS nodelet realsense_camera). The objective of this module is to get the informations(can be pose, oriantation, id etc) of a person( or a specific person) in the images.  
 

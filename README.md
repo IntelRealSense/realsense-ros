@@ -1,4 +1,4 @@
-There is the draft version ROS packages.
+There is the draft version ROS packages released by Perc-china.
 
 ###Libraries used:(version beta3_RC5_22_12_2016_ww52)
 

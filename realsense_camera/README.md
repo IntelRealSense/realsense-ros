@@ -1,4 +1,4 @@
-realsense_camera (draft)
+realsense_camera released by Perc-China(draft)
 =========================================
 This package contains a ROS wrapper for Intel's realsense library. The realsense_camera package provides a solution to get the depth and color stream of realsense device as a ROS nodelet. For instance,it's used only with RealSense ZR300 and R200. The objectif of this module is to provides the data and stream needed by SLAM and PT ros wrapper of Intel.
 

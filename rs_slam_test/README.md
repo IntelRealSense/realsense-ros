@@ -1,4 +1,4 @@
-rs_slam_test (draft)
+rs_slam_test released by Perc-China(draft)
 ==============================================
 This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test package provides a solution of SLAM as a ROS nodelet. It take the messages sended by realsense_camera nodelet. The objectif of this module is to find out map informations and 2Dpose of agent.
 
