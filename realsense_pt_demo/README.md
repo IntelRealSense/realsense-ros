@@ -15,7 +15,7 @@ This package contains a ROS wrapper for Intel's realsense_persontracking library
 <br /\>     realsense_srvs
 2. Example 
 --------------------------------------
-           To use realsense_pt_demo, you need a RealSense device(LR200 or ZR300) and realsense_camera (RealSense ros package) in your system and launched.
+<br /\>    To use realsense_pt_demo, you need a RealSense device(LR200 or ZR300) and realsense_camera (RealSense ros package) in your system and launched.
 <br /\>    To start realsense_pt_demo and realsense_camera with command: 
            roslaunch realsense_pt_demo camera_track.launch
 3. Nodelet
