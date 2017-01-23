@@ -96,7 +96,7 @@ namespace realsense_camera
       if (num_of_cams == 0)
       {
         ROS_ERROR("error : can't find devices");
-        return;
+        exit(0);
       }
       rs::device *detected_dev;
       for (int i = 0; i < num_of_cams; i++)
@@ -278,7 +278,11 @@ namespace realsense_camera
       depInfo_publisher_.publish(camera_info_[RS_STREAM_DEPTH]);
       loop_rate.sleep();
     }
-    device->stop(rs::source::all_sources);
+    if(isZR300)
+      device->stop(rs::source::all_sources);
+    else
+      device->stop();
+
     return 0;
   }
 
