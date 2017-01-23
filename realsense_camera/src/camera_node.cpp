@@ -268,9 +268,13 @@ namespace realsense_camera
             pub_img_[(int32_t)rs::stream(i)].publish(image_msg_[(int32_t)rs::stream(i)]);
           }
       }
-      if(isZR300)
+      if(isZR300){
         feInfo_publisher_.publish(camera_info_[RS_STREAM_FISHEYE]);
+        camera_info_[RS_STREAM_FISHEYE].header.stamp=stamp;
+      }
+      camera_info_[RS_STREAM_COLOR].header.stamp=stamp;
       colorInfo_publisher_.publish(camera_info_[RS_STREAM_COLOR]);
+      camera_info_[RS_STREAM_DEPTH].header.stamp=stamp;
       depInfo_publisher_.publish(camera_info_[RS_STREAM_DEPTH]);
       loop_rate.sleep();
     }
