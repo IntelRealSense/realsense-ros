@@ -1,6 +1,6 @@
 realsense_pt_demo released by Perc-China(draft)
 ======================================
-This package contains a ROS wrapper for Intel's realsense_persontracking library. The realsense_pt_demo package provides a image-based strategy to track and recognize the people in front of the camera as a ROS nodelet. For instance, it's guaranteed only with the RealSense device (tested with Depth and Color iages recieved from ROS nodelet realsense_camera). The objective of this module is to get the informations(can be pose, oriantation, id etc) of a person( or a specific person) in the images.  
+This package contains a ROS wrapper for Intel's realsense_persontracking library. The realsense_pt_demo package provides an image-based strategy to track and recognize the people in front of the camera as a ROS nodelet. For instance, it's guaranteed only with the RealSense device (tested with Depth and Color images received from ROS nodelet realsense_camera). The objective of this module is to get the information(can be pose, orientation, id etc.) of a person( or a specific person) in the images.  
 
 1. Hardwarei/Software Requirement
 --------------------------------------
@@ -15,25 +15,25 @@ This package contains a ROS wrapper for Intel's realsense_persontracking library
 <br /\>     realsense_srvs
 2. Example 
 --------------------------------------
-<br /\>    To use realsense_pt_demo, you need a RealSense device(LR200 or ZR300) and realsense_camera (RealSense ros package) in your system and launched.
+<br /\>    To use realsense_pt_demo, you need a RealSense device (LR200 or ZR300) and realsense_camera (RealSense ros package) in your system and launched.
 <br /\>    To start realsense_pt_demo and realsense_camera with command: 
            roslaunch realsense_pt_demo camera_track.launch
 3. Nodelet
 --------------------------------------
 ##  3.1 realsense_pt_demo 
-    The realsense_pt_demo nodelet take camera infos(sensor_msgs/CameraInfo), color stream, depth stream (sensor_msgs/Image), published by realsense_camera nodelet, send the informations of person detected after calculation as realsense_msgs/Frame messages.
+    The realsense_pt_demo nodelet take camera infos(sensor_msgs/CameraInfo), color stream, depth stream (sensor_msgs/Image), published by realsense_camera nodelet, send the information of person detected after calculation as realsense_msgs/Frame messages.
 ###  3.1.1 Subscribed Topics
       camera/depth/camera_info (sensor_msgs/CameraInfo)
-        The intrinsics (and extrinsics) of camera (depth and depth to color)
+        The intrinsic (and extrinsics) of camera (depth and depth to color)
       camera/color/camera_info (sensor_msgs/CameraInfo)
-        The intrinsics of camera (color)
+        The intrinsic of camera (color)
       camera/depth/image_raw (sensor_msgs/Image)
-        Depth image stream recieved from RealSense device
+        Depth image stream received from RealSense device
       camera/color/image_raw (sensor_msgs/Image)
-        Color image stream recieved from RealSense device
+        Color image stream received from RealSense device
 ###  3.1.2 Published Topics
       person_tracking/person_tracking_output (realsense_msgs/Frame)
-        Results informations of person tracked
+        Results information of person tracked
       image_result (sensor_msgs/Image)
         Image result of person tracked, you may see the image with rviz or rqt_image_view
 ###  3.1.3 Services

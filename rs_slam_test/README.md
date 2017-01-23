@@ -1,10 +1,10 @@
 rs_slam_test released by Perc-China(draft)
 ==============================================
-This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test package provides a solution of SLAM as a ROS nodelet. It take the messages sended by realsense_camera nodelet. The objectif of this module is to find out map informations and 2Dpose of agent.
+This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test package provides a solution of SLAM as a ROS nodelet. It take the messages sent by realsense_camera nodelet. The objective of this module is to find out map information and 2Dpose of agent.
 
 1. Hardwarei/Software Requirement
 ----------------------------------------------
-  To use rs_slam_test,you need a mobile agent with a RealSense ZR200 mounted.
+  To use rs_slam_test, you need a mobile agent with a RealSense ZR200 mounted.
 ###  ubuntu requirements:
 <br /\>     Ubuntu 16.04
 <br /\>     gcc 4.9.3
@@ -21,20 +21,20 @@ This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test p
 3. Nodelet
 --------------------------------------------
 ## 3.1 rs_slam_test 
-    The rs_slam_test nodelet takes fisheye image, imu data, color image,depth image from device, then send the informations of "map" and "2Dpose" of agent as type of nav_msgs/OccupancyGrid and geometry_msgs/Pose2D messages after calculation.
+    The rs_slam_test nodelet takes fisheye image, imu data, color image, depth image from device, then send the information of "map" and "2Dpose" of agent as type of nav_msgs/OccupancyGrid and geometry_msgs/Pose2D messages after calculation.
 ###  3.1.1 Subscribed Topics
       camera/fisheye/camera_info (sensor_msgs/CameraInfo)
-        The intrinsics of camera (fisheye)
+        The intrinsic of camera (fisheye)
       camera/depth/camera_info (sensor_msgs/CameraInfo)
-        The intrinsics (and extrinsics) of camera( depth and depth to color)
+        The intrinsic (and extrinsic) of camera( depth and depth to color)
       camera/imu/gyro (realsense_camera/MotionInfo)
-        Contain the imu data of Gyroscope, timestamp and framenumber corresponding
+        Contain the imu data of Gyroscope, timestamp and frame number corresponding
       camera/imu/accel (realsenese_camera/MotionInfo)
-        Contain the imu data of Accelerometer, timestamp and framenumber corresponding
+        Contain the imu data of Accelerometer, timestamp and frame number corresponding
       camera/fisheye/fisheye_stream_and_info (realsense_camera::StreamInfo)
-        Contain the fisheye stream, timestamp and framenumber corresponding
+        Contain the fisheye stream, timestamp and frame number corresponding
       camera/depth/depth_stream_and_info (realsense_camera::StreamInfo)
-        Contain the depth stream, timestamp and framenumber corresponding
+        Contain the depth stream, timestamp and frame number corresponding
 ###  3.1.2 Published Topics
       poseMatrix (rs_slam_test/PoseMatrix)
           6 dof matrix 
@@ -46,7 +46,7 @@ This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test p
       ~trajectoryFilename: (str::string, default: 'trajectory.ppm') 
           name of trajectory file of agent. The files will be saved in the rs_slam_test directory
       ~relocalizationFilename: (str::string, default: 'relocalization.bin')
-          name of relocalization data file. The files will be saved in the rs_slam_test directory
+          name of re-localization data file. The files will be saved in the rs_slam_test directory
       ~occupancyFilename: (str::string, default: 'occupancy.bin')
           name of occupancy data file. The files will be saved in the rs_slam_test directory
 
