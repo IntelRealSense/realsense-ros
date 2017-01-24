@@ -90,6 +90,9 @@ target_link_libraries(${PROJECT_NAME}_nodelet
 add_dependencies(${PROJECT_NAME}_nodelet ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
 add_dependencies(${PROJECT_NAME}_nodelet ${catkin_EXPORTED_TARGETS})
 
+add_executable(get_debug_info src/get_debug_info.cpp)
+target_link_libraries(get_debug_info ${catkin_LIBRARIES})
+
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
 
@@ -111,7 +114,7 @@ if (CATKIN_ENABLE_TESTING)
 endif()
 
 # Install nodelet library
-install(TARGETS ${PROJECT_NAME}_nodelet
+install(TARGETS ${PROJECT_NAME}_nodelet get_debug_info
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
