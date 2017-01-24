@@ -118,8 +118,8 @@ namespace realsense_camera
     const std::string IMU_ACCEL = "IMU_ACCEL";
     const std::string IMU_GYRO = "IMU_GYRO";
     const double IMU_UNITS_TO_MSEC = 0.00003125;
-    const std::string ZR300_CAMERA_FW_VERSION = "2.0.71.26";
-    const std::string ZR300_ADAPTER_FW_VERSION = "1.28.0.0";
+    const std::string ZR300_CAMERA_FW_VERSION = "2.0.71.28";
+    const std::string ZR300_ADAPTER_FW_VERSION = "1.29.0.0";
     const std::string ZR300_MOTION_MODULE_FW_VERSION = "1.25.0.0";
 
     // map the camera name to its validated firmware

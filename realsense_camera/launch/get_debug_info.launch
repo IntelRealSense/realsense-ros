@@ -1,0 +1,4 @@
+<!-- launch file for data collection of RealSense camera configurations -->
+<launch>
+  <node pkg="realsense_camera" type="get_debug_info" name="data_collection" output="screen" required="true"/>
+</launch>
