@@ -11,10 +11,14 @@
   <arg name="mode"              default="manual" />
   <arg name="color_fps"         default="30" />
   <arg name="fisheye_fps"       default="30" />
+  <arg name="fisheye_strobe"    default="1" />
+  <arg name="fisheye_external_trigger"    default="1" />
 
   <param name="$(arg camera)/driver/mode"              type="str"  value="$(arg mode)" />
   <param name="$(arg camera)/driver/color_fps"         type="int"  value="$(arg color_fps)" />
   <param name="$(arg camera)/driver/fisheye_fps"       type="int"  value="$(arg fisheye_fps)" />
+  <param name="$(arg camera)/driver/fisheye_strobe"    type="int"  value="$(arg fisheye_strobe)" />
+  <param name="$(arg camera)/driver/fisheye_external_trigger"    type="int"  value="$(arg fisheye_external_trigger)" />
   <!-- Refer to the Wiki http://wiki.ros.org/realsense_camera for list of supported parameters -->
 
   <group ns="$(arg camera)">

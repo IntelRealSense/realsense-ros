@@ -498,8 +498,6 @@ namespace realsense_camera
     rs_set_device_option(rs_device_, RS_OPTION_FISHEYE_EXPOSURE,
         config.fisheye_exposure, 0);
     rs_set_device_option(rs_device_, RS_OPTION_FISHEYE_GAIN, config.fisheye_gain, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_FISHEYE_STROBE, config.fisheye_strobe, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_FISHEYE_EXTERNAL_TRIGGER, config.fisheye_external_trigger, 0);
     rs_set_device_option(rs_device_, RS_OPTION_FISHEYE_ENABLE_AUTO_EXPOSURE, config.fisheye_enable_auto_exposure, 0);
     rs_set_device_option(rs_device_, RS_OPTION_FISHEYE_AUTO_EXPOSURE_MODE, config.fisheye_auto_exposure_mode, 0);
     rs_set_device_option(rs_device_, RS_OPTION_FISHEYE_AUTO_EXPOSURE_ANTIFLICKER_RATE,
