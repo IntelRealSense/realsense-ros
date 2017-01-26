@@ -1,0 +1,5 @@
+<launch>
+<node pkg="nodelet" type="nodelet" name="realsense_orview"  args="manager" output="screen"/>
+<node pkg="nodelet" type="nodelet" name="COrViewNodelet" args="load realsense/COrViewNodelet realsense_orview">	
+</node>
+</launch>

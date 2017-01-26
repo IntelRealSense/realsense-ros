@@ -1,0 +1,7 @@
+<library path="lib/librealsense_recognition_nodelet">
+  <class name="realsense/CRecognitionNodelet" type="realsense::CRecognitionNodelet" base_class_type="nodelet::Nodelet">
+  <description>
+  Intel(R) RealSense(TM) Object recognition nodelet.
+  </description>
+  </class>
+</library>
