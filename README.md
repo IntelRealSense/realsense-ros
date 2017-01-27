@@ -31,6 +31,13 @@ $ source devel/setup.bash
 
 ## Usage Instructions
 See 'script_setup.sh' in this repo to install everything needed from scratch, from clean Ubuntu install
+```bash
+$ wget https://github.intel.com/raw/IntelRealSense/realsense_ros/master/script_setup.sh
+$ chmod a+x ./script_setup.sh
+$ ./script_setup.sh
+```
+
+**Note** Ensure no other apt/apt-get/aptd processes are running int the background.  In future, would like to use aptdcon to queue updates behind other running processes, or add shell script support for waiting for other commands to complete before proceeding
 
 ## Additional Information
 For additional information about this repository, see https://wiki.ith.intel.com/display/perceptual/Guidelines+for+RealSense+SDK+ROS+Samples
