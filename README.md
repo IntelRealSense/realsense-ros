@@ -30,7 +30,7 @@ $ source devel/setup.bash
 **Note**: These instructions above currently use a different librealsense than provided publically as part of the ROS build farm.  Do not install ros-kinetic-realsense-camera or ros-kinetic-librealsense, otherwise the steps above will not work correctly. 
 
 ## Usage Instructions
-<to be provided
+See 'script_setup.sh' in this repo to install everything needed from scratch, from clean Ubuntu install
 
 ## Additional Information
 For additional information about this repository, see https://wiki.ith.intel.com/display/perceptual/Guidelines+for+RealSense+SDK+ROS+Samples
