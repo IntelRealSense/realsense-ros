@@ -1,13 +1,5 @@
 #!/bin/bash
 #
-# This script sets up the Sheldon robot software stack, from a fresh install of Ubuntu 16.04
-#
-# Assumptions:
-# 1) You are a member of the github.com/mattcurfman repo's below, and you've setup your github account with your
-# SSH public key to be granted access.
-# 2) You are on a public internet, or have manually setup your proxies for corporate network access
-#
-
 
 # Run script as root, unless permissions are dropped elsewhere.  This allows root password to be provided once at start of script
 export _DEFAULT_USER=$USER
@@ -15,6 +7,16 @@ sudo -E bash <<"EOF"
 
 export NPROCS=`grep -c ^processor /proc/cpuinfo`
 
+
+function init_install {
+  while fuser /var/lib/dpkg/lock >/dev/null 2>&1 ; do
+    echo "Waiting for other software managers to stop ..."
+    killall aptd
+    killall apt-get
+    killall apt
+    sleep 0.5
+  done 
+}
 
 function install_ros {
 if [ -f "/etc/apt/sources.list.d/ros-latest.list" ] 
@@ -28,8 +30,8 @@ else
   rosdep init
 
 sudo -E -u $_DEFAULT_USER bash <<"EOF2"
-  rosdep update
-  echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+    rosdep update
+    echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
 EOF2
 fi
 }
@@ -42,10 +44,9 @@ then
 else
   apt-key adv --keyserver keys.gnupg.net --recv-key D6FB2970 
   sh -c 'echo "deb http://realsense-alm-public.s3.amazonaws.com/apt-repo xenial main" > /etc/apt/sources.list.d/realsense-latest.list'
+  apt update 
+  apt install -y librealsense-object-recognition-dev librealsense-persontracking-dev librealsense-slam-dev librealsense-utils 
 fi
-
-apt update 
-apt install -y librealsense-object-recognition-dev librealsense-persontracking-dev librealsense-slam-dev librealsense-utils 
 }
 
 function install_robot_common {
@@ -53,16 +54,20 @@ function install_robot_common {
 sudo -E -u $_DEFAULT_USER bash <<"EOF2"
   source /opt/ros/kinetic/setup.bash
   cd
-  mkdir -p catkin_ws/src
-  cd catkin_ws/src/
-  catkin_init_workspace 
-  git clone http://github.intel.com/IntelRealSense/realsense_ros
-  cd 
-  cd catkin_ws
-#  catkin_make
+  if [ -d "catkin_ws/src/realsense_ros" ] 
+  then
+    echo "Repo realsense_ros is already presenting, skipping this step"
+  else
+    echo "Creating new realsense_ros repository"
+    mkdir -p catkin_ws/src
+    cd catkin_ws/src/
+    catkin_init_workspace 
+    git clone http://github.intel.com/IntelRealSense/realsense_ros
+  fi
 EOF2
 }
 
+init_install
 install_ros
 install_realsense
 install_robot_common
