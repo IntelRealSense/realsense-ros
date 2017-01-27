@@ -1,0 +1,9 @@
+<launch>
+<node pkg="nodelet" type="nodelet" name="realsense_ormgr"  args="manager" output="screen"/>
+<node pkg="nodelet" type="nodelet" name="COrmgrNodelet" args="load realsense/COrmgrNodelet realsense_ormgr">	
+       	<param name="debug" type="bool" value="true" />
+       	<param name="threshold" type="int" value="1" />
+       	<param name="max_number_of_objects" type="int" value="5" />
+	<param name="localize_every_frame" type="bool" value="false" />
+</node>
+</launch>

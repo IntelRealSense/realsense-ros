@@ -1,0 +1,7 @@
+<library path="lib/librealsense_ormgr_nodelet">
+  <class name="realsense/COrmgrNodelet" type="realsense::COrmgrNodelet" base_class_type="nodelet::Nodelet">
+  <description>
+  Intel(R) RealSense(TM) OR demo nodelet.
+  </description>
+  </class>
+</library>

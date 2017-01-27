@@ -1,0 +1,63 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(realsense_recognition)
+
+set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+
+set(UP	 "${CMAKE_CURRENT_SOURCE_DIR}/../../../")
+set(DEPS "${UP}dependencies")
+set(OPENCV_LIBS
+	opencv_core
+	opencv_imgproc
+	opencv_highgui
+	opencv_imgcodecs
+		)
+
+set(OPENCV_INCLUDE_DIRS ${DEPS}/opencv_3.1/include)
+
+#find_package(OpenCV REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+  cv_bridge
+  image_transport
+  message_generation
+  realsense_msgs
+)
+
+catkin_package(
+  CATKIN_DEPENDS message_runtime std_msgs sensor_msgs realsense_msgs
+)
+
+
+##########
+## Build ##
+###########
+
+set(BUILD_NODELETE 1)
+
+include_directories(${catkin_INCLUDE_DIRS}	
+	../utils/
+	include
+)
+
+
+
+if(BUILD_NODELETE)
+SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DRUN_AS_NODELET" )
+add_library(realsense_recognition_nodelet
+  				src/realsense_recognition_nodelet.cpp ../utils/utils.cpp)
+else(BUILD_NODELETE)
+add_executable(	realsense_recognition_nodelet
+  				src/realsense_recognition_nodelet.cpp ../utils/utils.cpp)
+
+endif(BUILD_NODELETE)
+
+## Specify libraries to link a library or executable target against
+
+target_link_libraries(realsense_recognition_nodelet 
+						${catkin_LIBRARIES} 
+						${roscpp_LIBRARIES} 
+)
+
+
+target_link_libraries(realsense_recognition_nodelet ${OPENCV_LIBS} realsense realsense_image realsense_projection realsense_object_recognition )
+add_dependencies(realsense_recognition_nodelet realsense_msgs_generate_messages_cpp)
+
