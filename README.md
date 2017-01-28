@@ -34,7 +34,22 @@ Then unplug and replug ZR300.
 
 ## Usage Instructions
 
-<to be published>
+### Run SLAM
+
+To run the slam engine:
+```bash
+$ cd catkin_ws
+$ catkin_make
+$ source devel/setup.bash
+$ roslaunch rs_slam_test camera_slam_nodelet.launch
+```
+
+To see estimated pos, in another window:
+```bash
+$ cd catkin-ws
+$ source devel/setup.bash
+$ rostopic echo /pose2d
+```
 
 ## Additional Information
 For additional information about this repository, see https://wiki.ith.intel.com/display/perceptual/Guidelines+for+RealSense+SDK+ROS+Samples
