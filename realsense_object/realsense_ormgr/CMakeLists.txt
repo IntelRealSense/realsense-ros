@@ -67,5 +67,4 @@ target_link_libraries(realsense_ormgr_nodelet)
 
 
 #add_dependencies(realsense_recognition_nodelet realsense_msgs_generate_messages_cpp ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
-add_dependencies(realsense_ormgr_nodelet realsense_msgs_generate_messages_cpp)
-
+add_dependencies(realsense_ormgr_nodelet realsense_msgs_gencpp)

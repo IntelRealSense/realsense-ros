@@ -26,7 +26,6 @@ add_message_files(
 	Object.msg
 	ObjectArray.msg
 	Rect.msg
-	RectArray.msg
 	ObjectInBox.msg
 	ObjectsInBoxes.msg
 	StringCommand.msg
@@ -35,6 +34,10 @@ add_message_files(
 	RealSenseResourceCommand.msg
 	RealSenseResourceCommandsArray.msg
 	KeyValueStringPair.msg
+	TrackedObject.msg
+	TrackedObjectsArray.msg
+	UI.msg
+	cpu_gpu.msg
 )
 
 generate_messages(

@@ -59,5 +59,4 @@ target_link_libraries(realsense_recognition_nodelet
 
 
 target_link_libraries(realsense_recognition_nodelet ${OPENCV_LIBS} realsense realsense_image realsense_projection realsense_object_recognition )
-add_dependencies(realsense_recognition_nodelet realsense_msgs_generate_messages_cpp)
-
+add_dependencies(realsense_recognition_nodelet realsense_msgs_gencpp)

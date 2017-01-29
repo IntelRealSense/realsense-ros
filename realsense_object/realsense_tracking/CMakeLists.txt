@@ -62,5 +62,4 @@ target_link_libraries(realsense_tracking_nodelet
 	${roscpp_LIBRARIES}
 	)
 
-add_dependencies(realsense_tracking_nodelet realsense_msgs_generate_messages_cpp)
-
+add_dependencies(realsense_tracking_nodelet realsense_msgs_gencpp)
