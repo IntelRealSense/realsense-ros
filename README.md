@@ -12,7 +12,9 @@ The release notes in the packages are draft version, they will be updated very s
  
 ## Installation Instructions
 
-See 'script_setup.sh' in this repo to install everything needed from scratch, from clean Ubuntu install
+The Intel RealSense SDK for Linux is used as the base for everything used by these modules.  Public installation information for RealSense for Ubuntu 16.04 is available at https://software.intel.com/sites/products/realsense/intro/
+
+Using the instructions documented above, see 'script_setup.sh' in this repo to install everything needed from scratch, from clean Ubuntu install including ROS and the RealSense SDK for Linux:
 ```bash
 $ wget https://github.intel.com/raw/IntelRealSense/realsense_ros/master/script_setup.sh
 $ chmod a+x ./script_setup.sh
