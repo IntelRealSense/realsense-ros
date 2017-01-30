@@ -278,9 +278,11 @@ namespace realsense
 		    objectInBox.object_bbox.y = localization_data[i].roi.y;
 		    objectInBox.object_bbox.width = localization_data[i].roi.width;
 		    objectInBox.object_bbox.height = localization_data[i].roi.height;
-		    objectInBox.location.x = localization_data[i].object_center.x;
-		    objectInBox.location.y = localization_data[i].object_center.y;
-		    objectInBox.location.z = localization_data[i].object_center.z;
+                    objectInBox.location.coordinates.x = localization_data[i].object_center.coordinates.x;
+                    objectInBox.location.coordinates.y = localization_data[i].object_center.coordinates.y;
+                    objectInBox.location.coordinates.z = localization_data[i].object_center.coordinates.z;
+                    objectInBox.location.horiz_margin = localization_data[i].object_center.horiz_margin;
+                    objectInBox.location.vert_margin = localization_data[i].object_center.vert_margin;
 
 		    objects_with_pos.objects_vector.push_back(objectInBox);
 
@@ -312,8 +314,8 @@ namespace realsense
 		  if (or_configuration->is_object_center_estimation_enabled())
 		  {
 		    text.precision(0);
-		    text << " COM: (" <<localization_data[i].object_center.x << ", " <<localization_data[i].object_center.y << ", "  <<localization_data[i].object_center.z << ")" ;
-		  }    
+                    text << " COM: (" <<localization_data[i].object_center.coordinates.x << ", " <<localization_data[i].object_center.coordinates.y << ", "  <<localization_data[i].object_center.coordinates.z << ")" ;
+                  }    //todo: print margin vertical and horizental
 		  cv::Point txtLocation(localization_data[i].roi.x-5, std::max(localization_data[i].roi.y, 20));
 		  cv::putText(m_imageColor, text.str(), txtLocation, cv::FONT_HERSHEY_PLAIN, 1.5, cvScalar(0, 0, 0), 2); // black text outlining
 		  cv::putText(m_imageColor, text.str(), txtLocation, cv::FONT_HERSHEY_PLAIN, 1.5, cvScalar(255, 128, 128), 1);

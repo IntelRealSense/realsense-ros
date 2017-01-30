@@ -67,7 +67,6 @@ void ros_camera_utils::get_extrinsics(const sensor_msgs::CameraInfo::ConstPtr & 
   
 }
 
-
 rs::core::status ros_camera_utils::init_or(const rs::intrinsics& colorInt,const rs::intrinsics& depthInt,const rs::extrinsics& ext,rs::object_recognition::or_video_module_impl& impl,
 	  rs::object_recognition::or_data_interface** or_data, rs::object_recognition::or_configuration_interface** or_configuration)
 {
@@ -85,21 +84,23 @@ rs::core::status ros_camera_utils::init_or(const rs::intrinsics& colorInt,const 
 	rs::core::intrinsics core_depthInt;
 	
 	rs::core::video_module_interface::supported_module_config cfg;
-	st =impl.query_supported_module_config(5, cfg);
-	if (st != rs::core::status_no_error)
-	      return st;
-	
-	
-	// add check that the cfg is ok
-	if ( cfg.image_streams_configs[(int)rs::stream::color].size.width != colorInt.width || 
-	     cfg.image_streams_configs[(int)rs::stream::color].size.height != colorInt.height )
-	      return rs::core::status_param_unsupported;
-		     
- 	// add check that the cfg is ok
-	if ( cfg.image_streams_configs[(int)rs::stream::depth].size.width != depthInt.width || 
-	     cfg.image_streams_configs[(int)rs::stream::depth].size.height != depthInt.height )
-	      return rs::core::status_param_unsupported;
-	
+        bool supported = false;
+
+        for(int i = 0;impl.query_supported_module_config(i, cfg) == rs::core::status_no_error; i++)
+        {
+            // add check that the cfg is ok
+            if ( cfg.image_streams_configs[(int)rs::stream::color].size.width == colorInt.width &&
+                 cfg.image_streams_configs[(int)rs::stream::color].size.height == colorInt.height &&
+                 cfg.image_streams_configs[(int)rs::stream::depth].size.width == depthInt.width &&
+                 cfg.image_streams_configs[(int)rs::stream::depth].size.height == depthInt.height )
+            {
+                supported = true;
+                break;
+            }
+        }
+        if(!supported)
+            return rs::core::status_param_unsupported;
+
 	//1. copy the extrinsics 
 	memcpy(&actualConfig.image_streams_configs[(int)rs::stream::color].extrinsics, &ext, sizeof(rs::extrinsics));
 	core_ext =  rs::utils::convert_extrinsics(ext);

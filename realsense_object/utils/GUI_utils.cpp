@@ -213,10 +213,10 @@ bool GUI_utils::draw_results(const sensor_msgs::ImageConstPtr& color, const real
 	for(int i=0; i < (int)msg.objects_vector.size(); i++)
 	{
 		
-		cv::String text = msg.objects_vector[i].object.object_name + " " + get_3D_location_string(msg.objects_vector[i].location);
+		cv::String text = msg.objects_vector[i].object.object_name + " " + get_3D_location_string(msg.objects_vector[i].location.coordinates); //todo: drow vertical and horisontical margin
 		
 		      
-		  draw_rect(text, 3*i, (int)msg.objects_vector[i].object_bbox.x, (int)msg.objects_vector[i].object_bbox.y, (int)msg.objects_vector[i].object_bbox.width, (int)msg.objects_vector[i].object_bbox.height);
+		draw_rect(text, 3*i, (int)msg.objects_vector[i].object_bbox.x, (int)msg.objects_vector[i].object_bbox.y, (int)msg.objects_vector[i].object_bbox.width, (int)msg.objects_vector[i].object_bbox.height);
 	} 
 	
 	return true;

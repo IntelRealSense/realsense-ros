@@ -1,0 +1,3 @@
+geometry_msgs/Point32 coordinates
+float32 horiz_margin
+float32 vert_margin

@@ -26,6 +26,7 @@ add_message_files(
 	Object.msg
 	ObjectArray.msg
 	Rect.msg
+	Location3D.msg
 	ObjectInBox.msg
 	ObjectsInBoxes.msg
 	StringCommand.msg

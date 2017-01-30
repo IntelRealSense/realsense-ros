@@ -289,9 +289,11 @@ namespace realsense
 			to.bbox.height = tracking_data[i].roi.height;
 			to.bbox.x = tracking_data[i].roi.x;
 			to.bbox.y = tracking_data[i].roi.y;
-			to.location.x = tracking_data[i].object_center.x; 
-			to.location.y = tracking_data[i].object_center.y; 
-			to.location.z = tracking_data[i].object_center.z;
+                        to.location.coordinates.x = tracking_data[i].object_center.coordinates.x;
+                        to.location.coordinates.y = tracking_data[i].object_center.coordinates.y;
+                        to.location.coordinates.z = tracking_data[i].object_center.coordinates.z;
+                        to.location.horiz_margin = tracking_data[i].object_center.horiz_margin;
+                        to.location.vert_margin = tracking_data[i].object_center.vert_margin;
 			to.id = i; 
 			outROIs.tracked_objects_vector.push_back(to);	
 

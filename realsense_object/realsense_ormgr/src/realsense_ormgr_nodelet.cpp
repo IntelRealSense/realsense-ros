@@ -120,8 +120,8 @@ namespace realsense
 		realsense_msgs::TrackedObject to;	 
 		 for(int i=0; i < array_size; i++)
 		 {
-			to.bbox =  msg.objects_vector[i].object_bbox;
-			to.location = msg.objects_vector[i].location;	
+			to.bbox = msg.objects_vector[i].object_bbox;
+			to.location = msg.objects_vector[i].location;
 			to.id = i;	
 			outROIs.tracked_objects_vector.push_back(to);
 			m_objects_vector.objects_vector.push_back( msg.objects_vector[i]);
