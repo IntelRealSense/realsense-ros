@@ -20,6 +20,10 @@ set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -O2 -D_FORTIFY_SOURCE=2 -fstack-prot
 set(ROOT      "${CMAKE_CURRENT_SOURCE_DIR}")
 set(CMAKE_THREAD_LIBS_INIT pthread)
 
+add_message_files(
+  FILES
+  PoseMatrix.msg
+ )
 generate_messages(
   DEPENDENCIES
   sensor_msgs 
@@ -36,7 +40,6 @@ catkin_package(
                  std_msgs 
                  geometry_msgs
                  message_runtime
-		 realsense_msgs
 #  DEPENDS system_lib
 )
 

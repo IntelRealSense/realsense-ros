@@ -39,7 +39,6 @@ add_message_files(
 	TrackedObjectsArray.msg
 	UI.msg
 	cpu_gpu.msg
-	PoseMatrix.msg
 )
 
 generate_messages(

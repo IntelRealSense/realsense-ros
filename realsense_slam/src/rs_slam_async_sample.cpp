@@ -90,7 +90,7 @@ public:
     const rs::slam::tracking_accuracy trackingAccuracy = pSP->get_tracking_accuracy();
     rs::slam::PoseMatrix4f cameraPose; 
     pSP->get_camera_pose(cameraPose);
-    realsense_msgs::PoseMatrix matrix_msg;
+    rs_slam_test::PoseMatrix matrix_msg;
     for (int i = 0; i < 4; i++)
     {
       for (int j = 0; j < 4; j++)
@@ -162,7 +162,7 @@ namespace rs_slam_test
     nh = getMTNodeHandle();
     pub_pose2d = nh.advertise< geometry_msgs::Pose2D >("pose2d", 2, true);
     mapPub = nh.advertise< nav_msgs::OccupancyGrid >("map", 1, true);
-    pub_poseMatrix = nh.advertise< realsense_msgs::PoseMatrix >("poseMatrix", 1, true);
+    pub_poseMatrix = nh.advertise< rs_slam_test::PoseMatrix >("poseMatrix", 1, true);
     pkgpath = ros::package::getPath("rs_slam_test") + "/";
     ros::NodeHandle pnh = getPrivateNodeHandle();
     pnh.param< double >("resolution", resolution, 0.05);

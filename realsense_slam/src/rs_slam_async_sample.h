@@ -18,7 +18,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
-#include <realsense_msgs/PoseMatrix.h>
+#include <rs_slam_test/PoseMatrix.h>
 #include <ros/time.h>
 #include <std_msgs/String.h>
 
