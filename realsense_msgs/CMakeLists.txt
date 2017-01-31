@@ -14,31 +14,25 @@ find_package(PCL 1.7 REQUIRED COMPONENTS common io)
 
 add_message_files(
 	FILES
+# PT
 	Landmark.msg
 	User.msg
 	UserInfo.msg
 	Frame.msg
-	Nlu.msg
-	Gesture.msg
-	Fusion.msg
-	MovementCommand.msg
-	MovementCommandArray.msg
-	Object.msg
-	ObjectArray.msg
-	Rect.msg
-	Location3D.msg
-	ObjectInBox.msg
-	ObjectsInBoxes.msg
-	StringCommand.msg
         Gestures.msg
         Pointing.msg
-	RealSenseResourceCommand.msg
-	RealSenseResourceCommandsArray.msg
-	KeyValueStringPair.msg
+
+# Object
+	Object.msg
+	ObjectArray.msg
+	ObjectInBox.msg
+	ObjectsInBoxes.msg
 	TrackedObject.msg
 	TrackedObjectsArray.msg
 	UI.msg
 	cpu_gpu.msg
+	Rect.msg
+	Location3D.msg
 )
 
 generate_messages(
