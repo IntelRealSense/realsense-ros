@@ -12,7 +12,7 @@ This package contains a ROS wrapper for Intel's realsense_persontracking library
 <br /\>     Link: https://securewiki.ith.intel.com/pages/viewpage.action?pageId=510951805
 ### ros package requirements:
 <br /\>     realsense_pt_msgs
-<br /\>     realsense_srvs
+<br /\>     realsense_pt_srvs
 2. Example 
 --------------------------------------
 <br /\>    To use realsense_pt_demo, you need a RealSense device (LR200 or ZR300) and realsense_camera (RealSense ros package) in your system and launched.
@@ -37,17 +37,17 @@ This package contains a ROS wrapper for Intel's realsense_persontracking library
       image_result (sensor_msgs/Image)
         Image result of person tracked, you may see the image with rviz or rqt_image_view
 ###  3.1.3 Services
-      person_tracking/tracking_config (realsense_srvs/TrackingConfig)
+      person_tracking/tracking_config (realsense_pt_srvs/TrackingConfig)
         Reconfigure several settings for PersonTracking
-      person_tracing/recognition_request (realsense_srvs/RecognitionRequest)
+      person_tracing/recognition_request (realsense_pt_srvs/RecognitionRequest)
         Reconfigure to register or remove a person to recognition 
-      person_tracking/tracking_request (realsense_srvs/TrackingRequest)
+      person_tracking/tracking_request (realsense_pt_srvs/TrackingRequest)
         Reconfigure to start or stop tracking
-      person_tracking/save_recognition (realsense_srvs/SaveRecognitionDB)
+      person_tracking/save_recognition (realsense_pt_srvs/SaveRecognitionDB)
         Save the recognition data base to file
-      person_tracking/load_recognition (realsense_srvs/LoadRecognitionDB)
+      person_tracking/load_recognition (realsense_pt_srvs/LoadRecognitionDB)
         Load the recognition data base from file
-      person_tracking/recognition_image_request (realsense_srvs/RecognitionImgRequest)
+      person_tracking/recognition_image_request (realsense_pt_srvs/RecognitionImgRequest)
         Register or remove a person to recognition by image
 ###  3.1.4 Parameters
       ~recognitionEnabled (bool, default: false)

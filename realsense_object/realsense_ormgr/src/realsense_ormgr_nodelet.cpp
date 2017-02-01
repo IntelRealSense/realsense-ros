@@ -140,7 +140,7 @@ namespace realsense
 	  ROS_INFO("re-localization\n ");
 	  m_sub_tracked_objects.shutdown();		  		     	   
           m_sub_localized_objects = m_nh.subscribe("realsense/localized_objects", 1, &COrmgr::localizeidObjectsCallback , this);						
-	  ROS_INFO(std::to_string(msg.key).c_str());			  
+	  //ROS_INFO(std::to_string(msg.key).c_str());	NOTE: Matt commented this out because it did not compile
 	}
 	
 	void COrmgr::trackedObjectCallback(const realsense_or_msgs::TrackedObjectsArray::ConstPtr & msg)

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  	<name>realsense_srvs</name>
+  	<name>realsense_pt_srvs</name>
   	<version>0.0.1</version>
   	<description>The realsense_srvs package</description>
 

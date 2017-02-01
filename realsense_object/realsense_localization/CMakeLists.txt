@@ -59,7 +59,7 @@ target_link_libraries(realsense_localization_nodelet
 	realsense_image
 	realsense_projection
 	realsense_object_recognition
-	caffe
+#	caffe [Matt: Why would this be linked here?  it should be in MW library]
         ${OPENCV_LIBS}
         ${catkin_LIBRARIES}
 	${roscpp_LIBRARIES}
