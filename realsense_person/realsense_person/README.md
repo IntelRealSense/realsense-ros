@@ -11,7 +11,7 @@ This package contains a ROS wrapper for Intel's realsense_persontracking library
 <br /\>     librealsense
 <br /\>     Link: https://securewiki.ith.intel.com/pages/viewpage.action?pageId=510951805
 ### ros package requirements:
-<br /\>     realsense_msgs
+<br /\>     realsense_pt_msgs
 <br /\>     realsense_srvs
 2. Example 
 --------------------------------------
@@ -21,7 +21,7 @@ This package contains a ROS wrapper for Intel's realsense_persontracking library
 3. Nodelet
 --------------------------------------
 ##  3.1 realsense_pt_demo 
-    The realsense_pt_demo nodelet take camera infos(sensor_msgs/CameraInfo), color stream, depth stream (sensor_msgs/Image), published by realsense_camera nodelet, send the information of person detected after calculation as realsense_msgs/Frame messages.
+    The realsense_pt_demo nodelet take camera infos(sensor_msgs/CameraInfo), color stream, depth stream (sensor_msgs/Image), published by realsense_camera nodelet, send the information of person detected after calculation as realsense_pt_msgs/Frame messages.
 ###  3.1.1 Subscribed Topics
       camera/depth/camera_info (sensor_msgs/CameraInfo)
         The intrinsic (and extrinsics) of camera (depth and depth to color)
@@ -32,7 +32,7 @@ This package contains a ROS wrapper for Intel's realsense_persontracking library
       camera/color/image_raw (sensor_msgs/Image)
         Color image stream received from RealSense device
 ###  3.1.2 Published Topics
-      person_tracking/person_tracking_output (realsense_msgs/Frame)
+      person_tracking/person_tracking_output (realsense_pt_msgs/Frame)
         Results information of person tracked
       image_result (sensor_msgs/Image)
         Image result of person tracked, you may see the image with rviz or rqt_image_view

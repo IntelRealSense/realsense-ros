@@ -7,11 +7,11 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   message_generation
-  realsense_msgs
+  realsense_or_msgs
 )
 
 catkin_package(
-  CATKIN_DEPENDS message_runtime std_msgs sensor_msgs realsense_msgs
+  CATKIN_DEPENDS message_runtime std_msgs sensor_msgs realsense_or_msgs
 )
 
 include_directories(
@@ -49,5 +49,5 @@ target_link_libraries(realsense_orview_nodelet
 target_link_libraries(realsense_orview_nodelet)
 
 
-#add_dependencies(realsense_recognition_nodelet realsense_msgs_generate_messages_cpp ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
-add_dependencies(realsense_orview_nodelet realsense_msgs_gencpp)
+#add_dependencies(realsense_recognition_nodelet realsense_or_msgs_generate_messages_cpp ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
+add_dependencies(realsense_orview_nodelet realsense_or_msgs_gencpp)

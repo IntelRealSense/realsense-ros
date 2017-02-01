@@ -190,7 +190,7 @@ void GUI_utils::draw_no_results()
 
 }
 
-bool GUI_utils::draw_results(const sensor_msgs::ImageConstPtr& color, const realsense_msgs::ObjectsInBoxes& msg)
+bool GUI_utils::draw_results(const sensor_msgs::ImageConstPtr& color, const realsense_or_msgs::ObjectsInBoxes& msg)
 {
 			
 	try
@@ -266,6 +266,6 @@ std::string GUI_utils::get_3D_location_string(geometry_msgs::Point32 location)
 }
 //bool GUI_utils::draw_results(const sensor_msgs::ImageConstPtr& color, const sie_common::RecogRsObjectTracker & msg)
 //{
-	//const realsense_msgs::ObjectsInBoxes rs_msg = msg.uniques[0].objects_in_boxes;		
+	//const realsense_or_msgs::ObjectsInBoxes rs_msg = msg.uniques[0].objects_in_boxes;		
 //}
 

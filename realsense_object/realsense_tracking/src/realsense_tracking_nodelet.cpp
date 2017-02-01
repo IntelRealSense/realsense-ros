@@ -7,10 +7,10 @@
 *******************************************************************************/
 #include <ros/ros.h>
 
-#include "realsense_msgs/TrackedObject.h"
-#include "realsense_msgs/TrackedObjectsArray.h"
-#include "realsense_msgs/ObjectInBox.h"
-#include "realsense_msgs/ObjectsInBoxes.h"
+#include "realsense_or_msgs/TrackedObject.h"
+#include "realsense_or_msgs/TrackedObjectsArray.h"
+#include "realsense_or_msgs/ObjectInBox.h"
+#include "realsense_or_msgs/ObjectsInBoxes.h"
  
 #include <image_transport/image_transport.h>
 #include <opencv2/highgui/highgui.hpp>
@@ -107,7 +107,7 @@ namespace realsense
 		m_no_subscribers = true;	
 		m_nh = nh;		
 		m_sub_depthCameraInfo = m_nh.subscribe("camera/depth/camera_info", 1, &CTracking::depthCameraImfoCallback, this);
-		m_tracked_objects_pub = m_nh.advertise<realsense_msgs::TrackedObjectsArray>("realsense/tracked_objects", 1);	
+		m_tracked_objects_pub = m_nh.advertise<realsense_or_msgs::TrackedObjectsArray>("realsense/tracked_objects", 1);	
 		
 		
 		if(m_show_rgb)
@@ -183,7 +183,7 @@ namespace realsense
 	}
 	
 	
-	void CTracking::objectsToTrackCallback(const realsense_msgs::TrackedObjectsArray& msg)
+	void CTracking::objectsToTrackCallback(const realsense_or_msgs::TrackedObjectsArray& msg)
 	{
 	  
 	//	m_sub_objects_with_pos.shutdown();
@@ -210,7 +210,7 @@ namespace realsense
 	}
 	
 	
-	void CTracking::localizedObjectsToTrackCallback(const realsense_msgs::ObjectsInBoxes& msg)
+	void CTracking::localizedObjectsToTrackCallback(const realsense_or_msgs::ObjectsInBoxes& msg)
 	{
 	  
 		m_sub_objects_with_pos.shutdown();
@@ -279,8 +279,8 @@ namespace realsense
 		  if (st != rs::core::status_no_error)
 			ROS_ERROR("query_tracking_result failed");		
 		 
-		 realsense_msgs::TrackedObjectsArray outROIs;
-		 realsense_msgs::TrackedObject to;		 
+		 realsense_or_msgs::TrackedObjectsArray outROIs;
+		 realsense_or_msgs::TrackedObject to;		 
 		 for(int i=0; i < array_size; i++)
 		 {
 		    

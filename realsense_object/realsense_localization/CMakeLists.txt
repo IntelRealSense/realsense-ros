@@ -20,11 +20,11 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   message_generation
-  realsense_msgs
+  realsense_or_msgs
 )
 
 catkin_package(
-  CATKIN_DEPENDS message_runtime std_msgs sensor_msgs realsense_msgs
+  CATKIN_DEPENDS message_runtime std_msgs sensor_msgs realsense_or_msgs
 )
 
 ##########
@@ -65,4 +65,4 @@ target_link_libraries(realsense_localization_nodelet
 	${roscpp_LIBRARIES}
 	)
 
-add_dependencies(realsense_localization_nodelet realsense_msgs_gencpp)
+add_dependencies(realsense_localization_nodelet realsense_or_msgs_gencpp)

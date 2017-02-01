@@ -11,7 +11,7 @@
 #include "ros/ros.h"
 #include <string>
 #include <geometry_msgs/Point32.h>
-#include "realsense_msgs/ObjectsInBoxes.h"
+#include "realsense_or_msgs/ObjectsInBoxes.h"
 
 /**
  * @brief Class designed to serve the localization demo app, and to display localization rectangles
@@ -163,7 +163,7 @@ public:
 	 */
 	bool draw_rect(cv::String name, int class_ID, int x, int y, int width, int height);
 
-	bool draw_results(const sensor_msgs::ImageConstPtr& color, const realsense_msgs::ObjectsInBoxes& msg);
+	bool draw_results(const sensor_msgs::ImageConstPtr& color, const realsense_or_msgs::ObjectsInBoxes& msg);
 
 
 	/**

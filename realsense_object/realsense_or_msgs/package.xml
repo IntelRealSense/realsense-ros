@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-	<name>realsense_msgs</name>
+	<name>realsense_or_msgs</name>
 	<version>0.0.1</version>
 	<description>Intel(r) RealSense(tm) Technology package realsense msg</description>
 

@@ -8,10 +8,10 @@
 #include "ros/ros.h"
 
 
-#include "realsense_msgs/Rect.h"
-#include "realsense_msgs/ObjectInBox.h"
-#include "realsense_msgs/ObjectsInBoxes.h"
-#include "realsense_msgs/cpu_gpu.h"
+#include "realsense_or_msgs/Rect.h"
+#include "realsense_or_msgs/ObjectInBox.h"
+#include "realsense_or_msgs/ObjectsInBoxes.h"
+#include "realsense_or_msgs/cpu_gpu.h"
  
 #include <image_transport/image_transport.h>
 #include <opencv2/highgui/highgui.hpp>
@@ -112,8 +112,8 @@ namespace realsense
 		image_transport::ImageTransport it(nh);
 
 		m_sub_depthCameraInfo = nh.subscribe("camera/depth/camera_info", 1, &CLocalization::depthCameraImfoCallback, this);
-		m_recognized_objects_pub = nh.advertise<realsense_msgs::ObjectsInBoxes>("realsense/localized_objects", 1);
-		m_cpu_gpu_pub = nh.advertise<realsense_msgs::cpu_gpu>("realsense/cpu_gpu", 1);				
+		m_recognized_objects_pub = nh.advertise<realsense_or_msgs::ObjectsInBoxes>("realsense/localized_objects", 1);
+		m_cpu_gpu_pub = nh.advertise<realsense_or_msgs::cpu_gpu>("realsense/cpu_gpu", 1);				
 		if(m_show_rgb)
 		{
 			cv::namedWindow("localization");
@@ -192,7 +192,7 @@ namespace realsense
 			ROS_INFO("Unable to use GPU, using CPU");
 			m_or_configuration->set_compute_engine(rs::object_recognition::compute_engine::CPU);
 			m_or_configuration->apply_changes();
-			realsense_msgs::cpu_gpu msg;
+			realsense_or_msgs::cpu_gpu msg;
 			msg.CPU_GPU = "Unable to use GPU, using CPU";
 			m_cpu_gpu_pub.publish(msg);
 		}	
@@ -267,8 +267,8 @@ namespace realsense
 		  }
 		  
 		//ROS_INFO(("array" + std::to_string(array_size)).c_str() );
-		 realsense_msgs::ObjectsInBoxes objects_with_pos;
-		 realsense_msgs::ObjectInBox objectInBox;
+		 realsense_or_msgs::ObjectsInBoxes objects_with_pos;
+		 realsense_or_msgs::ObjectInBox objectInBox;
 		 for(int i=0; i < array_size; i++)
 		 {
 		    objectInBox.object.label = localization_data[i].label;

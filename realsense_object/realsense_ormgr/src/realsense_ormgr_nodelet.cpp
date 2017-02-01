@@ -9,11 +9,11 @@
 #include "ros/ros.h"
 
 
-#include "realsense_msgs/Rect.h"
-#include "realsense_msgs/TrackedObjectsArray.h"
-#include "realsense_msgs/ObjectInBox.h"
-#include "realsense_msgs/ObjectsInBoxes.h"
-#include "realsense_msgs/UI.h"
+#include "realsense_or_msgs/Rect.h"
+#include "realsense_or_msgs/TrackedObjectsArray.h"
+#include "realsense_or_msgs/ObjectInBox.h"
+#include "realsense_or_msgs/ObjectsInBoxes.h"
+#include "realsense_or_msgs/UI.h"
  
 #include <image_transport/image_transport.h>
 #include <opencv2/highgui/highgui.hpp>
@@ -99,13 +99,13 @@ namespace realsense
 		m_sub_localized_objects = m_nh.subscribe("realsense/localized_objects", 1, &COrmgr::localizeidObjectsCallback , this);
 		m_sub_UI = m_nh.subscribe("realsense/UI", 1, &COrmgr::UICallback , this);
 			
-		m_objects_to_track_pub = m_nh.advertise<realsense_msgs::TrackedObjectsArray>("realsense/objects_to_track", 1);
-		m_tracked_localized_pub = m_nh.advertise<realsense_msgs::ObjectsInBoxes>("realsense/localized_tracked_objects", 1);
+		m_objects_to_track_pub = m_nh.advertise<realsense_or_msgs::TrackedObjectsArray>("realsense/objects_to_track", 1);
+		m_tracked_localized_pub = m_nh.advertise<realsense_or_msgs::ObjectsInBoxes>("realsense/localized_tracked_objects", 1);
 	 }
 
 
 	
-	void COrmgr::localizeidObjectsCallback(const realsense_msgs::ObjectsInBoxes& msg)
+	void COrmgr::localizeidObjectsCallback(const realsense_or_msgs::ObjectsInBoxes& msg)
 	{
 	  // get objects roi from localization and publish it
 	  
@@ -114,10 +114,10 @@ namespace realsense
 			return ;
 		m_sub_localized_objects.shutdown();	
 		ROS_INFO("new objects to track");		
-		realsense_msgs::TrackedObjectsArray outROIs;
+		realsense_or_msgs::TrackedObjectsArray outROIs;
 		m_objects_vector.objects_vector.clear();
 		 
-		realsense_msgs::TrackedObject to;	 
+		realsense_or_msgs::TrackedObject to;	 
 		 for(int i=0; i < array_size; i++)
 		 {
 			to.bbox = msg.objects_vector[i].object_bbox;
@@ -131,7 +131,7 @@ namespace realsense
 		 m_objects_to_track_pub.publish(outROIs);				  
 	}
 	
-	void COrmgr::UICallback(const realsense_msgs::UI& msg)
+	void COrmgr::UICallback(const realsense_or_msgs::UI& msg)
 	{
 	  if (true == m_localize_every_frame)
 	  {
@@ -143,7 +143,7 @@ namespace realsense
 	  ROS_INFO(std::to_string(msg.key).c_str());			  
 	}
 	
-	void COrmgr::trackedObjectCallback(const realsense_msgs::TrackedObjectsArray::ConstPtr & msg)
+	void COrmgr::trackedObjectCallback(const realsense_or_msgs::TrackedObjectsArray::ConstPtr & msg)
 	{	
 		int nCtr = 0;
 		for(int i=0; i < (int)msg->tracked_objects_vector.size(); i++)

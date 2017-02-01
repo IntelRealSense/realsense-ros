@@ -7,18 +7,18 @@ void PersonTrackingPublisher::onInit(ros::NodeHandle & nodeHandle, rs::person_tr
   mPersonTracking = personTracking;
   std::string toStream = "person_tracking/person_tracking_output";
   ROS_INFO_STREAM("Publishing to " << toStream);
-  mPublisher = nodeHandle.advertise<realsense_msgs::Frame>(toStream, 1);
+  mPublisher = nodeHandle.advertise<realsense_pt_msgs::Frame>(toStream, 1);
 }
 void PersonTrackingPublisher::publishOutput(PXCPersonTrackingData & trackingData)
 {
-  realsense_msgs::Frame frame;
+  realsense_pt_msgs::Frame frame;
   frame.numberOfUsers = trackingData.QueryNumberOfPeople();
   for (int index = 0; index < frame.numberOfUsers; ++index)
   {
     PXCPersonTrackingData::Person* personData = trackingData.QueryPersonData(PXCPersonTrackingData::AccessOrderType::ACCESS_ORDER_BY_INDEX, index);
     if (personData)
     {
-      realsense_msgs::User user;
+      realsense_pt_msgs::User user;
       PXCPersonTrackingData::PersonTracking* personTrackingData = personData->QueryTracking();
       PXCPersonTrackingData::BoundingBox2D box = personTrackingData->Query2DBoundingBox();
       PXCPersonTrackingData::BoundingBox2D facebox = personTrackingData->QueryHeadBoundingBox();
@@ -76,7 +76,7 @@ void PersonTrackingPublisher::publishOutput(PXCPersonTrackingData & trackingData
   }
   mPublisher.publish(frame);
 }
-void PersonTrackingPublisher::addBlobToOutput(PXCPersonTrackingData::PersonTracking * personTrackingData, realsense_msgs::User & user)
+void PersonTrackingPublisher::addBlobToOutput(PXCPersonTrackingData::PersonTracking * personTrackingData, realsense_pt_msgs::User & user)
 {
   if (!mPersonTracking->QueryConfiguration()->QueryTracking()->IsSegmentationEnabled()) return;
   if (mPersonTracking->QueryConfiguration()->QueryTracking()->IsBlobEnabled())
@@ -112,7 +112,7 @@ void PersonTrackingPublisher::addBlobToOutput(PXCPersonTrackingData::PersonTrack
     }
   }
 }
-void PersonTrackingPublisher::addSkeletonToOutput(PXCPersonTrackingData::Person * personData, realsense_msgs::User & user)
+void PersonTrackingPublisher::addSkeletonToOutput(PXCPersonTrackingData::Person * personData, realsense_pt_msgs::User & user)
 {
   if (!mPersonTracking->QueryConfiguration()->QuerySkeletonJoints()->IsEnabled()) return;
   PXCPersonTrackingData::PersonJoints* personJoints = personData->QuerySkeletonJoints();
@@ -122,14 +122,14 @@ void PersonTrackingPublisher::addSkeletonToOutput(PXCPersonTrackingData::Person 
   personJoints->QueryJoints(skeletonPoints.data());
   for (PXCPersonTrackingData::PersonJoints::SkeletonPoint& skeletonPoint : skeletonPoints)
   {
-    realsense_msgs::Landmark landmark;
+    realsense_pt_msgs::Landmark landmark;
     landmark.type = skeletonPoint.jointType;
     landmark.location.x = skeletonPoint.image.x;
     landmark.location.y = skeletonPoint.image.y;
     user.landmarks.push_back(landmark);
   }
 }
-void PersonTrackingPublisher::addGesturesToOutout(PXCPersonTrackingData::Person * personData, realsense_msgs::User & user)
+void PersonTrackingPublisher::addGesturesToOutout(PXCPersonTrackingData::Person * personData, realsense_pt_msgs::User & user)
 {
   if (!mPersonTracking->QueryConfiguration()->QueryGestures()->IsEnabled()) return;
   PXCPersonTrackingData::PersonGestures * personGestures = personData->QueryGestures();

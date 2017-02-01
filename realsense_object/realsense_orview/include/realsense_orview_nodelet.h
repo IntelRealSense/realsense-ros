@@ -23,7 +23,7 @@ ClassifyImage	INTEL CORPORATION PROPRIETARY INFORMATION
 
 #include <message_filters/time_synchronizer.h>
 
-//typedef message_filters::TimeSynchronizer<sensor_msgs::Image, realsense_msgs::ObjectsInBoxes> trackingSynchronizer;
+//typedef message_filters::TimeSynchronizer<sensor_msgs::Image, realsense_or_msgs::ObjectsInBoxes> trackingSynchronizer;
 //typedef message_filters::TimeSynchronizer<sensor_msgs::Image, sie_common::RecogRsObjectTracker> sonySynchronizer;
 
 namespace realsense
@@ -52,7 +52,7 @@ namespace realsense
 		int initialize();
 		int unInitialize();
 		//Static member functions:
-		void localizedTrackedObjectsCallback(const sensor_msgs::ImageConstPtr& color,const realsense_msgs::ObjectsInBoxes::ConstPtr& msg);
+		void localizedTrackedObjectsCallback(const sensor_msgs::ImageConstPtr& color,const realsense_or_msgs::ObjectsInBoxes::ConstPtr& msg);
 		
 		//===================================
 		//	Member Variables
@@ -60,9 +60,9 @@ namespace realsense
 
 		std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>>			mColorSubscriber;
 
-		std::unique_ptr<message_filters::Subscriber<realsense_msgs::ObjectsInBoxes>> 		mTrackingSubscriber;
+		std::unique_ptr<message_filters::Subscriber<realsense_or_msgs::ObjectsInBoxes>> 		mTrackingSubscriber;
 		
-		std::unique_ptr<message_filters::TimeSynchronizer<sensor_msgs::Image, realsense_msgs::ObjectsInBoxes>> mTimeSynchronizer;
+		std::unique_ptr<message_filters::TimeSynchronizer<sensor_msgs::Image, realsense_or_msgs::ObjectsInBoxes>> mTimeSynchronizer;
 		
 		ros::Publisher m_UI_pub;
 		ros::NodeHandle m_nh;

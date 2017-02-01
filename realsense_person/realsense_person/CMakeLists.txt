@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   roscpp_serialization
   rospy
-  realsense_msgs
+  realsense_pt_msgs
   realsense_srvs
   )
 find_package(OpenCV 3 REQUIRED)
@@ -72,7 +72,7 @@ add_library(realsense_pt_demo
 	 ${PROJECT_LINK_LIBS}
       	 ${catkin_LIBRARIES}
 	 )
- add_dependencies(realsense_pt_demo realsense_msgs_gencpp realsense_srvs_gencpp)
+ add_dependencies(realsense_pt_demo realsense_pt_msgs_gencpp realsense_srvs_gencpp)
 
 
 # Install launch files

@@ -53,8 +53,8 @@ namespace realsense
 		//Static member functions:
 		void colorCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
 		void depthCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
-		void objectsToTrackCallback(const realsense_msgs::TrackedObjectsArray& msg);
-		void localizedObjectsToTrackCallback(const realsense_msgs::ObjectsInBoxes& msg);
+		void objectsToTrackCallback(const realsense_or_msgs::TrackedObjectsArray& msg);
+		void localizedObjectsToTrackCallback(const realsense_or_msgs::ObjectsInBoxes& msg);
 	
 		
 		void TrackingCallback(const sensor_msgs::ImageConstPtr& color ,const sensor_msgs::ImageConstPtr& depth );

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(realsense_msgs)
+project(realsense_pt_msgs)
 
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
@@ -14,25 +14,12 @@ find_package(PCL 1.7 REQUIRED COMPONENTS common io)
 
 add_message_files(
 	FILES
-# PT
 	Landmark.msg
 	User.msg
 	UserInfo.msg
 	Frame.msg
         Gestures.msg
         Pointing.msg
-
-# Object
-	Object.msg
-	ObjectArray.msg
-	ObjectInBox.msg
-	ObjectsInBoxes.msg
-	TrackedObject.msg
-	TrackedObjectsArray.msg
-	UI.msg
-	cpu_gpu.msg
-	Rect.msg
-	Location3D.msg
 )
 
 generate_messages(

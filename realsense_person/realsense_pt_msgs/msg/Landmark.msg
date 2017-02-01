@@ -1,0 +1,4 @@
+int32 type
+float32 confidenceLevel
+geometry_msgs/Point32 location
+geometry_msgs/Point32 realWorldCoordinates

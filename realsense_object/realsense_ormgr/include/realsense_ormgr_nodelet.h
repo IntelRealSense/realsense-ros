@@ -49,9 +49,9 @@ namespace realsense
 		int initialize();
 		int unInitialize();
 		//Static member functions:
-		void localizeidObjectsCallback(const realsense_msgs::ObjectsInBoxes& msg);		
-		void trackedObjectCallback(const realsense_msgs::TrackedObjectsArray::ConstPtr & msg);
-		void UICallback(const realsense_msgs::UI & msg);
+		void localizeidObjectsCallback(const realsense_or-msgs::ObjectsInBoxes& msg);		
+		void trackedObjectCallback(const realsense_or_msgs::TrackedObjectsArray::ConstPtr & msg);
+		void UICallback(const realsense_or_msgs::UI & msg);
 		
 		//===================================
 		//	Member Variables
@@ -66,7 +66,7 @@ namespace realsense
 		
 		ros::NodeHandle m_nh;
 		
-		realsense_msgs::ObjectsInBoxes m_objects_vector;
+		realsense_or_msgs::ObjectsInBoxes m_objects_vector;
 		
 		bool m_debug;
 		int m_maxNumberOfObjects;	

@@ -8,8 +8,8 @@
 
 #include "ros/ros.h"
 
-#include "realsense_msgs/UI.h"
-#include "realsense_msgs/ObjectsInBoxes.h" 
+#include "realsense_or_msgs/UI.h"
+#include "realsense_or_msgs/ObjectsInBoxes.h" 
 #include <image_transport/image_transport.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
@@ -83,11 +83,11 @@ namespace realsense
 		// Subscribe to color, tracking using synchronization filter
 		mColorSubscriber.reset(new message_filters::Subscriber<sensor_msgs::Image>(m_nh, "camera/color/image_raw", 1));
 		
-		mTrackingSubscriber.reset(new message_filters::Subscriber<realsense_msgs::ObjectsInBoxes>(m_nh, "realsense/localized_tracked_objects", 1));
+		mTrackingSubscriber.reset(new message_filters::Subscriber<realsense_or_msgs::ObjectsInBoxes>(m_nh, "realsense/localized_tracked_objects", 1));
 	
-		m_UI_pub = m_nh.advertise<realsense_msgs::UI>("realsense/UI", 1);	
+		m_UI_pub = m_nh.advertise<realsense_or_msgs::UI>("realsense/UI", 1);	
  
-		mTimeSynchronizer.reset(new message_filters::TimeSynchronizer<sensor_msgs::Image, realsense_msgs::ObjectsInBoxes>(*mColorSubscriber, *mTrackingSubscriber,60));
+		mTimeSynchronizer.reset(new message_filters::TimeSynchronizer<sensor_msgs::Image, realsense_or_msgs::ObjectsInBoxes>(*mColorSubscriber, *mTrackingSubscriber,60));
  
 		mTimeSynchronizer->registerCallback(boost::bind(&COrView::localizedTrackedObjectsCallback, this, _1, _2));
 
@@ -95,13 +95,13 @@ namespace realsense
 
 
 	
-	void COrView::localizedTrackedObjectsCallback(const sensor_msgs::ImageConstPtr& color,const realsense_msgs::ObjectsInBoxes::ConstPtr& msg)
+	void COrView::localizedTrackedObjectsCallback(const sensor_msgs::ImageConstPtr& color,const realsense_or_msgs::ObjectsInBoxes::ConstPtr& msg)
 	{
 
 		int key = cv::waitKey(1);
 		if ((char)key == ' ')
 		{
-			realsense_msgs::UI msg;
+			realsense_or_msgs::UI msg;
 			msg.key = key;
 			m_UI_pub.publish(msg);
 			ROS_INFO(std::to_string(key).c_str());	

@@ -29,10 +29,10 @@
   <build_depend>roscpp_serialization</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>sensor_msgs</build_depend>
-  <build_depend>realsense_msgs</build_depend>
+  <build_depend>realsense_pt_msgs</build_depend>
   <build_depend>realsense_srvs</build_depend>
   <run_depend>realsense_srvs</run_depend>
-  <run_depend>realsense_msgs</run_depend>
+  <run_depend>realsense_pt_msgs</run_depend>
   <run_depend>roscpp_serialization</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>sensor_msgs</run_depend>

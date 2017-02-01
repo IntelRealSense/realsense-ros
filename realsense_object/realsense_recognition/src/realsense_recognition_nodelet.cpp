@@ -14,7 +14,7 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 
-#include "realsense_msgs/ObjectArray.h"
+#include "realsense_or_msgs/ObjectArray.h"
  
 #include <image_transport/image_transport.h>
 #include <opencv2/highgui/highgui.hpp>
@@ -85,7 +85,7 @@ namespace realsense
 		image_transport::ImageTransport it(nh);
 				
 		m_sub_depthCameraInfo = nh.subscribe("camera/depth/camera_info", 1, &CRecognition::depthCameraImfoCallback, this);
-		m_recognized_objects_pub = nh.advertise<realsense_msgs::ObjectArray>("realsense/recognized_objects", 1);
+		m_recognized_objects_pub = nh.advertise<realsense_or_msgs::ObjectArray>("realsense/recognized_objects", 1);
 		
 
 		
@@ -205,8 +205,8 @@ namespace realsense
 			return;
 		  }
 		  
-		 realsense_msgs::ObjectArray object_vector;
-		 realsense_msgs::Object one_object;
+		 realsense_or_msgs::ObjectArray object_vector;
+		 realsense_or_msgs::Object one_object;
 		 for(int i=0; i < array_size; i++)
 		 {
 		    
