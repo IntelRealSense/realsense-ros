@@ -4,7 +4,7 @@
 	<version>0.0.1</version>
 	<description>Intel(r) RealSense(tm) Technology package realsense msg</description>
 
-	<maintainer email="artyom.popov@intel.com">Artyom Popov</maintainer>
+	<maintainer email="shoshana.skurnik@intel.com">Shoshana Skurnik</maintainer>
 
 	<license>Under NDA release only. See license attached</license>
 

@@ -47,15 +47,9 @@ namespace realsense
 		//===================================
 
 		int initialize();
-		int unInitialize();
-		
-		//int RecognizeObjects(cv::Mat image, std::vector<cv::Rect> & objectProposals);
-		
-		
-	
-		//Static member functions:
-//		void imageColorCallback(const sensor_msgs::ImageConstPtr& msg);
-//		void imageDepthCallback(const sensor_msgs::ImageConstPtr& msg);
+                int unInitialize();
+
+                //Static member functions:
 		void colorCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
 		void depthCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
 		void draw_results(rs::object_recognition::localization_data* localization_data,int array_size,rs::object_recognition::or_configuration_interface* or_configuration);
@@ -75,7 +69,6 @@ namespace realsense
 		
 		std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>> 			mDepthSubscriber;
 		std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>>			mColorSubscriber;
-		
 		std::unique_ptr<message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image>> mTimeSynchronizer;
 			
 		ros::Publisher m_recognized_objects_pub;
@@ -90,20 +83,14 @@ namespace realsense
 		float m_confidence;
 		int m_maxNumberOfObjects;
 		bool m_use_CPU;
-		
 		bool m_no_subscribers;
 
-		
 		ros::NodeHandle m_nh;
-		
-	//	std::string m_colorInfoTopic;
 		
 		int m_colorHeight;
 		int m_colorWidth;
 		int m_depthHeight;
 		int m_depthWidth;
-		
-		
 		
 		rs::extrinsics m_ext;
 		rs::intrinsics m_colorInt;
@@ -116,10 +103,7 @@ namespace realsense
 		
 		rs::object_recognition::or_video_module_impl m_impl;
 		rs::object_recognition::or_data_interface* m_or_data; 
-		rs::object_recognition::or_configuration_interface* m_or_configuration;
-		
-		
-		
+		rs::object_recognition::or_configuration_interface* m_or_configuration;		
 	};
 	
 #ifdef RUN_AS_NODELET

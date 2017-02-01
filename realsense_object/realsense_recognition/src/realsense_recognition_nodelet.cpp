@@ -180,9 +180,6 @@ namespace realsense
 			ROS_ERROR("toCvShare failed");
 			return;
 		}
-
-//		if(m_recognized_objects_pub.getNumSubscribers() <= 0)
-//		    return;
 		
 		int array_size = 0;
 		rs::core::status st;

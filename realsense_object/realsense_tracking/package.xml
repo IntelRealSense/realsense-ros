@@ -2,14 +2,12 @@
 <package>
   <name>realsense_tracking</name>
   <version>0.0.0</version>
-  <description>The tracking package</description>
+  <description>object tracking package</description>
+  <maintainer email="shoshana.skurnik@intel.com">Shoshana Skurnik</maintainer>
 
- 
-  <maintainer email="ostro@todo.todo">ostro</maintainer>
+  <license>Under NDA release only. See license attached</license>
 
-  <license>TODO</license>
-
-   <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>

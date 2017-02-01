@@ -48,6 +48,7 @@ namespace realsense
 
 		int initialize();
 		int unInitialize();
+
 		//Static member functions:
 		void localizeidObjectsCallback(const realsense_or_msgs::ObjectsInBoxes& msg);		
 		void trackedObjectCallback(const realsense_or_msgs::TrackedObjectsArray::ConstPtr & msg);

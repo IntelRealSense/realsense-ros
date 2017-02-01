@@ -264,8 +264,3 @@ std::string GUI_utils::get_3D_location_string(geometry_msgs::Point32 location)
     str += str_stream.str() + "m";
     return str;
 }
-//bool GUI_utils::draw_results(const sensor_msgs::ImageConstPtr& color, const sie_common::RecogRsObjectTracker & msg)
-//{
-	//const realsense_or_msgs::ObjectsInBoxes rs_msg = msg.uniques[0].objects_in_boxes;		
-//}
-

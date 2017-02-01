@@ -246,31 +246,28 @@ namespace realsense
 		
 		int array_size = 0;
 		rs::core::status st;
-		//ROS_INFO("before sample set");
 		rs::core::correlated_sample_set* sample_set = utils.get_sample_set(m_colorInfo,m_depthInfo, m_imageColor.data,m_imageDepth.data,color->header.seq,(uint64_t)color->header.stamp.nsec);
-		//ROS_INFO("after sample set");		
-		 st = m_impl.process_sample_set(*sample_set);
-		 if (st != rs::core::status_no_error)
-		 {
-		   	 ROS_ERROR("process_sample_set_sync failed");
-			 return;
-		 }
-		 //ROS_INFO("after process");
-		  rs::object_recognition::localization_data* localization_data = nullptr; 
+		st = m_impl.process_sample_set(*sample_set);
+		if (st != rs::core::status_no_error)
+		{
+				ROS_ERROR("process_sample_set_sync failed");
+				return;
+		}
+		rs::object_recognition::localization_data* localization_data = nullptr;
 		 
-		  //retrieve localization data from the or_data object 
-		  st =m_or_data->query_localization_result(&localization_data, array_size);
-		  if (st != rs::core::status_no_error)
-		  {
+		//retrieve localization data from the or_data object
+		st =m_or_data->query_localization_result(&localization_data, array_size);
+		if (st != rs::core::status_no_error)
+		{
 			ROS_ERROR("query_localization_result failed");
 			return;
-		  }
+		}
 		  
 		//ROS_INFO(("array" + std::to_string(array_size)).c_str() );
-		 realsense_or_msgs::ObjectsInBoxes objects_with_pos;
-		 realsense_or_msgs::ObjectInBox objectInBox;
-		 for(int i=0; i < array_size; i++)
-		 {
+		realsense_or_msgs::ObjectsInBoxes objects_with_pos;
+		realsense_or_msgs::ObjectInBox objectInBox;
+		for(int i=0; i < array_size; i++)
+		{
 		    objectInBox.object.label = localization_data[i].label;
 		    objectInBox.object.object_name = m_or_configuration->query_object_name_by_id(localization_data[i].label);
 		    objectInBox.object.probability =  localization_data[i].probability;		    
@@ -286,12 +283,12 @@ namespace realsense
 
 		    objects_with_pos.objects_vector.push_back(objectInBox);
 
-		 }
+		}
 		 
-		 // copy the header for image and localization sync;
-		 objects_with_pos.header= color->header;
+		// copy the header for image and localization sync;
+		objects_with_pos.header= color->header;
 		 
-		 m_recognized_objects_pub.publish(objects_with_pos);
+		m_recognized_objects_pub.publish(objects_with_pos);
 		ROS_INFO("localization done" );	
 		if(m_show_rgb)
 		{
