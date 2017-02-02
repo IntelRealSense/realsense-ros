@@ -1,14 +1,16 @@
-There is the draft version ROS packages released by Perc-china.
+# Intel® RealSense™ SDK for Linux ROS Samples
 
-###Libraries used:(version beta3_RC5_22_12_2016_ww52)
+## Features
+These samples illustrate how to develop OSRF&reg; ROS* applications using Intel® RealSense™ cameras for Object Library (OR), Person Library (PT), and Simultaneous Localization And Mapping (SLAM).
 
-<br /\>    SLAM: libreansense_slam.so. 
+## Functionality
+**API is experimental and not an official Intel product. It is subject to incompatible API changes in future updates. Breaking API changes are noted through major release numbers**
 
-<br /\>    PT: librealsense_persontracking.so. 
+The following sample projects are provided in this release:
+- Object Recognition
+- Person Tracking
+- SLAM
 
-<br /\>    CAMERA: librealsense.so. 
-
-The release notes in the packages are draft version, they will be updated very soon. Thanks.
  
 ## Installation Instructions
 
@@ -55,3 +57,20 @@ $ rostopic echo /pose2d
 
 ## Additional Information
 For additional information about this repository, see https://wiki.ith.intel.com/display/perceptual/Guidelines+for+RealSense+SDK+ROS+Samples
+
+## License
+Copyright 2017 Intel Corporation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this project except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+**Other names and brands may be claimed as the property of others*

@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<package format="2">
+
+  <name>realsense_person</name>
+  <version>0.2.0</version>
+  <description>ROS package for the RealSense Person middleware</description>
+
+  <maintainer email="reagan.lopez@intel.com">Reagan Lopez</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">TODO</url>
+
+  <author email="reagan.lopez@intel.com">Reagan Lopez</author>
+  <author email="kevron.m.rees@intel.com">Kevron Rees</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
+  <depend>nodelet</depend>
+  <depend>dynamic_reconfigure</depend>
+  <depend>cv_bridge</depend>
+  <depend>message_filters</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>message_generation</depend>
+  <depend>rostest</depend>
+  <depend>pkg-config</depend>
+
+  <exec_depend>realsense_camera</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugins.xml" />
+  </export>
+
+</package>

@@ -1,0 +1,26 @@
+<launch>
+  <arg name="camera"       value="camera" />
+  <arg name="camera_type"  default="R200" />
+  <arg name="enable_color" default="true" />
+  <arg name="enable_depth" default="false" />
+  <arg name="enable_ir"    default="true" />
+  <arg name="enable_ir2"   default="true" />
+
+  <!-- Start camera -->
+  <include file="$(find realsense_camera)/launch/r200_nodelet_modify_params.launch">
+    <arg name="camera"        value="$(arg camera)" />
+    <arg name="camera_type"   value="$(arg camera_type)" />
+    <arg name="enable_color"  value="$(arg enable_color)" />
+    <arg name="enable_depth"  value="$(arg enable_depth)" />
+    <arg name="enable_ir"     value="$(arg enable_ir)" />
+    <arg name="enable_ir2"    value="$(arg enable_ir2)" />
+  </include>
+
+  <!-- Start test -->
+  <test pkg="realsense_camera" type="tests_camera_core" test-name="realsense_camera_test"
+    args="camera_type $(arg camera_type) enable_color $(arg enable_color) 
+      enable_depth $(arg enable_depth) 
+      enable_ir $(arg enable_ir) 
+      enable_ir2 $(arg enable_ir2)"
+      retry="3" />
+</launch>

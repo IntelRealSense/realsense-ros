@@ -1,0 +1,19 @@
+<launch>
+  <arg name="camera"          value="camera" />
+  <arg name="camera_type"     default="ZR300" />
+  <arg name="enable_fisheye"  default="true" />
+  <arg name="enable_imu"      default="true" />
+
+  <!-- Start camera -->
+  <include file="$(find realsense_camera)/launch/zr300_nodelet_default.launch">
+    <arg name="camera"          value="$(arg camera)" />
+    <arg name="camera_type"     value="$(arg camera_type)" />
+  </include>
+
+  <!-- Start test -->
+  <test pkg="realsense_camera" type="tests_camera_core" test-name="realsense_camera_test"
+    args="camera_type $(arg camera_type)
+    enable_fisheye $(arg enable_fisheye)
+    enable_imu $(arg enable_imu)"
+    retry="3" />
+</launch>

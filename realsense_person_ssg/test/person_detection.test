@@ -1,0 +1,24 @@
+<launch>
+  <arg name="camera"               value="camera" />
+  <arg name="camera_type"          value="R200" />
+  <arg name="person"               value="person" />
+
+  <!-- Seconds to wait for the subscribed topics before running the tests -->
+  <arg name="ros_sleep_time"       value="10" />
+  <!-- Number of times to try testing the services for success -->
+  <arg name="service_call_count"   value="50" />
+
+  <!-- Start camera -->
+  <include file="$(find realsense_person)/launch/person_sample.launch">
+    <arg name="camera"      value="$(arg camera)" />
+    <arg name="camera_type" value="$(arg camera_type)" />
+  </include>
+
+  <!-- Start test -->
+  <test pkg="realsense_person" type="test_person_detection" test-name="test_person_detection">
+    <param name="camera"              type="str"  value="$(arg camera)" />
+    <param name="person"              type="str"  value="$(arg person)" />
+    <param name="ros_sleep_time"      type="int"  value="$(arg ros_sleep_time)" />
+    <param name="service_call_count"  type="int"  value="$(arg service_call_count)" />
+  </test>
+</launch>

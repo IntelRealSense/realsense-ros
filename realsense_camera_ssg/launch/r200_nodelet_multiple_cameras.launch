@@ -1,0 +1,37 @@
+<!-- Sample launch file for using multiple RealSense R200 cameras -->
+<launch>
+  <arg name="camera1"              default="camera1" />
+  <arg name="camera1_camera_type"  default="R200"    /> <!-- Type of camera -->
+  <arg name="camera1_serial_no"    default=""        /> <!-- Note: Replace with actual serial number -->
+  <arg name="camera1_usb_port_id"  default=""        /> <!-- USB "Bus#-Port#" -->
+  <arg name="camera2"              default="camera2" />
+  <arg name="camera2_camera_type"  default="R200"    /> <!-- Type of camera -->
+  <arg name="camera2_serial_no"    default=""        /> <!-- Note: Replace with actual serial number -->
+  <arg name="camera2_usb_port_id"  default=""        /> <!-- USB "Bus#-Port#" -->
+  
+  <arg name="manager" value="camera_nodelet_manager" /> <!-- Single nodelet manager for all cameras -->
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
+
+  <!-- User must include the .xml file for each camera with unique values for "camera" and 
+       either the "serial_no" or "usb_port_id" of the camera.
+       "camera" should be a user friendly string that follows the ROS Names convention. -->
+  <group ns="$(arg camera1)">
+    <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="manager"      value="/$(arg manager)" />
+      <arg name="camera"       value="$(arg camera1)" />
+      <arg name="camera_type"  value="$(arg camera1_camera_type)" />
+      <arg name="serial_no"    value="$(arg camera1_serial_no)" />
+      <arg name="usb_port_id"  value="$(arg camera1_usb_port_id)" />
+    </include>
+  </group> 
+
+  <group ns="$(arg camera2)">
+    <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="manager"      value="/$(arg manager)" />
+      <arg name="camera"       value="$(arg camera2)" />
+      <arg name="camera_type"  value="$(arg camera2_camera_type)" />
+      <arg name="serial_no"    value="$(arg camera2_serial_no)" />
+      <arg name="usb_port_id"  value="$(arg camera2_usb_port_id)" />
+    </include>
+  </group>
+</launch>

@@ -1,0 +1,79 @@
+<!-- Sample launch file for using RealSense R200 camera with realsense_person -->
+<launch>
+
+  <!-- "camera" should be a user friendly string to uniquely identify the device namespace.
+       All topics are pushed down into the "camera" namespace, and it is prepended to tf frame ids. -->
+  <arg name="camera"          default="camera" />
+
+  <!-- Type of RealSense camera -->
+  <arg name="camera_type"     default="R200" />
+
+  <!-- "serial_no" or "usb_port_id" should be a unique identifier to connect to a device -->
+  <arg name="serial_no"     default="" />
+  <arg name="usb_port_id"   default="" /> <!-- USB "Bus#-Port#" -->
+
+  <!-- Arguments for remapping topic namespaces -->
+  <arg name="rgb"              default="rgb" />
+  <arg name="depth"            default="depth" />
+  <arg name="person"           default="person" />
+
+  <!-- Arguments for stream settings -->
+  <arg name="enable_color"      default="true" />
+  <arg name="enable_depth"      default="true" />
+  <arg name="mode"              default="manual" />
+  <arg name="color_width"       default="640" />
+  <arg name="color_height"      default="480" />
+  <arg name="depth_width"       default="480" />
+  <arg name="depth_height"      default="360" />
+  <arg name="subscribe_rate"    default="30" />
+
+  <!-- These arguments can be set dynamically too and are provided here just for convenience -->
+  <arg name="detection_rate"            default="30" />
+  <arg name="tracking_rate"             default="30" />
+  <arg name="enable_recognition"        default="true" />
+  <arg name="enable_head_bounding_box"  default="false" />
+  <arg name="enable_gestures"           default="false" />
+  <arg name="enable_skeleton_joints"    default="false" />
+
+  <arg name="manager"           default="manager" />
+
+  <group ns="$(arg camera)">
+    <!-- Load manager -->
+    <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
+
+    <!-- Load camera -->
+    <param name="driver/mode"           type="str"  value="$(arg mode)" />
+    <param name="driver/enable_color"   type="bool" value="$(arg enable_color)" />
+    <param name="driver/enable_depth"   type="bool" value="$(arg enable_depth)" />
+    <param name="driver/color_width"    type="int"  value="$(arg color_width)" />
+    <param name="driver/color_height"   type="int"  value="$(arg color_height)" />
+    <param name="driver/depth_width"    type="int"  value="$(arg depth_width)" />
+    <param name="driver/depth_height"   type="int"  value="$(arg depth_height)" />
+    <param name="driver/color_fps"      type="int"  value="$(arg subscribe_rate)" />
+    <param name="driver/depth_fps"      type="int"  value="$(arg subscribe_rate)" />
+    <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="manager"       value="$(arg manager)" />
+      <arg name="camera_type"   value="$(arg camera_type)" />
+      <arg name="serial_no"     value="$(arg serial_no)" />
+      <arg name="usb_port_id"   value="$(arg usb_port_id)" />
+      <arg name="rgb"           value="$(arg rgb)" />
+      <arg name="depth"         value="$(arg depth)" />
+    </include>
+
+    <!-- Load person -->
+    <param name="$(arg person)/subscribe_rate"            type="int"   value="$(arg subscribe_rate)" />
+    <param name="$(arg person)/detection_rate"            type="int"   value="$(arg detection_rate)" />
+    <param name="$(arg person)/tracking_rate"             type="int"   value="$(arg tracking_rate)" />
+    <param name="$(arg person)/enable_recognition"        type="bool"  value="$(arg enable_recognition)" />
+    <param name="$(arg person)/enable_head_bounding_box"  type="bool"  value="$(arg enable_head_bounding_box)" />
+    <param name="$(arg person)/enable_gestures"           type="bool"  value="$(arg enable_gestures)" />
+    <param name="$(arg person)/enable_skeleton_joints"    type="bool"  value="$(arg enable_skeleton_joints)" />
+    <include file="$(find realsense_person)/launch/includes/nodelet.launch.xml">
+      <arg name="manager"       value="$(arg manager)" />
+      <arg name="rgb"           value="$(arg rgb)" />
+      <arg name="depth"         value="$(arg depth)" />
+      <arg name="person"        value="$(arg person)" />
+    </include>
+  </group>
+
+</launch>

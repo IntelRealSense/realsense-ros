@@ -1,0 +1,29 @@
+<!-- Sample launch file for using RealSense R200 camera with default configurations -->
+<launch>
+  <arg name="camera"       default="camera" />
+  <arg name="camera_type"  default="R200" /> <!-- Type of camera -->
+  <arg name="serial_no"    default="" />
+  <arg name="usb_port_id"  default="" /> <!-- USB "Bus#-Port#" -->
+  <arg name="manager"      default="nodelet_manager" />
+
+  <!-- These 'arg' tags are just place-holders for passing values from test files.
+  The recommended way is to pass the values directly into the 'param' tags. -->
+  <arg name="mode"              default="manual" />
+  <arg name="color_fps"         default="30" />
+
+  <param name="$(arg camera)/driver/mode"              type="str"  value="$(arg mode)" />
+  <param name="$(arg camera)/driver/color_fps"         type="int"  value="$(arg color_fps)" />
+  <!-- Refer to the Wiki http://wiki.ros.org/realsense_camera for list of supported parameters -->
+
+  <group ns="$(arg camera)">
+    <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
+
+    <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="manager"      value="$(arg manager)" />
+      <arg name="camera"       value="$(arg camera)" />
+      <arg name="camera_type"  value="$(arg camera_type)" />
+      <arg name="serial_no"    value="$(arg serial_no)" />
+      <arg name="usb_port_id"  value="$(arg usb_port_id)" />
+    </include>
+  </group>
+</launch>

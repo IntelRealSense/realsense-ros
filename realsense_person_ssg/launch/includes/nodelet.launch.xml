@@ -1,0 +1,13 @@
+<!-- Entry point for using realsense_person -->
+<launch>
+  <arg name="manager" /> <!-- Name of nodelet manager must be fully resolved -->
+  <arg name="depth"        default="depth" />
+  <arg name="rgb"          default="color" />
+  <arg name="person"       default="person" />
+  <node pkg="nodelet" type="nodelet" name="person"
+    args="load realsense_person/PersonNodelet $(arg manager)">
+    <remap from="depth"    to="$(arg depth)" />
+    <remap from="color"    to="$(arg rgb)" />
+    <remap from="person"   to="$(arg person)" />
+  </node>
+</launch>

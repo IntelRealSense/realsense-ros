@@ -1,0 +1,70 @@
+<!-- Entry point for using realsense_camera with rgbd_launch -->
+<launch>
+<!-- rgbd_launch -->
+    <arg name="manager" /> <!-- Name of nodelet manager must be fully resolved -->
+    <arg name="camera"              default="camera" />
+    <arg name="publish_tf"          default="true" />
+    <arg name="depth"               default="depth" />
+    <arg name="rgb"                 default="rgb" />
+    <arg name="ir"                  default="ir" />
+<!-- rgbd_launch -->
+
+<!-- realsense_camera -->
+    <arg name="camera_type" /> <!-- Type of camera must be fully resolved -->
+    <arg name="serial_no"           default="" />
+    <arg name="usb_port_id"         default="" />
+    <arg name="mode"                default="" />
+    <arg name="depth_width"         default="" />
+    <arg name="depth_height"        default="" />
+    <arg name="color_width"         default="" />
+    <arg name="color_height"        default="" />
+    <arg name="depth_fps"           default="" />
+    <arg name="color_fps"           default="" />
+    <arg name="ir2"                 default="ir2" />
+
+    <arg name="enable_depth"        default="true" />
+    <arg name="enable_color"        default="true" />
+    <arg name="enable_ir"           default="true" />
+    <arg name="enable_ir2"          default="true" />
+    <arg name="enable_fisheye"      default="false" />
+    <arg name="enable_imu"          default="false" />
+
+     <!-- "enable_pointcloud" is set to false by default because rgbd_launch uses standard ROS packages
+          to generate point clouds. -->
+    <arg name="enable_pointcloud"   default="false" />
+<!-- realsense_camera -->
+
+    <node pkg="nodelet" type="nodelet" name="driver"
+        args="load realsense_camera/$(arg camera_type)Nodelet $(arg manager)">
+        <param name="serial_no"               type="str"  value="$(arg serial_no)" />
+        <param name="usb_port_id"             type="str"  value="$(arg usb_port_id)" />
+        <param name="camera_type"             type="str"  value="$(arg camera_type)" />
+        <param name="enable_depth"            type="bool" value="$(arg enable_depth)" />
+        <param name="enable_color"            type="bool" value="$(arg enable_color)" />
+        <param name="enable_ir"               type="bool" value="$(arg enable_ir)" />
+        <param name="enable_ir2"              type="bool" value="$(arg enable_ir2)" />
+        <param name="enable_pointcloud"       type="bool" value="$(arg enable_pointcloud)" />
+        <param name="enable_fisheye"          type="bool" value="$(arg enable_fisheye)" />
+        <param name="enable_imu"              type="bool" value="$(arg enable_imu)" />
+        <param name="enable_tf"               type="bool" value="$(arg publish_tf)" />
+        <param name="mode"                    type="str"  value="$(arg mode)" />
+        <param name="depth_width"             type="int"  value="$(arg depth_width)" />
+        <param name="depth_height"            type="int"  value="$(arg depth_height)" />
+        <param name="color_width"             type="int"  value="$(arg color_width)" />
+        <param name="color_height"            type="int"  value="$(arg color_height)" />
+        <param name="depth_fps"               type="int"  value="$(arg depth_fps)" />
+        <param name="color_fps"               type="int"  value="$(arg color_fps)" />
+        <param name="base_frame_id"           type="str"  value="$(arg camera)_link" />
+        <param name="depth_frame_id"          type="str"  value="$(arg camera)_$(arg depth)_frame" />
+        <param name="color_frame_id"          type="str"  value="$(arg camera)_$(arg rgb)_frame" />
+        <param name="depth_optical_frame_id"  type="str"  value="$(arg camera)_$(arg depth)_optical_frame" />
+        <param name="color_optical_frame_id"  type="str"  value="$(arg camera)_$(arg rgb)_optical_frame" />
+        <param name="ir_frame_id"             type="str"  value="$(arg camera)_$(arg ir)_frame" />
+        <param name="ir2_frame_id"            type="str"  value="$(arg camera)_$(arg ir2)_frame" />
+
+        <remap from="depth"    to="$(arg depth)" />
+        <remap from="color"    to="$(arg rgb)" />
+        <remap from="ir"       to="$(arg ir)" />
+        <remap from="ir2"      to="$(arg ir2)" />
+    </node>
+</launch>

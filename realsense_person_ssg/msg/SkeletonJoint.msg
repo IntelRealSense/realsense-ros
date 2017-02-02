@@ -1,0 +1,2 @@
+string type
+realsense_person/RegisteredPoint point

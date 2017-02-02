@@ -1,0 +1,17 @@
+<launch>
+  <arg name="camera"       value="camera" />
+  <arg name="camera_type"  default="R200" />
+  <arg name="enable_depth" value="false" />
+
+  <!-- Start camera -->
+  <param name="$(arg camera)/driver/enable_depth" type="bool" value="$(arg enable_depth)" />
+  <include file="$(find realsense_camera)/launch/r200_nodelet_default.launch">
+    <arg name="camera"      value="$(arg camera)" />
+    <arg name="camera_type" value="$(arg camera_type)" />
+  </include>
+
+  <!-- Start test -->
+  <test pkg="realsense_camera" type="tests_camera_core" test-name="realsense_camera_test"
+    args="camera_type $(arg camera_type) enable_depth $(arg enable_depth)" 
+    retry="3" />
+</launch>

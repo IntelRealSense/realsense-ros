@@ -1,0 +1,7 @@
+<library path="lib/librealsense_person_nodelet">
+  <class name="realsense_person/PersonNodelet" type="realsense_person::PersonNodelet" base_class_type="nodelet::Nodelet">
+  <description>
+  Intel(R) RealSense(TM) Person nodelet.
+  </description>
+  </class>
+</library>
