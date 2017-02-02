@@ -8,14 +8,14 @@
 Auther: Elisa_LU 
 Email: lu.x.lu@intel.com
 *******************************************************************************/
-#include "realsense_pt_demo_nodelet.h"
+#include "realsense_ros_person_nodelet.h"
 #ifndef PERSON_TRACKING_DATA_FILES
 #define PERSON_TRACKING_DATA_FILES "/usr/share/librealsense/pt/data/"
 #endif
 
-PLUGINLIB_EXPORT_CLASS(realsense_pt_demo::TNodeletPt, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(realsense_ros_person::TNodeletPt, nodelet::Nodelet)
 
-namespace realsense_pt_demo
+namespace realsense_ros_person
 {
   void TNodeletPt::onInit()
   {
@@ -62,7 +62,7 @@ namespace realsense_pt_demo
   {
     ros::NodeHandle & nodeHandle = getPrivateNodeHandle();
     int streamingmode, colorresolution, depthresolution;
-    std::string path = ros::package::getPath("realsense_pt_demo");
+    std::string path = ros::package::getPath("realsense_ros_person");
     NODELET_INFO("setParams");
     nodeHandle.param< bool >("recognitionEnabled", config.recognitionEnabled, false);
     nodeHandle.param< bool >("gesturesEnabled", config.gesturesEnabled, false);

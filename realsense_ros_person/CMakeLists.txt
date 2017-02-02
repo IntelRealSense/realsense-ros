@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(realsense_pt_demo)
+project(realsense_ros_person)
 
 find_package(catkin REQUIRED COMPONENTS
   std_msgs 
@@ -82,12 +82,12 @@ set( PROJECT_LINK_LIBS
    )
 
 catkin_package(
- LIBRARIES realsense_pt_demo
+ LIBRARIES realsense_ros_person
  CATKIN_DEPENDS nodelet roscpp std_msgs image_transport sensor_msgs geometry_msgs message_runtime message_filters roslib rostime cv_bridge roscpp_serialization rospy
 )
 
 file(GLOB SOURCES
-    "src/realsense_pt_demo_nodelet.cpp"
+    "src/realsense_ros_person_nodelet.cpp"
     "src/PersonTrackingPublisher.cpp"
     "src/PersonTrackingServer.cpp"
     "src/Common/TrackingRenderer/*.cpp"
@@ -95,16 +95,16 @@ file(GLOB SOURCES
     "src/Common/*.cpp"
 )
 
-add_library(realsense_pt_demo
+add_library(realsense_ros_person
 	${SOURCES}
  )
 
- target_link_libraries(realsense_pt_demo
+ target_link_libraries(realsense_ros_person
 	 ${PROJECT_LINK_LIBS}
       	 ${catkin_LIBRARIES}
 	 )
 
- add_dependencies(realsense_pt_demo ${PROJECT_NAME}_generate_messages_cpp)
+ add_dependencies(realsense_ros_person ${PROJECT_NAME}_generate_messages_cpp)
 
 
 # Install launch files

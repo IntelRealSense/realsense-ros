@@ -3,11 +3,11 @@
   <param name="depth_fps"         type="int"  value="30" />
   <param name="color_fps"         type="int"  value="30" />
 
-  <node pkg="nodelet" type="nodelet" name="realsense_pt" args="standalone realsense_pt_demo/TNodeletPt" output="screen" >
+  <node pkg="nodelet" type="nodelet" name="realsense_pt" args="standalone realsense_ros_person/TNodeletPt" output="screen" >
 <!-- launch-prefix="xterm -e gdb--><!--args"-->
   <!--launch-prefix="gdb -ex run --><!--args"/-->
 
-     <rosparam file="$(find realsense_pt_demo)/launch/test_pt_params.yaml" command="load"/>
+     <rosparam file="$(find realsense_ros_person)/launch/test_pt_params.yaml" command="load"/>
   </node>
 
 </launch>

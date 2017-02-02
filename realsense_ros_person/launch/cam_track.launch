@@ -14,8 +14,8 @@
   <param name="depth_fps"         type="int"  value="$(arg depth_fps)" />
   <param name="color_fps"         type="int"  value="$(arg color_fps)" />
 
-  <node pkg="nodelet" type="nodelet" name="realsense_pt" args="standalone realsense_pt_demo/TNodeletPt" output="screen">
-     <rosparam file="$(find realsense_pt_demo)/launch/test_pt_params.yaml" command="load"/>
+  <node pkg="nodelet" type="nodelet" name="realsense_pt" args="standalone realsense_ros_person/TNodeletPt" output="screen">
+     <rosparam file="$(find realsense_ros_person)/launch/test_pt_params.yaml" command="load"/>
   </node>
 
 </launch>

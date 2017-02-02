@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>realsense_pt_demo</name>
+  <name>realsense_ros_person</name>
   <version>16.0.0</version>
-  <description>The realsense_pt_demo package with image registration mode</description>
+  <description>The realsense_ros_person package with image registration mode</description>
 
   <maintainer email="lu.x.lu@intel.com">elisa_Lu</maintainer>
 

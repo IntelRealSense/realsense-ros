@@ -6,5 +6,5 @@ libraries of intel used(version beta3 RC5):
   Link: https://securewiki.ith.intel.com/pages/viewpage.action?pageId=510951805
 
 Quick start:
-  roslaunch realsense_pt_demo camera_track.launch
+  roslaunch realsense_ros_person camera_track.launch
 

@@ -36,7 +36,7 @@
 #include "PersonTrackingPublisher.h"
 #include "PersonTrackingServer.h"
 
-namespace realsense_pt_demo
+namespace realsense_ros_person
 {
   class TNodeletPt:public nodelet::Nodelet
   {

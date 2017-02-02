@@ -7,4 +7,4 @@ cd ../../../
 pwd
 source devel/setup.bash
 
-rqt --perspective-file ./src/realsense_pt_demo/ros_gui/pt_img_result_and_output.perspective
+rqt --perspective-file ./src/realsense_ros_person/ros_gui/pt_img_result_and_output.perspective
