@@ -107,19 +107,19 @@ This package contains a ROS wrapper for Intel's realsense library. The realsense
     
 4. run sample app
 --------------------------------------------
-launch realsense_camera
-  
-for each nodelet open a new tab (Ctrl+shift+t) and type
-source devel/setup.bash
-
-window 2
-roslaunch realsense_localization realsense_localization_launch.launch
-
-window 3
-roslaunch realsense_tracking realsense_tracking_launch.launch
-
-window 4
-roslaunch realsense_ormgr realsense_ormgr_launch.launch
-
-window 5
-roslaunch realsense_orview realsense_orview_launch.launch
+<br /\>    launch realsense_camera
+<br /\>     
+<br /\>    for each nodelet open a new tab (Ctrl+shift+t) and type
+<br /\>      source devel/setup.bash
+<br /\>    
+<br /\>    window 2
+<br /\>      roslaunch realsense_localization realsense_localization_launch.launch
+<br /\>    
+<br /\>    window 3
+<br /\>      roslaunch realsense_tracking realsense_tracking_launch.launch
+<br /\>    
+<br /\>    window 4
+<br /\>      roslaunch realsense_ormgr realsense_ormgr_launch.launch
+<br /\>    
+<br /\>    window 5
+<br /\>      roslaunch realsense_orview realsense_orview_launch.launch
