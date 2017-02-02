@@ -189,7 +189,7 @@ namespace realsense
 	//	m_sub_objects_with_pos.shutdown();
 			
 	
-		int array_size = std::min(m_maxNumberOfObjects,(int)msg.tracked_objects_vector.size());		
+		int array_size = std::min(m_maxNumberOfObjects,(int)msg.tracked_objects_vector.size());	 //todo: insert m_maxNumberOfObjects as parameter to orconfiguration
 		rs::core::rect* trackingRois = new rs::core::rect[array_size];
 		
 		for(int i=0; i < array_size ; i++)

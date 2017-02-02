@@ -80,8 +80,7 @@ namespace realsense
 		
 		bool m_show_rgb;
 		bool m_estimateCenter;
-		float m_confidence;
-		int m_maxNumberOfObjects;
+                float m_confidence;
 		bool m_use_CPU;
 		bool m_no_subscribers;
 
