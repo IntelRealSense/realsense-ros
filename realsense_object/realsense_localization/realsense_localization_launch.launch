@@ -4,7 +4,6 @@
        	<param name="show_rgb" type="bool" value="false" />
        	<param name="confidence" type="double" value="0.7" />
        	<param name="estimate_center" type="bool" value="true" />
-       	<param name="max_number_of_objects" type="int" value="5" />
 	<param name="use_CPU" type="bool" value="true" />	
 </node>
 </launch>

@@ -1,10 +1,5 @@
-/******************************************************************************
-ClassifyImage	INTEL CORPORATION PROPRIETARY INFORMATION
-	This software is supplied under the terms of a license agreement or nondisclosure
-	agreement with Intel Corporation and may not be copied or disclosed except in
-	accordance with the terms of that agreement
-	Copyright(c) 2011-2015 Intel Corporation. All Rights Reserved.
-*******************************************************************************/
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2016 Intel Corporation. All Rights Reserved.
 
 #pragma once
 # ifndef RS_LOCALIZATION_NODELET
@@ -80,8 +75,7 @@ namespace realsense
 		
 		bool m_show_rgb;
 		bool m_estimateCenter;
-		float m_confidence;
-		int m_maxNumberOfObjects;
+                float m_confidence;
 		bool m_use_CPU;
 		bool m_no_subscribers;
 

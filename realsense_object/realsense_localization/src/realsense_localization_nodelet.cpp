@@ -1,10 +1,6 @@
-/******************************************************************************
-	INTEL CORPORATION PROPRIETARY INFORMATION
-	This software is supplied under the terms of a license agreement or nondisclosure
-	agreement with Intel Corporation and may not be copied or disclosed except in
-	accordance with the terms of that agreement
-	Copyright(c) 2011-2015 Intel Corporation. All Rights Reserved.
-*******************************************************************************/
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2016 Intel Corporation. All Rights Reserved.
+
 #include "ros/ros.h"
 
 
@@ -62,8 +58,8 @@ namespace realsense
 	{
 		m_show_rgb = false;
 		m_confidence = 0.7;
-		m_estimateCenter = true;
-		m_maxNumberOfObjects = 5;
+                m_estimateCenter = true;
+                m_use_CPU = true;
 		return 0;
 	}
 	
@@ -71,8 +67,7 @@ namespace realsense
 	{
 		nh.getParam("show_rgb", m_show_rgb);		
 		nh.getParam("confidence", m_confidence);		
-		nh.getParam("estimate_center", m_estimateCenter);		
-		nh.getParam("max_number_of_objects", m_maxNumberOfObjects);
+                nh.getParam("estimate_center", m_estimateCenter);
 		nh.getParam("use_CPU",m_use_CPU);
 	}
 	
@@ -84,10 +79,6 @@ namespace realsense
 			if(argv[i] == "show_rgb")
 			{
 				m_show_rgb = true;
-			}
-			else if(argv[i] == "-max_number_of_objects") // max objects to track
-			{
-				m_maxNumberOfObjects = atoi(argv[++i].c_str());
 			}
 			else if(argv[i] == "-confidence")
 			{
@@ -216,8 +207,7 @@ namespace realsense
 		// if there are no subscribers do nothing
 		
 		if(m_recognized_objects_pub.getNumSubscribers() <= 0)
-		{
-		//	ROS_INFO("no subscribers");	
+		{	
 		      return;
 		}
 	  

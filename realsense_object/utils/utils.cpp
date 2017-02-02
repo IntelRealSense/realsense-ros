@@ -1,4 +1,7 @@
-#include "utils.h"	
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2016 Intel Corporation. All Rights Reserved.
+
+#include "utils.h"
 #include <rs_sdk.h>	
 ros_camera_utils::ros_camera_utils() 
 {
