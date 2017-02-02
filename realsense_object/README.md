@@ -4,7 +4,7 @@ This package contains a ROS wrapper for Intel's realsense library. The realsense
 
 1. Hardwarei/Software Requirement
 ----------------------------------------------
-  To use rs_slam_test, you need a mobile agent with a RealSense ZR200 mounted.
+  To use realsense_object, you need an agent with a RealSense camera mounted.
 ###  ubuntu requirements:
 <br /\>     Ubuntu 16.04
 <br /\>     gcc 4.9.3
