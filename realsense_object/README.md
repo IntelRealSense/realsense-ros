@@ -105,7 +105,7 @@ This package contains a ROS wrapper for Intel's realsense library. The realsense
 ## 3.5 realsense_orview
     viewer, sample app to show how to use realsense_ormgr. process localization when the user hint space key.
     
-3. run sample app
+4. run sample app
 --------------------------------------------
 launch realsense_camera
   
