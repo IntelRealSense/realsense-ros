@@ -18,7 +18,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
-#include <rs_slam_test/PoseMatrix.h>
+#include <realsense_ros_slam/PoseMatrix.h>
 #include <ros/time.h>
 #include <std_msgs/String.h>
 
@@ -36,7 +36,7 @@
 #include <realsense_ros_camera/GetFExtrinsics.h>
 #include "SubscribeTopics.h"
 
-namespace rs_slam_test
+namespace realsense_ros_slam
 {
   class SNodeletSlam:public nodelet::Nodelet
   {

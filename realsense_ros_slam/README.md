@@ -1,10 +1,10 @@
-rs_slam_test released by Perc-China(draft)
+realsense_ros_slam released by Perc-China(draft)
 ==============================================
-This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test package provides a solution of SLAM as a ROS nodelet. It take the messages sent by realsense_ros_camera nodelet. The objective of this module is to find out map information and 2Dpose of agent.
+This package contains a ROS wrapper for Intel's SLAM library. The realsense_ros_slam package provides a solution of SLAM as a ROS nodelet. It take the messages sent by realsense_ros_camera nodelet. The objective of this module is to find out map information and 2Dpose of agent.
 
 1. Hardwarei/Software Requirement
 ----------------------------------------------
-  To use rs_slam_test, you need a mobile agent with a RealSense ZR200 mounted.
+  To use realsense_ros_slam, you need a mobile agent with a RealSense ZR200 mounted.
 ###  ubuntu requirements:
 <br /\>     Ubuntu 16.04
 <br /\>     gcc 4.9.3
@@ -16,12 +16,12 @@ This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test p
 <br /\>     Link: https://securewiki.ith.intel.com/pages/viewpage.action?pageId=510951805
 2. Example 
 --------------------------------------------
-<br /\>    To start rs_slam_test and realsense_ros_camera with command: 
-<br /\>       roslaunch rs_slam_test camera_slam_nodelet.launch
+<br /\>    To start realsense_ros_slam and realsense_ros_camera with command: 
+<br /\>       roslaunch realsense_ros_slam camera_slam_nodelet.launch
 3. Nodelet
 --------------------------------------------
-## 3.1 rs_slam_test 
-    The rs_slam_test nodelet takes fisheye image, imu data, color image, depth image from device, then send the information of "map" and "2Dpose" of agent as type of nav_msgs/OccupancyGrid and geometry_msgs/Pose2D messages after calculation.
+## 3.1 realsense_ros_slam 
+    The realsense_ros_slam nodelet takes fisheye image, imu data, color image, depth image from device, then send the information of "map" and "2Dpose" of agent as type of nav_msgs/OccupancyGrid and geometry_msgs/Pose2D messages after calculation.
 ###  3.1.1 Subscribed Topics
       camera/fisheye/camera_info (sensor_msgs/CameraInfo)
         The intrinsic of camera (fisheye)
@@ -36,7 +36,7 @@ This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test p
       camera/depth/depth_stream_and_info (realsense_ros_camera::StreamInfo)
         Contain the depth stream, timestamp and frame number corresponding
 ###  3.1.2 Published Topics
-      poseMatrix (rs_slam_test/PoseMatrix)
+      poseMatrix (realsense_ros_slam/PoseMatrix)
           6 dof matrix 
       pose2d (geometry_msgs/Pose2D)
           pose of agent in 2 dimentions(x,y,theta)
@@ -44,9 +44,9 @@ This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test p
           map info of area passed
 ###  3.1.3 Parameters
       ~trajectoryFilename: (str::string, default: 'trajectory.ppm') 
-          name of trajectory file of agent. The files will be saved in the rs_slam_test directory
+          name of trajectory file of agent. The files will be saved in the realsense_ros_slam directory
       ~relocalizationFilename: (str::string, default: 'relocalization.bin')
-          name of re-localization data file. The files will be saved in the rs_slam_test directory
+          name of re-localization data file. The files will be saved in the realsense_ros_slam directory
       ~occupancyFilename: (str::string, default: 'occupancy.bin')
-          name of occupancy data file. The files will be saved in the rs_slam_test directory
+          name of occupancy data file. The files will be saved in the realsense_ros_slam directory
 

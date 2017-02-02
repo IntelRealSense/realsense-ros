@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(rs_slam_test)
+project(realsense_ros_slam)
 
 find_package(catkin REQUIRED COMPONENTS
   nodelet
@@ -32,7 +32,7 @@ generate_messages(
 
 catkin_package(
 #  INCLUDE_DIRS include
-  LIBRARIES rs_slam_test
+  LIBRARIES realsense_ros_slam
   CATKIN_DEPENDS nodelet 
                  roscpp 
                  rospy 
@@ -92,7 +92,7 @@ install(DIRECTORY include/
 )
 
 # Install xml files
-install(FILES test_nodelet.xml
+install(FILES nodelet_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

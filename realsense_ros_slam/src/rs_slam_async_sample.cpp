@@ -90,7 +90,7 @@ public:
     const rs::slam::tracking_accuracy trackingAccuracy = pSP->get_tracking_accuracy();
     rs::slam::PoseMatrix4f cameraPose; 
     pSP->get_camera_pose(cameraPose);
-    rs_slam_test::PoseMatrix matrix_msg;
+    realsense_ros_slam::PoseMatrix matrix_msg;
     for (int i = 0; i < 4; i++)
     {
       for (int j = 0; j < 4; j++)
@@ -152,8 +152,8 @@ public:
   }
 };
 
-PLUGINLIB_EXPORT_CLASS(rs_slam_test::SNodeletSlam, nodelet::Nodelet)
-namespace rs_slam_test
+PLUGINLIB_EXPORT_CLASS(realsense_ros_slam::SNodeletSlam, nodelet::Nodelet)
+namespace realsense_ros_slam
 {
   SNodeletSlam::SNodeletSlam(){}
   SNodeletSlam::~SNodeletSlam(){}
@@ -162,8 +162,8 @@ namespace rs_slam_test
     nh = getMTNodeHandle();
     pub_pose2d = nh.advertise< geometry_msgs::Pose2D >("pose2d", 2, true);
     mapPub = nh.advertise< nav_msgs::OccupancyGrid >("map", 1, true);
-    pub_poseMatrix = nh.advertise< rs_slam_test::PoseMatrix >("poseMatrix", 1, true);
-    pkgpath = ros::package::getPath("rs_slam_test") + "/";
+    pub_poseMatrix = nh.advertise< realsense_ros_slam::PoseMatrix >("poseMatrix", 1, true);
+    pkgpath = ros::package::getPath("realsense_ros_slam") + "/";
     ros::NodeHandle pnh = getPrivateNodeHandle();
     pnh.param< double >("resolution", resolution, 0.05);
     pnh.param< std::string >("trajectoryFilename", trajectoryFilename, "trajectory.ppm");

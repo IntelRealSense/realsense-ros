@@ -1,7 +1,0 @@
-<launch>
-<include file="$(find realsense_ros_camera)/launch/slam_camera.launch"/>
-	<node pkg="nodelet" type="nodelet" name="rs_slam" args="standalone rs_slam_test/SNodeletSlam" output="screen">
-         <rosparam file="$(find rs_slam_test)/launch/params.yaml" command="load"/>
-     </node>
-	 <!--launch-prefix="gdb -ex run --><!--args"/-->
-</launch>

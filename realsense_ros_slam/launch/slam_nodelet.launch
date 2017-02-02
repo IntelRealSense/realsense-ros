@@ -1,0 +1,7 @@
+<launch>
+
+     <node pkg="nodelet" type="nodelet" name="rs_slam" args="standalone realsense_ros_slam/SNodeletSlam" output="screen" launch-prefix="gdb -ex run --args">
+         <rosparam file="$(find realsense_ros_slam)/launch/params.yaml" command="load"/>
+     </node>
+	 <!--launch-prefix="gdb -ex run --><!--args"/-->
+</launch>

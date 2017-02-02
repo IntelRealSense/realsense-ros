@@ -1,8 +1,0 @@
-<library path="lib/librs_slam_test">
-	<class name="rs_slam_test/SNodeletSlam" type="rs_slam_test::SNodeletSlam" base_class_type="nodelet::Nodelet">
-        <description>
-            A nodelet of slam.
-        </description>
-        </class>
- </library>
-
