@@ -2,7 +2,7 @@
 
   <arg name="depth_fps" default="30"/>
   <arg name="color_fps" default="30"/>
-  <include file="$(find realsense_camera)/launch/r200_nodelet_modify_params.launch">
+  <include file="$(find realsense_ros_camera)/launch/r200_nodelet_modify_params.launch">
     <arg name="depth_width"       value="320" />
     <arg name="depth_height"      value="240" />
     <arg name="color_width"       value="640" />

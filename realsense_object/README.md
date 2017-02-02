@@ -107,7 +107,7 @@ This package contains a ROS wrapper for Intel's realsense library. The realsense
     
 4. run sample app
 --------------------------------------------
-<br /\>    launch realsense_camera
+<br /\>    launch realsense_ros_camera
 <br /\>     
 <br /\>    for each nodelet open a new tab (Ctrl+shift+t) and type
 <br /\>      source devel/setup.bash

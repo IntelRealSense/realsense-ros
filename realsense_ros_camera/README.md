@@ -1,10 +1,10 @@
-realsense_camera released by Perc-China(draft)
+realsense_ros_camera released by Perc-China(draft)
 =========================================
-This package contains a ROS wrapper for Intel's realsense library. The realsense_camera package provides a solution to get the depth and color stream of realsense device as a ROS nodelet. For instance, it's used only with RealSense ZR300 and R200. The objectif of this module is to provide the data and stream needed by SLAM and PT ros wrapper of Intel.
+This package contains a ROS wrapper for Intel's realsense library. The realsense_ros_camera package provides a solution to get the depth and color stream of realsense device as a ROS nodelet. For instance, it's used only with RealSense ZR300 and R200. The objectif of this module is to provide the data and stream needed by SLAM and PT ros wrapper of Intel.
 
 1. Hardware/Software Requirement
 ----------------------------------------
-  To use realsense_camera, you need a RealSense device(RealSense ZR300 or LR200).
+  To use realsense_ros_camera, you need a RealSense device(RealSense ZR300 or LR200).
 ###  ubuntu requirements:
 <br /\>     Ubuntu 16.04
 <br /\>     gcc 4.9.3
@@ -13,12 +13,12 @@ This package contains a ROS wrapper for Intel's realsense library. The realsense
 <br /\>     Link: https://securewiki.ith.intel.com/pages/viewpage.action?pageId=510951805
 2. Example 
 ---------------------------------------
-<br /\>    To start realsense_camera with command: 
-<br /\>       roslaunch realsense_camera slam_camera.launch
+<br /\>    To start realsense_ros_camera with command: 
+<br /\>       roslaunch realsense_ros_camera slam_camera.launch
 3. Nodelet
 --------------------------------------
-##  3.1 realsense_camera 
-<br /\>       The realsense_camera nodelet get the fisheye image, imu data, color image, depth image from ZR300, or depth image, color image from LR200, then send the information. For now, the image size is:
+##  3.1 realsense_ros_camera 
+<br /\>       The realsense_ros_camera nodelet get the fisheye image, imu data, color image, depth image from ZR300, or depth image, color image from LR200, then send the information. For now, the image size is:
 <br /\>       -depth: 320x240 30fps
 <br /\>       -color: 640x480 30fps
 <br /\>       -fisheye: 640x480 30fps
@@ -41,16 +41,16 @@ This package contains a ROS wrapper for Intel's realsense library. The realsense
           The intrinsic of camera (fisheye)
         camera/fisheye/image_raw (sensor_msgs/Image)
           The fisheye stream received from realsense device
-        camera/imu/gyro (realsense_camera/MotionInfo) 
+        camera/imu/gyro (realsense_ros_camera/MotionInfo) 
           Contain the imu data of Gyroscope, timestamp and frame number corresponding received from ZR300 device
         camera/imu/accel (realsenese_camera/MotionInfo)
           Contain the imu data of Accelerometer, timestamp and framenumber corresponding received frome ZR300 device
-        camera/fisheye/fisheye_stream_and_info (realsense_camera::StreamInfo)
+        camera/fisheye/fisheye_stream_and_info (realsense_ros_camera::StreamInfo)
           Contain the fisheye stream, timestamp and frame number corresponding received from ZR300 device
-        camera/depth/depth_stream_and_info (realsense_camera::StreamInfo)
+        camera/depth/depth_stream_and_info (realsense_ros_camera::StreamInfo)
           Contain the depth stream, timestamp and frame number corresponding received from ZR300 device
 ####    3.1.3.2 Services
-        camera/get_imu_info (realsense_camera::GetIMUInfo)
+        camera/get_imu_info (realsense_ros_camera::GetIMUInfo)
           No input needed, give back the motion intrinsic needed by slam middleware of Intel
-        camera/get_fe_extrinsics (realsense_camera::GetFExtrinsics)
+        camera/get_fe_extrinsics (realsense_ros_camera::GetFExtrinsics)
           No input needed, give back the fisheye to motion extrinsic and the depth to fisheye extrinsic needed by slam middleware of Intel

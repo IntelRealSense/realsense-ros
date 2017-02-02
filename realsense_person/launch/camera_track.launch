@@ -1,6 +1,6 @@
 <launch>
 <!--launch file for launch the camera nodelet for zr300 and PT nodelet-->
-  <include file="$(find realsense_camera)/launch/slam_camera.launch">
+  <include file="$(find realsense_ros_camera)/launch/slam_camera.launch">
   </include>
  <include file="$(find realsense_pt_demo)/launch/track.launch"/>  
 

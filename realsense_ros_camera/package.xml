@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>realsense_camera</name>
+  <name>realsense_ros_camera</name>
   <version>16.0.0</version>
-  <description>The realsense_camera package</description>
+  <description>The realsense_ros_camera package</description>
 
   <maintainer email="lu.x.lu@intel.com">Elisa_Lu</maintainer>
   <license>Apache 2.0</license>

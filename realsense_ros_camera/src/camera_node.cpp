@@ -24,10 +24,10 @@ Copyright(c) 2011-2016 Intel Corporation. All Rights Reserved.
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/version.hpp>
-#include <realsense_camera/StreamInfo.h>
-#include <realsense_camera/MotionInfo.h>
-#include <realsense_camera/GetIMUInfo.h>
-#include <realsense_camera/GetFExtrinsics.h>
+#include <realsense_ros_camera/StreamInfo.h>
+#include <realsense_ros_camera/MotionInfo.h>
+#include <realsense_ros_camera/GetIMUInfo.h>
+#include <realsense_ros_camera/GetFExtrinsics.h>
 #include <sensor_msgs/CameraInfo.h>
 
 const int STREAM_COUNT = 5;
@@ -66,7 +66,7 @@ std::string optical_imu_id_[2] = {"imu_accel_frame_id","imu_gyro_frame_id"};
 bool isZR300 = false;
 std::string serial_no;
 ros::ServiceServer get_imu_info_, get_fisheye_extrin_;
-namespace realsense_camera
+namespace realsense_ros_camera
 {
   class NodeletCamera:public nodelet::Nodelet
   {
@@ -76,8 +76,8 @@ namespace realsense_camera
     rs::device *device;
     private:
     void getStreamCalibData(rs::stream stream_index);
-    bool getIMUInfo(realsense_camera::GetIMUInfo::Request & req, realsense_camera::GetIMUInfo::Response & res);
-    bool getFISHExtrin(realsense_camera::GetFExtrinsics::Request & req, realsense_camera::GetFExtrinsics::Response & res);
+    bool getIMUInfo(realsense_ros_camera::GetIMUInfo::Request & req, realsense_ros_camera::GetIMUInfo::Response & res);
+    bool getFISHExtrin(realsense_ros_camera::GetFExtrinsics::Request & req, realsense_ros_camera::GetFExtrinsics::Response & res);
     int getDatas();
 
     virtual void onInit()
@@ -137,16 +137,16 @@ namespace realsense_camera
       
         get_imu_info_       = nh.advertiseService("camera/get_imu_info", &NodeletCamera::getIMUInfo, this);
         get_fisheye_extrin_ = nh.advertiseService("camera/get_fe_extrinsics",&NodeletCamera::getFISHExtrin,this);
-        stream_pub_[RS_STREAM_FISHEYE] = nh.advertise< realsense_camera::StreamInfo >("camera/fisheye/fisheye_stream_and_info",10);
-        stream_pub_[RS_STREAM_DEPTH]   = nh.advertise< realsense_camera::StreamInfo >("camera/depth/depth_stream_and_info", 10);
-        imu_pub_[RS_EVENT_IMU_GYRO]    = nh.advertise< realsense_camera::MotionInfo >("camera/imu/gyro",100);
-        imu_pub_[RS_EVENT_IMU_ACCEL]   = nh.advertise< realsense_camera::MotionInfo >("camera/imu/accel",100);  
+        stream_pub_[RS_STREAM_FISHEYE] = nh.advertise< realsense_ros_camera::StreamInfo >("camera/fisheye/fisheye_stream_and_info",10);
+        stream_pub_[RS_STREAM_DEPTH]   = nh.advertise< realsense_ros_camera::StreamInfo >("camera/depth/depth_stream_and_info", 10);
+        imu_pub_[RS_EVENT_IMU_GYRO]    = nh.advertise< realsense_ros_camera::MotionInfo >("camera/imu/gyro",100);
+        imu_pub_[RS_EVENT_IMU_ACCEL]   = nh.advertise< realsense_ros_camera::MotionInfo >("camera/imu/accel",100);  
       }
       int ret = getDatas();
       ROS_INFO_STREAM("end of onInit " << ret);
     }//end onInit
   };//end class
-  PLUGINLIB_DECLARE_CLASS(realsense_camera, NodeletCamera, realsense_camera::NodeletCamera, nodelet::Nodelet);
+  PLUGINLIB_DECLARE_CLASS(realsense_ros_camera, NodeletCamera, realsense_ros_camera::NodeletCamera, nodelet::Nodelet);
 
   int NodeletCamera::getDatas()
   {
@@ -198,7 +198,7 @@ namespace realsense_camera
           return ;
         if (isZR300)
         {
-          realsense_camera::StreamInfo stream_data;
+          realsense_ros_camera::StreamInfo stream_data;
           stream_data.image = *image_msg_[stream_nb];
           stream_data.stamps = (double)frame.get_timestamp();
           stream_data.frame_number = (unsigned int64_t)frame.get_frame_number();
@@ -235,7 +235,7 @@ namespace realsense_camera
           imu_msg.linear_acceleration.y = entry.axes[1];
           imu_msg.linear_acceleration.z = entry.axes[2];
         }
-        realsense_camera::MotionInfo motionInfo;
+        realsense_ros_camera::MotionInfo motionInfo;
         motionInfo.stamps = entry.timestamp_data.timestamp;
         motionInfo.frame_number = entry.timestamp_data.frame_number;
         motionInfo.imu = imu_msg;
@@ -286,7 +286,7 @@ namespace realsense_camera
     return 0;
   }
 
-  bool NodeletCamera::getIMUInfo(realsense_camera::GetIMUInfo::Request & req, realsense_camera::GetIMUInfo::Response & res)
+  bool NodeletCamera::getIMUInfo(realsense_ros_camera::GetIMUInfo::Request & req, realsense_ros_camera::GetIMUInfo::Response & res)
   {
     ros::Time header_stamp = ros::Time::now();
     std::string header_frame_id;
@@ -322,7 +322,7 @@ namespace realsense_camera
     }
     return true;
   }
-  bool NodeletCamera::getFISHExtrin(realsense_camera::GetFExtrinsics::Request & req, realsense_camera::GetFExtrinsics::Response & res)
+  bool NodeletCamera::getFISHExtrin(realsense_ros_camera::GetFExtrinsics::Request & req, realsense_ros_camera::GetFExtrinsics::Response & res)
   {
     ros::Time header_stamp = ros::Time::now();
     std::string header_frame_id;

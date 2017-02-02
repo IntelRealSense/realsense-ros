@@ -177,8 +177,8 @@ namespace rs_slam_test
     info_TimeSynchronizer = std::shared_ptr< message_filters::TimeSynchronizer< sensor_msgs::CameraInfo, sensor_msgs::CameraInfo > >(new message_filters::TimeSynchronizer< sensor_msgs::CameraInfo, sensor_msgs::CameraInfo >( * sub_depthInfo, * sub_fisheyeInfo, 40));
     info_TimeSynchronizer->registerCallback(boost::bind( & SNodeletSlam::cameraInfoCallback, this, _1, _2));
 
-    client_imu = nh.serviceClient< realsense_camera::GetIMUInfo >("/camera/get_imu_info");
-    client_fisheye = nh.serviceClient< realsense_camera::GetFExtrinsics >("camera/get_fe_extrinsics");
+    client_imu = nh.serviceClient< realsense_ros_camera::GetIMUInfo >("/camera/get_imu_info");
+    client_fisheye = nh.serviceClient< realsense_ros_camera::GetFExtrinsics >("camera/get_fe_extrinsics");
                 
     actual_config = {};
     ROS_INFO("end of onInit");
@@ -209,7 +209,7 @@ namespace rs_slam_test
     SNodeletSlam::setStreamConfigIntrin(rs::core::stream_type::depth, intrinsics);
     SNodeletSlam::setStreamConfigIntrin(rs::core::stream_type::fisheye, intrinsics);	
     /* add extrins and motion intrin*/	
-    realsense_camera::GetFExtrinsics srv_fe;
+    realsense_ros_camera::GetFExtrinsics srv_fe;
     if (client_fisheye.call(srv_fe))
     {
       NODELET_INFO("fisheye extrinsics got");	
@@ -223,7 +223,7 @@ namespace rs_slam_test
     {
       NODELET_ERROR("fisheye extrinsics missed");
     }
-    realsense_camera::GetIMUInfo srv_imu;
+    realsense_ros_camera::GetIMUInfo srv_imu;
     if (client_imu.call(srv_imu))
     {
       NODELET_INFO("imu info got");
@@ -303,7 +303,7 @@ namespace rs_slam_test
     actual_stream_config.is_enabled = true;
   }//end of setStremConfigIntrin
 
-  void SNodeletSlam::setMotionData(realsense_camera::IMUInfo & imu_res, rs::core::motion_device_intrinsics & motion_intrin)
+  void SNodeletSlam::setMotionData(realsense_ros_camera::IMUInfo & imu_res, rs::core::motion_device_intrinsics & motion_intrin)
   {
     int index = 0;
     for (int i = 0; i < 3; ++i)
@@ -322,7 +322,7 @@ namespace rs_slam_test
     actual_config[motion].is_enabled = true;
     actual_config[motion].intrinsics = motion_intrinsics[motion];
   }//end of setMotionConfigIntrin
-  void SNodeletSlam::setExtrinData(realsense_camera::Extrinsics & fe_res, rs::core::extrinsics & extrinsics)
+  void SNodeletSlam::setExtrinData(realsense_ros_camera::Extrinsics & fe_res, rs::core::extrinsics & extrinsics)
   {
     for (int i = 0; i < 9; ++i)
     {

@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   message_filters
   message_generation
- realsense_camera
+ realsense_ros_camera
   )
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV 3 REQUIRED)

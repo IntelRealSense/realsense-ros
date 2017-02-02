@@ -1,6 +1,6 @@
 rs_slam_test released by Perc-China(draft)
 ==============================================
-This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test package provides a solution of SLAM as a ROS nodelet. It take the messages sent by realsense_camera nodelet. The objective of this module is to find out map information and 2Dpose of agent.
+This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test package provides a solution of SLAM as a ROS nodelet. It take the messages sent by realsense_ros_camera nodelet. The objective of this module is to find out map information and 2Dpose of agent.
 
 1. Hardwarei/Software Requirement
 ----------------------------------------------
@@ -16,7 +16,7 @@ This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test p
 <br /\>     Link: https://securewiki.ith.intel.com/pages/viewpage.action?pageId=510951805
 2. Example 
 --------------------------------------------
-<br /\>    To start rs_slam_test and realsense_camera with command: 
+<br /\>    To start rs_slam_test and realsense_ros_camera with command: 
 <br /\>       roslaunch rs_slam_test camera_slam_nodelet.launch
 3. Nodelet
 --------------------------------------------
@@ -27,13 +27,13 @@ This package contains a ROS wrapper for Intel's SLAM library. The rs_slam_test p
         The intrinsic of camera (fisheye)
       camera/depth/camera_info (sensor_msgs/CameraInfo)
         The intrinsic (and extrinsic) of camera( depth and depth to color)
-      camera/imu/gyro (realsense_camera/MotionInfo)
+      camera/imu/gyro (realsense_ros_camera/MotionInfo)
         Contain the imu data of Gyroscope, timestamp and frame number corresponding
       camera/imu/accel (realsenese_camera/MotionInfo)
         Contain the imu data of Accelerometer, timestamp and frame number corresponding
-      camera/fisheye/fisheye_stream_and_info (realsense_camera::StreamInfo)
+      camera/fisheye/fisheye_stream_and_info (realsense_ros_camera::StreamInfo)
         Contain the fisheye stream, timestamp and frame number corresponding
-      camera/depth/depth_stream_and_info (realsense_camera::StreamInfo)
+      camera/depth/depth_stream_and_info (realsense_ros_camera::StreamInfo)
         Contain the depth stream, timestamp and frame number corresponding
 ###  3.1.2 Published Topics
       poseMatrix (rs_slam_test/PoseMatrix)

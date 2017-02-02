@@ -11,7 +11,7 @@
 #include <ros/package.h>
 #include <geometry_msgs/Pose2D.h>
 #include <nav_msgs/OccupancyGrid.h>
-#include <realsense_camera/StreamInfo.h>
+#include <realsense_ros_camera/StreamInfo.h>
 #include <sensor_msgs/Imu.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -32,8 +32,8 @@
 #include "ParamTypes.h"
 #include "2DMapCommon.h"
 #include <opencv2/core/version.hpp>
-#include <realsense_camera/GetIMUInfo.h>
-#include <realsense_camera/GetFExtrinsics.h>
+#include <realsense_ros_camera/GetIMUInfo.h>
+#include <realsense_ros_camera/GetFExtrinsics.h>
 #include "SubscribeTopics.h"
 
 namespace rs_slam_test
@@ -56,8 +56,8 @@ namespace rs_slam_test
     void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr & fisheyeCameraInfo, const sensor_msgs::CameraInfoConstPtr & depthCameraInfo);
     void setCalibrationData(const sensor_msgs::CameraInfoConstPtr & cameraInfoMsg, rs::core::intrinsics & cameraInfo);
     void setStreamConfigIntrin(rs::core::stream_type stream, std::map< rs::core::stream_type, rs::core::intrinsics > intrinsics);
-    void setMotionData(realsense_camera::IMUInfo& imu_res, rs::core::motion_device_intrinsics& motion_intrin);
+    void setMotionData(realsense_ros_camera::IMUInfo& imu_res, rs::core::motion_device_intrinsics& motion_intrin);
     void setMotionConfigIntrin(rs::core::motion_type motion, std::map< rs::core::motion_type, rs::core::motion_device_intrinsics > motion_intrinsics);
-    void setExtrinData(realsense_camera::Extrinsics& fe_res, rs::core::extrinsics& extrinsics);
+    void setExtrinData(realsense_ros_camera::Extrinsics& fe_res, rs::core::extrinsics& extrinsics);
   };//end class
 } 

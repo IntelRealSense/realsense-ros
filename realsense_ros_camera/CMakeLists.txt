@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(realsense_camera)
+project(realsense_ros_camera)
 
 find_package(catkin REQUIRED COMPONENTS
   message_generation
@@ -36,7 +36,7 @@ set(CMAKE_THREAD_LIBS_INIT pthread)
  )
 
 catkin_package(
-  LIBRARIES realsense_camera
+  LIBRARIES realsense_ros_camera
   CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs
   nodelet
   cv_bridge
@@ -48,14 +48,14 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
-add_library(realsense_camera
+add_library(realsense_ros_camera
    src/camera_node.cpp
 )
 
-add_dependencies(realsense_camera ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
+add_dependencies(realsense_ros_camera ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
 )
 
-target_link_libraries(realsense_camera
+target_link_libraries(realsense_ros_camera
    realsense
    ${catkin_LIBRARIES}
    ${OpenCV_LIBRARIES}

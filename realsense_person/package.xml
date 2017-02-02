@@ -28,7 +28,7 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>rostime</run_depend>
-  <run_depend>realsense_camera</run_depend>
+  <run_depend>realsense_ros_camera</run_depend>
   <build_depend>roscpp_serialization</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>sensor_msgs</build_depend>

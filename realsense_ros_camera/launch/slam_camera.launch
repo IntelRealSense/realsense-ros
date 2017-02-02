@@ -1,0 +1,5 @@
+<launch>
+
+	<node pkg="nodelet" type="nodelet" name="realsense_ros_camera" args="standalone realsense_ros_camera/NodeletCamera" output="screen" >
+     </node>
+</launch>

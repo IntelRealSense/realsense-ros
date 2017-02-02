@@ -13,14 +13,14 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>nav_msgs</build_depend>
-  <build_depend>realsense_camera</build_depend>
+  <build_depend>realsense_ros_camera</build_depend>
   <build_depend>message_filters</build_depend>
   <build_depend>image_transport</build_depend>
   <build_depend>message_generation</build_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>message_filters</run_depend>
   <run_depend>image_transport</run_depend>
-  <run_depend>realsense_camera</run_depend>
+  <run_depend>realsense_ros_camera</run_depend>
   <run_depend>nav_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>nodelet</run_depend>
