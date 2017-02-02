@@ -5,8 +5,8 @@
 	<description>Intel(r) RealSense(tm) Technology package realsense msg</description>
 
 	<maintainer email="artyom.popov@intel.com">Artyom Popov</maintainer>
-
-	<license>Under NDA release only. See license attached</license>
+ 
+	<license>Apache 2.0</license>
 
 	<url type="website">http://www.intel.com/realsense</url>
 

@@ -4,8 +4,8 @@
   <version>0.0.0</version>
   <description>object manager package, sample of viewer, comunicates with realsesnse_ormgr </description>
   <maintainer email="shoshana.skurnik@intel.com">Shoshana Skurnik</maintainer>
+  <license>Apache 2.0</license>
   
-  <license>Under NDA release only. See license attached</license>
 
    <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>

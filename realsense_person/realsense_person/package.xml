@@ -6,7 +6,7 @@
 
   <maintainer email="lu.x.lu@intel.com">elisa_Lu</maintainer>
 
-  <license>BSD</license>
+  <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>nodelet</build_depend>

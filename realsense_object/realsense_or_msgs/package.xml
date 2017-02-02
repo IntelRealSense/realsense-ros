@@ -5,8 +5,7 @@
 	<description>Intel(r) RealSense(tm) Technology package realsense msg</description>
 
 	<maintainer email="shoshana.skurnik@intel.com">Shoshana Skurnik</maintainer>
-
-	<license>Under NDA release only. See license attached</license>
+        <license>Apache 2.0</license>
 
 	<url type="website">http://www.intel.com/realsense</url>
 

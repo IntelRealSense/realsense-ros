@@ -5,8 +5,7 @@
   <description>The realsense_camera package</description>
 
   <maintainer email="lu.x.lu@intel.com">Elisa_Lu</maintainer>
-
-  <license>BSD</license>
+  <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>message_generation</build_depend>

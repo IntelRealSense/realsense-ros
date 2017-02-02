@@ -6,8 +6,7 @@
 
   	<maintainer email="administrator@todo.todo">administrator</maintainer>
 
-  	<license>TODO</license>
-
+	 <license>Apache 2.0</license>
 
 	<buildtool_depend>catkin</buildtool_depend>
 	<build_depend>roscpp</build_depend>

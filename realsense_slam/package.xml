@@ -4,7 +4,7 @@
   <version>16.0.0</version>
   <description>The rs_slam_test package</description>
   <maintainer email="lu.x.lu@intel.com">elisa_lu</maintainer>
-  <license>BSD</license>
+  <license>Apache 2.0</license>
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>nodelet</build_depend>
   <build_depend>roscpp</build_depend>

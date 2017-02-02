@@ -6,8 +6,7 @@
 
  
   <maintainer email="shoshana.skurnik@intel.com">Shoshana Skurnik</maintainer>
-
-  <license>Under NDA release only. See license attached</license>
+  <license>Apache 2.0</license>
 
    <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
