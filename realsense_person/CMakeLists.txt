@@ -6,6 +6,10 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   nodelet
   message_filters
+  std_msgs
+  sensor_msgs
+  geometry_msgs
+  message_generation
   roscpp
   roslib
   rostime
@@ -13,9 +17,8 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   roscpp_serialization
   rospy
-  realsense_pt_msgs
-  realsense_pt_srvs
   )
+
 find_package(OpenCV 3 REQUIRED)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPT_MW_DEV")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -fmessage-length=0 --std=c++11 -pthread -fPIC -std=c++0x -fexceptions -frtti -ffunction-sections -fdata-sections")
@@ -28,6 +31,33 @@ set(ROOT                "${CMAKE_CURRENT_SOURCE_DIR}")
 set(SAMPLES_ROOT    "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 add_definitions(-DPERSON_TRACKING_DATA_FILES="/usr/share/librealsense/pt/data/")
+
+add_message_files(
+  FILES
+  Landmark.msg
+  User.msg
+  UserInfo.msg
+  Frame.msg
+  Gestures.msg
+  Pointing.msg
+)
+
+add_service_files(
+  FILES
+  LoadRecognitionDB.srv
+  RecognitionImgRequest.srv
+  RecognitionRequest.srv
+  SaveRecognitionDB.srv
+  TrackingConfig.srv
+  TrackingRequest.srv
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  sensor_msgs
+  geometry_msgs
+)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
@@ -50,9 +80,10 @@ set( PROJECT_LINK_LIBS
     ${CMAKE_THREAD_LIBS_INIT}
     ${OpenCV_LIBRARIES}
    )
+
 catkin_package(
  LIBRARIES realsense_pt_demo
- CATKIN_DEPENDS nodelet roscpp std_msgs image_transport sensor_msgs message_filters roslib rostime cv_bridge roscpp_serialization rospy
+ CATKIN_DEPENDS nodelet roscpp std_msgs image_transport sensor_msgs geometry_msgs message_runtime message_filters roslib rostime cv_bridge roscpp_serialization rospy
 )
 
 file(GLOB SOURCES
@@ -72,7 +103,8 @@ add_library(realsense_pt_demo
 	 ${PROJECT_LINK_LIBS}
       	 ${catkin_LIBRARIES}
 	 )
- add_dependencies(realsense_pt_demo realsense_pt_msgs_gencpp realsense_pt_srvs_gencpp)
+
+ add_dependencies(realsense_pt_demo ${PROJECT_NAME}_generate_messages_cpp)
 
 
 # Install launch files

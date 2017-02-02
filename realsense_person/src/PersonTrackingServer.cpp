@@ -16,7 +16,7 @@ void PersonTrackingServer::onInit(ros::NodeHandle& nodeHandle, rs::person_tracki
   mRecognitionImgRequestService = nodeHandle.advertiseService("person_tracking/recognition_image_request",& PersonTrackingServer::recognitionImgRequestCallback, this);
 }
 
-bool PersonTrackingServer::trackingConfigRequestCallback(realsense_pt_srvs::TrackingConfig::Request & request, realsense_pt_srvs::TrackingConfig::Response & response)
+bool PersonTrackingServer::trackingConfigRequestCallback(realsense_pt_demo::TrackingConfig::Request & request, realsense_pt_demo::TrackingConfig::Response & response)
 {
   mConfig.segmentationEnabled = request.enableSegmentation;
   mConfig.recognitionEnabled = request.enableRecognition;
@@ -26,7 +26,7 @@ bool PersonTrackingServer::trackingConfigRequestCallback(realsense_pt_srvs::Trac
   response.status = true;
   return true;
 }
-bool PersonTrackingServer::recognitionRequestCallback(realsense_pt_srvs::RecognitionRequest::Request & request, realsense_pt_srvs::RecognitionRequest::Response & response)
+bool PersonTrackingServer::recognitionRequestCallback(realsense_pt_demo::RecognitionRequest::Request & request, realsense_pt_demo::RecognitionRequest::Response & response)
 {
   if (!mPersonTracking->QueryConfiguration()->QueryRecognition()->IsEnabled())
   {
@@ -80,7 +80,7 @@ bool PersonTrackingServer::recognitionRequestCallback(realsense_pt_srvs::Recogni
   return true;
 }
 
-bool PersonTrackingServer::trackingRequestCallback(realsense_pt_srvs::TrackingRequest::Request & request, realsense_pt_srvs::TrackingRequest::Response & response)
+bool PersonTrackingServer::trackingRequestCallback(realsense_pt_demo::TrackingRequest::Request & request, realsense_pt_demo::TrackingRequest::Response & response)
 {
   ROS_INFO_STREAM("Received tracking request for person: " << request.personId);
   PXCPersonTrackingData* trackingData = mPersonTracking->QueryOutput();
@@ -107,7 +107,7 @@ bool PersonTrackingServer::trackingRequestCallback(realsense_pt_srvs::TrackingRe
   return true;
 }
 
-bool PersonTrackingServer::saveRecognitionDbCallback(realsense_pt_srvs::SaveRecognitionDB::Request & request, realsense_pt_srvs::SaveRecognitionDB::Response & response)
+bool PersonTrackingServer::saveRecognitionDbCallback(realsense_pt_demo::SaveRecognitionDB::Request & request, realsense_pt_demo::SaveRecognitionDB::Response & response)
 {
   std::string dbPath = request.saveToPath;
   ROS_INFO_STREAM("Save database to: " << dbPath);
@@ -124,7 +124,7 @@ bool PersonTrackingServer::saveRecognitionDbCallback(realsense_pt_srvs::SaveReco
   return true;
 }
 
-bool PersonTrackingServer::loadRecognitionDbCallback(realsense_pt_srvs::LoadRecognitionDB::Request & request, realsense_pt_srvs::LoadRecognitionDB::Response & response)
+bool PersonTrackingServer::loadRecognitionDbCallback(realsense_pt_demo::LoadRecognitionDB::Request & request, realsense_pt_demo::LoadRecognitionDB::Response & response)
 {
   std::string dbPath = request.loadFromPath;
   ROS_INFO_STREAM("Loading database from: " << dbPath);
@@ -183,7 +183,7 @@ void PersonTrackingServer::CreateColorImage(rs::core::correlated_sample_set & sa
 }
 
 
-bool PersonTrackingServer::recognitionImgRequestCallback(realsense_pt_srvs::RecognitionImgRequest::Request & request, realsense_pt_srvs::RecognitionImgRequest::Response & response)
+bool PersonTrackingServer::recognitionImgRequestCallback(realsense_pt_demo::RecognitionImgRequest::Request & request, realsense_pt_demo::RecognitionImgRequest::Response & response)
 {
   if (!autoImgRecog)
   {
