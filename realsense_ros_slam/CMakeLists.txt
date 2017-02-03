@@ -50,8 +50,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
 )
 file(GLOB SOURCES
-  src/rs_slam_async_sample.cpp
-  src/SubscribeTopics.cpp)
+  src/slam_nodelet.cpp)
 
 add_library(${PROJECT_NAME} ${SOURCES})
 
