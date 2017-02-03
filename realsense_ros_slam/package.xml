@@ -30,7 +30,6 @@
   <run_depend>std_msgs</run_depend>
 
   <export>
-    <nodelet plugin="${prefix}/test_nodelet.xml"/>
-
+    <nodelet plugin="${prefix}/nodelet_plugins.xml"/>
   </export>
 </package>
