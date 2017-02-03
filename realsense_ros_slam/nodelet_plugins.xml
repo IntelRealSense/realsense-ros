@@ -1,4 +1,4 @@
-<library path="lib/librealsense_ros_slam_nodelet">
+<library path="lib/librealsense_ros_slam">
   <class name="realsense_ros_slam/SNodeletSlam" type="realsense_ros_slam::SNodeletSlam" base_class_type="nodelet::Nodelet">
   <description>
   Intel(R) RealSense(TM) SLAM nodelet.
