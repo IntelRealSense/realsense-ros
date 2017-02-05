@@ -1,0 +1,8 @@
+<library path="lib/librealsense_ros_person">
+    <class name="realsense_ros_person/TNodeletPt" type="realsense_ros_person::TNodeletPt" base_class_type="nodelet::Nodelet">
+        <description>
+            A nodelet of person tracking.
+        </description>
+    </class>
+ </library>
+

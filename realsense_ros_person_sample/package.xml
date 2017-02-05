@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<package>
+  	<name>realsense_ros_person_sample</name>
+	<version>0.0.1</version>
+  	<description>Sample of usage of realsense_ros_person node</description>
+
+  	<maintainer email="vitaly.burshtein@intel.com">Vitaly Burshtein</maintainer>
+  	<maintainer email="ohad.meir@intel.com">Ohad Meir</maintainer>
+
+  	<license>unknown</license>
+
+  	<author email="ohad.meir@intel.com">Ohad Meir</author>
+  	<author email="vitaly.burshtein@intel.com">Vitaly Burshtein</author>
+
+	
+	<buildtool_depend>catkin</buildtool_depend>
+
+	<build_depend>roscpp</build_depend>
+	<build_depend>rospy</build_depend>
+	<build_depend>std_msgs</build_depend>
+	<build_depend>genmsg</build_depend>
+	<build_depend>sensor_msgs</build_depend>
+	<build_depend>message_generation</build_depend>
+	<build_depend>geometry_msgs</build_depend>
+	<build_depend>realsense_ros_person</build_depend>
+
+	<run_depend>roscpp</run_depend>
+	<run_depend>rospy</run_depend>
+	<run_depend>std_msgs</run_depend>
+	<run_depend>genmsg</run_depend> 
+	<run_depend>sensor_msgs</run_depend>
+	<run_depend>message_runtime</run_depend>
+	<run_depend>geometry_msgs</run_depend>
+	<run_depend>realsense_ros_person</run_depend>
+	<export>
+	</export>
+</package>

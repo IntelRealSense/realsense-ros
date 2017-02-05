@@ -1,0 +1,14 @@
+<launch>
+
+	<node pkg="nodelet" type="nodelet" name="realsense_ros_person_sample_nodelet"  args="manager" output="screen"/>
+  	
+    	<node pkg="realsense_ros_person_sample" type="realsense_ros_person_sample" name="realsense_ros_person_sample"
+        	args="load realsense_ros_person_sample/realsense_ros_person_sample node" output="screen">
+		<param name="recognition"	type="bool"  	value="true" />
+		<param name="skeleton"		type="bool"  	value="true" />
+		<param name="gestures"		type="bool"  	value="true" />
+		<param name="landmarks"         type="bool"     value="true" />
+		<param name="headBoundingBox"   type="bool"     value="true" />
+    	</node>
+
+</launch> 

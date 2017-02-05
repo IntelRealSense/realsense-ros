@@ -1,0 +1,21 @@
+#publisher type defines messages for person tracking node(RecognRsPersonTracker or Frame message)
+# supported values:
+#     defaultPublisher - default message format - main message - "Frame"
+publisherType: "defaultPublisher"
+
+#test mode, true - publish person tracking topic with color image
+isTestMode: true
+
+gesturesEnabled: true
+skeletonEnabled: true
+recognitionEnabled: true
+trackingEnabled: true
+
+#load Data saved
+loadDb: false
+dbPath: '/home/elisa/testPT1.db'
+
+headPositionEnabled: false
+headBoundingBoxEnabled: true
+landmarksEnabled: true
+
