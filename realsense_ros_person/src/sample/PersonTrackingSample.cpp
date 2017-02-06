@@ -67,7 +67,7 @@ void PersonTrackingSample::EnableTrackingFeatures(ros::NodeHandle& nodeHandle)
 
 void PersonTrackingSample::PersonTrackingCallback(const realsense_ros_person::FrameTest& msg)
 {
-    ROS_INFO_STREAM("Received person tracking output message. Number of people: " << msg.frameData.numberOfUsers);
+//    ROS_INFO_STREAM("Received person tracking output message. Number of people: " << msg.frameData.numberOfUsers);
 
     cv_bridge::CvImageConstPtr ptr;
     cv::Mat colorImage = cv_bridge::toCvShare(msg.colorImage, ptr, sensor_msgs::image_encodings::BGR8)->image;
