@@ -67,7 +67,7 @@ void PersonTrackingSample::EnableTrackingFeatures(ros::NodeHandle& nodeHandle)
 
 void PersonTrackingSample::PersonTrackingCallback(const realsense_ros_person::FrameTest& msg)
 {
-    //ROS_INFO_STREAM("Received person tracking output message. Number of people: " << msg.frameData.numberOfUsers);
+    ROS_INFO_STREAM("Received person tracking output message. Number of people: " << msg.frameData.numberOfUsers);
 
     cv_bridge::CvImageConstPtr ptr;
     cv::Mat colorImage = cv_bridge::toCvShare(msg.colorImage, ptr, sensor_msgs::image_encodings::BGR8)->image;
@@ -165,10 +165,6 @@ void PersonTrackingSample::DrawPersonGestures(cv::Mat& colorImage, realsense_ros
     if (user.gestures.pointing.confidence > 0)
     {
         realsense_ros_person::Pointing pointing = user.gestures.pointing;
-
-        //ROS_INFO("Found gesture at [%.0f,%.0f]", pointing.originColor.x, pointing.originColor.y);
-        //ROS_INFO("Found gesture orientation: [%f,%f]", pointing.orientationColor.x, pointing.orientationColor.y);
-
         cv::Point origin(pointing.originColor.x, pointing.originColor.y);
         cv::Point2f direction(pointing.orientationColor.x, pointing.orientationColor.y);
 
@@ -180,14 +176,11 @@ void PersonTrackingSample::PersonSelectedHandler(PersonData& data, TrackingRende
 {
     SAFE_MUTEX(mMutex);
 
-    //ROS_INFO_STREAM("Matched person to point: " << personId);
     if  (type == TrackingRenderer::SelectType::RECOGNITION)
     {
         realsense_ros_person::Recognition request;
         request.request.personId = data.Id;
-//        request.request.recognitionId = data.rid;
         mRecognitionRequestClient.call(request);
-//        ROS_INFO("Recognition result: %s", request.response.description.c_str());
         data.rid = request.response.recognitionId;
         ROS_INFO_STREAM("Recognition Status = " + RecognitionResultToString(request.response.status));
     }
@@ -214,17 +207,6 @@ void PersonTrackingSample::PersonSelectedHandler(PersonData& data, TrackingRende
 void PersonTrackingSample::GlobalHandler(TrackingRenderer::SelectType type)
 {
     SAFE_MUTEX(mMutex);
-
-//    if (type == TrackingRenderer::SelectType::ACTIVATE_RECOGNITION)
-//    {
-//        realsense_ros_person::TrackingConfig request;
-//        mEnableRecognition = !mEnableRecognition;
-//        request.request.enableRecognition = mEnableRecognition;
-//        mConfigClient.call(request);
-//        std::string res = request.response.status ? "SUCCEEDED" : "FAILED";
-//        std::string stringStatus = mEnableRecognition ? "Enable Recognition " : "Disable Recognition ";
-//        ROS_INFO_STREAM(stringStatus + res);
-//    }
 }
 
 

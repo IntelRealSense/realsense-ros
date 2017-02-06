@@ -26,15 +26,12 @@ Viewer::Viewer(bool showDepth) : m_showDepth(showDepth)
 void Viewer::ShowImage(cv::Mat image)
 {
     cv::imshow(COLOR_WINDOW_NAME, image);
-#ifdef PT_ROS
     cv::waitKey(25);
-#endif
 }
 
 void Viewer::ShowDepth(cv::Mat depth)
 {
     cv::imshow(DEPTH_WINDOW_NAME, depth);
-//    cv::waitKey(25);
 }
 
 void Viewer::SetMouseEventHandler(std::function<void(int,int,int,int)> mouseEventHandler) \

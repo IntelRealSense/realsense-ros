@@ -12,7 +12,6 @@ This package contains a ROS wrapper for Intel's PersonTracking library. The real
     librealsense 2.2.0
     realsense-sdk
     person tracking
-
     ROS indigo
 
 2. Example 
@@ -54,7 +53,7 @@ This package contains a ROS wrapper for Intel's PersonTracking library. The real
         Reconfigure to start or stop tracking
     person_tracking/save_recognition (realsense_srvs/SaveRecognitionDB)
         Save the recognition data base to file
-    person_tracking/load_recognition (realsense_srvs/LoadRecognitionDB)       
+    person_tracking/load_recognition (realsense_srvs/LoadRecognitionDB)
         Load the recognition data base from file
 
   3.1.4 Parameters
@@ -85,4 +84,11 @@ This package contains a ROS wrapper for Intel's PersonTracking library. The real
         Register:
             Mouse left button click
         Recognize:
-            Ctrl+ mouse left button click
+            Ctrl+left mouse button click
+   4. How to run:
+        Person tracking node only (assumes that camera node already run):
+            roslaunch realsense_ros_person track.launch
+        Person tracking node and camera node:
+            roslaunch realsense_ros_person cam_track.launch
+        Person tracking node and camera node and person tracking test(sample) node:
+            roslaunch realsense_ros_person realsense_person_tracking_test.launched
