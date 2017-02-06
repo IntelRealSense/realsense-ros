@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(realsense_ros_person)
 
+# Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
     std_msgs
     sensor_msgs
@@ -19,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 include(FindPkgConfig)
 pkg_check_modules(PERSONTRACKING REQUIRED realsense_persontracking)
 
+# Set compile flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fexceptions -frtti")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
 
@@ -63,16 +65,20 @@ generate_messages(
     geometry_msgs
 )
 
+###########
+## Build ##
+###########
+
 include_directories(
     ${catkin_INCLUDE_DIRS}
     ${PERSONTRACKING_INCLUDE_DIRS}
-    ${ROOT}/include
-    ${ROOT}/src/server/
-    ${ROOT}/src/publisher/
-    ${ROOT}/src/helpers/
+    ${ROOT}/src/apiwrapper/server/
+    ${ROOT}/src/apiwrapper/publisher/
+    ${ROOT}/src/apiwrapper/helpers/
+
 )
 
-set( PROJECT_LINK_LIBS
+set( PT_LINK_LIBS
     ${PERSONTRACKING_LIBRARIES}
 -Wl,--start-group
         ${OpenCV_LIBS}
@@ -89,25 +95,41 @@ catkin_package(
 
 )
 
-file(GLOB SOURCES
-    "src/*.cpp"
-    "src/helpers/*.cpp"
-    "src/publisher/*.cpp"
-    "src/server/*.cpp"
+file(GLOB ROS_WRAPPER_SOURCES
+    "src/apiwrapper/*.cpp"
+    "src/apiwrapper/helpers/*.cpp"
+    "src/apiwrapper/publisher/*.cpp"
+    "src/apiwrapper/server/*.cpp"
 )
 
+# build person tracking API ROS wrapper
 add_library(realsense_ros_person
-     ${SOURCES}
+    ${ROS_WRAPPER_SOURCES}
 )
+
 
 target_link_libraries(realsense_ros_person
-   ${PROJECT_LINK_LIBS}
+    ${PT_LINK_LIBS}
     ${catkin_LIBRARIES}
 )
+
 
 add_dependencies(realsense_ros_person ${PROJECT_NAME}_generate_messages_cpp)
 
 
+add_executable(${PROJECT_NAME}_sample
+    ${ROOT}/src/sample/PersonTrackingSampleRunner.cpp
+    ${ROOT}/src/sample/PersonTrackingSample.cpp
+    ${ROOT}/src/sample/TrackingRenderer/TrackingRenderer.cpp
+    ${ROOT}/src/sample/TrackingRenderer/Viewer.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_sample
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBRARIES}
+        )
+
+add_dependencies(${PROJECT_NAME}_sample ${PROJECT_NAME}_generate_messages_cpp)
 
 # Install launch files
 install(DIRECTORY launch/
