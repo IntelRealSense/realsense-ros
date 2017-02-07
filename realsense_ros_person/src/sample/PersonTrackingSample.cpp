@@ -1,7 +1,5 @@
 #include "PersonTrackingSample.h"
 
-#include "SafeMutex.h"
-
 #include "realsense_ros_person/TrackingConfig.h"
 #include "realsense_ros_person/Recognition.h"
 #include "realsense_ros_person/TrackingRequest.h"
@@ -79,7 +77,7 @@ void PersonTrackingSample::PersonTrackingCallback(const realsense_ros_person::Fr
 
 void PersonTrackingSample::DrawDetectionResults(cv::Mat& colorImage, const realsense_ros_person::FrameTest& msg)
 {
-    SAFE_MUTEX(mMutex);
+    std::lock_guard<std::mutex> guard(mMutex);
 
     m_trackingRenderer.Reset();
 
@@ -174,7 +172,7 @@ void PersonTrackingSample::DrawPersonGestures(cv::Mat& colorImage, realsense_ros
 
 void PersonTrackingSample::PersonSelectedHandler(PersonData& data, TrackingRenderer::SelectType type)
 {
-    SAFE_MUTEX(mMutex);
+    std::lock_guard<std::mutex> guard(mMutex);
 
     if  (type == TrackingRenderer::SelectType::RECOGNITION)
     {
@@ -206,7 +204,7 @@ void PersonTrackingSample::PersonSelectedHandler(PersonData& data, TrackingRende
 //Function For Handling glbal events (that are not specific for a user)
 void PersonTrackingSample::GlobalHandler(TrackingRenderer::SelectType type)
 {
-    SAFE_MUTEX(mMutex);
+//    std::lock_guard<std::mutex> guard(mMutex);
 }
 
 
