@@ -6,8 +6,6 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   nodelet
   message_filters
-  std_msgs
-  sensor_msgs
   geometry_msgs
   message_generation
   roscpp
@@ -17,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   roscpp_serialization
   rospy
+
   )
 
 find_package(OpenCV 3 REQUIRED)
@@ -104,7 +103,7 @@ add_library(realsense_ros_person
       	 ${catkin_LIBRARIES}
 	 )
 
- add_dependencies(realsense_ros_person ${PROJECT_NAME}_generate_messages_cpp)
+ add_dependencies(realsense_ros_person ${PROJECT_NAME}_gencpp)
 
 
 # Install launch files
