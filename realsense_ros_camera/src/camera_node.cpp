@@ -37,9 +37,11 @@ ros::Publisher feInfo_publisher_,
 image_transport::Publisher pub_img_[STREAM_COUNT] = {};
 ros::Publisher stream_pub_[STREAM_COUNT] = {},//fisheye 4 depth 0
                imu_pub_[2] = {};//accel 0 gyro 1
+int seq_motion[2]={0,0};
 cv::Mat image_[STREAM_COUNT] = {};
 sensor_msgs::CameraInfo camera_info_[STREAM_COUNT] = {};
 sensor_msgs::ImagePtr image_msg_[STREAM_COUNT] = {};
+int seq[STREAM_COUNT]={0,0,0,0,0};
 std::string encoding_[STREAM_COUNT] = {
      sensor_msgs::image_encodings::TYPE_16UC1,
      sensor_msgs::image_encodings::RGB8,
@@ -190,10 +192,13 @@ namespace realsense_ros_camera
         image_msg_[stream_nb] = cv_bridge::CvImage(std_msgs::Header(), encoding_[stream_nb], image_[stream_nb]).toImageMsg();
         image_msg_[stream_nb]->header.frame_id = optical_frame_id_[stream_nb];
         image_msg_[stream_nb]->header.stamp = ros::Time::now(); // Publish timestamp.
+        image_msg_[stream_nb]->header.seq = seq[stream_nb]; 
         image_msg_[stream_nb]->width = image_[stream_nb].cols;
         image_msg_[stream_nb]->height = image_[stream_nb].rows;
         image_msg_[stream_nb]->is_bigendian = false;
         image_msg_[stream_nb]->step = image_[stream_nb].cols * unit_step_size_[stream_nb];
+        seq[stream_nb] += 1;
+
         if ((stream != rs::stream::fisheye ) && (stream != rs::stream::depth))
           return ;
         if (isZR300)
@@ -235,6 +240,8 @@ namespace realsense_ros_camera
           imu_msg.linear_acceleration.y = entry.axes[1];
           imu_msg.linear_acceleration.z = entry.axes[2];
         }
+        seq_motion[motionType] += 1; 
+        imu_msg.header.seq = seq_motion[motionType];
         realsense_ros_camera::MotionInfo motionInfo;
         motionInfo.stamps = entry.timestamp_data.timestamp;
         motionInfo.frame_number = entry.timestamp_data.frame_number;
