@@ -1,10 +1,19 @@
-Date of version 2017. 1. 18
+Date of version 2017.2.06
 
-libraries of intel used(version beta3 RC5):
+libraries of intel used(version beta4):
   Linux SDK
   librealsense_persontracking
   Link: https://securewiki.ith.intel.com/pages/viewpage.action?pageId=510951805
 
+Supported features:
+    Person Detection
+    Person Tracking
+    Person Recognition (basic API)
+    Body Tracking (skeleton) - preview quality
+    Body Gestures (pointing)
+    Face landmarks
+    Face bounding box
+
 Quick start:
-  roslaunch realsense_ros_person camera_track.launch
+  roslaunch realsense_ros_person realsense_person_tracking_test.launched
 

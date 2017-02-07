@@ -1,6 +1,7 @@
-bool enableSegmentation
 bool enableRecognition
 bool enableSkeleton
 bool enableGestures
+bool enableLandmarks
+bool enableHeadBoundingBox
 ---
 bool status
