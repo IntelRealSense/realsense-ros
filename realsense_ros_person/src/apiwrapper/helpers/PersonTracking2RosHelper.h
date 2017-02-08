@@ -5,6 +5,7 @@
 #include "realsense_ros_person/RecognitionResponse.h"
 #include "realsense_ros_person/RecognitionRegisterResponse.h"
 #include "realsense_ros_person/Wave.h"
+#include "realsense_ros_person/RectWithConfidence.h"
 
 namespace realsense_ros_person
 {
@@ -81,6 +82,18 @@ namespace realsense_ros_person
                 default:
                     throw std::runtime_error("unsupported value");
             }
+        }
+
+        realsense_ros_person::RectWithConfidence BoundingBox2D2RosRectWithConfidence(
+                Intel::RealSense::PersonTracking::PersonTrackingData::BoundingBox2D& boundingBox2D)
+        {
+            realsense_ros_person::RectWithConfidence rectWithConfidence;
+            rectWithConfidence.rectCorners[0].x =  boundingBox2D.rect.x;
+            rectWithConfidence.rectCorners[0].y =  boundingBox2D.rect.y;
+            rectWithConfidence.rectCorners[1].x =  boundingBox2D.rect.x + boundingBox2D.rect.w;
+            rectWithConfidence.rectCorners[1].y =  boundingBox2D.rect.y + boundingBox2D.rect.h;
+            rectWithConfidence.confidence = boundingBox2D.confidence;
+            return rectWithConfidence;
         }
     };
 }

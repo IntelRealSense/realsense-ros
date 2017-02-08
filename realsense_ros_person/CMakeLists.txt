@@ -44,7 +44,6 @@ add_message_files(
     Wave.msg
     Frame.msg
     FrameTest.msg
-    Rect.msg
     RectWithConfidence.msg
     EulerAngles.msg
     EulerAnglesWithConfidence.msg

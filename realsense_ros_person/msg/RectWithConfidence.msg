@@ -1,2 +1,2 @@
 int32 confidence
-Rect rect
+geometry_msgs/Point32[2] rectCorners

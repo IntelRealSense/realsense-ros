@@ -97,8 +97,8 @@ void PersonTrackingSample::DrawDetectionResults(cv::Mat& colorImage, const reals
 void PersonTrackingSample::DrawPersonResults(cv::Mat& colorImage, realsense_ros_person::User& user)
 {
     // person rectangle
-    cv::Point pt1(user.userRect.rect.x, user.userRect.rect.y);
-    cv::Point pt2(user.userRect.rect.x + user.userRect.rect.width, user.userRect.rect.y  + user.userRect.rect.height);
+    cv::Point pt1(user.userRect.rectCorners[0].x, user.userRect.rectCorners[0].y);
+    cv::Point pt2(user.userRect.rectCorners[1].x, user.userRect.rectCorners[1].y);
     cv::Rect userRectangle(pt1, pt2);
 
     int personId = user.userInfo.Id;
@@ -153,8 +153,8 @@ void PersonTrackingSample::DrawFace(cv::Mat& colorImage, realsense_ros_person::U
     if (!mEnableHeadBoundingBox) return;
     if (user.headBoundingBox.confidence > HEAD_BOUNDING_BOX_THR)
     {
-        cv::Point pt1(user.headBoundingBox.rect.x, user.headBoundingBox.rect.y);
-        cv::Point pt2(user.headBoundingBox.rect.x + user.headBoundingBox.rect.width, user.headBoundingBox.rect.y + user.headBoundingBox.rect.height);
+        cv::Point pt1(user.headBoundingBox.rectCorners[0].x, user.headBoundingBox.rectCorners[0].y);
+        cv::Point pt2(user.headBoundingBox.rectCorners[1].x, user.headBoundingBox.rectCorners[1].y);
         cv::Rect headBoundingBoxRect(pt1, pt2);
         m_trackingRenderer.DrawFace(colorImage, headBoundingBoxRect);
     }
