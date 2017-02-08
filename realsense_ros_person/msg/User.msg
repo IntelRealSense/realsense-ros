@@ -5,6 +5,7 @@ RectWithConfidence userRect
 RectWithConfidence headBoundingBox
 sensor_msgs/Image geodesicMatrix
 LandmarksInfo landmarksInfo
+EulerAnglesWithConfidence headPose
 SkeletonJoint[] skeletonJoints
 Gestures gestures
 

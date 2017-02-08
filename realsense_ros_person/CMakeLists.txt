@@ -46,6 +46,8 @@ add_message_files(
     FrameTest.msg
     Rect.msg
     RectWithConfidence.msg
+    EulerAngles.msg
+    EulerAnglesWithConfidence.msg
 )
 
 add_service_files(

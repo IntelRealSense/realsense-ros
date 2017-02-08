@@ -84,7 +84,7 @@ namespace realsense_ros_person
         nodeHandle.param<bool>("trackingEnabled", config.trackingEnabled,false);
         nodeHandle.param<bool>("skeletonEnabled",config.skeletonEnabled,false);
 
-        nodeHandle.param<bool>("headPositionEnabled",config.headPositionEnabled,false);
+        nodeHandle.param<bool>("headPoseEnabled",config.headPoseEnabled,false);
         nodeHandle.param<bool>("headBoundingBoxEnabled",config.headBoundingBoxEnabled,false);
         nodeHandle.param<bool>("landmarksEnabled",config.landmarksEnabled,false);
 

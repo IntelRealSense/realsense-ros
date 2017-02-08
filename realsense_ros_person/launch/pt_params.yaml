@@ -10,12 +10,13 @@ gesturesEnabled: true
 skeletonEnabled: true
 recognitionEnabled: true
 trackingEnabled: true
+headPoseEnabled: true
 
 #load Data saved
 loadDb: false
 dbPath: '/home/elisa/testPT1.db'
 
-headPositionEnabled: false
+headPoseEnabled: true
 headBoundingBoxEnabled: true
 landmarksEnabled: true
 

@@ -38,6 +38,9 @@ void PersonTrackingSample::ProcessCommandLineArgs()
 
     nodeHandle.getParam("headBoundingBox", mEnableHeadBoundingBox);
     ROS_INFO_STREAM("headBoundingBox = " << mEnableHeadBoundingBox);
+
+    nodeHandle.getParam("headPose", mEnableHeadPose);
+    ROS_INFO_STREAM("headPose = " << mEnableHeadPose);
 }
 
 void PersonTrackingSample::InitMessaging(ros::NodeHandle& nodeHandle)
@@ -59,6 +62,7 @@ void PersonTrackingSample::EnableTrackingFeatures(ros::NodeHandle& nodeHandle)
     config.request.enableGestures = mEnableGestures;
     config.request.enableLandmarks = mEnableLandmarks;
     config.request.enableHeadBoundingBox = mEnableHeadBoundingBox;
+    config.request.enableHeadPose = mEnableHeadPose;
 
     mConfigClient.call(config);
 }
@@ -218,6 +222,15 @@ void PersonTrackingSample::DrawPersonSummaryReport(cv::Mat image, realsense_ros_
     summaryText << user.userInfo.Id << ": " <<
                 std::fixed << std::setprecision(3) <<
                 "(" << user.centerOfMassWorld.x << "," << user.centerOfMassWorld.y << "," << user.centerOfMassWorld.z << ")";
+
+    if (user.headPose.confidence > 0)
+    {
+        //add head pose
+        summaryText << std::setprecision(1) << std::fixed << " head orientation " << "(" <<
+                    user.headPose.angles.pitch << ", " <<
+                    user.headPose.angles.roll << ", " <<
+                    user.headPose.angles.yaw << ")";
+    }
 
     //add wave gesture
     int32_t waveGesture = user.gestures.wave.type;

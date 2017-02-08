@@ -39,6 +39,7 @@ private:
     bool mEnableGestures;
     bool mEnableLandmarks;
     bool mEnableHeadBoundingBox;
+    bool mEnableHeadPose;
 
     const int JOINT_CONFIDENCE_THR = 90;
     const int LANDMARKS_CONFIDENCE_THR = 90;

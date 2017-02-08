@@ -55,15 +55,15 @@ namespace realsense_ros_person
             ptConfiguration->QueryTracking()->Disable();
         }
 
-        if (config.headPositionEnabled)
+        if (config.headPoseEnabled)
         {
-            ROS_INFO("head head position enabled");
+            ROS_INFO("head pose enabled");
             ptConfiguration->QueryTracking()->Enable();
             ptConfiguration->QueryFace()->EnableHeadPose();
         }
         else
         {
-            ROS_INFO("head head position disabled");
+            ROS_INFO("head pose disabled");
             ptConfiguration->QueryFace()->DisableHeadPose();
         }
 

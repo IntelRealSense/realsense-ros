@@ -121,6 +121,7 @@ namespace realsense_ros_person
                 addSkeletonToOutput(ptConfiguration, personData, user);
                 addGesturesToOutput(ptConfiguration, personData, user);
                 addLandmarksToOutput(ptConfiguration, personData, user);
+                addHeadPoseToOutput(ptConfiguration, personData, user);
                 usersVector.push_back(user);
             }
         }
@@ -164,5 +165,32 @@ namespace realsense_ros_person
             landmark.realWorldCoordinates.z = landmarksInfo->landmarks[landmarkNb].world.z;
             user.landmarksInfo.landmarks.push_back(landmark);
         }
+    }
+
+    void PersonTrackingPublisherHelper::addHeadPoseToOutput(
+            Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+            Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
+            realsense_ros_person::User &user)
+    {
+
+        Intel::RealSense::PersonTracking::PersonTrackingData::PersonFace *faceData = personData->QueryFace();
+        if (faceData == nullptr)
+        {
+            user.headPose.confidence = 0;
+            return;
+        }
+        Intel::RealSense::PersonTracking::PersonTrackingData::PoseEulerAngles angles;
+        if(faceData->QueryHeadPose(angles))
+        {
+            user.headPose.angles.yaw = angles.yaw;
+            user.headPose.angles.pitch = angles.pitch;
+            user.headPose.angles.roll = angles.roll;
+            user.headPose.confidence = 100;
+        }
+        else
+        {
+            user.headPose.confidence = 0;
+        }
+        return;
     }
 }

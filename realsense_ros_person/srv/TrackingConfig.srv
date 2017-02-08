@@ -3,5 +3,6 @@ bool enableSkeleton
 bool enableGestures
 bool enableLandmarks
 bool enableHeadBoundingBox
+bool enableHeadPose
 ---
 bool status

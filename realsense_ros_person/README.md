@@ -57,13 +57,16 @@ This package contains a ROS wrapper for Intel's PersonTracking library. The real
         Load the recognition data base from file
 
   3.1.4 Parameters
-    ~recognitionEnabled (bool, default: false)
+    ~recognitionEnabled (bool, default: true)
         Enable/Disable recognition
-    ~sceletonEnabled (bool, default: false)
+    ~sceletonEnabled (bool, default: true)
         Enable/Disable skeleton
-    ~gesturesEnabled (bool, default: false)
+    ~gesturesEnabled (bool, default: true)
         Enable/Disable gestures
-    ~trackingEnabled (bool, default: false)
+    ~trackingEnabled (bool, default: true)
+    ~headPoseEnabled (bool, default: true)
+    ~headBoundingBoxEnabled (bool, default: true)
+    ~landmarksEnabled (bool, default: true)
     ~loadDb (bool, default: false)
         Loads recognition data base from file specified at (~dbPath) parameter
     ~dbPath: 'package_path/db'
