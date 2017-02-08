@@ -32,6 +32,11 @@ namespace realsense_ros_person
                              Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
                              realsense_ros_person::User &user);
 
+        virtual void
+        addHeadPoseToOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+                             Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
+                             realsense_ros_person::User &user);
+
         PersonTracking2RosHelper m_pt2rosHelper;
     };
 }

@@ -81,11 +81,13 @@ namespace realsense_ros_person
         std::vector<realsense_ros_person::User> usersVector;
         int numberOfUsers = trackingData.QueryNumberOfPeople();
 
-        for (int index = 0; index < numberOfUsers; ++index) {
+        for (int index = 0; index < numberOfUsers; ++index)
+        {
             PersonTrackingData::Person *personData = trackingData.QueryPersonData(
                     PersonTrackingData::AccessOrderType::ACCESS_ORDER_BY_INDEX, index);
 
-            if (personData) {
+            if (personData)
+            {
                 realsense_ros_person::User user;
 
                 PersonTrackingData::PersonTracking *personTrackingData = personData->QueryTracking();
@@ -98,17 +100,8 @@ namespace realsense_ros_person
 
                 user.userInfo.recognitionId = -1; //TODO may be remove this field from user info
 
-                user.userRect.rect.x = box.rect.x;
-                user.userRect.rect.y = box.rect.y;
-                user.userRect.rect.width = box.rect.w;
-                user.userRect.rect.height = box.rect.h;
-                user.userRect.confidence =  box.confidence;
-
-                user.headBoundingBox.rect.x = headBoundingBox.rect.x;
-                user.headBoundingBox.rect.y = headBoundingBox.rect.y;
-                user.headBoundingBox.rect.width = headBoundingBox.rect.w;
-                user.headBoundingBox.rect.height = headBoundingBox.rect.h;
-                user.headBoundingBox.confidence =  headBoundingBox.confidence;
+                user.userRect = m_pt2rosHelper.BoundingBox2D2RosRectWithConfidence(box);
+                user.headBoundingBox = m_pt2rosHelper.BoundingBox2D2RosRectWithConfidence(headBoundingBox);
 
                 user.centerOfMassImage.x = centerMass.image.point.x;
                 user.centerOfMassImage.y = centerMass.image.point.y;
@@ -121,6 +114,7 @@ namespace realsense_ros_person
                 addSkeletonToOutput(ptConfiguration, personData, user);
                 addGesturesToOutput(ptConfiguration, personData, user);
                 addLandmarksToOutput(ptConfiguration, personData, user);
+                addHeadPoseToOutput(ptConfiguration, personData, user);
                 usersVector.push_back(user);
             }
         }
@@ -164,5 +158,32 @@ namespace realsense_ros_person
             landmark.realWorldCoordinates.z = landmarksInfo->landmarks[landmarkNb].world.z;
             user.landmarksInfo.landmarks.push_back(landmark);
         }
+    }
+
+    void PersonTrackingPublisherHelper::addHeadPoseToOutput(
+            Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+            Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
+            realsense_ros_person::User &user)
+    {
+
+        Intel::RealSense::PersonTracking::PersonTrackingData::PersonFace *faceData = personData->QueryFace();
+        if (faceData == nullptr)
+        {
+            user.headPose.confidence = 0;
+            return;
+        }
+        Intel::RealSense::PersonTracking::PersonTrackingData::PoseEulerAngles angles;
+        if(faceData->QueryHeadPose(angles))
+        {
+            user.headPose.angles.yaw = angles.yaw;
+            user.headPose.angles.pitch = angles.pitch;
+            user.headPose.angles.roll = angles.roll;
+            user.headPose.confidence = 100;
+        }
+        else
+        {
+            user.headPose.confidence = 0;
+        }
+        return;
     }
 }

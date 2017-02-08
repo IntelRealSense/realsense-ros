@@ -1,12 +1,9 @@
-#include "TrackingRenderer.h"
+#include <iomanip>
+#include <opencv2/opencv.hpp>
+
 #include "Colors.h"
 #include "OpencvUtils.h"
-#include "BlackSegmentationRenderer.h"
-#include "WinStyleSegmentationRenderer.h"
-#include <string>
-#include <sstream>
-#include <iomanip>
-
+#include "TrackingRenderer.h"
 
 TrackingRenderer::TrackingRenderer(Viewer& viewer) : m_viewer(viewer)
 {
@@ -18,8 +15,7 @@ TrackingRenderer::TrackingRenderer(Viewer& viewer) : m_viewer(viewer)
 
 void TrackingRenderer::Reset()
 {
-    mLastCenterOfMassTextBottom = 0;
-    //m_personDataStorage.clear();
+    mSummaryTextBottom = 0;
 }
 
 void TrackingRenderer::DrawPerson(cv::Mat image, int id, cv::Rect boundingBox, cv::Point com, cv::Point3f comWorld)
@@ -45,15 +41,6 @@ void TrackingRenderer::DrawPerson(cv::Mat image, int id, cv::Rect boundingBox, c
     // center of mass point
     cv::Point centerMass = com;
     cv::circle(image, centerMass, 2, RED, -1, 8, 0);
-
-    // center of mass world coordinates at top left corner of image
-    std::stringstream centerMassText;
-    centerMassText <<
-        personId << ": " <<
-        std::fixed << std::setprecision(3) <<
-        "(" << comWorld.x << "," << comWorld.y << "," << comWorld.z << ")";
-    Rectangle centerMassTextRect = setLabel(image, centerMassText.str(), cv::Point(0, mLastCenterOfMassTextBottom), 1);
-    mLastCenterOfMassTextBottom = centerMassTextRect.bottomRight.y;
 
     // Add person data to storage
     PersonData data;
@@ -119,4 +106,10 @@ void TrackingRenderer::HandleMouseEvent(int event, int x, int y, int flags)
     {
         m_personSelectedHandler(*data, SelectType::TRACKING);
     }
+}
+
+void TrackingRenderer::DrawLineAtSummaryReport(cv::Mat image, std::string line)
+{
+    Rectangle summaryTextRect = setLabel(image, line, cv::Point(0, mSummaryTextBottom), 2,  0.5);
+    mSummaryTextBottom = summaryTextRect.bottomRight.y + 0.02 * image.rows;
 }

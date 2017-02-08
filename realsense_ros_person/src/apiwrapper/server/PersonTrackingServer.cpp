@@ -38,7 +38,7 @@ namespace realsense_ros_person
         mConfig.skeletonEnabled = request.enableSkeleton;
         mConfig.headBoundingBoxEnabled = request.enableHeadBoundingBox;
         mConfig.landmarksEnabled = request.enableLandmarks;
-
+        mConfig.headPoseEnabled = request.enableHeadPose;
         ConfigurePersonTracking(mConfig, mPersonTracking->QueryConfiguration());
         response.status = true;
         return true;

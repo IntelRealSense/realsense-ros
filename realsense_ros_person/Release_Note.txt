@@ -13,6 +13,7 @@ Supported features:
     Body Gestures (pointing)
     Face landmarks
     Face bounding box
+    Head pose
 
 Quick start:
   roslaunch realsense_ros_person realsense_person_tracking_test.launched

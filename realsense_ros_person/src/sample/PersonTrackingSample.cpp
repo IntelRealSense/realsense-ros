@@ -1,7 +1,5 @@
 #include "PersonTrackingSample.h"
 
-#include "SafeMutex.h"
-
 #include "realsense_ros_person/TrackingConfig.h"
 #include "realsense_ros_person/Recognition.h"
 #include "realsense_ros_person/TrackingRequest.h"
@@ -14,7 +12,7 @@
 
 std::string RegistrationResultToString(int status);
 std::string RecognitionResultToString(int status);
-
+std::string WaveGestureToString(int32_t waveGestureRos);
 
 
 PersonTrackingSample::PersonTrackingSample() : m_viewer(false), m_trackingRenderer(m_viewer)
@@ -40,6 +38,9 @@ void PersonTrackingSample::ProcessCommandLineArgs()
 
     nodeHandle.getParam("headBoundingBox", mEnableHeadBoundingBox);
     ROS_INFO_STREAM("headBoundingBox = " << mEnableHeadBoundingBox);
+
+    nodeHandle.getParam("headPose", mEnableHeadPose);
+    ROS_INFO_STREAM("headPose = " << mEnableHeadPose);
 }
 
 void PersonTrackingSample::InitMessaging(ros::NodeHandle& nodeHandle)
@@ -61,6 +62,7 @@ void PersonTrackingSample::EnableTrackingFeatures(ros::NodeHandle& nodeHandle)
     config.request.enableGestures = mEnableGestures;
     config.request.enableLandmarks = mEnableLandmarks;
     config.request.enableHeadBoundingBox = mEnableHeadBoundingBox;
+    config.request.enableHeadPose = mEnableHeadPose;
 
     mConfigClient.call(config);
 }
@@ -79,7 +81,7 @@ void PersonTrackingSample::PersonTrackingCallback(const realsense_ros_person::Fr
 
 void PersonTrackingSample::DrawDetectionResults(cv::Mat& colorImage, const realsense_ros_person::FrameTest& msg)
 {
-    SAFE_MUTEX(mMutex);
+    std::lock_guard<std::mutex> guard(mMutex);
 
     m_trackingRenderer.Reset();
 
@@ -87,15 +89,16 @@ void PersonTrackingSample::DrawDetectionResults(cv::Mat& colorImage, const reals
 
     for (realsense_ros_person::User& user : frame.usersData)
     {
-        DrawPersonResults(colorImage, msg, user);
+        DrawPersonResults(colorImage, user);
     }
 }
 
-void PersonTrackingSample::DrawPersonResults(cv::Mat& colorImage, const realsense_ros_person::FrameTest& msg, realsense_ros_person::User& user)
+
+void PersonTrackingSample::DrawPersonResults(cv::Mat& colorImage, realsense_ros_person::User& user)
 {
     // person rectangle
-    cv::Point pt1(user.userRect.rect.x, user.userRect.rect.y);
-    cv::Point pt2(user.userRect.rect.x + user.userRect.rect.width, user.userRect.rect.y  + user.userRect.rect.height);
+    cv::Point pt1(user.userRect.rectCorners[0].x, user.userRect.rectCorners[0].y);
+    cv::Point pt2(user.userRect.rectCorners[1].x, user.userRect.rectCorners[1].y);
     cv::Rect userRectangle(pt1, pt2);
 
     int personId = user.userInfo.Id;
@@ -104,12 +107,13 @@ void PersonTrackingSample::DrawPersonResults(cv::Mat& colorImage, const realsens
     cv::Point centerMass(user.centerOfMassImage.x, user.centerOfMassImage.y);
     cv::Point3f centerMassWorld(user.centerOfMassWorld.x, user.centerOfMassWorld.y, user.centerOfMassWorld.z);
 
+    m_trackingRenderer.Reset();
     m_trackingRenderer.DrawPerson(colorImage, personId, userRectangle, centerMass, centerMassWorld);
-
     DrawPersonSkeleton(colorImage, user);
     DrawPersonGestures(colorImage, user);
     DrawPersonLandmarks(colorImage, user);
     DrawFace(colorImage, user);
+    DrawPersonSummaryReport(colorImage, user);
 }
 
 void PersonTrackingSample::DrawPersonSkeleton(cv::Mat& colorImage, realsense_ros_person::User& user)
@@ -149,8 +153,8 @@ void PersonTrackingSample::DrawFace(cv::Mat& colorImage, realsense_ros_person::U
     if (!mEnableHeadBoundingBox) return;
     if (user.headBoundingBox.confidence > HEAD_BOUNDING_BOX_THR)
     {
-        cv::Point pt1(user.headBoundingBox.rect.x, user.headBoundingBox.rect.y);
-        cv::Point pt2(user.headBoundingBox.rect.x + user.headBoundingBox.rect.width, user.headBoundingBox.rect.y + user.headBoundingBox.rect.height);
+        cv::Point pt1(user.headBoundingBox.rectCorners[0].x, user.headBoundingBox.rectCorners[0].y);
+        cv::Point pt2(user.headBoundingBox.rectCorners[1].x, user.headBoundingBox.rectCorners[1].y);
         cv::Rect headBoundingBoxRect(pt1, pt2);
         m_trackingRenderer.DrawFace(colorImage, headBoundingBoxRect);
     }
@@ -174,7 +178,7 @@ void PersonTrackingSample::DrawPersonGestures(cv::Mat& colorImage, realsense_ros
 
 void PersonTrackingSample::PersonSelectedHandler(PersonData& data, TrackingRenderer::SelectType type)
 {
-    SAFE_MUTEX(mMutex);
+    std::lock_guard<std::mutex> guard(mMutex);
 
     if  (type == TrackingRenderer::SelectType::RECOGNITION)
     {
@@ -206,10 +210,37 @@ void PersonTrackingSample::PersonSelectedHandler(PersonData& data, TrackingRende
 //Function For Handling glbal events (that are not specific for a user)
 void PersonTrackingSample::GlobalHandler(TrackingRenderer::SelectType type)
 {
-    SAFE_MUTEX(mMutex);
+//    std::lock_guard<std::mutex> guard(mMutex);
 }
 
 
+void PersonTrackingSample::DrawPersonSummaryReport(cv::Mat image, realsense_ros_person::User &user)
+{
+    std::stringstream summaryText;// summary text at at top left corner of image (center of mass, orientation etc.)
+
+    //add center of mass (world coordinates)
+    summaryText << user.userInfo.Id << ": " <<
+                std::fixed << std::setprecision(3) <<
+                "(" << user.centerOfMassWorld.x << "," << user.centerOfMassWorld.y << "," << user.centerOfMassWorld.z << ")";
+
+    if (user.headPose.confidence > 0)
+    {
+        //add head pose
+        summaryText << std::setprecision(1) << std::fixed << " head orientation " << "(" <<
+                    user.headPose.angles.pitch << ", " <<
+                    user.headPose.angles.roll << ", " <<
+                    user.headPose.angles.yaw << ")";
+    }
+
+    //add wave gesture
+    int32_t waveGesture = user.gestures.wave.type;
+    if (waveGesture != (int32_t)realsense_ros_person::Wave::WAVE_NOT_DETECTED)
+    {
+        summaryText << " wave gesture: " << WaveGestureToString(waveGesture).c_str() << "\n";
+    }
+
+    m_trackingRenderer.DrawLineAtSummaryReport(image, summaryText.str());
+}
 
 std::string RegistrationResultToString(int status)
 {
@@ -257,5 +288,24 @@ std::string RecognitionResultToString(int status)
             return "RECOGNITION_FAILED_FACE_AMBIGUITY";
         default:
             return "RECOGNITION_UNKNOWN_ERROR";
+    }
+}
+
+std::string WaveGestureToString(int32_t waveGestureRos)
+{
+    switch (waveGestureRos)
+    {
+        case realsense_ros_person::Wave::WAVE_NOT_DETECTED:
+            return "Wave not detected";
+        case realsense_ros_person::Wave::WAVE_LEFT_LA:
+            return "Wave left left area";
+        case realsense_ros_person::Wave::WAVE_RIGHT_LA:
+            return "Wave right left area";
+        case realsense_ros_person::Wave::WAVE_LEFT_RA:
+            return "Wave left right area";
+        case  realsense_ros_person::Wave::WAVE_RIGHT_RA:
+            return "Wave right right area";
+        default:
+            throw std::runtime_error("unsupported wave gesture value");
     }
 }

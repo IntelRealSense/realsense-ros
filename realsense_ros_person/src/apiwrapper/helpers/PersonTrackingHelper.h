@@ -10,7 +10,7 @@ namespace realsense_ros_person {
         bool skeletonEnabled;
         bool recognitionEnabled;
         bool trackingEnabled;
-        bool headPositionEnabled;
+        bool headPoseEnabled;
         bool headBoundingBoxEnabled;
         bool landmarksEnabled;
 
@@ -20,7 +20,7 @@ namespace realsense_ros_person {
                 skeletonEnabled(false),
                 recognitionEnabled(false),
                 trackingEnabled(false),
-                headPositionEnabled(false),
+                headPoseEnabled(false),
                 headBoundingBoxEnabled(false),
                 landmarksEnabled(false) {}
     };

@@ -19,10 +19,8 @@ private:
     void EnableTrackingFeatures(ros::NodeHandle& nodeHandle);
 
     void PersonTrackingCallback(const realsense_ros_person::FrameTest& msg);
-
     void DrawDetectionResults(cv::Mat& colorImage, const realsense_ros_person::FrameTest& msg);
-
-    void DrawPersonResults(cv::Mat& colorImage, const realsense_ros_person::FrameTest& msg, realsense_ros_person::User& user);
+    void DrawPersonResults(cv::Mat& colorImage, realsense_ros_person::User& user);
 
 
 
@@ -30,6 +28,7 @@ private:
     void DrawPersonGestures(cv::Mat& colorImage, realsense_ros_person::User& user);
     void DrawPersonLandmarks(cv::Mat& colorImage, realsense_ros_person::User& user);
     void DrawFace(cv::Mat& colorImage, realsense_ros_person::User& user);
+    void DrawPersonSummaryReport(cv::Mat image, realsense_ros_person::User &user);
 
     void PersonSelectedHandler(PersonData& data, TrackingRenderer::SelectType type);
     void GlobalHandler(TrackingRenderer::SelectType type);
@@ -40,6 +39,7 @@ private:
     bool mEnableGestures;
     bool mEnableLandmarks;
     bool mEnableHeadBoundingBox;
+    bool mEnableHeadPose;
 
     const int JOINT_CONFIDENCE_THR = 90;
     const int LANDMARKS_CONFIDENCE_THR = 90;
