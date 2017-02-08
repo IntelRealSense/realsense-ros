@@ -3,7 +3,6 @@ geometry_msgs/Point32 centerOfMassImage
 geometry_msgs/Point32 centerOfMassWorld
 RectWithConfidence userRect
 RectWithConfidence headBoundingBox
-sensor_msgs/Image geodesicMatrix
 LandmarksInfo landmarksInfo
 EulerAnglesWithConfidence headPose
 SkeletonJoint[] skeletonJoints

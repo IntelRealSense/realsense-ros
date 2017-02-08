@@ -1,7 +1,6 @@
 #pragma once
 #include "Viewer.h"
 #include "PersonDataStorage.h"
-#include "SegmentationRenderer.h"
 #include <opencv2/core/core.hpp>
 #include <vector>
 #include <functional>

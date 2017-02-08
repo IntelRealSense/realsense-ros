@@ -1,12 +1,9 @@
-#include "TrackingRenderer.h"
+#include <iomanip>
+#include <opencv2/opencv.hpp>
+
 #include "Colors.h"
 #include "OpencvUtils.h"
-#include "BlackSegmentationRenderer.h"
-#include "WinStyleSegmentationRenderer.h"
-#include <string>
-#include <sstream>
-#include <iomanip>
-
+#include "TrackingRenderer.h"
 
 TrackingRenderer::TrackingRenderer(Viewer& viewer) : m_viewer(viewer)
 {
