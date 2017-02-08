@@ -30,13 +30,13 @@ public:
     void DrawSkeleton(cv::Mat image, std::vector<cv::Point>& points);
     void DrawLandmarks(cv::Mat image, std::vector<cv::Point>& points);
     void DrawPointing(cv::Mat image, cv::Point origin, cv::Point2f direction);
+    void DrawLineAtSummaryReport(cv::Mat image, std::string line);
 
 private:
     void HandleMouseEvent(int event, int x, int y, int flags);
 
+    int mSummaryTextBottom = 0;
     Viewer& m_viewer;
-
-    int mLastCenterOfMassTextBottom = 0;
 
     std::function<void (PersonData&, SelectType)> m_personSelectedHandler;
     std::function<void (SelectType)> m_globaldHandler;
