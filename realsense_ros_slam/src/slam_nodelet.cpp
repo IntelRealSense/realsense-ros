@@ -70,7 +70,7 @@ void SubscribeTopics::subscribeMotion()
 void SubscribeTopics::depthMessageCallback(const realsense_ros_camera::StreamInfoConstPtr & depthImageMsg)
 {
     mut_depth.lock();
-    SubscribeTopics::GetStreamSample(depthImageMsg, rs::core::stream_type::depth);
+    SubscribeTopics::getStreamSample(depthImageMsg, rs::core::stream_type::depth);
     mut_depth.unlock();
 }
 
@@ -78,12 +78,12 @@ void SubscribeTopics::depthMessageCallback(const realsense_ros_camera::StreamInf
 void SubscribeTopics::fisheyeMessageCallback(const realsense_ros_camera::StreamInfoConstPtr & fisheyeImageMsg)
 {
     mut_fisheye.lock();
-    SubscribeTopics::GetStreamSample(fisheyeImageMsg, rs::core::stream_type::fisheye);
+    SubscribeTopics::getStreamSample(fisheyeImageMsg, rs::core::stream_type::fisheye);
     mut_fisheye.unlock();
 }
 
 
-void SubscribeTopics::GetStreamSample(const realsense_ros_camera::StreamInfoConstPtr & imageMsg, rs::core::stream_type stream)
+void SubscribeTopics::getStreamSample(const realsense_ros_camera::StreamInfoConstPtr & imageMsg, rs::core::stream_type stream)
 {
     int width=imageMsg->image.width;
     int height=imageMsg->image.height;
@@ -149,13 +149,13 @@ void SubscribeTopics::GetStreamSample(const realsense_ros_camera::StreamInfoCons
         ROS_ERROR("error: failed to process sample");
     }
     sample_set[stream]->release();
-}//end of GetStreamSample
+}//end of getStreamSample
 
 
 void SubscribeTopics::motion_gyroCallback(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg)
 {
     mut_gyro_imu.lock();
-    SubscribeTopics::GetMotionSample(motionInfoMsg, rs::core::motion_type::gyro);
+    SubscribeTopics::getMotionSample(motionInfoMsg, rs::core::motion_type::gyro);
     mut_gyro_imu.unlock();
 }
 
@@ -163,12 +163,12 @@ void SubscribeTopics::motion_gyroCallback(const realsense_ros_camera::MotionInfo
 void SubscribeTopics::motion_accelCallback(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg)
 {
     mut_accel_imu.lock();
-    SubscribeTopics::GetMotionSample(motionInfoMsg, rs::core::motion_type::accel);
+    SubscribeTopics::getMotionSample(motionInfoMsg, rs::core::motion_type::accel);
     mut_accel_imu.unlock();
 }
 
 
-void SubscribeTopics::GetMotionSample(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg, rs::core::motion_type motionType)
+void SubscribeTopics::getMotionSample(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg, rs::core::motion_type motionType)
 {
     rs::core::correlated_sample_set sample_set = {};
     sample_set[motionType].timestamp = motionInfoMsg->stamps;

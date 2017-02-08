@@ -50,27 +50,27 @@ namespace realsense_ros_slam
 class SubscribeTopics
 {
 public:
-  SubscribeTopics();
-  ~SubscribeTopics();
-  ros::NodeHandle l_nh;
-  rs::slam::slam* l_slam;
-  std::mutex mut_depth, mut_fisheye, mut_gyro_imu, mut_accel_imu;
-  std::vector<void *> data_list;
-  ros::Subscriber l_motion_gyro_sub, l_motion_accel_sub, l_fisheye_sub, l_depth_sub;
-  void subscribeStreamMessages();
-  void subscribeMotion();
-  void GetStreamSample(const realsense_ros_camera::StreamInfoConstPtr & imageMsg, rs::core::stream_type stream);
-  void depthMessageCallback(const realsense_ros_camera::StreamInfoConstPtr & depthImageMsg);
-  void fisheyeMessageCallback(const realsense_ros_camera::StreamInfoConstPtr & fisheyeImageMsg);
-  void motion_gyroCallback(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg);
-  void motion_accelCallback(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg);
-  void GetMotionSample(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg, rs::core::motion_type motionType);
-  void onInit(ros::NodeHandle & nh, rs::slam::slam * slam);
+    SubscribeTopics();
+    ~SubscribeTopics();
+    ros::NodeHandle l_nh;
+    rs::slam::slam* l_slam;
+    std::mutex mut_depth, mut_fisheye, mut_gyro_imu, mut_accel_imu;
+    std::vector<void *> data_list;
+    ros::Subscriber l_motion_gyro_sub, l_motion_accel_sub, l_fisheye_sub, l_depth_sub;
+    void subscribeStreamMessages();
+    void subscribeMotion();
+    void getStreamSample(const realsense_ros_camera::StreamInfoConstPtr & imageMsg, rs::core::stream_type stream);
+    void depthMessageCallback(const realsense_ros_camera::StreamInfoConstPtr & depthImageMsg);
+    void fisheyeMessageCallback(const realsense_ros_camera::StreamInfoConstPtr & fisheyeImageMsg);
+    void motion_gyroCallback(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg);
+    void motion_accelCallback(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg);
+    void getMotionSample(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg, rs::core::motion_type motionType);
+    void onInit(ros::NodeHandle & nh, rs::slam::slam * slam);
 };
 
-  class SNodeletSlam:public nodelet::Nodelet
-  {
-  public:
+class SNodeletSlam:public nodelet::Nodelet
+{
+public:
     SNodeletSlam();
     ~SNodeletSlam();
     ros::NodeHandle nh;
@@ -82,12 +82,12 @@ public:
     SubscribeTopics sub;
 
     void onInit()override;
-  private:
+private:
     void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr & fisheyeCameraInfo, const sensor_msgs::CameraInfoConstPtr & depthCameraInfo);
     void setCalibrationData(const sensor_msgs::CameraInfoConstPtr & cameraInfoMsg, rs::core::intrinsics & cameraInfo);
     void setStreamConfigIntrin(rs::core::stream_type stream, std::map< rs::core::stream_type, rs::core::intrinsics > intrinsics);
     void setMotionData(realsense_ros_camera::IMUInfo& imu_res, rs::core::motion_device_intrinsics& motion_intrin);
     void setMotionConfigIntrin(rs::core::motion_type motion, std::map< rs::core::motion_type, rs::core::motion_device_intrinsics > motion_intrinsics);
     void setExtrinData(realsense_ros_camera::Extrinsics& fe_res, rs::core::extrinsics& extrinsics);
-  };//end class
-} 
+};//end class
+}
