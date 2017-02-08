@@ -82,7 +82,7 @@ namespace realsense_camera
   }
 
   /*
-   * Determine the timetamp for the publish topic. -- overrides base class
+   * Determine the timestamp for the publish topic. -- overrides base class
    */
   ros::Time SR300Nodelet::getTimestamp(rs_stream stream_index, double frame_ts)
   {
