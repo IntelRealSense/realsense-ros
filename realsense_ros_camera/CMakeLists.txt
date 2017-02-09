@@ -20,7 +20,6 @@ set(CMAKE_THREAD_LIBS_INIT pthread)
    FILES
   IMUInfo.msg
   Extrinsics.msg
-  MotionInfo.msg
  )
 
  add_service_files(

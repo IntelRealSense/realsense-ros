@@ -141,8 +141,8 @@ namespace realsense_ros_camera
         get_fisheye_extrin_ = nh.advertiseService("camera/get_fe_extrinsics",&NodeletCamera::getFISHExtrin,this);
         stream_pub_[RS_STREAM_FISHEYE] = nh.advertise< sensor_msgs::Image >("camera/fisheye/fisheye_stream_and_info",10);
         stream_pub_[RS_STREAM_DEPTH]   = nh.advertise< sensor_msgs::Image >("camera/depth/depth_stream_and_info", 10);
-        imu_pub_[RS_EVENT_IMU_GYRO]    = nh.advertise< realsense_ros_camera::MotionInfo >("camera/imu/gyro",100);
-        imu_pub_[RS_EVENT_IMU_ACCEL]   = nh.advertise< realsense_ros_camera::MotionInfo >("camera/imu/accel",100);  
+        imu_pub_[RS_EVENT_IMU_GYRO]    = nh.advertise< sensor_msgs::Imu >("camera/imu/gyro",100);
+        imu_pub_[RS_EVENT_IMU_ACCEL]   = nh.advertise< sensor_msgs::Imu >("camera/imu/accel",100);  
       }
       int ret = getDatas();
       ROS_INFO_STREAM("end of onInit " << ret);
@@ -236,11 +236,8 @@ namespace realsense_ros_camera
         }
         seq_motion[motionType] += 1; 
         imu_msg.header.seq = seq_motion[motionType];
-        realsense_ros_camera::MotionInfo motionInfo;
-        motionInfo.stamps = entry.timestamp_data.timestamp;
-        motionInfo.frame_number = entry.timestamp_data.frame_number;
-        motionInfo.imu = imu_msg;
-        imu_pub_[motionType].publish(motionInfo);
+        imu_msg.header.stamp = ros::Time(entry.timestamp_data.timestamp);
+        imu_pub_[motionType].publish(imu_msg);
       };
       timestamp_callback = [](rs::timestamp_data entry){};
       device->enable_motion_tracking(motion_callback, timestamp_callback);

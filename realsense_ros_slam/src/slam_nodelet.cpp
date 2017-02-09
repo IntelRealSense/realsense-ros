@@ -156,39 +156,39 @@ void SubscribeTopics::getStreamSample(const sensor_msgs::ImageConstPtr &imageMsg
 }//end of getStreamSample
 
 
-void SubscribeTopics::motion_gyroCallback(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg)
+void SubscribeTopics::motion_gyroCallback(const sensor_msgs::ImuConstPtr &imuMsg)
 {
     mut_gyro_imu.lock();
-    SubscribeTopics::getMotionSample(motionInfoMsg, rs::core::motion_type::gyro);
+    SubscribeTopics::getMotionSample(imuMsg, rs::core::motion_type::gyro);
     mut_gyro_imu.unlock();
 }
 
 
-void SubscribeTopics::motion_accelCallback(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg)
+void SubscribeTopics::motion_accelCallback(const sensor_msgs::ImuConstPtr &imuMsg)
 {
     mut_accel_imu.lock();
-    SubscribeTopics::getMotionSample(motionInfoMsg, rs::core::motion_type::accel);
+    SubscribeTopics::getMotionSample(imuMsg, rs::core::motion_type::accel);
     mut_accel_imu.unlock();
 }
 
 
-void SubscribeTopics::getMotionSample(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg, rs::core::motion_type motionType)
+void SubscribeTopics::getMotionSample(const sensor_msgs::ImuConstPtr &imuMsg, rs::core::motion_type motionType)
 {
     rs::core::correlated_sample_set sample_set = {};
-    sample_set[motionType].timestamp = motionInfoMsg->stamps;
+    sample_set[motionType].timestamp = imuMsg->header.stamp.toSec();
     sample_set[motionType].type = motionType;
-    sample_set[motionType].frame_number= motionInfoMsg->frame_number;
+    sample_set[motionType].frame_number= imuMsg->header.seq;
     if (motionType == rs::core::motion_type::accel)
     {
-        sample_set[motionType].data[0] = (float)motionInfoMsg->imu.linear_acceleration.x;
-        sample_set[motionType].data[1] = (float)motionInfoMsg->imu.linear_acceleration.y;
-        sample_set[motionType].data[2] = (float)motionInfoMsg->imu.linear_acceleration.z;
+        sample_set[motionType].data[0] = (float)imuMsg->linear_acceleration.x;
+        sample_set[motionType].data[1] = (float)imuMsg->linear_acceleration.y;
+        sample_set[motionType].data[2] = (float)imuMsg->linear_acceleration.z;
     }
     else if (motionType == rs::core::motion_type::gyro)
     {
-        sample_set[motionType].data[0] = (float)motionInfoMsg->imu.angular_velocity.x;
-        sample_set[motionType].data[1] = (float)motionInfoMsg->imu.angular_velocity.y;
-        sample_set[motionType].data[2] = (float)motionInfoMsg->imu.angular_velocity.z;
+        sample_set[motionType].data[0] = (float)imuMsg->angular_velocity.x;
+        sample_set[motionType].data[1] = (float)imuMsg->angular_velocity.y;
+        sample_set[motionType].data[2] = (float)imuMsg->angular_velocity.z;
     }
 
     if (l_slam->process_sample_set(sample_set) < rs::core::status_no_error)
