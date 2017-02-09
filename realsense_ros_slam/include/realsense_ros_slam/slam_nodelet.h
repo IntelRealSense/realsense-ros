@@ -59,9 +59,9 @@ public:
     ros::Subscriber l_motion_gyro_sub, l_motion_accel_sub, l_fisheye_sub, l_depth_sub;
     void subscribeStreamMessages();
     void subscribeMotion();
-    void getStreamSample(const realsense_ros_camera::StreamInfoConstPtr & imageMsg, rs::core::stream_type stream);
-    void depthMessageCallback(const realsense_ros_camera::StreamInfoConstPtr & depthImageMsg);
-    void fisheyeMessageCallback(const realsense_ros_camera::StreamInfoConstPtr & fisheyeImageMsg);
+    void getStreamSample(const sensor_msgs::ImageConstPtr &imageMsg, rs::core::stream_type stream);
+    void depthMessageCallback(const sensor_msgs::ImageConstPtr &depthImageMsg);
+    void fisheyeMessageCallback(const sensor_msgs::ImageConstPtr &fisheyeImageMsg);
     void motion_gyroCallback(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg);
     void motion_accelCallback(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg);
     void getMotionSample(const realsense_ros_camera::MotionInfoConstPtr & motionInfoMsg, rs::core::motion_type motionType);

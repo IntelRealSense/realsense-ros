@@ -71,7 +71,7 @@ void SubscribeTopics::subscribeMotion()
 }
 
 
-void SubscribeTopics::depthMessageCallback(const realsense_ros_camera::StreamInfoConstPtr & depthImageMsg)
+void SubscribeTopics::depthMessageCallback(const sensor_msgs::ImageConstPtr &depthImageMsg)
 {
     mut_depth.lock();
     SubscribeTopics::getStreamSample(depthImageMsg, rs::core::stream_type::depth);
@@ -79,7 +79,7 @@ void SubscribeTopics::depthMessageCallback(const realsense_ros_camera::StreamInf
 }
 
 
-void SubscribeTopics::fisheyeMessageCallback(const realsense_ros_camera::StreamInfoConstPtr & fisheyeImageMsg)
+void SubscribeTopics::fisheyeMessageCallback(const sensor_msgs::ImageConstPtr &fisheyeImageMsg)
 {
     mut_fisheye.lock();
     SubscribeTopics::getStreamSample(fisheyeImageMsg, rs::core::stream_type::fisheye);
@@ -87,10 +87,10 @@ void SubscribeTopics::fisheyeMessageCallback(const realsense_ros_camera::StreamI
 }
 
 
-void SubscribeTopics::getStreamSample(const realsense_ros_camera::StreamInfoConstPtr & imageMsg, rs::core::stream_type stream)
+void SubscribeTopics::getStreamSample(const sensor_msgs::ImageConstPtr &imageMsg, rs::core::stream_type stream)
 {
-    int width=imageMsg->image.width;
-    int height=imageMsg->image.height;
+    int width=imageMsg->width;
+    int height=imageMsg->height;
     rs::core::correlated_sample_set sample_set = {};
     if (stream == rs::core::stream_type::fisheye)
     {
@@ -101,14 +101,14 @@ void SubscribeTopics::getStreamSample(const realsense_ros_camera::StreamInfoCons
             rs::utils::convert_pixel_format(rs::format::raw8),
             1 * width
         };
-        image_fisheye[cpt_fisheye] = cv::Mat(height, width, CV_8UC1, (unsigned char*)imageMsg->image.data.data()).clone();
+        image_fisheye[cpt_fisheye] = cv::Mat(height, width, CV_8UC1, (unsigned char*)imageMsg->data.data()).clone();
         sample_set[stream] = rs::core::image_interface::create_instance_from_raw_data(
                                  & info_fisheye[cpt_fisheye],
                                  image_fisheye[cpt_fisheye].data,
                                  stream,
                                  rs::core::image_interface::flag::any,
-                                 (double)imageMsg->stamps,
-                                 (uint64_t)imageMsg->frame_number,
+                                 imageMsg->header.stamp.toSec(),
+                                 (uint64_t)imageMsg->header.seq,
                                  rs::core::timestamp_domain::microcontroller
                              );
         if (cpt_fisheye < 99)
@@ -129,14 +129,14 @@ void SubscribeTopics::getStreamSample(const realsense_ros_camera::StreamInfoCons
             rs::utils::convert_pixel_format(rs::format::z16),
             2 * width
         };
-        image_depth[cpt_depth] = cv::Mat(height, width, CV_16UC1, (unsigned char*)imageMsg->image.data.data()).clone();
+        image_depth[cpt_depth] = cv::Mat(height, width, CV_16UC1, (unsigned char*)imageMsg->data.data()).clone();
         sample_set[stream] = rs::core::image_interface::create_instance_from_raw_data(
                                  & info_depth[cpt_depth],
                                  image_depth[cpt_depth].data,
                                  stream,
                                  rs::core::image_interface::flag::any,
-                                 (double)imageMsg->stamps,
-                                 (uint64_t)imageMsg->frame_number,
+                                 imageMsg->header.stamp.toSec(),
+                                 (uint64_t)imageMsg->header.seq,
                                  rs::core::timestamp_domain::microcontroller
                              );
         if (cpt_depth < 99)
@@ -221,7 +221,7 @@ public:
 };
 
 
-void ConvertToPG(rs::slam::PoseMatrix4f & pose, rs::slam::tracking_accuracy trackingAccuracy, Eigen::Vector3f & gravity, stRobotPG & robotPG)
+void ConvertToPG(rs::slam::PoseMatrix4f & pose, Eigen::Vector3f & gravity, stRobotPG & robotPG)
 {
     Eigen::Vector3f g = gravity;
     Eigen::Vector3f g_startG(0.0f, 1.0f, 0.0f);
@@ -308,7 +308,6 @@ public:
     void module_output_ready(rs::core::video_module_interface * sender, rs::core::correlated_sample_set * sample)
     {
         rs::slam::slam *pSP = dynamic_cast< rs::slam::slam * >(sender);
-        const rs::slam::tracking_accuracy trackingAccuracy = pSP->get_tracking_accuracy();
         rs::slam::PoseMatrix4f cameraPose;
         pSP->get_camera_pose(cameraPose);
                 
@@ -316,7 +315,7 @@ public:
         
         Eigen::Vector3f gravity = Eigen::Vector3f(0, 1, 0);
         stRobotPG robotPG;
-        ConvertToPG(cameraPose, trackingAccuracy, gravity, robotPG);
+        ConvertToPG(cameraPose, gravity, robotPG);
         pose2d.x = robotPG.x;
         pose2d.y = robotPG.y;
         pose2d.theta = robotPG.theta;

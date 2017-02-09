@@ -139,8 +139,8 @@ namespace realsense_ros_camera
       
         get_imu_info_       = nh.advertiseService("camera/get_imu_info", &NodeletCamera::getIMUInfo, this);
         get_fisheye_extrin_ = nh.advertiseService("camera/get_fe_extrinsics",&NodeletCamera::getFISHExtrin,this);
-        stream_pub_[RS_STREAM_FISHEYE] = nh.advertise< realsense_ros_camera::StreamInfo >("camera/fisheye/fisheye_stream_and_info",10);
-        stream_pub_[RS_STREAM_DEPTH]   = nh.advertise< realsense_ros_camera::StreamInfo >("camera/depth/depth_stream_and_info", 10);
+        stream_pub_[RS_STREAM_FISHEYE] = nh.advertise< sensor_msgs::Image >("camera/fisheye/fisheye_stream_and_info",10);
+        stream_pub_[RS_STREAM_DEPTH]   = nh.advertise< sensor_msgs::Image >("camera/depth/depth_stream_and_info", 10);
         imu_pub_[RS_EVENT_IMU_GYRO]    = nh.advertise< realsense_ros_camera::MotionInfo >("camera/imu/gyro",100);
         imu_pub_[RS_EVENT_IMU_ACCEL]   = nh.advertise< realsense_ros_camera::MotionInfo >("camera/imu/accel",100);  
       }
@@ -191,23 +191,17 @@ namespace realsense_ros_camera
         image_[stream_nb].data = (unsigned char *) frame.get_data();
         image_msg_[stream_nb] = cv_bridge::CvImage(std_msgs::Header(), encoding_[stream_nb], image_[stream_nb]).toImageMsg();
         image_msg_[stream_nb]->header.frame_id = optical_frame_id_[stream_nb];
-        image_msg_[stream_nb]->header.stamp = ros::Time::now(); // Publish timestamp.
+        image_msg_[stream_nb]->header.stamp = ros::Time(frame.get_timestamp());
         image_msg_[stream_nb]->header.seq = seq[stream_nb]; 
         image_msg_[stream_nb]->width = image_[stream_nb].cols;
         image_msg_[stream_nb]->height = image_[stream_nb].rows;
         image_msg_[stream_nb]->is_bigendian = false;
         image_msg_[stream_nb]->step = image_[stream_nb].cols * unit_step_size_[stream_nb];
         seq[stream_nb] += 1;
-
-        if ((stream != rs::stream::fisheye ) && (stream != rs::stream::depth))
-          return ;
-        if (isZR300)
+       
+        if (isZR300 && (stream == rs::stream::fisheye || stream == rs::stream::depth))
         {
-          realsense_ros_camera::StreamInfo stream_data;
-          stream_data.image = *image_msg_[stream_nb];
-          stream_data.stamps = (double)frame.get_timestamp();
-          stream_data.frame_number = (unsigned int64_t)frame.get_frame_number();
-          stream_pub_[stream_nb].publish(stream_data);
+          stream_pub_[stream_nb].publish(image_msg_[stream_nb]);
         }
       };
       device->set_frame_callback(stream, stream_callback_per_stream[stream]);
