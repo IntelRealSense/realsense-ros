@@ -295,7 +295,7 @@ public:
         
         std_msgs::Header header;
         header.stamp = ros::Time::now();
-        header.frame_id = "1";
+        header.frame_id = "camera_link";
         
         geometry_msgs::PoseStamped pose_msg;
         pose_msg.header = header;
@@ -311,16 +311,7 @@ public:
         const rs::slam::tracking_accuracy trackingAccuracy = pSP->get_tracking_accuracy();
         rs::slam::PoseMatrix4f cameraPose;
         pSP->get_camera_pose(cameraPose);
-        realsense_ros_slam::PoseMatrix matrix_msg;
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                matrix_msg.matrix[i*4+j] = cameraPose.at(i,j);
-            }
-        }
-        pub_poseMatrix.publish(matrix_msg);
-        
+                
         publishPoseMsg(cameraPose);
         
         Eigen::Vector3f gravity = Eigen::Vector3f(0, 1, 0);
@@ -331,6 +322,7 @@ public:
         pose2d.theta = robotPG.theta;
         pub_pose2d.publish(pose2d);
         g_robotPGStack.push_back(robotPG);
+        
         int wmap = 512;
         int hmap = 512;
         if (!occ_map)
@@ -391,10 +383,9 @@ SNodeletSlam::~SNodeletSlam()
 void SNodeletSlam::onInit()
 {
     nh = getMTNodeHandle();
-    pub_pose = nh.advertise< geometry_msgs::PoseStamped >("pose", 1, true);
+    pub_pose = nh.advertise< geometry_msgs::PoseStamped >("camera_pose", 1, true);
     pub_pose2d = nh.advertise< geometry_msgs::Pose2D >("pose2d", 2, true);
     mapPub = nh.advertise< nav_msgs::OccupancyGrid >("map", 1, true);
-    pub_poseMatrix = nh.advertise< realsense_ros_slam::PoseMatrix >("poseMatrix", 1, true);
     pkgpath = ros::package::getPath("realsense_ros_slam") + "/";
     ros::NodeHandle pnh = getPrivateNodeHandle();
     pnh.param< double >("resolution", resolution, 0.05);
