@@ -51,8 +51,8 @@ void SubscribeTopics::onInit(ros::NodeHandle & nh, rs::slam::slam * slam)
 
 void SubscribeTopics::subscribeStreamMessages()
 {
-    std::string depthImageStream =  "camera/depth/depth_stream_and_info";
-    std::string fisheyeImageStream =  "camera/fisheye/fisheye_stream_and_info";
+    std::string depthImageStream =  "camera/depth/image_raw";
+    std::string fisheyeImageStream =  "camera/fisheye/image_raw";
     ROS_INFO_STREAM("Listening on " << depthImageStream);
     ROS_INFO_STREAM("Listening on " << fisheyeImageStream);
     l_depth_sub = l_nh.subscribe(depthImageStream, 100, & SubscribeTopics::depthMessageCallback, this);

@@ -35,8 +35,7 @@ ros::Publisher feInfo_publisher_,
                colorInfo_publisher_,
                depInfo_publisher_;
 image_transport::Publisher pub_img_[STREAM_COUNT] = {};
-ros::Publisher stream_pub_[STREAM_COUNT] = {},//fisheye 4 depth 0
-               imu_pub_[2] = {};//accel 0 gyro 1
+ros::Publisher imu_pub_[2] = {};//accel 0 gyro 1
 int seq_motion[2]={0,0};
 cv::Mat image_[STREAM_COUNT] = {};
 sensor_msgs::CameraInfo camera_info_[STREAM_COUNT] = {};
@@ -86,8 +85,8 @@ namespace realsense_ros_camera
     {
       nh = getNodeHandle();
       image_transport::ImageTransport it(nh);
-      pub_img_[RS_STREAM_COLOR]   = it.advertise("camera/color/image_raw", 1);
-      pub_img_[RS_STREAM_DEPTH]   = it.advertise("camera/depth/image_raw", 1);
+      pub_img_[(int32_t)rs::stream::fisheye]   = it.advertise("camera/color/image_raw", 1);
+      pub_img_[(int32_t)rs::stream::depth]   = it.advertise("camera/depth/image_raw", 1);
       
       colorInfo_publisher_ = nh.advertise< sensor_msgs::CameraInfo >("camera/color/camera_info",1);
       depInfo_publisher_   = nh.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info",1); 
@@ -134,13 +133,11 @@ namespace realsense_ros_camera
 
       if (isZR300)
       {
-        pub_img_[RS_STREAM_FISHEYE] = it.advertise("camera/fisheye/image_raw", 1);
+        pub_img_[(int32_t)rs::stream::fisheye] = it.advertise("camera/fisheye/image_raw", 1);
         feInfo_publisher_    = nh.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info",1);
       
         get_imu_info_       = nh.advertiseService("camera/get_imu_info", &NodeletCamera::getIMUInfo, this);
         get_fisheye_extrin_ = nh.advertiseService("camera/get_fe_extrinsics",&NodeletCamera::getFISHExtrin,this);
-        stream_pub_[RS_STREAM_FISHEYE] = nh.advertise< sensor_msgs::Image >("camera/fisheye/fisheye_stream_and_info",10);
-        stream_pub_[RS_STREAM_DEPTH]   = nh.advertise< sensor_msgs::Image >("camera/depth/depth_stream_and_info", 10);
         imu_pub_[RS_EVENT_IMU_GYRO]    = nh.advertise< sensor_msgs::Imu >("camera/imu/gyro",100);
         imu_pub_[RS_EVENT_IMU_ACCEL]   = nh.advertise< sensor_msgs::Imu >("camera/imu/accel",100);  
       }
@@ -199,9 +196,9 @@ namespace realsense_ros_camera
         image_msg_[stream_nb]->step = image_[stream_nb].cols * unit_step_size_[stream_nb];
         seq[stream_nb] += 1;
        
-        if (isZR300 && (stream == rs::stream::fisheye || stream == rs::stream::depth))
+        if ((isZR300 && stream == rs::stream::fisheye) || stream == rs::stream::depth || stream == rs::stream::color)
         {
-          stream_pub_[stream_nb].publish(image_msg_[stream_nb]);
+          pub_img_[stream_nb].publish(image_msg_[stream_nb]);
         }
       };
       device->set_frame_callback(stream, stream_callback_per_stream[stream]);
@@ -257,23 +254,14 @@ namespace realsense_ros_camera
     while (ros::ok())
     {
       ros::Time stamp = ros::Time::now();
-      for (int i = 0; i < (int32_t)rs::stream::points; ++i)
-      {
-        if (rs::stream(i) == rs::stream::depth || rs::stream(i) == rs::stream::color || ((rs::stream(i) == rs::stream::fisheye) && isZR300))
-          if (image_msg_[(int32_t)rs::stream(i)])
-          {
-            image_msg_[(int32_t)rs::stream(i)]->header.stamp = stamp;
-            pub_img_[(int32_t)rs::stream(i)].publish(image_msg_[(int32_t)rs::stream(i)]);
-          }
-      }
       if(isZR300){
-        feInfo_publisher_.publish(camera_info_[RS_STREAM_FISHEYE]);
-        camera_info_[RS_STREAM_FISHEYE].header.stamp=stamp;
+        feInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::fisheye]);
+        camera_info_[(int32_t)rs::stream::fisheye].header.stamp=stamp;
       }
-      camera_info_[RS_STREAM_COLOR].header.stamp=stamp;
-      colorInfo_publisher_.publish(camera_info_[RS_STREAM_COLOR]);
-      camera_info_[RS_STREAM_DEPTH].header.stamp=stamp;
-      depInfo_publisher_.publish(camera_info_[RS_STREAM_DEPTH]);
+      camera_info_[(int32_t)rs::stream::color].header.stamp=stamp;
+      colorInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::color]);
+      camera_info_[(int32_t)rs::stream::depth].header.stamp=stamp;
+      depInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::depth]);
       loop_rate.sleep();
     }
     if(isZR300)
