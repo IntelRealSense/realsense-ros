@@ -34,8 +34,8 @@ const int STREAM_COUNT = 5;
 ros::Publisher feInfo_publisher_,
     colorInfo_publisher_,
     depInfo_publisher_;
-image_transport::Publisher pub_img_[STREAM_COUNT] = {};
-ros::Publisher imu_pub_[2] = {};//accel 0 gyro 1
+image_transport::Publisher image_publishers_[STREAM_COUNT] = {};
+ros::Publisher imu_publishers_[2] = {};//accel 0 gyro 1
 int seq_motion[2]= {0,0};
 cv::Mat image_[STREAM_COUNT] = {};
 sensor_msgs::CameraInfo camera_info_[STREAM_COUNT] = {};
@@ -91,11 +91,25 @@ private:
     {
         node_handle = getNodeHandle();
         image_transport::ImageTransport image_transport(node_handle);
-        pub_img_[(int32_t)rs::stream::fisheye]   = image_transport.advertise("camera/color/image_raw", 1);
-        pub_img_[(int32_t)rs::stream::depth]   = image_transport.advertise("camera/depth/image_raw", 1);
+        
+        // publishers and services
+        image_publishers_[(int32_t)rs::stream::fisheye]   = image_transport.advertise("camera/color/image_raw", 1);
+        image_publishers_[(int32_t)rs::stream::depth]   = image_transport.advertise("camera/depth/image_raw", 1);
 
         colorInfo_publisher_ = node_handle.advertise< sensor_msgs::CameraInfo >("camera/color/camera_info",1);
         depInfo_publisher_   = node_handle.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info",1);
+
+        if (isZR300)
+        {
+            image_publishers_[(int32_t)rs::stream::fisheye] = image_transport.advertise("camera/fisheye/image_raw", 1);
+            feInfo_publisher_    = node_handle.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info",1);
+            imu_publishers_[RS_EVENT_IMU_GYRO]    = node_handle.advertise< sensor_msgs::Imu >("camera/imu/gyro",100);
+            imu_publishers_[RS_EVENT_IMU_ACCEL]   = node_handle.advertise< sensor_msgs::Imu >("camera/imu/accel",100);
+
+            get_imu_info_       = node_handle.advertiseService("camera/get_imu_info", &NodeletCamera::getIMUInfo, this);
+            get_fisheye_extrin_ = node_handle.advertiseService("camera/get_fe_extrinsics",&NodeletCamera::getFISHExtrin,this);
+        }
+        // end publishers and services
         
         ros::NodeHandle pnh = getPrivateNodeHandle();
         node_handle.param<std::string>("serial_no", serial_no, "");
@@ -136,17 +150,6 @@ private:
         }
         else {
             isZR300 = true;
-        }
-
-        if (isZR300)
-        {
-            pub_img_[(int32_t)rs::stream::fisheye] = image_transport.advertise("camera/fisheye/image_raw", 1);
-            feInfo_publisher_    = node_handle.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info",1);
-
-            get_imu_info_       = node_handle.advertiseService("camera/get_imu_info", &NodeletCamera::getIMUInfo, this);
-            get_fisheye_extrin_ = node_handle.advertiseService("camera/get_fe_extrinsics",&NodeletCamera::getFISHExtrin,this);
-            imu_pub_[RS_EVENT_IMU_GYRO]    = node_handle.advertise< sensor_msgs::Imu >("camera/imu/gyro",100);
-            imu_pub_[RS_EVENT_IMU_ACCEL]   = node_handle.advertise< sensor_msgs::Imu >("camera/imu/accel",100);
         }
         int ret = getDatas();
         ROS_INFO_STREAM("end of onInit " << ret);
@@ -205,7 +208,7 @@ int NodeletCamera::getDatas()
 
             if ((isZR300 && stream == rs::stream::fisheye) || stream == rs::stream::depth || stream == rs::stream::color)
             {
-                pub_img_[stream_nb].publish(image_msg_[stream_nb]);
+                image_publishers_[stream_nb].publish(image_msg_[stream_nb]);
             }
         };
         device->set_frame_callback(stream, stream_callback_per_stream[stream]);
@@ -242,7 +245,7 @@ int NodeletCamera::getDatas()
             seq_motion[motionType] += 1;
             imu_msg.header.seq = seq_motion[motionType];
             imu_msg.header.stamp = ros::Time(entry.timestamp_data.timestamp);
-            imu_pub_[motionType].publish(imu_msg);
+            imu_publishers_[motionType].publish(imu_msg);
         };
         timestamp_callback = [](rs::timestamp_data entry) {};
         device->enable_motion_tracking(motion_callback, timestamp_callback);
