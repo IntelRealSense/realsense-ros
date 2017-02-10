@@ -131,7 +131,7 @@ private:
         }
         else {
             isZR300 = true;
-        }
+        }        
         
         // publishers and services
         image_publishers_[(int32_t)rs::stream::fisheye]   = image_transport.advertise("camera/color/image_raw", 1);
@@ -207,7 +207,7 @@ int NodeletCamera::getDatas()
             image_msg_[stream_nb]->step = image_[stream_nb].cols * unit_step_size_[stream_nb];
             seq[stream_nb] += 1;
 
-                image_publishers_[stream_nb].publish(image_msg_[stream_nb]);
+            image_publishers_[stream_nb].publish(image_msg_[stream_nb]);
         };
         device->set_frame_callback(stream, stream_callback_per_stream[stream]);
     }//end for
@@ -251,8 +251,15 @@ int NodeletCamera::getDatas()
         image_[(int32_t)rs::stream::fisheye] = cv::Mat(camera_info_[(int32_t)rs::stream::fisheye].height, camera_info_[(int32_t)rs::stream::fisheye].width, CV_8UC1, cv::Scalar(0,0,0));
     }
     
+    // get camera intrinsics
     getStreamCalibData(rs::stream::depth);
     getStreamCalibData(rs::stream::color);
+    
+    // publish camera intrinsics as latched topics        
+    colorInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::color]);
+    depInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::depth]);
+    if (isZR300) feInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::fisheye]);
+    
     image_[(int32_t)rs::stream::depth]   = cv::Mat(camera_info_[(int32_t)rs::stream::depth].height, camera_info_[(int32_t)rs::stream::depth].width, CV_16UC1, cv::Scalar(0,0,0));
     image_[(int32_t)rs::stream::color]   = cv::Mat(camera_info_[(int32_t)rs::stream::color].height, camera_info_[(int32_t)rs::stream::color].width, CV_8UC3, cv::Scalar(0,0,0));
 
@@ -264,16 +271,6 @@ int NodeletCamera::getDatas()
     ros::Rate loop_rate(30);
     while (ros::ok())
     {
-        ros::Time stamp = ros::Time::now();
-        if(isZR300) 
-        {
-            feInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::fisheye]);
-            camera_info_[(int32_t)rs::stream::fisheye].header.stamp=stamp;
-        }
-        camera_info_[(int32_t)rs::stream::color].header.stamp=stamp;
-        colorInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::color]);
-        camera_info_[(int32_t)rs::stream::depth].header.stamp=stamp;
-        depInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::depth]);
         loop_rate.sleep();
     }
     
