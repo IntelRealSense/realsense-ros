@@ -37,19 +37,19 @@ fi
 }
 
 
-function install_realsense {
+function install_realsense_sdk {
 if [ -f "/etc/apt/sources.list.d/realsense-latest.list" ] 
 then
-  echo "RealSense is already installed, skipping this step"
+  echo "RealSense SDK is already installed, skipping this step"
 else
   apt-key adv --keyserver keys.gnupg.net --recv-key D6FB2970 
   sh -c 'echo "deb http://realsense-alm-public.s3.amazonaws.com/apt-repo xenial main" > /etc/apt/sources.list.d/realsense-latest.list'
   apt update 
-  apt install -y librealsense-object-recognition-dev librealsense-persontracking-dev librealsense-slam-dev librealsense-utils 
+  apt install -y librealsense-object-recognition-dev librealsense-persontracking-dev librealsense-slam-dev libopencv-dev
 fi
 }
 
-function install_robot_common {
+function install_realsense_ros_wrappers {
 # Perform the following with normal user permissions (e.g. drop root)
 sudo -E -u $_DEFAULT_USER bash <<"EOF2"
   source /opt/ros/kinetic/setup.bash
@@ -69,8 +69,8 @@ EOF2
 
 init_install
 install_ros
-install_realsense
-install_robot_common
+install_realsense_sdk
+install_realsense_ros_wrappers
 
 ldconfig
 
