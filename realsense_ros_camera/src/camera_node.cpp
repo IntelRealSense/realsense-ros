@@ -78,7 +78,7 @@ class NodeletCamera:public nodelet::Nodelet
 {
 public:
     NodeletCamera() {}
-    ros::NodeHandle nh;
+    ros::NodeHandle node_handle;
     rs::device *device;
     
 private:
@@ -89,15 +89,16 @@ private:
 
     virtual void onInit()
     {
-        nh = getNodeHandle();
-        image_transport::ImageTransport it(nh);
-        pub_img_[(int32_t)rs::stream::fisheye]   = it.advertise("camera/color/image_raw", 1);
-        pub_img_[(int32_t)rs::stream::depth]   = it.advertise("camera/depth/image_raw", 1);
+        node_handle = getNodeHandle();
+        image_transport::ImageTransport image_transport(node_handle);
+        pub_img_[(int32_t)rs::stream::fisheye]   = image_transport.advertise("camera/color/image_raw", 1);
+        pub_img_[(int32_t)rs::stream::depth]   = image_transport.advertise("camera/depth/image_raw", 1);
 
-        colorInfo_publisher_ = nh.advertise< sensor_msgs::CameraInfo >("camera/color/camera_info",1);
-        depInfo_publisher_   = nh.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info",1);
+        colorInfo_publisher_ = node_handle.advertise< sensor_msgs::CameraInfo >("camera/color/camera_info",1);
+        depInfo_publisher_   = node_handle.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info",1);
+        
         ros::NodeHandle pnh = getPrivateNodeHandle();
-        nh.param<std::string>("serial_no", serial_no, "");
+        node_handle.param<std::string>("serial_no", serial_no, "");
         std::unique_ptr< rs::context > ctx(new rs::context());
         int num_of_cams = ctx -> get_device_count();
         if (num_of_cams == 0)
@@ -139,13 +140,13 @@ private:
 
         if (isZR300)
         {
-            pub_img_[(int32_t)rs::stream::fisheye] = it.advertise("camera/fisheye/image_raw", 1);
-            feInfo_publisher_    = nh.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info",1);
+            pub_img_[(int32_t)rs::stream::fisheye] = image_transport.advertise("camera/fisheye/image_raw", 1);
+            feInfo_publisher_    = node_handle.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info",1);
 
-            get_imu_info_       = nh.advertiseService("camera/get_imu_info", &NodeletCamera::getIMUInfo, this);
-            get_fisheye_extrin_ = nh.advertiseService("camera/get_fe_extrinsics",&NodeletCamera::getFISHExtrin,this);
-            imu_pub_[RS_EVENT_IMU_GYRO]    = nh.advertise< sensor_msgs::Imu >("camera/imu/gyro",100);
-            imu_pub_[RS_EVENT_IMU_ACCEL]   = nh.advertise< sensor_msgs::Imu >("camera/imu/accel",100);
+            get_imu_info_       = node_handle.advertiseService("camera/get_imu_info", &NodeletCamera::getIMUInfo, this);
+            get_fisheye_extrin_ = node_handle.advertiseService("camera/get_fe_extrinsics",&NodeletCamera::getFISHExtrin,this);
+            imu_pub_[RS_EVENT_IMU_GYRO]    = node_handle.advertise< sensor_msgs::Imu >("camera/imu/gyro",100);
+            imu_pub_[RS_EVENT_IMU_ACCEL]   = node_handle.advertise< sensor_msgs::Imu >("camera/imu/accel",100);
         }
         int ret = getDatas();
         ROS_INFO_STREAM("end of onInit " << ret);
@@ -263,7 +264,8 @@ int NodeletCamera::getDatas()
     while (ros::ok())
     {
         ros::Time stamp = ros::Time::now();
-        if(isZR300) {
+        if(isZR300) 
+        {
             feInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::fisheye]);
             camera_info_[(int32_t)rs::stream::fisheye].header.stamp=stamp;
         }
