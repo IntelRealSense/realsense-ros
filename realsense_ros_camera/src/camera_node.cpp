@@ -92,25 +92,6 @@ private:
         node_handle = getNodeHandle();
         image_transport::ImageTransport image_transport(node_handle);
         
-        // publishers and services
-        image_publishers_[(int32_t)rs::stream::fisheye]   = image_transport.advertise("camera/color/image_raw", 1);
-        image_publishers_[(int32_t)rs::stream::depth]   = image_transport.advertise("camera/depth/image_raw", 1);
-
-        colorInfo_publisher_ = node_handle.advertise< sensor_msgs::CameraInfo >("camera/color/camera_info",1);
-        depInfo_publisher_   = node_handle.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info",1);
-
-        if (isZR300)
-        {
-            image_publishers_[(int32_t)rs::stream::fisheye] = image_transport.advertise("camera/fisheye/image_raw", 1);
-            feInfo_publisher_    = node_handle.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info",1);
-            imu_publishers_[RS_EVENT_IMU_GYRO]    = node_handle.advertise< sensor_msgs::Imu >("camera/imu/gyro",100);
-            imu_publishers_[RS_EVENT_IMU_ACCEL]   = node_handle.advertise< sensor_msgs::Imu >("camera/imu/accel",100);
-
-            get_imu_info_       = node_handle.advertiseService("camera/get_imu_info", &NodeletCamera::getIMUInfo, this);
-            get_fisheye_extrin_ = node_handle.advertiseService("camera/get_fe_extrinsics",&NodeletCamera::getFISHExtrin,this);
-        }
-        // end publishers and services
-        
         ros::NodeHandle pnh = getPrivateNodeHandle();
         node_handle.param<std::string>("serial_no", serial_no, "");
         std::unique_ptr< rs::context > ctx(new rs::context());
@@ -151,6 +132,26 @@ private:
         else {
             isZR300 = true;
         }
+        
+        // publishers and services
+        image_publishers_[(int32_t)rs::stream::fisheye]   = image_transport.advertise("camera/color/image_raw", 1);
+        image_publishers_[(int32_t)rs::stream::depth]   = image_transport.advertise("camera/depth/image_raw", 1);
+
+        colorInfo_publisher_ = node_handle.advertise< sensor_msgs::CameraInfo >("camera/color/camera_info", 1, true);
+        depInfo_publisher_   = node_handle.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info", 1, true);
+
+        if (isZR300)
+        {
+            image_publishers_[(int32_t)rs::stream::fisheye] = image_transport.advertise("camera/fisheye/image_raw", 1);
+            feInfo_publisher_    = node_handle.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info", 1, true);
+            imu_publishers_[RS_EVENT_IMU_GYRO]    = node_handle.advertise< sensor_msgs::Imu >("camera/imu/gyro",100);
+            imu_publishers_[RS_EVENT_IMU_ACCEL]   = node_handle.advertise< sensor_msgs::Imu >("camera/imu/accel",100);
+
+            get_imu_info_       = node_handle.advertiseService("camera/get_imu_info", &NodeletCamera::getIMUInfo, this);
+            get_fisheye_extrin_ = node_handle.advertiseService("camera/get_fe_extrinsics",&NodeletCamera::getFISHExtrin,this);
+        }
+        // end publishers and services
+        
         int ret = getDatas();
         ROS_INFO_STREAM("end of onInit " << ret);
     }//end onInit
@@ -206,10 +207,7 @@ int NodeletCamera::getDatas()
             image_msg_[stream_nb]->step = image_[stream_nb].cols * unit_step_size_[stream_nb];
             seq[stream_nb] += 1;
 
-            if ((isZR300 && stream == rs::stream::fisheye) || stream == rs::stream::depth || stream == rs::stream::color)
-            {
                 image_publishers_[stream_nb].publish(image_msg_[stream_nb]);
-            }
         };
         device->set_frame_callback(stream, stream_callback_per_stream[stream]);
     }//end for
