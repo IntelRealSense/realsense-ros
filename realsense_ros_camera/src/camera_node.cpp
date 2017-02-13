@@ -1,12 +1,5 @@
-/********************************************************************************
-
-INTEL CORPORATION PROPRIETARY INFORMATION This software is supplied under the
-terms of a license agreement or nondisclosure agreement with Intel Corporation
-and may not be copied or disclosed except in accordance with the terms of that
-agreement.
-Copyright(c) 2011-2016 Intel Corporation. All Rights Reserved.
-
-*********************************************************************************/
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2016 Intel Corporation. All Rights Reserved
 
 #include <iostream>
 #include <functional>
@@ -24,8 +17,6 @@ Copyright(c) 2011-2016 Intel Corporation. All Rights Reserved.
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/version.hpp>
-//#include <realsense_ros_camera/StreamInfo.h>
-//#include <realsense_ros_camera/MotionInfo.h>
 #include <realsense_ros_camera/GetIMUInfo.h>
 #include <realsense_ros_camera/GetFExtrinsics.h>
 #include <sensor_msgs/CameraInfo.h>
