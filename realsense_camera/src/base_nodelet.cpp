@@ -568,7 +568,7 @@ namespace realsense_camera
           {
             opt_val = val;
           }
-          ROS_DEBUG_STREAM(nodelet_name_ << " - " << opt_name << " = " << opt_val);
+          ROS_INFO_STREAM(nodelet_name_ << " - Setting camera option " << opt_name << " = " << opt_val);
           rs_set_device_option(rs_device_, o.opt, opt_val, &rs_error_);
           checkError();
         }
