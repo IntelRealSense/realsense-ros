@@ -13,7 +13,6 @@
 #include <ros/package.h>
 #include <geometry_msgs/Pose2D.h>
 #include <nav_msgs/OccupancyGrid.h>
-#include <realsense_ros_camera/StreamInfo.h>
 #include <sensor_msgs/Imu.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -39,8 +38,6 @@
 #include <librealsense/slam/slam.h>
 #include <rs_core.h>
 #include <rs_utils.h>
-#include <realsense_ros_camera/StreamInfo.h>
-#include <realsense_ros_camera/MotionInfo.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
