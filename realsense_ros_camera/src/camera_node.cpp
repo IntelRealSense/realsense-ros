@@ -135,7 +135,7 @@ private:
         }        
         
         // publishers and services
-        image_publishers_[(int32_t)rs::stream::fisheye]   = image_transport.advertise("camera/color/image_raw", 1);
+        image_publishers_[(int32_t)rs::stream::color]   = image_transport.advertise("camera/color/image_raw", 1);
         image_publishers_[(int32_t)rs::stream::depth]   = image_transport.advertise("camera/depth/image_raw", 1);
 
         colorInfo_publisher_ = node_handle.advertise< sensor_msgs::CameraInfo >("camera/color/camera_info", 1, true);
