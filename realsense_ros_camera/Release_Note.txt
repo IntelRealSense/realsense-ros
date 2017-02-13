@@ -5,4 +5,4 @@ libraries of intel used(version beta3 RC5):
   Link: https://securewiki.ith.intel.com/pages/viewpage.action?pageId=510951805
 
 Quick start:
-roslaunch realsense_ros_camera slam_camera.launch
+roslaunch realsense_ros_camera camera.launch

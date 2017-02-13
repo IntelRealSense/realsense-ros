@@ -1,8 +1,8 @@
 <launch>
      <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_base_link" args="0 0 0 0 0 0 1 map base_link" />
      <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_camera_link" args="0 0 0 0 0 0 1 base_link camera_link" />
-     <node pkg="nodelet" type="nodelet" name="rs_slam" args="standalone realsense_ros_slam/SNodeletSlam" output="screen" launch-prefix="gdb -ex run --args">
+     <node pkg="nodelet" type="nodelet" name="rs_slam" args="standalone realsense_ros_slam/SNodeletSlam" output="screen">
          <rosparam file="$(find realsense_ros_slam)/launch/params.yaml" command="load"/>
      </node>
-	 <!--launch-prefix="gdb -ex run --><!--args"/-->
+     <!--launch-prefix="gdb -ex run --><!--args"/-->
 </launch>

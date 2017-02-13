@@ -14,7 +14,7 @@ This package contains a ROS wrapper for Intel's realsense library. The realsense
 2. Example 
 ---------------------------------------
 <br /\>    To start realsense_ros_camera with command: 
-<br /\>       roslaunch realsense_ros_camera slam_camera.launch
+<br /\>       roslaunch realsense_ros_camera camera.launch
 3. Nodelet
 --------------------------------------
 ##  3.1 realsense_ros_camera 

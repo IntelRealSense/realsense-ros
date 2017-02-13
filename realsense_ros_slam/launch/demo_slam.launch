@@ -1,4 +1,4 @@
 <launch>
-<include file="$(find realsense_ros_camera)/launch/slam_camera.launch"/>
+<include file="$(find realsense_ros_camera)/launch/camera.launch"/>
 <include file="$(find realsense_ros_slam)/launch/slam_nodelet.launch"/>
 </launch>

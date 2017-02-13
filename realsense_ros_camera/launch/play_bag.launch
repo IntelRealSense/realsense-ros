@@ -1,0 +1,4 @@
+<launch>
+  <arg name="bag_path" default="$(env HOME)/test.bag" />
+  <node pkg="rosbag" type="play" name="rosbag" args="$(arg bag_path)"/>
+</launch>

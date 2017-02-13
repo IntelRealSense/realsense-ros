@@ -1,0 +1,13 @@
+<!--
+
+Run the SLAM nodelet, using a pre-recorded bag file:
+roslaunch realsense_ros_slam demo_slam_from_bag.launch bag_path:=my_value
+
+--> 
+<launch>
+  <arg name="bag_path" default="$(env HOME)/test.bag" />
+  <include file="$(find realsense_ros_camera)/launch/play_bag.launch">
+    <arg name="bag_path" value="$(arg bag_path)"/>
+  </include>
+  <include file="$(find realsense_ros_slam)/launch/slam_nodelet.launch"/>
+</launch>
