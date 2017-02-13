@@ -475,7 +475,7 @@ namespace realsense_camera
     static_tf_broadcaster_.sendTransform(b2i_msg);
 
     // Transform infrared2 frame to infrared2 optical frame
-    q_i2io.setEuler(M_PI/2, 0.0, -M_PI/2);
+    q_i2io.setRPY(-M_PI/2, 0.0, -M_PI/2);
     i2io_msg.header.stamp = transform_ts_;
     i2io_msg.header.frame_id = frame_id_[RS_STREAM_INFRARED2];
     i2io_msg.child_frame_id = optical_frame_id_[RS_STREAM_INFRARED2];
@@ -510,7 +510,7 @@ namespace realsense_camera
 
     // Transform infrared2 frame to infrared2 optical frame
     tr.setOrigin(tf::Vector3(0, 0, 0));
-    q.setEuler(M_PI/2, 0.0, -M_PI/2);
+    q.setRPY(-M_PI/2, 0.0, -M_PI/2);
     tr.setRotation(q);
     dynamic_tf_broadcaster_.sendTransform(tf::StampedTransform(tr, transform_ts_,
           frame_id_[RS_STREAM_INFRARED2], optical_frame_id_[RS_STREAM_INFRARED2]));
