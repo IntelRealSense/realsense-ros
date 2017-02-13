@@ -1,3 +1,0 @@
-realsense_person/PersonId person_id
-realsense_person/BoundingBox bounding_box
-realsense_person/RegisteredPoint center_of_mass

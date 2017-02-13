@@ -1,3 +1,0 @@
-string type
-realsense_person/RegisteredPoint origin
-realsense_person/RegisteredPoint direction
