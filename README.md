@@ -36,6 +36,22 @@ git clone git@github.intel.com:IntelRealSense/realsense_ros.git
 - [Person](realsense_ros_person/README.md): This ROS node (fill in content).
 - [SLAM](realsense_ros_slam/README.md): This ROS node (fill in content).
 
+## Record and Playback Support
+These sample ROS nodes supporting using the ROS 'rosbag' tool for recording and playback.
+
+For recording to a specific file.  If you omit the bag_path argument, it will default to $HOME/test.bag
+```bash
+$ roslaunch realsense_ros_camera record_bag.launch bag_path:=<path to file>
+```
+When you ready to conclude the recording, press Ctrl-C and the recording will end gracefully.
+
+For playing back from a specific file.  Like above, if you omit the bag_path argument, it will default to $HOME/test.bag
+```bash
+$ roslaunch realsense_ros_camera play_bag.launch bag_path:=<path to file>
+```
+
+All of the sample ROS nodes above accept an optional bag_path parameter to allow usage and testing from a pre-recorded file instead of the live camera streams.
+
 ## License
 Copyright 2017 Intel Corporation
 
