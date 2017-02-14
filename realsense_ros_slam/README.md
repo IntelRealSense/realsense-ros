@@ -50,3 +50,18 @@ This package contains a ROS wrapper for Intel's SLAM library. The realsense_ros_
       ~occupancyFilename: (str::string, default: 'occupancy.bin')
           name of occupancy data file. The files will be saved in the realsense_ros_slam directory
 
+## Usage
+
+To run the slam engine:
+```bash
+$ cd catkin_ws
+$ catkin_make
+$ source devel/setup.bash
+$ roslaunch rs_slam_test camera_slam_nodelet.launch
+```
+
+To see estimated pos, in another window:
+```bash
+$ cd catkin-ws
+$ source devel/setup.bash
+$ rostopic echo /pose2d
