@@ -30,7 +30,7 @@ catkin_init_workspace
 git clone git@github.intel.com:IntelRealSense/realsense_ros.git
 ```
 
-## Using ROS Wrappers
+## Usage Instructions
 - [Camera](realsense_ros_camera/README.md): This ROS node (fill in content).
 - [Tracking](realsense_ros_object/README.md): This ROS node (fill in content).
 - [Person](realsense_ros_person/README.md): This ROS node (fill in content).
