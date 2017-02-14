@@ -15,23 +15,6 @@ The Intel RealSense SDK for Linux is used as the base for these ROS node.  Publi
 - [Person](realsense_ros_person/README.md): This ROS node (fill in content).
 - [SLAM](realsense_ros_slam/README.md): This ROS node (fill in content).
 
-### Run SLAM (old, move to realsense_ros_slam/README.md)
-
-To run the slam engine:
-```bash
-$ cd catkin_ws
-$ catkin_make
-$ source devel/setup.bash
-$ roslaunch rs_slam_test camera_slam_nodelet.launch
-```
-
-To see estimated pos, in another window:
-```bash
-$ cd catkin-ws
-$ source devel/setup.bash
-$ rostopic echo /pose2d
-```
-
 ## License
 Copyright 2017 Intel Corporation
 
