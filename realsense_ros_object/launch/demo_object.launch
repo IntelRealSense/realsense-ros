@@ -1,31 +1,4 @@
 <launch>
   <include file="$(find realsense_ros_camera)/launch/camera.launch"/>
-
-  <!-- These are the three Object Library nodelets, implementing the recognition, localization, and tracking functionality -->
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_object_tracking" args="load realsense_ros_object/SNodeletObjectTracking realsense_ros_camera_manager" output="screen">
-    <param name="show_rgb" type="bool" value="true" />
-    <param name="subscribe_to_localization" type="bool" value="false" />
-    <param name="estimate_center" type="bool" value="true" />
-    <param name="max_number_of_objects" type="int" value="5" />	
-  </node>
-
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_object_recognize" args="load realsense_ros_object/SNodeletObjectRecognition realsense_ros_camera_manager" output="screen"/>
-
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_object_localize" args="load realsense_ros_object/SNodeletObjectLocalization realsense_ros_camera_manager" output="screen" >
-    <param name="show_rgb" type="bool" value="false" />
-    <param name="confidence" type="double" value="0.7" />
-    <param name="estimate_center" type="bool" value="true" />
-    <param name="use_CPU" type="bool" value="true" />	
-  </node>
-
-  <!-- This is the Object Library viewer nodelet, which shows the color image along with the tracking and recognition state -->
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_object_viewer" args="load realsense_ros_object/SNodeletObjectViewer realsense_ros_camera_manager"/>
-
-  <!-- This is the Sample1 Localization and Tracking Demo nodelet -->
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_object_sample1" args="load realsense_ros_object/SNodeletObjectSample1 realsense_ros_camera_manager">	
-    <param name="debug" type="bool" value="true" />
-    <param name="threshold" type="int" value="1" />
-    <param name="max_number_of_objects" type="int" value="5" />
-    <param name="localize_every_frame" type="bool" value="false" />
-  </node>
+  <include file="$(find realsense_ros_object)/launch/object_workaround.launch"/>
 </launch>
