@@ -47,15 +47,21 @@ namespace realsense_ros_person
     {
         using Intel::RealSense::PersonTracking::PersonTrackingData;
 
+        user.gestures.pointing.confidence = 0;
+        user.gestures.wave.type = m_pt2rosHelper.WaveGesture2RosWaveGesture(PersonTrackingData::PersonGestures::WaveType::WAVE_NOT_DETECTED);
+
         if (!ptConfiguration.QueryGestures()->IsEnabled()) return;
 
         PersonTrackingData::PersonGestures *personGestures = personData->QueryGestures();
-        if (personGestures == nullptr) {
+
+        if (personGestures == nullptr)
+        {
             ROS_WARN("personGestures == nullptr");
             return;
         }
 
-        if (personGestures->IsPointing()) {
+        if ( personGestures->IsPointing())
+        {
             PersonTrackingData::PersonGestures::PointingInfo poitingInfo = personGestures->QueryPointingInfo();
             user.gestures.pointing.originColor.x = poitingInfo.colorPointingData.origin.x;
             user.gestures.pointing.originColor.y = poitingInfo.colorPointingData.origin.y;
@@ -98,8 +104,6 @@ namespace realsense_ros_person
 
                 user.userInfo.Id = personTrackingData->QueryId();
 
-                user.userInfo.recognitionId = -1; //TODO may be remove this field from user info
-
                 user.userRect = m_pt2rosHelper.BoundingBox2D2RosRectWithConfidence(box);
                 user.headBoundingBox = m_pt2rosHelper.BoundingBox2D2RosRectWithConfidence(headBoundingBox);
 
@@ -132,7 +136,8 @@ namespace realsense_ros_person
         }
 
         Intel::RealSense::PersonTracking::PersonTrackingData::PersonFace *faceData = personData->QueryFace();
-        if (faceData == nullptr) {
+        if (faceData == nullptr)
+        {
             return;
         }
 
@@ -148,15 +153,18 @@ namespace realsense_ros_person
 
         int32_t numLandmarks = landmarksInfo->numLandmarks;
         user.landmarksInfo.confidence = landmarksInfo->confidence;
-        for (int landmarkNb = 0; landmarkNb < numLandmarks; ++landmarkNb)
+        if (landmarksInfo->confidence > 0)
         {
-            realsense_ros_person::Landmark landmark;
-            landmark.location.x = landmarksInfo->landmarks[landmarkNb].image.x;
-            landmark.location.y = landmarksInfo->landmarks[landmarkNb].image.y;
-            landmark.realWorldCoordinates.x = landmarksInfo->landmarks[landmarkNb].world.x;
-            landmark.realWorldCoordinates.y = landmarksInfo->landmarks[landmarkNb].world.y;
-            landmark.realWorldCoordinates.z = landmarksInfo->landmarks[landmarkNb].world.z;
-            user.landmarksInfo.landmarks.push_back(landmark);
+            for (int landmarkNb = 0; landmarkNb < numLandmarks; ++landmarkNb)
+            {
+                realsense_ros_person::Landmark landmark;
+                landmark.location.x = landmarksInfo->landmarks[landmarkNb].image.x;
+                landmark.location.y = landmarksInfo->landmarks[landmarkNb].image.y;
+                landmark.realWorldCoordinates.x = landmarksInfo->landmarks[landmarkNb].world.x;
+                landmark.realWorldCoordinates.y = landmarksInfo->landmarks[landmarkNb].world.y;
+                landmark.realWorldCoordinates.z = landmarksInfo->landmarks[landmarkNb].world.z;
+                user.landmarksInfo.landmarks.push_back(landmark);
+            }
         }
     }
 

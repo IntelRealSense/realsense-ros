@@ -17,15 +17,19 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/version.hpp>
-#include <realsense_ros_camera/GetIMUInfo.h>
-#include <realsense_ros_camera/GetFExtrinsics.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <realsense_ros_camera/Extrinsics.h>
+#include <realsense_ros_camera/IMUInfo.h>
 #include <sensor_msgs/Imu.h>
 
 const int STREAM_COUNT = 5;
 ros::Publisher feInfo_publisher_,
     colorInfo_publisher_,
-    depInfo_publisher_;
+    depthInfo_publisher_,
+    accelInfo_publisher_,
+    gyroInfo_publisher_,
+    fe2imu_publisher_,
+    fe2depth_publisher_;
 image_transport::Publisher image_publishers_[STREAM_COUNT] = {};
 ros::Publisher imu_publishers_[2] = {};//accel 0 gyro 1
 int seq_motion[2]= {0,0};
@@ -62,10 +66,68 @@ std::string optical_frame_id_[STREAM_COUNT] = {
 std::string optical_imu_id_[2] = {"imu_accel_frame_id","imu_gyro_frame_id"};
 bool isZR300 = false;
 std::string serial_no;
-ros::ServiceServer get_imu_info_, get_fisheye_extrin_;
 
 namespace realsense_ros_camera
 {
+
+void getImuInfo(rs::device* device, IMUInfo &accelInfo, IMUInfo &gyroInfo)
+{
+    rs::motion_intrinsics imuIntrinsics = device->get_motion_intrinsics();
+    
+    accelInfo.header.frame_id = "imu_accel";  
+    int index = 0;
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+        {
+            accelInfo.data[index] = imuIntrinsics.acc.data[i][j];
+            ++index;
+        }
+        accelInfo.noise_variances[i] = imuIntrinsics.acc.noise_variances[i];
+        accelInfo.bias_variances[i] = imuIntrinsics.acc.bias_variances[i];
+    }
+    
+    gyroInfo.header.frame_id = "imu_gyro";
+    index = 0;
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+        {
+            gyroInfo.data[index] = imuIntrinsics.gyro.data[i][j];
+            ++index;
+        }
+        gyroInfo.noise_variances[i] = imuIntrinsics.gyro.noise_variances[i];
+        gyroInfo.bias_variances[i] = imuIntrinsics.gyro.bias_variances[i];
+    }
+}
+
+Extrinsics rsExtrinsicsToMsg(rs::extrinsics rsExtrinsics)
+{
+    Extrinsics extrinsicsMsg;
+    
+    for (int i = 0; i < 9; ++i) 
+    {
+        extrinsicsMsg.rotation[i] = rsExtrinsics.rotation[i];
+        if (i < 3) extrinsicsMsg.translation[i] = rsExtrinsics.translation[i];
+    }
+    
+    return extrinsicsMsg;
+}
+
+Extrinsics getFisheye2ImuExtrinsicsMsg(rs::device* device)
+{    
+    Extrinsics extrinsicsMsg = rsExtrinsicsToMsg(device->get_motion_extrinsics_from(rs::stream::fisheye));
+    extrinsicsMsg.header.frame_id = "fisheye2imu_extrinsics";
+    return extrinsicsMsg;
+}
+
+Extrinsics getFisheye2DepthExtrinsicsMsg(rs::device* device)
+{
+    Extrinsics extrinsicsMsg =  rsExtrinsicsToMsg(device->get_extrinsics(rs::stream::depth, rs::stream::fisheye));
+    extrinsicsMsg.header.frame_id = "fisheye2depth_extrinsics";
+    return extrinsicsMsg;
+}
+
 class NodeletCamera:public nodelet::Nodelet
 {
 public:
@@ -75,8 +137,6 @@ public:
     
 private:
     void getStreamCalibData(rs::stream stream_index);
-    bool getIMUInfo(realsense_ros_camera::GetIMUInfo::Request & req, realsense_ros_camera::GetIMUInfo::Response & res);
-    bool getFISHExtrin(realsense_ros_camera::GetFExtrinsics::Request & req, realsense_ros_camera::GetFExtrinsics::Response & res);
     int getDatas();
 
     virtual void onInit()
@@ -125,22 +185,27 @@ private:
             isZR300 = true;
         }        
         
-        // publishers and services
-        image_publishers_[(int32_t)rs::stream::color]   = image_transport.advertise("camera/color/image_raw", 1);
-        image_publishers_[(int32_t)rs::stream::depth]   = image_transport.advertise("camera/depth/image_raw", 1);
+        // Stream publishers
+        image_publishers_[(int32_t)rs::stream::color] = image_transport.advertise("camera/color/image_raw", 1);
+        image_publishers_[(int32_t)rs::stream::depth] = image_transport.advertise("camera/depth/image_raw", 1);
 
+        // Latched topics            
         colorInfo_publisher_ = node_handle.advertise< sensor_msgs::CameraInfo >("camera/color/camera_info", 1, true);
-        depInfo_publisher_   = node_handle.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info", 1, true);
+        depthInfo_publisher_ = node_handle.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info", 1, true);
 
         if (isZR300)
         {
+            // Stream publishers
             image_publishers_[(int32_t)rs::stream::fisheye] = image_transport.advertise("camera/fisheye/image_raw", 1);
-            feInfo_publisher_    = node_handle.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info", 1, true);
-            imu_publishers_[RS_EVENT_IMU_GYRO]    = node_handle.advertise< sensor_msgs::Imu >("camera/imu/gyro",100);
-            imu_publishers_[RS_EVENT_IMU_ACCEL]   = node_handle.advertise< sensor_msgs::Imu >("camera/imu/accel",100);
-
-            get_imu_info_       = node_handle.advertiseService("camera/get_imu_info", &NodeletCamera::getIMUInfo, this);
-            get_fisheye_extrin_ = node_handle.advertiseService("camera/get_fe_extrinsics",&NodeletCamera::getFISHExtrin,this);
+            imu_publishers_[RS_EVENT_IMU_GYRO] = node_handle.advertise< sensor_msgs::Imu >("camera/gyro/sample", 100); // TODO: review queue size
+            imu_publishers_[RS_EVENT_IMU_ACCEL] = node_handle.advertise< sensor_msgs::Imu >("camera/accel/sample", 100); // TODO: review queue size
+            
+            // Latched topics            
+            feInfo_publisher_ = node_handle.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info", 1, true);
+            fe2imu_publisher_ = node_handle.advertise< Extrinsics >("camera/extrinsics/fisheye2imu", 1, true);
+            fe2depth_publisher_ = node_handle.advertise< Extrinsics >("camera/extrinsics/fisheye2depth", 1, true);
+            accelInfo_publisher_ = node_handle.advertise< IMUInfo >("camera/accel/imu_info", 1, true);
+            gyroInfo_publisher_ = node_handle.advertise< IMUInfo >("camera/gyro/imu_info", 1, true);
         }
         // end publishers and services
         
@@ -241,16 +306,24 @@ int NodeletCamera::getDatas()
         device->enable_motion_tracking(motion_callback, timestamp_callback);
         getStreamCalibData(rs::stream::fisheye);
         image_[(int32_t)rs::stream::fisheye] = cv::Mat(camera_info_[(int32_t)rs::stream::fisheye].height, camera_info_[(int32_t)rs::stream::fisheye].width, CV_8UC1, cv::Scalar(0,0,0));
+                
+        // publish ZR300-specific intrinsics/extrinsics
+        IMUInfo accelInfo, gyroInfo;
+        getImuInfo(device, accelInfo, gyroInfo);
+        feInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::fisheye]);
+        fe2imu_publisher_.publish(getFisheye2ImuExtrinsicsMsg(device));
+        fe2depth_publisher_.publish(getFisheye2DepthExtrinsicsMsg(device));
+        accelInfo_publisher_.publish(accelInfo);
+        gyroInfo_publisher_.publish(gyroInfo);
     }
     
     // get camera intrinsics
     getStreamCalibData(rs::stream::depth);
     getStreamCalibData(rs::stream::color);
     
-    // publish camera intrinsics as latched topics        
+    // publish camera intrinsics/extrinsics        
     colorInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::color]);
-    depInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::depth]);
-    if (isZR300) feInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::fisheye]);
+    depthInfo_publisher_.publish(camera_info_[(int32_t)rs::stream::depth]);
     
     image_[(int32_t)rs::stream::depth]   = cv::Mat(camera_info_[(int32_t)rs::stream::depth].height, camera_info_[(int32_t)rs::stream::depth].width, CV_16UC1, cv::Scalar(0,0,0));
     image_[(int32_t)rs::stream::color]   = cv::Mat(camera_info_[(int32_t)rs::stream::color].height, camera_info_[(int32_t)rs::stream::color].width, CV_8UC3, cv::Scalar(0,0,0));
@@ -260,6 +333,8 @@ int NodeletCamera::getDatas()
     else
         device->start();
 
+    ROS_INFO_STREAM("RealSense camera started streaming");
+    
     ros::Rate loop_rate(30);
     while (ros::ok())
     {
@@ -274,75 +349,6 @@ int NodeletCamera::getDatas()
     return 0;
 }
 
-bool NodeletCamera::getIMUInfo(realsense_ros_camera::GetIMUInfo::Request & req, realsense_ros_camera::GetIMUInfo::Response & res)
-{
-    ros::Time header_stamp = ros::Time::now();
-    std::string header_frame_id;
-    rs::motion_intrinsics imu_intrinsics = device->get_motion_intrinsics();
-    int index = 0;
-    res.accel.header.stamp = header_stamp;
-    res.accel.header.frame_id = "imu_accel";
-    std::transform(res.accel.header.frame_id.begin(), res.accel.header.frame_id.end(),
-                   res.accel.header.frame_id.begin(), ::tolower);
-    
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 4; ++j)
-        {
-            res.accel.data[index] = imu_intrinsics.acc.data[i][j];
-            ++index;
-        }
-        res.accel.noise_variances[i] = imu_intrinsics.acc.noise_variances[i];
-        res.accel.bias_variances[i] = imu_intrinsics.acc.bias_variances[i];
-    }
-    
-    index = 0;
-    res.gyro.header.stamp = header_stamp;
-    res.gyro.header.frame_id = "imu_gyro";
-    std::transform(res.gyro.header.frame_id.begin(), res.gyro.header.frame_id.end(), res.gyro.header.frame_id.begin(), ::tolower);
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 4; ++j)
-        {
-            res.gyro.data[index] = imu_intrinsics.gyro.data[i][j];
-            ++index;
-        }
-        res.gyro.noise_variances[i] = imu_intrinsics.gyro.noise_variances[i];
-        res.gyro.bias_variances[i] = imu_intrinsics.gyro.bias_variances[i];
-    }
-    
-    return true;
-}
-bool NodeletCamera::getFISHExtrin(realsense_ros_camera::GetFExtrinsics::Request & req, realsense_ros_camera::GetFExtrinsics::Response & res)
-{
-    ros::Time header_stamp = ros::Time::now();
-    std::string header_frame_id;
-    rs::extrinsics extrinsic = device->get_motion_extrinsics_from(rs::stream::fisheye);
-    res.fisheye.header.stamp = header_stamp;
-    res.fisheye.header.frame_id = "fisheye2motion_extrinsics";
-    std::transform(res.fisheye.header.frame_id.begin(), res.fisheye.header.frame_id.end(), res.fisheye.header.frame_id.begin(), ::tolower);
-    
-    for (int i = 0; i < 9; ++i) {
-        res.fisheye.rotation[i] = extrinsic.rotation[i];
-        if (i<3) {
-            res.fisheye.translation[i] = extrinsic.translation[i];
-        }
-    }
-    
-    //////depth to fisheye
-    extrinsic=device->get_extrinsics(rs::stream::depth, rs::stream::fisheye);
-    res.depth2fisheye.header.stamp = header_stamp;
-    res.depth2fisheye.header.frame_id = "depth2fisheye_extrinsics";
-    std::transform(res.depth2fisheye.header.frame_id.begin(), res.depth2fisheye.header.frame_id.end(), res.depth2fisheye.header.frame_id.begin(), ::tolower);
-    
-    for (int i = 0; i < 9; ++i) {
-        res.depth2fisheye.rotation[i] = extrinsic.rotation[i];
-        if (i<3) {
-            res.depth2fisheye.translation[i] = extrinsic.translation[i];
-        }
-    }
-    return true;
-}
 void NodeletCamera::getStreamCalibData(rs::stream stream_index)
 {
     rs::intrinsics intrinsic = device->get_stream_intrinsics(stream_index);
