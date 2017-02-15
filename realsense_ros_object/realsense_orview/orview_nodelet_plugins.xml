@@ -1,7 +1,0 @@
-<library path="lib/librealsense_orview_nodelet">
-  <class name="realsense/COrViewNodelet" type="realsense::COrViewNodelet" base_class_type="nodelet::Nodelet">
-  <description>
-  Intel(R) RealSense(TM) OR viewer nodelet.
-  </description>
-  </class>
-</library>

@@ -1,7 +1,0 @@
-<library path="lib/librealsense_tracking_nodelet">
-  <class name="realsense/CTrackingNodelet" type="realsense::CTrackingNodelet" base_class_type="nodelet::Nodelet">
-  <description>
-  Intel(R) RealSense(TM) Object tracking nodelet.
-  </description>
-  </class>
-</library>

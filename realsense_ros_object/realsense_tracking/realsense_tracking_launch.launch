@@ -1,9 +1,0 @@
-<launch>
-<node pkg="nodelet" type="nodelet" name="realsense_tracking"  args="manager" output="screen"/>
-<node pkg="nodelet" type="nodelet" name="CTrackingNodelet" args="load realsense/CTrackingNodelet realsense_tracking">  
-       	<param name="show_rgb" type="bool" value="false" />
-       	<param name="subscribe_to_localization" type="bool" value="false" />
-       	<param name="estimate_center" type="bool" value="true" />
-       	<param name="max_number_of_objects" type="int" value="5" />	
-</node>
-</launch>

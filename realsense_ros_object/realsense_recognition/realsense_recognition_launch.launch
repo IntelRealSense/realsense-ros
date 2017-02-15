@@ -1,5 +1,0 @@
-<launch>
-	<node pkg="nodelet" type="nodelet" name="standalone_nodelet" args="manager" output="screen"/>	
-	<node pkg="nodelet" type="nodelet" name="CRecognitionNodelet" args="load realsense/CRecognitionNodelet standalone_nodelet show_rgb" output="screen">		
-	</node>
-</launch>

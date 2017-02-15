@@ -1,0 +1,31 @@
+<library path="lib/librealsense_ros_object">
+  <class name="realsense_ros_object/SNodeletObjectTracking" type="realsense_ros_object::CTrackingNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+    Intel(R) RealSense(TM) Object tracking nodelet.
+    </description>
+  </class>
+  <class name="realsense_ros_object/SNodeletObjectRecognition" type="realsense_ros_object::CRecognitionNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+    Intel(R) RealSense(TM) Object recognize nodelet.
+    </description>
+  </class>
+  <class name="realsense_ros_object/SNodeletObjectLocalization" type="realsense_ros_object::CLocalizationNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+    Intel(R) RealSense(TM) Object localize nodelet.
+    </description>
+  </class>
+</library>
+<library path="lib/librealsense_ros_object_viewer">
+  <class name="realsense_ros_object/SNodeletObjectViewer" type="realsense_ros_object::COrViewNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+    Intel(R) RealSense(TM) Object viewer nodelet.
+    </description>
+  </class>
+</library>
+<library path="lib/librealsense_ros_object_sample1">
+  <class name="realsense_ros_object/SNodeletObjectSample1" type="realsense_ros_object::COrmgrNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+    Intel(R) RealSense(TM) Object Sample Localization/Tracker nodelet 
+    </description>
+  </class>
+</library>
