@@ -1,6 +1,7 @@
 <launch>
 
-    <include file="$(find realsense_ros_person)/launch/cam_track.launch"/>
+  <include file="$(find realsense_ros_camera)/launch/camera.launch"/>
+  <include file="$(find realsense_ros_person)/launch/person_tracking.launch"/>
 
     <node pkg="nodelet" type="nodelet" name="realsense_ros_person_sample_nodelet"  args="manager" output="screen"/>
         <node pkg="realsense_ros_person" type="realsense_ros_person_sample" name="realsense_ros_person_sample"
