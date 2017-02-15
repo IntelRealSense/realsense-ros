@@ -48,7 +48,6 @@ void SubscribeTopics::onInit(ros::NodeHandle & nh, rs::slam::slam * slam)
     l_slam = slam;
 }
 
-
 void SubscribeTopics::subscribeStreamMessages()
 {
     std::string depthImageStream =  "camera/depth/image_raw";
@@ -59,17 +58,15 @@ void SubscribeTopics::subscribeStreamMessages()
     l_fisheye_sub = l_nh.subscribe(fisheyeImageStream, 100, & SubscribeTopics::fisheyeMessageCallback, this);
 }
 
-
 void SubscribeTopics::subscribeMotion()
 {
-    std::string motionInfo_gyro = "camera/imu/gyro";
-    std::string motionInfo_accel = "camera/imu/accel";
+    std::string motionInfo_gyro = "camera/gyro/sample";
+    std::string motionInfo_accel = "camera/accel/sample";
     ROS_INFO_STREAM("Listening on " << motionInfo_gyro);
     ROS_INFO_STREAM("Listening on " << motionInfo_accel);
     l_motion_gyro_sub = l_nh.subscribe(motionInfo_gyro, 10000, & SubscribeTopics::motion_gyroCallback, this);
     l_motion_accel_sub = l_nh.subscribe(motionInfo_accel, 10000, & SubscribeTopics::motion_accelCallback, this);
 }
-
 
 void SubscribeTopics::depthMessageCallback(const sensor_msgs::ImageConstPtr &depthImageMsg)
 {
@@ -85,7 +82,6 @@ void SubscribeTopics::fisheyeMessageCallback(const sensor_msgs::ImageConstPtr &f
     SubscribeTopics::getStreamSample(fisheyeImageMsg, rs::core::stream_type::fisheye);
     mut_fisheye.unlock();
 }
-
 
 void SubscribeTopics::getStreamSample(const sensor_msgs::ImageConstPtr &imageMsg, rs::core::stream_type stream)
 {
@@ -259,6 +255,30 @@ void ConvertToPG(rs::slam::PoseMatrix4f & pose, Eigen::Vector3f & gravity, stRob
 }
 
 
+void extrinsicsMsgToRSExtrinsics(const realsense_ros_camera::ExtrinsicsConstPtr &extrinsicsMsg, rs::core::extrinsics &rsExtrinsics)
+{
+    for (int i = 0; i < 9; ++i)
+    {
+        rsExtrinsics.rotation[i] = extrinsicsMsg->rotation[i];
+        if (i < 3) rsExtrinsics.translation[i] = extrinsicsMsg->translation[i];
+    }
+}
+
+void imuInfoMsgToRSImuIntrinsics(const realsense_ros_camera::IMUInfoConstPtr &imuInfoMsg, rs::core::motion_device_intrinsics &rsImuIntrinsics)
+{
+    int index = 0;
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+        {
+            rsImuIntrinsics.data[i][j] = imuInfoMsg->data[index];
+            ++index;
+        }
+        rsImuIntrinsics.noise_variances[i] = imuInfoMsg->noise_variances[i];
+        rsImuIntrinsics.bias_variances[i] = imuInfoMsg->bias_variances[i];
+    }
+}
+
 class slam_event_handler : public rs::core::video_module_interface::processing_event_handler
 {
 public:
@@ -391,27 +411,36 @@ void SNodeletSlam::onInit()
     pnh.param< std::string >("trajectoryFilename", trajectoryFilename, "trajectory.ppm");
     pnh.param< std::string >("relocalizationFilename", relocalizationFilename, "relocalization.bin");
     pnh.param< std::string >("occupancyFilename", occupancyFilename, "occupancy.bin");
-    std::string fisheyeCameraInfoStream = "camera/fisheye/camera_info";
-    std::string depthCameraInfoStream = "camera/depth/camera_info";
 
-    sub_depthInfo = std::shared_ptr< message_filters::Subscriber< sensor_msgs::CameraInfo > >(new message_filters::Subscriber< sensor_msgs::CameraInfo >(nh, depthCameraInfoStream, 1));
-    sub_fisheyeInfo = std::shared_ptr< message_filters::Subscriber<sensor_msgs::CameraInfo > >(new message_filters::Subscriber< sensor_msgs::CameraInfo >(nh, fisheyeCameraInfoStream, 1));
+    sub_depthInfo = std::shared_ptr< message_filters::Subscriber< sensor_msgs::CameraInfo > >(new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh, "camera/depth/camera_info", 1));
+    sub_fisheyeInfo = std::shared_ptr< message_filters::Subscriber<sensor_msgs::CameraInfo > >(new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh, "camera/fisheye/camera_info", 1));
+    sub_accelInfo = std::shared_ptr< message_filters::Subscriber<realsense_ros_camera::IMUInfo> >(new message_filters::Subscriber<realsense_ros_camera::IMUInfo>(nh, "camera/accel/imu_info", 1));
+    sub_gyroInfo = std::shared_ptr< message_filters::Subscriber<realsense_ros_camera::IMUInfo> >(new message_filters::Subscriber<realsense_ros_camera::IMUInfo>(nh, "camera/gyro/imu_info", 1));
+    sub_fe2imu = std::shared_ptr< message_filters::Subscriber<realsense_ros_camera::Extrinsics> >(new message_filters::Subscriber<realsense_ros_camera::Extrinsics>(nh, "camera/extrinsics/fisheye2imu", 1));
+    sub_fe2depth = std::shared_ptr< message_filters::Subscriber<realsense_ros_camera::Extrinsics> >(new message_filters::Subscriber<realsense_ros_camera::Extrinsics>(nh, "camera/extrinsics/fisheye2depth", 1));
 
-    info_TimeSynchronizer = std::shared_ptr< message_filters::TimeSynchronizer< sensor_msgs::CameraInfo, sensor_msgs::CameraInfo > >(new message_filters::TimeSynchronizer< sensor_msgs::CameraInfo, sensor_msgs::CameraInfo >( * sub_depthInfo, * sub_fisheyeInfo, 40));
-    info_TimeSynchronizer->registerCallback(boost::bind( & SNodeletSlam::cameraInfoCallback, this, _1, _2));
-
-    client_imu = nh.serviceClient< realsense_ros_camera::GetIMUInfo >("/camera/get_imu_info");
-    client_fisheye = nh.serviceClient< realsense_ros_camera::GetFExtrinsics >("camera/get_fe_extrinsics");
+    info_TimeSynchronizer = std::shared_ptr< message_filters::TimeSynchronizer< sensor_msgs::CameraInfo, sensor_msgs::CameraInfo, realsense_ros_camera::IMUInfo, realsense_ros_camera::IMUInfo, realsense_ros_camera::Extrinsics, realsense_ros_camera::Extrinsics > >(
+            new message_filters::TimeSynchronizer< sensor_msgs::CameraInfo, sensor_msgs::CameraInfo, realsense_ros_camera::IMUInfo, realsense_ros_camera::IMUInfo, realsense_ros_camera::Extrinsics, realsense_ros_camera::Extrinsics >( 
+                *sub_depthInfo, *sub_fisheyeInfo, *sub_accelInfo, *sub_gyroInfo, *sub_fe2imu, *sub_fe2depth, 1
+        )
+    );
+    info_TimeSynchronizer->registerCallback(boost::bind( & SNodeletSlam::cameraInfoCallback, this, _1, _2, _3, _4, _5, _6));
 
     actual_config = {};
     ROS_INFO("end of onInit");
 }//end onInit
 
-
-void SNodeletSlam::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& depthCameraInfo,const sensor_msgs::CameraInfoConstPtr& fisheyeCameraInfo)
+// The TimeSynchronizer will call this when it has received all the messages it was waiting for.
+void SNodeletSlam::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& depthCameraInfoMsg,const sensor_msgs::CameraInfoConstPtr& fisheyeCameraInfoMsg, const realsense_ros_camera::IMUInfoConstPtr& accelInfoMsg, const realsense_ros_camera::IMUInfoConstPtr& gyroInfoMsg, const realsense_ros_camera::ExtrinsicsConstPtr& fe2imuMsg, const realsense_ros_camera::ExtrinsicsConstPtr& fe2depthMsg)
 {
+    ROS_INFO("cameraInfoCallback");
+    
     sub_depthInfo->unsubscribe();
     sub_fisheyeInfo->unsubscribe();
+    sub_accelInfo->unsubscribe();
+    sub_gyroInfo->unsubscribe();
+    sub_fe2imu->unsubscribe();
+    sub_fe2depth->unsubscribe();
 
     std::unique_ptr<rs::slam::slam> slam(new rs::slam::slam());
     slam->set_occupancy_map_resolution(resolution);
@@ -430,9 +459,11 @@ void SNodeletSlam::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& dep
     }
 
     //end init supported config
+    
+    // Set camera intrinsics
     rs::core::intrinsics  depth_intrinsics, fisheye_intrinsics;
-    SNodeletSlam::setCalibrationData(depthCameraInfo, depth_intrinsics);
-    SNodeletSlam::setCalibrationData(fisheyeCameraInfo, fisheye_intrinsics);
+    SNodeletSlam::setCalibrationData(depthCameraInfoMsg, depth_intrinsics);
+    SNodeletSlam::setCalibrationData(fisheyeCameraInfoMsg, fisheye_intrinsics);
 
     std::map< rs::core::stream_type, rs::core::intrinsics > intrinsics;
     intrinsics[rs::core::stream_type::depth] = depth_intrinsics;
@@ -440,42 +471,23 @@ void SNodeletSlam::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& dep
     SNodeletSlam::setStreamConfigIntrin(rs::core::stream_type::depth, intrinsics);
     SNodeletSlam::setStreamConfigIntrin(rs::core::stream_type::fisheye, intrinsics);
 
-    /* add extrins and motion intrin*/
-    realsense_ros_camera::GetFExtrinsics srv_fe;
+    // Set IMU intrinsics
+    rs::core::motion_device_intrinsics acc, gyro;
+    imuInfoMsgToRSImuIntrinsics(accelInfoMsg, acc);
+    imuInfoMsgToRSImuIntrinsics(gyroInfoMsg, gyro);
+    actual_config[rs::core::motion_type::accel].is_enabled = true;
+    actual_config[rs::core::motion_type::accel].intrinsics = acc;
+    actual_config[rs::core::motion_type::gyro].is_enabled = true;
+    actual_config[rs::core::motion_type::gyro].intrinsics = gyro;
 
-    if (client_fisheye.call(srv_fe))
-    {
-        NODELET_INFO("fisheye extrinsics got");
-        rs::core::extrinsics fe2motion, dep2fe;
-        SNodeletSlam::setExtrinData(srv_fe.response.fisheye, fe2motion);
-        SNodeletSlam::setExtrinData(srv_fe.response.depth2fisheye, dep2fe);
-        actual_config[rs::core::stream_type::fisheye].extrinsics_motion = fe2motion;
-        actual_config[rs::core::stream_type::fisheye].extrinsics = dep2fe;
-    }
-    else
-    {
-        NODELET_ERROR("fisheye extrinsics missed");
-    }
+    // Set extrinsics
+    rs::core::extrinsics fe2imu, fe2depth;
+    extrinsicsMsgToRSExtrinsics(fe2imuMsg, fe2imu);
+    extrinsicsMsgToRSExtrinsics(fe2depthMsg, fe2depth);    
+    actual_config[rs::core::stream_type::fisheye].extrinsics_motion = fe2imu;
+    actual_config[rs::core::stream_type::fisheye].extrinsics = fe2depth;
 
-    realsense_ros_camera::GetIMUInfo srv_imu;
-    if (client_imu.call(srv_imu))
-    {
-        NODELET_INFO("imu info got");
-        rs::core::motion_device_intrinsics acc, gyro;
-        SNodeletSlam::setMotionData(srv_imu.response.accel, acc);
-        SNodeletSlam::setMotionData(srv_imu.response.gyro, gyro);
-        std::map< rs::core::motion_type, rs::core::motion_device_intrinsics > motion_intrinsics;
-        motion_intrinsics[rs::core::motion_type::accel] = acc;
-        motion_intrinsics[rs::core::motion_type::gyro] = gyro;
-        SNodeletSlam::setMotionConfigIntrin(rs::core::motion_type::accel, motion_intrinsics);
-        SNodeletSlam::setMotionConfigIntrin(rs::core::motion_type::gyro, motion_intrinsics);
-    }
-    else
-    {
-        NODELET_ERROR("imu info missed");
-    }
-
-    //set actual config
+    // Set actual config
     if (slam->set_module_config(actual_config) < rs::core::status_no_error)
     {
         NODELET_ERROR("error : failed to set the enabled module configuration");

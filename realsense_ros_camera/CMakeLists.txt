@@ -22,12 +22,6 @@ set(CMAKE_THREAD_LIBS_INIT pthread)
   Extrinsics.msg
  )
 
- add_service_files(
-   FILES
-  GetIMUInfo.srv
-  GetFExtrinsics.srv
-)
-
  generate_messages(
    DEPENDENCIES
    sensor_msgs   std_msgs
