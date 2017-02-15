@@ -46,7 +46,7 @@ void PersonTrackingSample::ProcessCommandLineArgs()
 void PersonTrackingSample::InitMessaging(ros::NodeHandle& nodeHandle)
 {
     EnableTrackingFeatures(nodeHandle);
-    mTrackingOutputSubscriber = nodeHandle.subscribe("person_tracking/person_tracking_output_test", 1, &PersonTrackingSample::PersonTrackingCallback, this);
+    mTrackingOutputSubscriber = nodeHandle.subscribe("person_tracking_output_test", 1, &PersonTrackingSample::PersonTrackingCallback, this);
     mRecognitionRequestClient = nodeHandle.serviceClient<realsense_ros_person::Recognition>("person_tracking/recognition_request");
     mRegisterRequestClient = nodeHandle.serviceClient<realsense_ros_person::RecognitionRegister>("person_tracking/register_request");
     mTrackingRequestClient = nodeHandle.serviceClient<realsense_ros_person::TrackingRequest>("person_tracking/tracking_request");

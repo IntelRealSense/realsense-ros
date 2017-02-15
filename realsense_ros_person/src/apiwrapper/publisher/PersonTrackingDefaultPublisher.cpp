@@ -6,8 +6,8 @@ namespace realsense_ros_person
 {
     void PersonTrackingDefaultPublisher::onInit(ros::NodeHandle &nodeHandle)
     {
-        std::string personTrackingTopic = "person_tracking/person_tracking_output";
-        std::string personTrackingTestTopic = "person_tracking/person_tracking_output_test";
+        std::string personTrackingTopic = "person_tracking_output";
+        std::string personTrackingTestTopic = "person_tracking_output_test";
         ROS_INFO_STREAM("Publishing to " << personTrackingTopic);
         mPublisher = nodeHandle.advertise<realsense_ros_person::Frame>(personTrackingTopic, 1);
         mTestPublisher = nodeHandle.advertise<realsense_ros_person::FrameTest>(personTrackingTestTopic,

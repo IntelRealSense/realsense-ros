@@ -39,8 +39,8 @@ This package contains a ROS wrapper for Intel's PersonTracking library. The real
     camera/color/image_view (sensor_msgs/Image)
         Color image got from realsense camera
   3.1.2 Published Topics
-    person_tracking/person_tracking_output (realsense_pt_msgs/Frame) Informations of person tracked
-    person_tracking/person_tracking_output_test (realsense_pt_msgs/FrameTest) Informations of person tracked + color image from camera
+    person_tracking_output (realsense_pt_msgs/Frame) Informations of person tracked
+    person_tracking_output_test (realsense_pt_msgs/FrameTest) Informations of person tracked + color image from camera
 
   3.1.3 Services
     person_tracking/tracking_config (realsense_srvs/TrackingConfig)
