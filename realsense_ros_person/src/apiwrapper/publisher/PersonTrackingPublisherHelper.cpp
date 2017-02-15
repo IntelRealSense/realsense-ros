@@ -104,8 +104,6 @@ namespace realsense_ros_person
 
                 user.userInfo.Id = personTrackingData->QueryId();
 
-                user.userInfo.recognitionId = -1; //TODO may be remove this field from user info
-
                 user.userRect = m_pt2rosHelper.BoundingBox2D2RosRectWithConfidence(box);
                 user.headBoundingBox = m_pt2rosHelper.BoundingBox2D2RosRectWithConfidence(headBoundingBox);
 
