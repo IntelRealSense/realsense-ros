@@ -6,7 +6,7 @@ roslaunch realsense_ros_camera record_bag.launch bag_path:=my_value
 --> 
 <launch>
   <arg name="bag_path" default="$(env HOME)/test.bag" />
-  <arg name="bag_topics" default="/camera/color/image_raw /camera/color/camera_info /camera/depth/image_raw /camera/depth/camera_info /camera/fisheye/camera_info /camera/fisheye/image_raw /camera/imu/accel /camera/imu/gyro"/>
+  <arg name="bag_topics" default="/camera/color/image_raw /camera/color/camera_info /camera/depth/image_raw /camera/depth/camera_info /camera/fisheye/camera_info /camera/fisheye/image_raw /camera/accel/sample /camera/gyro/sample /camera/accel/imu_info /camera/gyro/imu_info /camera/extrinsics/fisheye2imu /camera/extrinsics/fisheye2depth"/>
   <node pkg="rosbag" type="record" name="rosbag" args="-O $(arg bag_path) $(arg bag_topics)"/>
   <node pkg="nodelet" type="nodelet" name="realsense_ros_camera" args="standalone realsense_ros_camera/NodeletCamera" output="screen"/>
 </launch>
