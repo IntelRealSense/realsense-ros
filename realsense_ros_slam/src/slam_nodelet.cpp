@@ -6,6 +6,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <realsense_ros_slam/TrackingAccuracy.h>
 
 PLUGINLIB_EXPORT_CLASS(realsense_ros_slam::SNodeletSlam, nodelet::Nodelet)
 
@@ -20,7 +21,7 @@ std::string relocalizationFilename;
 std::string occupancyFilename;
 double resolution;
 
-ros::Publisher pub_pose2d, pub_poseMatrix, pub_pose;
+ros::Publisher pub_pose2d, pub_poseMatrix, pub_pose, pub_accuracy;
 geometry_msgs::Pose2D pose2d;
 ros::Publisher mapPub;
 
@@ -327,11 +328,18 @@ public:
 
     void module_output_ready(rs::core::video_module_interface * sender, rs::core::correlated_sample_set * sample)
     {
-        rs::slam::slam *pSP = dynamic_cast< rs::slam::slam * >(sender);
+        rs::slam::slam *slamPtr = dynamic_cast< rs::slam::slam * >(sender);
+        
         rs::slam::PoseMatrix4f cameraPose;
-        pSP->get_camera_pose(cameraPose);
-                
+        slamPtr->get_camera_pose(cameraPose);                
         publishPoseMsg(cameraPose);
+        
+        rs::slam::tracking_accuracy accuracy = slamPtr->get_tracking_accuracy();
+        TrackingAccuracy accuracyMsg;
+        accuracyMsg.header.stamp = ros::Time(sample->images[static_cast<uint8_t>(rs::core::stream_type::fisheye)]->query_time_stamp());
+        accuracyMsg.header.seq = sample->images[static_cast<uint8_t>(rs::core::stream_type::fisheye)]->query_frame_number(); // TODO: Could be useful?
+        accuracyMsg.tracking_accuracy = (uint32_t)accuracy;
+        pub_accuracy.publish(accuracyMsg);
         
         Eigen::Vector3f gravity = Eigen::Vector3f(0, 1, 0);
         stRobotPG robotPG;
@@ -346,15 +354,15 @@ public:
         int hmap = 512;
         if (!occ_map)
         {
-            occ_map = pSP->create_occupancy_map(wmap * hmap);
-            std::cout << " creating occupancy map: resolution: " << pSP->get_occupancy_map_resolution() << std::endl;
+            occ_map = slamPtr->create_occupancy_map(wmap * hmap);
+            std::cout << " creating occupancy map: resolution: " << slamPtr->get_occupancy_map_resolution() << std::endl;
         }
         if (ipNavMap == NULL)
         {
             ipNavMap = cvCreateImage(cvSize(wmap, hmap), 8, 1);
             cvSet(ipNavMap, 10, NULL);
         }
-        int status = pSP->get_occupancy_map_update(occ_map);
+        int status = slamPtr->get_occupancy_map_update(occ_map);
         int count = occ_map->get_tile_count();
         nav_msgs::OccupancyGrid map_msg;
         if (status >= 0 && count > 0)
@@ -403,6 +411,7 @@ void SNodeletSlam::onInit()
 {
     nh = getMTNodeHandle();
     pub_pose = nh.advertise< geometry_msgs::PoseStamped >("camera_pose", 1, true);
+    pub_accuracy = nh.advertise< realsense_ros_slam::TrackingAccuracy >("tracking_accuracy", 1, true);
     pub_pose2d = nh.advertise< geometry_msgs::Pose2D >("pose2d", 2, true);
     mapPub = nh.advertise< nav_msgs::OccupancyGrid >("map", 1, true);
     pkgpath = ros::package::getPath("realsense_ros_slam") + "/";
