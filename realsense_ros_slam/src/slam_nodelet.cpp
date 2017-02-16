@@ -397,6 +397,8 @@ public:
         map_msg.info.resolution = resolution;
         map_msg.info.width      = wmap;
         map_msg.info.height     = hmap;
+        map_msg.info.origin.position.x = -(wmap / 2) * resolution;
+        map_msg.info.origin.position.y = -(hmap / 2) * resolution;
         mapPub.publish(map_msg);
     }
 
