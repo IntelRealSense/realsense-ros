@@ -137,7 +137,7 @@ namespace realsense_camera
   }
   catch(...)
   {
-    ROS_ERROR_STREAM(nodelet_name_ << " - Caught unknown expection...shutting down!");
+    ROS_ERROR_STREAM(nodelet_name_ << " - Caught unknown exception...shutting down!");
     ros::shutdown();
   }
 
@@ -863,7 +863,7 @@ namespace realsense_camera
   }
 
   /*
-   * Determine the timetamp for the publish topic.
+   * Determine the timestamp for the publish topic.
    */
   ros::Time BaseNodelet::getTimestamp(rs_stream stream_index, double frame_ts)
   {
@@ -915,7 +915,7 @@ namespace realsense_camera
   }
   catch(...)
   {
-    ROS_ERROR_STREAM(nodelet_name_ << " - Caught unknown expection...shutting down!");
+    ROS_ERROR_STREAM(nodelet_name_ << " - Caught unknown exception...shutting down!");
     ros::shutdown();
   }
 
