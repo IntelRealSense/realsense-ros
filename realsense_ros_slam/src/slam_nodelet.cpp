@@ -21,7 +21,7 @@ std::string relocalizationFilename;
 std::string occupancyFilename;
 double resolution;
 
-ros::Publisher pub_pose2d, pub_poseMatrix, pub_pose, pub_accuracy;
+ros::Publisher pub_pose2d, pub_pose, pub_accuracy;
 geometry_msgs::Pose2D pose2d;
 ros::Publisher mapPub;
 
