@@ -289,7 +289,7 @@ public:
         std::cout<<"created.........."<<std::endl;
     }
     
-    void publishPoseMsg(rs::slam::PoseMatrix4f cameraPose)
+    void publishPoseMsg(rs::slam::PoseMatrix4f cameraPose, uint64_t frameNum, double timeStamp)
     {
         tf2::Matrix3x3 rotMat = tf2::Matrix3x3(
             cameraPose.at(0,0),
@@ -315,8 +315,16 @@ public:
         point_msg.z = cameraPose.at(2,3);
         
         std_msgs::Header header;
-        header.stamp = ros::Time::now();
-        header.frame_id = "camera_link";
+        header.stamp = ros::Time(timeStamp);
+        header.frame_id = "camera_link";        
+        if (frameNum > INT32_MAX)
+        {
+            header.seq = frameNum - INT32_MAX;
+        }
+        else
+        {
+            header.seq = frameNum;
+        }
         
         geometry_msgs::PoseStamped pose_msg;
         pose_msg.header = header;
@@ -329,15 +337,17 @@ public:
     void module_output_ready(rs::core::video_module_interface * sender, rs::core::correlated_sample_set * sample)
     {
         rs::slam::slam *slamPtr = dynamic_cast< rs::slam::slam * >(sender);
+        uint64_t feFrameNum = sample->images[static_cast<uint8_t>(rs::core::stream_type::fisheye)]->query_frame_number();
+        double feTimeStamp = sample->images[static_cast<uint8_t>(rs::core::stream_type::fisheye)]->query_time_stamp();
         
         rs::slam::PoseMatrix4f cameraPose;
         slamPtr->get_camera_pose(cameraPose);                
-        publishPoseMsg(cameraPose);
+        publishPoseMsg(cameraPose, feFrameNum, feTimeStamp);
         
         rs::slam::tracking_accuracy accuracy = slamPtr->get_tracking_accuracy();
         TrackingAccuracy accuracyMsg;
-        accuracyMsg.header.stamp = ros::Time(sample->images[static_cast<uint8_t>(rs::core::stream_type::fisheye)]->query_time_stamp());
-        accuracyMsg.header.seq = sample->images[static_cast<uint8_t>(rs::core::stream_type::fisheye)]->query_frame_number(); // TODO: Could be useful?
+        accuracyMsg.header.stamp = ros::Time(feTimeStamp);
+        accuracyMsg.header.seq = feFrameNum;
         accuracyMsg.tracking_accuracy = (uint32_t)accuracy;
         pub_accuracy.publish(accuracyMsg);
         
