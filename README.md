@@ -37,20 +37,18 @@ git clone git@github.intel.com:IntelRealSense/realsense_ros.git
 - [SLAM](realsense_ros_slam/README.md): This ROS node demonstrates use of ZR300 camera above for simultaneous location and mapping (SLAM), relocalization, and occupancy map generation.
 
 ## Record and Playback Support
-These sample ROS nodes supporting using the ROS 'rosbag' tool for recording and playback.
+The sample code above supports use of the ROS 'rosbag' tool for recording and playback of camera stream data.
 
-For recording to a specific file.  If you omit the bag_path argument, it will default to $HOME/test.bag
+For recording cameara stream data to a specific file, use the command below.  Note that if you omit the bag_path argument, it will default to $HOME/test.bag
 ```bash
 $ roslaunch realsense_ros_camera record_bag.launch bag_path:=<path to file>
 ```
 When you ready to conclude the recording, press Ctrl-C and the recording will end gracefully.
 
-For playing back from a specific file.  Like above, if you omit the bag_path argument, it will default to $HOME/test.bag
+For playback of previously recorded camera stream data from a specific file, use the command below.  Like above, if you omit the bag_path argument, it will default to $HOME/test.bag
 ```bash
 $ roslaunch realsense_ros_camera play_bag.launch bag_path:=<path to file>
 ```
-
-All of the sample ROS nodes above accept an optional bag_path parameter to allow usage and testing from a pre-recorded file instead of the live camera streams.
 
 ## License
 Copyright 2017 Intel Corporation
