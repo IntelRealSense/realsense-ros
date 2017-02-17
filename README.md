@@ -31,10 +31,10 @@ git clone git@github.intel.com:IntelRealSense/realsense_ros.git
 ```
 
 ## Usage Instructions
-- [Camera](realsense_ros_camera/README.md): This ROS node implements use of [Intel RealSense ZR300 camera](http://click.intel.com/intelr-realsensetm-development-kit-featuring-the-zr300.html) as a standard ROS camera node, and is used by the functionality below.
-- [Object Recognition, Localization, and Tracking](realsense_ros_object/README.md): This ROS node demonstrates use of [Intel RealSense ZR300 camera](http://click.intel.com/intelr-realsensetm-development-kit-featuring-the-zr300.html) to implement Object Recognition, Localization, and Tracking functionality.
-- [Person Tracking and Analysis](realsense_ros_person/README.md): This ROS node demonstrates use of [Intel RealSense ZR300 camera](http://click.intel.com/intelr-realsensetm-development-kit-featuring-the-zr300.html) to implement Person Detection, Tracking, and Gesture analysis.
-- [SLAM](realsense_ros_slam/README.md): This ROS node demonstrates use of [Intel RealSense ZR300 camera](http://click.intel.com/intelr-realsensetm-development-kit-featuring-the-zr300.html) for simultaneous location and mapping (SLAM), relocalization, and occupancy map generation.
+- [Camera](realsense_ros_camera/README.md): This ROS node implements use of ZR300 camera as a standard ROS camera node.
+- [Object Recognition, Localization, and Tracking](realsense_ros_object/README.md): This ROS node demonstrates use of ZR300 camera above to implement Object Recognition, Localization, and Tracking functionality.
+- [Person Tracking and Analysis](realsense_ros_person/README.md): This ROS node demonstrates use of the ZR300 camera above to implement Person Detection, Tracking, and Gesture analysis.
+- [SLAM](realsense_ros_slam/README.md): This ROS node demonstrates use of ZR300 camera above for simultaneous location and mapping (SLAM), relocalization, and occupancy map generation.
 
 ## Record and Playback Support
 These sample ROS nodes supporting using the ROS 'rosbag' tool for recording and playback.
