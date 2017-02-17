@@ -1,7 +1,7 @@
 # Intel® RealSense™ SDK for Linux ROS Samples
 
 ## Features
-These samples illustrate how to develop OSRF&reg; ROS* applications using Intel® RealSense™ cameras for Object Library (OR), Person Library (PT), and Simultaneous Localization And Mapping (SLAM).
+These samples illustrate how to develop OSRF&reg; ROS* applications using the Intel® RealSense™ [ZR300](http://click.intel.com/intelr-realsensetm-development-kit-featuring-the-zr300.html) camera for Object Library (OR, Person Library (PT), and Simultaneous Localization And Mapping (SLAM).
 
 ## Installation Instructions
 
