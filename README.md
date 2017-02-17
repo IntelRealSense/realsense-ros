@@ -5,7 +5,7 @@ These samples illustrate how to develop OSRF&reg; ROS* applications using the In
 
 ## Installation Instructions
 
-The Intel RealSense SDK for Linux is used as the base for these ROS node.  Full installation information for this SDK is available at https://software.intel.com/sites/products/realsense/intro. Here is the quick guide:
+The Intel RealSense SDK for Linux is used as the base for these ROS node.  Full installation information for the SDK is available at https://software.intel.com/sites/products/realsense/intro. Here is the quick setup guide:
 
 ```bash
 # Install ROS Kinetic full desktop environment
