@@ -1,4 +1,9 @@
-﻿realsense_ros_person v0.0.1
+ROS Node for Intel® RealSense™ Person Library
+=========================================
+
+(Stas, your AR: Update this documentation)
+
+# (Old Content) realsense_ros_person v0.0.1
 
 This package contains a ROS wrapper for Intel's PersonTracking library. The realsense_pt package provides a image-based stategy to follow the people in front of the camera as a ROS nodelet. For instance,it's garantieed only with RealSense ZR300(tested with Depth and Color images recieved from ROS nodelet realsense_camera). The objectif of this module is to find out the informations(can be pose,oriantation,id etc.) of a person(or a specific person) in the images.
 
