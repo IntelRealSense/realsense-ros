@@ -1,7 +1,7 @@
-ROS Node for Intel® RealSense™ SLAM Library
+ROS Node for Intel® RealSense™ Object Library
 =========================================
 
-(Ben, your AR: Update this documentation)
+(Shoshana, your AR: Update this documentation)
 
 # (Old Content) realsense_object released by Perc-OR(draft)
 
