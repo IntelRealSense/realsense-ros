@@ -1,5 +1,10 @@
-realsense_object released by Perc-OR(draft)
+ROS Node for Intel® RealSense™ SLAM Library
 =========================================
+
+(Ben, your AR: Update this documentation)
+
+# (Old Content) realsense_object released by Perc-OR(draft)
+
 This package contains a ROS wrapper for Intel's realsense library. The realsense_object package provides a solution to recognize, localize and track objects as a ROS nodelet.
 
 1. Hardwarei/Software Requirement
