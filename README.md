@@ -5,7 +5,7 @@ These samples illustrate how to develop OSRF&reg; ROS* applications using IntelÂ
 
 ## Installation Instructions
 
-The Intel RealSense SDK for Linux is used as the base for these ROS node.  Public installation information for RealSense for Ubuntu 16.04 is available at https://software.intel.com/sites/products/realsense/intro/
+The Intel RealSense SDK for Linux is used as the base for these ROS node.  Full installation information for this SDK is available at https://software.intel.com/sites/products/realsense/intro. Here is the quick guide:
 
 ```bash
 # Install ROS Kinetic full desktop environment
