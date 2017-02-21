@@ -5,4 +5,11 @@
         </description>
         </class>
  </library>
+<library path="lib/librealsense_ros_camera_viewer">
+	<class name="realsense_ros_camera/ViewerNodelet" type="realsense_ros_camera::ViewerNodelet" base_class_type="nodelet::Nodelet">
+        <description>
+            A nodelet of slam.
+        </description>
+        </class>
+ </library>
 

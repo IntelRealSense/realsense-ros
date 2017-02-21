@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   nodelet
   cv_bridge
   image_transport
+  dynamic_reconfigure
 )
 
 find_package(OpenCV 3 REQUIRED)
@@ -27,6 +28,12 @@ set(CMAKE_THREAD_LIBS_INIT pthread)
    sensor_msgs   std_msgs
  )
 
+#add dynamic reconfigure api
+#generate_dynamic_reconfigure_options(
+#  cfg/r200_params.cfg
+#  cfg/zr300_params.cfg
+#)
+
 catkin_package(
   LIBRARIES realsense_ros_camera
   CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs
@@ -36,7 +43,7 @@ catkin_package(
 )
 
 include_directories(
-/usr/local/include
+  include
   ${OpenCV_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
@@ -44,8 +51,9 @@ add_library(realsense_ros_camera
    src/camera_node.cpp
 )
 
-add_dependencies(realsense_ros_camera ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
-)
+#add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(realsense_ros_camera
    realsense

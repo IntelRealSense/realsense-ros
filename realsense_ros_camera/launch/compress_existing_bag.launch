@@ -1,0 +1,19 @@
+<!--
+
+Comrpess a test stream from the camera, into a ROS bag for later playback
+roslaunch realsense_ros_camera record_bag.launch input_bag_path:=input.bag output_bag_path:=output.bag
+
+--> 
+<launch>
+  <arg name="input_bag_path" default="$(env HOME)/test.bag" />
+  <arg name="output_bag_path" default="$(env HOME)/test_compressed.bag" />
+  <arg name="bag_topics" default="/camera/color/image_raw/theora /camera/color/camera_info /camera/depth/image_raw/compressedDepth /camera/depth/camera_info /camera/fisheye/camera_info /camera/fisheye/image_raw /camera/accel/sample /camera/gyro/sample /camera/accel/imu_info /camera/gyro/imu_info /camera/extrinsics/fisheye2imu /camera/extrinsics/fisheye2depth"/>
+
+  <node name="compress_color" pkg="image_transport" type="republish" output="screen" args="raw in:=/camera/color/image_raw theora out:=/camera/color/image_raw" />
+
+  <node name="compress_depth" pkg="image_transport" type="republish" output="screen" args="raw in:=/camera/depth/image_raw compressedDepth out:=/camera/depth/image_raw" />
+
+  <node name="rosbag_input" pkg="rosbag" type="play" args="$(arg input_bag_path)"/>
+
+  <node name="rosbag_output" pkg="rosbag" type="record" args="-O $(arg output_bag_path) $(arg bag_topics)"/>
+</launch>
