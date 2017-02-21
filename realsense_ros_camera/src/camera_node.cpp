@@ -20,6 +20,7 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <realsense_ros_camera/Extrinsics.h>
 #include <realsense_ros_camera/IMUInfo.h>
+#include <realsense_ros_camera/constants.h>
 #include <sensor_msgs/Imu.h>
 
 const int STREAM_COUNT = 5;
@@ -132,15 +133,100 @@ class NodeletCamera:public nodelet::Nodelet
 {
 public:
     NodeletCamera() {}
-    ros::NodeHandle node_handle;
+    ros::NodeHandle node_handle, pnh_;
     rs::device *device;
-    
+
+
+   // parameters
+  std::string serial_no_;
+  std::string usb_port_id_;
+  std::string camera_type_;
+
+  std::map<rs::stream,int> width_;
+  std::map<rs::stream,int> height_;
+  std::map<rs::stream,int> fps_;
+
+#if 0
+  std::string mode_;
+  bool enable_[STREAM_COUNT] = {false};
+
+  rs_format format_[STREAM_COUNT];
+  std::string encoding_[STREAM_COUNT];
+  int cv_type_[STREAM_COUNT];
+  int unit_step_size_[STREAM_COUNT];
+  int step_[STREAM_COUNT];
+  double ts_[STREAM_COUNT];
+  std::string frame_id_[STREAM_COUNT];
+  std::string optical_frame_id_[STREAM_COUNT];
+ 
+  bool enable_imu_;
+  std::string imu_frame_id_;
+  std::string imu_optical_frame_id_;
+#endif
+
+   
 private:
     void getStreamCalibData(rs::stream stream_index);
     int getDatas();
+ 
+ 
+    void getParameters()
+    {
+      pnh_ = getPrivateNodeHandle();
+
+      pnh_.param("depth_width", width_[rs::stream::depth], DEPTH_WIDTH);
+      pnh_.param("depth_height", height_[rs::stream::depth], DEPTH_HEIGHT);
+      pnh_.param("depth_fps", fps_[rs::stream::depth], DEPTH_FPS);
+
+      pnh_.param("color_width", width_[rs::stream::color], COLOR_WIDTH);
+      pnh_.param("color_height", height_[rs::stream::color], COLOR_HEIGHT);
+      pnh_.param("color_fps", fps_[rs::stream::color], COLOR_FPS);
+
+      pnh_.param("fisheye_width", width_[rs::stream::fisheye], FISHEYE_WIDTH);
+      pnh_.param("fisheye_height", height_[rs::stream::fisheye], FISHEYE_HEIGHT);
+      pnh_.param("fisheye_fps", fps_[rs::stream::fisheye], FISHEYE_FPS);
+
+#if 0
+      nodelet_name_ = getName();
+      nh_ = getNodeHandle();
+
+      pnh_.getParam("serial_no", serial_no_);
+      pnh_.getParam("usb_port_id", usb_port_id_);
+      pnh_.getParam("camera_type", camera_type_);
+
+      // R200 and ZR300 parametesr
+      pnh_.param("mode", mode_, DEFAULT_MODE);
+      pnh_.param("enable_depth", enable_[RS_STREAM_DEPTH], ENABLE_DEPTH);
+      pnh_.param("enable_color", enable_[RS_STREAM_COLOR], ENABLE_COLOR);
+      pnh_.param("enable_ir", enable_[RS_STREAM_INFRARED], ENABLE_IR);
+      pnh_.param("enable_ir2", enable_[RS_STREAM_INFRARED2], ENABLE_IR2);
+      pnh_.param("enable_pointcloud", enable_pointcloud_, ENABLE_PC);
+      pnh_.param("enable_tf", enable_tf_, ENABLE_TF);
+      pnh_.param("enable_tf_dynamic", enable_tf_dynamic_, ENABLE_TF_DYNAMIC);
+      pnh_.param("base_frame_id", base_frame_id_, DEFAULT_BASE_FRAME_ID);
+      pnh_.param("depth_frame_id", frame_id_[RS_STREAM_DEPTH], DEFAULT_DEPTH_FRAME_ID);
+      pnh_.param("color_frame_id", frame_id_[RS_STREAM_COLOR], DEFAULT_COLOR_FRAME_ID);
+      pnh_.param("ir_frame_id", frame_id_[RS_STREAM_INFRARED], DEFAULT_IR_FRAME_ID);
+      pnh_.param("ir2_frame_id", frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_FRAME_ID);
+      pnh_.param("depth_optical_frame_id", optical_frame_id_[RS_STREAM_DEPTH], DEFAULT_DEPTH_OPTICAL_FRAME_ID);
+      pnh_.param("color_optical_frame_id", optical_frame_id_[RS_STREAM_COLOR], DEFAULT_COLOR_OPTICAL_FRAME_ID);
+      pnh_.param("ir_optical_frame_id", optical_frame_id_[RS_STREAM_INFRARED], DEFAULT_IR_OPTICAL_FRAME_ID);
+      pnh_.param("ir2_optical_frame_id", optical_frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_OPTICAL_FRAME_ID);
+
+      // ZR300 specific parameters
+      pnh_.param("enable_fisheye", enable_[RS_STREAM_FISHEYE], ENABLE_FISHEYE);
+      pnh_.param("enable_imu", enable_imu_, ENABLE_IMU);
+      pnh_.param("fisheye_frame_id", frame_id_[RS_STREAM_FISHEYE], DEFAULT_FISHEYE_FRAME_ID);
+      pnh_.param("fisheye_optical_frame_id", optical_frame_id_[RS_STREAM_FISHEYE], DEFAULT_FISHEYE_OPTICAL_FRAME_ID);
+      pnh_.param("imu_frame_id", imu_frame_id_, DEFAULT_IMU_FRAME_ID);
+      pnh_.param("imu_optical_frame_id", imu_optical_frame_id_, DEFAULT_IMU_OPTICAL_FRAME_ID);
+#endif
+    }
 
     virtual void onInit()
     {
+        getParameters();
+
         node_handle = getNodeHandle();
         image_transport::ImageTransport image_transport(node_handle);
         
@@ -218,28 +304,23 @@ PLUGINLIB_DECLARE_CLASS(realsense_ros_camera, NodeletCamera, realsense_ros_camer
 int NodeletCamera::getDatas()
 {
     std::map< rs::stream, std::function< void (rs::frame) > > stream_callback_per_stream;
-    for (int i = 0; i < (int) rs::stream::points; ++i)
+    const rs::stream All[] = { rs::stream::depth, rs::stream::color, rs::stream::fisheye };
+
+    for ( const auto stream : All )
     {
-        rs::stream stream = rs::stream(i);
-        rs::format stream_format = rs::format::any;
         if (stream == rs::stream::depth)
         {
-            stream_format = rs::format::z16;
+            device->enable_stream(stream, width_[stream], height_[stream], rs::format::z16, fps_[stream]);
         }
         else if (stream == rs::stream::fisheye && isZR300)
         {
-            stream_format = rs::format::raw8;
+            device->enable_stream(stream, width_[stream], height_[stream], rs::format::raw8, fps_[stream]);
         }
         else if (stream == rs::stream::color)
         {
-            stream_format = rs::format::rgb8;
+	    device->enable_stream(stream, width_[stream], height_[stream], rs::format::rgb8, fps_[stream]);
         }
-        if (stream == rs::stream::depth)
-            device -> enable_stream (stream, 320, 240, stream_format, 30);
-        else if (stream == rs::stream::fisheye && isZR300)
-            device -> enable_stream (stream, 640, 480, stream_format, 30);
-        else if (stream == rs::stream::color)
-            device -> enable_stream (stream, 640, 480, stream_format, 30);
+
         stream_callback_per_stream[stream] = [stream](rs::frame frame)
         {
             if (isZR300)
