@@ -80,7 +80,9 @@ namespace realsense_ros_person
         std::string path=ros::package::getPath("realsense_ros_person");
         NODELET_INFO("setParams");
         nodeHandle.param<bool>("recognitionEnabled", config.recognitionEnabled, false);
-        nodeHandle.param<bool>("gesturesEnabled", config.gesturesEnabled, false);
+        nodeHandle.param<bool>("pointingGestureEnabled", config.pointingGestureEnabled, false);
+        nodeHandle.param<bool>("waveGestureEnabled", config.waveGestureEnabled, false);
+
         nodeHandle.param<bool>("trackingEnabled", config.trackingEnabled, true);
         nodeHandle.param<bool>("skeletonEnabled",config.skeletonEnabled, false);
 
