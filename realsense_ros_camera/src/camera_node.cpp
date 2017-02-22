@@ -20,6 +20,7 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <realsense_ros_camera/Extrinsics.h>
 #include <realsense_ros_camera/IMUInfo.h>
+#include <realsense_ros_camera/constants.h>
 #include <sensor_msgs/Imu.h>
 
 const int STREAM_COUNT = 5;
@@ -132,15 +133,43 @@ class NodeletCamera:public nodelet::Nodelet
 {
 public:
     NodeletCamera() {}
-    ros::NodeHandle node_handle;
+    ros::NodeHandle node_handle, pnh_;
     rs::device *device;
-    
+
+   std::string serial_no_;
+   std::string usb_port_id_;
+   std::string camera_type_;
+
+   std::map<rs::stream,int> width_;
+   std::map<rs::stream,int> height_;
+   std::map<rs::stream,int> fps_;
+
 private:
     void getStreamCalibData(rs::stream stream_index);
     int getDatas();
+ 
+ 
+    void getParameters()
+    {
+      pnh_ = getPrivateNodeHandle();
+
+      pnh_.param("depth_width", width_[rs::stream::depth], DEPTH_WIDTH);
+      pnh_.param("depth_height", height_[rs::stream::depth], DEPTH_HEIGHT);
+      pnh_.param("depth_fps", fps_[rs::stream::depth], DEPTH_FPS);
+
+      pnh_.param("color_width", width_[rs::stream::color], COLOR_WIDTH);
+      pnh_.param("color_height", height_[rs::stream::color], COLOR_HEIGHT);
+      pnh_.param("color_fps", fps_[rs::stream::color], COLOR_FPS);
+
+      pnh_.param("fisheye_width", width_[rs::stream::fisheye], FISHEYE_WIDTH);
+      pnh_.param("fisheye_height", height_[rs::stream::fisheye], FISHEYE_HEIGHT);
+      pnh_.param("fisheye_fps", fps_[rs::stream::fisheye], FISHEYE_FPS);
+    }
 
     virtual void onInit()
     {
+        getParameters();
+
         node_handle = getNodeHandle();
         image_transport::ImageTransport image_transport(node_handle);
         
@@ -218,28 +247,23 @@ PLUGINLIB_DECLARE_CLASS(realsense_ros_camera, NodeletCamera, realsense_ros_camer
 int NodeletCamera::getDatas()
 {
     std::map< rs::stream, std::function< void (rs::frame) > > stream_callback_per_stream;
-    for (int i = 0; i < (int) rs::stream::points; ++i)
+    const rs::stream All[] = { rs::stream::depth, rs::stream::color, rs::stream::fisheye };
+
+    for ( const auto stream : All )
     {
-        rs::stream stream = rs::stream(i);
-        rs::format stream_format = rs::format::any;
         if (stream == rs::stream::depth)
         {
-            stream_format = rs::format::z16;
+            device->enable_stream(stream, width_[stream], height_[stream], rs::format::z16, fps_[stream]);
         }
         else if (stream == rs::stream::fisheye && isZR300)
         {
-            stream_format = rs::format::raw8;
+            device->enable_stream(stream, width_[stream], height_[stream], rs::format::raw8, fps_[stream]);
         }
         else if (stream == rs::stream::color)
         {
-            stream_format = rs::format::rgb8;
+	    device->enable_stream(stream, width_[stream], height_[stream], rs::format::rgb8, fps_[stream]);
         }
-        if (stream == rs::stream::depth)
-            device -> enable_stream (stream, 320, 240, stream_format, 30);
-        else if (stream == rs::stream::fisheye && isZR300)
-            device -> enable_stream (stream, 640, 480, stream_format, 30);
-        else if (stream == rs::stream::color)
-            device -> enable_stream (stream, 640, 480, stream_format, 30);
+
         stream_callback_per_stream[stream] = [stream](rs::frame frame)
         {
             if (isZR300)

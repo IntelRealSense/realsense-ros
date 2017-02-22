@@ -64,7 +64,11 @@ void PersonTrackingSample::EnableTrackingFeatures(ros::NodeHandle& nodeHandle)
     config.request.enableHeadBoundingBox = mEnableHeadBoundingBox;
     config.request.enableHeadPose = mEnableHeadPose;
 
-    mConfigClient.call(config);
+    while (!mConfigClient.call(config))
+    {
+        ROS_INFO_STREAM("failed to send config to person tracking node, sleep 1 second and retry");
+        usleep(1e6);
+    }
 }
 
 void PersonTrackingSample::PersonTrackingCallback(const realsense_ros_person::FrameTest& msg)

@@ -1,11 +1,11 @@
 # Intel® RealSense™ SDK for Linux ROS Samples
 
 ## Features
-These samples illustrate how to develop OSRF&reg; ROS* applications using Intel® RealSense™ cameras for Object Library (OR), Person Library (PT), and Simultaneous Localization And Mapping (SLAM).
+These samples illustrate how to develop OSRF&reg; ROS* applications using the Intel® RealSense™ [ZR300](http://click.intel.com/intelr-realsensetm-development-kit-featuring-the-zr300.html) camera for Object Library (OR, Person Library (PT), and Simultaneous Localization And Mapping (SLAM).
 
 ## Installation Instructions
 
-The Intel RealSense SDK for Linux is used as the base for these ROS node.  Public installation information for RealSense for Ubuntu 16.04 is available at https://software.intel.com/sites/products/realsense/intro/
+The Intel RealSense SDK for Linux is used as the base for these ROS node.  Full installation information for the SDK is available at https://software.intel.com/sites/products/realsense/intro. Here is the quick setup guide:
 
 ```bash
 # Install ROS Kinetic full desktop environment
@@ -31,26 +31,24 @@ git clone git@github.intel.com:IntelRealSense/realsense_ros.git
 ```
 
 ## Usage Instructions
-- [Camera](realsense_ros_camera/README.md): This ROS node (fill in content).
-- [Tracking](realsense_ros_object/README.md): This ROS node (fill in content).
-- [Person](realsense_ros_person/README.md): This ROS node (fill in content).
-- [SLAM](realsense_ros_slam/README.md): This ROS node (fill in content).
+- [Camera](realsense_ros_camera/README.md): This ROS node implements use of ZR300 camera as a standard ROS camera node.
+- [Object Recognition, Localization, and Tracking](realsense_ros_object/README.md): This ROS node demonstrates use of ZR300 camera above to implement Object Recognition, Localization, and Tracking functionality.
+- [Person Tracking and Analysis](realsense_ros_person/README.md): This ROS node demonstrates use of the ZR300 camera above to implement Person Detection, Tracking, and Gesture analysis.
+- [SLAM](realsense_ros_slam/README.md): This ROS node demonstrates use of ZR300 camera above for simultaneous location and mapping (SLAM), relocalization, and occupancy map generation.
 
 ## Record and Playback Support
-These sample ROS nodes supporting using the ROS 'rosbag' tool for recording and playback.
+The sample code above supports use of the ROS 'rosbag' tool for recording and playback of camera stream data.
 
-For recording to a specific file.  If you omit the bag_path argument, it will default to $HOME/test.bag
+For recording cameara stream data to a specific file, use the command below.  Note that if you omit the bag_path argument, it will default to $HOME/test.bag
 ```bash
 $ roslaunch realsense_ros_camera record_bag.launch bag_path:=<path to file>
 ```
 When you ready to conclude the recording, press Ctrl-C and the recording will end gracefully.
 
-For playing back from a specific file.  Like above, if you omit the bag_path argument, it will default to $HOME/test.bag
+For playback of previously recorded camera stream data from a specific file, use the command below.  Like above, if you omit the bag_path argument, it will default to $HOME/test.bag
 ```bash
 $ roslaunch realsense_ros_camera play_bag.launch bag_path:=<path to file>
 ```
-
-All of the sample ROS nodes above accept an optional bag_path parameter to allow usage and testing from a pre-recorded file instead of the live camera streams.
 
 ## License
 Copyright 2017 Intel Corporation

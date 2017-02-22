@@ -1,5 +1,9 @@
-realsense_ros_slam released by Perc-China(draft)
-==============================================
+ROS Node for Intel® RealSense™ SLAM Library
+=========================================
+
+(Ben, your AR: Update this documentation)
+
+# (Old Content) realsense_ros_slam released by Perc-China(draft)
 This package contains a ROS wrapper for Intel's SLAM library. The realsense_ros_slam package provides a solution of SLAM as a ROS nodelet. It take the messages sent by realsense_ros_camera nodelet. The objective of this module is to find out map information and 2Dpose of agent.
 
 1. Hardwarei/Software Requirement

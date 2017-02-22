@@ -9,5 +9,5 @@ roslaunch realsense_ros_slam demo_slam_from_bag.launch bag_path:=my_value
   <include file="$(find realsense_ros_camera)/launch/play_bag.launch">
     <arg name="bag_path" value="$(arg bag_path)"/>
   </include>
-  <include file="$(find realsense_ros_slam)/launch/slam_nodelet.launch"/>
+  <include file="$(find realsense_ros_slam)/launch/slam_with_transforms.launch"/>
 </launch>
