@@ -12,7 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
   message_generation
   realsense_ros_camera
+  tf
   tf2
+  tf2_kdl
   )
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV 3 REQUIRED)
