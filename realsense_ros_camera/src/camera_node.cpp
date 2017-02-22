@@ -136,35 +136,14 @@ public:
     ros::NodeHandle node_handle, pnh_;
     rs::device *device;
 
+   std::string serial_no_;
+   std::string usb_port_id_;
+   std::string camera_type_;
 
-   // parameters
-  std::string serial_no_;
-  std::string usb_port_id_;
-  std::string camera_type_;
+   std::map<rs::stream,int> width_;
+   std::map<rs::stream,int> height_;
+   std::map<rs::stream,int> fps_;
 
-  std::map<rs::stream,int> width_;
-  std::map<rs::stream,int> height_;
-  std::map<rs::stream,int> fps_;
-
-#if 0
-  std::string mode_;
-  bool enable_[STREAM_COUNT] = {false};
-
-  rs_format format_[STREAM_COUNT];
-  std::string encoding_[STREAM_COUNT];
-  int cv_type_[STREAM_COUNT];
-  int unit_step_size_[STREAM_COUNT];
-  int step_[STREAM_COUNT];
-  double ts_[STREAM_COUNT];
-  std::string frame_id_[STREAM_COUNT];
-  std::string optical_frame_id_[STREAM_COUNT];
- 
-  bool enable_imu_;
-  std::string imu_frame_id_;
-  std::string imu_optical_frame_id_;
-#endif
-
-   
 private:
     void getStreamCalibData(rs::stream stream_index);
     int getDatas();
@@ -185,42 +164,6 @@ private:
       pnh_.param("fisheye_width", width_[rs::stream::fisheye], FISHEYE_WIDTH);
       pnh_.param("fisheye_height", height_[rs::stream::fisheye], FISHEYE_HEIGHT);
       pnh_.param("fisheye_fps", fps_[rs::stream::fisheye], FISHEYE_FPS);
-
-#if 0
-      nodelet_name_ = getName();
-      nh_ = getNodeHandle();
-
-      pnh_.getParam("serial_no", serial_no_);
-      pnh_.getParam("usb_port_id", usb_port_id_);
-      pnh_.getParam("camera_type", camera_type_);
-
-      // R200 and ZR300 parametesr
-      pnh_.param("mode", mode_, DEFAULT_MODE);
-      pnh_.param("enable_depth", enable_[RS_STREAM_DEPTH], ENABLE_DEPTH);
-      pnh_.param("enable_color", enable_[RS_STREAM_COLOR], ENABLE_COLOR);
-      pnh_.param("enable_ir", enable_[RS_STREAM_INFRARED], ENABLE_IR);
-      pnh_.param("enable_ir2", enable_[RS_STREAM_INFRARED2], ENABLE_IR2);
-      pnh_.param("enable_pointcloud", enable_pointcloud_, ENABLE_PC);
-      pnh_.param("enable_tf", enable_tf_, ENABLE_TF);
-      pnh_.param("enable_tf_dynamic", enable_tf_dynamic_, ENABLE_TF_DYNAMIC);
-      pnh_.param("base_frame_id", base_frame_id_, DEFAULT_BASE_FRAME_ID);
-      pnh_.param("depth_frame_id", frame_id_[RS_STREAM_DEPTH], DEFAULT_DEPTH_FRAME_ID);
-      pnh_.param("color_frame_id", frame_id_[RS_STREAM_COLOR], DEFAULT_COLOR_FRAME_ID);
-      pnh_.param("ir_frame_id", frame_id_[RS_STREAM_INFRARED], DEFAULT_IR_FRAME_ID);
-      pnh_.param("ir2_frame_id", frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_FRAME_ID);
-      pnh_.param("depth_optical_frame_id", optical_frame_id_[RS_STREAM_DEPTH], DEFAULT_DEPTH_OPTICAL_FRAME_ID);
-      pnh_.param("color_optical_frame_id", optical_frame_id_[RS_STREAM_COLOR], DEFAULT_COLOR_OPTICAL_FRAME_ID);
-      pnh_.param("ir_optical_frame_id", optical_frame_id_[RS_STREAM_INFRARED], DEFAULT_IR_OPTICAL_FRAME_ID);
-      pnh_.param("ir2_optical_frame_id", optical_frame_id_[RS_STREAM_INFRARED2], DEFAULT_IR2_OPTICAL_FRAME_ID);
-
-      // ZR300 specific parameters
-      pnh_.param("enable_fisheye", enable_[RS_STREAM_FISHEYE], ENABLE_FISHEYE);
-      pnh_.param("enable_imu", enable_imu_, ENABLE_IMU);
-      pnh_.param("fisheye_frame_id", frame_id_[RS_STREAM_FISHEYE], DEFAULT_FISHEYE_FRAME_ID);
-      pnh_.param("fisheye_optical_frame_id", optical_frame_id_[RS_STREAM_FISHEYE], DEFAULT_FISHEYE_OPTICAL_FRAME_ID);
-      pnh_.param("imu_frame_id", imu_frame_id_, DEFAULT_IMU_FRAME_ID);
-      pnh_.param("imu_optical_frame_id", imu_optical_frame_id_, DEFAULT_IMU_OPTICAL_FRAME_ID);
-#endif
     }
 
     virtual void onInit()

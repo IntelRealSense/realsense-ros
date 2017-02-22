@@ -1,0 +1,4 @@
+<launch>
+  <!--<node pkg="nodelet" type="nodelet" name="viewer" args="load realsense_ros_camera/ViewerNodelet realsense_ros_camera_manager" output="screen"/>-->
+  <node pkg="nodelet" type="nodelet" name="viewer" args="standalone realsense_ros_camera/ViewerNodelet" output="screen"/>
+</launch>
