@@ -133,6 +133,16 @@ class NodeletCamera:public nodelet::Nodelet
 {
 public:
     NodeletCamera() {}
+
+    virtual ~NodeletCamera()
+    {        
+        if(isZR300)
+            device->stop(rs::source::all_sources);
+        else
+            device->stop();
+        ctx.reset();
+    }
+
     ros::NodeHandle node_handle, pnh_;
     rs::device *device;
 
@@ -144,9 +154,11 @@ public:
    std::map<rs::stream,int> height_;
    std::map<rs::stream,int> fps_;
 
+   std::unique_ptr< rs::context > ctx;
+
 private:
     void getStreamCalibData(rs::stream stream_index);
-    int getDatas();
+    void getDatas();
  
  
     void getParameters()
@@ -175,7 +187,7 @@ private:
         
         ros::NodeHandle pnh = getPrivateNodeHandle();
         node_handle.param<std::string>("serial_no", serial_no, "");
-        std::unique_ptr< rs::context > ctx(new rs::context());
+        ctx.reset(new rs::context());
         int num_of_cams = ctx -> get_device_count();
         if (num_of_cams == 0)
         {
@@ -238,13 +250,13 @@ private:
         }
         // end publishers and services
         
-        int ret = getDatas();
-        ROS_INFO_STREAM("end of onInit " << ret);
+        getDatas();
+        ROS_INFO_STREAM("end of onInit ");
     }//end onInit
 };//end class
 PLUGINLIB_DECLARE_CLASS(realsense_ros_camera, NodeletCamera, realsense_ros_camera::NodeletCamera, nodelet::Nodelet);
 
-int NodeletCamera::getDatas()
+void NodeletCamera::getDatas()
 {
     std::map< rs::stream, std::function< void (rs::frame) > > stream_callback_per_stream;
     const rs::stream All[] = { rs::stream::depth, rs::stream::color, rs::stream::fisheye };
@@ -358,19 +370,6 @@ int NodeletCamera::getDatas()
         device->start();
 
     ROS_INFO_STREAM("RealSense camera started streaming");
-    
-    ros::Rate loop_rate(30);
-    while (ros::ok())
-    {
-        loop_rate.sleep();
-    }
-    
-    if(isZR300)
-        device->stop(rs::source::all_sources);
-    else
-        device->stop();
-
-    return 0;
 }
 
 void NodeletCamera::getStreamCalibData(rs::stream stream_index)
