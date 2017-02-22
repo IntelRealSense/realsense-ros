@@ -77,17 +77,16 @@ namespace realsense_ros_person
 
     void TNodeletPt::setParams(PersonTrackingConfig& config){
         ros::NodeHandle & nodeHandle=getPrivateNodeHandle();
-    std::string path=ros::package::getPath("realsense_ros_person");
+        std::string path=ros::package::getPath("realsense_ros_person");
         NODELET_INFO("setParams");
-        nodeHandle.param<bool>("recognitionEnabled", config.recognitionEnabled,false);
-        nodeHandle.param<bool>("gesturesEnabled", config.gesturesEnabled,false);
-        nodeHandle.param<bool>("trackingEnabled", config.trackingEnabled,false);
-        nodeHandle.param<bool>("skeletonEnabled",config.skeletonEnabled,false);
+        nodeHandle.param<bool>("recognitionEnabled", config.recognitionEnabled, false);
+        nodeHandle.param<bool>("gesturesEnabled", config.gesturesEnabled, false);
+        nodeHandle.param<bool>("trackingEnabled", config.trackingEnabled, true);
+        nodeHandle.param<bool>("skeletonEnabled",config.skeletonEnabled, false);
 
         nodeHandle.param<bool>("headPoseEnabled",config.headPoseEnabled,false);
-        nodeHandle.param<bool>("headBoundingBoxEnabled",config.headBoundingBoxEnabled,false);
-        nodeHandle.param<bool>("landmarksEnabled",config.landmarksEnabled,false);
-
+        nodeHandle.param<bool>("headBoundingBoxEnabled",config.headBoundingBoxEnabled, false);
+        nodeHandle.param<bool>("landmarksEnabled",config.landmarksEnabled, false);
     }
 ///////////////////////////////////////////////////////////////////////////////
     void TNodeletPt::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& colorCameraInfo,const sensor_msgs::CameraInfoConstPtr& depthCameraInfo){
