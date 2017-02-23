@@ -5,7 +5,7 @@ roslaunch realsense_ros_camera record_bag_slam.launch bag_path:=my_value
 
 --> 
 <launch>
-  <arg name="bag_path" default="$(env HOME)/test.bag" />
+  <arg name="bag_path" default="$(env HOME)/test_slam_320x240d_640x480f_imu.bag" />
   <arg name="bag_topics" default="/camera/depth/image_raw/compressedDepth /camera/depth/camera_info /camera/fisheye/camera_info /camera/fisheye/image_raw /camera/accel/sample /camera/gyro/sample /camera/accel/imu_info /camera/gyro/imu_info /camera/extrinsics/fisheye2imu /camera/extrinsics/fisheye2depth"/>
 
   <node pkg="rosbag" type="record" name="rosbag" args="-O $(arg bag_path) $(arg bag_topics)"/>

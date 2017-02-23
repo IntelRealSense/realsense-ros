@@ -5,7 +5,7 @@ roslaunch realsense_ros_person demo_person_tracking_from_bag.launch bag_path:=my
 
 --> 
 <launch>
-  <arg name="bag_path" default="$(env HOME)/test.bag" />
+  <arg name="bag_path" default="$(env HOME)/test_pt_640x480c_320x240d.bag" />
   <include file="$(find realsense_ros_camera)/launch/play_bag.launch">
     <arg name="bag_path" value="$(arg bag_path)"/>
   </include>
