@@ -4,15 +4,14 @@
 This package contains a ROS wrapper for Intel's Person library.
 The realsense_ros_person package provides a image-based stategy to follow the 
 people in front of the camera as a ROS nodelet. The objective of this module is
-to find out the informations(can be pose,oriantation,id etc.) of a person(or a specific person)
+to find out the information (can be pose, orientation, id etc.) of a person (or a specific person)
 in the images.
 
 ## 1. Design and Usage
 ---------------------------------------
-Peron package consists of 2 nodelets: 
-1. realsense_ros_person nodelet is the Peson API wrapper for ROS.
-2. realsense_ros_person_sample_nodelet - demo for usage of Person ROS API - visualize
-output of realsense_ros_person nodelet, provide GUI for realsense_ros_person node control(Start tracking, Register/Recognize users)
+    The person package consists of 2 nodelets:
+    1. realsense_ros_person nodelet is the Person API wrapper for ROS.
+    2. realsense_ros_person_sample_nodelet - demo for usage of Person ROS API - visualize output of realsense_ros_person nodelet, provide GUI for realsense_ros_person node control(Start tracking, Register/Recognize users)
 ---------------------------------------
 ## 2. Run person nodes (Person API wrapper + sample):
 ### For person tracking feature
@@ -76,7 +75,7 @@ output of realsense_ros_person nodelet, provide GUI for realsense_ros_person nod
     ~isTestMode: (bool, defaultL false)
         Start node at test mode, publish FrameTest messages on person_tracking/person_tracking_output_test topic
 
-### 3.2 realsense_ros_person_sample_nodelet - person sample  node - controls person node and vusualize output
+### 3.2 realsense_ros_person_sample_nodelet - person sample  node - controls person node and visualizes output
 #### 3.2.1 Subscribed Topics
    person_tracking/person_tracking_output_test (realsense_pt_msgs/FrameTest)
 #### 3.2.2 Published Topics
