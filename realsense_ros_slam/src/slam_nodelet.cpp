@@ -659,7 +659,10 @@ void SNodeletSlam::setStreamConfigIntrin(rs::core::stream_type stream, std::map<
     auto & supported_stream_config = supported_config[stream];
     if(!supported_stream_config.is_enabled || supported_stream_config.size.width != intrinsics[stream].width || supported_stream_config.size.height != intrinsics[stream].height)
     {
-        ROS_INFO("size of stream is not supported by slam");
+        ROS_ERROR("size of stream is not supported by slam");
+	ROS_ERROR_STREAM("  supported: stream " << (uint32_t) stream << ", width: " << supported_stream_config.size.width  << " height: " << supported_stream_config.size.height );
+	ROS_ERROR_STREAM("  received: stream " << (uint32_t) stream << ", width: " << intrinsics[stream].width  << " height: " << intrinsics[stream].height );
+
         return;
     }
     rs::core::video_module_interface::actual_image_stream_config &actual_stream_config = actual_config[stream];

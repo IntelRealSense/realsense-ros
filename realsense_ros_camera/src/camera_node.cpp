@@ -109,7 +109,8 @@ namespace realsense_ros_camera
     class NodeletCamera:public nodelet::Nodelet
     {
     public:
-        NodeletCamera() 
+        NodeletCamera() :
+            cameraStarted(false)
         {
             // libRealsense format types for stream
             format_[rs::stream::depth] = rs::format::z16;
@@ -130,14 +131,21 @@ namespace realsense_ros_camera
             unit_step_size_[rs::stream::depth] = sizeof(uint16_t);
             unit_step_size_[rs::stream::color] = sizeof(unsigned char) * 3;
             unit_step_size_[rs::stream::fisheye] = sizeof(unsigned char);
+
+            stream_name_[rs::stream::depth] = "depth";
+            stream_name_[rs::stream::color] = "color";
+            stream_name_[rs::stream::fisheye] = "fisheye";
         }
 
         virtual ~NodeletCamera()
         {        
-            if(isZR300)
-                device->stop(rs::source::all_sources);
-            else
-                device->stop();
+            if(cameraStarted)
+            {
+                if(isZR300)
+                    device->stop(rs::source::all_sources);
+                else
+                    device->stop();
+            }      
             ctx.reset();
         }
 
@@ -202,7 +210,6 @@ namespace realsense_ros_camera
                 if(serial_no.empty() || (serial_no == std::string(detected_dev->get_serial())))
                 {
                     device = detected_dev;
-                    ROS_INFO_STREAM("RealSense device serial_no: " << std::string(device ->get_serial()));
                     break;
                 }
             }
@@ -215,7 +222,7 @@ namespace realsense_ros_camera
             }
 
             auto device_name = device -> get_name();
-            ROS_INFO_STREAM(device_name);
+            ROS_INFO_STREAM(device_name << ", serial_no: " << std::string(device ->get_serial()));
             if (std::string(device_name).find("ZR300") == std::string::npos) 
             {
                 isZR300 = false;
@@ -276,6 +283,8 @@ namespace realsense_ros_camera
 
         void setupStreams()
         {
+            device->set_option(rs::option::r200_lr_auto_exposure_enabled, 1);
+
             const rs::stream All[] = { rs::stream::depth, rs::stream::color, rs::stream::fisheye };
             for ( const auto stream : All )
             {
@@ -323,12 +332,16 @@ namespace realsense_ros_camera
                 // Setup stream callback for stream
                 image_[stream] = cv::Mat(info.height, info.width, image_format_[stream], cv::Scalar(0,0,0));
                 device->set_frame_callback(stream, stream_callback_per_stream[stream]);
+
+                ROS_INFO_STREAM("  enabled " << stream_name_[stream] << " stream, width: " << info.width << " height: " << info.height << " fps: " << fps_[stream]);
             }//end for
             
 
             if(isZR300) {
-                device->set_option(rs::option::fisheye_strobe, 1);
-
+                device->set_option(rs::option::fisheye_strobe, 1); // Needed to align image timestamps to common clock-domain with the motion events
+                device->set_option(rs::option::fisheye_external_trigger, 1); // This option causes the fisheye image to be aquired in-sync with the depth image.
+                device->set_option(rs::option::fisheye_color_auto_exposure, 1);
+                
                 //define callback to the motion events and set it.
                 std::function<void(rs::motion_data)> motion_callback;
                 motion_callback = [](rs::motion_data entry)
@@ -365,7 +378,8 @@ namespace realsense_ros_camera
                 timestamp_callback = [](rs::timestamp_data entry) {};
 
                 device->enable_motion_tracking(motion_callback, timestamp_callback);
-                        
+                ROS_INFO_STREAM("  enabled accel and gyro stream" );
+
                 // publish ZR300-specific intrinsics/extrinsics
                 IMUInfo accelInfo, gyroInfo;
                 getImuInfo(device, accelInfo, gyroInfo);
@@ -380,6 +394,7 @@ namespace realsense_ros_camera
                 device->start(rs::source::all_sources);
             else
                 device->start();
+            cameraStarted = true;            
         }//end setupStreams
 
 
@@ -463,7 +478,7 @@ namespace realsense_ros_camera
 
     private:
         ros::NodeHandle node_handle, pnh_;
-
+        bool cameraStarted;
         std::unique_ptr< rs::context > ctx; 
         rs::device *device;
 
@@ -474,7 +489,8 @@ namespace realsense_ros_camera
         std::map<rs::stream,int> width_;
         std::map<rs::stream,int> height_;
         std::map<rs::stream,int> fps_;
-        std::map<rs::stream,bool> enable_;      
+        std::map<rs::stream,bool> enable_; 
+        std::map<rs::stream,std::string> stream_name_;
     };//end class
 
 PLUGINLIB_DECLARE_CLASS(realsense_ros_camera, NodeletCamera, realsense_ros_camera::NodeletCamera, nodelet::Nodelet);
