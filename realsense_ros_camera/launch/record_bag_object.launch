@@ -12,8 +12,8 @@ roslaunch realsense_ros_camera record_bag_object.launch bag_path:=my_value
 
   <include file="$(find realsense_ros_camera)/launch/camera.launch">
     <arg name="enable_fisheye" value="false"/>
-    <arg name="depth_width" value="640"/>
-    <arg name="depth_height" value="480"/>
+    <arg name="depth_width" value="320"/>
+    <arg name="depth_height" value="240"/>
     <arg name="enable_depth" value="true"/>
     <arg name="color_width" value="640"/>
     <arg name="color_height" value="480"/>
