@@ -23,54 +23,28 @@
 #include <realsense_ros_camera/constants.h>
 #include <sensor_msgs/Imu.h>
 
-const int STREAM_COUNT = 5;
-ros::Publisher //feInfo_publisher_,
-    //colorInfo_publisher_,
-    //depthInfo_publisher_,
-    accelInfo_publisher_,
-    gyroInfo_publisher_,
-    fe2imu_publisher_,
-    fe2depth_publisher_;
-//image_transport::Publisher image_publishers_[STREAM_COUNT] = {};
-std::map<rs::stream,image_transport::Publisher> image_publishers_;
-ros::Publisher imu_publishers_[2] = {};//accel 0 gyro 1
-int seq_motion[2]= {0,0};
-cv::Mat image_[STREAM_COUNT] = {};
-std::map<rs::stream,sensor_msgs::CameraInfo> camera_info_;
-sensor_msgs::ImagePtr image_msg_[STREAM_COUNT] = {};
-int seq[STREAM_COUNT]= {0,0,0,0,0};
 
+// R200 and ZR300 types
+std::map<rs::stream,image_transport::Publisher> image_publishers_;
 std::map<rs::stream,int> image_format_;
 std::map<rs::stream,rs::format> format_;
 std::map<rs::stream,ros::Publisher> info_publisher_;
+std::map<rs::stream,cv::Mat> image_;
+std::map<rs::stream,std::string> encoding_;
+std::map<rs::stream,std::string> optical_frame_id_;
+std::string optical_frame_id_accel;
+std::string optical_frame_id_gyro;
+std::map<rs::stream,int> seq_;
+std::map<rs::stream,int> unit_step_size_;
+std::map<rs::stream,std::function<void(rs::frame)>> stream_callback_per_stream; 
 
-std::string encoding_[STREAM_COUNT] = {
-    sensor_msgs::image_encodings::TYPE_16UC1,
-    sensor_msgs::image_encodings::RGB8,
-    sensor_msgs::image_encodings::TYPE_8UC1,
-    sensor_msgs::image_encodings::TYPE_8UC1,
-    sensor_msgs::image_encodings::TYPE_8UC1
-};
-
-int unit_step_size_[STREAM_COUNT] = {
-    sizeof(uint16_t),
-    sizeof(unsigned char) * 3,
-    sizeof(unsigned char),
-    sizeof(unsigned char),
-    sizeof(unsigned char)
-};
-
-int step_[STREAM_COUNT] = {};
-std::string optical_frame_id_[STREAM_COUNT] = {
-    "camera_depth_optical_frame",
-    "camera_rgb_optical_frame",
-    "camera_ir_optical_frame",
-    "camera_ir2_optical_frame",
-    "camera_fisheye_optical_frame"
-};
-
-std::string optical_imu_id_[2] = {"imu_accel_frame_id","imu_gyro_frame_id"};
+// ZR300 specific types
 bool isZR300 = false;
+ros::Publisher accelInfo_publisher_, gyroInfo_publisher_, fe2imu_publisher_, fe2depth_publisher_;
+ros::Publisher imu_publishers_[2] = {};//accel 0 gyro 1
+int seq_motion[2]= {0,0};
+std::string optical_imu_id_[2] = {"imu_accel_frame_id","imu_gyro_frame_id"};
+
 
 namespace realsense_ros_camera
 {
@@ -137,13 +111,25 @@ namespace realsense_ros_camera
     public:
         NodeletCamera() 
         {
+            // libRealsense format types for stream
+            format_[rs::stream::depth] = rs::format::z16;
+            format_[rs::stream::color] = rs::format::rgb8;
+            format_[rs::stream::fisheye] = rs::format::raw8;
+
+            // CVBridge native image types
             image_format_[rs::stream::depth] = CV_16UC1;
             image_format_[rs::stream::color] = CV_8UC3;
             image_format_[rs::stream::fisheye] = CV_8UC1;
 
-            format_[rs::stream::depth] = rs::format::z16;
-            format_[rs::stream::color] = rs::format::rgb8;
-            format_[rs::stream::fisheye] = rs::format::raw8;
+            // ROS sensor_msgs::ImagePtr encoding types
+            encoding_[rs::stream::depth] = sensor_msgs::image_encodings::TYPE_16UC1;
+            encoding_[rs::stream::color] = sensor_msgs::image_encodings::RGB8;
+            encoding_[rs::stream::fisheye] = sensor_msgs::image_encodings::TYPE_8UC1;
+
+            // ROS sensor_msgs::ImagePtr row step sizes
+            unit_step_size_[rs::stream::depth] = sizeof(uint16_t);
+            unit_step_size_[rs::stream::color] = sizeof(unsigned char) * 3;
+            unit_step_size_[rs::stream::fisheye] = sizeof(unsigned char);
         }
 
         virtual ~NodeletCamera()
@@ -159,7 +145,10 @@ namespace realsense_ros_camera
         virtual void onInit()
         {
             getParameters();
-            setupDevice();
+            
+            if(false == setupDevice())
+                return;
+
             setupPublishers();        
             setupStreams();
         }//end onInit
@@ -168,6 +157,8 @@ namespace realsense_ros_camera
         void getParameters()
         {
           pnh_ = getPrivateNodeHandle();
+
+          pnh_.param("serial_no", serial_no, DEFAULT_SERIAL_NO);
 
           pnh_.param("depth_width", width_[rs::stream::depth], DEPTH_WIDTH);
           pnh_.param("depth_height", height_[rs::stream::depth], DEPTH_HEIGHT);
@@ -183,55 +174,68 @@ namespace realsense_ros_camera
           pnh_.param("fisheye_height", height_[rs::stream::fisheye], FISHEYE_HEIGHT);
           pnh_.param("fisheye_fps", fps_[rs::stream::fisheye], FISHEYE_FPS);
           pnh_.param("enable_fisheye", enable_[rs::stream::fisheye], false);
+
+          pnh_.param("depth_optical_frame_id", optical_frame_id_[rs::stream::depth], DEFAULT_DEPTH_OPTICAL_FRAME_ID);
+          pnh_.param("color_optical_frame_id", optical_frame_id_[rs::stream::color], DEFAULT_COLOR_OPTICAL_FRAME_ID);
+          pnh_.param("fisheye_optical_frame_id", optical_frame_id_[rs::stream::fisheye], DEFAULT_FISHEYE_OPTICAL_FRAME_ID);
+          pnh_.param("accel_optical_frame_id", optical_frame_id_accel, DEFAULT_ACCEL_OPTICAL_FRAME_ID);
+          pnh_.param("gyro_optical_frame_id", optical_frame_id_gyro, DEFAULT_GYRO_OPTICAL_FRAME_ID);
         }//end getParameters
 
 
-        void setupDevice()
+        bool setupDevice()
         {
-            ros::NodeHandle node_handle = getNodeHandle();
-            node_handle.param<std::string>("serial_no", serial_no, "");
-
             ctx.reset(new rs::context());
             int num_of_cams = ctx -> get_device_count();
             if (num_of_cams == 0)
             {
-                ROS_ERROR("error : can't find devices");
-                exit(0);
+                ROS_ERROR("error : no RealSense R200, LR200, or ZR300 devices found.");
+                ctx.reset();
+                return false;
             }
+
             rs::device *detected_dev;
             for (int i = 0; i < num_of_cams; i++)
             {
-                detected_dev = ctx -> get_device(i);
-                detected_dev -> get_serial();
-                serial_no.empty();
-                if(serial_no.empty() || (serial_no == std::string(detected_dev -> get_serial())))
+                detected_dev = ctx->get_device(i);
+                detected_dev->get_serial();
+                if(serial_no.empty() || (serial_no == std::string(detected_dev->get_serial())))
                 {
                     device = detected_dev;
-                    ROS_INFO_STREAM("device serial No.: "<<std::string(device -> get_serial()));
+                    ROS_INFO_STREAM("RealSense device serial_no: " << std::string(device ->get_serial()));
                     break;
                 }
             }
+
             if (device == nullptr)
             {
-                ROS_ERROR_STREAM("Couldn't find camera to connect with serial_no = " << serial_no);
-                return;
+                ROS_ERROR_STREAM("No RealSense device with serial_no = " << serial_no << " found.");
+                ctx.reset();
+                return false;
             }
+
             auto device_name = device -> get_name();
             ROS_INFO_STREAM(device_name);
-            if (std::string(device_name).find("ZR300") == std::string::npos) {
+            if (std::string(device_name).find("ZR300") == std::string::npos) 
+            {
                 isZR300 = false;
                 enable_[rs::stream::fisheye] = false;
 
-                if ((std::string(device_name).find("R200") == std::string::npos) && (std::string(device_name).find("SR300") == std::string::npos))
+                if ((std::string(device_name).find("F200") == std::string::npos) && (std::string(device_name).find("SR300") == std::string::npos))
                 {
-                    ROS_INFO_STREAM("Please use ZR300, LR200 or SR300");
-                    return;
+                    ROS_INFO_STREAM("This ROS node supports R200, LR200, and ZR300 only.  See https://github.com/intel-ros/realsense for F200 and SR300 support.");
+                    ctx.reset();
+                    return false;
                 }
             }
-            else {
+            else 
+            {
+                // Only enable ZR300 functionality if fisheye stream is enabled.  Accel/Gyro automatically enabled when fisheye requested
                 if( true == enable_[rs::stream::fisheye])
                     isZR300 = true;
-            }    
+            }   
+
+            return true; 
         }//end setupDevice
 
 
@@ -273,14 +277,12 @@ namespace realsense_ros_camera
         void setupStreams()
         {
             const rs::stream All[] = { rs::stream::depth, rs::stream::color, rs::stream::fisheye };
-
             for ( const auto stream : All )
             {
                 if( false == enable_[stream])
                     continue;
 
-                image_[(int32_t)stream] = cv::Mat(camera_info_[stream].height, camera_info_[stream].width, image_format_[stream], cv::Scalar(0,0,0));
-
+                // Define lambda callback for receiving stream data
                 stream_callback_per_stream[stream] = [stream](rs::frame frame)
                 {
                     if (isZR300)
@@ -293,27 +295,34 @@ namespace realsense_ros_camera
                             return ;
                         }
                     }
-                    int32_t stream_nb = (int32_t) stream;
-                    image_[stream_nb].data = (unsigned char *) frame.get_data();
-                    image_msg_[stream_nb] = cv_bridge::CvImage(std_msgs::Header(), encoding_[stream_nb], image_[stream_nb]).toImageMsg();
-                    image_msg_[stream_nb]->header.frame_id = optical_frame_id_[stream_nb];
-                    image_msg_[stream_nb]->header.stamp = ros::Time(frame.get_timestamp());
-                    image_msg_[stream_nb]->header.seq = seq[stream_nb];
-                    image_msg_[stream_nb]->width = image_[stream_nb].cols;
-                    image_msg_[stream_nb]->height = image_[stream_nb].rows;
-                    image_msg_[stream_nb]->is_bigendian = false;
-                    image_msg_[stream_nb]->step = image_[stream_nb].cols * unit_step_size_[stream_nb];
-                    seq[stream_nb] += 1;
 
-                    image_publishers_[stream].publish(image_msg_[stream_nb]);
+                    image_[stream].data = (unsigned char *) frame.get_data();
+
+                    sensor_msgs::ImagePtr img;
+                    img = cv_bridge::CvImage(std_msgs::Header(), encoding_[stream], image_[stream]).toImageMsg();
+                    img->header.frame_id = optical_frame_id_[stream];
+                    img->header.stamp = ros::Time(frame.get_timestamp());
+                    img->header.seq = seq_[stream];
+                    img->width = image_[stream].cols;
+                    img->height = image_[stream].rows;
+                    img->is_bigendian = false;
+                    img->step = image_[stream].cols * unit_step_size_[stream];
+                    seq_[stream] += 1;
+
+                    image_publishers_[stream].publish(img);
                 };
 
+                // Enable the stream
                 device->enable_stream(stream, width_[stream], height_[stream], format_[stream], fps_[stream]);
-                device->set_frame_callback(stream, stream_callback_per_stream[stream]);
 
-                // Publish stream info
-                getStreamCalibData(stream);
-                info_publisher_[stream].publish(camera_info_[stream]);
+                // Publish info about the stream
+                sensor_msgs::CameraInfo info;
+                getStreamCalibData(stream,info);
+                info_publisher_[stream].publish(info);
+
+                // Setup stream callback for stream
+                image_[stream] = cv::Mat(info.height, info.width, image_format_[stream], cv::Scalar(0,0,0));
+                device->set_frame_callback(stream, stream_callback_per_stream[stream]);
             }//end for
             
 
@@ -354,7 +363,7 @@ namespace realsense_ros_camera
                 
                 std::function<void(rs::timestamp_data)> timestamp_callback;
                 timestamp_callback = [](rs::timestamp_data entry) {};
-                
+
                 device->enable_motion_tracking(motion_callback, timestamp_callback);
                         
                 // publish ZR300-specific intrinsics/extrinsics
@@ -374,85 +383,88 @@ namespace realsense_ros_camera
         }//end setupStreams
 
 
-        void getStreamCalibData(rs::stream stream)
+        void getStreamCalibData(rs::stream stream, sensor_msgs::CameraInfo& camera_info)
         {
             rs::intrinsics intrinsic = device->get_stream_intrinsics(stream);
-            camera_info_[stream].header.frame_id = optical_frame_id_[(int32_t)stream];
-            camera_info_[stream].width = intrinsic.width;
-            camera_info_[stream].height = intrinsic.height;
 
-            camera_info_[stream].K.at(0) = intrinsic.fx;
-            camera_info_[stream].K.at(2) = intrinsic.ppx;
-            camera_info_[stream].K.at(4) = intrinsic.fy;
-            camera_info_[stream].K.at(5) = intrinsic.ppy;
-            camera_info_[stream].K.at(8) = 1;
+            camera_info.header.frame_id = optical_frame_id_[stream];
+            camera_info.width = intrinsic.width;
+            camera_info.height = intrinsic.height;
 
-            camera_info_[stream].P.at(0) = camera_info_[stream].K.at(0);
-            camera_info_[stream].P.at(1) = 0;
-            camera_info_[stream].P.at(2) = camera_info_[stream].K.at(2);
-            camera_info_[stream].P.at(3) = 0;
-            camera_info_[stream].P.at(4) = 0;
-            camera_info_[stream].P.at(5) = camera_info_[stream].K.at(4);
-            camera_info_[stream].P.at(6) = camera_info_[stream].K.at(5);
-            camera_info_[stream].P.at(7) = 0;
-            camera_info_[stream].P.at(8) = 0;
-            camera_info_[stream].P.at(9) = 0;
-            camera_info_[stream].P.at(10) = 1;
-            camera_info_[stream].P.at(11) = 0;
+            camera_info.K.at(0) = intrinsic.fx;
+            camera_info.K.at(2) = intrinsic.ppx;
+            camera_info.K.at(4) = intrinsic.fy;
+            camera_info.K.at(5) = intrinsic.ppy;
+            camera_info.K.at(8) = 1;
+
+            camera_info.P.at(0) = camera_info.K.at(0);
+            camera_info.P.at(1) = 0;
+            camera_info.P.at(2) = camera_info.K.at(2);
+            camera_info.P.at(3) = 0;
+            camera_info.P.at(4) = 0;
+            camera_info.P.at(5) = camera_info.K.at(4);
+            camera_info.P.at(6) = camera_info.K.at(5);
+            camera_info.P.at(7) = 0;
+            camera_info.P.at(8) = 0;
+            camera_info.P.at(9) = 0;
+            camera_info.P.at(10) = 1;
+            camera_info.P.at(11) = 0;
             
             if (stream == rs::stream::depth)
             {
                 // set depth to color translation values in Projection matrix (P)
                 rs::extrinsics extrinsic = device->get_extrinsics(rs::stream::depth, rs::stream::color);
-                camera_info_[stream].P.at(3) = extrinsic.translation[0];     // Tx
-                camera_info_[stream].P.at(7) = extrinsic.translation[1];     // Ty
-                camera_info_[stream].P.at(11) = extrinsic.translation[2];    // Tz
+                camera_info.P.at(3) = extrinsic.translation[0];     // Tx
+                camera_info.P.at(7) = extrinsic.translation[1];     // Ty
+                camera_info.P.at(11) = extrinsic.translation[2];    // Tz
 
                 for (int i = 0; i < 9; i++)
-                    camera_info_[stream].R.at(i) = extrinsic.rotation[i];
+                    camera_info.R.at(i) = extrinsic.rotation[i];
             }
             
             switch((int32_t)intrinsic.model())
             {
             case 0:
-                camera_info_[stream].distortion_model = "none";
+                camera_info.distortion_model = "none";
                 break;
             case 1:
-                camera_info_[stream].distortion_model = "modified_brown_conrady";
+                camera_info.distortion_model = "modified_brown_conrady";
                 break;
             case 2:
-                camera_info_[stream].distortion_model = "inverse_brown_conrady";
+                camera_info.distortion_model = "inverse_brown_conrady";
                 break;
             case 3:
-                camera_info_[stream].distortion_model = "distortion_ftheta";
+                camera_info.distortion_model = "distortion_ftheta";
                 break;
             default:
-                camera_info_[stream].distortion_model = "others";
+                camera_info.distortion_model = "others";
                 break;
             }
             
             // set R (rotation matrix) values to identity matrix
             if (stream != rs::stream::depth)
             {
-                camera_info_[stream].R.at(0) = 1.0;
-                camera_info_[stream].R.at(1) = 0.0;
-                camera_info_[stream].R.at(2) = 0.0;
-                camera_info_[stream].R.at(3) = 0.0;
-                camera_info_[stream].R.at(4) = 1.0;
-                camera_info_[stream].R.at(5) = 0.0;
-                camera_info_[stream].R.at(6) = 0.0;
-                camera_info_[stream].R.at(7) = 0.0;
-                camera_info_[stream].R.at(8) = 1.0;
+                camera_info.R.at(0) = 1.0;
+                camera_info.R.at(1) = 0.0;
+                camera_info.R.at(2) = 0.0;
+                camera_info.R.at(3) = 0.0;
+                camera_info.R.at(4) = 1.0;
+                camera_info.R.at(5) = 0.0;
+                camera_info.R.at(6) = 0.0;
+                camera_info.R.at(7) = 0.0;
+                camera_info.R.at(8) = 1.0;
             }
             
             for (int i = 0; i < 5; i++)
             {
-                camera_info_[stream].D.push_back(intrinsic.coeffs[i]);
+                camera_info.D.push_back(intrinsic.coeffs[i]);
             }
         }//end getStreamCalibData
 
     private:
         ros::NodeHandle node_handle, pnh_;
+
+        std::unique_ptr< rs::context > ctx; 
         rs::device *device;
 
         std::string serial_no;
@@ -462,11 +474,7 @@ namespace realsense_ros_camera
         std::map<rs::stream,int> width_;
         std::map<rs::stream,int> height_;
         std::map<rs::stream,int> fps_;
-        std::map<rs::stream,bool> enable_;
-
-        std::unique_ptr< rs::context > ctx; 
-
-        std::map< rs::stream, std::function< void (rs::frame) > > stream_callback_per_stream;       
+        std::map<rs::stream,bool> enable_;      
     };//end class
 
 PLUGINLIB_DECLARE_CLASS(realsense_ros_camera, NodeletCamera, realsense_ros_camera::NodeletCamera, nodelet::Nodelet);
