@@ -6,7 +6,8 @@
 
 namespace realsense_ros_person {
     struct PersonTrackingConfig {
-        bool gesturesEnabled;
+        bool pointingGestureEnabled;
+        bool waveGestureEnabled;
         bool skeletonEnabled;
         bool recognitionEnabled;
         bool trackingEnabled;
@@ -16,7 +17,8 @@ namespace realsense_ros_person {
 
     public:
         PersonTrackingConfig() :
-                gesturesEnabled(false),
+                pointingGestureEnabled(false),
+                waveGestureEnabled(false),
                 skeletonEnabled(false),
                 recognitionEnabled(false),
                 trackingEnabled(false),
