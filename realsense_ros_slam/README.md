@@ -116,6 +116,10 @@ To start realsense_ros_slam and realsense_ros_camera:
 - `str::string`, default: 'occupancy.bin'
 - The name of occupancy data file to output. 
 
+`resolution`
+- `float`
+- Sets the size of the grid squares in the occupancy map, in meters.
+
 The files will be saved in the realsense_ros_slam directory.
 
 ## Usage
