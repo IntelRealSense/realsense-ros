@@ -216,7 +216,7 @@ namespace realsense_ros_camera
 
             if (device == nullptr)
             {
-                ROS_ERROR_STREAM("No RealSense device with serial_no = " << serial_no << " found.");
+                ROS_ERROR_STREAM("error: No RealSense device with serial_no = " << serial_no << " found.");
                 ctx.reset();
                 return false;
             }
@@ -228,9 +228,9 @@ namespace realsense_ros_camera
                 isZR300 = false;
                 enable_[rs::stream::fisheye] = false;
 
-                if ((std::string(device_name).find("F200") == std::string::npos) && (std::string(device_name).find("SR300") == std::string::npos))
+                if ((std::string(device_name).find("R200") == std::string::npos) && (std::string(device_name).find("LR200") == std::string::npos))
                 {
-                    ROS_INFO_STREAM("This ROS node supports R200, LR200, and ZR300 only.  See https://github.com/intel-ros/realsense for F200 and SR300 support.");
+                    ROS_ERROR_STREAM("error: This ROS node supports R200, LR200, and ZR300 only.  See https://github.com/intel-ros/realsense for F200 and SR300 support.");
                     ctx.reset();
                     return false;
                 }
