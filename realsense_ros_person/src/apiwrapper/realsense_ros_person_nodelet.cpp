@@ -1,3 +1,6 @@
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2016 Intel Corporation. All Rights Reserved
+
 #include "realsense_ros_person_nodelet.h"
 
 PLUGINLIB_EXPORT_CLASS(realsense_ros_person::TNodeletPt, nodelet::Nodelet)
