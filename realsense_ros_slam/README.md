@@ -1,11 +1,11 @@
-ROS Node for Intel® RealSense™ SLAM Library
-=========================================
+# ROS Node for Intel® RealSense™ SLAM Library
 
 This package contains a ROS wrapper for Intel's SLAM library. The realsense_ros_slam package provides a solution for SLAM as a ROS nodelet. It consumes the messages sent by the realsense_ros_camera nodelet, and publishes messages for the camera pose and occupancy map.
 
-1. Hardware/Software Requirements
-----------------------------------------------
-  To use realsense_ros_slam, you need a mobile agent with a RealSense ZR300 camera.
+## Hardware/Software Requirements
+
+To use realsense_ros_slam, you need a mobile agent with a RealSense ZR300 camera.
+
 ###  Ubuntu requirements:
 - Ubuntu 16.04
 - gcc 4.9.3
@@ -17,16 +17,9 @@ This package contains a ROS wrapper for Intel's SLAM library. The realsense_ros_
 - librealsense_slam
 - Link: https://securewiki.ith.intel.com/pages/viewpage.action?pageId=510951805
 
-2. Example 
---------------------------------------------
-To start realsense_ros_slam and realsense_ros_camera:
-`roslaunch realsense_ros_slam demo_slam.launch`
+## Inputs and Outputs
 
-3. Nodelet
---------------------------------------------
-## 3 realsense_ros_slam 
-
-###  3.1 Subscribed Topics
+### Subscribed Topics
 
 `/camera/fisheye/image_raw`
 
@@ -78,7 +71,7 @@ To start realsense_ros_slam and realsense_ros_camera:
 - Message type: `realsense_ros_camera::Extrinsics`
 - Fisheye to depth extrinsics
         
-###  3.2 Published Topics
+### Published Topics
 
 `/camera_pose`
 
@@ -100,7 +93,7 @@ To start realsense_ros_slam and realsense_ros_camera:
 - Message type: `nav_msgs::OccupancyGrid`
 - The occupancy map
 
-###  3.3 Parameters
+### Parameters
 
 `trajectoryFilename` 
 
@@ -158,4 +151,5 @@ Start the SLAM nodelet as shown above, then run rviz:
 $ rviz
 ```
 
-In rviz, add Pose and Map elements and select the `/camera_pose` and `/map` message types, respectively.
+In rviz, add Pose and Map visualizations (click Add button near bottom left). Select the `/camera_pose` message for the Pose and th `/map` message for the Map visualization.
+
