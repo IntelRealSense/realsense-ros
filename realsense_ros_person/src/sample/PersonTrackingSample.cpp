@@ -24,22 +24,25 @@ PersonTrackingSample::PersonTrackingSample() : m_viewer(false), m_trackingRender
 void PersonTrackingSample::ProcessCommandLineArgs()
 {
     ros::NodeHandle nodeHandle("~");
-    nodeHandle.getParam("skeleton", mEnableSkeleton);
+    nodeHandle.param<bool>("skeletonEnabled", mEnableSkeleton, false);
     ROS_INFO_STREAM("mEnableSkeleton = " << mEnableSkeleton);
 
-    nodeHandle.getParam("recognition", mEnableRecognition);
+    nodeHandle.param<bool>("recognitionEnabled", mEnableRecognition, false);
     ROS_INFO_STREAM("mEnableRecognition = " << mEnableRecognition);
 
-    nodeHandle.getParam("gestures", mEnableGestures);
-    ROS_INFO_STREAM("mEnableGestures = " << mEnableGestures);
+    nodeHandle.param<bool>("pointingGestureEnabled", mEnablePointingGesture, false);
+    ROS_INFO_STREAM("mEnablePointingGesture = " << mEnablePointingGesture);
 
-    nodeHandle.getParam("landmarks", mEnableLandmarks);
+    nodeHandle.param<bool>("waveGestureEnabled", mEnableWaveGesture, false);
+    ROS_INFO_STREAM("mEnableWaveGesture = " << mEnableWaveGesture);
+
+    nodeHandle.param<bool>("landmarksEnabled", mEnableLandmarks, false);
     ROS_INFO_STREAM("mEnableLandmarks = " << mEnableLandmarks);
 
-    nodeHandle.getParam("headBoundingBox", mEnableHeadBoundingBox);
+    nodeHandle.param<bool>("headBoundingBoxEnabled", mEnableHeadBoundingBox, false);
     ROS_INFO_STREAM("headBoundingBox = " << mEnableHeadBoundingBox);
 
-    nodeHandle.getParam("headPose", mEnableHeadPose);
+    nodeHandle.param<bool>("headPoseEnabled", mEnableHeadPose, false);
     ROS_INFO_STREAM("headPose = " << mEnableHeadPose);
 }
 
@@ -59,7 +62,8 @@ void PersonTrackingSample::EnableTrackingFeatures(ros::NodeHandle& nodeHandle)
     realsense_ros_person::TrackingConfig config;
     config.request.enableRecognition = mEnableRecognition;
     config.request.enableSkeleton = mEnableSkeleton;
-    config.request.enableGestures = mEnableGestures;
+    config.request.enablePointingGesture = mEnablePointingGesture;
+    config.request.enableWaveGesture = mEnableWaveGesture;
     config.request.enableLandmarks = mEnableLandmarks;
     config.request.enableHeadBoundingBox = mEnableHeadBoundingBox;
     config.request.enableHeadPose = mEnableHeadPose;
@@ -167,8 +171,7 @@ void PersonTrackingSample::DrawFace(cv::Mat& colorImage, realsense_ros_person::U
 
 void PersonTrackingSample::DrawPersonGestures(cv::Mat& colorImage, realsense_ros_person::User& user)
 {
-    if (!mEnableGestures) return;
-
+    if (!mEnablePointingGesture) return;
 
     if (user.gestures.pointing.confidence > 0)
     {

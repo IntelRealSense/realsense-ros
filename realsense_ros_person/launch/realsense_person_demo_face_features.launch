@@ -1,0 +1,23 @@
+<launch>
+
+  <include file="$(find realsense_ros_camera)/launch/camera.launch">
+    <arg name="depth_width" value="320"/>
+    <arg name="depth_height" value="240"/>
+    <arg name="color_width" value="1920"/>
+    <arg name="color_height" value="1080"/>
+  </include>
+
+  <include file="$(find realsense_ros_person)/launch/person_tracking.launch"/>
+
+    <node pkg="realsense_ros_person" type="realsense_ros_person_sample" name="realsense_ros_person_sample"
+            args="load realsense_ros_person/realsense_ros_person_sample node" output="screen">
+            <param name="recognitionEnabled"      type="bool"  value="true" />
+            <param name="skeletonEnabled"         type="bool"  value="false" />
+            <param name="pointingGestureEnabled"  type="bool"  value="false" />
+            <param name="waveGestureEnabled"      type="bool"  value="false" />
+            <param name="landmarksEnabled"        type="bool"  value="true" />
+            <param name="headBoundingBoxEnabled"  type="bool"  value="true" />
+            <param name="headPoseEnabled"         type="bool"  value="true" />
+        </node>
+
+</launch> 

@@ -34,11 +34,13 @@ namespace realsense_ros_person
                                                              realsense_ros_person::TrackingConfig::Response &response)
     {
         mConfig.recognitionEnabled = request.enableRecognition;
-        mConfig.gesturesEnabled = request.enableGestures;
+        mConfig.pointingGestureEnabled = request.enablePointingGesture;
+        mConfig.waveGestureEnabled = request.enableWaveGesture;
         mConfig.skeletonEnabled = request.enableSkeleton;
         mConfig.headBoundingBoxEnabled = request.enableHeadBoundingBox;
         mConfig.landmarksEnabled = request.enableLandmarks;
         mConfig.headPoseEnabled = request.enableHeadPose;
+        mConfig.trackingEnabled = true;
         ConfigurePersonTracking(mConfig, mPersonTracking->QueryConfiguration());
         response.status = true;
         return true;

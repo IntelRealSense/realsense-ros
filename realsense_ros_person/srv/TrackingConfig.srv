@@ -1,6 +1,7 @@
 bool enableRecognition
 bool enableSkeleton
-bool enableGestures
+bool enablePointingGesture
+bool enableWaveGesture
 bool enableLandmarks
 bool enableHeadBoundingBox
 bool enableHeadPose
