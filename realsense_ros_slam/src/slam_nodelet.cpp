@@ -5,8 +5,14 @@
 #include <tf2/convert.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Vector3.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
 #include <realsense_ros_slam/TrackingAccuracy.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
+#include <tf/transform_broadcaster.h>
 
 PLUGINLIB_EXPORT_CLASS(realsense_ros_slam::SNodeletSlam, nodelet::Nodelet)
 
@@ -21,7 +27,7 @@ std::string relocalizationFilename;
 std::string occupancyFilename;
 double resolution;
 
-ros::Publisher pub_pose2d, pub_pose, pub_accuracy;
+ros::Publisher pub_pose2d, pub_pose, pub_accuracy, pub_odom;
 geometry_msgs::Pose2D pose2d;
 ros::Publisher mapPub;
 
@@ -29,6 +35,9 @@ IplImage * ipNavMap = NULL;
 std::vector< stRobotPG > g_robotPGStack;
 std::vector< CvPoint > g_relocalizationPointStack;
 
+tf2_ros::Buffer tfBuffer;
+tf2_ros::TransformListener tfListener(tfBuffer);
+tf::TransformBroadcaster tfBroadcaster;
 
 namespace realsense_ros_slam
 {
@@ -280,6 +289,119 @@ void imuInfoMsgToRSImuIntrinsics(const realsense_ros_camera::IMUInfoConstPtr &im
     }
 }
 
+tf2::Quaternion quaternionFromPoseMatrix(rs::slam::PoseMatrix4f cameraPose)
+{
+    tf2::Matrix3x3 rotMat = tf2::Matrix3x3(
+        cameraPose.at(0,0),
+        cameraPose.at(0,1),
+        cameraPose.at(0,2),
+        cameraPose.at(1,0),
+        cameraPose.at(1,1),
+        cameraPose.at(1,2),
+        cameraPose.at(2,0),
+        cameraPose.at(2,1),
+        cameraPose.at(2,2)
+    );
+    
+    tf2::Quaternion quat;
+    rotMat.getRotation(quat);
+    return quat;
+}
+    
+geometry_msgs::Pose pose_matrix_to_msg(rs::slam::PoseMatrix4f camera_pose)
+{
+    tf2::Quaternion quat = quaternionFromPoseMatrix(camera_pose);
+    
+    // Rotate pose to match ROS coordinate system
+    tf2::Quaternion quatYaw90(-0.5 * M_PI, 0, 0);
+    tf2::Quaternion quatPitch90(0, 0.5 * M_PI, 0);    
+    tf2::Quaternion quatRotated = quat * quatYaw90 * quatPitch90;
+    
+    geometry_msgs::Quaternion quat_msg;
+    tf2::convert<tf2::Quaternion, geometry_msgs::Quaternion>(quatRotated, quat_msg);
+    
+    geometry_msgs::Point point_msg;
+    point_msg.x = camera_pose.at(0,3);
+    point_msg.y = camera_pose.at(1,3);
+    point_msg.z = camera_pose.at(2,3);
+    
+    geometry_msgs::Pose pose_msg;
+    pose_msg.orientation = quat_msg;
+    pose_msg.position = point_msg;
+    return pose_msg;
+}
+
+geometry_msgs::PoseStamped get_pose_stamped_msg(rs::slam::PoseMatrix4f cameraPose, uint64_t frameNum, double timestamp_ms)
+{
+    std_msgs::Header header;
+    header.stamp = ros::Time(timestamp_ms / 1000);
+    header.frame_id = "camera_link";        
+    if (frameNum > INT32_MAX)
+    {
+        header.seq = frameNum - INT32_MAX;
+    }
+    else
+    {
+        header.seq = frameNum;
+    }
+    
+    geometry_msgs::PoseStamped pose_stamped_msg;
+    pose_stamped_msg.header = header;
+    pose_stamped_msg.pose = pose_matrix_to_msg(cameraPose);
+    return pose_stamped_msg;
+}
+
+nav_msgs::Odometry get_odom_msg(geometry_msgs::PoseStamped camera_pose_msg)
+{    
+    /*geometry_msgs::TransformStamped base2cameraMsg;
+    try
+    {
+        base2cameraMsg = tfBuffer.lookupTransform("camera_link", "base_link", ros::Time(0));
+    }
+    catch (tf2::TransformException &e)
+    {
+        ROS_WARN("%s", e.what());
+    }
+        
+    geometry_msgs::PoseStamped transformed_camera_pose_msg;
+    tf2::doTransform<geometry_msgs::PoseStamped>(camera_pose_msg, transformed_camera_pose_msg, base2cameraMsg); */      
+            
+    nav_msgs::Odometry odomMsg;
+    odomMsg.header = camera_pose_msg.header;
+    odomMsg.header.frame_id = "odom";
+    odomMsg.pose.pose = camera_pose_msg.pose;
+    return odomMsg;
+}
+
+geometry_msgs::Vector3 vec3_from_point(geometry_msgs::Point point)
+{
+    geometry_msgs::Vector3 vec3;
+    vec3.x = point.x;
+    vec3.y = point.y;
+    vec3.z = point.z;
+    return vec3;
+}
+
+geometry_msgs::TransformStamped get_odom2base_tf_msg(nav_msgs::Odometry odom_msg)
+{
+//     tf2::Quaternion quat;
+//     tf2::convert<geometry_msgs::Quaternion, tf2::Quaternion>(odom_msg.pose.pose.orientation, quat);
+//     
+//     tf2::Quaternion quatRoll90(0, 0, 0.5 * M_PI);
+//     tf2::Quaternion quatPitch90(0, 0.5 * M_PI, 0);    
+//     tf2::Quaternion quatRotated = quat * quatRoll90 * quatPitch90;
+//     
+//     geometry_msgs::Quaternion quatMsg;
+//     tf2::convert<tf2::Quaternion, geometry_msgs::Quaternion>(quatRotated, quatMsg);
+    
+    geometry_msgs::TransformStamped tf_msg;
+    tf_msg.header = odom_msg.header;
+    tf_msg.child_frame_id = "base_link";
+    tf_msg.transform.rotation = odom_msg.pose.pose.orientation;
+    tf_msg.transform.translation = vec3_from_point(odom_msg.pose.pose.position);
+    return tf_msg;
+}
+
 class slam_event_handler : public rs::core::video_module_interface::processing_event_handler
 {
 public:
@@ -287,51 +409,6 @@ public:
     slam_event_handler()
     {
         std::cout<<"created.........."<<std::endl;
-    }
-    
-    void publishPoseMsg(rs::slam::PoseMatrix4f cameraPose, uint64_t frameNum, double timeStamp)
-    {
-        tf2::Matrix3x3 rotMat = tf2::Matrix3x3(
-            cameraPose.at(0,0),
-            cameraPose.at(0,1),
-            cameraPose.at(0,2),
-            cameraPose.at(1,0),
-            cameraPose.at(1,1),
-            cameraPose.at(1,2),
-            cameraPose.at(2,0),
-            cameraPose.at(2,1),
-            cameraPose.at(2,2)
-        );
-        
-        tf2::Quaternion quat;
-        rotMat.getRotation(quat);
-        
-        geometry_msgs::Quaternion quat_msg;
-        tf2::convert<tf2::Quaternion, geometry_msgs::Quaternion>(quat, quat_msg);
-        
-        geometry_msgs::Point point_msg;
-        point_msg.x = cameraPose.at(0,3);
-        point_msg.y = cameraPose.at(1,3);
-        point_msg.z = cameraPose.at(2,3);
-        
-        std_msgs::Header header;
-        header.stamp = ros::Time(timeStamp);
-        header.frame_id = "camera_link";        
-        if (frameNum > INT32_MAX)
-        {
-            header.seq = frameNum - INT32_MAX;
-        }
-        else
-        {
-            header.seq = frameNum;
-        }
-        
-        geometry_msgs::PoseStamped pose_msg;
-        pose_msg.header = header;
-        pose_msg.pose.orientation = quat_msg;
-        pose_msg.pose.position = point_msg;
-        
-        pub_pose.publish(pose_msg);
     }
 
     void module_output_ready(rs::core::video_module_interface * sender, rs::core::correlated_sample_set * sample)
@@ -341,8 +418,19 @@ public:
         double feTimeStamp = sample->images[static_cast<uint8_t>(rs::core::stream_type::fisheye)]->query_time_stamp();
         
         rs::slam::PoseMatrix4f cameraPose;
-        slamPtr->get_camera_pose(cameraPose);                
-        publishPoseMsg(cameraPose, feFrameNum, feTimeStamp);
+        slamPtr->get_camera_pose(cameraPose);    
+        
+        // Publish camera pose
+        geometry_msgs::PoseStamped pose_msg = get_pose_stamped_msg(cameraPose, feFrameNum, feTimeStamp);
+        pub_pose.publish(pose_msg);
+        
+        // Publish odometry message
+        nav_msgs::Odometry odom_msg = get_odom_msg(pose_msg);
+        pub_odom.publish(odom_msg);
+        
+        // Publish odom to base_link transform
+        geometry_msgs::TransformStamped odom2base_tf_msg = get_odom2base_tf_msg(odom_msg);
+        tfBroadcaster.sendTransform(odom2base_tf_msg);
         
         rs::slam::tracking_accuracy accuracy = slamPtr->get_tracking_accuracy();
         TrackingAccuracy accuracyMsg;
@@ -423,6 +511,7 @@ void SNodeletSlam::onInit()
 {
     nh = getMTNodeHandle();
     pub_pose = nh.advertise< geometry_msgs::PoseStamped >("camera_pose", 1, true);
+    pub_odom = nh.advertise< nav_msgs::Odometry >("odometry", 1, true);
     pub_accuracy = nh.advertise< realsense_ros_slam::TrackingAccuracy >("tracking_accuracy", 1, true);
     pub_pose2d = nh.advertise< geometry_msgs::Pose2D >("pose2d", 2, true);
     mapPub = nh.advertise< nav_msgs::OccupancyGrid >("map", 1, true);
@@ -465,6 +554,7 @@ void SNodeletSlam::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& dep
 
     std::unique_ptr<rs::slam::slam> slam(new rs::slam::slam());
     slam->set_occupancy_map_resolution(resolution);
+    slam->force_relocalization_pose(false);
 
     slam_event_handler scenePerceptionEventHandler;
     slam->register_event_handler(&scenePerceptionEventHandler);
@@ -526,9 +616,9 @@ void SNodeletSlam::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& dep
         r.sleep();
     }
 
-    std::cout << "occupancy ppm:" << slam->save_occupancy_map_as_ppm(pkgpath + trajectoryFilename, true) << std::endl;
-    std::cout << "Save Relocalozation:" << slam->save_relocalization_map(pkgpath + relocalizationFilename) << std::endl;
-    std::cout << "Save occupancy:" << slam->save_occupancy_map(pkgpath + occupancyFilename) << std::endl;
+//     std::cout << "occupancy ppm:" << slam->save_occupancy_map_as_ppm(pkgpath + trajectoryFilename, true) << std::endl;
+//     std::cout << "Save Relocalozation:" << slam->save_relocalization_map(pkgpath + relocalizationFilename) << std::endl;
+//     std::cout << "Save occupancy:" << slam->save_occupancy_map(pkgpath + occupancyFilename) << std::endl;
     slam->flush_resources();
 }//end of callback
 
