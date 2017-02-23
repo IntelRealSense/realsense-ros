@@ -137,8 +137,7 @@ install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
 )
 
-#TODO update test_nodelet.xml
 # Install xml files
-install(FILES test_nodelet.xml
+install(FILES nodelet_plugins.xml 
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

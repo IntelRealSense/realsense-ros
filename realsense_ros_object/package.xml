@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <package>
-  <name>realsense_ros_object</name> <version>0.0.0</version>
-  <description>object tracking package</description>
-  <maintainer email="shoshana.skurnik@intel.com">Shoshana Skurnik</maintainer>
+  <name>realsense_ros_object</name> 
+  <version>1.0.0</version>
+  <description>The realsense_ros_object package</description>
+  <maintainer email="realsense-sw@intel.com">Intel RealSense</maintainer>
   <license>Apache 2.0</license>
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
@@ -14,7 +15,6 @@
   <build_depend>message_generation</build_depend>
   <build_depend>nodelet</build_depend>
   <build_depend>realsense_ros_camera</build_depend>
- 
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
@@ -26,9 +26,6 @@
   <run_depend>message_generation</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>realsense_ros_camera</run_depend>
-
-
-  <!-- The export tag contains other, unspecified, tags -->
   <export>
     <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>

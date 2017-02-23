@@ -9,30 +9,24 @@ find_package(catkin REQUIRED COMPONENTS
   nodelet
   cv_bridge
   image_transport
-  dynamic_reconfigure
 )
 
 find_package(OpenCV 3 REQUIRED)
+#find_package(librealsense 1 REQUIRED) librealsense package currently lacks required pkgconfig file
 
 set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -O2 -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
-set(CMAKE_THREAD_LIBS_INIT pthread)
 
- add_message_files(
-   FILES
+add_message_files(
+  FILES
   IMUInfo.msg
   Extrinsics.msg
- )
+)
 
- generate_messages(
-   DEPENDENCIES
-   sensor_msgs   std_msgs
- )
-
-#add dynamic reconfigure api
-#generate_dynamic_reconfigure_options(
-#  cfg/r200_params.cfg
-#  cfg/zr300_params.cfg
-#)
+generate_messages(
+  DEPENDENCIES
+  sensor_msgs
+  std_msgs
+)
 
 catkin_package(
   LIBRARIES realsense_ros_camera
@@ -51,7 +45,6 @@ add_library(realsense_ros_camera
    src/camera_node.cpp
 )
 
-#add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
@@ -62,20 +55,17 @@ target_link_libraries(realsense_ros_camera
    ${CMAKE_THREAD_LIBS_INIT}
  )
 
-# Install nodelet library
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-# Install launch files
 install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
 )
 
-# Install xml files
-install(FILES test_nodelet.xml
+install(FILES nodelet_plugins.xml 
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
