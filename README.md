@@ -1,7 +1,7 @@
 # Intel® RealSense™ SDK for Linux ROS Samples
 
 ## Features
-These samples illustrate how to develop OSRF&reg; ROS* applications using the Intel® RealSense™ [ZR300](http://click.intel.com/intelr-realsensetm-development-kit-featuring-the-zr300.html) camera for Object Library (OR, Person Library (PT), and Simultaneous Localization And Mapping (SLAM).
+These samples illustrate how to develop OSRF&reg; ROS* applications using the Intel® RealSense™ [ZR300](http://click.intel.com/intelr-realsensetm-development-kit-featuring-the-zr300.html) camera for Object Library (OR), Person Library (PT), and Simultaneous Localization And Mapping (SLAM).
 
 ## Installation Instructions
 
@@ -27,7 +27,10 @@ apt install -y librealsense-object-recognition-dev librealsense-persontracking-d
 mkdir -p catkin_ws/src
 cd catkin_ws/src/
 catkin_init_workspace 
-git clone git@github.intel.com:IntelRealSense/realsense_ros.git
+git clone https://github.com/IntelRealSense/realsense_samples_ros
+cd ..
+catkin_make
+source devel/setup.bash
 ```
 
 ## Usage Instructions
