@@ -8,11 +8,11 @@ to find out the information (can be pose, orientation, id etc.) of a person (or 
 in the images.
 
 ## 1. Design and Usage
----------------------------------------
-    The person package consists of 2 nodelets:
-    1. realsense_ros_person nodelet is the Person API wrapper for ROS.
-    2. realsense_ros_person_sample_nodelet - demo for usage of Person ROS API - visualize output of realsense_ros_person nodelet, provide GUI for realsense_ros_person node control(Start tracking, Register/Recognize users)
----------------------------------------
+The person package consists of 2 nodelets:
+
+1. realsense_ros_person nodelet is the Person API wrapper for ROS.
+2. realsense_ros_person_sample_nodelet - demo for usage of Person ROS API - visualize output of realsense_ros_person nodelet, provide GUI for realsense_ros_person node control(Start tracking, Register/Recognize users)
+    
 ## 2. Run person nodes (Person API wrapper + sample):
 ### For person tracking feature
     roslaunch realsense_ros_person realsense_person_demo_tracking.launch
@@ -20,7 +20,7 @@ in the images.
     roslaunch realsense_ros_person realsense_person_demo_tracking.launch
 ### For person face features (recogntion, landmarks, head pose, head bounding box)
     roslaunch realsense_ros_person realsense_person_demo_face_features.launch
----------------------------------------
+    
 ## 3. Nodelet
 ### 3.1 realsense_ros_person - person nodelet - wraps Person API
     The realsense_ros_person nodelet takes sensor_msgs/CameraInfo camera infos and sensor_msgs/Image images(color, depth),then send the informations of person detected as realsense_ros_person/Frame realsense_ros_person/FrameTest messages.
