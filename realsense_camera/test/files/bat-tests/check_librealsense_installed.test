@@ -1,0 +1,5 @@
+<launch>
+  <!-- Start test -->
+  <test pkg="realsense_camera" type="check_librealsense_installed.py" test-name="check_librealsense_installed"
+    />
+</launch>

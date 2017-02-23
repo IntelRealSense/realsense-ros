@@ -21,6 +21,17 @@ Both these methods first starts the nodelet and then executes all the unit tests
 
 Sample test files are available in "realsense_camera/test" directory
 
+##Bat Tests:
+The bat tests can be executed using `rostest` command with test files
+
+    $ rostest realsense_camera <test_filename>
+    E.g. rostest realsense_camera r200_camera_info_matrix_check.test
+
+Sample test files are available in "realsense_camera/test/files/bat-tests" directory.
+
+Bat tests include its executable python scripts, they will be copied to specific directory when build realsense_camera.
+If will not run the bat tests again or want to clean realsense_camera, please remove the bat python scripts by additional running `catkin_make clean-script` command.
+
 ##Errata:
 See the [GitHub Issues Bugs](https://github.com/intel-ros/realsense/labels/bug)
 for a complete list.

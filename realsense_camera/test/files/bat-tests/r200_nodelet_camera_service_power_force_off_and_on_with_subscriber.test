@@ -1,0 +1,17 @@
+<launch>
+  <arg name="camera"       value="camera" />
+  <arg name="camera_type"  default="R200" />
+  <arg name="start_camera_info" default="Camera*Started*Successfully" />
+  <arg name="stop_camera_info" default="Camera*Stopped*Successfully" />
+  <!-- Start camera -->
+  <include file="$(find realsense_camera)/launch/r200_nodelet_default.launch">
+    <arg name="camera"      value="$(arg camera)" />
+    <arg name="camera_type" value="$(arg camera_type)" />
+  </include>
+
+  <!-- Start test -->
+  <test pkg="realsense_camera" type="check_camera_service_power_force_off_and_on_with_subscriber.py" test-name="test_camera_service_power_force_off_and_on_with_subscriber"
+    args="camera_type $(arg camera_type)
+    start_camera_info $(arg start_camera_info)
+    stop_camera_info  $(arg stop_camera_info)" />
+</launch>

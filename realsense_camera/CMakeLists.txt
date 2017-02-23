@@ -59,6 +59,7 @@ generate_dynamic_reconfigure_options(
 
 # ROS Lint the code
 roslint_cpp()
+roslint_python()
 roslint_add_test()
 
 #################################

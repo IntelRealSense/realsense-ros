@@ -1,0 +1,34 @@
+<launch>
+  <arg name="camera"            value="camera" />
+  <arg name="camera_type"       default="SR300" />
+  <arg name="enable_depth"      value="true" />
+  <arg name="enable_color"      value="true" />
+  <arg name="enable_ir"         default="true" />
+  <arg name="enable_ir2"        default="false" />
+  <arg name="enable_pointcloud" value="true" />
+  <arg name="mode"              value="manual" />
+  <arg name="depth_width"       default="640" />
+  <arg name="depth_height"      default="480" />
+  <arg name="color_width"       value="320" />
+  <arg name="color_height"      value="240" />
+
+  <!-- Start camera -->
+  <include file="$(find realsense_camera)/launch/r200_nodelet_modify_params.launch">
+    <arg name="camera"            value="$(arg camera)" />
+    <arg name="camera_type"       value="$(arg camera_type)" />
+    <arg name="enable_depth"      value="$(arg enable_depth)" />
+    <arg name="enable_color"      value="$(arg enable_color)" />
+    <arg name="enable_ir"         value="$(arg enable_ir)" />
+    <arg name="enable_ir2"        value="$(arg enable_ir2)" />
+    <arg name="enable_pointcloud" value="$(arg enable_pointcloud)" />
+    <arg name="mode"              value="$(arg mode)" />
+    <arg name="depth_width"       value="$(arg depth_width)" />
+    <arg name="depth_height"      value="$(arg depth_height)" />
+    <arg name="color_width"       value="$(arg color_width)" />
+    <arg name="color_height"      value="$(arg color_height)" />
+  </include>
+
+  <!-- Start test -->
+  <test pkg="realsense_camera" type="check_camera_info_matrix.py" test-name="camera_info_matrix_check"
+    args="camera_type $(arg camera_type)" />
+</launch>
