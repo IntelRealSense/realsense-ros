@@ -39,20 +39,6 @@ source devel/setup.bash
 - [Person Tracking and Analysis](realsense_ros_person/README.md): This ROS node demonstrates use of the ZR300 camera above to implement Person Detection, Tracking, and Gesture analysis.
 - [SLAM](realsense_ros_slam/README.md): This ROS node demonstrates use of ZR300 camera above for simultaneous location and mapping (SLAM), relocalization, and occupancy map generation.
 
-## Record and Playback Support
-The sample code above supports use of the ROS 'rosbag' tool for recording and playback of camera stream data.
-
-For recording cameara stream data to a specific file, use the command below.  Note that if you omit the bag_path argument, it will default to $HOME/test.bag
-```bash
-$ roslaunch realsense_ros_camera record_bag.launch bag_path:=<path to file>
-```
-When you ready to conclude the recording, press Ctrl-C and the recording will end gracefully.
-
-For playback of previously recorded camera stream data from a specific file, use the command below.  Like above, if you omit the bag_path argument, it will default to $HOME/test.bag
-```bash
-$ roslaunch realsense_ros_camera play_bag.launch bag_path:=<path to file>
-```
-
 ## License
 Copyright 2017 Intel Corporation
 
