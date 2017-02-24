@@ -25,9 +25,10 @@ std::string pkgpath;
 std::string trajectoryFilename;
 std::string relocalizationFilename;
 std::string occupancyFilename;
+std::string topic_camera_pose, topic_pose2d, topic_map, topic_tracking_accuracy;
 double resolution;
 
-ros::Publisher pub_pose2d, pub_pose, pub_accuracy, pub_map;
+ros::Publisher pub_pose2d, pub_pose, pub_map, pub_accuracy;
 geometry_msgs::Pose2D pose2d;
 
 IplImage * ipNavMap = NULL;
@@ -445,17 +446,22 @@ SNodeletSlam::~SNodeletSlam()
 
 void SNodeletSlam::onInit()
 {
-    nh = getMTNodeHandle();
-    pub_pose = nh.advertise< geometry_msgs::PoseStamped >("camera_pose", 1, true);
-    pub_accuracy = nh.advertise< realsense_ros_slam::TrackingAccuracy >("tracking_accuracy", 1, true);
-    pub_pose2d = nh.advertise< geometry_msgs::Pose2D >("pose2d", 2, true);
-    pub_map = nh.advertise< nav_msgs::OccupancyGrid >("map", 1, true);
-    pkgpath = ros::package::getPath("realsense_ros_slam") + "/";
     ros::NodeHandle pnh = getPrivateNodeHandle();
     pnh.param< double >("resolution", resolution, 0.05);
     pnh.param< std::string >("trajectoryFilename", trajectoryFilename, "trajectory.ppm");
     pnh.param< std::string >("relocalizationFilename", relocalizationFilename, "relocalization.bin");
     pnh.param< std::string >("occupancyFilename", occupancyFilename, "occupancy.bin");
+    pnh.param< std::string >("topic_camera_pose", topic_camera_pose, "camera_pose");
+    pnh.param< std::string >("topic_pose2d", topic_pose2d, "pose2d");
+    pnh.param< std::string >("topic_map", topic_map, "map");
+    pnh.param< std::string >("topic_tracking_accuracy", topic_tracking_accuracy, "tracking_accuracy");
+    
+    nh = getMTNodeHandle();
+    pub_pose = nh.advertise< geometry_msgs::PoseStamped >(topic_camera_pose, 1, true);
+    pub_pose2d = nh.advertise< geometry_msgs::Pose2D >(topic_pose2d, 2, true);
+    pub_map = nh.advertise< nav_msgs::OccupancyGrid >(topic_map, 1, true);
+    pub_accuracy = nh.advertise< realsense_ros_slam::TrackingAccuracy >(topic_tracking_accuracy, 1, true);
+    pkgpath = ros::package::getPath("realsense_ros_slam") + "/";
 
     sub_depthInfo = std::shared_ptr< message_filters::Subscriber< sensor_msgs::CameraInfo > >(new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh, "camera/depth/camera_info", 1));
     sub_fisheyeInfo = std::shared_ptr< message_filters::Subscriber<sensor_msgs::CameraInfo > >(new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh, "camera/fisheye/camera_info", 1));
