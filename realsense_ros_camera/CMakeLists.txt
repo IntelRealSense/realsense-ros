@@ -55,6 +55,19 @@ target_link_libraries(realsense_ros_camera
    ${CMAKE_THREAD_LIBS_INIT}
  )
 
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+
+  add_executable(tests_camera_core test/camera_core.cpp)
+  target_link_libraries(tests_camera_core
+    ${catkin_LIBRARIES}
+    ${GTEST_LIBRARIES}
+    )
+  add_dependencies(tests_camera_core ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
+  add_dependencies(tests_camera_core ${catkin_EXPORTED_TARGETS})
+endif()
+
+
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

@@ -37,6 +37,7 @@ std::string optical_frame_id_gyro;
 std::map<rs::stream,int> seq_;
 std::map<rs::stream,int> unit_step_size_;
 std::map<rs::stream,std::function<void(rs::frame)>> stream_callback_per_stream; 
+std::map<rs::stream,sensor_msgs::CameraInfo> camera_info_;
 
 // ZR300 specific types
 bool isZR300 = false;
@@ -254,20 +255,20 @@ namespace realsense_ros_camera
             if(true == enable_[rs::stream::color])
             {
                 image_publishers_[rs::stream::color] = image_transport.advertise("camera/color/image_raw", 1);
-                info_publisher_[rs::stream::color] = node_handle.advertise< sensor_msgs::CameraInfo >("camera/color/camera_info", 1, true);
+                info_publisher_[rs::stream::color] = node_handle.advertise< sensor_msgs::CameraInfo >("camera/color/camera_info", 1);
             }
 
             if(true == enable_[rs::stream::depth])
             {
                 image_publishers_[rs::stream::depth] = image_transport.advertise("camera/depth/image_raw", 1);
-                info_publisher_[rs::stream::depth] = node_handle.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info", 1, true);
+                info_publisher_[rs::stream::depth] = node_handle.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info", 1);
             }
            
             if (isZR300)
             {
                 // Stream publishers
                 image_publishers_[rs::stream::fisheye] = image_transport.advertise("camera/fisheye/image_raw", 1);
-                info_publisher_[rs::stream::fisheye] = node_handle.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info", 1, true);
+                info_publisher_[rs::stream::fisheye] = node_handle.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info", 1);
 
                 imu_publishers_[RS_EVENT_IMU_GYRO] = node_handle.advertise< sensor_msgs::Imu >("camera/gyro/sample", 100); // TODO: review queue size
                 imu_publishers_[RS_EVENT_IMU_ACCEL] = node_handle.advertise< sensor_msgs::Imu >("camera/accel/sample", 100); // TODO: review queue size
@@ -309,31 +310,33 @@ namespace realsense_ros_camera
 
                     sensor_msgs::ImagePtr img;
                     img = cv_bridge::CvImage(std_msgs::Header(), encoding_[stream], image_[stream]).toImageMsg();
-                    img->header.frame_id = optical_frame_id_[stream];
-                    img->header.stamp = ros::Time(frame.get_timestamp());
-                    img->header.seq = seq_[stream];
                     img->width = image_[stream].cols;
                     img->height = image_[stream].rows;
                     img->is_bigendian = false;
                     img->step = image_[stream].cols * unit_step_size_[stream];
                     seq_[stream] += 1;
 
+                    img->header.frame_id = optical_frame_id_[stream];
+                    img->header.stamp = ros::Time(frame.get_timestamp());
+                    img->header.seq = seq_[stream];
                     image_publishers_[stream].publish(img);
+
+                    camera_info_[stream].header.stamp = img->header.stamp;
+                    camera_info_[stream].header.seq = img->header.seq;
+                    info_publisher_[stream].publish(camera_info_[stream]);
                 };
 
                 // Enable the stream
                 device->enable_stream(stream, width_[stream], height_[stream], format_[stream], fps_[stream]);
 
                 // Publish info about the stream
-                sensor_msgs::CameraInfo info;
-                getStreamCalibData(stream,info);
-                info_publisher_[stream].publish(info);
+                getStreamCalibData(stream);
 
                 // Setup stream callback for stream
-                image_[stream] = cv::Mat(info.height, info.width, image_format_[stream], cv::Scalar(0,0,0));
+                image_[stream] = cv::Mat(camera_info_[stream].height, camera_info_[stream].width, image_format_[stream], cv::Scalar(0,0,0));
                 device->set_frame_callback(stream, stream_callback_per_stream[stream]);
 
-                ROS_INFO_STREAM("  enabled " << stream_name_[stream] << " stream, width: " << info.width << " height: " << info.height << " fps: " << fps_[stream]);
+                ROS_INFO_STREAM("  enabled " << stream_name_[stream] << " stream, width: " << camera_info_[stream].width << " height: " << camera_info_[stream].height << " fps: " << fps_[stream]);
             }//end for
             
 
@@ -398,81 +401,81 @@ namespace realsense_ros_camera
         }//end setupStreams
 
 
-        void getStreamCalibData(rs::stream stream, sensor_msgs::CameraInfo& camera_info)
+        void getStreamCalibData(rs::stream stream)
         {
             rs::intrinsics intrinsic = device->get_stream_intrinsics(stream);
 
-            camera_info.header.frame_id = optical_frame_id_[stream];
-            camera_info.width = intrinsic.width;
-            camera_info.height = intrinsic.height;
+            camera_info_[stream].header.frame_id = optical_frame_id_[stream];
+            camera_info_[stream].width = intrinsic.width;
+            camera_info_[stream].height = intrinsic.height;
 
-            camera_info.K.at(0) = intrinsic.fx;
-            camera_info.K.at(2) = intrinsic.ppx;
-            camera_info.K.at(4) = intrinsic.fy;
-            camera_info.K.at(5) = intrinsic.ppy;
-            camera_info.K.at(8) = 1;
+            camera_info_[stream].K.at(0) = intrinsic.fx;
+            camera_info_[stream].K.at(2) = intrinsic.ppx;
+            camera_info_[stream].K.at(4) = intrinsic.fy;
+            camera_info_[stream].K.at(5) = intrinsic.ppy;
+            camera_info_[stream].K.at(8) = 1;
 
-            camera_info.P.at(0) = camera_info.K.at(0);
-            camera_info.P.at(1) = 0;
-            camera_info.P.at(2) = camera_info.K.at(2);
-            camera_info.P.at(3) = 0;
-            camera_info.P.at(4) = 0;
-            camera_info.P.at(5) = camera_info.K.at(4);
-            camera_info.P.at(6) = camera_info.K.at(5);
-            camera_info.P.at(7) = 0;
-            camera_info.P.at(8) = 0;
-            camera_info.P.at(9) = 0;
-            camera_info.P.at(10) = 1;
-            camera_info.P.at(11) = 0;
+            camera_info_[stream].P.at(0) = camera_info_[stream].K.at(0);
+            camera_info_[stream].P.at(1) = 0;
+            camera_info_[stream].P.at(2) = camera_info_[stream].K.at(2);
+            camera_info_[stream].P.at(3) = 0;
+            camera_info_[stream].P.at(4) = 0;
+            camera_info_[stream].P.at(5) = camera_info_[stream].K.at(4);
+            camera_info_[stream].P.at(6) = camera_info_[stream].K.at(5);
+            camera_info_[stream].P.at(7) = 0;
+            camera_info_[stream].P.at(8) = 0;
+            camera_info_[stream].P.at(9) = 0;
+            camera_info_[stream].P.at(10) = 1;
+            camera_info_[stream].P.at(11) = 0;
             
             if (stream == rs::stream::depth)
             {
                 // set depth to color translation values in Projection matrix (P)
                 rs::extrinsics extrinsic = device->get_extrinsics(rs::stream::depth, rs::stream::color);
-                camera_info.P.at(3) = extrinsic.translation[0];     // Tx
-                camera_info.P.at(7) = extrinsic.translation[1];     // Ty
-                camera_info.P.at(11) = extrinsic.translation[2];    // Tz
+                camera_info_[stream].P.at(3) = extrinsic.translation[0];     // Tx
+                camera_info_[stream].P.at(7) = extrinsic.translation[1];     // Ty
+                camera_info_[stream].P.at(11) = extrinsic.translation[2];    // Tz
 
                 for (int i = 0; i < 9; i++)
-                    camera_info.R.at(i) = extrinsic.rotation[i];
+                    camera_info_[stream].R.at(i) = extrinsic.rotation[i];
             }
             
             switch((int32_t)intrinsic.model())
             {
             case 0:
-                camera_info.distortion_model = "none";
+                camera_info_[stream].distortion_model = "none";
                 break;
             case 1:
-                camera_info.distortion_model = "modified_brown_conrady";
+                camera_info_[stream].distortion_model = "plumb_bob"; // This is the same as "modified_brown_conrady", but used by ROS
                 break;
             case 2:
-                camera_info.distortion_model = "inverse_brown_conrady";
+                camera_info_[stream].distortion_model = "inverse_brown_conrady";
                 break;
             case 3:
-                camera_info.distortion_model = "distortion_ftheta";
+                camera_info_[stream].distortion_model = "distortion_ftheta";
                 break;
             default:
-                camera_info.distortion_model = "others";
+                camera_info_[stream].distortion_model = "others";
                 break;
             }
             
             // set R (rotation matrix) values to identity matrix
             if (stream != rs::stream::depth)
             {
-                camera_info.R.at(0) = 1.0;
-                camera_info.R.at(1) = 0.0;
-                camera_info.R.at(2) = 0.0;
-                camera_info.R.at(3) = 0.0;
-                camera_info.R.at(4) = 1.0;
-                camera_info.R.at(5) = 0.0;
-                camera_info.R.at(6) = 0.0;
-                camera_info.R.at(7) = 0.0;
-                camera_info.R.at(8) = 1.0;
+                camera_info_[stream].R.at(0) = 1.0;
+                camera_info_[stream].R.at(1) = 0.0;
+                camera_info_[stream].R.at(2) = 0.0;
+                camera_info_[stream].R.at(3) = 0.0;
+                camera_info_[stream].R.at(4) = 1.0;
+                camera_info_[stream].R.at(5) = 0.0;
+                camera_info_[stream].R.at(6) = 0.0;
+                camera_info_[stream].R.at(7) = 0.0;
+                camera_info_[stream].R.at(8) = 1.0;
             }
             
             for (int i = 0; i < 5; i++)
             {
-                camera_info.D.push_back(intrinsic.coeffs[i]);
+                camera_info_[stream].D.push_back(intrinsic.coeffs[i]);
             }
         }//end getStreamCalibData
 

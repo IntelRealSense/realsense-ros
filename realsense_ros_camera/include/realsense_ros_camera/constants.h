@@ -28,6 +28,9 @@ namespace realsense_ros_camera
     const bool ENABLE_COLOR = true;
     const bool ENABLE_FISHEYE = true;
 
+    const double ROTATION_IDENTITY[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    const float MILLIMETER_METERS  = 0.001;
+    
     const std::string DEFAULT_DEPTH_OPTICAL_FRAME_ID = "camera_depth_optical_frame";
     const std::string DEFAULT_COLOR_OPTICAL_FRAME_ID = "camera_rgb_optical_frame";
     const std::string DEFAULT_FISHEYE_OPTICAL_FRAME_ID = "camera_fisheye_optical_frame";
