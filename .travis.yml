@@ -1,0 +1,38 @@
+# This config file for Travis CI utilizes ros-industrial/industrial_ci package.
+# For more info for the package, see https://github.com/ros-industrial/industrial_ci/blob/master/README.rst
+sudo: required 
+dist: trusty 
+services:
+  - docker
+language: generic 
+compiler:
+  - gcc
+notifications:
+  email:
+    recipients:
+      - 130s@2000.jukuin.keio.ac.jp
+env:
+  matrix:
+    - ROS_DISTRO="indigo" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
+    - ROS_DISTRO="indigo" ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu
+    - ROS_DISTRO="indigo" PRERELEASE=true
+    - ROS_DISTRO="jade"   ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
+    - ROS_DISTRO="jade"   ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu
+    - ROS_DISTRO="jade"   PRERELEASE=true
+    - ROS_DISTRO="kinetic"   ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
+    - ROS_DISTRO="kinetic"   ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu
+    - ROS_DISTRO="kinetic"   PRERELEASE=true
+matrix:
+  allow_failures:
+    - env: ROS_DISTRO="indigo" PRERELEASE=true  # Run docker-based ROS prerelease test http://wiki.ros.org/bloom/Tutorials/PrereleaseTest Because we might not want to run prerelease test for all PRs, it's omitted from pass-fail criteria.
+    - env: ROS_DISTRO="jade"   ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
+    - env: ROS_DISTRO="jade"   ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu
+    - env: ROS_DISTRO="jade"   PRERELEASE=true
+    - env: ROS_DISTRO="kinetic"   ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
+    - env: ROS_DISTRO="kinetic"   ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu
+    - env: ROS_DISTRO="kinetic"   PRERELEASE=true
+install:
+  - git clone https://github.com/ros-industrial/industrial_ci.git .ci_config
+script:
+  - source .ci_config/travis.sh
+#  - source ./travis.sh  # Enable this when you have a package-local script 
