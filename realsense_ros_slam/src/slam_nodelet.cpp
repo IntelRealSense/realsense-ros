@@ -25,19 +25,15 @@ std::string pkgpath;
 std::string trajectoryFilename;
 std::string relocalizationFilename;
 std::string occupancyFilename;
+std::string topic_camera_pose, topic_pose2d, topic_map, topic_tracking_accuracy;
 double resolution;
 
-ros::Publisher pub_pose2d, pub_pose, pub_accuracy, pub_odom;
+ros::Publisher pub_pose2d, pub_pose, pub_map, pub_accuracy;
 geometry_msgs::Pose2D pose2d;
-ros::Publisher mapPub;
 
 IplImage * ipNavMap = NULL;
 std::vector< stRobotPG > g_robotPGStack;
 std::vector< CvPoint > g_relocalizationPointStack;
-
-tf2_ros::Buffer tfBuffer;
-tf2_ros::TransformListener tfListener(tfBuffer);
-tf::TransformBroadcaster tfBroadcaster;
 
 namespace realsense_ros_slam
 {
@@ -351,57 +347,6 @@ geometry_msgs::PoseStamped get_pose_stamped_msg(rs::slam::PoseMatrix4f cameraPos
     return pose_stamped_msg;
 }
 
-nav_msgs::Odometry get_odom_msg(geometry_msgs::PoseStamped camera_pose_msg)
-{    
-    /*geometry_msgs::TransformStamped base2cameraMsg;
-    try
-    {
-        base2cameraMsg = tfBuffer.lookupTransform("camera_link", "base_link", ros::Time(0));
-    }
-    catch (tf2::TransformException &e)
-    {
-        ROS_WARN("%s", e.what());
-    }
-        
-    geometry_msgs::PoseStamped transformed_camera_pose_msg;
-    tf2::doTransform<geometry_msgs::PoseStamped>(camera_pose_msg, transformed_camera_pose_msg, base2cameraMsg); */      
-            
-    nav_msgs::Odometry odomMsg;
-    odomMsg.header = camera_pose_msg.header;
-    odomMsg.header.frame_id = "odom";
-    odomMsg.pose.pose = camera_pose_msg.pose;
-    return odomMsg;
-}
-
-geometry_msgs::Vector3 vec3_from_point(geometry_msgs::Point point)
-{
-    geometry_msgs::Vector3 vec3;
-    vec3.x = point.x;
-    vec3.y = point.y;
-    vec3.z = point.z;
-    return vec3;
-}
-
-geometry_msgs::TransformStamped get_odom2base_tf_msg(nav_msgs::Odometry odom_msg)
-{
-//     tf2::Quaternion quat;
-//     tf2::convert<geometry_msgs::Quaternion, tf2::Quaternion>(odom_msg.pose.pose.orientation, quat);
-//     
-//     tf2::Quaternion quatRoll90(0, 0, 0.5 * M_PI);
-//     tf2::Quaternion quatPitch90(0, 0.5 * M_PI, 0);    
-//     tf2::Quaternion quatRotated = quat * quatRoll90 * quatPitch90;
-//     
-//     geometry_msgs::Quaternion quatMsg;
-//     tf2::convert<tf2::Quaternion, geometry_msgs::Quaternion>(quatRotated, quatMsg);
-    
-    geometry_msgs::TransformStamped tf_msg;
-    tf_msg.header = odom_msg.header;
-    tf_msg.child_frame_id = "base_link";
-    tf_msg.transform.rotation = odom_msg.pose.pose.orientation;
-    tf_msg.transform.translation = vec3_from_point(odom_msg.pose.pose.position);
-    return tf_msg;
-}
-
 class slam_event_handler : public rs::core::video_module_interface::processing_event_handler
 {
 public:
@@ -423,14 +368,6 @@ public:
         // Publish camera pose
         geometry_msgs::PoseStamped pose_msg = get_pose_stamped_msg(cameraPose, feFrameNum, feTimeStamp);
         pub_pose.publish(pose_msg);
-        
-        // Publish odometry message
-        nav_msgs::Odometry odom_msg = get_odom_msg(pose_msg);
-        pub_odom.publish(odom_msg);
-        
-        // Publish odom to base_link transform
-        geometry_msgs::TransformStamped odom2base_tf_msg = get_odom2base_tf_msg(odom_msg);
-        tfBroadcaster.sendTransform(odom2base_tf_msg);
         
         rs::slam::tracking_accuracy accuracy = slamPtr->get_tracking_accuracy();
         TrackingAccuracy accuracyMsg;
@@ -487,7 +424,7 @@ public:
         map_msg.info.height     = hmap;
         map_msg.info.origin.position.x = -(wmap / 2) * resolution;
         map_msg.info.origin.position.y = -(hmap / 2) * resolution;
-        mapPub.publish(map_msg);
+        pub_map.publish(map_msg);
     }
 
     ~slam_event_handler()
@@ -509,18 +446,22 @@ SNodeletSlam::~SNodeletSlam()
 
 void SNodeletSlam::onInit()
 {
-    nh = getMTNodeHandle();
-    pub_pose = nh.advertise< geometry_msgs::PoseStamped >("camera_pose", 1, true);
-    pub_odom = nh.advertise< nav_msgs::Odometry >("odometry", 1, true);
-    pub_accuracy = nh.advertise< realsense_ros_slam::TrackingAccuracy >("tracking_accuracy", 1, true);
-    pub_pose2d = nh.advertise< geometry_msgs::Pose2D >("pose2d", 2, true);
-    mapPub = nh.advertise< nav_msgs::OccupancyGrid >("map", 1, true);
-    pkgpath = ros::package::getPath("realsense_ros_slam") + "/";
     ros::NodeHandle pnh = getPrivateNodeHandle();
     pnh.param< double >("resolution", resolution, 0.05);
     pnh.param< std::string >("trajectoryFilename", trajectoryFilename, "trajectory.ppm");
     pnh.param< std::string >("relocalizationFilename", relocalizationFilename, "relocalization.bin");
     pnh.param< std::string >("occupancyFilename", occupancyFilename, "occupancy.bin");
+    pnh.param< std::string >("topic_camera_pose", topic_camera_pose, "camera_pose");
+    pnh.param< std::string >("topic_pose2d", topic_pose2d, "pose2d");
+    pnh.param< std::string >("topic_map", topic_map, "map");
+    pnh.param< std::string >("topic_tracking_accuracy", topic_tracking_accuracy, "tracking_accuracy");
+    
+    nh = getMTNodeHandle();
+    pub_pose = nh.advertise< geometry_msgs::PoseStamped >(topic_camera_pose, 1, true);
+    pub_pose2d = nh.advertise< geometry_msgs::Pose2D >(topic_pose2d, 2, true);
+    pub_map = nh.advertise< nav_msgs::OccupancyGrid >(topic_map, 1, true);
+    pub_accuracy = nh.advertise< realsense_ros_slam::TrackingAccuracy >(topic_tracking_accuracy, 1, true);
+    pkgpath = ros::package::getPath("realsense_ros_slam") + "/";
 
     sub_depthInfo = std::shared_ptr< message_filters::Subscriber< sensor_msgs::CameraInfo > >(new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh, "camera/depth/camera_info", 1));
     sub_fisheyeInfo = std::shared_ptr< message_filters::Subscriber<sensor_msgs::CameraInfo > >(new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh, "camera/fisheye/camera_info", 1));
