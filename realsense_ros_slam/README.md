@@ -21,74 +21,74 @@ To use realsense_ros_slam, you need a mobile agent with a RealSense ZR300 camera
 
 ### Subscribed Topics
 
-`/camera/fisheye/image_raw`
+`camera/fisheye/image_raw`
 
 - Message type: `sensor_msgs::Image`
 - The fisheye image with timestamp
 
-`/camera/depth/image_raw`
+`camera/depth/image_raw`
 
 - Message type: `sensor_msgs::Image`
 - The depth image with timestamp
 
-`/camera/fisheye/camera_info`
+`camera/fisheye/camera_info`
 
 - Message type: `sensor_msgs::CameraInfo`
 - The intrinsics of the fisheye camera
 
-`/camera/depth/camera_info` 
+`camera/depth/camera_info` 
 
 - Message type: `sensor_msgs::CameraInfo`
 - The intrinsics of the depth camera
 
-`/camera/gyro/sample`
+`camera/gyro/sample`
 
 - Message type: `sensor_msgs::Imu`
 - Gyroscope sample with timestamp
 
-`/camera/accel/sample`
+`camera/accel/sample`
 
 - Message type: `sensor_msgs::Imu`
 - Accelerometer sample with timestamp 
 
-`/camera/gyro/imu_info`
+`camera/gyro/imu_info`
 
 - Message type: `realsense_ros_camera::IMUInfo`
 - Gyroscope intrinsics, noise and bias variances
 
-`/camera/accel/imu_info`
+`camera/accel/imu_info`
 
 - Message type: `realsense_ros_camera::IMUInfo`
 - Accelerometer intrinsics, noise and bias variances
 
-`/camera/extrinsics/fisheye2imu`
+`camera/extrinsics/fisheye2imu`
 
 - Message type: `realsense_ros_camera::Extrinsics`
 - Fisheye to IMU extrinsics
 
-`/camera/extrinsics/fisheye2depth`
+`camera/extrinsics/fisheye2depth`
 
 - Message type: `realsense_ros_camera::Extrinsics`
 - Fisheye to depth extrinsics
         
 ### Published Topics
 
-`/camera_pose`
+`camera_pose`
 
 - Message type: `geometry_msgs::PoseStamped`
 - The raw camera pose, in the camera's coordinate system (right-handed, +x right, +y down, +z forward)
 
-`/pose2d`
+`pose2d`
 
 - Message type: `geometry_msgs::Pose2D`
 - The 2D camera pose, projected onto a plane corresponding to the occupancy map
 
-`/tracking_accuracy`
+`tracking_accuracy`
 
 - Message type: `realsense_ros_slam::TrackingAccuracy`
 - The current 6DoF tracking accuracy (low/medium/high/failed). Currently `high` is not used.
 
-`/map`
+`map`
 
 - Message type: `nav_msgs::OccupancyGrid`
 - The occupancy map
@@ -137,7 +137,7 @@ To see the estimated pose messages, in another console window:
 ```bash
 $ cd catkin-ws
 $ source devel/setup.bash
-$ rostopic echo /camera_pose
+$ rostopic echo camera_pose
 ```
 
 To see the camera pose and occupancy map in rviz:
@@ -151,5 +151,5 @@ Start the SLAM nodelet as shown above, then run rviz:
 $ rviz
 ```
 
-In rviz, add Pose and Map visualizations (click Add button near bottom left). Select the `/camera_pose` message for the Pose and th `/map` message for the Map visualization.
+In rviz, add Pose and Map visualizations (click Add button near bottom left). Select the `camera_pose` message for the Pose and th `map` message for the Map visualization.
 
