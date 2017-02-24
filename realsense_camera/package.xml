@@ -4,9 +4,7 @@
   <version>1.7.1</version>
   <description>RealSense Camera package allowing access to Intel 3D cameras and advanced modules</description>
 
-  <maintainer email="rajvi.jingar@intel.com">Rajvi Jingar</maintainer>
-  <maintainer email="reagan.lopez@intel.com">Reagan Lopez</maintainer>
-  <maintainer email="mark.d.horn@intel.com">Mark Horn</maintainer>
+  <maintainer email="matthew.c.curfman@intel.com">Matt Curfman</maintainer>
 
   <license>BSD 3-clause. See license attached</license>
 
@@ -16,6 +14,7 @@
   <author email="rajvi.jingar@intel.com">Rajvi Jingar</author>
   <author email="reagan.lopez@intel.com">Reagan Lopez</author>
   <author email="matthew.k.hansen@intel.com">Matt Hansen</author>
+  <author email="mark.d.horn@intel.com">Mark Horn</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 
