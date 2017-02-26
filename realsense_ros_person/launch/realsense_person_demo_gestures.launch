@@ -1,6 +1,12 @@
 <launch>
 
-  <include file="$(find realsense_ros_camera)/launch/camera.launch"/>
+  <include file="$(find realsense_ros_camera)/launch/camera.launch">
+    <arg name="depth_width" value="320"/>
+    <arg name="depth_height" value="240"/>
+    <arg name="color_width" value="640"/>
+    <arg name="color_height" value="480"/>
+  </include>
+
   <include file="$(find realsense_ros_person)/launch/person_tracking.launch"/>
 
     <node pkg="nodelet" type="nodelet" name="realsense_ros_person_sample_nodelet"  args="manager" output="screen"/>

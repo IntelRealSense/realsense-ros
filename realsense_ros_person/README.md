@@ -17,7 +17,7 @@ The person package consists of 2 nodelets:
 ### For person tracking feature
     roslaunch realsense_ros_person realsense_person_demo_tracking.launch
 ### For person gestures feature(pointing & wave)
-    roslaunch realsense_ros_person realsense_person_demo_tracking.launch
+    roslaunch realsense_ros_person realsense_person_demo_gestures.launch
 ### For person face features (recogntion, landmarks, head pose, head bounding box)
     roslaunch realsense_ros_person realsense_person_demo_face_features.launch
     
