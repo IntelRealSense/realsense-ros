@@ -148,6 +148,15 @@ namespace realsense_ros_camera
                     device->stop();
             }      
             ctx.reset();
+
+            const rs::stream All[] = { rs::stream::depth, rs::stream::color, rs::stream::fisheye };
+            for ( const auto stream : All )
+            {
+                if( false == enable_[stream])
+                    continue;
+                image_publishers_[stream].shutdown();
+            }
+            image_publishers_.clear();
         }
 
     private:
