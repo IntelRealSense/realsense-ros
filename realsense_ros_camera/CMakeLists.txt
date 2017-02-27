@@ -63,7 +63,7 @@ if (CATKIN_ENABLE_TESTING)
     ${catkin_LIBRARIES}
     ${GTEST_LIBRARIES}
     )
-  add_dependencies(tests_camera_core ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
+  add_dependencies(tests_camera_core ${PROJECT_NAME}_generate_messages_cpp)
   add_dependencies(tests_camera_core ${catkin_EXPORTED_TARGETS})
 endif()
 
