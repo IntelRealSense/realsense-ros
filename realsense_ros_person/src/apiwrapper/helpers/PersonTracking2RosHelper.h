@@ -9,6 +9,7 @@
 #include "realsense_ros_person/RecognitionRegisterResponse.h"
 #include "realsense_ros_person/Wave.h"
 #include "realsense_ros_person/RectWithConfidence.h"
+#include "realsense_ros_person/SkeletonJoint.h"
 
 namespace realsense_ros_person
 {
@@ -97,6 +98,65 @@ namespace realsense_ros_person
             rectWithConfidence.rectCorners[1].y =  boundingBox2D.rect.y + boundingBox2D.rect.h;
             rectWithConfidence.confidence = boundingBox2D.confidence;
             return rectWithConfidence;
+        }
+
+        int SkeletonJointType2RosSkeletonJointType(Intel::RealSense::PersonTracking::PersonJoints::JointType jointType)
+        {
+            using namespace Intel::RealSense::PersonTracking;
+            switch (jointType) {
+                case PersonJoints::JointType::JOINT_ANKLE_LEFT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_ANKLE_LEFT;
+                case PersonJoints::JointType::JOINT_ANKLE_RIGHT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_ANKLE_RIGHT;
+                case PersonJoints::JointType::JOINT_ELBOW_LEFT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_ELBOW_LEFT;
+                case PersonJoints::JointType::JOINT_ELBOW_RIGHT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_ELBOW_RIGHT;
+                case PersonJoints::JointType::JOINT_FOOT_LEFT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_FOOT_LEFT;
+                case PersonJoints::JointType::JOINT_FOOT_RIGHT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_FOOT_RIGHT;
+                case PersonJoints::JointType::JOINT_HAND_LEFT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_HAND_LEFT;
+                case PersonJoints::JointType::JOINT_HAND_RIGHT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_HAND_RIGHT;
+                case PersonJoints::JointType::JOINT_HAND_TIP_LEFT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_HAND_TIP_LEFT;
+                case PersonJoints::JointType::JOINT_HAND_TIP_RIGHT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_HAND_TIP_RIGHT;
+                case PersonJoints::JointType::JOINT_HEAD:
+                    return realsense_ros_person::SkeletonJoint::JOINT_HEAD;
+                case PersonJoints::JointType::JOINT_HIP_LEFT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_HIP_LEFT;
+                case PersonJoints::JointType::JOINT_HIP_RIGHT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_HIP_RIGHT;
+                case PersonJoints::JointType::JOINT_KNEE_LEFT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_KNEE_LEFT;
+                case PersonJoints::JointType::JOINT_KNEE_RIGHT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_KNEE_RIGHT;
+                case PersonJoints::JointType::JOINT_NECK:
+                    return realsense_ros_person::SkeletonJoint::JOINT_NECK;
+                case PersonJoints::JointType::JOINT_SHOULDER_LEFT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_SHOULDER_LEFT;
+                case PersonJoints::JointType::JOINT_SHOULDER_RIGHT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_SHOULDER_RIGHT;
+                case PersonJoints::JointType::JOINT_SPINE_BASE:
+                    return realsense_ros_person::SkeletonJoint::JOINT_SPINE_BASE;
+                case PersonJoints::JointType::JOINT_SPINE_MID:
+                    return realsense_ros_person::SkeletonJoint::JOINT_SPINE_MID;
+                case PersonJoints::JointType::JOINT_SPINE_SHOULDER:
+                    return realsense_ros_person::SkeletonJoint::JOINT_SPINE_SHOULDER;
+                case PersonJoints::JointType::JOINT_THUMB_LEFT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_THUMB_LEFT;
+                case PersonJoints::JointType::JOINT_THUMB_RIGHT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_THUMB_RIGHT;
+                case PersonJoints::JointType::JOINT_WRIST_LEFT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_WRIST_LEFT;
+                case PersonJoints::JointType::JOINT_WRIST_RIGHT:
+                    return realsense_ros_person::SkeletonJoint::JOINT_WRIST_RIGHT;
+                default:
+                    return realsense_ros_person::SkeletonJoint::JOINT_UNKNOWN;
+            }
         }
     };
 }

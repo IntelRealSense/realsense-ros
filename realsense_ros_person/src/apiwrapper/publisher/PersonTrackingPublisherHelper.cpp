@@ -4,7 +4,7 @@
 #include <ros/console.h>
 
 #include "PersonTrackingPublisherHelper.h"
-#include "RealSense/Image.h"
+#include "realsense_ros_person/SkeletonJoint.h"
 #include "PersonTrackingHelper.h"
 
 
@@ -32,7 +32,7 @@ namespace realsense_ros_person
         for (PersonTrackingData::PersonJoints::SkeletonPoint &skeletonPoint : skeletonPoints)
         {
             realsense_ros_person::SkeletonJoint joint;
-            joint.type = skeletonPoint.jointType;
+            joint.type = m_pt2rosHelper.SkeletonJointType2RosSkeletonJointType(skeletonPoint.jointType);
             joint.confidence = skeletonPoint.confidenceImage;
             joint.location.x = skeletonPoint.image.x;
             joint.location.y = skeletonPoint.image.y;

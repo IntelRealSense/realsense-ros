@@ -14,10 +14,20 @@ The person package consists of 2 nodelets:
 2. realsense_ros_person_sample_nodelet - demo for usage of Person ROS API - visualize output of realsense_ros_person nodelet, provide GUI for realsense_ros_person node control(Start tracking, Register/Recognize users)
     
 ## 2. Run person nodes (Person API wrapper + sample):
+Person node starts in detection mode, some features requries tracking mode(e.g. skeleton).
+
+Aditional information:
+
+* [Person features tracking mode requirements](#4-person-features-requirements-for-tracking-mode)
+
+* [Person sample nodelet GUI commands](#324-gui-commands)
+
 ### For person tracking feature
     roslaunch realsense_ros_person realsense_person_demo_tracking.launch
 ### For person gestures feature(pointing & wave)
     roslaunch realsense_ros_person realsense_person_demo_gestures.launch
+### For skeleton feature
+    roslaunch realsense_ros_person realsense_person_demo_skeleton.launch
 ### For person face features (recogntion, landmarks, head pose, head bounding box)
     roslaunch realsense_ros_person realsense_person_demo_face_features.launch
     
@@ -82,7 +92,7 @@ The person package consists of 2 nodelets:
     nothing
 #### 3.2.3 Services
     nothing
-####  3.2.4 GUI commands:
+####  3.2.4 GUI commands
     Start tracking:
         Mouse wheel click
     Register:
@@ -109,3 +119,17 @@ configuration request will be send to realsense_ros_person nodelet
         Enable/Disable head bounding box
     ~landmarksEnabled (bool, default: false)
         Enable/Disable face landmarks
+
+# 4 Person features requirements for tracking mode
+Part of person features works only at tracking/detection mode.
+
+|Feature name           |Tracking mode          |
+|-----------------------|-----------------------|
+|Tracking               |Tracking               |
+|Skeleton               |Tracking               |
+|Pointing gesture       |Tracking               |
+|Wave gesture           |Detection              |
+|Recognition            |Not important          |
+|Landmarks              |Not important          |
+|Head bounding box      |Not important          |
+|Head pose              |Not important          |
