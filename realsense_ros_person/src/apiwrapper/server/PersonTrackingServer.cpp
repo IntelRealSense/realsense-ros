@@ -57,7 +57,7 @@ namespace realsense_ros_person
         if (!mPersonTracking->QueryConfiguration()->QueryRecognition()->IsEnabled())
         {
             ROS_ERROR("Recognition is not enabled");
-            response.status = -1;
+            response.status = realsense_ros_person::RecognitionResponse::RECOGNITION_FAILED;
             return true;
         }
 
@@ -67,7 +67,7 @@ namespace realsense_ros_person
         if (!personData)
         {
             ROS_ERROR_STREAM("Couldn't find recognition request target");
-            response.status = -1;
+            response.status = realsense_ros_person::RecognitionResponse::RECOGNITION_FAILED;
             return true;
         }
         ROS_INFO_STREAM("Found recognition request target");
@@ -119,7 +119,7 @@ namespace realsense_ros_person
         if (!mPersonTracking->QueryConfiguration()->QueryRecognition()->IsEnabled())
         {
             ROS_INFO("Recognition is not enabled");
-            response.status = false;
+            response.status = realsense_ros_person::RecognitionRegisterResponse::REGISTRATION_FAILED;
             return true;
         }
 
@@ -129,7 +129,7 @@ namespace realsense_ros_person
         if (!personData)
         {
             ROS_ERROR_STREAM("Couldn't find recognition request target");
-            response.status = false;
+            response.status = realsense_ros_person::RecognitionRegisterResponse::REGISTRATION_FAILED;
             return true;
         }
         ROS_INFO_STREAM("Found register request target");
