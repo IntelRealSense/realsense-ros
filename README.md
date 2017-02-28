@@ -21,7 +21,7 @@ echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
 apt-key adv --keyserver keys.gnupg.net --recv-key D6FB2970 
 sh -c 'echo "deb http://realsense-alm-public.s3.amazonaws.com/apt-repo xenial main" > /etc/apt/sources.list.d/realsense-latest.list'
 apt update 
-apt install -y librealsense-object-recognition-dev librealsense-persontracking-dev librealsense-slam-dev libopencv-dev uvcvideo-realsense-dkms
+apt install -y librealsense-object-recognition-dev librealsense-persontracking-dev librealsense-slam-dev libopencv-dev
 
 # Download and compile ROS wrappers for Intel RealSense SDK for Linux
 mkdir -p catkin_ws/src
