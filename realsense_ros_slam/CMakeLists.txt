@@ -72,6 +72,18 @@ target_link_libraries(${PROJECT_NAME}
   ${LIBRARIES_TO_LINK}
 )
 
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+
+  add_executable(tests_slam test/slam_test.cpp)
+  target_link_libraries(tests_slam
+    ${catkin_LIBRARIES}
+    ${GTEST_LIBRARIES}
+    )
+  add_dependencies(tests_slam ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
+  add_dependencies(tests_slam ${catkin_EXPORTED_TARGETS})
+endif()
+
 # Install nodelet library
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
