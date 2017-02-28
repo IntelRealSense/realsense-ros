@@ -60,4 +60,6 @@ private:
 
     Viewer m_viewer;
     TrackingRenderer m_trackingRenderer;
+
+    static std::string PERSON_MODULE_STATE_TOPIC;
 };
