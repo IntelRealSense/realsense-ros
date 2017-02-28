@@ -104,20 +104,20 @@ void imageColorCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs
 
 void imageFisheyeCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs::CameraInfoConstPtr &info_msg)
 {
-  // cv::Mat image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::TYPE_8UC1)->image;
-  // uchar *fisheye_data = image.data;
+  cv::Mat image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::TYPE_8UC1)->image;
+  uchar *fisheye_data = image.data;
 
   double fisheye_total = 0.0;
   int fisheye_count = 1;
-  // for (unsigned int i = 0; i < msg->height * msg->width; i++)
-  // {
-  //   if (*fisheye_data > 0 && *fisheye_data < 255)
-  //   {
-  //     fisheye_total += *fisheye_data;
-  //     fisheye_count++;
-  //   }
-  //   fisheye_data++;
-  // }
+  for (unsigned int i = 0; i < msg->height * msg->width; i++)
+  {
+    if (*fisheye_data > 0 && *fisheye_data < 255)
+    {
+      fisheye_total += *fisheye_data;
+      fisheye_count++;
+    }
+    fisheye_data++;
+  }
   if (fisheye_count != 0)
   {
     g_fisheye_avg = static_cast<float>(fisheye_total / fisheye_count);
@@ -136,7 +136,6 @@ void imageFisheyeCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_ms
 
 void accelCallback(const sensor_msgs::ImuConstPtr &imu)
 {
-  ROS_INFO("accelCallback");
   g_accel_recv = false;
   if (imu->linear_acceleration_covariance[0] != -1.0)
   {
@@ -151,7 +150,6 @@ void accelCallback(const sensor_msgs::ImuConstPtr &imu)
 
 void gyroCallback(const sensor_msgs::ImuConstPtr &imu)
 {
-  ROS_INFO("gyroCallback");
   g_gyro_recv = false;
   if (imu->angular_velocity_covariance[0] != -1.0)
   {
@@ -331,6 +329,9 @@ TEST(RealsenseTests, testDepthCameraInfo)
 
 TEST(RealsenseTests, testIsFisheyeStreamEnabled)
 {
+  if (g_camera_type != "ZR300")
+    return;
+
   if (g_enable_fisheye)
   {
     EXPECT_TRUE(g_fisheye_recv);
@@ -344,6 +345,9 @@ TEST(RealsenseTests, testIsFisheyeStreamEnabled)
 
 TEST(RealsenseTests, testFisheyeStream)
 {
+  if (g_camera_type != "ZR300")
+    return;
+
   if (g_enable_fisheye)
   {
     EXPECT_GT(g_fisheye_avg, 0);
@@ -352,6 +356,9 @@ TEST(RealsenseTests, testFisheyeStream)
 
 TEST(RealsenseTests, testFisheyeResolution)
 {
+  if (g_camera_type != "ZR300")
+    return;
+
   if (g_enable_fisheye)
   {
     EXPECT_TRUE(g_fisheye_recv);
@@ -368,6 +375,9 @@ TEST(RealsenseTests, testFisheyeResolution)
 
 TEST(RealsenseTests, testFisheyeCameraInfo)
 {
+  if (g_camera_type != "ZR300")
+    return;
+
   if (g_enable_fisheye)
   {
     EXPECT_EQ(g_width_recv[RS_STREAM_FISHEYE], g_caminfo_width_recv[RS_STREAM_FISHEYE]);
@@ -413,6 +423,9 @@ TEST(RealsenseTests, testFisheyeCameraInfo)
 
 TEST(RealsenseTests, testImu)
 {
+  if (g_camera_type != "ZR300")
+    return;
+
   if (g_enable_imu)
   {
     EXPECT_TRUE(g_accel_recv);
@@ -549,7 +562,7 @@ void fillConfigMap(int argc, char **argv)
   }
 }
 
-int main(int argc, char **argv) try
+int main(int argc, char **argv) //try
 {
   testing::InitGoogleTest(&argc, argv);
 
@@ -557,35 +570,39 @@ int main(int argc, char **argv) try
   ros::NodeHandle n;
   ros::NodeHandle nh(n, "camera");
 
+  image_transport::CameraSubscriber camera_subscriber[STREAM_COUNT];
+  ros::Subscriber sub_accel;
+  ros::Subscriber sub_gyro;
+  
   fillConfigMap(argc, argv);
 
   ROS_INFO_STREAM("RealSense camera test - Initializing Tests...");
 
   ros::NodeHandle depth_nh(nh, "depth");
   image_transport::ImageTransport depth_image_transport(depth_nh);
-  g_camera_subscriber[0] = depth_image_transport.subscribeCamera("image_raw", 1, imageDepthCallback, 0);
+  camera_subscriber[0] = depth_image_transport.subscribeCamera("image_raw", 1, imageDepthCallback, 0);
 
   ros::NodeHandle color_nh(nh, "color");
   image_transport::ImageTransport color_image_transport(color_nh);
-  g_camera_subscriber[1] = color_image_transport.subscribeCamera("image_raw", 1, imageColorCallback, 0);
+  camera_subscriber[1] = color_image_transport.subscribeCamera("image_raw", 1, imageColorCallback, 0);
 
   // ZR300 cameras have Fisheye and IMU
   ros::NodeHandle fisheye_nh(nh, "fisheye");
   image_transport::ImageTransport fisheye_image_transport(fisheye_nh);
   if (g_camera_type == "ZR300")
   {  
-    g_camera_subscriber[4] = fisheye_image_transport.subscribeCamera("image_raw", 1, imageFisheyeCallback, 0);
-    g_sub_accel = n.subscribe<sensor_msgs::Imu>("camera/accel/sample", 1, accelCallback);
-    g_sub_gyro = n.subscribe<sensor_msgs::Imu>("camera/gyro/sample", 1, gyroCallback);
+    camera_subscriber[4] = fisheye_image_transport.subscribeCamera("image_raw", 1, imageFisheyeCallback, 0);
+    sub_accel = n.subscribe<sensor_msgs::Imu>("camera/accel/sample", 1, accelCallback);
+    sub_gyro = n.subscribe<sensor_msgs::Imu>("camera/gyro/sample", 1, gyroCallback);
   }
 
   ros::Duration duration;
   duration.sec = 5;
   duration.sleep();
   ros::spinOnce();
-  
+
   ROS_INFO_STREAM("RealSense camera test - Running Tests...");
 
   return RUN_ALL_TESTS();
 }
-catch(...) {}  // catch the "testing::internal::<unnamed>::ClassUniqueToAlwaysTrue" from gtest
+//catch(...) {}  // catch the "testing::internal::<unnamed>::ClassUniqueToAlwaysTrue" from gtest

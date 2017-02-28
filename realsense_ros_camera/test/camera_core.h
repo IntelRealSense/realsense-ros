@@ -48,10 +48,6 @@ bool g_enable_imu = false;
 std::string g_depth_encoding_exp;  // Expected depth encoding.
 std::string g_color_encoding_exp;  // Expected color encoding.
 
-image_transport::CameraSubscriber g_camera_subscriber[STREAM_COUNT];
-ros::Subscriber g_sub_accel;
-ros::Subscriber g_sub_gyro;
-
 std::map<std::string, std::string> g_config_args;
 const float R200_MAX_Z = 10.0f;
 double g_max_z = R200_MAX_Z * 1000.0f;  // Converting meter to mm.
