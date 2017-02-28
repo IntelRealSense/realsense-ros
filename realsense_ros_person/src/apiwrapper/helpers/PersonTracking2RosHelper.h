@@ -10,6 +10,7 @@
 #include "realsense_ros_person/Wave.h"
 #include "realsense_ros_person/RectWithConfidence.h"
 #include "realsense_ros_person/SkeletonJoint.h"
+#include "realsense_ros_person/PersonModuleState.h"
 
 namespace realsense_ros_person
 {
@@ -158,5 +159,20 @@ namespace realsense_ros_person
                     return realsense_ros_person::SkeletonJoint::JOINT_UNKNOWN;
             }
         }
+
+        int TrackingState2RosTrackingState(Intel::RealSense::PersonTracking::TrackingState trackingState)
+        {
+            using namespace Intel::RealSense::PersonTracking;
+            switch(trackingState)
+            {
+                case TrackingState::TRACKING_STATE_TRACKING:
+                    return realsense_ros_person::PersonModuleState::TRACKING_STATE_TRACKING;
+                case TrackingState::TRACKING_STATE_DETECTING:
+                    return realsense_ros_person::PersonModuleState::TRACKING_STATE_DETECTING;
+                default:
+                    throw std::runtime_error("unsupported value");
+            }
+        }
+
     };
 }

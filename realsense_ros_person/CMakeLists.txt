@@ -47,6 +47,7 @@ add_message_files(
     RectWithConfidence.msg
     EulerAngles.msg
     EulerAnglesWithConfidence.msg
+    PersonModuleState.msg
 )
 
 add_service_files(

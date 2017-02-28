@@ -7,7 +7,6 @@
 #include "realsense_ros_person/SkeletonJoint.h"
 #include "PersonTrackingHelper.h"
 
-
 namespace realsense_ros_person
 {
     void PersonTrackingPublisherHelper::addSkeletonToOutput(
@@ -32,7 +31,7 @@ namespace realsense_ros_person
         for (PersonTrackingData::PersonJoints::SkeletonPoint &skeletonPoint : skeletonPoints)
         {
             realsense_ros_person::SkeletonJoint joint;
-            joint.type = m_pt2rosHelper.SkeletonJointType2RosSkeletonJointType(skeletonPoint.jointType);
+            joint.type = mPt2rosHelper.SkeletonJointType2RosSkeletonJointType(skeletonPoint.jointType);
             joint.confidence = skeletonPoint.confidenceImage;
             joint.location.x = skeletonPoint.image.x;
             joint.location.y = skeletonPoint.image.y;
@@ -51,7 +50,7 @@ namespace realsense_ros_person
         using Intel::RealSense::PersonTracking::PersonTrackingData;
 
         user.gestures.pointing.confidence = 0;
-        user.gestures.wave.type = m_pt2rosHelper.WaveGesture2RosWaveGesture(PersonTrackingData::PersonGestures::WaveType::WAVE_NOT_DETECTED);
+        user.gestures.wave.type = mPt2rosHelper.WaveGesture2RosWaveGesture(PersonTrackingData::PersonGestures::WaveType::WAVE_NOT_DETECTED);
 
         if (!ptConfiguration.QueryGestures()->IsEnabled()) return;
 
@@ -79,7 +78,7 @@ namespace realsense_ros_person
             user.gestures.pointing.confidence = poitingInfo.confidence;
         }
 
-        user.gestures.wave.type = m_pt2rosHelper.WaveGesture2RosWaveGesture(personGestures->QueryWaveGesture());
+        user.gestures.wave.type = mPt2rosHelper.WaveGesture2RosWaveGesture(personGestures->QueryWaveGesture());
     }
 
     std::vector<realsense_ros_person::User> PersonTrackingPublisherHelper::BuildUsersVector(
@@ -107,8 +106,8 @@ namespace realsense_ros_person
 
                 user.userInfo.Id = personTrackingData->QueryId();
 
-                user.userRect = m_pt2rosHelper.BoundingBox2D2RosRectWithConfidence(box);
-                user.headBoundingBox = m_pt2rosHelper.BoundingBox2D2RosRectWithConfidence(headBoundingBox);
+                user.userRect = mPt2rosHelper.BoundingBox2D2RosRectWithConfidence(box);
+                user.headBoundingBox = mPt2rosHelper.BoundingBox2D2RosRectWithConfidence(headBoundingBox);
 
                 user.centerOfMassImage.x = centerMass.image.point.x;
                 user.centerOfMassImage.y = centerMass.image.point.y;
@@ -196,5 +195,20 @@ namespace realsense_ros_person
             user.headPose.confidence = 0;
         }
         return;
+    }
+
+    realsense_ros_person::PersonModuleState PersonTrackingPublisherHelper::BuildPersonModuleState(
+            Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+            Intel::RealSense::PersonTracking::PersonTrackingData &trackingData)
+    {
+        realsense_ros_person::PersonModuleState state;
+        state.isRecognitionEnabled = ptConfiguration.QueryRecognition()->IsEnabled();
+        state.isSkeletonEnabled = ptConfiguration.QuerySkeletonJoints()->IsEnabled();
+        state.isGesturesEnabled = ptConfiguration.QueryGestures()->IsEnabled();
+        state.isLandmarksEnabled = ptConfiguration.QueryFace()->IsFaceLandmarksEnabled();
+        state.isHeadBoundingBoxEnabled =  ptConfiguration.QueryTracking()->IsHeadBoundingBoxEnabled();
+        state.isTrackingEnabled = ptConfiguration.QueryTracking()->IsEnabled();
+        state.trackingState = mPt2rosHelper.TrackingState2RosTrackingState(trackingData.GetTrackingState());
+        return  state;
     }
 }
