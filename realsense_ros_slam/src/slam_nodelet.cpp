@@ -307,14 +307,8 @@ tf2::Quaternion quaternionFromPoseMatrix(rs::slam::PoseMatrix4f cameraPose)
 geometry_msgs::Pose pose_matrix_to_msg(rs::slam::PoseMatrix4f camera_pose)
 {
     tf2::Quaternion quat = quaternionFromPoseMatrix(camera_pose);
-    
-    // Rotate pose to match ROS coordinate system
-    tf2::Quaternion quatYaw90(-0.5 * M_PI, 0, 0);
-    tf2::Quaternion quatPitch90(0, 0.5 * M_PI, 0);    
-    tf2::Quaternion quatRotated = quat * quatYaw90 * quatPitch90;
-    
     geometry_msgs::Quaternion quat_msg;
-    tf2::convert<tf2::Quaternion, geometry_msgs::Quaternion>(quatRotated, quat_msg);
+    tf2::convert<tf2::Quaternion, geometry_msgs::Quaternion>(quat, quat_msg);
     
     geometry_msgs::Point point_msg;
     point_msg.x = camera_pose.at(0,3);
