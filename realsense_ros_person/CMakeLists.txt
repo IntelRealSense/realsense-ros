@@ -47,12 +47,14 @@ add_message_files(
     RectWithConfidence.msg
     EulerAngles.msg
     EulerAnglesWithConfidence.msg
+    PersonModuleState.msg
 )
 
 add_service_files(
     FILES
     TrackingConfig.srv
-    TrackingRequest.srv
+    StartTracking.srv
+    StopTracking.srv
     Recognition.srv
     RecognitionRegister.srv
     LoadRecognitionDB.srv

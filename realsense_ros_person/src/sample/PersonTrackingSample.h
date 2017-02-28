@@ -51,7 +51,8 @@ private:
 
     ros::Subscriber mTrackingOutputSubscriber;
     ros::ServiceClient mRecognitionRequestClient;
-    ros::ServiceClient mTrackingRequestClient;
+    ros::ServiceClient mStartTrackingRequestClient;
+    ros::ServiceClient mStopTrackingRequestClient;
     ros::ServiceClient mRegisterRequestClient;
     ros::ServiceClient mConfigClient;
 
@@ -59,4 +60,6 @@ private:
 
     Viewer m_viewer;
     TrackingRenderer m_trackingRenderer;
+
+    static std::string PERSON_MODULE_STATE_TOPIC;
 };

@@ -5,14 +5,16 @@
 
 #include "realsense_ros_person/TrackingConfig.h"
 #include "realsense_ros_person/Recognition.h"
-#include "realsense_ros_person/TrackingRequest.h"
+#include "realsense_ros_person/StartTracking.h"
+#include "realsense_ros_person/StopTracking.h"
 #include "realsense_ros_person/RecognitionRegister.h"
-#include <realsense_ros_person/RecognitionRegisterResponse.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 
 #include <sstream>
+#include <realsense_ros_person/PersonModuleState.h>
 
+std::string PersonTrackingSample::PERSON_MODULE_STATE_TOPIC = "/person_tracking/module_state";
 std::string RegistrationResultToString(int status);
 std::string RecognitionResultToString(int status);
 std::string WaveGestureToString(int32_t waveGestureRos);
@@ -55,7 +57,8 @@ void PersonTrackingSample::InitMessaging(ros::NodeHandle& nodeHandle)
     mTrackingOutputSubscriber = nodeHandle.subscribe("person_tracking_output_test", 1, &PersonTrackingSample::PersonTrackingCallback, this);
     mRecognitionRequestClient = nodeHandle.serviceClient<realsense_ros_person::Recognition>("person_tracking/recognition_request");
     mRegisterRequestClient = nodeHandle.serviceClient<realsense_ros_person::RecognitionRegister>("person_tracking/register_request");
-    mTrackingRequestClient = nodeHandle.serviceClient<realsense_ros_person::TrackingRequest>("person_tracking/tracking_request");
+    mStartTrackingRequestClient = nodeHandle.serviceClient<realsense_ros_person::StartTracking>("person_tracking/start_tracking_request");
+    mStopTrackingRequestClient = nodeHandle.serviceClient<realsense_ros_person::StopTracking>("person_tracking/stop_tracking_request");
 }
 
 void PersonTrackingSample::EnableTrackingFeatures(ros::NodeHandle& nodeHandle)
@@ -209,11 +212,28 @@ void PersonTrackingSample::PersonSelectedHandler(PersonData& data, TrackingRende
     }
     else if  (type == TrackingRenderer::SelectType::TRACKING)
     {
-        realsense_ros_person::TrackingRequest request;
-        request.request.personId = data.Id;
-        mTrackingRequestClient.call(request);
-        std::string res = request.response.status ? " SUCCEEDED" : " FAILED";
-        ROS_INFO_STREAM("Tracking of user ID " + std::to_string(data.Id) + res);
+        auto personState = ros::topic::waitForMessage<realsense_ros_person::PersonModuleState>(PERSON_MODULE_STATE_TOPIC, ros::Duration(5));
+        if (personState == nullptr)
+        {
+            ROS_ERROR_STREAM("Failed to get person tracking state");
+            return;
+        }
+        if (personState->trackingState == realsense_ros_person::PersonModuleState::TRACKING_STATE_DETECTING)
+        {
+            realsense_ros_person::StartTracking request;
+            request.request.personId = data.Id;
+            mStartTrackingRequestClient.call(request);
+            std::string res = request.response.status ? " SUCCEEDED" : " FAILED";
+            ROS_INFO_STREAM("Start tracking of user ID " + std::to_string(data.Id) + res);
+        }
+        else
+        {
+            realsense_ros_person::StopTracking request;
+            request.request.personId = data.Id;
+            mStopTrackingRequestClient.call(request);
+            std::string res = request.response.status ? " SUCCEEDED" : " FAILED";
+            ROS_INFO_STREAM("Stop tracking of user ID " + std::to_string(data.Id) + res);
+        }
     }
 }
 

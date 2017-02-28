@@ -28,7 +28,7 @@ namespace realsense_ros_person
 
     protected:
         PersonTrackingPublisherHelper mPtPublisherHelper;
-
+        ros::Publisher mPersonModuleStatePublisher;
         void FillFrameData(realsense_ros_person::Frame &frame,
                            Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
                            Intel::RealSense::PersonTracking::PersonTrackingData &trackingData);
