@@ -44,11 +44,5 @@
     <param name="fisheye_optical_frame_id" type="str"  value="$(arg camera)_fisheye_optical_frame" />
     <param name="accel_optical_frame_id"   type="str"  value="$(arg camera)_accel_optical_frame" />
     <param name="gyro_optical_frame_id"    type="str"  value="$(arg camera)_gyro_optical_frame" />
-
-    <remap from="depth"    to="$(arg depth)" />
-    <remap from="color"    to="$(arg rgb)" />
-    <remap from="fisheye"  to="$(arg fisheye)" />
-    <remap from="accel"    to="$(arg accel)" />
-    <remap from="gyro"     to="$(arg gyro)" />
   </node>
 </launch>

@@ -22,6 +22,8 @@
 #include <realsense_ros_camera/IMUInfo.h>
 #include <realsense_ros_camera/constants.h>
 #include <sensor_msgs/Imu.h>
+#include <tf/transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 
 
 // R200 and ZR300 types
@@ -31,9 +33,10 @@ std::map<rs::stream,rs::format> format_;
 std::map<rs::stream,ros::Publisher> info_publisher_;
 std::map<rs::stream,cv::Mat> image_;
 std::map<rs::stream,std::string> encoding_;
+std::string base_frame_id_;
+std::map<rs::stream,std::string> frame_id_;
 std::map<rs::stream,std::string> optical_frame_id_;
-std::string optical_frame_id_accel;
-std::string optical_frame_id_gyro;
+std::string imu_frame_id_, optical_imu_frame_id_;
 std::map<rs::stream,int> seq_;
 std::map<rs::stream,int> unit_step_size_;
 std::map<rs::stream,std::function<void(rs::frame)>> stream_callback_per_stream; 
@@ -169,6 +172,7 @@ namespace realsense_ros_camera
 
             setupPublishers();        
             setupStreams();
+            publishStaticTransforms();
         }//end onInit
 
 
@@ -193,11 +197,15 @@ namespace realsense_ros_camera
           pnh_.param("fisheye_fps", fps_[rs::stream::fisheye], FISHEYE_FPS);
           pnh_.param("enable_fisheye", enable_[rs::stream::fisheye], false);
 
+          pnh_.param("base_frame_id", base_frame_id_, DEFAULT_BASE_FRAME_ID);
+          pnh_.param("depth_frame_id", frame_id_[rs::stream::depth], DEFAULT_DEPTH_FRAME_ID);
+          pnh_.param("color_frame_id", frame_id_[rs::stream::color], DEFAULT_COLOR_FRAME_ID);
+          pnh_.param("fisheye_frame_id", frame_id_[rs::stream::fisheye], DEFAULT_FISHEYE_FRAME_ID);
+          pnh_.param("imu_frame_id", imu_frame_id_, DEFAULT_IMU_FRAME_ID);
           pnh_.param("depth_optical_frame_id", optical_frame_id_[rs::stream::depth], DEFAULT_DEPTH_OPTICAL_FRAME_ID);
           pnh_.param("color_optical_frame_id", optical_frame_id_[rs::stream::color], DEFAULT_COLOR_OPTICAL_FRAME_ID);
           pnh_.param("fisheye_optical_frame_id", optical_frame_id_[rs::stream::fisheye], DEFAULT_FISHEYE_OPTICAL_FRAME_ID);
-          pnh_.param("accel_optical_frame_id", optical_frame_id_accel, DEFAULT_ACCEL_OPTICAL_FRAME_ID);
-          pnh_.param("gyro_optical_frame_id", optical_frame_id_gyro, DEFAULT_GYRO_OPTICAL_FRAME_ID);
+          pnh_.param("imu_optical_frame_id", optical_imu_frame_id_, DEFAULT_IMU_OPTICAL_FRAME_ID);
         }//end getParameters
 
 
@@ -488,6 +496,145 @@ namespace realsense_ros_camera
             }
         }//end getStreamCalibData
 
+
+        void publishStaticTransforms()
+        {
+            // Publish transforms for the cameras
+            tf::Quaternion q_c2co;
+            tf::Quaternion q_d2do;
+            tf::Quaternion q_i2io;
+            geometry_msgs::TransformStamped b2d_msg;
+            geometry_msgs::TransformStamped d2do_msg;
+            geometry_msgs::TransformStamped b2c_msg;
+            geometry_msgs::TransformStamped c2co_msg;
+            geometry_msgs::TransformStamped b2i_msg;
+            geometry_msgs::TransformStamped i2io_msg;
+
+            // Get the current timestamp for all static transforms
+            ros::Time transform_ts_ = ros::Time::now();
+
+            // The color frame is used as the base frame.
+            // Hence no additional transformation is done from base frame to color frame.
+            b2c_msg.header.stamp = transform_ts_;
+            b2c_msg.header.frame_id = base_frame_id_;
+            b2c_msg.child_frame_id = frame_id_[rs::stream::color];
+            b2c_msg.transform.translation.x = 0;
+            b2c_msg.transform.translation.y = 0;
+            b2c_msg.transform.translation.z = 0;
+            b2c_msg.transform.rotation.x = 0;
+            b2c_msg.transform.rotation.y = 0;
+            b2c_msg.transform.rotation.z = 0;
+            b2c_msg.transform.rotation.w = 1;
+            static_tf_broadcaster_.sendTransform(b2c_msg);
+
+            // Transform color frame to color optical frame
+            q_c2co.setRPY(-M_PI/2, 0.0, -M_PI/2);
+            c2co_msg.header.stamp = transform_ts_;
+            c2co_msg.header.frame_id = frame_id_[rs::stream::color];
+            c2co_msg.child_frame_id = optical_frame_id_[rs::stream::color];
+            c2co_msg.transform.translation.x = 0;
+            c2co_msg.transform.translation.y = 0;
+            c2co_msg.transform.translation.z = 0;
+            c2co_msg.transform.rotation.x = q_c2co.getX();
+            c2co_msg.transform.rotation.y = q_c2co.getY();
+            c2co_msg.transform.rotation.z = q_c2co.getZ();
+            c2co_msg.transform.rotation.w = q_c2co.getW();
+            static_tf_broadcaster_.sendTransform(c2co_msg);
+
+            // Transform base frame to depth frame
+            rs::extrinsics color2depth_extrinsic = device->get_extrinsics(rs::stream::color, rs::stream::depth);
+            b2d_msg.header.stamp = transform_ts_;
+            b2d_msg.header.frame_id = base_frame_id_;
+            b2d_msg.child_frame_id = frame_id_[rs::stream::depth];
+            b2d_msg.transform.translation.x =  color2depth_extrinsic.translation[2];
+            b2d_msg.transform.translation.y = -color2depth_extrinsic.translation[0];
+            b2d_msg.transform.translation.z = -color2depth_extrinsic.translation[1];
+            b2d_msg.transform.rotation.x = 0;
+            b2d_msg.transform.rotation.y = 0;
+            b2d_msg.transform.rotation.z = 0;
+            b2d_msg.transform.rotation.w = 1;
+            static_tf_broadcaster_.sendTransform(b2d_msg);
+
+            // Transform depth frame to depth optical frame
+            q_d2do.setRPY(-M_PI/2, 0.0, -M_PI/2);
+            d2do_msg.header.stamp = transform_ts_;
+            d2do_msg.header.frame_id = frame_id_[rs::stream::depth];
+            d2do_msg.child_frame_id = optical_frame_id_[rs::stream::depth];
+            d2do_msg.transform.translation.x = 0;
+            d2do_msg.transform.translation.y = 0;
+            d2do_msg.transform.translation.z = 0;
+            d2do_msg.transform.rotation.x = q_d2do.getX();
+            d2do_msg.transform.rotation.y = q_d2do.getY();
+            d2do_msg.transform.rotation.z = q_d2do.getZ();
+            d2do_msg.transform.rotation.w = q_d2do.getW();
+            static_tf_broadcaster_.sendTransform(d2do_msg);
+
+            if(isZR300)
+            {
+                tf::Quaternion q_f2fo, q_imu2imuo;
+                geometry_msgs::TransformStamped b2f_msg;
+                geometry_msgs::TransformStamped f2fo_msg;
+                geometry_msgs::TransformStamped b2imu_msg;
+                geometry_msgs::TransformStamped imu2imuo_msg;
+
+                // Transform base frame to fisheye frame
+                b2f_msg.header.stamp = transform_ts_;
+                b2f_msg.header.frame_id = base_frame_id_;
+                b2f_msg.child_frame_id = frame_id_[rs::stream::fisheye];
+                rs::extrinsics color2fisheye_extrinsic = device->get_extrinsics(rs::stream::color, rs::stream::fisheye);
+                b2f_msg.transform.translation.x =  color2fisheye_extrinsic.translation[2];
+                b2f_msg.transform.translation.y = -color2fisheye_extrinsic.translation[0];
+                b2f_msg.transform.translation.z = -color2fisheye_extrinsic.translation[1];
+                b2f_msg.transform.rotation.x = 0;
+                b2f_msg.transform.rotation.y = 0;
+                b2f_msg.transform.rotation.z = 0;
+                b2f_msg.transform.rotation.w = 1;
+                static_tf_broadcaster_.sendTransform(b2f_msg);
+
+                // Transform fisheye frame to fisheye optical frame
+                q_f2fo.setRPY(-M_PI/2, 0.0, -M_PI/2);
+                f2fo_msg.header.stamp = transform_ts_;
+                f2fo_msg.header.frame_id = frame_id_[rs::stream::fisheye];
+                f2fo_msg.child_frame_id = optical_frame_id_[rs::stream::fisheye];
+                f2fo_msg.transform.translation.x = 0;
+                f2fo_msg.transform.translation.y = 0;
+                f2fo_msg.transform.translation.z = 0;
+                f2fo_msg.transform.rotation.x = q_f2fo.getX();
+                f2fo_msg.transform.rotation.y = q_f2fo.getY();
+                f2fo_msg.transform.rotation.z = q_f2fo.getZ();
+                f2fo_msg.transform.rotation.w = q_f2fo.getW();
+                static_tf_broadcaster_.sendTransform(f2fo_msg);
+
+                // // Transform base frame to imu frame
+                // b2imu_msg.header.stamp = transform_ts_;
+                // b2imu_msg.header.frame_id = base_frame_id_;
+                // b2imu_msg.child_frame_id = imu_frame_id_;
+                // rs::extrinsics color2imu_extrinsic = device->get_motion_extrinsics_from(rs::stream::color);
+                // b2imu_msg.transform.translation.x =  color2imu_extrinsic.translation[2];
+                // b2imu_msg.transform.translation.y = -color2imu_extrinsic.translation[0];
+                // b2imu_msg.transform.translation.z = -color2imu_extrinsic.translation[1];
+                // b2imu_msg.transform.rotation.x = 0;
+                // b2imu_msg.transform.rotation.y = 0;
+                // b2imu_msg.transform.rotation.z = 0;
+                // b2imu_msg.transform.rotation.w = 1;
+                // static_tf_broadcaster_.sendTransform(b2imu_msg);
+
+                // // Transform imu frame to imu optical frame
+                // q_imu2imuo.setRPY(-M_PI/2, 0.0, -M_PI/2);
+                // imu2imuo_msg.header.stamp = transform_ts_;
+                // imu2imuo_msg.header.frame_id = imu_frame_id_;
+                // imu2imuo_msg.child_frame_id = optical_imu_frame_id_;
+                // imu2imuo_msg.transform.translation.x = 0;
+                // imu2imuo_msg.transform.translation.y = 0;
+                // imu2imuo_msg.transform.translation.z = 0;
+                // imu2imuo_msg.transform.rotation.x = q_imu2imuo.getX();
+                // imu2imuo_msg.transform.rotation.y = q_imu2imuo.getY();
+                // imu2imuo_msg.transform.rotation.z = q_imu2imuo.getZ();
+                // imu2imuo_msg.transform.rotation.w = q_imu2imuo.getW();
+                // static_tf_broadcaster_.sendTransform(imu2imuo_msg);
+            }
+        }
+
     private:
         ros::NodeHandle node_handle, pnh_;
         bool cameraStarted;
@@ -503,6 +650,7 @@ namespace realsense_ros_camera
         std::map<rs::stream,int> fps_;
         std::map<rs::stream,bool> enable_; 
         std::map<rs::stream,std::string> stream_name_;
+        tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
     };//end class
 
 PLUGINLIB_DECLARE_CLASS(realsense_ros_camera, NodeletCamera, realsense_ros_camera::NodeletCamera, nodelet::Nodelet);
