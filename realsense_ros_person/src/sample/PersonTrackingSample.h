@@ -51,7 +51,8 @@ private:
 
     ros::Subscriber mTrackingOutputSubscriber;
     ros::ServiceClient mRecognitionRequestClient;
-    ros::ServiceClient mTrackingRequestClient;
+    ros::ServiceClient mStartTrackingRequestClient;
+    ros::ServiceClient mStopTrackingRequestClient;
     ros::ServiceClient mRegisterRequestClient;
     ros::ServiceClient mConfigClient;
 

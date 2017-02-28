@@ -5,9 +5,9 @@
 
 #include "realsense_ros_person/TrackingConfig.h"
 #include "realsense_ros_person/Recognition.h"
-#include "realsense_ros_person/TrackingRequest.h"
+#include "realsense_ros_person/StartTracking.h"
+#include "realsense_ros_person/StopTracking.h"
 #include "realsense_ros_person/RecognitionRegister.h"
-#include <realsense_ros_person/RecognitionRegisterResponse.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 
@@ -55,7 +55,8 @@ void PersonTrackingSample::InitMessaging(ros::NodeHandle& nodeHandle)
     mTrackingOutputSubscriber = nodeHandle.subscribe("person_tracking_output_test", 1, &PersonTrackingSample::PersonTrackingCallback, this);
     mRecognitionRequestClient = nodeHandle.serviceClient<realsense_ros_person::Recognition>("person_tracking/recognition_request");
     mRegisterRequestClient = nodeHandle.serviceClient<realsense_ros_person::RecognitionRegister>("person_tracking/register_request");
-    mTrackingRequestClient = nodeHandle.serviceClient<realsense_ros_person::TrackingRequest>("person_tracking/tracking_request");
+    mStartTrackingRequestClient = nodeHandle.serviceClient<realsense_ros_person::StartTracking>("person_tracking/start_tracking_request");
+    mStopTrackingRequestClient = nodeHandle.serviceClient<realsense_ros_person::StopTracking>("person_tracking/stop_tracking_request");
 }
 
 void PersonTrackingSample::EnableTrackingFeatures(ros::NodeHandle& nodeHandle)
@@ -209,9 +210,9 @@ void PersonTrackingSample::PersonSelectedHandler(PersonData& data, TrackingRende
     }
     else if  (type == TrackingRenderer::SelectType::TRACKING)
     {
-        realsense_ros_person::TrackingRequest request;
+        realsense_ros_person::StartTracking request;
         request.request.personId = data.Id;
-        mTrackingRequestClient.call(request);
+        mStartTrackingRequestClient.call(request);
         std::string res = request.response.status ? " SUCCEEDED" : " FAILED";
         ROS_INFO_STREAM("Tracking of user ID " + std::to_string(data.Id) + res);
     }

@@ -52,7 +52,8 @@ add_message_files(
 add_service_files(
     FILES
     TrackingConfig.srv
-    TrackingRequest.srv
+    StartTracking.srv
+    StopTracking.srv
     Recognition.srv
     RecognitionRegister.srv
     LoadRecognitionDB.srv

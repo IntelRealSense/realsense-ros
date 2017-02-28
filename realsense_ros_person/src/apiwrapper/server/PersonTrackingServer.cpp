@@ -25,8 +25,10 @@ namespace realsense_ros_person
         mRecognitionRegisterRequestService = nodeHandle.advertiseService("person_tracking/register_request",
                                                                          &PersonTrackingServer::recognitionRegisterRequestCallback,
                                                                          this);
-        mTrackingRequestService = nodeHandle.advertiseService("person_tracking/tracking_request",
-                                                              &PersonTrackingServer::trackingRequestCallback, this);
+        mStartTrackingService = nodeHandle.advertiseService("person_tracking/start_tracking_request",
+                                                              &PersonTrackingServer::startTrackingRequestCallback, this);
+        mStopTrackingService = nodeHandle.advertiseService("person_tracking/stop_tracking_request",
+                                                            &PersonTrackingServer::stopTrackingRequestCallback, this);
         mSaveRecognitionDbService = nodeHandle.advertiseService("person_tracking/save_recognition",
                                                                 &PersonTrackingServer::saveRecognitionDbCallback, this);
         mLoadRecognitionDbService = nodeHandle.advertiseService("person_tracking/load_recognition",
@@ -177,33 +179,42 @@ namespace realsense_ros_person
         return true;
     }
 
-    bool PersonTrackingServer::trackingRequestCallback(realsense_ros_person::TrackingRequest::Request &request,
-                                                       realsense_ros_person::TrackingRequest::Response &response)
+    bool PersonTrackingServer::startStopTracking(bool isStart, int personId)
     {
-        ROS_INFO_STREAM("Received tracking request for person: " << request.personId);
         PXCPersonTrackingData *trackingData = mPersonTracking->QueryOutput();
-        PXCPersonTrackingData::Person *personData = trackingData->QueryPersonDataById(request.personId);
+        PXCPersonTrackingData::Person *personData = trackingData->QueryPersonDataById(personId);
         if (!personData)
         {
             ROS_ERROR_STREAM("Couldn't find tracking request target");
-            response.status = false;
-            return true;
+            return false;
         }
         ROS_INFO_STREAM("Found tracking request target");
-        PXCPersonTrackingData::TrackingState trackingState = trackingData->GetTrackingState();
-        if (trackingState == PXCPersonTrackingData::TRACKING_STATE_DETECTING)
+        if (isStart)
         {
-            ROS_INFO_STREAM("start tracking");
-            trackingData->StartTracking(request.personId);
+            ROS_INFO_STREAM("start tracking on person: " << personId);
+            trackingData->StartTracking(personId);
         }
         else
         {
-            ROS_INFO_STREAM("stop tracking");
-            trackingData->StopTracking(request.personId);
+            ROS_INFO_STREAM("stop tracking on person: " << personId);
+            trackingData->StopTracking(personId);
         }
+        return true;
+    }
 
-        response.status = true;
+    bool PersonTrackingServer::startTrackingRequestCallback(realsense_ros_person::StartTracking::Request &request,
+                                                       realsense_ros_person::StartTracking::Response &response)
+    {
+        ROS_INFO_STREAM("Received start tracking request for person: " << request.personId);
+        response.status = startStopTracking(true, request.personId);
+        return true;
+    }
 
+    bool PersonTrackingServer::stopTrackingRequestCallback(realsense_ros_person::StopTracking::Request &request,
+                                                            realsense_ros_person::StopTracking::Response &response)
+    {
+        ROS_INFO_STREAM("Received stop tracking request for person: " << request.personId);
+        response.status = startStopTracking(false, request.personId);
         return true;
     }
 

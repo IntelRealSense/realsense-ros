@@ -48,17 +48,19 @@ Aditional information:
     person_tracking_output_test (realsense_ros_person/FrameTest) Informations of person tracked + color image from camera
 
 #### 3.1.3 Services
-    person_tracking/tracking_config (realsense_srvs/TrackingConfig)
+    person_tracking/tracking_config (realsense_ros_person/TrackingConfig)
         Reconfigure several settings for PersonTracking
-    person_tracking/register_request (realsense_srvs/RecognitionRegister)
+    person_tracking/register_request (realsense_ros_person/RecognitionRegister)
         Register person at recognition database
-    person_tracking/recognition_request (realsense_srvs/Recognition)
+    person_tracking/recognition_request (realsense_ros_person/Recognition)
         Recognize person
-    person_tracking/tracking_request (realsense_srvs/TrackingRequest)
-        Reconfigure to start or stop tracking
-    person_tracking/save_recognition (realsense_srvs/SaveRecognitionDB)
+    person_tracking/start_tracking_request (realsense_ros_person/StartTracking)
+        Start tracking on specific person
+    person_tracking/stop_tracking_request (realsense_ros_person/StopTracking)
+        Start tracking on specific person
+    person_tracking/save_recognition (realsense_ros_person/SaveRecognitionDB)
         Save the recognition data base to file
-    person_tracking/load_recognition (realsense_srvs/LoadRecognitionDB)
+    person_tracking/load_recognition (realsense_ros_person/LoadRecognitionDB)
         Load the recognition data base from file
 
 #### 3.1.4 Parameters
