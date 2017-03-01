@@ -74,7 +74,7 @@ void pose2d_callback(const geometry_msgs::Pose2DConstPtr &ptr)
 void accuracy_callback(const realsense_ros_slam::TrackingAccuracyConstPtr &ptr)
 {
      accuracy_received = true;
-     highest_accuracy = ptr->tracking_accuracy;
+     if (ptr->tracking_accuracy > highest_accuracy) highest_accuracy = ptr->tracking_accuracy;
 }
 
 void map_callback(const nav_msgs::OccupancyGridConstPtr &ptr)
