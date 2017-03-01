@@ -51,27 +51,27 @@ void map_callback(const nav_msgs::OccupancyGridConstPtr &ptr)
 
 int main(int argc, char **argv) try
 {
-  testing::InitGoogleTest(&argc, argv);
+    testing::InitGoogleTest(&argc, argv);
 
-  ros::init(argc, argv, "utest");
-  ros::NodeHandle nh;
+    ros::init(argc, argv, "utest");
+    ros::NodeHandle nh;
 
-  ROS_INFO_STREAM("RealSense SLAM test - Initializing Tests...");
-  
-  ros::Subscriber sub_cam_pose, sub_pose2d, sub_tracking_acc, sub_map;
-  
-  sub_cam_pose = nh.subscribe("camera_pose", 10, &camera_pose_callback);
-  sub_pose2d = nh.subscribe("pose2d", 10, &pose2d_callback);
-  sub_tracking_acc = nh.subscribe("tracking_accuracy", 10, &accuracy_callback);
-  sub_map = nh.subscribe("map", 10, &map_callback);
+    ROS_INFO_STREAM("RealSense SLAM test - Initializing Tests...");
 
-  ros::Duration duration;
-  duration.sec = 10;
-  duration.sleep();
-  ros::spinOnce();
-  
-  ROS_INFO_STREAM("RealSense SLAM test - Running Tests...");
+    ros::Subscriber sub_cam_pose, sub_pose2d, sub_tracking_acc, sub_map;
 
-  return RUN_ALL_TESTS();
+    sub_cam_pose = nh.subscribe("camera_pose", 10, &camera_pose_callback);
+    sub_pose2d = nh.subscribe("pose2d", 10, &pose2d_callback);
+    sub_tracking_acc = nh.subscribe("tracking_accuracy", 10, &accuracy_callback);
+    sub_map = nh.subscribe("map", 10, &map_callback);
+
+    ros::Duration duration;
+    duration.sec = 10;
+    duration.sleep();
+    ros::spinOnce();
+
+    ROS_INFO_STREAM("RealSense SLAM test - Running Tests...");
+
+    return RUN_ALL_TESTS();
 }
 catch(...) {}  // catch the "testing::internal::<unnamed>::ClassUniqueToAlwaysTrue" from gtest
