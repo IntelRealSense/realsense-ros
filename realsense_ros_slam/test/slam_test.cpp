@@ -53,6 +53,12 @@ TEST(RealsenseTests, testCamPoseHeader)
     EXPECT_TRUE(is_header_valid(last_cam_pose.header));
 }
 
+TEST(RealsenseTests, testPose2D)
+{
+    // we are not testing last_pose2d.theta because zero could be valid.
+    EXPECT_TRUE(last_pose2d.x || last_pose2d.y);
+}
+
 void camera_pose_callback(const geometry_msgs::PoseStampedConstPtr &ptr)
 {
      camera_pose_received = true;
