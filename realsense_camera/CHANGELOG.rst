@@ -2,6 +2,13 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Create tool to get debug info
+* Change tf to using setRPY for consistency
+* Changed fisheye_strobe and fisheye_external_trigger to static params
+* Contributors: Amanda Brindle, Mark D Horn, Mark Horn, Matthew Hansen, Wang Jinliang
+
 1.7.1 (2017-01-14)
 ------------------
 * Generate Warning for non-validated camera firmware
