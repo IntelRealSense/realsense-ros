@@ -5,11 +5,41 @@
 #include "slam_test.h"  // NOLINT(build/include)
 #include <string>  // Added to satisfy roslint
 #include <vector>  // Added to satisfy roslint
+#include <geometry_msgs/Pose2D.h>
+#include <realsense_ros_slam/TrackingAccuracy.h>
+#include <nav_msgs/OccupancyGrid.h>
 
+bool camera_pose_received = false;
+bool pose2d_received = false;
+bool accuracy_received = false;
+bool map_received = false;
 
-TEST(RealsenseTests, testPass)
+TEST(RealsenseTests, testMessagesReceived)
 {
-  EXPECT_TRUE(true);
+  EXPECT_TRUE(camera_pose_received);
+  EXPECT_TRUE(pose2d_received);
+  EXPECT_TRUE(accuracy_received);
+  EXPECT_TRUE(map_received);
+}
+
+void camera_pose_callback(const geometry_msgs::PoseStampedConstPtr &ptr)
+{
+     camera_pose_received = true;
+}
+
+void pose2d_callback(const geometry_msgs::Pose2DConstPtr &ptr)
+{
+     pose2d_received = true;
+}
+
+void accuracy_callback(const realsense_ros_slam::TrackingAccuracyConstPtr &ptr)
+{
+     accuracy_received = true;
+}
+
+void map_callback(const nav_msgs::OccupancyGridConstPtr &ptr)
+{
+     map_received = true;
 }
 
 int main(int argc, char **argv) try
@@ -17,31 +47,19 @@ int main(int argc, char **argv) try
   testing::InitGoogleTest(&argc, argv);
 
   ros::init(argc, argv, "utest");
-  ros::NodeHandle n;
-  ros::NodeHandle nh(n, "camera");
+  ros::NodeHandle nh;
 
   ROS_INFO_STREAM("RealSense SLAM test - Initializing Tests...");
-
-//   ros::NodeHandle depth_nh(nh, "depth");
-//   image_transport::ImageTransport depth_image_transport(depth_nh);
-//   g_camera_subscriber[0] = depth_image_transport.subscribeCamera("image_raw", 1, imageDepthCallback, 0);
-// 
-//   ros::NodeHandle color_nh(nh, "color");
-//   image_transport::ImageTransport color_image_transport(color_nh);
-//   g_camera_subscriber[1] = color_image_transport.subscribeCamera("image_raw", 1, imageColorCallback, 0);
-// 
-//   ZR300 cameras have Fisheye and IMU
-//   ros::NodeHandle fisheye_nh(nh, "fisheye");
-//   image_transport::ImageTransport fisheye_image_transport(fisheye_nh);
-//   if (g_camera_type == "ZR300")
-//   {  
-//     g_camera_subscriber[4] = fisheye_image_transport.subscribeCamera("image_raw", 1, imageFisheyeCallback, 0);
-//     g_sub_accel = n.subscribe<sensor_msgs::Imu>("camera/accel/sample", 1, accelCallback);
-//     g_sub_gyro = n.subscribe<sensor_msgs::Imu>("camera/gyro/sample", 1, gyroCallback);
-//   }
+  
+  ros::Subscriber sub_cam_pose, sub_pose2d, sub_tracking_acc, sub_map;
+  
+  sub_cam_pose = nh.subscribe("camera_pose", 10, &camera_pose_callback);
+  sub_pose2d = nh.subscribe("pose2d", 10, &pose2d_callback);
+  sub_tracking_acc = nh.subscribe("tracking_accuracy", 10, &accuracy_callback);
+  sub_map = nh.subscribe("map", 10, &map_callback);
 
   ros::Duration duration;
-  duration.sec = 5;
+  duration.sec = 10;
   duration.sleep();
   ros::spinOnce();
   
