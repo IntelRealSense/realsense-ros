@@ -13,13 +13,19 @@ bool camera_pose_received = false;
 bool pose2d_received = false;
 bool accuracy_received = false;
 bool map_received = false;
+uint32_t highest_accuracy = 0;
 
-TEST(RealsenseTests, testMessagesReceived)
+TEST(RealsenseTests, testAllMessagesReceived)
 {
-  EXPECT_TRUE(camera_pose_received);
-  EXPECT_TRUE(pose2d_received);
-  EXPECT_TRUE(accuracy_received);
-  EXPECT_TRUE(map_received);
+    EXPECT_TRUE(camera_pose_received);
+    EXPECT_TRUE(pose2d_received);
+    EXPECT_TRUE(accuracy_received);
+    EXPECT_TRUE(map_received);
+}
+
+TEST(RealsenseTests, testAccuracyMediumOrBetter)
+{
+    EXPECT_GE(highest_accuracy, 2);
 }
 
 void camera_pose_callback(const geometry_msgs::PoseStampedConstPtr &ptr)
@@ -35,6 +41,7 @@ void pose2d_callback(const geometry_msgs::Pose2DConstPtr &ptr)
 void accuracy_callback(const realsense_ros_slam::TrackingAccuracyConstPtr &ptr)
 {
      accuracy_received = true;
+     highest_accuracy = ptr->tracking_accuracy;
 }
 
 void map_callback(const nav_msgs::OccupancyGridConstPtr &ptr)
