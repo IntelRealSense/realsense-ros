@@ -2,8 +2,8 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.7.2 (2017-03-01)
+------------------
 * Create tool to get debug info
 * Change tf to using setRPY for consistency
 * Changed fisheye_strobe and fisheye_external_trigger to static params
