@@ -19,6 +19,11 @@ geometry_msgs::PoseStamped last_cam_pose;
 geometry_msgs::Pose2D last_pose2d;
 nav_msgs::OccupancyGrid last_map;
 
+bool is_header_valid(std_msgs::Header header)
+{
+    return header.seq && header.frame_id.length() && header.stamp.isValid();
+}
+
 TEST(RealsenseTests, testAllMessagesReceived)
 {
     EXPECT_TRUE(camera_pose_received);
@@ -41,6 +46,11 @@ TEST(RealsenseTests, testCamPose)
     bool isOrientationAllZeros = true;
     if (last_cam_pose.pose.orientation.x || last_cam_pose.pose.orientation.y || last_cam_pose.pose.orientation.z || last_cam_pose.pose.orientation.w) isOrientationAllZeros = false;
     EXPECT_FALSE(isOrientationAllZeros);
+}
+
+TEST(RealsenseTests, testCamPoseHeader)
+{
+    EXPECT_TRUE(is_header_valid(last_cam_pose.header));
 }
 
 void camera_pose_callback(const geometry_msgs::PoseStampedConstPtr &ptr)
