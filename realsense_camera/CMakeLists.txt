@@ -83,7 +83,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(${PROJECT_NAME}_nodelet src/base_nodelet.cpp src/r200_nodelet.cpp src/f200_nodelet.cpp src/sr300_nodelet.cpp
+add_library(${PROJECT_NAME}_nodelet src/base_nodelet.cpp src/sync_nodelet.cpp src/r200_nodelet.cpp src/f200_nodelet.cpp src/sr300_nodelet.cpp
   src/zr300_nodelet.cpp)
 target_link_libraries(${PROJECT_NAME}_nodelet
   ${catkin_LIBRARIES}
