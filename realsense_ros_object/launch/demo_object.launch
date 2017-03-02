@@ -5,5 +5,5 @@
     <arg name="color_width"         value="640" />
     <arg name="color_height"        value="480" />
   </include>
-  <include file="$(find realsense_ros_object)/launch/object.launch"/>
+  <include file="$(find realsense_ros_object)/launch/object_workaround.launch"/>
 </launch>
