@@ -25,10 +25,10 @@ std::string pkgpath;
 std::string trajectoryFilename;
 std::string relocalizationFilename;
 std::string occupancyFilename;
-std::string topic_camera_pose, topic_pose2d, topic_map, topic_tracking_accuracy;
+std::string topic_camera_pose, topic_reloc_pose, topic_pose2d, topic_map, topic_tracking_accuracy;
 double resolution;
 
-ros::Publisher pub_pose2d, pub_pose, pub_map, pub_accuracy;
+ros::Publisher pub_pose2d, pub_pose, pub_map, pub_accuracy, pub_reloc;
 geometry_msgs::Pose2D pose2d;
 
 IplImage * ipNavMap = NULL;
@@ -356,13 +356,21 @@ public:
         uint64_t feFrameNum = sample->images[static_cast<uint8_t>(rs::core::stream_type::fisheye)]->query_frame_number();
         double feTimeStamp = sample->images[static_cast<uint8_t>(rs::core::stream_type::fisheye)]->query_time_stamp();
         
+        // Publish camera pose
         rs::slam::PoseMatrix4f cameraPose;
         slamPtr->get_camera_pose(cameraPose);    
-        
-        // Publish camera pose
         geometry_msgs::PoseStamped pose_msg = get_pose_stamped_msg(cameraPose, feFrameNum, feTimeStamp);
         pub_pose.publish(pose_msg);
-        
+
+        // Publish relocalized camera pose, if any
+        rs::slam::PoseMatrix4f relocPose;
+        if (slamPtr->get_relocalization_pose(relocPose))
+        {
+            geometry_msgs::PoseStamped reloc_pose_msg = get_pose_stamped_msg(relocPose, feFrameNum, feTimeStamp);
+            pub_reloc.publish(reloc_pose_msg);
+        }
+
+        // Publish tracking accuracy
         rs::slam::tracking_accuracy accuracy = slamPtr->get_tracking_accuracy();
         TrackingAccuracy accuracyMsg;
         accuracyMsg.header.stamp = ros::Time(feTimeStamp);
@@ -370,6 +378,7 @@ public:
         accuracyMsg.tracking_accuracy = (uint32_t)accuracy;
         pub_accuracy.publish(accuracyMsg);
         
+        // Publish 2D pose
         Eigen::Vector3f gravity = Eigen::Vector3f(0, 1, 0);
         stRobotPG robotPG;
         ConvertToPG(cameraPose, gravity, robotPG);
@@ -379,6 +388,7 @@ public:
         pub_pose2d.publish(pose2d);
         g_robotPGStack.push_back(robotPG);
         
+        // Publish occupancy map
         int wmap = 512;
         int hmap = 512;
         if (!occ_map)
@@ -446,12 +456,14 @@ void SNodeletSlam::onInit()
     pnh.param< std::string >("relocalizationFilename", relocalizationFilename, "relocalization.bin");
     pnh.param< std::string >("occupancyFilename", occupancyFilename, "occupancy.bin");
     pnh.param< std::string >("topic_camera_pose", topic_camera_pose, "camera_pose");
+    pnh.param< std::string >("topic_reloc_pose", topic_reloc_pose, "reloc_pose");
     pnh.param< std::string >("topic_pose2d", topic_pose2d, "pose2d");
     pnh.param< std::string >("topic_map", topic_map, "map");
     pnh.param< std::string >("topic_tracking_accuracy", topic_tracking_accuracy, "tracking_accuracy");
     
     nh = getMTNodeHandle();
     pub_pose = nh.advertise< geometry_msgs::PoseStamped >(topic_camera_pose, 1, true);
+    pub_reloc = nh.advertise< geometry_msgs::PoseStamped >(topic_reloc_pose, 1, true);
     pub_pose2d = nh.advertise< geometry_msgs::Pose2D >(topic_pose2d, 2, true);
     pub_map = nh.advertise< nav_msgs::OccupancyGrid >(topic_map, 1, true);
     pub_accuracy = nh.advertise< realsense_ros_slam::TrackingAccuracy >(topic_tracking_accuracy, 1, true);
