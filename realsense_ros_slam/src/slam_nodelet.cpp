@@ -551,9 +551,13 @@ void SNodeletSlam::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& dep
         r.sleep();
     }
 
-    std::cout << "occupancy ppm:" << slam->save_occupancy_map_as_ppm(pkgpath + trajectoryFilename, true) << std::endl;
-    std::cout << "Save Relocalozation:" << slam->save_relocalization_map(pkgpath + relocalizationFilename) << std::endl;
-    std::cout << "Save occupancy:" << slam->save_occupancy_map(pkgpath + occupancyFilename) << std::endl;
+    std::string result = slam->save_occupancy_map_as_ppm(pkgpath + trajectoryFilename, true) == 0 ? "Saved trajectory to file." : "FAILED to save trajectory to file.";
+    std::cout << result << std::endl;
+    result = slam->save_relocalization_map(pkgpath + relocalizationFilename) == 0 ? "Saved relocalization map to file." : "FAILED to save relocalization map to file.";
+    std::cout << result << std::endl;
+    result = slam->save_occupancy_map(pkgpath + occupancyFilename) == 0 ? "Saved occupancy map to file." : "FAILED to save occupancy map to file.";
+    std::cout << result << std::endl;
+    
     slam->flush_resources();
 }//end of callback
 
