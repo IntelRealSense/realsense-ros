@@ -19,26 +19,14 @@ geometry_msgs::PoseStamped last_cam_pose;
 geometry_msgs::Pose2D last_pose2d;
 nav_msgs::OccupancyGrid last_map;
 
-bool is_header_valid(std_msgs::Header header)
-{
-    return header.seq && header.frame_id.length() && header.stamp.isValid();
-}
-
-TEST(RealsenseTests, testAllMessagesReceived)
-{
-    EXPECT_TRUE(camera_pose_received);
-    EXPECT_TRUE(pose2d_received);
-    EXPECT_TRUE(accuracy_received);
-    EXPECT_TRUE(map_received);
-}
-
-TEST(RealsenseTests, testAccuracyMediumOrBetter)
-{
-    EXPECT_GE(highest_accuracy, 2);
-}
-
 TEST(RealsenseTests, testCamPose)
 {
+    EXPECT_TRUE(camera_pose_received);
+
+    EXPECT_GT(last_cam_pose.header.seq, 0);
+    EXPECT_GT(last_cam_pose.header.frame_id.length(), 0);
+    EXPECT_TRUE(last_cam_pose.header.stamp.isValid());
+    
     bool isPositionAllZeros = true;
     if (last_cam_pose.pose.position.x || last_cam_pose.pose.position.y || last_cam_pose.pose.position.z) isPositionAllZeros = false;
     EXPECT_FALSE(isPositionAllZeros);
@@ -48,15 +36,34 @@ TEST(RealsenseTests, testCamPose)
     EXPECT_FALSE(isOrientationAllZeros);
 }
 
-TEST(RealsenseTests, testCamPoseHeader)
-{
-    EXPECT_TRUE(is_header_valid(last_cam_pose.header));
-}
-
 TEST(RealsenseTests, testPose2D)
 {
-    // we are not testing last_pose2d.theta because zero could be valid.
+    EXPECT_TRUE(pose2d_received);
     EXPECT_TRUE(last_pose2d.x || last_pose2d.y);
+    // we are not testing last_pose2d.theta because zero could be valid.
+}
+
+TEST(RealsenseTests, testAccuracy)
+{
+    EXPECT_TRUE(accuracy_received);
+    EXPECT_GE(highest_accuracy, 2);
+}
+
+TEST(RealsenseTests, testMap)
+{
+    EXPECT_TRUE(map_received);
+
+    EXPECT_GT(last_map.header.seq, 0);
+    EXPECT_TRUE(last_map.header.stamp.isValid());
+    //EXPECT_GT(last_map.header.frame_id.length(), 0); // map header doesn't have frame_id
+    
+    EXPECT_GT(last_map.info.resolution, 0);
+    EXPECT_GT(last_map.info.width, 0);
+    EXPECT_GT(last_map.info.height, 0);
+    EXPECT_NE(last_map.info.origin.position.x, 0);
+    EXPECT_NE(last_map.info.origin.position.y, 0);
+    
+    EXPECT_GT(last_map.data.size(), 0);
 }
 
 void camera_pose_callback(const geometry_msgs::PoseStampedConstPtr &ptr)
