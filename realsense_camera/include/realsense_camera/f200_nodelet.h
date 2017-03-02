@@ -37,11 +37,11 @@
 #include <dynamic_reconfigure/server.h>
 
 #include <realsense_camera/f200_paramsConfig.h>
-#include <realsense_camera/base_nodelet.h>
+#include <realsense_camera/sync_nodelet.h>
 
 namespace realsense_camera
 {
-class F200Nodelet: public realsense_camera::BaseNodelet
+class F200Nodelet: public realsense_camera::SyncNodelet
 {
 public:
   void onInit();

@@ -59,7 +59,7 @@ namespace realsense_camera
 
     max_z_ = F200_MAX_Z;
 
-    BaseNodelet::onInit();
+    SyncNodelet::onInit();
   }
 
   /*
