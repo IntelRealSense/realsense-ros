@@ -2,9 +2,10 @@
 // Copyright(c) 2016 Intel Corporation. All Rights Reserved
 
 #include <gtest/gtest.h>
-#include "slam_test.h"  // NOLINT(build/include)
 #include <string>  // Added to satisfy roslint
 #include <vector>  // Added to satisfy roslint
+#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Pose2D.h>
 #include <realsense_ros_slam/TrackingAccuracy.h>
 #include <nav_msgs/OccupancyGrid.h>
