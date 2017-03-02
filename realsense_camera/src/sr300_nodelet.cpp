@@ -58,7 +58,7 @@ namespace realsense_camera
 
     max_z_ = SR300_MAX_Z;
 
-    BaseNodelet::onInit();
+    SyncNodelet::onInit();
   }
 
   /*

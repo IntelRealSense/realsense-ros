@@ -38,11 +38,11 @@
 #include <dynamic_reconfigure/server.h>
 
 #include <realsense_camera/sr300_paramsConfig.h>
-#include <realsense_camera/base_nodelet.h>
+#include <realsense_camera/sync_nodelet.h>
 
 namespace realsense_camera
 {
-class SR300Nodelet: public realsense_camera::BaseNodelet
+class SR300Nodelet: public realsense_camera::SyncNodelet
 {
 public:
   void onInit();
