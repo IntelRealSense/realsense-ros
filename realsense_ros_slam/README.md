@@ -78,6 +78,11 @@ To use realsense_ros_slam, you need a mobile agent with a RealSense ZR300 camera
 - Message type: `geometry_msgs::PoseStamped`
 - The raw camera pose, in the camera's coordinate system (right-handed, +x right, +y down, +z forward)
 
+`reloc_pose`
+
+- Message type: `geometry_msgs::PoseStamped`
+- The relocalized camera pose, in the camera's coordinate system. Published only when a relocalization has occurred.
+
 `pose2d`
 
 - Message type: `geometry_msgs::Pose2D`
