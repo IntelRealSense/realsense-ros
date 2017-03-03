@@ -54,6 +54,7 @@ namespace realsense_camera
       {
         rs_wait_for_frames(rs_device_, &rs_error_);
         checkError();
+        topic_ts_ = ros::Time::now();
 
         for (int stream=0; stream < STREAM_COUNT; stream++)
         {
@@ -117,7 +118,7 @@ namespace realsense_camera
             image_[stream_index]).toImageMsg();
 
         msg->header.frame_id = optical_frame_id_[stream_index];
-        msg->header.stamp = getTimestamp(stream_index, frame_ts);;  // Publish timestamp to synchronize frames.
+        msg->header.stamp = topic_ts_;  // Publish timestamp to synchronize frames.
         msg->width = image_[stream_index].cols;
         msg->height = image_[stream_index].rows;
         msg->is_bigendian = false;

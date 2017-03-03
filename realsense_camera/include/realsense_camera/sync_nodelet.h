@@ -46,6 +46,7 @@ public:
 protected:
   boost::shared_ptr<boost::thread> topic_thread_;
   bool duplicate_depth_color_ = false;
+  ros::Time topic_ts_;
 
   virtual void setFrameCallbacks() { }  // don't set callbacks!
   virtual void publishSyncTopics();

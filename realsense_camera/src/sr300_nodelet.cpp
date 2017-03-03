@@ -82,21 +82,6 @@ namespace realsense_camera
   }
 
   /*
-   * Determine the timestamp for the publish topic. -- overrides base class
-   */
-  ros::Time SR300Nodelet::getTimestamp(rs_stream stream_index, double frame_ts)
-  {
-    static ros::Time last_common_stamp = ros::Time::now();
-
-    if (stream_index == fastest_stream_)
-    {
-      last_common_stamp = ros::Time::now();
-    }
-
-    return last_common_stamp;
-  }
-
-  /*
    * Set Dynamic Reconfigure Server and return the dynamic params.
    */
   std::vector<std::string> SR300Nodelet::setDynamicReconfServer()

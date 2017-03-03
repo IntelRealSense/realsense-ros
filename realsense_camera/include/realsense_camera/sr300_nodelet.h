@@ -54,7 +54,6 @@ protected:
 
   // Member Functions.
   void setStreams();
-  ros::Time getTimestamp(rs_stream stream_index, double frame_ts);
   std::vector<std::string> setDynamicReconfServer();
   void startDynamicReconfCallback();
   void configCallback(realsense_camera::sr300_paramsConfig &config, uint32_t level);
