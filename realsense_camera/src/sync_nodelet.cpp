@@ -64,7 +64,7 @@ namespace realsense_camera
 
           if (pointcloud_publisher_.getNumSubscribers() > 0 &&
               rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0) == 1 && enable_pointcloud_ == true &&
-              (duplicate_depth_color_ == false)) // Skip publishing PointCloud if Depth and/or Color frame was duplicate
+              (duplicate_depth_color_ == false))  // Skip publishing PointCloud if Depth or Color frame was duplicate
           {
             if (camera_publisher_[RS_STREAM_DEPTH].getNumSubscribers() <= 0)
             {
@@ -108,7 +108,7 @@ namespace realsense_camera
         rs_is_stream_enabled(rs_device_, (rs_stream) stream_index, 0) == 1)
     {
       double frame_ts = rs_get_frame_timestamp(rs_device_, (rs_stream) stream_index, 0);
-      if (ts_[stream_index] != frame_ts) // Publish frames only if its not duplicate
+      if (ts_[stream_index] != frame_ts)  // Publish frames only if its not duplicate
       {
         setImageData(stream_index);
 
@@ -117,20 +117,20 @@ namespace realsense_camera
             image_[stream_index]).toImageMsg();
 
         msg->header.frame_id = optical_frame_id_[stream_index];
-        msg->header.stamp = getTimestamp(stream_index, frame_ts);; // Publish timestamp to synchronize frames.
+        msg->header.stamp = getTimestamp(stream_index, frame_ts);;  // Publish timestamp to synchronize frames.
         msg->width = image_[stream_index].cols;
         msg->height = image_[stream_index].rows;
         msg->is_bigendian = false;
         msg->step = step_[stream_index];
 
         camera_info_ptr_[stream_index]->header.stamp = msg->header.stamp;
-        camera_publisher_[stream_index].publish (msg, camera_info_ptr_[stream_index]);
+        camera_publisher_[stream_index].publish(msg, camera_info_ptr_[stream_index]);
       }
       else
       {
         if ((stream_index == RS_STREAM_DEPTH) || (stream_index == RS_STREAM_COLOR))
         {
-          duplicate_depth_color_ = true; // Set this flag to true if Depth and/or Color frame is duplicate
+          duplicate_depth_color_ = true;  // Set this flag to true if Depth and/or Color frame is duplicate
         }
       }
       ts_[stream_index] = frame_ts;
@@ -149,8 +149,9 @@ namespace realsense_camera
         }
         else
         {
-          cvWrapper_ = cv::Mat(image_[stream_index].size(), cv_type_[stream_index], (void *) image_depth16_,
-                step_[stream_index]);
+          cvWrapper_ = cv::Mat(image_[stream_index].size(), cv_type_[stream_index],
+                               const_cast<void *>(reinterpret_cast<const void *>(image_depth16_)),
+                               step_[stream_index]);
           cvWrapper_.convertTo(image_[stream_index], cv_type_[stream_index],
                 static_cast<double>(depth_scale_meters) / static_cast<double>(MILLIMETER_METERS));
         }

@@ -44,14 +44,13 @@ public:
   virtual void onInit();
 
 protected:
-   boost::shared_ptr<boost::thread> topic_thread_;
-   bool duplicate_depth_color_ = false;
+  boost::shared_ptr<boost::thread> topic_thread_;
+  bool duplicate_depth_color_ = false;
 
-  virtual void setFrameCallbacks() { };  // don't set callbacks!
+  virtual void setFrameCallbacks() { }  // don't set callbacks!
   virtual void publishSyncTopics();
   virtual void publishTopic(rs_stream stream_index);
   virtual void setImageData(rs_stream stream_index);
-
 };
 }  // namespace realsense_camera
 #endif  // REALSENSE_CAMERA_SYNC_NODELET_H
