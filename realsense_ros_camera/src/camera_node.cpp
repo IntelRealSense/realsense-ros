@@ -338,7 +338,7 @@ namespace realsense_ros_camera
                     img->header.seq = seq_[stream];
                     image_publishers_[stream].publish(img);
 
-                    camera_info_[stream].header.stamp = img->header.stamp;
+                    //camera_info_[stream].header.stamp = img->header.stamp; // Don't timestamp camera intrinsics. Timestamp is meaningless and breaks the slam node's TimeSynchronizer.
                     camera_info_[stream].header.seq = img->header.seq;
                     info_publisher_[stream].publish(camera_info_[stream]);
                 };
