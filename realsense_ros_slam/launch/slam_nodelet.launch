@@ -4,6 +4,8 @@
     <arg name="topic_pose2d"            default="pose2d" />
     <arg name="topic_map"               default="map" />
     <arg name="topic_tracking_accuracy" default="tracking_accuracy" />
+    <arg name="topic_odom"              default="odom" />
+    <arg name="publish_odometry"        default="false" />
   
     <node pkg="nodelet" type="nodelet" name="rs_slam" args="standalone realsense_ros_slam/SNodeletSlam" output="screen">
         <rosparam file="$(find realsense_ros_slam)/launch/params.yaml" command="load"/>            
@@ -12,6 +14,8 @@
         <param name="topic_pose2d"   type="str"  value="$(arg topic_pose2d)" />            
         <param name="topic_map"   type="str"  value="$(arg topic_map)" />            
         <param name="topic_tracking_accuracy"   type="str"  value="$(arg topic_tracking_accuracy)" />
+        <param name="topic_odom"   type="str"  value="$(arg topic_odom)" />
+        <param name="publish_odometry"   type="bool"  value="$(arg publish_odometry)" />
     </node>
      <!--launch-prefix="gdb -ex run --><!--args"/-->
 

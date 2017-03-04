@@ -25,10 +25,11 @@ std::string pkgpath;
 std::string trajectoryFilename;
 std::string relocalizationFilename;
 std::string occupancyFilename;
-std::string topic_camera_pose, topic_reloc_pose, topic_pose2d, topic_map, topic_tracking_accuracy;
+std::string topic_camera_pose, topic_reloc_pose, topic_pose2d, topic_map, topic_tracking_accuracy, topic_odom;
 double resolution;
+bool is_pub_odom = false;
 
-ros::Publisher pub_pose2d, pub_pose, pub_map, pub_accuracy, pub_reloc;
+ros::Publisher pub_pose2d, pub_pose, pub_map, pub_accuracy, pub_reloc, pub_odom;
 geometry_msgs::Pose2D pose2d;
 
 IplImage * ipNavMap = NULL;
@@ -241,11 +242,12 @@ void ConvertToPG(rs::slam::PoseMatrix4f & pose, Eigen::Vector3f & gravity, stRob
     float theta1 = atan2(v.x(), v.y());
     float theta2 = atan2(v_.x(), v_.y());
     float theta = theta2 - theta1;
-    if (theta < -CV_PI)
+    theta += CV_PI / 2; // Needed to point the right direction
+    if (theta < 0)
     {
         theta += 2 * CV_PI;
     }
-    else if (theta >= CV_PI)
+    else if (theta >= 2 * CV_PI)
     {
         theta -= 2 * CV_PI;
     }
@@ -387,7 +389,21 @@ public:
         pose2d.theta = robotPG.theta;
         pub_pose2d.publish(pose2d);
         g_robotPGStack.push_back(robotPG);
-        
+
+        // Publish odometry
+        if (is_pub_odom)
+        {
+            nav_msgs::Odometry odom;
+            odom.header.stamp = ros::Time(feTimeStamp);
+            odom.header.seq = feFrameNum;
+            odom.header.frame_id = "odom";
+            odom.pose.pose.position.x = pose2d.x;
+            odom.pose.pose.position.y = pose2d.y;
+            tf2::Quaternion quat(tf2::Vector3(0,0,1), pose2d.theta); // Rotate around the z axis by angle theta
+            tf2::convert<tf2::Quaternion, geometry_msgs::Quaternion>(quat, odom.pose.pose.orientation);
+            pub_odom.publish(odom);
+        }
+
         // Publish occupancy map
         int wmap = 512;
         int hmap = 512;
@@ -460,6 +476,8 @@ void SNodeletSlam::onInit()
     pnh.param< std::string >("topic_pose2d", topic_pose2d, "pose2d");
     pnh.param< std::string >("topic_map", topic_map, "map");
     pnh.param< std::string >("topic_tracking_accuracy", topic_tracking_accuracy, "tracking_accuracy");
+    pnh.param< std::string >("topic_odom", topic_odom, "odom");
+    pnh.param< bool >("publish_odometry", is_pub_odom, false);
     
     nh = getMTNodeHandle();
     pub_pose = nh.advertise< geometry_msgs::PoseStamped >(topic_camera_pose, 1, true);
@@ -467,6 +485,7 @@ void SNodeletSlam::onInit()
     pub_pose2d = nh.advertise< geometry_msgs::Pose2D >(topic_pose2d, 2, true);
     pub_map = nh.advertise< nav_msgs::OccupancyGrid >(topic_map, 1, true);
     pub_accuracy = nh.advertise< realsense_ros_slam::TrackingAccuracy >(topic_tracking_accuracy, 1, true);
+    if (is_pub_odom) pub_odom = nh.advertise< nav_msgs::Odometry >(topic_odom, 1, true);
     pkgpath = ros::package::getPath("realsense_ros_slam") + "/";
 
     sub_depthInfo = std::shared_ptr< message_filters::Subscriber< sensor_msgs::CameraInfo > >(new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh, "camera/depth/camera_info", 1));
