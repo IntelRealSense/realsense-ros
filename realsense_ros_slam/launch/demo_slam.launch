@@ -8,5 +8,5 @@
     <arg name="enable_depth" value="true"/>
     <arg name="enable_color" value="false"/>
   </include>
-  <include file="$(find realsense_ros_slam)/launch/slam_with_transforms.launch"/>
+  <include file="$(find realsense_ros_slam)/launch/setup_demo.launch"/>
 </launch>
