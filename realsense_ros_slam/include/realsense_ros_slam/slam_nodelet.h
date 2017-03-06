@@ -59,8 +59,8 @@ public:
   void getStreamSample(const sensor_msgs::ImageConstPtr &imageMsg, rs::core::stream_type stream);
   void depthMessageCallback(const sensor_msgs::ImageConstPtr &depthImageMsg);
   void fisheyeMessageCallback(const sensor_msgs::ImageConstPtr &fisheyeImageMsg);
-  void motion_gyroCallback(const sensor_msgs::ImuConstPtr &imuMsg);
-  void motion_accelCallback(const sensor_msgs::ImuConstPtr &imuMsg);
+  void motionGyroCallback(const sensor_msgs::ImuConstPtr &imuMsg);
+  void motionAccelCallback(const sensor_msgs::ImuConstPtr &imuMsg);
   void getMotionSample(const sensor_msgs::ImuConstPtr &imuMsg, rs::core::motion_type motionType);
   void onInit(ros::NodeHandle & nh, rs::slam::slam * slam);
 };
