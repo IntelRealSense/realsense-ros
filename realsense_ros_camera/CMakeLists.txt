@@ -37,43 +37,61 @@ catkin_package(
   image_transport
 )
 
+# DS4 Node
 include_directories(
   include
   ${OpenCV_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
-add_library(realsense_ros_camera
-   src/camera_node.cpp
+#add_library(realsense_ros_camera
+#   src/camera_node.cpp
+#)
+#
+#add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
+#add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+#
+#target_link_libraries(realsense_ros_camera
+#   realsense
+#   ${catkin_LIBRARIES}
+#   ${OpenCV_LIBRARIES}
+#   ${CMAKE_THREAD_LIBS_INIT}
+# )
+
+
+# DS5 Node
+add_library(${PROJECT_NAME}
+   src/ds5_camera_node.cpp
 )
 
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(realsense_ros_camera
+target_link_libraries(${PROJECT_NAME}
    realsense
    ${catkin_LIBRARIES}
    ${OpenCV_LIBRARIES}
    ${CMAKE_THREAD_LIBS_INIT}
  )
 
-if (CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
 
-  add_executable(tests_camera_core test/camera_core.cpp)
-  target_link_libraries(tests_camera_core
-    ${catkin_LIBRARIES}
-    ${GTEST_LIBRARIES}
-    )
-  add_dependencies(tests_camera_core ${PROJECT_NAME}_generate_messages_cpp)
-  add_dependencies(tests_camera_core ${catkin_EXPORTED_TARGETS})
-endif()
+#if (CATKIN_ENABLE_TESTING)
+#  find_package(rostest REQUIRED)
+#
+#  add_executable(tests_camera_core test/camera_core.cpp)
+#  target_link_libraries(tests_camera_core
+#    ${catkin_LIBRARIES}
+#    ${GTEST_LIBRARIES}
+#    )
+#  add_dependencies(tests_camera_core ${PROJECT_NAME}_generate_messages_cpp)
+#  add_dependencies(tests_camera_core ${catkin_EXPORTED_TARGETS})
+#endif()
 
 
-install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+#install(TARGETS ${PROJECT_NAME}
+#  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#)
 
 install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
