@@ -19,75 +19,75 @@
 namespace realsense_ros_object
 {
 ///////////////////////////////////////////////
-///	CTracking -
+/// CTracking -
 ///////////////////////////////////////////////
 class COrView
 {
 public:
-    //===================================
-    //	Interface
-    //===================================
-    void getParams(ros::NodeHandle& nh);
-    void getParams(const std::vector<std::string> & argv);
-    void init(ros::NodeHandle& nh);
+  //===================================
+  //  Interface
+  //===================================
+  void getParams(ros::NodeHandle& nh);
+  void getParams(const std::vector<std::string> & argv);
+  void init(ros::NodeHandle& nh);
 
-    COrView();
-    virtual ~COrView();
+  COrView();
+  virtual ~COrView();
 
 private:
-    //===================================
-    //	Member Functions
-    //===================================
+  //===================================
+  //  Member Functions
+  //===================================
 
-    int initialize();
-    int unInitialize();
-    //Static member functions:
-    void localizedTrackedObjectsCallback(const sensor_msgs::ImageConstPtr& color,const realsense_ros_object::ObjectsInBoxes::ConstPtr& msg);
+  int initialize();
+  int unInitialize();
+  //Static member functions:
+  void localizedTrackedObjectsCallback(const sensor_msgs::ImageConstPtr& color, const realsense_ros_object::ObjectsInBoxes::ConstPtr& msg);
 
-    //===================================
-    //	Member Variables
-    //===================================
+  //===================================
+  //  Member Variables
+  //===================================
 
-    std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>> color_subscriber_;
-    std::unique_ptr<message_filters::Subscriber<realsense_ros_object::ObjectsInBoxes>> tracking_subscriber_;
-    std::unique_ptr<message_filters::TimeSynchronizer<sensor_msgs::Image, realsense_ros_object::ObjectsInBoxes>> time_synchronizer_;
-    ros::Publisher UI_pub_;
-    ros::NodeHandle nh_;
+  std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>> color_subscriber_;
+  std::unique_ptr<message_filters::Subscriber<realsense_ros_object::ObjectsInBoxes>> tracking_subscriber_;
+  std::unique_ptr<message_filters::TimeSynchronizer<sensor_msgs::Image, realsense_ros_object::ObjectsInBoxes>> time_synchronizer_;
+  ros::Publisher UI_pub_;
+  ros::NodeHandle nh_;
 
-    GUI_utils gui;
+  GUI_utils gui;
 
-    cv::Mat m_imageColor;
+  cv::Mat m_imageColor;
 
 };
 
 #ifdef RUN_AS_NODELET
 ///////////////////////////////////////////////
-///	COrViewNodelet
+/// COrViewNodelet
 ///////////////////////////////////////////////
 class COrViewNodelet : public nodelet::Nodelet
 {
 public:
-    //===================================
-    //	Interface
-    //===================================
-    virtual void onInit();
+  //===================================
+  //  Interface
+  //===================================
+  virtual void onInit();
 
-    ~COrViewNodelet();
+  ~COrViewNodelet();
 
 private:
-    //===================================
-    //	Member Functions
-    //===================================
+  //===================================
+  //  Member Functions
+  //===================================
 
-    //===================================
-    //	Member Variables
-    //===================================
+  //===================================
+  //  Member Variables
+  //===================================
 
-    COrView view_nodelet_;
+  COrView view_nodelet_;
 
 };
 #endif
-	
+
 };
 
 #endif //RS_ORVIEW_NODELET 

@@ -12,40 +12,40 @@
 
 namespace realsense_ros_person
 {
-    class PersonTrackingPublisherHelper
-    {
-    public:
-        PersonTrackingPublisherHelper() = default;
+class PersonTrackingPublisherHelper
+{
+public:
+  PersonTrackingPublisherHelper() = default;
 
-        ~PersonTrackingPublisherHelper() = default;
+  ~PersonTrackingPublisherHelper() = default;
 
-        virtual std::vector<realsense_ros_person::User>
-        BuildUsersVector(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
-                         Intel::RealSense::PersonTracking::PersonTrackingData &trackingData);
+  virtual std::vector<realsense_ros_person::User>
+  BuildUsersVector(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+                   Intel::RealSense::PersonTracking::PersonTrackingData &trackingData);
 
-        virtual void addSkeletonToOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
-                                         Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
-                                         realsense_ros_person::User &user);
+  virtual void addSkeletonToOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+                                   Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
+                                   realsense_ros_person::User &user);
 
-        virtual void addGesturesToOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
-                                         Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
-                                         realsense_ros_person::User &user);
+  virtual void addGesturesToOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+                                   Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
+                                   realsense_ros_person::User &user);
 
-        virtual void
-        addLandmarksToOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
-                             Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
-                             realsense_ros_person::User &user);
+  virtual void
+  addLandmarksToOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+                       Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
+                       realsense_ros_person::User &user);
 
-        virtual void
-        addHeadPoseToOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
-                             Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
-                             realsense_ros_person::User &user);
+  virtual void
+  addHeadPoseToOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+                      Intel::RealSense::PersonTracking::PersonTrackingData::Person *const personData,
+                      realsense_ros_person::User &user);
 
-        virtual
-        realsense_ros_person::PersonModuleState BuildPersonModuleState(
-                Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
-                Intel::RealSense::PersonTracking::PersonTrackingData &trackingData);
+  virtual
+  realsense_ros_person::PersonModuleState BuildPersonModuleState(
+    Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+    Intel::RealSense::PersonTracking::PersonTrackingData &trackingData);
 
-        PersonTracking2RosHelper mPt2rosHelper;
-    };
+  PersonTracking2RosHelper mPt2rosHelper;
+};
 }

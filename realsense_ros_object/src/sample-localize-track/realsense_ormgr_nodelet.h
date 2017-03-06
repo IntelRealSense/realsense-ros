@@ -16,79 +16,79 @@
 namespace realsense_ros_object
 {
 ///////////////////////////////////////////////
-///	CTracking -
+/// CTracking -
 ///////////////////////////////////////////////
 class COrmgr
 {
 public :
-    //===================================
-    //	Interface
-    //===================================
-    void getParams(ros::NodeHandle& nh);
-    void getParams(const std::vector<std::string> & argv);
-    void init(ros::NodeHandle& nh);
+  //===================================
+  //  Interface
+  //===================================
+  void getParams(ros::NodeHandle& nh);
+  void getParams(const std::vector<std::string> & argv);
+  void init(ros::NodeHandle& nh);
 
-    COrmgr();
-    virtual ~COrmgr();
+  COrmgr();
+  virtual ~COrmgr();
 
 private:
-    //===================================
-    //	Member Functions
-    //===================================
+  //===================================
+  //  Member Functions
+  //===================================
 
-    int initialize();
-    int unInitialize();
+  int initialize();
+  int unInitialize();
 
-    //Static member functions:
-    void localizeidObjectsCallback(const realsense_ros_object::ObjectsInBoxes& msg);
-    void trackedObjectCallback(const realsense_ros_object::TrackedObjectsArray::ConstPtr & msg);
-    void UICallback(const realsense_ros_object::UI & msg);
+  //Static member functions:
+  void localizeidObjectsCallback(const realsense_ros_object::ObjectsInBoxes& msg);
+  void trackedObjectCallback(const realsense_ros_object::TrackedObjectsArray::ConstPtr & msg);
+  void UICallback(const realsense_ros_object::UI & msg);
 
-    //===================================
-    //	Member Variables
-    //===================================
+  //===================================
+  //  Member Variables
+  //===================================
 
-    ros::Subscriber sub_localized_objects_;
-    ros::Subscriber sub_tracked_objects_;
-    ros::Subscriber sub_UI_;
+  ros::Subscriber sub_localized_objects_;
+  ros::Subscriber sub_tracked_objects_;
+  ros::Subscriber sub_UI_;
 
-    ros::Publisher objects_to_track_pub_;
-    ros::Publisher tracked_localized_pub_;
+  ros::Publisher objects_to_track_pub_;
+  ros::Publisher tracked_localized_pub_;
 
-    ros::NodeHandle nh_;
+  ros::NodeHandle nh_;
 
-    realsense_ros_object::ObjectsInBoxes objects_vector_;
+  realsense_ros_object::ObjectsInBoxes objects_vector_;
 
-    bool debug_;
-    int max_number_of_objects_;
-    int threshold_;
-    bool localize_every_frame_;
+  bool debug_;
+  int max_number_of_objects_;
+  int threshold_;
+  bool localize_every_frame_;
 };
 
 #ifdef RUN_AS_NODELET
 ///////////////////////////////////////////////
-///	COrmgrNodelet
+/// COrmgrNodelet
 ///////////////////////////////////////////////
 class COrmgrNodelet : public nodelet::Nodelet
 {
 public :
-    //===================================
-    //	Interface
-    //===================================
-    virtual void onInit();
+  //===================================
+  //  Interface
+  //===================================
+  virtual void onInit();
 
-    ~COrmgrNodelet();
+  ~COrmgrNodelet();
 
 private:
-    //===================================
-    //	Member Functions
-    //===================================
+  //===================================
+  //  Member Functions
+  //===================================
 
-    //===================================
-    //	Member Variables
-    //===================================
+  //===================================
+  //  Member Variables
+  //===================================
 
-    COrmgr manager_nodelet_;
+  COrmgr manager_nodelet_;
 };
 #endif
 };

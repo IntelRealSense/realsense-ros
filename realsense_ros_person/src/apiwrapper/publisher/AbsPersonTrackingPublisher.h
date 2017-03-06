@@ -10,24 +10,24 @@
 
 namespace realsense_ros_person
 {
-    class AbsPersonTrackingPublisher
-    {
-    public:
-        AbsPersonTrackingPublisher() = default;
+class AbsPersonTrackingPublisher
+{
+public:
+  AbsPersonTrackingPublisher() = default;
 
-        virtual void publishOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
-                                   Intel::RealSense::PersonTracking::PersonTrackingData &trackingData) = 0;
+  virtual void publishOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+                             Intel::RealSense::PersonTracking::PersonTrackingData &trackingData) = 0;
 
-        virtual void publishTestOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
-                                       Intel::RealSense::PersonTracking::PersonTrackingData &trackingData,
-                                       const sensor_msgs::ImageConstPtr &colorImage) = 0;
+  virtual void publishTestOutput(Intel::RealSense::PersonTracking::PersonTrackingConfiguration &ptConfiguration,
+                                 Intel::RealSense::PersonTracking::PersonTrackingData &trackingData,
+                                 const sensor_msgs::ImageConstPtr &colorImage) = 0;
 
-        virtual void onInit(ros::NodeHandle &nodeHandle) = 0;
+  virtual void onInit(ros::NodeHandle &nodeHandle) = 0;
 
-        virtual ~AbsPersonTrackingPublisher() = default;
+  virtual ~AbsPersonTrackingPublisher() = default;
 
-    protected:
-        ros::Publisher mPublisher;
-        ros::Publisher mTestPublisher;
-    };
+protected:
+  ros::Publisher mPublisher;
+  ros::Publisher mTestPublisher;
+};
 }

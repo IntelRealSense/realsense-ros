@@ -26,13 +26,13 @@ void getCameraInfo(rs_stream stream, const sensor_msgs::CameraInfoConstPtr &info
   g_dmodel_recv[stream] = info_msg->distortion_model;
 
   // copy rotation matrix
-  for (unsigned int i = 0; i < sizeof(info_msg->R)/sizeof(double); i++)
+  for (unsigned int i = 0; i < sizeof(info_msg->R) / sizeof(double); i++)
   {
     g_caminfo_rotation_recv[stream][i] = info_msg->R[i];
   }
 
   // copy projection matrix
-  for (unsigned int i = 0; i < sizeof(info_msg->P)/sizeof(double); i++)
+  for (unsigned int i = 0; i < sizeof(info_msg->P) / sizeof(double); i++)
   {
     g_caminfo_projection_recv[stream][i] = info_msg->P[i];
   }
@@ -179,7 +179,7 @@ TEST(RealsenseTests, testColorStream)
   if (g_enable_color)
   {
     EXPECT_GT(g_color_avg, 0);
-    if (!g_color_encoding_exp.empty ())
+    if (!g_color_encoding_exp.empty())
     {
       EXPECT_EQ(g_color_encoding_exp, g_encoding_recv[RS_STREAM_COLOR]);
     }
@@ -215,7 +215,7 @@ TEST(RealsenseTests, testColorCameraInfo)
     EXPECT_STREQ(g_dmodel_recv[RS_STREAM_COLOR].c_str(), "plumb_bob");
 
     // verify rotation is equal to identity matrix
-    for (unsigned int i = 0; i < sizeof(realsense_ros_camera::ROTATION_IDENTITY)/sizeof(double); i++)
+    for (unsigned int i = 0; i < sizeof(realsense_ros_camera::ROTATION_IDENTITY) / sizeof(double); i++)
     {
       EXPECT_EQ(realsense_ros_camera::ROTATION_IDENTITY[i], g_caminfo_rotation_recv[RS_STREAM_COLOR][i]);
     }
@@ -268,7 +268,7 @@ TEST(RealsenseTests, testDepthStream)
   if (g_enable_depth)
   {
     EXPECT_GT(g_depth_avg, 0);
-    if (!g_depth_encoding_exp.empty ())
+    if (!g_depth_encoding_exp.empty())
     {
       EXPECT_EQ(g_depth_encoding_exp, g_encoding_recv[RS_STREAM_DEPTH]);
     }
@@ -385,7 +385,7 @@ TEST(RealsenseTests, testFisheyeCameraInfo)
     EXPECT_STREQ(g_dmodel_recv[RS_STREAM_FISHEYE].c_str(), "distortion_ftheta");
 
     // verify rotation is equal to identity matrix
-    for (unsigned int i = 0; i < sizeof(realsense_ros_camera::ROTATION_IDENTITY)/sizeof(double); i++)
+    for (unsigned int i = 0; i < sizeof(realsense_ros_camera::ROTATION_IDENTITY) / sizeof(double); i++)
     {
       EXPECT_EQ(realsense_ros_camera::ROTATION_IDENTITY[i], g_caminfo_rotation_recv[RS_STREAM_FISHEYE][i]);
     }
@@ -467,7 +467,7 @@ void fillConfigMap(int argc, char **argv)
     if (g_config_args.find("enable_depth") != g_config_args.end())
     {
       ROS_INFO("RealSense camera test - Setting %s to %s", "enable_depth", g_config_args.at("enable_depth").c_str());
-      if (strcmp((g_config_args.at("enable_depth").c_str ()), "true") == 0)
+      if (strcmp((g_config_args.at("enable_depth").c_str()), "true") == 0)
       {
         g_enable_depth = true;
       }
@@ -502,7 +502,7 @@ void fillConfigMap(int argc, char **argv)
     if (g_config_args.find("enable_color") != g_config_args.end())
     {
       ROS_INFO("RealSense camera test - Setting %s to %s", "enable_color", g_config_args.at("enable_color").c_str());
-      if (strcmp((g_config_args.at("enable_color").c_str ()), "true") == 0)
+      if (strcmp((g_config_args.at("enable_color").c_str()), "true") == 0)
       {
         g_enable_color = true;
       }
@@ -536,7 +536,7 @@ void fillConfigMap(int argc, char **argv)
     if (g_config_args.find("enable_fisheye") != g_config_args.end())
     {
       ROS_INFO("RealSense camera test - Setting %s to %s", "enable_fisheye",
-          g_config_args.at("enable_fisheye").c_str());
+               g_config_args.at("enable_fisheye").c_str());
       if (strcmp((g_config_args.at("enable_fisheye").c_str()), "true") == 0)
       {
         g_enable_fisheye = true;
@@ -573,7 +573,7 @@ int main(int argc, char **argv) //try
   image_transport::CameraSubscriber camera_subscriber[STREAM_COUNT];
   ros::Subscriber sub_accel;
   ros::Subscriber sub_gyro;
-  
+
   fillConfigMap(argc, argv);
 
   ROS_INFO_STREAM("RealSense camera test - Initializing Tests...");
@@ -590,7 +590,7 @@ int main(int argc, char **argv) //try
   ros::NodeHandle fisheye_nh(nh, "fisheye");
   image_transport::ImageTransport fisheye_image_transport(fisheye_nh);
   if (g_camera_type == "ZR300")
-  {  
+  {
     camera_subscriber[4] = fisheye_image_transport.subscribeCamera("image_raw", 1, imageFisheyeCallback, 0);
     sub_accel = n.subscribe<sensor_msgs::Imu>("camera/accel/sample", 1, accelCallback);
     sub_gyro = n.subscribe<sensor_msgs::Imu>("camera/gyro/sample", 1, gyroCallback);

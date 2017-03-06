@@ -8,17 +8,17 @@
 class Viewer
 {
 public:
-    Viewer(bool showDepth);
+  Viewer(bool showDepth);
 
-    void ShowImage(cv::Mat image);
-    void ShowDepth(cv::Mat depth);
+  void ShowImage(cv::Mat image);
+  void ShowDepth(cv::Mat depth);
 
-    void SetMouseEventHandler(std::function<void(int,int,int,int)> mouseEventHandler);
+  void SetMouseEventHandler(std::function<void(int, int, int, int)> mouseEventHandler);
 
-    void MouseEventCallback(int event, int x, int y, int flags);
+  void MouseEventCallback(int event, int x, int y, int flags);
 
 private:
-    bool m_showDepth;
+  bool m_showDepth;
 
-    std::function<void(int,int,int,int)> m_mouseEventHandler;
+  std::function<void(int, int, int, int)> m_mouseEventHandler;
 };

@@ -8,125 +8,125 @@
 
 enum emNavStatus
 {
-	navInvalid,
-	navContinue,
-	navStay,
-	navNavigationFinished,
-	navNavigationFailed,
-	navExploreFinished,
-	navExploreFailed
+  navInvalid,
+  navContinue,
+  navStay,
+  navNavigationFinished,
+  navNavigationFailed,
+  navExploreFinished,
+  navExploreFailed
 };
 
 typedef enum INNAV_TRACKING_ACCURACY : int
 {
-	innavLOW,
-	innavMED,
-	innavHIGH,
-	innavFAILED
+  innavLOW,
+  innavMED,
+  innavHIGH,
+  innavFAILED
 } INNAV_TRACKING_ACCURACY;
 
 enum emNavMapPixel
 {
-	navUnobserved = 0,
-	navUnObservedOpenThreshold = 41,
-	navOpen = 80,
-	navOpenObstacleThreshold = 121,
-	navObstacle = 160,
-	navObstacleUncertainOrSmall = 180
+  navUnobserved = 0,
+  navUnObservedOpenThreshold = 41,
+  navOpen = 80,
+  navOpenObstacleThreshold = 121,
+  navObstacle = 160,
+  navObstacleUncertainOrSmall = 180
 };
 
 enum emMapUpdateStrategy
 {
-	innavNoUpdate,
-	innavReplace,
-	innavReplaceOnlyLargeObject,
-	innavAddOnlyLargeObject,
-	innavAdd,
-	innavClear
+  innavNoUpdate,
+  innavReplace,
+  innavReplaceOnlyLargeObject,
+  innavAddOnlyLargeObject,
+  innavAdd,
+  innavClear
 };
 
 enum emCollisionAvoidanceCommand
 {
-	avoidCollisionNoNeed = 0,
-	avoidCollisionStop = 1,
-	avoidCollisionTurn = 2
+  avoidCollisionNoNeed = 0,
+  avoidCollisionStop = 1,
+  avoidCollisionTurn = 2
 };
 
 enum emRobotControlCommand
 {
-	robotcontrolStop = 0,
-	robotcontrolMoveAndTurn = 1,
-	robotcontrolTurnBody = 2,
-	robotcontrolTurnHead = 3,
-	robotcontrolIdle = 4
+  robotcontrolStop = 0,
+  robotcontrolMoveAndTurn = 1,
+  robotcontrolTurnBody = 2,
+  robotcontrolTurnHead = 3,
+  robotcontrolIdle = 4
 };
 
 typedef struct stRobotControlCommand
 {
-	emRobotControlCommand type;
-	float distance;
-	float dtheta;
-	//
-	float dpan;
-	float dtilt;
+  emRobotControlCommand type;
+  float distance;
+  float dtheta;
+  //
+  float dpan;
+  float dtilt;
 
-	float velocity_sugesstion;
+  float velocity_sugesstion;
 
-	void Init()
-	{
-		type = robotcontrolIdle;
-		distance = 0.0f;
-		dtheta = 0.0f;
-		dpan = 0.0f;
-		dtilt = 0.0f;
+  void Init()
+  {
+    type = robotcontrolIdle;
+    distance = 0.0f;
+    dtheta = 0.0f;
+    dpan = 0.0f;
+    dtilt = 0.0f;
 
-		velocity_sugesstion = 1.0f;
-	}
-}stRobotControlCommand;
+    velocity_sugesstion = 1.0f;
+  }
+} stRobotControlCommand;
 
 typedef struct stTrajTopology
 {
-	int hnext;
-	int vnext;
-	int node;
-	void Default()
-	{
-		node = -1;
-		hnext = -1;
-		vnext = -1;
-	}
-}stTrajTopology;
+  int hnext;
+  int vnext;
+  int node;
+  void Default()
+  {
+    node = -1;
+    hnext = -1;
+    vnext = -1;
+  }
+} stTrajTopology;
 
 typedef struct stRobotPG
 {
-	INNAV_TRACKING_ACCURACY trackingAccuracy;
+  INNAV_TRACKING_ACCURACY trackingAccuracy;
 
-	float x;
-	float y;
-	float theta;
-	float pan;
-	float tilt;
-	emRobotControlCommand commandtype;
-	//
-	void initdefault()
-	{
-		trackingAccuracy = innavMED;
-		x = 0.0f;
-		y = 0.0f;
-		theta = 0.0f;
-		pan = 0.0f;
-		tilt = 0.0f;
-		commandtype = robotcontrolIdle;
-	}
-}stRobotPG;
+  float x;
+  float y;
+  float theta;
+  float pan;
+  float tilt;
+  emRobotControlCommand commandtype;
+  //
+  void initdefault()
+  {
+    trackingAccuracy = innavMED;
+    x = 0.0f;
+    y = 0.0f;
+    theta = 0.0f;
+    pan = 0.0f;
+    tilt = 0.0f;
+    commandtype = robotcontrolIdle;
+  }
+} stRobotPG;
 
 typedef struct stTrajLeaf
 {
-	stRobotPG leafPG;
-	stRobotPG rootPG;
-	int rootID;
-	bool bLive;
-}stTrajLeaf;
+  stRobotPG leafPG;
+  stRobotPG rootPG;
+  int rootID;
+  bool bLive;
+} stTrajLeaf;
 
 float dis2D(CvPoint p1, CvPoint p2);
 float dis2D(CvPoint2D32f p1, CvPoint2D32f p2);
