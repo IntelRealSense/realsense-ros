@@ -14,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
   realsense_ros_camera
   tf
   tf2
-  tf2_kdl
   )
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV 3 REQUIRED)
@@ -27,21 +26,21 @@ add_message_files(
   FILES
   TrackingAccuracy.msg
 )
- 
+
 generate_messages(
   DEPENDENCIES
-  sensor_msgs 
+  sensor_msgs
   std_msgs
 )
 
 catkin_package(
 #  INCLUDE_DIRS include
   LIBRARIES realsense_ros_slam
-  CATKIN_DEPENDS nodelet 
-                 roscpp 
-                 rospy 
-                 sensor_msgs 
-                 std_msgs 
+  CATKIN_DEPENDS nodelet
+                 roscpp
+                 rospy
+                 sensor_msgs
+                 std_msgs
                  geometry_msgs
                  message_runtime
 #  DEPENDS system_lib
@@ -65,9 +64,8 @@ set(LIBRARIES_TO_LINK
     SP_Core
     tracker
     ${CMAKE_THREAD_LIBS_INIT}
-    ${OpenCV_LIBRARIES}
 )
-target_link_libraries(${PROJECT_NAME} 
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${LIBRARIES_TO_LINK}
 )
@@ -110,4 +108,3 @@ install(DIRECTORY include/
 install(FILES nodelet_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-

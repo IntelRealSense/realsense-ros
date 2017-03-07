@@ -2,7 +2,7 @@
   <arg name="bag_path"     default="~/test.bag" />
 
   <!-- Start SLAM -->
-  <include file="$(find realsense_ros_slam)/launch/demo_slam_from_bag.launch">
+  <include file="$(find realsense_ros_slam)/launch/run_from_bag.launch">
     <arg name="bag_path"     value="$(arg bag_path)" />
   </include>
 
@@ -11,4 +11,3 @@
     args="bag_path $(arg bag_path)"
     retry="3" />
 </launch>
-

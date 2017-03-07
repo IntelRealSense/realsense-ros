@@ -135,26 +135,16 @@ To run the slam engine using a recorded bag file:
 $ cd catkin_ws
 $ catkin_make
 $ source devel/setup.bash
-$ roslaunch realsense_ros_salm demo_slam_from_bag.launch bag_path:=~/test.bag
+$ roslaunch realsense_ros_slam demo_slam_from_bag.launch bag_path:=~/test.bag
 ```
 
-To see the estimated pose messages, in another console window:
+To print the estimated pose messages, in another console window:
 ```bash
 $ cd catkin-ws
 $ source devel/setup.bash
 $ rostopic echo camera_pose
 ```
 
-To see the camera pose and occupancy map in rviz:
-```bash
-$ sudo apt-get install ros-kinetic-rviz
-```
+The `demo_slam.launch` and `demo_slam_from_bag.launch` files will automatically start rviz using a configuration file located at `launch/demo_settings.rviz`. The raw camera pose, occupancy map, and odometry are shown in rviz. The odometry message is only sent by the SLAM nodelet for demo purposes, since the `pose2d` message cannot be displayed by rviz. The odometry message contains the same 2D pose that the `pose2d` message does. This shows where the robot is located relative to the occupancy map.
 
-Start the SLAM nodelet as shown above, then run rviz:
-
-```bash
-$ rviz
-```
-
-In rviz, add Pose and Map visualizations (click Add button near bottom left). Select the `camera_pose` message for the Pose and th `map` message for the Map visualization.
 
