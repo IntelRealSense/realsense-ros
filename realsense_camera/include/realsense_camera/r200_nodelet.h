@@ -38,11 +38,11 @@
 #include <dynamic_reconfigure/server.h>
 
 #include <realsense_camera/r200_paramsConfig.h>
-#include <realsense_camera/base_nodelet.h>
+#include <realsense_camera/sync_nodelet.h>
 
 namespace realsense_camera
 {
-class R200Nodelet: public realsense_camera::BaseNodelet
+class R200Nodelet: public realsense_camera::SyncNodelet
 {
 public:
   void onInit();
@@ -71,8 +71,6 @@ protected:
   void getCameraExtrinsics();
   void publishStaticTransforms();
   void publishDynamicTransforms();
-  void setFrameCallbacks();
-  std::function<void(rs::frame f)> ir2_frame_handler_;
 };
 }  // namespace realsense_camera
 #endif  // REALSENSE_CAMERA_R200_NODELET_H
