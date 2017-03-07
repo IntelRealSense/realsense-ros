@@ -71,8 +71,8 @@ void SubscribeTopics::subscribeMotion()
   std::string motionInfo_accel = "camera/accel/sample";
   ROS_INFO_STREAM("Listening on " << motionInfo_gyro);
   ROS_INFO_STREAM("Listening on " << motionInfo_accel);
-  l_motion_gyro_sub = l_nh.subscribe(motionInfo_gyro, 10000, & SubscribeTopics::motion_gyroCallback, this);
-  l_motion_accel_sub = l_nh.subscribe(motionInfo_accel, 10000, & SubscribeTopics::motion_accelCallback, this);
+  l_motion_gyro_sub = l_nh.subscribe(motionInfo_gyro, 10000, & SubscribeTopics::motionGyroCallback, this);
+  l_motion_accel_sub = l_nh.subscribe(motionInfo_accel, 10000, & SubscribeTopics::motionAccelCallback, this);
 }
 
 void SubscribeTopics::depthMessageCallback(const sensor_msgs::ImageConstPtr &depthImageMsg)
@@ -159,7 +159,7 @@ void SubscribeTopics::getStreamSample(const sensor_msgs::ImageConstPtr &imageMsg
 }//end of getStreamSample
 
 
-void SubscribeTopics::motion_gyroCallback(const sensor_msgs::ImuConstPtr &imuMsg)
+void SubscribeTopics::motionGyroCallback(const sensor_msgs::ImuConstPtr &imuMsg)
 {
   mut_gyro_imu.lock();
   SubscribeTopics::getMotionSample(imuMsg, rs::core::motion_type::gyro);
@@ -167,7 +167,7 @@ void SubscribeTopics::motion_gyroCallback(const sensor_msgs::ImuConstPtr &imuMsg
 }
 
 
-void SubscribeTopics::motion_accelCallback(const sensor_msgs::ImuConstPtr &imuMsg)
+void SubscribeTopics::motionAccelCallback(const sensor_msgs::ImuConstPtr &imuMsg)
 {
   mut_accel_imu.lock();
   SubscribeTopics::getMotionSample(imuMsg, rs::core::motion_type::accel);
@@ -224,7 +224,7 @@ public:
 };
 
 
-void ConvertToPG(rs::slam::PoseMatrix4f & pose, Eigen::Vector3f & gravity, stRobotPG & robotPG)
+void convertToPG(rs::slam::PoseMatrix4f & pose, Eigen::Vector3f & gravity, stRobotPG & robotPG)
 {
   Eigen::Vector3f g = gravity;
   Eigen::Vector3f g_startG(0.0f, 1.0f, 0.0f);
@@ -306,7 +306,7 @@ tf2::Quaternion quaternionFromPoseMatrix(rs::slam::PoseMatrix4f cameraPose)
   return quat;
 }
 
-geometry_msgs::Pose pose_matrix_to_msg(rs::slam::PoseMatrix4f camera_pose)
+geometry_msgs::Pose poseMatrixToMsg(rs::slam::PoseMatrix4f camera_pose)
 {
   tf2::Quaternion quat = quaternionFromPoseMatrix(camera_pose);
   geometry_msgs::Quaternion quat_msg;
@@ -323,7 +323,7 @@ geometry_msgs::Pose pose_matrix_to_msg(rs::slam::PoseMatrix4f camera_pose)
   return pose_msg;
 }
 
-geometry_msgs::PoseStamped get_pose_stamped_msg(rs::slam::PoseMatrix4f cameraPose, uint64_t frameNum, double timestamp_ms)
+geometry_msgs::PoseStamped getPoseStampedMsg(rs::slam::PoseMatrix4f cameraPose, uint64_t frameNum, double timestamp_ms)
 {
   std_msgs::Header header;
   header.stamp = ros::Time(timestamp_ms / 1000);
@@ -339,7 +339,7 @@ geometry_msgs::PoseStamped get_pose_stamped_msg(rs::slam::PoseMatrix4f cameraPos
 
   geometry_msgs::PoseStamped pose_stamped_msg;
   pose_stamped_msg.header = header;
-  pose_stamped_msg.pose = pose_matrix_to_msg(cameraPose);
+  pose_stamped_msg.pose = poseMatrixToMsg(cameraPose);
   return pose_stamped_msg;
 }
 
@@ -361,14 +361,14 @@ public:
     // Publish camera pose
     rs::slam::PoseMatrix4f cameraPose;
     slamPtr->get_camera_pose(cameraPose);
-    geometry_msgs::PoseStamped pose_msg = get_pose_stamped_msg(cameraPose, feFrameNum, feTimeStamp);
+    geometry_msgs::PoseStamped pose_msg = getPoseStampedMsg(cameraPose, feFrameNum, feTimeStamp);
     pub_pose.publish(pose_msg);
 
     // Publish relocalized camera pose, if any
     rs::slam::PoseMatrix4f relocPose;
     if (slamPtr->get_relocalization_pose(relocPose))
     {
-      geometry_msgs::PoseStamped reloc_pose_msg = get_pose_stamped_msg(relocPose, feFrameNum, feTimeStamp);
+      geometry_msgs::PoseStamped reloc_pose_msg = getPoseStampedMsg(relocPose, feFrameNum, feTimeStamp);
       pub_reloc.publish(reloc_pose_msg);
     }
 
@@ -383,7 +383,7 @@ public:
     // Publish 2D pose
     Eigen::Vector3f gravity = Eigen::Vector3f(0, 1, 0);
     stRobotPG robotPG;
-    ConvertToPG(cameraPose, gravity, robotPG);
+    convertToPG(cameraPose, gravity, robotPG);
     pose2d.x = robotPG.x;
     pose2d.y = robotPG.y;
     pose2d.theta = robotPG.theta;
@@ -679,4 +679,3 @@ void SNodeletSlam::setExtrinData(realsense_ros_camera::Extrinsics & fe_res, rs::
   }
 }//end of setExtrinData
 }//end namespace
-

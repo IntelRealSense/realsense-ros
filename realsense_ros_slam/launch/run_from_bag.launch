@@ -1,0 +1,12 @@
+<!--
+
+Used by unit tests.
+
+-->
+<launch>
+  <arg name="bag_path" default="$(env HOME)/test_slam_320x240d_640x480f_imu.bag" />
+  <include file="$(find realsense_ros_camera)/launch/play_bag.launch">
+    <arg name="bag_path" value="$(arg bag_path)"/>
+  </include>
+  <include file="$(find realsense_ros_slam)/launch/slam_nodelet.launch"/>
+</launch>

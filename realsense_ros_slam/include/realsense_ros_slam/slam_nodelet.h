@@ -25,19 +25,14 @@
 #include <rs_sdk.h>
 #include <librealsense/slam/slam.h>
 #include <sensor_msgs/CameraInfo.h>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <Eigen/Eigen>
 #include "ParamTypes.h"
 #include "2DMapCommon.h"
-#include <opencv2/core/version.hpp>
 #include <ros/ros.h>
 #include <librealsense/slam/slam.h>
 #include <rs_core.h>
 #include <rs_utils.h>
 #include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <realsense_ros_camera/Extrinsics.h>
 #include <realsense_ros_camera/IMUInfo.h>
@@ -59,8 +54,8 @@ public:
   void getStreamSample(const sensor_msgs::ImageConstPtr &imageMsg, rs::core::stream_type stream);
   void depthMessageCallback(const sensor_msgs::ImageConstPtr &depthImageMsg);
   void fisheyeMessageCallback(const sensor_msgs::ImageConstPtr &fisheyeImageMsg);
-  void motion_gyroCallback(const sensor_msgs::ImuConstPtr &imuMsg);
-  void motion_accelCallback(const sensor_msgs::ImuConstPtr &imuMsg);
+  void motionGyroCallback(const sensor_msgs::ImuConstPtr &imuMsg);
+  void motionAccelCallback(const sensor_msgs::ImuConstPtr &imuMsg);
   void getMotionSample(const sensor_msgs::ImuConstPtr &imuMsg, rs::core::motion_type motionType);
   void onInit(ros::NodeHandle & nh, rs::slam::slam * slam);
 };
