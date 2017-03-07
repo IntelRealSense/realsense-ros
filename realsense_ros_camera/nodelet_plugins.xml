@@ -1,4 +1,10 @@
-
+<library path="lib/librealsense_ros_camera">
+	<class name="realsense_ros_camera/NodeletCamera" type="realsense_ros_camera::NodeletCamera" base_class_type="nodelet::Nodelet">
+        <description>
+            A nodelet of slam.
+        </description>
+        </class>
+</library>
 <library path="lib/librealsense_ros_camera_ds5">
     <class name="realsense_ros_camera/NodeletDS5Camera" type="realsense_ros_camera::DS5NodeletCamera" base_class_type="nodelet::Nodelet">
         <description>
