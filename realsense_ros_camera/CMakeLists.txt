@@ -15,6 +15,9 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(OpenCV 3 REQUIRED)
 #find_package(librealsense 1 REQUIRED) librealsense package currently lacks required pkgconfig file
 
+find_package(PkgConfig)
+pkg_search_module(realsense2 REQUIRED realsense2)
+
 set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -O2 -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
 
 add_message_files(
@@ -43,31 +46,31 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
-#add_library(realsense_ros_camera
-#   src/camera_node.cpp
-#)
-#
-#add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
-#add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-#
-#target_link_libraries(realsense_ros_camera
-#   realsense
-#   ${catkin_LIBRARIES}
-#   ${OpenCV_LIBRARIES}
-#   ${CMAKE_THREAD_LIBS_INIT}
-# )
-
-
-# DS5 Node
-add_library(${PROJECT_NAME}
-   src/ds5_camera_node.cpp
+add_library(realsense_ros_camera
+   src/camera_node.cpp
 )
 
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(realsense_ros_camera
    realsense
+   ${catkin_LIBRARIES}
+   ${OpenCV_LIBRARIES}
+   ${CMAKE_THREAD_LIBS_INIT}
+ )
+
+
+# DS5 Node
+add_library(${PROJECT_NAME}_ds5
+   src/ds5_camera_node.cpp
+)
+
+add_dependencies(${PROJECT_NAME}_ds5 ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(${PROJECT_NAME}_ds5 ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(${PROJECT_NAME}_ds5
+   ${realsense2_LIBRARIES}
    ${catkin_LIBRARIES}
    ${OpenCV_LIBRARIES}
    ${CMAKE_THREAD_LIBS_INIT}
