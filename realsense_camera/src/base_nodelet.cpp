@@ -456,7 +456,8 @@ namespace realsense_camera
 
     if (req.power_on == true)
     {
-      ROS_INFO_STREAM(nodelet_name_ << " - " << startCamera());
+      start_camera_ = true;
+      start_stop_srv_called_ = true;
     }
     else
     {
@@ -468,7 +469,8 @@ namespace realsense_camera
       {
         if (checkForSubscriber() == false)
         {
-          ROS_INFO_STREAM(nodelet_name_ << " - " << stopCamera());
+          start_camera_ = false;
+          start_stop_srv_called_ = true;
         }
         else
         {
@@ -478,8 +480,7 @@ namespace realsense_camera
       }
     }
     return res.success;
-  }
-
+}
 
   /*
    * Force Power Camera service
@@ -487,14 +488,8 @@ namespace realsense_camera
   bool BaseNodelet::forcePowerCameraService(realsense_camera::ForcePower::Request & req,
       realsense_camera::ForcePower::Response & res)
   {
-    if (req.power_on == true)
-    {
-      ROS_INFO_STREAM(nodelet_name_ << " - " << startCamera());
-    }
-    else
-    {
-      ROS_INFO_STREAM(nodelet_name_ << " - " << stopCamera());
-    }
+    start_camera_ = req.power_on;
+    start_stop_srv_called_ = true;
     return true;
   }
 

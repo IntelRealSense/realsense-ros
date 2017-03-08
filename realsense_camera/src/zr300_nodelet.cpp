@@ -518,6 +518,19 @@ namespace realsense_camera
     prev_imu_ts_ = -1;
     while (ros::ok())
     {
+      if (start_stop_srv_called_ == true)
+      {
+        if (start_camera_ == true)
+        {
+          ROS_INFO_STREAM(nodelet_name_ << " - " << startCamera());
+        }
+        else
+        {
+          ROS_INFO_STREAM(nodelet_name_ << " - " << stopCamera());
+        }
+        start_stop_srv_called_ = false;
+      }
+
       if (imu_publisher_.getNumSubscribers() > 0)
       {
         std::unique_lock<std::mutex> lock(imu_mutex_);

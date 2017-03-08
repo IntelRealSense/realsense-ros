@@ -50,11 +50,25 @@ namespace realsense_camera
   {
     while (ros::ok())
     {
+      if (start_stop_srv_called_ == true)
+      {
+        if (start_camera_ == true)
+        {
+          ROS_INFO_STREAM(nodelet_name_ << " - " << startCamera());
+        }
+        else
+        {
+          ROS_INFO_STREAM(nodelet_name_ << " - " << stopCamera());
+        }
+        start_stop_srv_called_ = false;
+      }
+
       if (rs_is_device_streaming(rs_device_, 0) == 1)
       {
         rs_wait_for_frames(rs_device_, &rs_error_);
         checkError();
         topic_ts_ = ros::Time::now();
+        duplicate_depth_color_ = false;
 
         for (int stream=0; stream < STREAM_COUNT; stream++)
         {
@@ -62,21 +76,21 @@ namespace realsense_camera
           {
             publishTopic(static_cast<rs_stream>(stream));
           }
+        }
 
-          if (pointcloud_publisher_.getNumSubscribers() > 0 &&
-              rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0) == 1 && enable_pointcloud_ == true &&
-              (duplicate_depth_color_ == false))  // Skip publishing PointCloud if Depth or Color frame was duplicate
+        if (pointcloud_publisher_.getNumSubscribers() > 0 &&
+            rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0) == 1 && enable_pointcloud_ == true &&
+            (duplicate_depth_color_ == false))  // Skip publishing PointCloud if Depth or Color frame was duplicate
+        {
+          if (camera_publisher_[RS_STREAM_DEPTH].getNumSubscribers() <= 0)
           {
-            if (camera_publisher_[RS_STREAM_DEPTH].getNumSubscribers() <= 0)
-            {
-              setImageData(RS_STREAM_DEPTH);
-            }
-            if (camera_publisher_[RS_STREAM_COLOR].getNumSubscribers() <= 0)
-            {
-              setImageData(RS_STREAM_COLOR);
-            }
-            publishPCTopic();
+            setImageData(RS_STREAM_DEPTH);
           }
+          if (camera_publisher_[RS_STREAM_COLOR].getNumSubscribers() <= 0)
+          {
+            setImageData(RS_STREAM_COLOR);
+          }
+          publishPCTopic();
         }
       }
     }
