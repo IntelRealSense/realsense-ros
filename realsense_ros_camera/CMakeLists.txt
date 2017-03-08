@@ -59,13 +59,13 @@ target_link_libraries(realsense_ros_camera
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
 
-  add_executable(tests_camera_core test/camera_core.cpp)
-  target_link_libraries(tests_camera_core
+  add_executable(realsense_ros_tests_camera test/camera_core.cpp)
+  target_link_libraries(realsense_ros_tests_camera
     ${catkin_LIBRARIES}
     ${GTEST_LIBRARIES}
     )
-  add_dependencies(tests_camera_core ${PROJECT_NAME}_generate_messages_cpp)
-  add_dependencies(tests_camera_core ${catkin_EXPORTED_TARGETS})
+  add_dependencies(realsense_ros_tests_camera ${PROJECT_NAME}_generate_messages_cpp)
+  add_dependencies(realsense_ros_tests_camera ${catkin_EXPORTED_TARGETS})
 endif()
 
 
