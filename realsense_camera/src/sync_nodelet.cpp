@@ -63,6 +63,13 @@ namespace realsense_camera
         start_stop_srv_called_ = false;
       }
 
+      if (enable_[RS_STREAM_DEPTH] != rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0))
+      {
+        stopCamera();
+        setStreams();
+        startCamera();
+      }
+
       if (rs_is_device_streaming(rs_device_, 0) == 1)
       {
         rs_wait_for_frames(rs_device_, &rs_error_);

@@ -848,13 +848,6 @@ namespace realsense_camera
     {
       enable_[RS_STREAM_DEPTH] = true;
     }
-
-    if (enable_[RS_STREAM_DEPTH] != rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0))
-    {
-      stopCamera();
-      setStreams();
-      startCamera();
-    }
   }
 
   /*

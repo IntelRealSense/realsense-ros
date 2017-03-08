@@ -531,6 +531,13 @@ namespace realsense_camera
         start_stop_srv_called_ = false;
       }
 
+      if (enable_[RS_STREAM_DEPTH] != rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0))
+      {
+        stopCamera();
+        setStreams();
+        startCamera();
+      }
+
       if (imu_publisher_.getNumSubscribers() > 0)
       {
         std::unique_lock<std::mutex> lock(imu_mutex_);
