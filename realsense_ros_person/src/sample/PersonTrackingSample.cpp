@@ -127,7 +127,6 @@ void PersonTrackingSample::DrawPersonResults(cv::Mat& colorImage, realsense_ros_
   cv::Point centerMass(user.centerOfMassImage.x, user.centerOfMassImage.y);
   cv::Point3f centerMassWorld(user.centerOfMassWorld.x, user.centerOfMassWorld.y, user.centerOfMassWorld.z);
 
-  m_trackingRenderer.Reset();
   m_trackingRenderer.DrawPerson(colorImage, personId, userRectangle, centerMass, centerMassWorld);
   DrawPersonSkeleton(colorImage, user);
   DrawPersonGestures(colorImage, user);
