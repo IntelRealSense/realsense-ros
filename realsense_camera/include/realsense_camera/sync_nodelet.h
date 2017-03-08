@@ -41,6 +41,7 @@ class SyncNodelet: public realsense_camera::BaseNodelet
 {
 public:
   // Interfaces.
+  virtual ~SyncNodelet();
   virtual void onInit();
 
 protected:

@@ -34,6 +34,12 @@ PLUGINLIB_EXPORT_CLASS(realsense_camera::SyncNodelet, nodelet::Nodelet)
 
 namespace realsense_camera
 {
+
+  SyncNodelet::~SyncNodelet()
+  {
+    topic_thread_->join();
+  }
+
   /*
    * Initialize the nodelet.
    */
