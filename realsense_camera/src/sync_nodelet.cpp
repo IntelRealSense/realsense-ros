@@ -34,7 +34,6 @@ PLUGINLIB_EXPORT_CLASS(realsense_camera::SyncNodelet, nodelet::Nodelet)
 
 namespace realsense_camera
 {
-
   SyncNodelet::~SyncNodelet()
   {
     topic_thread_->join();
@@ -66,6 +65,7 @@ namespace realsense_camera
         {
           ROS_INFO_STREAM(nodelet_name_ << " - " << stopCamera());
         }
+
         start_stop_srv_called_ = false;
       }
 
@@ -99,10 +99,12 @@ namespace realsense_camera
           {
             setImageData(RS_STREAM_DEPTH);
           }
+
           if (camera_publisher_[RS_STREAM_COLOR].getNumSubscribers() <= 0)
           {
             setImageData(RS_STREAM_COLOR);
           }
+
           publishPCTopic();
         }
       }
@@ -161,9 +163,11 @@ namespace realsense_camera
           duplicate_depth_color_ = true;  // Set this flag to true if Depth and/or Color frame is duplicate
         }
       }
+
       ts_[stream_index] = frame_ts;
     }
   }
+
   void SyncNodelet::setImageData(rs_stream stream_index)
     {
       if (stream_index == RS_STREAM_DEPTH)
