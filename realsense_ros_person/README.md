@@ -117,22 +117,22 @@ The person node by default starts in detection mode, and some features requires 
 
 ### For person tracking feature
 ```bash
-$ roslaunch realsense_ros_person realsense_person_demo_tracking.launch
+$ roslaunch realsense_ros_person demo_person_tracking.launch
 ```
 
 ### For person gestures feature(pointing & wave)
 ```bash
-$ roslaunch realsense_ros_person realsense_person_demo_gestures.launch
+$ roslaunch realsense_ros_person demo_person_gestures.launch
 ```
 
 ### For skeleton feature
 ```bash
-$ roslaunch realsense_ros_person realsense_person_demo_skeleton.launch
+$ roslaunch realsense_ros_person demo_person_skeleton.launch
 ```
 
 ### For person face features (recogntion, landmarks, head pose, head bounding box)
 ```bash
-$ roslaunch realsense_ros_person realsense_person_demo_face_features.launch
+$ roslaunch realsense_ros_person demo_person_face_features.launch
   ```
 
 # Person features requirements for tracking mode
