@@ -27,7 +27,7 @@ apt install -y librealsense-object-recognition-dev librealsense-persontracking-d
 mkdir -p catkin_ws/src
 cd catkin_ws/src/
 catkin_init_workspace 
-git clone https://github.com/IntelRealSense/realsense_samples_ros
+git clone https://github.intel.com/IntelRealSense/realsense_ros
 cd ..
 catkin_make
 source devel/setup.bash
