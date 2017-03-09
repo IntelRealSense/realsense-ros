@@ -1,5 +1,5 @@
 /******************************************************************************
- Copyright (c) 2016, Intel Corporation
+ Copyright (c) 2017, Intel Corporation
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -386,9 +386,10 @@ namespace realsense_camera
     rs_set_device_option(rs_device_, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, config.r200_lr_auto_exposure_enabled, 0);
     if (config.r200_lr_auto_exposure_enabled == 0)
     {
+      rs_set_device_option(rs_device_, RS_OPTION_R200_LR_GAIN, config.r200_lr_gain, 0);
       rs_set_device_option(rs_device_, RS_OPTION_R200_LR_EXPOSURE, config.r200_lr_exposure, 0);
     }
-    rs_set_device_option(rs_device_, RS_OPTION_R200_LR_GAIN, config.r200_lr_gain, 0);
+
     rs_set_device_option(rs_device_, RS_OPTION_R200_EMITTER_ENABLED, config.r200_emitter_enabled, 0);
     rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CLAMP_MIN, config.r200_depth_clamp_min, 0);
     rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CLAMP_MAX, config.r200_depth_clamp_max, 0);
