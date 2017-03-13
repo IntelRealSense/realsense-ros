@@ -63,6 +63,7 @@ if (CATKIN_ENABLE_TESTING)
   target_link_libraries(realsense_ros_tests_camera
     ${catkin_LIBRARIES}
     ${GTEST_LIBRARIES}
+    -lpthread -lm
     )
   add_dependencies(realsense_ros_tests_camera ${PROJECT_NAME}_generate_messages_cpp)
   add_dependencies(realsense_ros_tests_camera ${catkin_EXPORTED_TARGETS})
