@@ -78,7 +78,7 @@ if (CATKIN_ENABLE_TESTING)
     ${catkin_LIBRARIES}
     ${GTEST_LIBRARIES}
     )
-  add_dependencies(tests_slam ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
+  add_dependencies(tests_slam ${PROJECT_NAME}_generate_messages_cpp)
   add_dependencies(tests_slam ${catkin_EXPORTED_TARGETS})
 endif()
 
