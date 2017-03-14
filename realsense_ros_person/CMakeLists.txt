@@ -110,7 +110,6 @@ add_library(realsense_ros_person
     ${ROS_WRAPPER_SOURCES}
 )
 
-
 target_link_libraries(realsense_ros_person
     ${PT_LINK_LIBS}
     ${catkin_LIBRARIES}
@@ -132,7 +131,20 @@ target_link_libraries(${PROJECT_NAME}_sample
         ${OpenCV_LIBRARIES}
         )
 
+
 add_dependencies(${PROJECT_NAME}_sample ${PROJECT_NAME}_generate_messages_cpp)
+
+if(CATKIN_ENABLE_TESTING)
+  # build person unit tests
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(tests_person test/person_detection.test test/person_test.cpp)
+  target_link_libraries(tests_person
+        ${catkin_LIBRARIES}
+        ${GTEST_LIBRARIES}
+        )
+  add_dependencies(tests_person realsense_ros_person)
+
+endif()
 
 # Install launch files
 install(DIRECTORY launch/
@@ -140,6 +152,7 @@ install(DIRECTORY launch/
 )
 
 # Install xml files
-install(FILES nodelet_plugins.xml 
+install(FILES nodelet_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
