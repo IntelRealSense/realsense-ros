@@ -14,8 +14,9 @@ set(CMAKE_EXE_LINKER_FLAGS "-pie -z noexecstack -z relro -z now")
 # Flags shared libraries
 set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now ${CMAKE_SHARED_LINKER_FLAGS}")
 
-find_package(catkin REQUIRED COMPONENTS
-  librealsense
+option(USE_SYSTEM_LIBREALSENSE "Build realsense_camera against system librealsense, not the one built with catkin" OFF)
+
+set(REALSENSE_CATKIN_BASED_DEPS
   dynamic_reconfigure
   roscpp
   nodelet
@@ -27,7 +28,20 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   pcl_ros
-  roslint
+)
+
+if(USE_SYSTEM_LIBREALSENSE)
+  find_package(realsense REQUIRED)
+else()
+  list(APPEND REALSENSE_CATKIN_BASED_DEPS librealsense)
+endif()
+
+if(CATKIN_ENABLE_TESTING)
+  list(APPEND REALSENSE_CATKIN_BASED_DEPS roslint)
+endif()
+
+find_package(catkin REQUIRED COMPONENTS
+  ${REALSENSE_CATKIN_BASED_DEPS}
 )
 
 add_message_files(
@@ -57,11 +71,6 @@ generate_dynamic_reconfigure_options(
   cfg/zr300_params.cfg
 )
 
-# ROS Lint the code
-roslint_cpp()
-roslint_python()
-roslint_add_test()
-
 #################################
 # catkin specific configuration #
 #################################
@@ -71,11 +80,20 @@ roslint_add_test()
 # LIBRARIES: libraries you create in this project that dependent projects also need
 # CATKIN_DEPENDS: catkin_packages dependent projects also need
 # DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS librealsense std_msgs message_runtime sensor_msgs
-  LIBRARIES ${PROJECT_NAME}_nodelet
-)
+if(USE_SYSTEM_LIBREALSENSE)
+  catkin_package(
+    INCLUDE_DIRS include
+    CATKIN_DEPENDS std_msgs message_runtime sensor_msgs
+    DEPENDS realsense
+    LIBRARIES ${PROJECT_NAME}_nodelet
+  )
+else()
+  catkin_package(
+    INCLUDE_DIRS include
+    CATKIN_DEPENDS std_msgs message_runtime sensor_msgs librealsense
+    LIBRARIES ${PROJECT_NAME}_nodelet
+  )
+endif()
 
 # Specify additional locations of header files
 include_directories(
@@ -93,9 +111,17 @@ add_dependencies(${PROJECT_NAME}_nodelet ${catkin_EXPORTED_TARGETS})
 
 add_executable(get_debug_info src/get_debug_info.cpp)
 target_link_libraries(get_debug_info ${catkin_LIBRARIES})
+if(USE_SYSTEM_LIBREALSENSE)
+  target_link_libraries(get_debug_info PRIVATE realsense::realsense)
+endif()
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
+
+  # ROS Lint the code
+  roslint_cpp()
+  roslint_python()
+  roslint_add_test()
 
   add_executable(tests_camera_core test/camera_core.cpp)
   target_link_libraries(tests_camera_core
