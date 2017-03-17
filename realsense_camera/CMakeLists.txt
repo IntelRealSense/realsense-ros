@@ -28,13 +28,16 @@ set(REALSENSE_CATKIN_BASED_DEPS
   std_msgs
   sensor_msgs
   pcl_ros
-  roslint
 )
 
 if(USE_SYSTEM_LIBREALSENSE)
   find_package(realsense REQUIRED)
 else()
   list(APPEND REALSENSE_CATKIN_BASED_DEPS librealsense)
+endif()
+
+if(CATKIN_ENABLE_TESTING)
+  list(APPEND REALSENSE_CATKIN_BASED_DEPS roslint)
 endif()
 
 find_package(catkin REQUIRED COMPONENTS
@@ -67,11 +70,6 @@ generate_dynamic_reconfigure_options(
   cfg/sr300_params.cfg
   cfg/zr300_params.cfg
 )
-
-# ROS Lint the code
-roslint_cpp()
-roslint_python()
-roslint_add_test()
 
 #################################
 # catkin specific configuration #
@@ -119,6 +117,11 @@ endif()
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
+
+  # ROS Lint the code
+  roslint_cpp()
+  roslint_python()
+  roslint_add_test()
 
   add_executable(tests_camera_core test/camera_core.cpp)
   target_link_libraries(tests_camera_core
