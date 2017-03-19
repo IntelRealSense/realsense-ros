@@ -79,7 +79,7 @@ void CRecognition::init(ros::NodeHandle& nh, const std::vector<std::string> & ar
 
   image_transport::ImageTransport it(nh);
 
-  m_sub_depthCameraInfo = nh.subscribe("camera/depth/camera_info", 1, &CRecognition::depthCameraImfoCallback, this);
+  m_sub_depthCameraInfo = nh.subscribe("camera/depth/camera_info", 1, &CRecognition::depthCameraInfoCallback, this);
   m_recognized_objects_pub = nh.advertise<realsense_ros_object::ObjectArray>("realsense/recognized_objects", 1);
 
 
@@ -90,7 +90,7 @@ void CRecognition::init(ros::NodeHandle& nh, const std::vector<std::string> & ar
   }
 }
 
-void CRecognition::depthCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo)
+void CRecognition::depthCameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo)
 {
   // this callback is used in trackMiddle mode.
   // get the image size and set the bbox in the middle of the image
@@ -101,11 +101,11 @@ void CRecognition::depthCameraImfoCallback(const sensor_msgs::CameraInfo::ConstP
   utils.get_extrinsics(cameraInfo, m_ext);
   utils.get_intrinsics(cameraInfo, m_depthInt);
 
-  m_sub_colorCameraInfo = m_nh.subscribe("camera/color/camera_info", 1, &CRecognition::colorCameraImfoCallback, this);
+  m_sub_colorCameraInfo = m_nh.subscribe("camera/color/camera_info", 1, &CRecognition::colorCameraInfoCallback, this);
   m_sub_depthCameraInfo.shutdown();
 }
 
-void CRecognition::colorCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo)
+void CRecognition::colorCameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo)
 {
 
   utils.get_intrinsics(cameraInfo, m_colorInt);

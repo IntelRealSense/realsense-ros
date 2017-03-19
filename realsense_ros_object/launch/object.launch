@@ -9,7 +9,7 @@
     <param name="max_number_of_objects" type="int" value="5" />	
   </node>
 
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_object_recognize" args="standalone realsense_ros_object/SNodeletObjectRecognition" output="screen"/>
+  <!-- <node pkg="nodelet" type="nodelet" name="realsense_ros_object_recognize" args="standalone realsense_ros_object/SNodeletObjectRecognition" output="screen"/> -->
 
   <node pkg="nodelet" type="nodelet" name="realsense_ros_object_localize" args="standalone realsense_ros_object/SNodeletObjectLocalization" output="screen" >
     <param name="show_rgb" type="bool" value="false" />

@@ -42,7 +42,9 @@ private:
   int initialize();
   int unInitialize();
   //Static member functions:
-  void localizedTrackedObjectsCallback(const sensor_msgs::ImageConstPtr& color, const realsense_ros_object::ObjectsInBoxes::ConstPtr& msg);
+  void localizedTrackedObjectsCallback(
+          const sensor_msgs::ImageConstPtr& color,
+          const realsense_ros_object::ObjectsInBoxes::ConstPtr& msg);
 
   //===================================
   //  Member Variables

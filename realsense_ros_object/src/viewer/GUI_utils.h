@@ -172,6 +172,20 @@ public:
    */
   char show_results();
 
+  /**
+   * @brief Write the previously calculated results to text file
+   *
+   * @return True if results were writen successfully , false otherwise
+   */
+  char save_results(const realsense_ros_object::ObjectsInBoxes& msg, std::string file_path = "");
+
+  /**
+   * @brief Read the calculated results from text file.
+   *
+   * @return vector of results
+   */
+  std::vector<realsense_ros_object::ObjectsInBoxes> read_results(std::string file_path);
+
 protected:
   /**
    * @brief Gets an object ID and returns unique color.

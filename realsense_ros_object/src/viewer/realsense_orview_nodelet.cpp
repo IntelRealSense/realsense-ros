@@ -60,13 +60,17 @@ void COrView::init(ros::NodeHandle& nh)
 
   // Subscribe to color, tracking using synchronization filter
   color_subscriber_.reset(new message_filters::Subscriber<sensor_msgs::Image>(nh_, "camera/color/image_raw", 1));
-  tracking_subscriber_.reset(new message_filters::Subscriber<realsense_ros_object::ObjectsInBoxes>(nh_, "realsense/localized_tracked_objects", 1));
+  tracking_subscriber_.reset(new message_filters::Subscriber<realsense_ros_object::ObjectsInBoxes>(
+                                 nh_, "realsense/localized_tracked_objects", 1));
   UI_pub_ = nh_.advertise<realsense_ros_object::UI>("realsense/UI", 1);
-  time_synchronizer_.reset(new message_filters::TimeSynchronizer<sensor_msgs::Image, realsense_ros_object::ObjectsInBoxes>(*color_subscriber_, *tracking_subscriber_, 60));
+  time_synchronizer_.reset(new message_filters::TimeSynchronizer<sensor_msgs::Image, realsense_ros_object::ObjectsInBoxes>(
+                               *color_subscriber_, *tracking_subscriber_, 60));
   time_synchronizer_->registerCallback(boost::bind(&COrView::localizedTrackedObjectsCallback, this, _1, _2));
 }
 
-void COrView::localizedTrackedObjectsCallback(const sensor_msgs::ImageConstPtr& color, const realsense_ros_object::ObjectsInBoxes::ConstPtr& msg)
+void COrView::localizedTrackedObjectsCallback(
+            const sensor_msgs::ImageConstPtr& color,
+            const realsense_ros_object::ObjectsInBoxes::ConstPtr& msg)
 {
   int key = cv::waitKey(1);
   if ((char)key == ' ')
@@ -114,16 +118,16 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "realsense_orview");
   ros::NodeHandle nh;
 
-  realsense::COrView ormanager;
+  realsense::COrView or_manager;
 
-  std::vector<std::string> argvStrings;
+  std::vector<std::string> argv_strings;
   for (int i = 0; i < argc; i++)
   {
-    argvStrings.push_back(argv[i]);
+    argv_strings.push_back(argv[i]);
   }
 
-  ormanager.getParams(argvStrings);
-  ormanager.init(nh);
+  or_manager.getParams(argv_strings);
+  or_manager.init(nh);
 
   ros::spin();
 }

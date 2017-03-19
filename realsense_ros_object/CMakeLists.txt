@@ -69,6 +69,20 @@ target_link_libraries(${PROJECT_NAME}_viewer
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
+
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+
+  add_executable(tests_object test/object_test.cpp)
+  target_link_libraries(tests_object
+    ${catkin_LIBRARIES}
+    ${GTEST_LIBRARIES}
+    -lpthread -lm
+    )
+  add_dependencies(tests_object ${PROJECT_NAME}_generate_messages_cpp)
+  add_dependencies(tests_object ${catkin_EXPORTED_TARGETS})
+endif()
+
 add_dependencies(${PROJECT_NAME}_viewer ${PROJECT_NAME})
 add_dependencies(${PROJECT_NAME}_viewer ${catkin_EXPORTED_TARGETS})
 

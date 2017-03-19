@@ -45,14 +45,12 @@ int COrmgr::unInitialize()
 int COrmgr::initialize()
 {
   threshold_ = 1;
-  debug_ = false;
   max_number_of_objects_ = 5;
   return 0;
 }
 
 void COrmgr::getParams(ros::NodeHandle& nh)
 {
-  nh.getParam("debug", debug_);
   nh.getParam("threshold", threshold_);
   nh.getParam("max_number_of_objects", max_number_of_objects_);
   nh.getParam("localize_every_frame", localize_every_frame_);
@@ -62,11 +60,7 @@ void COrmgr::getParams(const std::vector<std::string> & argv)
 {
   for (int i = 0; i < argv.size(); i++)
   {
-    if (argv[i] == "debug")
-    {
-      debug_ = true;
-    }
-    else if (argv[i] == "-threshold") // max objects to track
+    if (argv[i] == "-threshold") // max objects to track
     {
       threshold_ = atoi(argv[++i].c_str());
     }
@@ -84,7 +78,8 @@ void COrmgr::init(ros::NodeHandle& nh)
   sub_UI_ = nh_.subscribe("realsense/UI", 1, &COrmgr::UICallback , this);
 
   objects_to_track_pub_ = nh_.advertise<realsense_ros_object::TrackedObjectsArray>("realsense/objects_to_track", 1);
-  tracked_localized_pub_ = nh_.advertise<realsense_ros_object::ObjectsInBoxes>("realsense/localized_tracked_objects", 1);
+  tracked_localized_pub_ = nh_.advertise<realsense_ros_object::ObjectsInBoxes>(
+              "realsense/localized_tracked_objects", 1);
 }
 
 
@@ -123,7 +118,6 @@ void COrmgr::UICallback(const realsense_ros_object::UI& msg)
   ROS_INFO("re-localization\n ");
   sub_tracked_objects_.shutdown();
   sub_localized_objects_ = nh_.subscribe("realsense/localized_objects", 1, &COrmgr::localizeidObjectsCallback , this);
-  //ROS_INFO(std::to_string(msg.key).c_str());  NOTE: Matt commented this out because it did not compile
 }
 
 void COrmgr::trackedObjectCallback(const realsense_ros_object::TrackedObjectsArray::ConstPtr & msg)
@@ -138,22 +132,18 @@ void COrmgr::trackedObjectCallback(const realsense_ros_object::TrackedObjectsArr
       nCtr++;
   }
 
-  if (/*(msg->tracked_objects_vector.size() == 0 || nCtr > m_threshold || nCtr == msg->tracked_objects_vector.size()) &&*/ localize_every_frame_)
+  if (localize_every_frame_)
   {
-    ROS_INFO("lost too many objects - asking for new\n ");
     sub_tracked_objects_.shutdown();
     sub_localized_objects_ = nh_.subscribe("realsense/localized_objects", 1, &COrmgr::localizeidObjectsCallback , this);
   }
 
-  if (debug_)
-  {
-    objects_vector_.header = msg->header;
-    tracked_localized_pub_.publish(objects_vector_);
-  }
+  objects_vector_.header = msg->header;
+  tracked_localized_pub_.publish(objects_vector_);
 }
 
 
-#ifdef RUN_AS_NODELET
+#if defined(RUN_AS_NODELET)
 
 //******************************
 // Public Methods
@@ -181,23 +171,23 @@ void COrmgrNodelet::onInit()
 
 }
 
-#ifndef RUN_AS_NODELET
+#if !defined(RUN_AS_NODELET)
 
 int main(int argc, char **argv)
 {
 
   ros::init(argc, argv, "realsense_ormgr");
   ros::NodeHandle nh;
-  realsense::COrmgr ormanager;
+  realsense::COrmgr or_manager;
 
-  std::vector<std::string> argvStrings;
+  std::vector<std::string> argv_strings;
   for (int i = 0; i < argc; i++)
   {
     argvStrings.push_back(argv[i]);
   }
 
-  ormanager.getParams(argvStrings);
-  ormanager.init(nh);
+  or_manager.getParams(argv_strings);
+  or_manager.init(nh);
   ros::spin();
 }
 #endif

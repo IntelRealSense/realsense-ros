@@ -28,12 +28,12 @@ ObjectsInBoxes conteains color image header and array of ObjectInBoxs, which con
 #### Parameters
     ~show_rgb: (boolean, default: false) 
         if true - view localization result, drawn on rgb frame 
-    ~confidence: (flaot, default: 0.7)
+    ~confidence: (float, default: 0.7)
 	    confidence threshold of localization result. result with confidence that low then the confidence will not be published.
     ~estimate_center: (boolean, default: true) 
 	    if true - object estimation center will be enabled, and 3d location field in ObjectInBox will store it.
     ~use_CPU: (boolean, default: true) 
-	    if true - use GPU opencl when processing localization. otherwize - use CPU.
+	    if true - use CPU when processing localization. otherwize - use GPU opencl.
 
 ### realsense_ros_object_recognition 
 The realsense_recognition nodelet takes color image and depth image from device, then processes recognition on the frame, and publishes the result as realsense_or_msgs::ObjectArray message.

@@ -59,7 +59,6 @@ private:
 
   realsense_ros_object::ObjectsInBoxes objects_vector_;
 
-  bool debug_;
   int max_number_of_objects_;
   int threshold_;
   bool localize_every_frame_;

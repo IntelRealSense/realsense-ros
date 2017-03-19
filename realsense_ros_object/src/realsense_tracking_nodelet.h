@@ -46,8 +46,8 @@ private:
 
 
   //Static member functions:
-  void colorCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
-  void depthCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
+  void colorCameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
+  void depthCameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
   void objectsToTrackCallback(const realsense_ros_object::TrackedObjectsArray& msg);
   void localizedObjectsToTrackCallback(const realsense_ros_object::ObjectsInBoxes& msg);
 

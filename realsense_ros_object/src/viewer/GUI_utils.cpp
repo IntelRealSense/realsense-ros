@@ -3,6 +3,8 @@
 
 #include "GUI_utils.h"
 #include <iomanip>
+#include <pwd.h>
+#include <fstream>
 
 bool GUI_utils::init_GUI(cv::String window_name)
 {
@@ -219,6 +221,103 @@ bool GUI_utils::draw_results(const sensor_msgs::ImageConstPtr& color, const real
   }
 
   return true;
+}
+
+char GUI_utils::save_results(const realsense_ros_object::ObjectsInBoxes &msg, std::string file_path)
+{
+  if(file_path == "")
+  {
+    const char *home_dir = getenv("HOME");
+
+    if ( home_dir== NULL) {
+        home_dir = getpwuid(getuid())->pw_dir;
+    }
+    file_path = std::string(home_dir) + "/object_bag_results.txt";
+  }
+
+  std::fstream myfile;
+  myfile.open (file_path, std::ofstream::out | std::ofstream::app);
+  static int frame_num = -1;
+  frame_num++;
+  myfile << "frame " + std::to_string(frame_num) << std::endl;
+  for (int i = 0; i < (int)msg.objects_vector.size(); i++)
+  {
+    myfile << "object id: " << i << std::endl;
+    myfile << msg.objects_vector[i].object.object_name << std::endl;
+    myfile << msg.objects_vector[i].object_bbox.x << std::endl;
+    myfile << msg.objects_vector[i].object_bbox.y << std::endl;
+    myfile << msg.objects_vector[i].object_bbox.width << std::endl;
+    myfile << msg.objects_vector[i].object_bbox.height << std::endl;
+
+    myfile << msg.objects_vector[i].location.coordinates.x << std::endl;
+    myfile << msg.objects_vector[i].location.coordinates.y << std::endl;
+    myfile << msg.objects_vector[i].location.coordinates.z << std::endl;
+    myfile << msg.objects_vector[i].location.horiz_margin << std::endl;
+    myfile << msg.objects_vector[i].location.vert_margin << std::endl;
+  }
+  myfile.close();
+}
+
+std::vector<realsense_ros_object::ObjectsInBoxes> GUI_utils::read_results(std::string file_path)
+{
+
+  std::string frame("frame");
+  std::string object_id("object id:");
+  std::vector<realsense_ros_object::ObjectsInBoxes> res;
+  std::ifstream resFile;
+  resFile.open(file_path);
+  std::string str;
+  if (resFile.is_open())
+  {
+    bool new_frame = true;
+    realsense_ros_object::ObjectsInBoxes objs;
+    while(new_frame)
+    {
+      new_frame = false;
+      std::getline(resFile, str);
+      while(std::getline(resFile, str))
+      {
+        if(!str.compare(0, object_id.size(), object_id))
+        {
+          realsense_ros_object::ObjectInBox objectInBox;
+          std::getline(resFile, objectInBox.object.object_name);
+          std::getline(resFile, str);
+          objectInBox.object_bbox.x = std::stoi(str);
+          std::getline(resFile, str);
+          objectInBox.object_bbox.y = std::stoi(str);
+          std::getline(resFile, str);
+          objectInBox.object_bbox.width = std::stoi(str);
+          std::getline(resFile, str);
+          objectInBox.object_bbox.height = std::stoi(str);
+          std::getline(resFile, str);
+          objectInBox.location.coordinates.x = std::stoi(str);
+          std::getline(resFile, str);
+          objectInBox.location.coordinates.y = std::stoi(str);
+          std::getline(resFile, str);
+          objectInBox.location.coordinates.z = std::stoi(str);
+          std::getline(resFile, str);
+          objectInBox.location.horiz_margin = std::stof(str);
+          std::getline(resFile, str);
+          objectInBox.location.vert_margin = std::stof(str);
+          objs.objects_vector.push_back(objectInBox);
+        }
+        else if (!str.compare(0, frame.size(), frame))
+        {
+            new_frame = true;
+            res.push_back(objs);
+        }
+      }
+
+    }
+  }
+
+  for(auto & frame : res)
+  {
+      save_results(frame, std::string("/home/sshoshan/object_bag_results2.txt"));
+  }
+
+
+  return res;
 }
 
 char GUI_utils::show_results()
