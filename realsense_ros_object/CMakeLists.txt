@@ -73,14 +73,22 @@ target_link_libraries(${PROJECT_NAME}_viewer
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
 
+  catkin_download_test_data(
+    detection.bag
+    https://s3-eu-west-1.amazonaws.com/realsense-rostest-public/realsense_ros_object/detection.bag
+    DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/tests
+    MD5 50afdbdd5d3f761612e1643f2a3281f1)
+
   add_executable(tests_object test/object_test.cpp)
   target_link_libraries(tests_object
     ${catkin_LIBRARIES}
     ${GTEST_LIBRARIES}
     -lpthread -lm
     )
+
   add_dependencies(tests_object ${PROJECT_NAME}_generate_messages_cpp)
   add_dependencies(tests_object ${catkin_EXPORTED_TARGETS})
+  add_dependencies(tests_object detection.bag)
 endif()
 
 add_dependencies(${PROJECT_NAME}_viewer ${PROJECT_NAME})

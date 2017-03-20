@@ -1,5 +1,5 @@
 <launch>
-  <arg name="bag_path"     default="$(env HOME)/catkin_ws/src/realsense_ros/realsense_ros_object/test/test_or_1920x1080c_320x240d_1.bag" />
+  <arg name="bag_path" default="$(find realsense_ros_object)/tests/detection.bag" />
 
   <!-- Start OBJECT -->
   <include file="$(find realsense_ros_object)/launch/demo_object_from_bag.launch">
