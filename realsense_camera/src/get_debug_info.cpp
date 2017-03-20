@@ -197,6 +197,28 @@ int main(int argc, char **argv)
           rs_error_ = NULL;
         }
         message = message + "\n|Camera Type | " + camera_name + "|\n|Camera Firmware | " + camera_fw + "|";
+        if (rs_supports(rs_detected_device, RS_CAPABILITIES_ADAPTER_BOARD, &rs_error_))
+        {
+          std::string adapter_fw = rs_get_device_info(rs_detected_device,
+              RS_CAMERA_INFO_ADAPTER_BOARD_FIRMWARE_VERSION, &rs_error_);
+          if (rs_error_)
+          {
+            adapter_fw = "Error detecting adapter firmware";
+            rs_error_ = NULL;
+          }
+          message = message + "\n|Adapter Firmware | " + adapter_fw + "|";
+        }
+        if (rs_supports(rs_detected_device, RS_CAPABILITIES_MOTION_EVENTS, &rs_error_))
+        {
+          std::string motion_module_fw = rs_get_device_info(rs_detected_device,
+              RS_CAMERA_INFO_MOTION_MODULE_FIRMWARE_VERSION, &rs_error_);
+          if (rs_error_)
+          {
+            motion_module_fw = "Error detecting motion module firmware";
+            rs_error_ = NULL;
+          }
+          message = message + "\n|Motion Module Firmware | " + motion_module_fw + "|";
+        }
       }
     }
   }
