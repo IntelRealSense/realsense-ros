@@ -66,7 +66,7 @@ namespace realsense_camera
 
     max_z_ = R200_MAX_Z;
 
-    BaseNodelet::onInit();
+    SyncNodelet::onInit();
   }
 
   /*
@@ -417,23 +417,6 @@ namespace realsense_camera
         }
       }
     }
-  }
-
-  /*
-  * Set up the callbacks for the camera streams
-  */
-  void R200Nodelet::setFrameCallbacks()
-  {
-    // call base nodelet method
-    BaseNodelet::setFrameCallbacks();
-
-    ir2_frame_handler_ = [&](rs::frame  frame)  // NOLINT(build/c++11)
-    {
-      publishTopic(RS_STREAM_INFRARED2, frame);
-    };
-
-    rs_set_frame_callback_cpp(rs_device_, RS_STREAM_INFRARED2, new rs::frame_callback(ir2_frame_handler_), &rs_error_);
-    checkError();
   }
 
   /*

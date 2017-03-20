@@ -29,48 +29,30 @@
  *******************************************************************************/
 
 #pragma once
-#ifndef REALSENSE_CAMERA_R200_NODELET_H
-#define REALSENSE_CAMERA_R200_NODELET_H
+#ifndef REALSENSE_CAMERA_SYNC_NODELET_H
+#define REALSENSE_CAMERA_SYNC_NODELET_H
 
-#include <string>
-#include <vector>
-
-#include <dynamic_reconfigure/server.h>
-
-#include <realsense_camera/r200_paramsConfig.h>
-#include <realsense_camera/sync_nodelet.h>
+#include <realsense_camera/base_nodelet.h>
+#include <boost/thread.hpp>
 
 namespace realsense_camera
 {
-class R200Nodelet: public realsense_camera::SyncNodelet
+class SyncNodelet: public realsense_camera::BaseNodelet
 {
 public:
-  void onInit();
+  // Interfaces.
+  virtual ~SyncNodelet();
+  virtual void onInit();
 
 protected:
-  // Member Variables.
-  rs_option edge_options_[4] =
-  {
-    RS_OPTION_R200_AUTO_EXPOSURE_LEFT_EDGE,
-    RS_OPTION_R200_AUTO_EXPOSURE_TOP_EDGE,
-    RS_OPTION_R200_AUTO_EXPOSURE_RIGHT_EDGE,
-    RS_OPTION_R200_AUTO_EXPOSURE_BOTTOM_EDGE
-  };
-  boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::r200_paramsConfig>> dynamic_reconf_server_;
+  boost::shared_ptr<boost::thread> topic_thread_;
+  bool duplicate_depth_color_ = false;
+  ros::Time topic_ts_;
 
-  rs_extrinsics color2ir2_extrinsic_;  // color frame is base frame
-
-  // Member Functions.
-  void getParameters();
-  void advertiseTopics();
-  std::vector<std::string> setDynamicReconfServer();
-  void startDynamicReconfCallback();
-  void setDynamicReconfigDepthControlPreset(int preset);
-  std::string setDynamicReconfigDepthControlIndividuals();
-  void configCallback(realsense_camera::r200_paramsConfig &config, uint32_t level);
-  void getCameraExtrinsics();
-  void publishStaticTransforms();
-  void publishDynamicTransforms();
+  virtual void setFrameCallbacks() { }  // don't set callbacks!
+  virtual void publishSyncTopics();
+  virtual void publishTopic(rs_stream stream_index);
+  virtual void setImageData(rs_stream stream_index);
 };
 }  // namespace realsense_camera
-#endif  // REALSENSE_CAMERA_R200_NODELET_H
+#endif  // REALSENSE_CAMERA_SYNC_NODELET_H

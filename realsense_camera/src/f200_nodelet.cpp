@@ -1,5 +1,5 @@
 /******************************************************************************
- Copyright (c) 2016, Intel Corporation
+ Copyright (c) 2017, Intel Corporation
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@ namespace realsense_camera
 
     max_z_ = F200_MAX_Z;
 
-    BaseNodelet::onInit();
+    SyncNodelet::onInit();
   }
 
   /*
@@ -80,21 +80,6 @@ namespace realsense_camera
         fastest_stream_ = RS_STREAM_COLOR;
       }
     }
-  }
-
-  /*
-   * Determine the timestamp for the publish topic. -- overrides base class
-   */
-  ros::Time F200Nodelet::getTimestamp(rs_stream stream_index, double frame_ts)
-  {
-    static ros::Time last_common_stamp = ros::Time::now();
-
-    if (stream_index == fastest_stream_)
-    {
-      last_common_stamp = ros::Time::now();
-    }
-
-    return last_common_stamp;
   }
 
   /*
