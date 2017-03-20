@@ -36,10 +36,6 @@ else()
   list(APPEND REALSENSE_CATKIN_BASED_DEPS librealsense)
 endif()
 
-if(CATKIN_ENABLE_TESTING)
-  list(APPEND REALSENSE_CATKIN_BASED_DEPS roslint)
-endif()
-
 find_package(catkin REQUIRED COMPONENTS
   ${REALSENSE_CATKIN_BASED_DEPS}
 )
@@ -117,6 +113,7 @@ endif()
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
+  find_package(roslint REQUIRED)
 
   # ROS Lint the code
   roslint_cpp()
