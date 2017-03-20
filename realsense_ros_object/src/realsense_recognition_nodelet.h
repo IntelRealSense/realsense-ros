@@ -1,5 +1,5 @@
 // License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2016 Intel Corporation. All Rights Reserved.
+// Copyright(c) 2017 Intel Corporation. All Rights Reserved.
 
 #pragma once
 # ifndef RS_RECOGNITION_NODELET
@@ -42,8 +42,8 @@ private:
   int unInitialize();
 
   //Static member functions:
-  void colorCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
-  void depthCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
+  void colorCameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
+  void depthCameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
   void draw_results(rs::object_recognition::recognition_data* recognition_data, int array_size, rs::object_recognition::or_configuration_interface* or_configuration);
 
   void RecognitionCallback(const sensor_msgs::ImageConstPtr& color , const sensor_msgs::ImageConstPtr& depth);

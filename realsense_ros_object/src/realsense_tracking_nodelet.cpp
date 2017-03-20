@@ -1,5 +1,5 @@
 // License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2016 Intel Corporation. All Rights Reserved.
+// Copyright(c) 2017 Intel Corporation. All Rights Reserved.
 
 #include <ros/ros.h>
 
@@ -101,7 +101,7 @@ void CTracking::init(ros::NodeHandle& nh)
   m_or_configuration = nullptr;
   m_no_subscribers = true;
   m_nh = nh;
-  m_sub_depthCameraInfo = m_nh.subscribe("camera/depth/camera_info", 1, &CTracking::depthCameraImfoCallback, this);
+  m_sub_depthCameraInfo = m_nh.subscribe("camera/depth/camera_info", 1, &CTracking::depthCameraInfoCallback, this);
   m_tracked_objects_pub = m_nh.advertise<realsense_ros_object::TrackedObjectsArray>("realsense/tracked_objects", 1);
 
 
@@ -111,7 +111,7 @@ void CTracking::init(ros::NodeHandle& nh)
   }
 }
 
-void CTracking::depthCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo)
+void CTracking::depthCameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo)
 {
   m_sub_depthCameraInfo.shutdown();
   // this callback is used in trackMiddle mode.
@@ -123,11 +123,11 @@ void CTracking::depthCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr 
   utils.get_extrinsics(cameraInfo, m_ext);
   utils.get_intrinsics(cameraInfo, m_depthInt);
 
-  m_sub_colorCameraInfo = m_nh.subscribe("camera/color/camera_info", 1, &CTracking::colorCameraImfoCallback, this);
+  m_sub_colorCameraInfo = m_nh.subscribe("camera/color/camera_info", 1, &CTracking::colorCameraInfoCallback, this);
 
 }
 
-void CTracking::colorCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo)
+void CTracking::colorCameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo)
 {
   m_sub_colorCameraInfo.shutdown();
   ROS_INFO("got color info");

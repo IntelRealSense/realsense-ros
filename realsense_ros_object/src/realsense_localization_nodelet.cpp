@@ -1,5 +1,5 @@
 // License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2016 Intel Corporation. All Rights Reserved.
+// Copyright(c) 2017 Intel Corporation. All Rights Reserved.
 
 #include "ros/ros.h"
 
@@ -101,7 +101,7 @@ void CLocalization::init(ros::NodeHandle& nh)
 
   image_transport::ImageTransport it(nh);
 
-  m_sub_depthCameraInfo = nh.subscribe("camera/depth/camera_info", 1, &CLocalization::depthCameraImfoCallback, this);
+  m_sub_depthCameraInfo = nh.subscribe("camera/depth/camera_info", 1, &CLocalization::depthCameraInfoCallback, this);
   m_recognized_objects_pub = nh.advertise<realsense_ros_object::ObjectsInBoxes>("realsense/localized_objects", 1);
   m_cpu_gpu_pub = nh.advertise<realsense_ros_object::cpu_gpu>("realsense/cpu_gpu", 1);
   if (m_show_rgb)
@@ -111,7 +111,7 @@ void CLocalization::init(ros::NodeHandle& nh)
 }
 
 
-void CLocalization::depthCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo)
+void CLocalization::depthCameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo)
 {
   // this callback is used in trackMiddle mode.
   // get the image size and set the bbox in the middle of the image
@@ -122,12 +122,12 @@ void CLocalization::depthCameraImfoCallback(const sensor_msgs::CameraInfo::Const
   utils.get_extrinsics(cameraInfo, m_ext);
   utils.get_intrinsics(cameraInfo, m_depthInt);
 
-  m_sub_colorCameraInfo = m_nh.subscribe("camera/color/camera_info", 1, &CLocalization::colorCameraImfoCallback, this);
+  m_sub_colorCameraInfo = m_nh.subscribe("camera/color/camera_info", 1, &CLocalization::colorCameraInfoCallback, this);
   m_sub_depthCameraInfo.shutdown();
 
 }
 
-void CLocalization::colorCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo)
+void CLocalization::colorCameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo)
 {
   m_sub_colorCameraInfo.shutdown();
   ROS_INFO("got color info");

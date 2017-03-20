@@ -1,5 +1,5 @@
 // License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2016 Intel Corporation. All Rights Reserved.
+// Copyright(c) 2017 Intel Corporation. All Rights Reserved.
 
 #pragma once
 # ifndef RS_TRACKING_NODELET
@@ -46,8 +46,8 @@ private:
 
 
   //Static member functions:
-  void colorCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
-  void depthCameraImfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
+  void colorCameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
+  void depthCameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & cameraInfo);
   void objectsToTrackCallback(const realsense_ros_object::TrackedObjectsArray& msg);
   void localizedObjectsToTrackCallback(const realsense_ros_object::ObjectsInBoxes& msg);
 

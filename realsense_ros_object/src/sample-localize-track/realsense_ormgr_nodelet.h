@@ -1,5 +1,5 @@
 // License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2016 Intel Corporation. All Rights Reserved.
+// Copyright(c) 2017 Intel Corporation. All Rights Reserved.
 
 #pragma once
 # ifndef RS_ORMGR_NODELET
@@ -59,7 +59,6 @@ private:
 
   realsense_ros_object::ObjectsInBoxes objects_vector_;
 
-  bool debug_;
   int max_number_of_objects_;
   int threshold_;
   bool localize_every_frame_;

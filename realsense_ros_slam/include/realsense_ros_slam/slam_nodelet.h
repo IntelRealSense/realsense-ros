@@ -1,5 +1,5 @@
 // License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2016 Intel Corporation. All Rights Reserved
+// Copyright(c) 2017 Intel Corporation. All Rights Reserved
 
 #pragma once
 #include <iostream>
@@ -66,17 +66,25 @@ public:
   SNodeletSlam();
   ~SNodeletSlam();
   ros::NodeHandle nh;
-  std::shared_ptr< message_filters::Subscriber< sensor_msgs::CameraInfo > > sub_depthInfo, sub_fisheyeInfo;
-  std::shared_ptr< message_filters::Subscriber< realsense_ros_camera::IMUInfo > > sub_accelInfo, sub_gyroInfo;
-  std::shared_ptr< message_filters::Subscriber< realsense_ros_camera::Extrinsics > > sub_fe2imu, sub_fe2depth;
-  std::shared_ptr< message_filters::TimeSynchronizer< sensor_msgs::CameraInfo, sensor_msgs::CameraInfo, realsense_ros_camera::IMUInfo, realsense_ros_camera::IMUInfo, realsense_ros_camera::Extrinsics, realsense_ros_camera::Extrinsics> > info_TimeSynchronizer;
+  ros::Subscriber sub_depthInfo, sub_fisheyeInfo, sub_accelInfo, sub_gyroInfo, sub_fe2imu, sub_fe2depth;
   rs::core::video_module_interface::supported_module_config supported_config;
   rs::core::video_module_interface::actual_module_config actual_config;
   SubscribeTopics sub;
 
   void onInit()override;
 private:
-  void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& depthCameraInfo, const sensor_msgs::CameraInfoConstPtr& fisheyeCameraInfo, const realsense_ros_camera::IMUInfoConstPtr& accelInfo, const realsense_ros_camera::IMUInfoConstPtr& gyroInfo, const realsense_ros_camera::ExtrinsicsConstPtr& fe2imu, const realsense_ros_camera::ExtrinsicsConstPtr& fe2depth);
+  sensor_msgs::CameraInfoConstPtr depthCameraInfo_, fisheyeCameraInfo_;
+  realsense_ros_camera::IMUInfoConstPtr accelInfo_, gyroInfo_;
+  realsense_ros_camera::ExtrinsicsConstPtr fe2imu_, fe2depth_;
+  std::mutex mut_init;
+  void depthInfoCallback(const sensor_msgs::CameraInfoConstPtr& depthCameraInfo);
+  void fisheyeInfoCallback(const sensor_msgs::CameraInfoConstPtr& fisheyeCameraInfo);
+  void accelInfoCallback(const realsense_ros_camera::IMUInfoConstPtr& accelInfo);
+  void gyroInfoCallback(const realsense_ros_camera::IMUInfoConstPtr& gyroInfo);
+  void fe2ImuCallback(const realsense_ros_camera::ExtrinsicsConstPtr& fe2imu);
+  void fe2depthCallback(const realsense_ros_camera::ExtrinsicsConstPtr& fe2depth);
+  void startIfReady();  
+  void startSlam();
   void setCalibrationData(const sensor_msgs::CameraInfoConstPtr & cameraInfoMsg, rs::core::intrinsics & cameraInfo);
   void setStreamConfigIntrin(rs::core::stream_type stream, std::map< rs::core::stream_type, rs::core::intrinsics > intrinsics);
   void setMotionData(realsense_ros_camera::IMUInfo& imu_res, rs::core::motion_device_intrinsics& motion_intrin);

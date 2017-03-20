@@ -15,9 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(OpenCV 3 REQUIRED)
 #find_package(librealsense 1 REQUIRED) librealsense package currently lacks required pkgconfig file
 
-find_package(PkgConfig)
-pkg_search_module(realsense2 REQUIRED realsense2)
-
 set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -O2 -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
 
 add_message_files(
@@ -40,7 +37,6 @@ catkin_package(
   image_transport
 )
 
-# DS4 Node
 include_directories(
   include
   ${OpenCV_INCLUDE_DIRS}
@@ -60,41 +56,25 @@ target_link_libraries(realsense_ros_camera
    ${CMAKE_THREAD_LIBS_INIT}
  )
 
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
 
-# DS5 Node
-add_library(${PROJECT_NAME}_ds5
-   src/ds5_camera_node.cpp
+  add_executable(realsense_ros_tests_camera test/camera_core.cpp)
+  target_link_libraries(realsense_ros_tests_camera
+    ${catkin_LIBRARIES}
+    ${GTEST_LIBRARIES}
+    -lpthread -lm
+    )
+  add_dependencies(realsense_ros_tests_camera ${PROJECT_NAME}_generate_messages_cpp)
+  add_dependencies(realsense_ros_tests_camera ${catkin_EXPORTED_TARGETS})
+endif()
+
+
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-
-add_dependencies(${PROJECT_NAME}_ds5 ${PROJECT_NAME}_generate_messages_cpp)
-add_dependencies(${PROJECT_NAME}_ds5 ${catkin_EXPORTED_TARGETS})
-
-target_link_libraries(${PROJECT_NAME}_ds5
-   ${realsense2_LIBRARIES}
-   ${catkin_LIBRARIES}
-   ${OpenCV_LIBRARIES}
-   ${CMAKE_THREAD_LIBS_INIT}
- )
-
-
-#if (CATKIN_ENABLE_TESTING)
-#  find_package(rostest REQUIRED)
-#
-#  add_executable(tests_camera_core test/camera_core.cpp)
-#  target_link_libraries(tests_camera_core
-#    ${catkin_LIBRARIES}
-#    ${GTEST_LIBRARIES}
-#    )
-#  add_dependencies(tests_camera_core ${PROJECT_NAME}_generate_messages_cpp)
-#  add_dependencies(tests_camera_core ${catkin_EXPORTED_TARGETS})
-#endif()
-
-
-#install(TARGETS ${PROJECT_NAME}
-#  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#)
 
 install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch

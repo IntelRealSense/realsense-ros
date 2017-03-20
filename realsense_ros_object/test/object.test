@@ -1,0 +1,13 @@
+<launch>
+  <arg name="bag_path" default="$(find realsense_ros_object)/tests/detection.bag" />
+
+  <!-- Start OBJECT -->
+  <include file="$(find realsense_ros_object)/launch/demo_object_from_bag.launch">
+    <arg name="bag_path"     value="$(arg bag_path)" />
+  </include>
+
+  <!-- Start test -->
+  <test pkg="realsense_ros_object" type="tests_object" test-name="realsense_object_test"
+    args="bag_path $(arg bag_path)"
+    retry="3" />
+</launch>
