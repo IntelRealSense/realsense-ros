@@ -1,5 +1,5 @@
 /******************************************************************************
- Copyright (c) 2016, Intel Corporation
+ Copyright (c) 2017, Intel Corporation
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -37,11 +37,11 @@
 #include <dynamic_reconfigure/server.h>
 
 #include <realsense_camera/f200_paramsConfig.h>
-#include <realsense_camera/base_nodelet.h>
+#include <realsense_camera/sync_nodelet.h>
 
 namespace realsense_camera
 {
-class F200Nodelet: public realsense_camera::BaseNodelet
+class F200Nodelet: public realsense_camera::SyncNodelet
 {
 public:
   void onInit();
@@ -53,7 +53,6 @@ protected:
 
   // Member Functions.
   void setStreams();
-  ros::Time getTimestamp(rs_stream stream_index, double frame_ts);
   std::vector<std::string> setDynamicReconfServer();
   void startDynamicReconfCallback();
   void configCallback(realsense_camera::f200_paramsConfig &config, uint32_t level);

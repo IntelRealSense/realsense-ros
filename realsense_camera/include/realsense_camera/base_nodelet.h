@@ -1,5 +1,5 @@
 /******************************************************************************
- Copyright (c) 2016, Intel Corporation
+ Copyright (c) 2017, Intel Corporation
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -139,6 +139,8 @@ protected:
   rs_extrinsics color2depth_extrinsic_;  // color frame is base frame
   rs_extrinsics color2ir_extrinsic_;     // color frame is base frame
   rs_source rs_source_ = RS_SOURCE_VIDEO;
+  bool start_camera_ = true;
+  bool start_stop_srv_called_ = false;
 
   struct CameraOptions
   {
