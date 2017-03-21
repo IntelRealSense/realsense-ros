@@ -166,6 +166,7 @@ if(REALSENSE_ENABLE_TESTING)
         ${GTEST_LIBRARIES}
         )
   add_dependencies(tests_person realsense_ros_person)
+  add_dependencies(tests_person person_detection.bag recognition.bag wave_detection.bag) 
 
 endif()
 
