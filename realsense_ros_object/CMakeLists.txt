@@ -70,7 +70,7 @@ target_link_libraries(${PROJECT_NAME}_viewer
   ${OpenCV_LIBRARIES}
 )
 
-if (CATKIN_ENABLE_TESTING)
+if (REALSENSE_ENABLE_TESTING)
   find_package(rostest REQUIRED)
 
   catkin_download_test_data(
