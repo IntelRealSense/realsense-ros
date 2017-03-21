@@ -134,6 +134,19 @@ $ roslaunch realsense_ros_person demo_person_skeleton.launch
 ```bash
 $ roslaunch realsense_ros_person demo_person_face_features.launch
   ```
+## Testing
+
+The person package can be tested with pre-recorded data using the provided ROS unit test.  No physical camera needs to be present in order to run the test.  The following steps can be used to build the unit test and download the pre-recorded ROS .bag data:
+
+```bash
+$ cd ~/catkin_ws
+$ catkin_make -DREALSENSE_ENABLE_TESTING=On
+$ rostest realsense_ros_person person_detection.test
+$ rostest realsense_ros_person recognition.test
+$ rostest realsense_ros_person wave_detection.test
+```
+
+You will see the three tests each execute with command line output only, and then each test passes with a "RESULT: SUCCESS" status.
 
 # Person features requirements for tracking mode
 Part of person features works only at tracking/detection mode.
