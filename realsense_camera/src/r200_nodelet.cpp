@@ -66,7 +66,7 @@ namespace realsense_camera
 
     max_z_ = R200_MAX_Z;
 
-    BaseNodelet::onInit();
+    SyncNodelet::onInit();
   }
 
   /*
@@ -290,10 +290,10 @@ namespace realsense_camera
     rs_set_device_option(rs_device_, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, config.r200_lr_auto_exposure_enabled, 0);
     if (config.r200_lr_auto_exposure_enabled == 0)
     {
+      rs_set_device_option(rs_device_, RS_OPTION_R200_LR_GAIN, config.r200_lr_gain, 0);
       rs_set_device_option(rs_device_, RS_OPTION_R200_LR_EXPOSURE, config.r200_lr_exposure, 0);
     }
-    rs_set_device_option(rs_device_, RS_OPTION_R200_LR_GAIN, config.r200_lr_gain, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_R200_EMITTER_ENABLED, config.r200_emitter_enabled, 0);
+
     if (config.r200_lr_auto_exposure_enabled == 1)
     {
       if (config.r200_auto_exposure_top_edge >= height_[RS_STREAM_DEPTH])
@@ -319,6 +319,8 @@ namespace realsense_camera
       edge_values_[3] = config.r200_auto_exposure_bottom_edge;
       rs_set_device_options(rs_device_, edge_options_, 4, edge_values_, 0);
     }
+
+    rs_set_device_option(rs_device_, RS_OPTION_R200_EMITTER_ENABLED, config.r200_emitter_enabled, 0);
 
     // Depth Control Group Settings
     // NOTE: do NOT use the config.groups values as they are zero the first time called
@@ -421,23 +423,6 @@ namespace realsense_camera
         }
       }
     }
-  }
-
-  /*
-  * Set up the callbacks for the camera streams
-  */
-  void R200Nodelet::setFrameCallbacks()
-  {
-    // call base nodelet method
-    BaseNodelet::setFrameCallbacks();
-
-    ir2_frame_handler_ = [&](rs::frame  frame)  // NOLINT(build/c++11)
-    {
-      publishTopic(RS_STREAM_INFRARED2, frame);
-    };
-
-    rs_set_frame_callback_cpp(rs_device_, RS_STREAM_INFRARED2, new rs::frame_callback(ir2_frame_handler_), &rs_error_);
-    checkError();
   }
 
   /*

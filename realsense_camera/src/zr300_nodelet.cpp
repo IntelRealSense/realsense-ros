@@ -1,5 +1,5 @@
 /******************************************************************************
- Copyright (c) 2016, Intel Corporation
+ Copyright (c) 2017, Intel Corporation
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -386,9 +386,10 @@ namespace realsense_camera
     rs_set_device_option(rs_device_, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, config.r200_lr_auto_exposure_enabled, 0);
     if (config.r200_lr_auto_exposure_enabled == 0)
     {
+      rs_set_device_option(rs_device_, RS_OPTION_R200_LR_GAIN, config.r200_lr_gain, 0);
       rs_set_device_option(rs_device_, RS_OPTION_R200_LR_EXPOSURE, config.r200_lr_exposure, 0);
     }
-    rs_set_device_option(rs_device_, RS_OPTION_R200_LR_GAIN, config.r200_lr_gain, 0);
+
     rs_set_device_option(rs_device_, RS_OPTION_R200_EMITTER_ENABLED, config.r200_emitter_enabled, 0);
     rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CLAMP_MIN, config.r200_depth_clamp_min, 0);
     rs_set_device_option(rs_device_, RS_OPTION_R200_DEPTH_CLAMP_MAX, config.r200_depth_clamp_max, 0);
@@ -518,6 +519,26 @@ namespace realsense_camera
     prev_imu_ts_ = -1;
     while (ros::ok())
     {
+      if (start_stop_srv_called_ == true)
+      {
+        if (start_camera_ == true)
+        {
+          ROS_INFO_STREAM(nodelet_name_ << " - " << startCamera());
+        }
+        else
+        {
+          ROS_INFO_STREAM(nodelet_name_ << " - " << stopCamera());
+        }
+        start_stop_srv_called_ = false;
+      }
+
+      if (enable_[RS_STREAM_DEPTH] != rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0))
+      {
+        stopCamera();
+        setStreams();
+        startCamera();
+      }
+
       if (imu_publisher_.getNumSubscribers() > 0)
       {
         std::unique_lock<std::mutex> lock(imu_mutex_);
