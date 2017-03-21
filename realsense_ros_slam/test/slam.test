@@ -1,5 +1,5 @@
 <launch>
-  <arg name="bag_path"     default="~/test.bag" />
+  <arg name="bag_path"     default="$(find realsense_ros_slam)/tests/slam_room_1.bag" />
 
   <!-- Start SLAM -->
   <include file="$(find realsense_ros_slam)/launch/run_from_bag.launch">

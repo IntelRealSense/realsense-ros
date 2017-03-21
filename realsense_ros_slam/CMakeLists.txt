@@ -70,8 +70,14 @@ target_link_libraries(${PROJECT_NAME}
   ${LIBRARIES_TO_LINK}
 )
 
-if (CATKIN_ENABLE_TESTING)
+if (REALSENSE_ENABLE_TESTING)
   find_package(rostest REQUIRED)
+
+  catkin_download_test_data(
+    slam_room_1.bag
+    https://s3-eu-west-1.amazonaws.com/realsense-rostest-public/realsense_ros_slam/slam_room_1.bag
+    DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/tests
+    MD5 73200cdfbde1d83851e23f58d9fbd9ab)
 
   add_executable(tests_slam test/slam_test.cpp)
   target_link_libraries(tests_slam
@@ -80,6 +86,7 @@ if (CATKIN_ENABLE_TESTING)
     )
   add_dependencies(tests_slam ${PROJECT_NAME}_generate_messages_cpp)
   add_dependencies(tests_slam ${catkin_EXPORTED_TARGETS})
+  add_dependencies(tests_slam slam_room_1.bag)
 endif()
 
 # Install nodelet library
