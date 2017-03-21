@@ -1,6 +1,6 @@
 <launch>
 
-  <arg name="bag_path"     default="$(find realsense_ros_person)/test/clips/recognition.bag" />
+  <arg name="bag_path"     default="$(find realsense_ros_person)/tests/recognition.bag" />
 
   <!-- Start Camera node at playback mode -->
   <include file="$(find realsense_ros_camera)/launch/play_bag.launch">
