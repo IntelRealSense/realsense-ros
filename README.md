@@ -16,6 +16,7 @@ apt-get -y install ros-kinetic-desktop-full
 rosdep init
 rosdep update
 echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+source ~/.bashrc
 
 # Install Intel RealSense SDK for Linux
 apt-key adv --keyserver keys.gnupg.net --recv-key D6FB2970 
