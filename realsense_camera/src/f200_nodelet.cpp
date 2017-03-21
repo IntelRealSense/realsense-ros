@@ -1,5 +1,5 @@
 /******************************************************************************
- Copyright (c) 2016, Intel Corporation
+ Copyright (c) 2017, Intel Corporation
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -145,6 +145,12 @@ namespace realsense_camera
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_HUE, config.color_hue, 0);
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_SATURATION, config.color_saturation, 0);
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_SHARPNESS, config.color_sharpness, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_COLOR_ENABLE_AUTO_EXPOSURE,
+    config.color_enable_auto_exposure, 0);
+    if (config.color_enable_auto_exposure == 0)
+    {
+      rs_set_device_option(rs_device_, RS_OPTION_COLOR_EXPOSURE, config.color_exposure, 0);
+    }
     rs_set_device_option(rs_device_, RS_OPTION_COLOR_ENABLE_AUTO_WHITE_BALANCE,
         config.color_enable_auto_white_balance, 0);
     if (config.color_enable_auto_white_balance == 0)
