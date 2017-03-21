@@ -115,4 +115,6 @@ $ rostest realsense_ros_object object.test
 ```
 
 You will see the test execute with the graphics display recognizing known objects, and the test passes with a "RESULT: SUCCESS" status.
+
+**Note:** Depending on your internet connection speed, enabling 'REALSENSE_ENABLE_TESTING' can cause catkin_make to run for very long time (more than 5 minutes), as it downloads required pre-recorded .bag data.
 	
