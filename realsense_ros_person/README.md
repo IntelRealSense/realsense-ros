@@ -148,6 +148,8 @@ $ rostest realsense_ros_person wave_detection.test
 
 You will see the three tests each execute with command line output only, and then each test passes with a "RESULT: SUCCESS" status.
 
+**Note:** Depending on your internet connection speed, enabling 'REALSENSE_ENABLE_TESTING' can cause catkin_make to run for very long time (more than 5 minutes), as it downloads required pre-recorded .bag data.
+
 # Person features requirements for tracking mode
 Part of person features works only at tracking/detection mode.
 
