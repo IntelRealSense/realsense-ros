@@ -147,4 +147,16 @@ $ rostopic echo camera_pose
 
 The `demo_slam.launch` and `demo_slam_from_bag.launch` files will automatically start rviz using a configuration file located at `launch/demo_settings.rviz`. The raw camera pose, occupancy map, and odometry are shown in rviz. The odometry message is only sent by the SLAM nodelet for demo purposes, since the `pose2d` message cannot be displayed by rviz. The odometry message contains the same 2D pose that the `pose2d` message does. This shows where the robot is located relative to the occupancy map.
 
+## Testing
 
+The SLAM package can be tested with pre-recorded data using the provided ROS unit test.  No physical camera needs to be present in order to run the test.  The following steps can be used to build the unit test and download the pre-recorded ROS .bag data:
+
+```bash
+$ cd ~/catkin_ws
+$ catkin_make -DREALSENSE_ENABLE_TESTING=On
+$ rostest realsense_ros_slam slam.test
+```
+
+You will see the test execute on the command line as it builds a map from the input data, then the test passes with a "RESULT: SUCCESS" status.
+
+**Note:** Depending on your internet connection speed, enabling 'REALSENSE_ENABLE_TESTING' can cause catkin_make to run for very long time (more than 5 minutes), as it downloads required pre-recorded .bag data.
