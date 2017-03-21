@@ -134,26 +134,26 @@ target_link_libraries(${PROJECT_NAME}_sample
 
 add_dependencies(${PROJECT_NAME}_sample ${PROJECT_NAME}_generate_messages_cpp)
 
-if(CATKIN_ENABLE_TESTING)
+if(REALSENSE_ENABLE_TESTING)
   # build person unit tests
   find_package(rostest REQUIRED)
 
   catkin_download_test_data(
     person_detection.bag
     https://s3-eu-west-1.amazonaws.com/realsense-rostest-public/realsense_ros_person/person_detection.bag
-    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/test/clips
+    DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/tests
     MD5 8a4a9db6b57d142ba8c408fda65b72c2)
 
   catkin_download_test_data(
     recognition.bag
     https://s3-eu-west-1.amazonaws.com/realsense-rostest-public/realsense_ros_person/recognition.bag
-    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/test/clips
+    DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/tests
     MD5 f62e471583946bdc1314a250bde7d073)
 
   catkin_download_test_data(
     wave_detection.bag
     https://s3-eu-west-1.amazonaws.com/realsense-rostest-public/realsense_ros_person/wave_detection.bag
-    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/test/clips
+    DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/tests
     MD5 716657342c4dd72cfd7abbfdc8d16b11)
 
   add_executable(tests_person test/person_test.cpp)
