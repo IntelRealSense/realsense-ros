@@ -103,4 +103,16 @@ $  roslaunch realsense_ros_object demo_object.launch
 ```
 
 The sample app demonstrates a combination of localization and tracking: process localization when the user hint space key, and the ROIs of localization output are the input to tracking.
+
+## Testing
+
+The object package can be tested with pre-recorded data using the provided ROS unit test.  No physical camera needs to be present in order to run the test.  The following steps can be used to build the unit test and download the pre-recorded ROS .bag data:
+
+```bash
+$ cd ~/catkin_ws
+$ catkin_make -DREALSENSE_ENABLE_TESTING=On
+$ rostest realsense_ros_object object.test
+```
+
+You will see the test execute with the graphics display recognizing known objects, and the test passes with a "RESULT: SUCCESS" status.
 	
