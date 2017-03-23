@@ -2,8 +2,8 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.8.0 (2017-03-23)
+------------------
 * Enable roslint when CATKIN_ENABLE_TESTING is True
 * Add option to link against non-catkin librealsense
 * Fixed LR auto exposure (#131)
