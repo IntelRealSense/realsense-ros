@@ -2,12 +2,23 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Enable roslint when CATKIN_ENABLE_TESTING is True
+* Add option to link against non-catkin librealsense
+* Fixed LR auto exposure (#131)
+* Dynamic reconfig autoexposure/exposure control SR300/F200/R200 (#213)
+* Added check for depth_enable dynamic change
+* Update Debug Tool
+* Added SyncNodelet class as new base for F200/SR300/R200 (#207, #210)
+* Contributors: Amanda Brindle, Dmitry Rozhkov, James Sergeant, Mark Horn, Matthew Hansen, Reagan Lopez
+
 1.7.2 (2017-03-01)
 ------------------
 * Create tool to get debug info
 * Change tf to using setRPY for consistency
 * Changed fisheye_strobe and fisheye_external_trigger to static params
-* Contributors: Amanda Brindle, Mark D Horn, Mark Horn, Matthew Hansen, Wang Jinliang
+* Contributors: Amanda Brindle, Mark Horn, Matthew Hansen, Wang Jinliang
 
 1.7.1 (2017-01-14)
 ------------------
