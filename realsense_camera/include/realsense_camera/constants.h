@@ -59,6 +59,7 @@ namespace realsense_camera
     const bool ENABLE_PC = false;
     const bool ENABLE_TF = true;
     const bool ENABLE_TF_DYNAMIC = false;
+    const double TF_PUBLICATION_RATE = 1.0;
     const std::string DEFAULT_MODE = "preset";
     const std::string DEFAULT_BASE_FRAME_ID = "camera_link";
     const std::string DEFAULT_DEPTH_FRAME_ID = "camera_depth_frame";
