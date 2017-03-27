@@ -128,6 +128,7 @@ protected:
   bool enable_pointcloud_;
   bool enable_tf_;
   bool enable_tf_dynamic_;
+  double tf_publication_rate_;
   const uint16_t *image_depth16_;
   cv::Mat cvWrapper_;
   std::mutex frame_mutex_[STREAM_COUNT];

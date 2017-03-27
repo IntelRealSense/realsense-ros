@@ -159,6 +159,7 @@ namespace realsense_camera
     pnh_.param("enable_pointcloud", enable_pointcloud_, ENABLE_PC);
     pnh_.param("enable_tf", enable_tf_, ENABLE_TF);
     pnh_.param("enable_tf_dynamic", enable_tf_dynamic_, ENABLE_TF_DYNAMIC);
+    pnh_.param("tf_publication_rate", tf_publication_rate_, TF_PUBLICATION_RATE);
     pnh_.param("depth_width", width_[RS_STREAM_DEPTH], DEPTH_WIDTH);
     pnh_.param("depth_height", height_[RS_STREAM_DEPTH], DEPTH_HEIGHT);
     pnh_.param("color_width", width_[RS_STREAM_COLOR], COLOR_WIDTH);
@@ -1210,7 +1211,7 @@ namespace realsense_camera
     // Publish transforms for the cameras
     ROS_INFO_STREAM(nodelet_name_ << " - Publishing camera transforms (/tf)");
 
-    ros::Rate loop_rate(1);
+    ros::Rate loop_rate(tf_publication_rate_);
 
     while (ros::ok())
     {
