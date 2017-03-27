@@ -58,10 +58,8 @@ protected:
   bool enable_imu_;
   std::string imu_frame_id_;
   std::string imu_optical_frame_id_;
-  float imu_angular_vel_[3];
-  float imu_linear_accel_[3];
-  float imu_angular_vel_cov_[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  float imu_linear_accel_cov_[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  geometry_msgs::Vector3 imu_angular_vel_;
+  geometry_msgs::Vector3 imu_linear_accel_;
   double imu_ts_;
   double prev_imu_ts_;
   ros::Publisher imu_publisher_;
