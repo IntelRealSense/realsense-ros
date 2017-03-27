@@ -2,8 +2,9 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.8.0 (2017-03-23)
+1.8.0 (2017-03-27)
 ------------------
+* Enable configuration of the TF publication rate when using tf_dynamic
 * Enable roslint when CATKIN_ENABLE_TESTING is True
 * Add option to link against non-catkin librealsense
 * Fixed LR auto exposure (#131)
@@ -11,7 +12,7 @@ Changelog for package realsense_camera
 * Added check for depth_enable dynamic change
 * Update Debug Tool
 * Added SyncNodelet class as new base for F200/SR300/R200 (#207, #210)
-* Contributors: Amanda Brindle, Dmitry Rozhkov, James Sergeant, Mark Horn, Matthew Hansen, Reagan Lopez
+* Contributors: Amanda Brindle, Dmitry Rozhkov, James Sergeant, Mark Horn, Matthew Hansen, Reagan Lopez, Séverin Lemaignan
 
 1.7.2 (2017-03-01)
 ------------------
