@@ -134,8 +134,6 @@ To use realsense_ros_slam, you need a mobile agent with a RealSense ZR300 camera
 - `double`
 - Sets the maximum depth of interest for the occupancy map, in meters.
 
-The files will be saved in the realsense_ros_slam directory.
-
 ## Usage
 
 To run the slam engine:
