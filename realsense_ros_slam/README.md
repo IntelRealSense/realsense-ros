@@ -114,9 +114,25 @@ To use realsense_ros_slam, you need a mobile agent with a RealSense ZR300 camera
 - `str::string`, default: 'occupancy.bin'
 - The name of occupancy data file to output. 
 
-`resolution`
-- `float`
+`map_resolution`
+- `double`
 - Sets the size of the grid squares in the occupancy map, in meters.
+
+`hoi_min`
+- `double`
+- Sets the minimum height of interest for the occupancy map, in meters.
+
+`hoi_max`
+- `double`
+- Sets the maximum height of interest for the occupancy map, in meters.
+
+`doi_min`
+- `double`
+- Sets the minimum depth of interest for the occupancy map, in meters.
+
+`doi_max`
+- `double`
+- Sets the maximum depth of interest for the occupancy map, in meters.
 
 The files will be saved in the realsense_ros_slam directory.
 
@@ -125,24 +141,24 @@ The files will be saved in the realsense_ros_slam directory.
 To run the slam engine:
 ```bash
 $ cd catkin_ws
-$ catkin_make
 $ source devel/setup.bash
-$ roslaunch realsense_ros_salm demo_slam.launch
+$ roslaunch realsense_ros_slam demo_slam.launch
 ```
 
 To run the slam engine using a recorded bag file:
 ```bash
-$ cd catkin_ws
-$ catkin_make
-$ source devel/setup.bash
 $ roslaunch realsense_ros_slam demo_slam_from_bag.launch bag_path:=~/test.bag
 ```
 
+To record slam topics to a bag file:
+```bash
+$ roslaunch realsense_ros_slam record_bag_slam.launch
+```
+The bag file will be written to your home directory, with a timestamp appended.
+
 To print the estimated pose messages, in another console window:
 ```bash
-$ cd catkin-ws
-$ source devel/setup.bash
-$ rostopic echo camera_pose
+$ rostopic echo pose2d
 ```
 
 The `demo_slam.launch` and `demo_slam_from_bag.launch` files will automatically start rviz using a configuration file located at `launch/demo_settings.rviz`. The raw camera pose, occupancy map, and odometry are shown in rviz. The odometry message is only sent by the SLAM nodelet for demo purposes, since the `pose2d` message cannot be displayed by rviz. The odometry message contains the same 2D pose that the `pose2d` message does. This shows where the robot is located relative to the occupancy map.
