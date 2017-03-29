@@ -1,0 +1,33 @@
+<launch>
+
+  <arg name="camera1"              default="camera1" />
+  <arg name="camera1_camera_type"  default="R200"    /> <!-- Type of camera -->
+  <arg name="camera1_serial_no"    default=""        /> <!-- Note: Replace with actual serial number -->
+  <arg name="camera1_usb_port_id"  default=""        /> <!-- USB "Bus#-Port#" -->
+
+  <arg name="camera2"              default="camera2" />
+  <arg name="camera2_camera_type"  default="R200"    /> <!-- Type of camera -->
+  <arg name="camera2_serial_no"    default=""        /> <!-- Note: Replace with actual serial number -->
+  <arg name="camera2_usb_port_id"  default=""        /> <!-- USB "Bus#-Port#" -->
+
+  <!-- NOTE: Replace with your camera pose -->
+  <node pkg="tf" type="static_transform_publisher" name="$(arg camera1)_link_to_world" args="0 0 0 0 0 0 $(arg camera1)_link world 10" />
+  <node pkg="tf" type="static_transform_publisher" name="$(arg camera2)_link_to_world" args="0 0 0 0 0 0 $(arg camera2)_link world 10" />
+
+  <!-- camera1 -->
+  <include file="$(find realsense_camera)/launch/r200_nodelet_rgbd.launch" >
+    <arg name="camera"        value="$(arg camera1)" /> 
+    <arg name="camera_type"  value="$(arg camera1_camera_type)" />
+    <arg name="serial_no"     value="$(arg camera1_serial_no)" />
+    <arg name="usb_port_id"   value="$(arg camera1_usb_port_id)" />
+  </include>
+
+  <!-- camera2 -->
+  <include file="$(find realsense_camera)/launch/r200_nodelet_rgbd.launch" >
+    <arg name="camera"        value="$(arg camera2)" /> 
+    <arg name="camera_type"  value="$(arg camera2_camera_type)" />
+    <arg name="serial_no"     value="$(arg camera2_serial_no)" />
+    <arg name="usb_port_id"   value="$(arg camera2_usb_port_id)" />
+  </include>
+
+</launch>
