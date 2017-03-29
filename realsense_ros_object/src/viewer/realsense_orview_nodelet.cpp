@@ -10,7 +10,7 @@
 #include "realsense_orview_nodelet.h"
 #include <pluginlib/class_list_macros.h>
 
-#ifdef RUN_AS_NODELET
+#if defined(RUN_AS_NODELET)
 PLUGINLIB_EXPORT_CLASS(realsense_ros_object::COrViewNodelet, nodelet::Nodelet)
 #endif
 
