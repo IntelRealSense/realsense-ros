@@ -98,8 +98,21 @@ The user should create his combination from those 3 nodelets by creating new nod
 
 
 ### For sample app
+
+#### From camera
 ```bash
 $  roslaunch realsense_ros_object demo_object.launch
+```
+
+#### From ros bag file
+
+Recorging a bag file:
+```bash
+$  roslaunch realsense_ros_object record_bag_object.launch bag_path:=mypath
+```
+Running object demo from bag:
+```bash
+$  roslaunch realsense_ros_object demo_object_from_bag.launch bag_path:=mypath
 ```
 
 The sample app demonstrates a combination of localization and tracking: process localization when the user hint space key, and the ROIs of localization output are the input to tracking.
