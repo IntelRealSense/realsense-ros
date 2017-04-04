@@ -2,8 +2,8 @@
 Changelog for package realsense_ros_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.2 (2017-04-04)
+------------------
 * Bug fixes and updates
 * Contributors: Ben Hirashima, Matt Curfman
 
