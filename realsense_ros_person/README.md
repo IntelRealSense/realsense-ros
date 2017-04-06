@@ -134,6 +134,17 @@ $ roslaunch realsense_ros_person demo_person_skeleton.launch
 ```bash
 $ roslaunch realsense_ros_person demo_person_face_features.launch
   ```
+
+
+### Recorging a bag file:
+```bash
+$  roslaunch realsense_ros_person record_bag_person.launch bag_path:=mypath
+```
+### Running person demo from bag:
+```bash
+$  roslaunch realsense_ros_person demo_person_tracking_from_bag.launch bag_path:=mypath
+```
+
 ## Testing
 
 The person package can be tested with pre-recorded data using the provided ROS unit test.  No physical camera needs to be present in order to run the test.  The following steps can be used to build the unit test and download the pre-recorded ROS .bag data:
