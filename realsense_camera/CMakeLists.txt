@@ -102,6 +102,12 @@ add_library(${PROJECT_NAME}_nodelet src/base_nodelet.cpp src/sync_nodelet.cpp sr
 target_link_libraries(${PROJECT_NAME}_nodelet
   ${catkin_LIBRARIES}
 )
+if(USE_SYSTEM_LIBREALSENSE)
+  target_link_libraries(${PROJECT_NAME}_nodelet
+    ${realsense_LIBRARY}
+    )
+endif()
+
 add_dependencies(${PROJECT_NAME}_nodelet ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
 add_dependencies(${PROJECT_NAME}_nodelet ${catkin_EXPORTED_TARGETS})
 
