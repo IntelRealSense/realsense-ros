@@ -318,6 +318,12 @@ private:
       // Define lambda callback for receiving stream data
       stream_callback_per_stream[stream] = [stream](rs::frame frame)
       {
+        // If there is nobody subscribed to the stream, do no further
+        // processing
+        if(( 0 == image_publishers_[stream].getNumSubscribers()) &&
+           ( 0 == info_publisher_[stream].getNumSubscribers()))
+          return;
+
         if (isZR300_)
         {
           const auto timestampDomain = frame.get_frame_timestamp_domain();
@@ -382,6 +388,12 @@ private:
           return;
 
         rs_event_source motionType = entry.timestamp_data.source_id;
+        
+        // If there is nobody subscribed to the stream, do no further
+        // processing
+        if( 0 == imu_publishers_[motionType].getNumSubscribers())
+          return;
+
         sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
         imu_msg.header.stamp = ros::Time::now();
         imu_msg.header.frame_id = optical_imu_id_[motionType];
