@@ -21,7 +21,7 @@
   <arg name="color_fps"           default="30" />
 
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/> 
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_$(arg camera)" args="load realsense_ros_camera/NodeletCamera $(arg manager)" output="screen">
+  <node pkg="nodelet" type="nodelet" name="realsense_ros_$(arg camera)" args="load realsense_ros_camera/NodeletCamera $(arg manager) --no-bond" output="screen">
     <param name="serial_no"                type="str"  value="$(arg serial_no)" />
     
     <param name="fisheye_width"            type="int"  value="$(arg fisheye_width)" />
