@@ -41,6 +41,7 @@
 
   <!-- Processing Modules -->
   <arg name="rgb_processing"                  default="true"/>
+  <arg name="debayer_processing"              default="true" />
   <arg name="ir_processing"                   default="true"/>
   <arg name="depth_processing"                default="true"/>
   <arg name="depth_registered_processing"     default="true"/>
@@ -98,6 +99,7 @@
       <arg name="projector"                       value="$(arg projector)" />
       <arg name="respawn"                         value="$(arg respawn)" />
       <arg name="rgb_processing"                  value="$(arg rgb_processing)" />
+      <arg name="debayer_processing"              value="$(arg debayer_processing)" />
       <arg name="ir_processing"                   value="$(arg ir_processing)" />
       <arg name="depth_processing"                value="$(arg depth_processing)" />
       <arg name="depth_registered_processing"     value="$(arg depth_registered_processing)" />
