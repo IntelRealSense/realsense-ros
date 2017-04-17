@@ -26,118 +26,33 @@
 #include <tf2_ros/static_transform_broadcaster.h>
 
 
-// R200 and ZR300 types
-std::map<rs::stream, image_transport::Publisher> image_publishers_;
-std::map<rs::stream, int> image_format_;
-std::map<rs::stream, rs::format> format_;
-std::map<rs::stream, ros::Publisher> info_publisher_;
-std::map<rs::stream, cv::Mat> image_;
-std::map<rs::stream, std::string> encoding_;
-std::string base_frame_id_;
-std::map<rs::stream, std::string> frame_id_;
-std::map<rs::stream, std::string> optical_frame_id_;
-std::string imu_frame_id_, optical_imu_frame_id_;
-std::map<rs::stream, int> seq_;
-std::map<rs::stream, int> unit_step_size_;
-std::map<rs::stream, std::function<void(rs::frame)>> stream_callback_per_stream;
-std::map<rs::stream, sensor_msgs::CameraInfo> camera_info_;
-
-// ZR300 specific types
-bool isZR300_ = false;
-ros::Publisher accelInfo_publisher_, gyroInfo_publisher_, fe2imu_publisher_, fe2depth_publisher_;
-ros::Publisher imu_publishers_[2] = {};//accel 0 gyro 1
-int seq_motion[2] = {0, 0};
-std::string optical_imu_id_[2] = {"imu_accel_frame_id", "imu_gyro_frame_id"};
-
-
 namespace realsense_ros_camera
 {
-void getImuInfo(rs::device* device, IMUInfo &accelInfo, IMUInfo &gyroInfo)
-{
-  rs::motion_intrinsics imuIntrinsics = device->get_motion_intrinsics();
-
-  accelInfo.header.frame_id = "imu_accel";
-  int index = 0;
-  for (int i = 0; i < 3; ++i)
-  {
-    for (int j = 0; j < 4; ++j)
-    {
-      accelInfo.data[index] = imuIntrinsics.acc.data[i][j];
-      ++index;
-    }
-    accelInfo.noise_variances[i] = imuIntrinsics.acc.noise_variances[i];
-    accelInfo.bias_variances[i] = imuIntrinsics.acc.bias_variances[i];
-  }
-
-  gyroInfo.header.frame_id = "imu_gyro";
-  index = 0;
-  for (int i = 0; i < 3; ++i)
-  {
-    for (int j = 0; j < 4; ++j)
-    {
-      gyroInfo.data[index] = imuIntrinsics.gyro.data[i][j];
-      ++index;
-    }
-    gyroInfo.noise_variances[i] = imuIntrinsics.gyro.noise_variances[i];
-    gyroInfo.bias_variances[i] = imuIntrinsics.gyro.bias_variances[i];
-  }
-}
-
-Extrinsics rsExtrinsicsToMsg(rs::extrinsics rsExtrinsics)
-{
-  Extrinsics extrinsicsMsg;
-
-  for (int i = 0; i < 9; ++i)
-  {
-    extrinsicsMsg.rotation[i] = rsExtrinsics.rotation[i];
-    if (i < 3) extrinsicsMsg.translation[i] = rsExtrinsics.translation[i];
-  }
-
-  return extrinsicsMsg;
-}
-
-Extrinsics getFisheye2ImuExtrinsicsMsg(rs::device* device)
-{
-  Extrinsics extrinsicsMsg = rsExtrinsicsToMsg(device->get_motion_extrinsics_from(rs::stream::fisheye));
-  extrinsicsMsg.header.frame_id = "fisheye2imu_extrinsics";
-  return extrinsicsMsg;
-}
-
-Extrinsics getFisheye2DepthExtrinsicsMsg(rs::device* device)
-{
-  Extrinsics extrinsicsMsg =  rsExtrinsicsToMsg(device->get_extrinsics(rs::stream::depth, rs::stream::fisheye));
-  extrinsicsMsg.header.frame_id = "fisheye2depth_extrinsics";
-  return extrinsicsMsg;
-}
-
 class NodeletCamera: public nodelet::Nodelet
 {
 public:
   NodeletCamera() :
     cameraStarted_(false)
   {
-    // libRealsense format types for stream
-    format_[rs::stream::depth] = rs::format::z16;
-    format_[rs::stream::color] = rs::format::rgb8;
-    format_[rs::stream::fisheye] = rs::format::raw8;
-
-    // CVBridge native image types
-    image_format_[rs::stream::depth] = CV_16UC1;
-    image_format_[rs::stream::color] = CV_8UC3;
-    image_format_[rs::stream::fisheye] = CV_8UC1;
-
-    // ROS sensor_msgs::ImagePtr encoding types
-    encoding_[rs::stream::depth] = sensor_msgs::image_encodings::TYPE_16UC1;
-    encoding_[rs::stream::color] = sensor_msgs::image_encodings::RGB8;
-    encoding_[rs::stream::fisheye] = sensor_msgs::image_encodings::TYPE_8UC1;
-
-    // ROS sensor_msgs::ImagePtr row step sizes
-    unit_step_size_[rs::stream::depth] = sizeof(uint16_t);
-    unit_step_size_[rs::stream::color] = sizeof(unsigned char) * 3;
-    unit_step_size_[rs::stream::fisheye] = sizeof(unsigned char);
-
+    // Types for depth stream
+    format_[rs::stream::depth] = rs::format::z16;   // libRS type
+    image_format_[rs::stream::depth] = CV_16UC1;    // CVBridge type
+    encoding_[rs::stream::depth] = sensor_msgs::image_encodings::TYPE_16UC1; // ROS message type
+    unit_step_size_[rs::stream::depth] = sizeof(uint16_t); // sensor_msgs::ImagePtr row step size
     stream_name_[rs::stream::depth] = "depth";
+
+    // Types for color stream
+    format_[rs::stream::color] = rs::format::rgb8;  // libRS type
+    image_format_[rs::stream::color] = CV_8UC3;     // CVBridge type
+    encoding_[rs::stream::color] = sensor_msgs::image_encodings::RGB8; // ROS message type
+    unit_step_size_[rs::stream::color] = sizeof(unsigned char) * 3; // sensor_msgs::ImagePtr row step size
     stream_name_[rs::stream::color] = "color";
+
+    // Types for fisheye stream
+    format_[rs::stream::fisheye] = rs::format::raw8;  // libRS type
+    image_format_[rs::stream::fisheye] = CV_8UC1;     // CVBridge type
+    encoding_[rs::stream::fisheye] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
+    unit_step_size_[rs::stream::fisheye] = sizeof(unsigned char); // sensor_msgs::ImagePtr row step size
     stream_name_[rs::stream::fisheye] = "fisheye";
   }
 
@@ -150,16 +65,9 @@ public:
       else
         device_->stop();
     }
-    ctx_.reset();
 
-    const rs::stream All[] = { rs::stream::depth, rs::stream::color, rs::stream::fisheye };
-    for (const auto stream : All)
-    {
-      if (false == enable_[stream])
-        continue;
-      image_publishers_[stream].shutdown();
-    }
-    image_publishers_.clear();
+    usleep(250);
+    ctx_.reset();
   }
 
 private:
@@ -206,6 +114,9 @@ private:
     pnh_.param("color_optical_frame_id", optical_frame_id_[rs::stream::color], DEFAULT_COLOR_OPTICAL_FRAME_ID);
     pnh_.param("fisheye_optical_frame_id", optical_frame_id_[rs::stream::fisheye], DEFAULT_FISHEYE_OPTICAL_FRAME_ID);
     pnh_.param("imu_optical_frame_id", optical_imu_frame_id_, DEFAULT_IMU_OPTICAL_FRAME_ID);
+
+    optical_imu_id_[0] = "imu_accel_frame_id";
+    optical_imu_id_[1] = "imu_gyro_frame_id";
   }//end getParameters
 
 
@@ -316,8 +227,14 @@ private:
         continue;
 
       // Define lambda callback for receiving stream data
-      stream_callback_per_stream[stream] = [stream](rs::frame frame)
+      stream_callback_per_stream[stream] = [this,stream](rs::frame frame)
       {
+        // If there is nobody subscribed to the stream, do no further
+        // processing
+        if(( 0 == image_publishers_[stream].getNumSubscribers()) &&
+           ( 0 == info_publisher_[stream].getNumSubscribers()))
+          return;
+
         if (isZR300_)
         {
           const auto timestampDomain = frame.get_frame_timestamp_domain();
@@ -372,16 +289,24 @@ private:
       // This option causes the fisheye image to be aquired in-sync with the depth image.
       device_->set_option(rs::option::fisheye_external_trigger, 1); 
       device_->set_option(rs::option::fisheye_color_auto_exposure, 1);
-
+      seq_motion[RS_EVENT_IMU_GYRO] = 0;
+      seq_motion[RS_EVENT_IMU_ACCEL] = 0;
+      
       //define callback to the motion events and set it.
       std::function<void(rs::motion_data)> motion_callback;
-      motion_callback = [](rs::motion_data entry)
+      motion_callback = [this](rs::motion_data entry)
       {
         if ((entry.timestamp_data.source_id != RS_EVENT_IMU_GYRO) && 
             (entry.timestamp_data.source_id != RS_EVENT_IMU_ACCEL))
           return;
 
         rs_event_source motionType = entry.timestamp_data.source_id;
+        
+        // If there is nobody subscribed to the stream, do no further
+        // processing
+        if( 0 == imu_publishers_[motionType].getNumSubscribers())
+          return;
+
         sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
         imu_msg.header.stamp = ros::Time::now();
         imu_msg.header.frame_id = optical_imu_id_[motionType];
@@ -622,6 +547,65 @@ private:
     }
   }
 
+  void getImuInfo(rs::device* device, IMUInfo &accelInfo, IMUInfo &gyroInfo)
+  {
+    rs::motion_intrinsics imuIntrinsics = device->get_motion_intrinsics();
+
+    accelInfo.header.frame_id = "imu_accel";
+    int index = 0;
+    for (int i = 0; i < 3; ++i)
+    {
+      for (int j = 0; j < 4; ++j)
+      {
+        accelInfo.data[index] = imuIntrinsics.acc.data[i][j];
+        ++index;
+      }
+      accelInfo.noise_variances[i] = imuIntrinsics.acc.noise_variances[i];
+      accelInfo.bias_variances[i] = imuIntrinsics.acc.bias_variances[i];
+    }
+
+    gyroInfo.header.frame_id = "imu_gyro";
+    index = 0;
+    for (int i = 0; i < 3; ++i)
+    {
+      for (int j = 0; j < 4; ++j)
+      {
+        gyroInfo.data[index] = imuIntrinsics.gyro.data[i][j];
+        ++index;
+      }
+      gyroInfo.noise_variances[i] = imuIntrinsics.gyro.noise_variances[i];
+      gyroInfo.bias_variances[i] = imuIntrinsics.gyro.bias_variances[i];
+    }
+  }
+
+  Extrinsics rsExtrinsicsToMsg(rs::extrinsics rsExtrinsics)
+  {
+    Extrinsics extrinsicsMsg;
+
+    for (int i = 0; i < 9; ++i)
+    {
+      extrinsicsMsg.rotation[i] = rsExtrinsics.rotation[i];
+      if (i < 3) extrinsicsMsg.translation[i] = rsExtrinsics.translation[i];
+    }
+
+    return extrinsicsMsg;
+  }
+
+  Extrinsics getFisheye2ImuExtrinsicsMsg(rs::device* device)
+  {
+    Extrinsics extrinsicsMsg = rsExtrinsicsToMsg(device->get_motion_extrinsics_from(rs::stream::fisheye));
+    extrinsicsMsg.header.frame_id = "fisheye2imu_extrinsics";
+    return extrinsicsMsg;
+  }
+
+  Extrinsics getFisheye2DepthExtrinsicsMsg(rs::device* device)
+  {
+    Extrinsics extrinsicsMsg =  rsExtrinsicsToMsg(device->get_extrinsics(rs::stream::depth, rs::stream::fisheye));
+    extrinsicsMsg.header.frame_id = "fisheye2depth_extrinsics";
+    return extrinsicsMsg;
+  }
+
+
 private:
   ros::NodeHandle node_handle, pnh_;
   bool cameraStarted_;
@@ -638,9 +622,31 @@ private:
   std::map<rs::stream, bool> enable_;
   std::map<rs::stream, std::string> stream_name_;
   tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
+
+  // R200 and ZR300 types
+  std::map<rs::stream, image_transport::Publisher> image_publishers_;
+  std::map<rs::stream, int> image_format_;
+  std::map<rs::stream, rs::format> format_;
+  std::map<rs::stream, ros::Publisher> info_publisher_;
+  std::map<rs::stream, cv::Mat> image_;
+  std::map<rs::stream, std::string> encoding_;
+  std::string base_frame_id_;
+  std::map<rs::stream, std::string> frame_id_;
+  std::map<rs::stream, std::string> optical_frame_id_;
+  std::string imu_frame_id_, optical_imu_frame_id_;
+  std::map<rs::stream, int> seq_;
+  std::map<rs::stream, int> unit_step_size_;
+  std::map<rs::stream, std::function<void(rs::frame)>> stream_callback_per_stream;
+  std::map<rs::stream, sensor_msgs::CameraInfo> camera_info_;
+
+  // ZR300 specific types
+  bool isZR300_ = false;
+  ros::Publisher accelInfo_publisher_, gyroInfo_publisher_, fe2imu_publisher_, fe2depth_publisher_;
+  ros::Publisher imu_publishers_[2];
+  int seq_motion[2];
+  std::string optical_imu_id_[2];
 };//end class
 
 PLUGINLIB_DECLARE_CLASS(realsense_ros_camera, NodeletCamera, realsense_ros_camera::NodeletCamera, nodelet::Nodelet);
 
 }//end namespace
-

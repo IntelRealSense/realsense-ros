@@ -16,7 +16,7 @@ void PersonTrackingDefaultPublisher::onInit(ros::NodeHandle &nodeHandle)
   ROS_INFO_STREAM("Publishing to " << personTrackingTopic);
   mPublisher = nodeHandle.advertise<realsense_ros_person::Frame>(personTrackingTopic, 1);
   mTestPublisher = nodeHandle.advertise<realsense_ros_person::FrameTest>(personTrackingTestTopic,
-                   1); //TODO publish only in debug mode
+                   1);
   mPersonModuleStatePublisher = nodeHandle.advertise<realsense_ros_person::PersonModuleState>(personTrackingModuleStateTopic, 1);
 }
 

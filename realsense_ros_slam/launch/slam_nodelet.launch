@@ -6,6 +6,11 @@
     <arg name="topic_tracking_accuracy" default="tracking_accuracy" />
     <arg name="topic_odom"              default="odom" />
     <arg name="publish_odometry"        default="false" />
+    <arg name="map_resolution"          default="0.05" />
+    <arg name="hoi_min"                 default="-0.5" />
+    <arg name="hoi_max"                 default="0.1" />
+    <arg name="doi_min"                 default="0.3" />
+    <arg name="doi_max"                 default="3.0" />
   
     <node pkg="nodelet" type="nodelet" name="rs_slam" args="standalone realsense_ros_slam/SNodeletSlam" output="screen">
         <rosparam file="$(find realsense_ros_slam)/launch/params.yaml" command="load"/>            
@@ -16,6 +21,11 @@
         <param name="topic_tracking_accuracy"   type="str"  value="$(arg topic_tracking_accuracy)" />
         <param name="topic_odom"   type="str"  value="$(arg topic_odom)" />
         <param name="publish_odometry"   type="bool"  value="$(arg publish_odometry)" />
+        <param name="map_resolution"   type="double"  value="$(arg map_resolution)" />
+        <param name="hoi_min"   type="double"  value="$(arg hoi_min)" />
+        <param name="hoi_max"   type="double"  value="$(arg hoi_max)" />
+        <param name="doi_min"   type="double"  value="$(arg doi_min)" />
+        <param name="doi_max"   type="double"  value="$(arg doi_max)" />
     </node>
      <!--launch-prefix="gdb -ex run --><!--args"/-->
 

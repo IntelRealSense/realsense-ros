@@ -25,10 +25,6 @@ void TNodeletPt::onInit()
 
   /***************create and configure person tracker video module**********************/
   ptModule.reset(rs::person_tracking::person_tracking_video_module_factory::create_person_tracking_video_module());
-  if (isallow)
-  {
-    ptModule->QueryConfiguration()->QueryTracking()->SetDetectionMode(Intel::RealSense::PersonTracking::PersonTrackingConfiguration::TrackingConfiguration::DetectionMode::MANUAL_CLOSE_RANGE);
-  }
 
   //configure person tracking - enable requested features
   ConfigurePersonTracking(config, ptModule.get()->QueryConfiguration());

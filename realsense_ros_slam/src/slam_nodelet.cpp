@@ -26,7 +26,7 @@ std::string trajectoryFilename;
 std::string relocalizationFilename;
 std::string occupancyFilename;
 std::string topic_camera_pose, topic_reloc_pose, topic_pose2d, topic_map, topic_tracking_accuracy, topic_odom;
-double resolution;
+double map_resolution, hoi_min, hoi_max, doi_min, doi_max;
 bool is_pub_odom = false;
 
 ros::Publisher pub_pose2d, pub_pose, pub_map, pub_accuracy, pub_reloc, pub_odom;
@@ -439,11 +439,11 @@ public:
     }
     std::vector<signed char> vMap(ipNavMap->imageData, ipNavMap->imageData + wmap * hmap);
     map_msg.data = vMap;
-    map_msg.info.resolution = resolution;
+    map_msg.info.resolution = map_resolution;
     map_msg.info.width      = wmap;
     map_msg.info.height     = hmap;
-    map_msg.info.origin.position.x = -(wmap / 2) * resolution;
-    map_msg.info.origin.position.y = -(hmap / 2) * resolution;
+    map_msg.info.origin.position.x = -(wmap / 2) * map_resolution;
+    map_msg.info.origin.position.y = -(hmap / 2) * map_resolution;
     pub_map.publish(map_msg);
   }
 
@@ -467,7 +467,11 @@ SNodeletSlam::~SNodeletSlam()
 void SNodeletSlam::onInit()
 {
   ros::NodeHandle pnh = getPrivateNodeHandle();
-  pnh.param< double >("resolution", resolution, 0.05);
+  pnh.param< double >("map_resolution", map_resolution, 0.05);
+  pnh.param< double >("hoi_min", hoi_min, -0.5);
+  pnh.param< double >("hoi_max", hoi_max, 0.1);
+  pnh.param< double >("doi_min", doi_min, 0.3);
+  pnh.param< double >("doi_max", doi_max, 3.0);
   pnh.param< std::string >("trajectoryFilename", trajectoryFilename, "trajectory.ppm");
   pnh.param< std::string >("relocalizationFilename", relocalizationFilename, "relocalization.bin");
   pnh.param< std::string >("occupancyFilename", occupancyFilename, "occupancy.bin");
@@ -567,7 +571,9 @@ void SNodeletSlam::startSlam()
   ROS_INFO("Staring SLAM...");
 
   std::unique_ptr<rs::slam::slam> slam(new rs::slam::slam());
-  slam->set_occupancy_map_resolution(resolution);
+  slam->set_occupancy_map_resolution(map_resolution);
+  slam->set_occupancy_map_height_of_interest(hoi_min, hoi_max);
+  slam->set_occupancy_map_depth_of_interest(doi_min, doi_max);
   slam->force_relocalization_pose(false);
 
   slam_event_handler scenePerceptionEventHandler;
