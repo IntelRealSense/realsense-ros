@@ -16,4 +16,6 @@
     <remap from="image" to="/camera/depth/image_raw"/>
     <remap from="camera_info" to="/camera/depth/camera_info"/>
   </node>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find realsense_ros_camera)/rviz/laser_view.rviz" required="true" />
 </launch>
