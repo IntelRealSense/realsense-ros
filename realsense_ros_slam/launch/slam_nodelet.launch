@@ -1,4 +1,5 @@
 <launch>
+    <arg name="manager"                 default="realsense_ros_camera_manager"/>
     <arg name="topic_camera_pose"       default="camera_pose"/>
     <arg name="topic_reloc_pose"        default="reloc_pose"/>
     <arg name="topic_pose2d"            default="pose2d" />
@@ -12,7 +13,7 @@
     <arg name="doi_min"                 default="0.3" />
     <arg name="doi_max"                 default="3.0" />
   
-    <node pkg="nodelet" type="nodelet" name="realsense_ros_slam" args="standalone realsense_ros_slam/SNodeletSlam" output="screen">
+    <node pkg="nodelet" type="nodelet" name="realsense_ros_slam" args="load realsense_ros_slam/SNodeletSlam $(arg manager)" output="screen">
         <rosparam file="$(find realsense_ros_slam)/launch/params.yaml" command="load"/>            
         <param name="topic_camera_pose"   type="str"  value="$(arg topic_camera_pose)" />           
         <param name="topic_reloc_pose"   type="str"  value="$(arg topic_reloc_pose)" />           
