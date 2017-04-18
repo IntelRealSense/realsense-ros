@@ -12,6 +12,13 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
+find_package(OpenMP REQUIRED)
+if(OPENMP_FOUND)
+ set(OpenMP_LIBS gomp)
+ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+
 find_package(OpenCV 3 REQUIRED)
 #find_package(librealsense 1 REQUIRED) librealsense package currently lacks required pkgconfig file
 
@@ -54,6 +61,7 @@ target_link_libraries(realsense_ros_camera
    ${catkin_LIBRARIES}
    ${OpenCV_LIBRARIES}
    ${CMAKE_THREAD_LIBS_INIT}
+   ${OpenMP_LIBS}
  )
 
 if (CATKIN_ENABLE_TESTING)

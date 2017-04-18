@@ -30,6 +30,7 @@ const bool ENABLE_FISHEYE = true;
 
 const double ROTATION_IDENTITY[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 const float MILLIMETER_METERS  = 0.001;
+const float MAX_Z = 3.5f; // meters
 
 const std::string DEFAULT_BASE_FRAME_ID = "camera_link";
 const std::string DEFAULT_DEPTH_FRAME_ID = "camera_depth_frame";
