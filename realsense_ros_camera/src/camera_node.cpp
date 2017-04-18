@@ -408,7 +408,7 @@ private:
     switch ((int32_t)intrinsic.model())
     {
     case 0:
-      camera_info_[stream].distortion_model = "none";
+      camera_info_[stream].distortion_model = "plumb_bob";
       break;
     case 1:
       // This is the same as "modified_brown_conrady", but used by ROS
@@ -559,10 +559,16 @@ private:
   void publishPCTopic()
   {
     rs::intrinsics depth_intrinsic = device_->get_stream_intrinsics(rs::stream::depth);
-    rs::intrinsics color_intrinsic = device_->get_stream_intrinsics(rs::stream::color);
-    rs::extrinsics extrinsic = device_->get_extrinsics(rs::stream::depth, rs::stream::color);
     float depth_scale_meters = device_->get_depth_scale();
-
+    
+    rs::intrinsics color_intrinsic;
+    rs::extrinsics extrinsic;
+    if( true == enable_[rs::stream::color])
+    {
+      color_intrinsic = device_->get_stream_intrinsics(rs::stream::color);
+      extrinsic = device_->get_extrinsics(rs::stream::depth, rs::stream::color);
+    }
+    
     sensor_msgs::PointCloud2 msg_pointcloud;
     msg_pointcloud.header.stamp = ros::Time::now();
     msg_pointcloud.header.frame_id = optical_frame_id_[rs::stream::depth];
