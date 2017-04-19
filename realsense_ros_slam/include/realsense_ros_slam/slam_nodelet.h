@@ -37,6 +37,7 @@
 #include <realsense_ros_camera/Extrinsics.h>
 #include <realsense_ros_camera/IMUInfo.h>
 #include <realsense_ros_slam/Reset.h>
+#include <realsense_ros_slam/SaveOutput.h>
 
 namespace realsense_ros_slam
 {
@@ -92,6 +93,7 @@ private:
   void setMotionData(realsense_ros_camera::IMUInfo& imu_res, rs::core::motion_device_intrinsics& motion_intrin);
   void setMotionConfigIntrin(rs::core::motion_type motion, std::map< rs::core::motion_type, rs::core::motion_device_intrinsics > motion_intrinsics);
   void setExtrinData(realsense_ros_camera::Extrinsics& fe_res, rs::core::extrinsics& extrinsics);  
-  bool reset(realsense_ros_slam::Reset::Request &req, realsense_ros_slam::Reset::Response &resp);
+  bool reset(realsense_ros_slam::Reset::Request &req, realsense_ros_slam::Reset::Response &resp); 
+  bool saveOutput(realsense_ros_slam::SaveOutput::Request &req, realsense_ros_slam::SaveOutput::Response &resp);
 };//end class
 }

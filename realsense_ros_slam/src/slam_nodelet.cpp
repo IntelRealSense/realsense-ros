@@ -37,7 +37,7 @@ IplImage * ipNavMap = NULL;
 std::vector< stRobotPG > g_robotPGStack;
 std::vector< CvPoint > g_relocalizationPointStack;
 
-ros::ServiceServer reset_srv;
+ros::ServiceServer reset_srv, save_output_srv;
 
 namespace realsense_ros_slam
 {
@@ -503,6 +503,7 @@ void SNodeletSlam::onInit()
   sub_fe2depth = nh.subscribe("camera/extrinsics/fisheye2depth", 1, &SNodeletSlam::fe2depthCallback, this);
   
   reset_srv = nh.advertiseService("realsense_ros_slam/reset", &SNodeletSlam::reset, this);
+  save_output_srv = nh.advertiseService("realsense_ros_slam/save_output", &SNodeletSlam::saveOutput, this);
 
   actual_config = {};
   
@@ -641,13 +642,6 @@ void SNodeletSlam::startSlam()
     r.sleep();
   }
 
-  std::string result = slam_->save_occupancy_map_as_ppm(pkgpath + trajectoryFilename, true) == 0 ? "Saved trajectory to file." : "FAILED to save trajectory to file.";
-  std::cout << result << std::endl;
-  result = slam_->save_relocalization_map(pkgpath + relocalizationFilename) == 0 ? "Saved relocalization map to file." : "FAILED to save relocalization map to file.";
-  std::cout << result << std::endl;
-  result = slam_->save_occupancy_map(pkgpath + occupancyFilename) == 0 ? "Saved occupancy map to file." : "FAILED to save occupancy map to file.";
-  std::cout << result << std::endl;
-
   slam_->flush_resources();
 }//end of callback
 
@@ -741,8 +735,46 @@ void SNodeletSlam::setExtrinData(realsense_ros_camera::Extrinsics & fe_res, rs::
 bool SNodeletSlam::reset(realsense_ros_slam::Reset::Request &req, realsense_ros_slam::Reset::Response &resp)
 {
   ROS_INFO("Resetting SLAM...");
-  slam_->restart();
+  resp.status = slam_->restart() == rs::core::status::status_no_error;
   return true;
+}
+
+bool SNodeletSlam::saveOutput(realsense_ros_slam::SaveOutput::Request &req, realsense_ros_slam::SaveOutput::Response &resp)
+{
+  bool success = true;
+  
+  if (slam_->save_occupancy_map_as_ppm(pkgpath + trajectoryFilename, true) == rs::core::status::status_no_error)
+  {
+    std::cout << "Saved trajectory to PPM file." << std::endl;
+  }
+  else
+  {
+    std::cout << "FAILED to save trajectory to PPM file." << std::endl;
+    success = false;
+  }
+  
+  if(slam_->save_occupancy_map(pkgpath + occupancyFilename) == rs::core::status::status_no_error)
+  {
+    std::cout << "Saved occupancy map to BIN file." << std::endl;
+  }
+  else
+  {
+    std::cout << "FAILED to save occupancy map to BIN file." << std::endl;
+    success = false;
+  }
+  
+  if(slam_->save_relocalization_map(pkgpath + relocalizationFilename) == rs::core::status::status_no_error)
+  {
+    std::cout << "Saved relocalization map to BIN file." << std::endl;
+  }
+  else
+  {
+    std::cout << "FAILED to save relocalization map to BIN file." << std::endl;
+    success = false;
+  }
+  
+  resp.status = success;
+  return true;  
 }
 
 }//end namespace
