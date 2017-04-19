@@ -13,6 +13,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 #include <tf/transform_broadcaster.h>
+#include <boost/make_unique.hpp>
 
 PLUGINLIB_EXPORT_CLASS(realsense_ros_slam::SNodeletSlam, nodelet::Nodelet)
 
@@ -35,6 +36,8 @@ geometry_msgs::Pose2D pose2d;
 IplImage * ipNavMap = NULL;
 std::vector< stRobotPG > g_robotPGStack;
 std::vector< CvPoint > g_relocalizationPointStack;
+
+ros::ServiceServer reset_srv;
 
 namespace realsense_ros_slam
 {
@@ -498,63 +501,68 @@ void SNodeletSlam::onInit()
   sub_gyroInfo = nh.subscribe("camera/gyro/imu_info", 1, &SNodeletSlam::gyroInfoCallback, this);
   sub_fe2imu = nh.subscribe("camera/extrinsics/fisheye2imu", 1, &SNodeletSlam::fe2ImuCallback, this);
   sub_fe2depth = nh.subscribe("camera/extrinsics/fisheye2depth", 1, &SNodeletSlam::fe2depthCallback, this);
+  
+  reset_srv = nh.advertiseService("realsense_ros_slam/reset", &SNodeletSlam::reset, this);
 
   actual_config = {};
+  
+  slam_ = boost::make_unique<rs::slam::slam>();
+  
   ROS_INFO("end of onInit");
 }//end onInit
 
 void SNodeletSlam::depthInfoCallback(const sensor_msgs::CameraInfoConstPtr& depthCameraInfo)
 {
   sub_depthInfo.shutdown();
-  mut_init.lock();
+  mut_init_.lock();
   depthCameraInfo_ = depthCameraInfo;
   startIfReady();
-  mut_init.unlock();
+  mut_init_.unlock();
 }
 
 void SNodeletSlam::fisheyeInfoCallback(const sensor_msgs::CameraInfoConstPtr& fisheyeCameraInfo)
 {
   sub_fisheyeInfo.shutdown();
-  mut_init.lock();
+  mut_init_.lock();
   fisheyeCameraInfo_ = fisheyeCameraInfo;
   startIfReady();
-  mut_init.unlock();
+  mut_init_.unlock();
 }
 
 void SNodeletSlam::accelInfoCallback(const realsense_ros_camera::IMUInfoConstPtr& accelInfo)
 {
   sub_accelInfo.shutdown();
-  mut_init.lock();
+  mut_init_.lock();
   accelInfo_ = accelInfo;
   startIfReady();
-  mut_init.unlock();
+  mut_init_.unlock();
 }
 
 void SNodeletSlam::gyroInfoCallback(const realsense_ros_camera::IMUInfoConstPtr& gyroInfo)
 {
   sub_gyroInfo.shutdown();
-  mut_init.lock();
+  mut_init_.lock();
   gyroInfo_ = gyroInfo;
   startIfReady();
-  mut_init.unlock();
+  mut_init_.unlock();
 }
 
 void SNodeletSlam::fe2ImuCallback(const realsense_ros_camera::ExtrinsicsConstPtr& fe2imu)
 {
   sub_fe2imu.shutdown();
-  mut_init.lock();
+  mut_init_.lock();
   fe2imu_ = fe2imu;
   startIfReady();
-  mut_init.unlock();
+  mut_init_.unlock();
 }
 
 void SNodeletSlam::fe2depthCallback(const realsense_ros_camera::ExtrinsicsConstPtr& fe2depth)
 {
   sub_fe2depth.shutdown();
-  mut_init.lock();
+  mut_init_.lock();
   fe2depth_ = fe2depth;
   startIfReady();
-  mut_init.unlock();
+  mut_init_.unlock();
 }
 
 void SNodeletSlam::startIfReady()
@@ -570,20 +578,19 @@ void SNodeletSlam::startSlam()
 {
   ROS_INFO("Staring SLAM...");
 
-  std::unique_ptr<rs::slam::slam> slam(new rs::slam::slam());
-  slam->set_occupancy_map_resolution(map_resolution);
-  slam->set_occupancy_map_height_of_interest(hoi_min, hoi_max);
-  slam->set_occupancy_map_depth_of_interest(doi_min, doi_max);
-  slam->force_relocalization_pose(false);
+  slam_->set_occupancy_map_resolution(map_resolution);
+  slam_->set_occupancy_map_height_of_interest(hoi_min, hoi_max);
+  slam_->set_occupancy_map_depth_of_interest(doi_min, doi_max);
+  slam_->force_relocalization_pose(false);
 
   slam_event_handler scenePerceptionEventHandler;
-  slam->register_event_handler(&scenePerceptionEventHandler);
+  slam_->register_event_handler(&scenePerceptionEventHandler);
 
   slam_tracking_event_handler trackingEventHandler;
-  slam->register_tracking_event_handler(&trackingEventHandler);
+  slam_->register_tracking_event_handler(&trackingEventHandler);
 
   supported_config = {};
-  if (slam->query_supported_module_config(0, supported_config) < rs::core::status_no_error)
+  if (slam_->query_supported_module_config(0, supported_config) < rs::core::status_no_error)
   {
     std::cerr << "error : failed to query the first supported module configuration" << std::endl;
     return ;
@@ -617,14 +624,14 @@ void SNodeletSlam::startSlam()
   actual_config[rs::core::stream_type::fisheye].extrinsics = fe2depth;
 
   // Set actual config
-  if (slam->set_module_config(actual_config) < rs::core::status_no_error)
+  if (slam_->set_module_config(actual_config) < rs::core::status_no_error)
   {
     NODELET_ERROR("error : failed to set the enabled module configuration");
     return ;
   }
 
   //slam->load_relocalization_map(relocalizationFilename);
-  sub.onInit(nh, slam.get());
+  sub.onInit(nh, slam_.get());
   sub.subscribeStreamMessages();
   sub.subscribeMotion();
 
@@ -634,14 +641,14 @@ void SNodeletSlam::startSlam()
     r.sleep();
   }
 
-  std::string result = slam->save_occupancy_map_as_ppm(pkgpath + trajectoryFilename, true) == 0 ? "Saved trajectory to file." : "FAILED to save trajectory to file.";
+  std::string result = slam_->save_occupancy_map_as_ppm(pkgpath + trajectoryFilename, true) == 0 ? "Saved trajectory to file." : "FAILED to save trajectory to file.";
   std::cout << result << std::endl;
-  result = slam->save_relocalization_map(pkgpath + relocalizationFilename) == 0 ? "Saved relocalization map to file." : "FAILED to save relocalization map to file.";
+  result = slam_->save_relocalization_map(pkgpath + relocalizationFilename) == 0 ? "Saved relocalization map to file." : "FAILED to save relocalization map to file.";
   std::cout << result << std::endl;
-  result = slam->save_occupancy_map(pkgpath + occupancyFilename) == 0 ? "Saved occupancy map to file." : "FAILED to save occupancy map to file.";
+  result = slam_->save_occupancy_map(pkgpath + occupancyFilename) == 0 ? "Saved occupancy map to file." : "FAILED to save occupancy map to file.";
   std::cout << result << std::endl;
 
-  slam->flush_resources();
+  slam_->flush_resources();
 }//end of callback
 
 
@@ -730,4 +737,12 @@ void SNodeletSlam::setExtrinData(realsense_ros_camera::Extrinsics & fe_res, rs::
     }
   }
 }//end of setExtrinData
+
+bool SNodeletSlam::reset(realsense_ros_slam::Reset::Request &req, realsense_ros_slam::Reset::Response &resp)
+{
+  ROS_INFO("Resetting SLAM...");
+  slam_->restart();
+  return true;
+}
+
 }//end namespace
