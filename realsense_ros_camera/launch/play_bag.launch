@@ -1,5 +1,6 @@
 <launch>
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_camera_manager"  args="manager" output="screen"/>
+  <arg name="manager" default="realsense_ros_camera_manager"/>
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)"  args="manager" output="screen"/>
 
   <arg name="bag_path" default="$(env HOME)/test.bag" />
   <node pkg="rosbag" type="play" name="rosbag" args="$(arg bag_path)"/>

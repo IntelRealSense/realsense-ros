@@ -36,6 +36,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <realsense_ros_camera/Extrinsics.h>
 #include <realsense_ros_camera/IMUInfo.h>
+#include <realsense_ros_slam/Reset.h>
+#include <realsense_ros_slam/SaveOutput.h>
 
 namespace realsense_ros_slam
 {
@@ -76,7 +78,8 @@ private:
   sensor_msgs::CameraInfoConstPtr depthCameraInfo_, fisheyeCameraInfo_;
   realsense_ros_camera::IMUInfoConstPtr accelInfo_, gyroInfo_;
   realsense_ros_camera::ExtrinsicsConstPtr fe2imu_, fe2depth_;
-  std::mutex mut_init;
+  std::mutex mut_init_;
+  std::unique_ptr<rs::slam::slam> slam_;
   void depthInfoCallback(const sensor_msgs::CameraInfoConstPtr& depthCameraInfo);
   void fisheyeInfoCallback(const sensor_msgs::CameraInfoConstPtr& fisheyeCameraInfo);
   void accelInfoCallback(const realsense_ros_camera::IMUInfoConstPtr& accelInfo);
@@ -89,6 +92,8 @@ private:
   void setStreamConfigIntrin(rs::core::stream_type stream, std::map< rs::core::stream_type, rs::core::intrinsics > intrinsics);
   void setMotionData(realsense_ros_camera::IMUInfo& imu_res, rs::core::motion_device_intrinsics& motion_intrin);
   void setMotionConfigIntrin(rs::core::motion_type motion, std::map< rs::core::motion_type, rs::core::motion_device_intrinsics > motion_intrinsics);
-  void setExtrinData(realsense_ros_camera::Extrinsics& fe_res, rs::core::extrinsics& extrinsics);
+  void setExtrinData(realsense_ros_camera::Extrinsics& fe_res, rs::core::extrinsics& extrinsics);  
+  bool reset(realsense_ros_slam::Reset::Request &req, realsense_ros_slam::Reset::Response &resp); 
+  bool saveOutput(realsense_ros_slam::SaveOutput::Request &req, realsense_ros_slam::SaveOutput::Response &resp);
 };//end class
 }

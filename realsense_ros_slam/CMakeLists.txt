@@ -27,6 +27,12 @@ add_message_files(
   TrackingAccuracy.msg
 )
 
+add_service_files(
+  FILES
+  Reset.srv
+  SaveOutput.srv
+)
+
 generate_messages(
   DEPENDENCIES
   sensor_msgs

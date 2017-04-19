@@ -134,6 +134,12 @@ To use realsense_ros_slam, you need a mobile agent with a RealSense ZR300 camera
 - `double`
 - Sets the maximum depth of interest for the occupancy map, in meters.
 
+### Services
+
+`realsense_ros_slam/reset` 
+- Resets SLAM so that all subsequent poses are relative to the current position. 
+- Clears the occupancy map.
+
 ## Usage
 
 To run the slam engine:
