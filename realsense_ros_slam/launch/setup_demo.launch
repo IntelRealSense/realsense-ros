@@ -1,10 +1,12 @@
 <launch>
+    <arg name="manager" default="realsense_ros_camera_manager"/>
     <!-- setup some static transforms to allow the camera pose to be shown in rviz -->
     <node pkg="tf2_ros" type="static_transform_publisher"   name="map_to_odom"              args="0 0 0 0 0 0 1 map odom" />
     <node pkg="tf2_ros" type="static_transform_publisher"   name="base_link_to_camera_link" args="0 0 0 0 0 0 1 base_link camera_link" />
     <node pkg="tf2_ros" type="static_transform_publisher"   name="odom_to_base_link"        args="0 0 0 0 0 0 1 odom base_link" />
     <node pkg="rviz"    type="rviz"                         name="rviz_demo"                args="-d $(find realsense_ros_slam)/launch/demo_settings.rviz" />
-    <include file="$(find realsense_ros_slam)/launch/slam_nodelet.launch">            
+    <include file="$(find realsense_ros_slam)/launch/slam_nodelet.launch">  
+        <arg name="manager" value="$(arg manager)"/>
         <arg name="publish_odometry" value="true" />   
     </include>
 </launch>

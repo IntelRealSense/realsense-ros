@@ -98,9 +98,36 @@ The user should create his combination from those 3 nodelets by creating new nod
 
 
 ### For sample app
+
+#### From camera
 ```bash
 $  roslaunch realsense_ros_object demo_object.launch
 ```
 
+#### From ros bag file
+
+Recorging a bag file:
+```bash
+$  roslaunch realsense_ros_object record_bag_object.launch bag_path:=mypath
+```
+Running object demo from bag:
+```bash
+$  roslaunch realsense_ros_object demo_object_from_bag.launch bag_path:=mypath
+```
+
 The sample app demonstrates a combination of localization and tracking: process localization when the user hint space key, and the ROIs of localization output are the input to tracking.
+
+## Testing
+
+The object package can be tested with pre-recorded data using the provided ROS unit test.  No physical camera needs to be present in order to run the test.  The following steps can be used to build the unit test and download the pre-recorded ROS .bag data:
+
+```bash
+$ cd ~/catkin_ws
+$ catkin_make -DREALSENSE_ENABLE_TESTING=On
+$ rostest realsense_ros_object object.test
+```
+
+You will see the test execute with the graphics display recognizing known objects, and the test passes with a "RESULT: SUCCESS" status.
+
+**Note:** Depending on your internet connection speed, enabling 'REALSENSE_ENABLE_TESTING' can cause catkin_make to run for very long time (more than 5 minutes), as it downloads required pre-recorded .bag data.
 	

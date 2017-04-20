@@ -47,7 +47,6 @@ public:
   ros::NodeHandle nh;
   void onInit()override;
 private:
-  bool isallow; //TODO why we need this flag????
   std::unique_ptr<rs::person_tracking::person_tracking_video_module_interface> ptModule;
 
 

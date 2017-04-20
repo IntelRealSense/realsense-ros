@@ -10,8 +10,8 @@
   <arg name="fisheye_width"       default="640" />
   <arg name="fisheye_height"      default="480" />
   <arg name="enable_fisheye"      default="false" />
-  <arg name="depth_width"         default="480" />
-  <arg name="depth_height"        default="360" />
+  <arg name="depth_width"         default="320" />
+  <arg name="depth_height"        default="240" />
   <arg name="enable_depth"        default="true" />
   <arg name="color_width"         default="640" />
   <arg name="color_height"        default="480" />
@@ -21,7 +21,7 @@
   <arg name="color_fps"           default="30" />
 
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/> 
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_$(arg camera)" args="load realsense_ros_camera/NodeletCamera $(arg manager)" output="screen">
+  <node pkg="nodelet" type="nodelet" name="realsense_ros_$(arg camera)" args="load realsense_ros_camera/NodeletCamera $(arg manager) --no-bond" output="screen">
     <param name="serial_no"                type="str"  value="$(arg serial_no)" />
     
     <param name="fisheye_width"            type="int"  value="$(arg fisheye_width)" />

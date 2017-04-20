@@ -1,16 +1,15 @@
 <launch>
   <arg name="manager" default="realsense_ros_camera_manager"/>
+
   <include file="$(find realsense_ros_camera)/launch/camera.launch">
     <arg name="manager" value="$(arg manager)"/>
-    <arg name="fisheye_width" value="640"/>
-    <arg name="fisheye_height" value="480"/>
-    <arg name="enable_fisheye" value="true"/>
     <arg name="depth_width" value="320"/>
     <arg name="depth_height" value="240"/>
+    <arg name="color_width" value="320"/>
+    <arg name="color_height" value="240"/>
     <arg name="enable_depth" value="true"/>
-    <arg name="enable_color" value="false"/>
+    <arg name="enable_color" value="true"/>
   </include>
-  <include file="$(find realsense_ros_slam)/launch/setup_demo.launch">
-    <arg name="manager" value="$(arg manager)"/>
-  </include>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find realsense_ros_camera)/rviz/pointcloud_view.rviz" required="true" />
 </launch>

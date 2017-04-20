@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+
+<!--
+License: Apache 2.0. See LICENSE file in root directory.
+Copyright(c) 2017 Intel Corporation. All Rights Reserved
+-->
+
+<robot name="sensor_zr300" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:property name="M_PI" value="3.1415926535897931" />
+
+  <xacro:property name="zr300_cam_rgb_px" value="-0.003"/>
+  <xacro:property name="zr300_cam_rgb_py" value="-0.029"/>
+  <xacro:property name="zr300_cam_rgb_pz" value="0.028"/>
+
+  <xacro:property name="zr300_cam_rgb_to_depth_offset" value="0.023"/>
+  <xacro:property name="zr300_cam_rgb_to_fisheye_offset" value="0.088"/>
+
+  <xacro:property name="zr300_cam_width" value="0.155"/>
+  <xacro:property name="zr300_cam_height" value="0.035"/>
+  <xacro:property name="zr300_cam_depth" value="0.01"/>
+
+  <xacro:macro name="sensor_zr300" params="parent *origin">
+
+    <!-- camera body, with origin at bottom screw mount -->
+    <joint name="camera_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}"/>
+      <child link="camera_link" />
+    </joint>
+
+    <link name="camera_link">
+      <visual>
+      <origin xyz="-0.005 0 0" rpy="${M_PI/2} 0 ${M_PI/2}"/>
+        <geometry>
+          <mesh filename="package://realsense_ros_camera/meshes/zr300/zr300.dae" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0.0 0.0 ${zr300_cam_height/2}" rpy="0 0 0"/>
+        <geometry>
+        <box size="${zr300_cam_depth} ${zr300_cam_width} ${zr300_cam_height}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <!-- The following are not reliable values, and should not be used for modeling -->
+        <mass value="0.564" />
+        <origin xyz="0 0 0" />
+        <inertia ixx="0.003881243" ixy="0.0" ixz="0.0" iyy="0.000498940" iyz="0.0" izz="0.003879257" />
+      </inertial>
+    </link>
+      
+    <!-- camera rgb joints and links -->
+    <joint name="camera_rgb_joint" type="fixed">
+      <origin xyz="${zr300_cam_rgb_px} ${zr300_cam_rgb_py} ${zr300_cam_rgb_pz}" rpy="0 0 0"/>
+      <parent link="camera_link"/>
+      <child link="camera_rgb_frame" />
+    </joint>
+    <link name="camera_rgb_frame"/>
+
+    <joint name="camera_rgb_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+      <parent link="camera_rgb_frame" />
+      <child link="camera_rgb_optical_frame" />
+    </joint>
+    <link name="camera_rgb_optical_frame"/>
+      
+    
+    <!-- camera depth joints and links -->
+    <joint name="camera_depth_joint" type="fixed">
+      <origin xyz="0 ${zr300_cam_rgb_to_depth_offset} 0" rpy="0 0 0" />
+      <parent link="camera_rgb_frame" />
+      <child link="camera_depth_frame" />
+    </joint>
+    <link name="camera_depth_frame"/>
+
+    <joint name="camera_depth_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+      <parent link="camera_depth_frame" />
+      <child link="camera_depth_optical_frame" />
+    </joint>
+    <link name="camera_depth_optical_frame"/>
+   
+
+    <!-- camera fisheye joints and links -->
+    <joint name="camera_fisheye_joint" type="fixed">
+      <origin xyz="0 ${zr300_cam_rgb_to_fisheye_offset} 0" rpy="0 0 0" />
+      <parent link="camera_rgb_frame" />
+      <child link="camera_fisheye_frame" />
+    </joint>
+    <link name="camera_fisheye_frame"/>
+
+    <joint name="camera_fisheye_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+      <parent link="camera_fisheye_frame" />
+      <child link="camera_fisheye_optical_frame" />
+    </joint>
+    <link name="camera_fisheye_optical_frame"/>
+  </xacro:macro>
+</robot>
