@@ -208,6 +208,11 @@ private:
       info_publisher_[rs::stream::fisheye] = 
         node_handle.advertise< sensor_msgs::CameraInfo >("camera/fisheye/camera_info", 1);
 
+      // HW timestamp version of image publishers, for realsense_ros_slam package
+      image_publishers_hw_timestamp_[rs::stream::color] = node_handle.advertise<sensor_msgs::Image>("/camera/color/image_raw_hw_timestamp", 1);
+      image_publishers_hw_timestamp_[rs::stream::depth] = node_handle.advertise<sensor_msgs::Image>("/camera/depth/image_raw_hw_timestamp", 1);
+      image_publishers_hw_timestamp_[rs::stream::fisheye] = node_handle.advertise<sensor_msgs::Image>("/camera/fisheye/image_raw_hw_timestamp", 1);
+
       imu_publishers_[RS_EVENT_IMU_GYRO] = node_handle.advertise< sensor_msgs::Imu >("camera/gyro/sample", 100); 
       imu_publishers_[RS_EVENT_IMU_ACCEL] = node_handle.advertise< sensor_msgs::Imu >("camera/accel/sample", 100);
 
@@ -236,43 +241,52 @@ private:
       stream_callback_per_stream[stream] = [this,stream](rs::frame frame)
       {
         image_[stream].data = (unsigned char *) frame.get_data();
+        ros::Time t = ros::Time::now();
 
         if((stream == rs::stream::depth) && (0 != pointcloud_publisher_.getNumSubscribers()))
-          publishPCTopic();
+          publishPCTopic(t);
 
-        // If there is nobody subscribed to the stream, do no further
-        // processing
-        if(( 0 == image_publishers_[stream].getNumSubscribers()) &&
-           ( 0 == info_publisher_[stream].getNumSubscribers()))
-          return;
-
-        if (isZR300_)
+        if((0 != image_publishers_[stream].getNumSubscribers()) || 
+           (0 != image_publishers_hw_timestamp_[stream].getNumSubscribers()))
         {
-          const auto timestampDomain = frame.get_frame_timestamp_domain();
-          if (rs::timestamp_domain::microcontroller != timestampDomain)
+          sensor_msgs::ImagePtr img;
+          img = cv_bridge::CvImage(std_msgs::Header(), encoding_[stream], image_[stream]).toImageMsg();
+          img->width = image_[stream].cols;
+          img->height = image_[stream].rows;
+          img->is_bigendian = false;
+          img->step = image_[stream].cols * unit_step_size_[stream];
+          seq_[stream] += 1;
+
+          img->header.frame_id = optical_frame_id_[stream];
+          img->header.stamp = t;
+          img->header.seq = seq_[stream];
+
+          // ROS Timestamp
+          if(0 != image_publishers_[stream].getNumSubscribers())
+            image_publishers_[stream].publish(img);
+
+          // Camera HW Timestamp for realsense_ros_slam
+          if(0 != image_publishers_hw_timestamp_[stream].getNumSubscribers())
           {
-            ROS_ERROR_STREAM("error: Junk time stamp in stream:" << (int)(stream) <<
-                             "\twith frame counter:" << frame.get_frame_number());
-            return ;
+            if (rs::timestamp_domain::microcontroller != frame.get_frame_timestamp_domain())
+            {
+              ROS_ERROR_STREAM("error: Junk time stamp in stream:" << (int)(stream) <<
+                               "\twith frame counter:" << frame.get_frame_number());
+            }
+            else
+            {
+              img->header.stamp = ros::Time(frame.get_timestamp());
+              image_publishers_hw_timestamp_[stream].publish(img);
+            }
           }
         }
-
-        sensor_msgs::ImagePtr img;
-        img = cv_bridge::CvImage(std_msgs::Header(), encoding_[stream], image_[stream]).toImageMsg();
-        img->width = image_[stream].cols;
-        img->height = image_[stream].rows;
-        img->is_bigendian = false;
-        img->step = image_[stream].cols * unit_step_size_[stream];
-        seq_[stream] += 1;
-
-        img->header.frame_id = optical_frame_id_[stream];
-        img->header.stamp = ros::Time(frame.get_timestamp());
-        img->header.seq = seq_[stream];
-        image_publishers_[stream].publish(img);
-
-        camera_info_[stream].header.stamp = img->header.stamp;
-        camera_info_[stream].header.seq = img->header.seq;
-        info_publisher_[stream].publish(camera_info_[stream]);
+        
+        if(0 != image_publishers_[stream].getNumSubscribers())
+        {
+          camera_info_[stream].header.stamp = t;
+          camera_info_[stream].header.seq = seq_[stream];
+          info_publisher_[stream].publish(camera_info_[stream]);
+        }
       };
 
       // Enable the stream
@@ -556,7 +570,7 @@ private:
     }
   }
 
-  void publishPCTopic()
+  void publishPCTopic(ros::Time t)
   {
     rs::intrinsics depth_intrinsic = device_->get_stream_intrinsics(rs::stream::depth);
     float depth_scale_meters = device_->get_depth_scale();
@@ -570,7 +584,7 @@ private:
     }
     
     sensor_msgs::PointCloud2 msg_pointcloud;
-    msg_pointcloud.header.stamp = ros::Time::now();
+    msg_pointcloud.header.stamp = t;
     msg_pointcloud.header.frame_id = optical_frame_id_[rs::stream::depth];
     msg_pointcloud.width = depth_intrinsic.width;
     msg_pointcloud.height = depth_intrinsic.height;
@@ -726,6 +740,7 @@ private:
 
   // R200 and ZR300 types
   std::map<rs::stream, image_transport::Publisher> image_publishers_;
+  std::map<rs::stream, ros::Publisher> image_publishers_hw_timestamp_;
   std::map<rs::stream, int> image_format_;
   std::map<rs::stream, rs::format> format_;
   std::map<rs::stream, ros::Publisher> info_publisher_;
