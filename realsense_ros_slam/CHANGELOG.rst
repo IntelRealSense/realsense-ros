@@ -2,8 +2,8 @@
 Changelog for package realsense_ros_slam
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.3 (2017-04-21)
+------------------
 * Added a service to save slam output to files.
 * Added reset service to slam.
 * Run slam and camera nodelets in the same node.

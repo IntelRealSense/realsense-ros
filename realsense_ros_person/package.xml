@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>realsense_ros_person</name>
-  <version>0.8.2</version>
+  <version>0.8.3</version>
   <description>The realsense_ros_person package</description>
   <maintainer email="realsense-sw@intel.com">Intel RealSense</maintainer>
   <license>Apache 2.0</license>

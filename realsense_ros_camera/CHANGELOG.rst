@@ -2,8 +2,8 @@
 Changelog for package realsense_ros_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.3 (2017-04-21)
+------------------
 * Added URDF models for R200 and ZR300 cameras
 * Added Pointcloud and Laserscan suppor
 * Fixed crashes that sometimes occured at node shutdown
