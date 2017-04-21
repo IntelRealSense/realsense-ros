@@ -1,6 +1,6 @@
 realsense_ros_camera
 =========================================
-This package provides a ROS node for using the Intel® RealSense™ R200, LR200, and ZR300 cameras.
+This package provides a ROS node for using the Intel® RealSense™ R200, LR200, ZR300, and LR410 cameras.
 
 # Features
 - Color RGB stream, up to 1920x1080 resolution
@@ -16,6 +16,7 @@ To ensure you camera has the most current, supported firmware, please review the
 Intel RealSense R200
 Intel RealSense LR200
 Intel RealSense ZR300
+Intel RealSense LR410
 
 # ROS API
 
@@ -79,9 +80,14 @@ The Intel RealSense camera driver nodelet
 		(ZR300 only) Specify the fisheye camera FPS.
 
 ## Usage
-To start the camera:
+To start the R200/LR200/ZR300 camera:
 ```bash
 $ roslaunch realsense_ros_camera camera.launch
+```
+
+To start the LR410 camera:
+```bash
+$ roslaunch realsense_ros_camera camera_ds5.launch
 ```
 
 To start the camera and camera viewers to see the video stream:
@@ -90,14 +96,6 @@ To start the camera and camera viewers to see the video stream:
 $ roslaunch realsense_ros_camera demo_r200_camera.launch
 # For ZRZ300 camera:
 $ roslaunch realsense_ros_camera demo_zr300_camera.launch
+# For LR410 camera:
+$ roslaunch realsense_ros_camera demo_ds5_camera.launch
 ```
-
-## Differences between this node and realsense_camera
-
-A full featured realsense camera node is available as open source at http://github.com/intel-ros/realsense.  This camera node is intended to be a smaller and more compact node illustrating use of the included middleware.  
-- This node is provided as sample source code only, and is not available pre-built as a ROS package.
-- This node only supports the R200, LR200, and ZR300 cameras
-- This node does not support use with a RGBD launch script
-- This node does not support dynamic configuration of camera parameters
-- This node does not export use of IR streams from camera
-
