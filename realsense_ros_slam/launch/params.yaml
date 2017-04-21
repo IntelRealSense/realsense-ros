@@ -1,5 +1,0 @@
-resolution: 0.1
-trajectoryFilename: 'trajectory_1019.ppm'
-relocalizationFilename: 'relocalization_1019.bin'
-occupancyFilename: 'occupancy_1019.bin'
-

@@ -1,6 +1,0 @@
-<launch>
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_person" args="standalone realsense_ros_person/TNodeletPt" output="screen">
-     <rosparam file="$(find realsense_ros_person)/launch/pt_params.yaml" command="load"/>
-  </node>
-</launch>
-

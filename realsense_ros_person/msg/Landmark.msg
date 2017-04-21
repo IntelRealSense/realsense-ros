@@ -1,2 +1,0 @@
-geometry_msgs/Point location
-geometry_msgs/Point32 realWorldCoordinates

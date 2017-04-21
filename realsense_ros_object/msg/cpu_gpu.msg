@@ -1,1 +1,0 @@
-string CPU_GPU

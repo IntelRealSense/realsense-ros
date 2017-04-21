@@ -1,9 +1,0 @@
-<launch>
-  <include file="$(find realsense_ros_camera)/launch/camera.launch">
-    <arg name="depth_width"         value="320" />
-    <arg name="depth_height"        value="240" />
-    <arg name="color_width"         value="1920" />
-    <arg name="color_height"        value="1080" />
-  </include>
-  <include file="$(find realsense_ros_object)/launch/object.launch"/>
-</launch>

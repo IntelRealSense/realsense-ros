@@ -1,3 +1,0 @@
-int32 type
-geometry_msgs/Point32 vectorOrigin
-geometry_msgs/Vector3 pointingVector

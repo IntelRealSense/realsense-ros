@@ -1,2 +1,0 @@
-Pointing pointing
-Wave wave
