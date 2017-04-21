@@ -25,6 +25,7 @@ sudo apt-key adv --keyserver keys.gnupg.net --recv-key D6FB2970
 sudo sh -c 'echo "deb http://realsense-alm-public.s3.amazonaws.com/apt-repo xenial main" > /etc/apt/sources.list.d/realsense-latest.list'
 sudo apt update 
 sudo apt install -y librealsense-dev
+# Then install librealsense2 packages from Alex Sherman at this point in instructions, using installation instructions provided by his team
 
 # Download and compile ROS wrappers for Intel RealSense SDK for Linux
 mkdir -p catkin_ws/src
@@ -37,7 +38,7 @@ source devel/setup.bash
 ```
 
 ## Usage Instructions
-- [Camera](realsense_ros_camera/README.md): This ROS node implements use of ZR300 camera as a standard ROS camera node.
+- [Camera](realsense_ros_camera/README.md): This ROS node implements use of R200, LR200, ZR300, and LR410 camera as a standard ROS camera node.
 
 ## License
 Copyright 2017 Intel Corporation
