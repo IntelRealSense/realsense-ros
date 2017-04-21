@@ -2,6 +2,11 @@
 Changelog for package realsense_ros_person
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.3 (2017-04-21)
+------------------
+* Added instructions for record/playback
+* Contributors: Stanislav Gutliansky
+
 0.8.2 (2017-04-04)
 ------------------
 * Bug fixes and updates

@@ -29,7 +29,6 @@
 #include <tf2_ros/static_transform_broadcaster.h>
 
 
-
 namespace realsense_ros_camera
 {
 class NodeletCamera: public nodelet::Nodelet
@@ -199,6 +198,8 @@ private:
       image_publishers_[rs::stream::depth] = image_transport.advertise("camera/depth/image_raw", 1);
       info_publisher_[rs::stream::depth] = 
         node_handle.advertise< sensor_msgs::CameraInfo >("camera/depth/camera_info", 1);
+    
+      pointcloud_publisher_ = node_handle.advertise<sensor_msgs::PointCloud2>("/camera/points", 1);
     }
 
     if (isZR300_)
@@ -222,8 +223,6 @@ private:
       accelInfo_publisher_ = node_handle.advertise< IMUInfo >("camera/accel/imu_info", 1, true);
       gyroInfo_publisher_ = node_handle.advertise< IMUInfo >("camera/gyro/imu_info", 1, true);
     }
-
-     pointcloud_publisher_ = node_handle.advertise<sensor_msgs::PointCloud2>("/camera/points", 1);
   }//end setupPublishers
 
 
@@ -246,17 +245,16 @@ private:
         if((stream == rs::stream::depth) && (0 != pointcloud_publisher_.getNumSubscribers()))
           publishPCTopic(t);
 
+        seq_[stream] += 1;                   
         if((0 != image_publishers_[stream].getNumSubscribers()) || 
            (0 != image_publishers_hw_timestamp_[stream].getNumSubscribers()))
         {
-          sensor_msgs::ImagePtr img;
+          sensor_msgs::ImagePtr img;          
           img = cv_bridge::CvImage(std_msgs::Header(), encoding_[stream], image_[stream]).toImageMsg();
           img->width = image_[stream].cols;
           img->height = image_[stream].rows;
           img->is_bigendian = false;
           img->step = image_[stream].cols * unit_step_size_[stream];
-          seq_[stream] += 1;
-
           img->header.frame_id = optical_frame_id_[stream];
           img->header.stamp = t;
           img->header.seq = seq_[stream];
@@ -575,14 +573,6 @@ private:
     rs::intrinsics depth_intrinsic = device_->get_stream_intrinsics(rs::stream::depth);
     float depth_scale_meters = device_->get_depth_scale();
     
-    rs::intrinsics color_intrinsic;
-    rs::extrinsics extrinsic;
-    if( true == enable_[rs::stream::color])
-    {
-      color_intrinsic = device_->get_stream_intrinsics(rs::stream::color);
-      extrinsic = device_->get_extrinsics(rs::stream::depth, rs::stream::color);
-    }
-    
     sensor_msgs::PointCloud2 msg_pointcloud;
     msg_pointcloud.header.stamp = t;
     msg_pointcloud.header.frame_id = optical_frame_id_[rs::stream::depth];
@@ -591,20 +581,18 @@ private:
     msg_pointcloud.is_dense = true;
 
     sensor_msgs::PointCloud2Modifier modifier(msg_pointcloud);
-    modifier.setPointCloud2Fields(4, 
+    modifier.setPointCloud2Fields(3, 
       "x", 1, sensor_msgs::PointField::FLOAT32, 
       "y", 1, sensor_msgs::PointField::FLOAT32, 
-      "z", 1, sensor_msgs::PointField::FLOAT32, 
-      "rgb", 1, sensor_msgs::PointField::FLOAT32);
-    modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
+      "z", 1, sensor_msgs::PointField::FLOAT32);
+    modifier.setPointCloud2FieldsByString(1, "xyz");
 
     for (int v = 0; v < depth_intrinsic.height; v++)
       for (int u = 0; u < depth_intrinsic.width; u++)
       {
-        float depth_point[3], color_point[3], color_pixel[2], scaled_depth;
+        float depth_point[3], scaled_depth;
         uint16_t depth_value;
-        int depth_offset, color_offset, cloud_offset;
-        int i, j;
+        int depth_offset, cloud_offset;
 
         // Offset into point cloud data, for point at u, v
         cloud_offset = (v * msg_pointcloud.row_step) + (u * msg_pointcloud.point_step);
@@ -625,31 +613,6 @@ private:
           // Convert depth image to points in 3D space
           float depth_pixel[2] = {static_cast<float>(u), static_cast<float>(v)};
           rs_deproject_pixel_to_point(depth_point, &depth_intrinsic, depth_pixel, scaled_depth);
-
-          // We have a valid depth point in 3D space.  If the color stream is enabled,
-          // assign color value to the associated depth point
-          if( true == enable_[rs::stream::color])
-          {
-            rs_transform_point_to_point(color_point, &extrinsic, depth_point);
-            rs_project_point_to_pixel(color_pixel, &color_intrinsic, color_point);
-
-            i = static_cast<int>(color_pixel[0]);
-            j = static_cast<int>(color_pixel[1]);
-
-            // Is projected color pixel location contained in our image?
-            if((i >= 0) && (i < color_intrinsic.width) && (j >= 0) && (j < color_intrinsic.height))
-            {
-              color_offset = (i * unit_step_size_[rs::stream::color]) + (j * unit_step_size_[rs::stream::color] * color_intrinsic.width);
-
-              // Assign 3d point color, flipping RGB to BGR
-              uint8_t r[3];
-              memcpy(&r, &image_[rs::stream::color].data[color_offset], sizeof(uint8_t)*3);
-                        
-              memcpy(&msg_pointcloud.data[cloud_offset + msg_pointcloud.fields[3].offset], &r[2], sizeof(uint8_t)); 
-              memcpy(&msg_pointcloud.data[cloud_offset + msg_pointcloud.fields[3].offset + 1], &r[1], sizeof(uint8_t)); 
-              memcpy(&msg_pointcloud.data[cloud_offset + msg_pointcloud.fields[3].offset + 2], &r[0], sizeof(uint8_t)); 
-            } 
-          }
         }
         
         // Assign 3d point
@@ -754,10 +717,11 @@ private:
   std::map<rs::stream, int> unit_step_size_;
   std::map<rs::stream, std::function<void(rs::frame)>> stream_callback_per_stream;
   std::map<rs::stream, sensor_msgs::CameraInfo> camera_info_;
+  ros::Publisher pointcloud_publisher_;
 
   // ZR300 specific types
   bool isZR300_ = false;
-  ros::Publisher accelInfo_publisher_, gyroInfo_publisher_, fe2imu_publisher_, fe2depth_publisher_, pointcloud_publisher_;
+  ros::Publisher accelInfo_publisher_, gyroInfo_publisher_, fe2imu_publisher_, fe2depth_publisher_;
   ros::Publisher imu_publishers_[2];
   int seq_motion[2];
   std::string optical_imu_id_[2];
