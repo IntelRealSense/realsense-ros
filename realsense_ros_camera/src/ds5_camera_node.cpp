@@ -301,7 +301,7 @@ private:
         depth_offset = (u * sizeof(uint16_t)) + (v * sizeof(uint16_t) * depth_intrinsic.width);
         memcpy(&depth_value, &image_[rs2_stream::RS2_STREAM_DEPTH].data[depth_offset], sizeof(uint16_t));
         scaled_depth = static_cast<float>(depth_value) * depth_scale_meters;
-        if (scaled_depth <= 0.0f || scaled_depth > MAX_Z)
+        if (scaled_depth <= 0.0f || scaled_depth > 40.0)
         {
           // Depth value is invalid, so zero it out.
           depth_point[0] = 0.0f;
