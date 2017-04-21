@@ -5,8 +5,10 @@
     <arg name="manager" value="$(arg manager)"/>
     <arg name="depth_width" value="320"/>
     <arg name="depth_height" value="240"/>
+    <arg name="color_width" value="320"/>
+    <arg name="color_height" value="240"/>
     <arg name="enable_depth" value="true"/>
-    <arg name="enable_color" value="false"/>
+    <arg name="enable_color" value="true"/>
   </include>
 
   <node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan" args="load depthimage_to_laserscan/DepthImageToLaserScanNodelet $(arg manager) --no-bond">
@@ -17,5 +19,5 @@
     <remap from="camera_info" to="/camera/depth/camera_info"/>
   </node>
 
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find realsense_ros_camera)/rviz/laser_view.rviz" required="true" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find realsense_ros_camera)/rviz/pointcloud_and_laser_view.rviz" required="true" />
 </launch>
