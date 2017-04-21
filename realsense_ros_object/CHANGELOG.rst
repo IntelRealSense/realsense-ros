@@ -2,6 +2,9 @@
 Changelog for package realsense_ros_object
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.2 (2017-04-04)
 ------------------
 * Bug fixes and updates
