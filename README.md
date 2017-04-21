@@ -38,7 +38,7 @@ source devel/setup.bash
 ```
 
 ## Usage Instructions
-- [Camera](realsense_ros_camera/README.md): This ROS node implements use of ZR300 camera as a standard ROS camera node.
+- [Camera](realsense_ros_camera/README.md): This ROS node implements use of R200, LR200, ZR300, and LR410 camera as a standard ROS camera node.
 
 ## License
 Copyright 2017 Intel Corporation
