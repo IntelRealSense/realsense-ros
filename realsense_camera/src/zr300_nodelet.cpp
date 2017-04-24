@@ -554,25 +554,11 @@ namespace realsense_camera
           imu_msg.header.stamp = ros::Time(camera_start_ts_) + ros::Duration(imu_ts_ * 0.001);
           imu_msg.header.frame_id = imu_optical_frame_id_;
 
-          imu_msg.orientation.x = 0.0;
-          imu_msg.orientation.y = 0.0;
-          imu_msg.orientation.z = 0.0;
-          imu_msg.orientation.w = 0.0;
-          imu_msg.orientation_covariance = {-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+          // Setting just the first element to -1.0 because device does not give orientation data
+          imu_msg.orientation_covariance[0] = -1.0;
 
-          imu_msg.angular_velocity.x = imu_angular_vel_[0];
-          imu_msg.angular_velocity.y = imu_angular_vel_[1];
-          imu_msg.angular_velocity.z = imu_angular_vel_[2];
-
-          imu_msg.linear_acceleration.x = imu_linear_accel_[0];
-          imu_msg.linear_acceleration.y = imu_linear_accel_[1];
-          imu_msg.linear_acceleration.z = imu_linear_accel_[2];
-
-          for (int i = 0; i < 9; ++i)
-          {
-            imu_msg.angular_velocity_covariance[i] = imu_angular_vel_cov_[i];
-            imu_msg.linear_acceleration_covariance[i] = imu_linear_accel_cov_[i];
-          }
+          imu_msg.angular_velocity = imu_angular_vel_;
+          imu_msg.linear_acceleration = imu_linear_accel_;
 
           imu_publisher_.publish(imu_msg);
           prev_imu_ts_ = imu_ts_;
@@ -613,23 +599,15 @@ namespace realsense_camera
 
       if (entry.timestamp_data.source_id == RS_EVENT_IMU_GYRO)
       {
-        for (int i = 0; i < 3; ++i)
-        {
-          imu_angular_vel_[i] = entry.axes[i];
-          imu_linear_accel_[i] = 0.0;
-        }
-        imu_angular_vel_cov_[0] = 0.0;
-        imu_linear_accel_cov_[0] = -1.0;
+        imu_angular_vel_.x = entry.axes[0];
+        imu_angular_vel_.y = entry.axes[1];
+        imu_angular_vel_.z = entry.axes[2];
       }
       else if (entry.timestamp_data.source_id == RS_EVENT_IMU_ACCEL)
       {
-        for (int i = 0; i < 3; ++i)
-        {
-          imu_angular_vel_[i] = 0.0;
-          imu_linear_accel_[i] = entry.axes[i];
-        }
-        imu_angular_vel_cov_[0] = -1.0;
-        imu_linear_accel_cov_[0] = 0.0;
+        imu_linear_accel_.x = entry.axes[0];
+        imu_linear_accel_.y = entry.axes[1];
+        imu_linear_accel_.z = entry.axes[2];
       }
       imu_ts_ = static_cast<double>(entry.timestamp_data.timestamp);
 
