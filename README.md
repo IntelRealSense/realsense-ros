@@ -11,7 +11,7 @@ This package illustrates how to develop OSRF&reg; ROS* applications using the In
 
 ## Installation Instructions
 
-The following instructions support ROS Indigo, on Ubuntu 14.04, and ROS Kinetic, on Ubutnu 16.04.  Please following the instructions for Step 1 for the OS you are using, then proceed to Step 2
+The following instructions support ROS Indigo, on Ubuntu 14.04, and ROS Kinetic, on Ubutnu 16.04.  Please follow the instructions for Step 1 for the OS you are using, then proceed to Step 2
 
 ### Step 1: Install ROS Indigo, on Ubuntu 14.04
 
