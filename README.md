@@ -90,6 +90,7 @@ This will open RViz and display the camera pointcloud and laser scan
 * This ROS node does not currently provide any dynamic reconfigure support for camera properties.
 * This ROS node does not currently provide support for using the RGBD package, but does support generation of a built-in point cloud topic stream.
 * This ROS node currently only provides the Depth stream from the camera sensor.  Future versions of the node will provide access to all camera streams.
+* This ROS node currently does not provide the unit-tests which ensure the proper operation of the camera.  Future versions of the node will provide ROS compatible unit-tests.
 * The SIGINT handler in librealsense2 2.5.3 is currently enabled incorrectly, which prevents clean shutdown of the ROS camera node.  This will be resolved in a future release
 
 ## License
