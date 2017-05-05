@@ -11,7 +11,7 @@ This package illustrates how to develop OSRF&reg; ROS* applications using the In
 
 The following instructions support ROS Indigo, on Ubuntu 14.04, and ROS Kinetic, on Ubutnu 16.04.  Please following the instructions for Step 1 for the OS you are using, then proceed to Step 2
 
-### Step 1: For ROS Indigo, on Ubuntu 14.04
+### Step 1: Install ROS Indigo, on Ubuntu 14.04
 
 The following steps will install the ROS Indigo software framework, on a clean Ubuntu 14.04 machine:
 ```bash
@@ -19,28 +19,28 @@ The following steps will install the ROS Indigo software framework, on a clean U
 sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 sudo apt-get update
-sudo apt-get -y install ros-indigo-desktop-full
+sudo apt-get -y install ros-indigo-desktop-full ros-indigo-depthimage-to-laserscan
 sudo rosdep init
 rosdep update
 echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-### Step 1: For ROS Kinetic, on Ubuntu 16.04
+### Step 1: Install ROS Kinetic, on Ubuntu 16.04
 The following steps will install the ROS Kinetic software framework, on a clean Ubuntu 16.04 machine:
 ```bash
 # Install ROS Kinetic full desktop environment
 sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 sudo apt-get update
-sudo apt-get -y install ros-kinetic-desktop-full
+sudo apt-get -y install ros-kinetic-desktop-full ros-kinetic-depthimage-to-laserscan
 sudo rosdep init
 rosdep update
 echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-### Step 2: Intel RealSense ROS Support
+### Step 2: Install Intel RealSense Support for ROS
 After Step 1 above is completed, the additional steps below will compile support for the Intel RealSense R410 camera, from source.  
 
 **Note:** <path_to_realsense_ros_r410.tar.bz2> refers to the archive you received from your customer representative or through the VIP portal.  Please substitute <path_to_realsense_ros_r410.tar.bz2> with the actual archive filename you received.
@@ -52,7 +52,7 @@ tar xv <path_to_realsense_ros_r410.tar.bz2>
 cd ..
 catkin_make
 echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
-source devel/setup.bash
+source ~/.bashrc
 ```
 
 Finally, to enable camera access as non-root users, the following steps will install the required udev rules.  Note: the steps below will request that your device reboot.
@@ -70,7 +70,8 @@ To start the camera node in ROS at the default 640x480x30 stream, first plug in 
 roslaunch realsense_ros_camera demo.launch
 ```
 
-This will display a default ROS viewer with the depth stream from the camera.  To better visualize difference ranges of the depth camera, use the viewer windows 
+This will display a default ROS viewer with the depth stream from the camera.  To better visualize difference ranges of the depth camera, use the viewer window's range tool in the upper right hand corner dialog.  The default in the viewer is 10.00m.
+
 Additional depth stream resolutions can optionally be provided as parameters to the camera.launch file
 
 ### Point Cloud and Laser scan 
@@ -82,6 +83,9 @@ roslaunch realsense_ros_camera demo_pointcloud_and_laser.launch
 ```
 
 This will open RViz and display the camera pointcloud and laser scan
+
+## Additional Non-ROS RealSense standlone utilities
+Although not built as part of this ROS package, the provided librealsense2 library contains additional standalone utilities for Linux and the Intel RealSense camera, including viewers with full control for all camera parameteters.  Please see the installation guide in librealsense2\README.md for details on compiling and using these utilities.
 
 ## Known Issues
 * This pre-release software package requires Intel RealSense R410 camera firmware 5.6.4.0 or newer.  Although it is not built by the ROS instructions above, the librealsense2 package can be built on the commandline using CMake with the parameter "-DBUILD_EXAMPLES-on", which will build a utility called 'cpp-enumerate'.  This utility will print the version number of your camera
