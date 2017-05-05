@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+
+<!-- This file is only used to enable the building librealsense -->
+<!-- as a debian package for use with ROS (http://ros.org) -->
+<!-- via catkin_make (which invokes cmake) -->
+
+<package format="2">
+  <name>librealsense2</name>
+  <!-- The version tag needs to be updated with each new release of librealsense -->
+  <version>2.5.3</version>
+  <description>
+  Library for capturing data from the Intel(R) RealSense(TM) DS5 cameras. This effort was initiated to better support researchers, creative coders, and app developers in domains such as robotics, virtual reality, and the internet of things. Several often-requested features of RealSense(TM); devices are implemented in this project, including multi-camera capture.
+  </description>
+
+  <maintainer email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</maintainer>
+  <maintainer email="mark.d.horn@intel.com">Mark Horn</maintainer>
+  <maintainer email="reagan.lopez@intel.com">Reagan Lopez</maintainer>
+
+  <url type="website">https://github.com/IntelRealSense/librealsense/</url>
+
+  <license>Apache License, Version 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>pkg-config</build_depend>
+
+  <depend>libusb-1.0-dev</depend>
+  <depend>linux-headers-generic</depend>
+  <depend>libssl-dev</depend>
+  <depend>dkms</depend>
+</package>

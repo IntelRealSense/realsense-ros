@@ -71,8 +71,8 @@ private:
 
     pnh_.param("serial_no", serial_no_, DEFAULT_SERIAL_NO);
 
-    pnh_.param("depth_width", width_[rs2_stream::RS2_STREAM_DEPTH], 640);
-    pnh_.param("depth_height", height_[rs2_stream::RS2_STREAM_DEPTH], 480);
+    pnh_.param("depth_width", width_[rs2_stream::RS2_STREAM_DEPTH], 1280);
+    pnh_.param("depth_height", height_[rs2_stream::RS2_STREAM_DEPTH], 720);
     pnh_.param("depth_fps", fps_[rs2_stream::RS2_STREAM_DEPTH], 30);
     pnh_.param("enable_depth", enable_[rs2_stream::RS2_STREAM_DEPTH], true);
 
