@@ -292,10 +292,10 @@ private:
               std::vector<rs2::stream_profile> motion_module_profiles;
 
               if (true == enable_[RS2_STREAM_GYRO])
-                  motion_module_profiles.push_back({ RS2_STREAM_GYRO, width_[RS2_STREAM_GYRO], height_[RS2_STREAM_GYRO], fps_[RS2_STREAM_GYRO], format_[RS2_STREAM_GYRO] });
+                  motion_module_profiles.push_back({ RS2_STREAM_GYRO, 1, 1, fps_[RS2_STREAM_GYRO], format_[RS2_STREAM_GYRO] });
 
               if (true == enable_[RS2_STREAM_ACCEL])
-                  motion_module_profiles.push_back({ RS2_STREAM_ACCEL, width_[RS2_STREAM_ACCEL], height_[RS2_STREAM_ACCEL], fps_[RS2_STREAM_ACCEL], format_[RS2_STREAM_ACCEL] });
+                  motion_module_profiles.push_back({ RS2_STREAM_ACCEL, 1, 1, fps_[RS2_STREAM_ACCEL], format_[RS2_STREAM_ACCEL] });
 
               auto& dev = devices[RS2_STREAM_GYRO];
               dev->open(motion_module_profiles);
@@ -336,7 +336,7 @@ private:
 
               if (true == enable_[rs2_stream::RS2_STREAM_GYRO])
               {
-                  ROS_INFO_STREAM("  enabled " << stream_name_[RS2_STREAM_GYRO] << " stream, width: " << camera_info_[RS2_STREAM_GYRO].width << " height: " << camera_info_[RS2_STREAM_GYRO].height << " fps: " << fps_[RS2_STREAM_GYRO]);
+                  ROS_INFO_STREAM("  enabled " << stream_name_[RS2_STREAM_GYRO] << " stream, fps: " << fps_[RS2_STREAM_GYRO]);
                   IMUInfo gyroInfo{};
                   getImuInfo(RS2_STREAM_GYRO, gyroInfo);
                   info_publisher_[RS2_STREAM_GYRO].publish(gyroInfo);
@@ -344,7 +344,7 @@ private:
 
               if (true == enable_[rs2_stream::RS2_STREAM_ACCEL])
               {
-                  ROS_INFO_STREAM("  enabled " << stream_name_[RS2_STREAM_ACCEL] << " stream, width: " << camera_info_[RS2_STREAM_ACCEL].width << " height: " << camera_info_[RS2_STREAM_ACCEL].height << " fps: " << fps_[RS2_STREAM_ACCEL]);
+                  ROS_INFO_STREAM("  enabled " << stream_name_[RS2_STREAM_ACCEL] << " stream, fps: " << fps_[RS2_STREAM_ACCEL]);
                   IMUInfo accelInfo{};
                   getImuInfo(RS2_STREAM_ACCEL, accelInfo);
                   info_publisher_[RS2_STREAM_ACCEL].publish(accelInfo);

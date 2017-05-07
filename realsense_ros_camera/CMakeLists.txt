@@ -17,6 +17,18 @@ find_package(OpenCV REQUIRED)
 
 set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -O2 -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
 
+add_message_files(
+  FILES
+  IMUInfo.msg
+  Extrinsics.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  sensor_msgs
+  std_msgs
+)
+
 include_directories(
   include
   ${OpenCV_INCLUDE_DIRS}
