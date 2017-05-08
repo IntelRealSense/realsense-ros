@@ -1,13 +1,13 @@
-# ROS* support for Intel® RealSense™ R410 camera 
+# ROS* support for Intel® RealSense™ R410 and 430 cameras 
 
 Version 2.5.3
 
 ## Features
-This package illustrates how to develop OSRF&reg; ROS* applications using the Intel® RealSense™ R410 camera. 
+This package illustrates how to develop OSRF&reg; ROS* applications using the Intel® RealSense™ R410 and R430 camera. 
 
 **Important:** This is pre-release software, please read the known issues below
 
-**Note:** This pre-release software requires Intel RealSense R410 camera FW 5.6.4.0 or newer. A warning message will be displayed if the software finds camera FW that is older.
+**Note:** This pre-release software requires Intel RealSense R410 or R430 camera FW 5.6.4.0 or newer. A warning message will be displayed if the software finds camera FW that is older.
 
 ## Installation Instructions
 
@@ -43,14 +43,14 @@ source ~/.bashrc
 ```
 
 ### Step 2: Install Intel RealSense Support for ROS
-After Step 1 above is completed, the additional steps below will compile support for the Intel RealSense R410 camera, from source.  
+After Step 1 above is completed, the additional steps below will compile support for the Intel RealSense camera, from source.  
 
-**Note:** <path_to_realsense_ros_r410.tar.bz2> refers to the archive you received from your customer representative or through the VIP portal.  Please substitute <path_to_realsense_ros_r410.tar.bz2> with the actual archive filename you received.
+**Note:** <path_to_realsense_ros_r410_r430.tar.bz2> refers to the archive you received from your customer representative or through the VIP portal.  Please substitute <path_to_realsense_ros_r410_r430.tar.bz2> with the actual archive filename you received.
 ```bash
 mkdir -p catkin_ws/src
 cd catkin_ws/src/
 catkin_init_workspace 
-tar xv <path_to_realsense_ros_r410.tar.bz2>
+tar xv <path_to_realsense_ros_r410_r430.tar.bz2>
 cd ..
 catkin_make
 echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
@@ -90,9 +90,8 @@ This will open RViz and display the camera pointcloud and laser scan
 Although not built as part of this ROS package, the provided librealsense2 library contains additional standalone utilities for Linux and the Intel RealSense camera, including viewers with full control for all camera parameteters.  Please see the installation guide in librealsense2\README.md for details on compiling and using these utilities.
 
 ## Known Issues
-* This pre-release software package requires Intel RealSense R410 camera firmware 5.6.4.0 or newer.  Although it is not built by the ROS instructions above, the librealsense2 package can be built on the commandline using CMake with the parameter "-DBUILD_EXAMPLES-on", which will build a utility called 'cpp-enumerate'.  This utility will print the version number of your camera
-* This ROS node currently only supports the Intel RealSense R410 camera model
-* This ROS node does not currently provide URDF models for the camera.
+* This pre-release software package requires Intel RealSense camera firmware 5.6.4.0 or newer.  Although it is not built by the ROS instructions above, the librealsense2 package can be built on the commandline using CMake with the parameter "-DBUILD_EXAMPLES-on", which will build a utility called 'cpp-enumerate'.  This utility will print the version number of your camera
+* This ROS node currently only supports the Intel RealSense R410 and R430 camera models
 * This ROS node does not currently provide any dynamic reconfigure support for camera properties.
 * This ROS node does not currently provide support for using the RGBD package, but does support generation of a built-in point cloud topic stream.
 * This ROS node currently only provides the Depth stream from the camera sensor.  Future versions of the node will provide access to all camera streams.
