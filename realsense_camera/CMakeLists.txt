@@ -141,6 +141,8 @@ if (CATKIN_ENABLE_TESTING)
     )
   add_dependencies(tests_rgbd_topics ${PROJECT_NAME}_generate_messages_cpp)
   add_dependencies(tests_rgbd_topics ${catkin_EXPORTED_TARGETS})
+
+  add_executable(reset_realsense src/reset_realsense.cpp)
 endif()
 
 # Install nodelet library
