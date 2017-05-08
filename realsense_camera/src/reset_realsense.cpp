@@ -25,7 +25,8 @@ int reset_all_devices(std::string device_type)
     usb_line = popen(list_devices.c_str(), "r");
 
     // Display the cameras we found
-    while (fgets(path, sizeof(path)-1, usb_line) != NULL) {
+    while (fgets(path, sizeof(path)-1, usb_line) != NULL)
+    {
       printf("%s", path);
 
       // Parse to get the bus/device identifiers
