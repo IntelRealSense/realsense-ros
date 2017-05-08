@@ -1,6 +1,6 @@
 /* Find and reset all RealSense cameras */
 // Andy Zelenak
-// 2017
+// Copyright 2017 <Andy Zelenak>
 
 #include <cstdlib>
 #include <errno.h>
@@ -22,7 +22,7 @@ int reset_all_devices(std::string device_type)
     // Intel is manufacturer 8086
     std::string list_devices = "lsusb -d 8086:" + device_type;
 
-    usb_line = popen( list_devices.c_str(), "r" );
+    usb_line = popen(list_devices.c_str(), "r");
 
     // Display the cameras we found
     while (fgets(path, sizeof(path)-1, usb_line) != NULL) {
@@ -33,18 +33,16 @@ int reset_all_devices(std::string device_type)
       bus[0] = path[4];
       bus[1] = path[5];
       bus[2] = path[6];
-      //printf("%c%c%c\n", bus[0], bus[1], bus[2]);
 
       char device[3];
       device[0] = path[15];
       device[1] = path[16];
       device[2] = path[17];
-      //printf("%c%c%c\n", device[0], device[1], device[2]);
 
       // Concatenate the full USB bus/device
 
-     // Example: const char *filename = "/dev/bus/usb/004/003"; 
-      char filename [21]= "/dev/bus/usb/"; // Elements 0-12
+     // Example: const char *filename = "/dev/bus/usb/004/003";
+      char filename [21]= "/dev/bus/usb/";  // Elements 0-12
       filename[13] = bus[0];
       filename[14] = bus[1];
       filename[15] = bus[2];
@@ -56,14 +54,16 @@ int reset_all_devices(std::string device_type)
       printf("%s\n", filename);
 
       fd = open(filename, O_WRONLY);
-      if (fd < 0) {
+      if (fd < 0)
+      {
           perror("Error opening output file");
           return 1;
       }
 
       printf("Resetting USB device %s\n", filename);
       rc = ioctl(fd, USBDEVFS_RESET, 0);
-      if (rc < 0) {
+      if (rc < 0)
+      {
           perror("Error in ioctl");
           return 1;
       }
