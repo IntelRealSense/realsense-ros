@@ -34,7 +34,8 @@ class DS5NodeletCamera: public nodelet::Nodelet
 public:
   DS5NodeletCamera() :
     cameraStarted_(false),
-    base_frame_id_("")
+    base_frame_id_(""),
+    intialize_time_base_(false)
   {
       //rs2::log_to_console(rs2_log_severity::RS2_LOG_SEVERITY_INFO); // TODO: Enable LRS logger?
 
@@ -133,8 +134,8 @@ private:
 
     pnh_.param("depth_optical_frame_id", optical_frame_id_[rs2_stream::RS2_STREAM_DEPTH], DEFAULT_DEPTH_OPTICAL_FRAME_ID);
     pnh_.param("fisheye_optical_frame_id", optical_frame_id_[rs2_stream::RS2_STREAM_FISHEYE], DEFAULT_FISHEYE_OPTICAL_FRAME_ID);
-    pnh_.param("imu_gyro_optical_frame_id", optical_frame_id_[rs2_stream::RS2_STREAM_GYRO], DEFAULT_IMU_OPTICAL_FRAME_ID);
-    pnh_.param("imu_accel_optical_frame_id", optical_frame_id_[rs2_stream::RS2_STREAM_ACCEL], DEFAULT_IMU_OPTICAL_FRAME_ID);
+    pnh_.param("gyro_optical_frame_id", optical_frame_id_[rs2_stream::RS2_STREAM_GYRO], DEFAULT_GYRO_OPTICAL_FRAME_ID);
+    pnh_.param("accel_optical_frame_id", optical_frame_id_[rs2_stream::RS2_STREAM_ACCEL], DEFAULT_ACCEL_OPTICAL_FRAME_ID);
   }//end getParameters
 
 
@@ -201,7 +202,8 @@ private:
       pointcloud_publisher_ = node_handle.advertise<sensor_msgs::PointCloud2>("/camera/points", 1);
     }
 
-    if (true == enable_[rs2_stream::RS2_STREAM_FISHEYE])
+    if (true == enable_[rs2_stream::RS2_STREAM_FISHEYE] &&
+        true == enable_[rs2_stream::RS2_STREAM_DEPTH])
     {
         image_publishers_[rs2_stream::RS2_STREAM_FISHEYE] = image_transport.advertise("camera/fisheye/image_raw", 1);
         info_publisher_[rs2_stream::RS2_STREAM_FISHEYE] = node_handle.advertise<sensor_msgs::CameraInfo>("camera/fisheye/camera_info", 1);
@@ -222,10 +224,11 @@ private:
     }
 
     // TODO
-//    if (true == enable_[rs2_stream::RS2_STREAM_GYRO] ||
-//        true == enable_[rs2_stream::RS2_STREAM_ACCEL])
+//    if (true == enable_[rs2_stream::RS2_STREAM_FISHEYE] &&
+//        (true == enable_[rs2_stream::RS2_STREAM_GYRO] ||
+//        true == enable_[rs2_stream::RS2_STREAM_ACCEL]))
 //    {
-//        fe2imu_publisher_ = node_handle.advertise< Extrinsics >("camera/extrinsics/fisheye2imu", 1, true);
+//        fe2imu_publisher_ = node_handle.advertise<Extrinsics>("camera/extrinsics/fisheye2imu", 1, true);
 //    }
   }//end setupPublishers
 
@@ -245,8 +248,12 @@ private:
             // Enable the stream
             dev->open({ stream, width_[stream], height_[stream], fps_[stream], format_[stream] });
 
-            // Publish info about the stream
-            getStreamCalibData(stream, dev.get());
+            // TODO:
+            if (rs2_stream::RS2_STREAM_DEPTH == stream)
+            {
+                // Publish info about the stream
+                getStreamCalibData(stream, dev.get());
+            }
 
             // Setup stream callback for stream
             image_[stream] = cv::Mat(width_[stream], height_[stream], image_format_[stream], cv::Scalar(0, 0, 0));
@@ -254,21 +261,35 @@ private:
             // Start device with the following callback
             dev->start([this, stream](rs2::frame frame)
             {
-                auto t = ros::Time::now();
+                // We compute a ROS timestamp which is based on an initial ROS time at point of first frame,
+                // and the incremental timestamp from the camera.
+                if (false == intialize_time_base_)
+                {
+                  intialize_time_base_ = true;
+                  ros_time_base_ = ros::Time::now();
+                  camera_time_base_ = frame.get_timestamp();
+                }
+                double elapsed_camera_ms = (/*ms*/ frame.get_timestamp() - /*ms*/ camera_time_base_) / /*ms to seconds*/ 1000;
+                ros::Time t(ros_time_base_.toSec() + elapsed_camera_ms);
+
                 image_[stream].data = (unsigned char *)frame.get_data();
 
-                if((stream == rs2_stream::RS2_STREAM_DEPTH) && (0 != pointcloud_publisher_.getNumSubscribers()))
+                if((rs2_stream::RS2_STREAM_DEPTH == stream) && (0 != pointcloud_publisher_.getNumSubscribers()))
                   publishPCTopic(t);
 
                 seq_[stream] += 1;
-                if(0 != image_publishers_[stream].getNumSubscribers())
+                if(0 != info_publisher_[stream].getNumSubscribers() ||
+                   0 != image_publishers_[stream].getNumSubscribers())
                 {
+                  auto width = frame.get_width();
+                  auto height = frame.get_height();
+
                   sensor_msgs::ImagePtr img;
                   img = cv_bridge::CvImage(std_msgs::Header(), encoding_[stream], image_[stream]).toImageMsg();
-                  img->width = frame.get_width();
-                  img->height = frame.get_height();
+                  img->width = width;
+                  img->height = height;
                   img->is_bigendian = false;
-                  img->step = frame.get_width() * frame.get_bytes_per_pixel();
+                  img->step = width * frame.get_bytes_per_pixel();
                   img->header.frame_id = optical_frame_id_[stream];
                   img->header.stamp = t;
                   img->header.seq = seq_[stream];
@@ -302,12 +323,14 @@ private:
 
               dev->start([this](rs2::frame frame){
                   auto stream = frame.get_stream_type();
-                  if (0 == imu_publishers_[stream].getNumSubscribers())
+                  if (0 == imu_publishers_[stream].getNumSubscribers() ||
+                      false == intialize_time_base_)
                     return;
 
-                  auto t = ros::Time::now();
+                  double elapsed_camera_ms = (/*ms*/ frame.get_timestamp() - /*ms*/ camera_time_base_) / /*ms to seconds*/ 1000;
+                  ros::Time t(ros_time_base_.toSec() + elapsed_camera_ms);
+
                   auto imu_msg = sensor_msgs::Imu();
-                  imu_msg.header.stamp = t;
                   imu_msg.header.frame_id = optical_frame_id_[stream];
                   imu_msg.orientation.x = 0.0;
                   imu_msg.orientation.y = 0.0;
@@ -330,7 +353,7 @@ private:
                   }
                   seq_[stream] += 1;
                   imu_msg.header.seq = seq_[stream];
-                  imu_msg.header.stamp = ros::Time(frame.get_timestamp());
+                  imu_msg.header.stamp = t;
                   imu_publishers_[stream].publish(imu_msg);
               });
 
@@ -351,16 +374,19 @@ private:
               }
           }
 
-          // TODO
-//          if (true == enable_[rs2_stream::RS2_STREAM_DEPTH])
+          // TODO:
+//          if (true == enable_[rs2_stream::RS2_STREAM_DEPTH] &&
+//              true == enable_[rs2_stream::RS2_STREAM_FISHEYE])
 //          {
-//              fe2depth_publisher_.publish(getFisheye2DepthExtrinsicsMsg());
+//              auto ex = getFisheye2DepthExtrinsicsMsg();
+//              fe2depth_publisher_.publish(ex);
 //          }
 
 //          if (true == enable_[rs2_stream::RS2_STREAM_FISHEYE] &&
 //              (enable_[rs2_stream::RS2_STREAM_GYRO] || enable_[rs2_stream::RS2_STREAM_ACCEL]))
 //          {
-//              fe2imu_publisher_.publish(getFisheye2ImuExtrinsicsMsg());
+//              auto ex = getFisheye2ImuExtrinsicsMsg();
+//              fe2imu_publisher_.publish(ex);
 //          }
 
           cameraStarted_ = true;
@@ -376,11 +402,11 @@ private:
 
   void getStreamCalibData(rs2_stream stream, rs2::device* dev)
   {
-    const auto intrinsic = dev->get_intrinsics({stream, width_[stream], height_[stream], fps_[stream], format_[stream]});
+    rs2_intrinsics intrinsic = dev->get_intrinsics({stream, width_[stream], height_[stream], fps_[stream], format_[stream]});
 
-    camera_info_[stream].header.frame_id = optical_frame_id_[stream];
     camera_info_[stream].width = intrinsic.width;
     camera_info_[stream].height = intrinsic.height;
+    camera_info_[stream].header.frame_id = optical_frame_id_[stream];
 
     camera_info_[stream].K.at(0) = intrinsic.fx;
     camera_info_[stream].K.at(2) = intrinsic.ppx;
@@ -465,7 +491,7 @@ private:
   void publishPCTopic(const ros::Time& t)
   {
     auto& depth_device = devices[rs2_stream::RS2_STREAM_DEPTH];
-    const auto depth_intrinsic = depth_device->get_intrinsics({rs2_stream::RS2_STREAM_DEPTH, width_[rs2_stream::RS2_STREAM_DEPTH], height_[rs2_stream::RS2_STREAM_DEPTH], fps_[rs2_stream::RS2_STREAM_DEPTH], format_[rs2_stream::RS2_STREAM_DEPTH]});
+    auto depth_intrinsic = depth_device->get_intrinsics({rs2_stream::RS2_STREAM_DEPTH, width_[rs2_stream::RS2_STREAM_DEPTH], height_[rs2_stream::RS2_STREAM_DEPTH], fps_[rs2_stream::RS2_STREAM_DEPTH], format_[rs2_stream::RS2_STREAM_DEPTH]});
     auto depth_scale_meters = depth_device->get_depth_scale();
       
     sensor_msgs::PointCloud2 msg_pointcloud;
@@ -519,32 +545,37 @@ private:
     pointcloud_publisher_.publish(msg_pointcloud);
   }
 
-  Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& rsExtrinsics)
+  Extrinsics rsExtrinsicsToMsg()
   {
+      // TODO: extrinsics isn't implemented yet in LRS
+      // Return identity matrix
       Extrinsics extrinsicsMsg;
       for (int i = 0; i < 9; ++i)
       {
-          extrinsicsMsg.rotation[i] = rsExtrinsics.rotation[i];
+          extrinsicsMsg.rotation[i] = 0;
           if (i < 3)
-              extrinsicsMsg.translation[i] = rsExtrinsics.translation[i];
+              extrinsicsMsg.translation[i] = 1;
       }
+      extrinsicsMsg.rotation[0] = 1;
+      extrinsicsMsg.rotation[4] = 1;
+      extrinsicsMsg.rotation[8] = 1;
       return extrinsicsMsg;
   }
 
   Extrinsics getFisheye2ImuExtrinsicsMsg()
   {
-      auto& fisheye_device = devices[rs2_stream::RS2_STREAM_FISHEYE];
-      auto& imu_device = devices[rs2_stream::RS2_STREAM_GYRO];
-      auto extrinsicsMsg = rsExtrinsicsToMsg(fisheye_device->get_extrinsics_to(rs2_stream::RS2_STREAM_FISHEYE, *imu_device, rs2_stream::RS2_STREAM_GYRO));
+//      auto& fisheye_device = devices[rs2_stream::RS2_STREAM_FISHEYE];
+//      auto& imu_device = devices[rs2_stream::RS2_STREAM_GYRO];
+      Extrinsics extrinsicsMsg = rsExtrinsicsToMsg();
       extrinsicsMsg.header.frame_id = "fisheye2imu_extrinsics";
       return extrinsicsMsg;
   }
 
   Extrinsics getFisheye2DepthExtrinsicsMsg()
   {
-      auto& fisheye_device = devices[rs2_stream::RS2_STREAM_FISHEYE];
-      auto& depth_device = devices[rs2_stream::RS2_STREAM_DEPTH];
-      auto extrinsicsMsg = rsExtrinsicsToMsg(fisheye_device->get_extrinsics_to(rs2_stream::RS2_STREAM_FISHEYE, *depth_device, rs2_stream::RS2_STREAM_DEPTH));
+//      auto& fisheye_device = devices[rs2_stream::RS2_STREAM_FISHEYE];
+//      auto& depth_device = devices[rs2_stream::RS2_STREAM_DEPTH];
+      Extrinsics extrinsicsMsg = rsExtrinsicsToMsg();
       extrinsicsMsg.header.frame_id = "fisheye2depth_extrinsics";
       return extrinsicsMsg;
   }
@@ -557,38 +588,83 @@ private:
 
   void getImuInfo(rs2_stream stream, IMUInfo &info)
   {
-      // TODO:
-      if (rs2_stream::RS2_STREAM_GYRO == stream)
-      {
-//          rs2_intrinsics imuIntrinsics = devices[RS2_STREAM_GYRO]->get_intrinsics();
-          info.header.frame_id = "imu_gyro";
-//          int index = 0;
+      // TODO: IMU intrinsics isn't implemented yet in LRS ;
+//      if (rs2_stream::RS2_STREAM_GYRO == stream)
+//      {
+
+//          auto imuIntrinsics = devices[RS2_STREAM_GYRO]->get_intrinsics(rs2::stream_profile{stream, 1, 1, 1000, RS2_FORMAT_MOTION_XYZ32F});
+//          info.header.frame_id = "imu_gyro";
+//          auto index = 0;
 //          for (int i = 0; i < 3; ++i)
 //          {
 //              for (int j = 0; j < 4; ++j)
 //              {
-//                  gyroInfo.data[index] = imuIntrinsics.data[i][j];
+//                  info.data[index] = imuIntrinsics.data[i][j];
 //                  ++index;
 //              }
-//              gyroInfo.noise_variances[i] = imuIntrinsics.noise_variances[i];
-//              gyroInfo.bias_variances[i] = imuIntrinsics.bias_variances[i];
+//              info.noise_variances[i] =  imuIntrinsics.noise_variances[i];
+//              info.bias_variances[i] = imuIntrinsics.bias_variances[i];
 //          }
+//      }
+//      else if (rs2_stream::RS2_STREAM_ACCEL == stream)
+//      {
+//          auto imuIntrinsics = devices[RS2_STREAM_ACCEL]->get_intrinsics(rs2::stream_profile{stream, 1, 1, 1000, RS2_FORMAT_MOTION_XYZ32F});
+//          info.header.frame_id = "imu_accel";
+//          auto index = 0;
+//          for (auto i = 0; i < 3; ++i)
+//          {
+//              for (auto j = 0; j < 4; ++j)
+//              {
+//                  info.data[index] = imuIntrinsics.data[i][j];
+//                  ++index;
+//              }
+//              info.noise_variances[i] = imuIntrinsics.noise_variances[i];
+//              info.bias_variances[i] = imuIntrinsics.bias_variances[i];
+//          }
+//      }
+
+      // Return fake data
+      if (rs2_stream::RS2_STREAM_GYRO == stream)
+      {
+          info.data[0] = 1;
+          info.data[1] = 0;
+          info.data[2] = 0;
+          info.data[3] = -0.01;
+          info.data[4] = 0;
+          info.data[5] = 0.9;
+          info.data[6] = 0;
+          info.data[7] = -0.002;
+          info.data[8] = 0;
+          info.data[9] = 0;
+          info.data[10] = 0.9;
+          info.data[11] = -0.0009;
+          info.bias_variances[0] = 0.004;
+          info.bias_variances[1] = 0.004;
+          info.bias_variances[2] = 0.004;
+          info.noise_variances[0] = 0.0002;
+          info.noise_variances[1] = 0.0002;
+          info.noise_variances[2] = 0.0002;
       }
       else if (rs2_stream::RS2_STREAM_ACCEL == stream)
       {
-//          rs2_intrinsics imuIntrinsics = devices[RS2_STREAM_ACCEL]->get_intrinsics();
-          info.header.frame_id = "imu_accel";
-//          index = 0;
-//          for (int i = 0; i < 3; ++i)
-//          {
-//              for (int j = 0; j < 4; ++j)
-//              {
-//                  accelInfo.data[index] = imuIntrinsics.data[i][j];
-//                  ++index;
-//              }
-//              accelInfo.noise_variances[i] = imuIntrinsics.noise_variances[i];
-//              accelInfo.bias_variances[i] = imuIntrinsics.bias_variances[i];
-//          }
+          info.data[0] = 1.01;
+          info.data[1] = 0;
+          info.data[2] = 0;
+          info.data[3] = 0.71;
+          info.data[4] = 0;
+          info.data[5] = 1.01;
+          info.data[6] = 0;
+          info.data[7] = 0.16;
+          info.data[8] = 0;
+          info.data[9] = 0;
+          info.data[10] = 1;
+          info.data[11] = -0.25;
+          info.bias_variances[0] = 0.0001;
+          info.bias_variances[1] = 0.0001;
+          info.bias_variances[2] = 0.0001;
+          info.noise_variances[0] = 0.1471;
+          info.noise_variances[1] = 0.1471;
+          info.noise_variances[2] = 0.1471;
       }
   }
 
@@ -616,6 +692,8 @@ private:
   std::map<rs2_stream, ros::Publisher> info_publisher_;
   std::map<rs2_stream, cv::Mat> image_;
   std::map<rs2_stream, std::string> encoding_;
+  bool intialize_time_base_;
+  double camera_time_base_;
   std::string base_frame_id_;
   std::map<rs2_stream, std::string> frame_id_;
   std::map<rs2_stream, std::string> optical_frame_id_;
@@ -623,8 +701,9 @@ private:
   std::map<rs2_stream, int> unit_step_size_;
   std::map<rs2_stream, sensor_msgs::CameraInfo> camera_info_;
   ros::Publisher fe2depth_publisher_, fe2imu_publisher_;
- 
+
   ros::Publisher pointcloud_publisher_;
+  ros::Time ros_time_base_;
 };//end class
 
 PLUGINLIB_DECLARE_CLASS(realsense_ros_camera, NodeletDS5Camera, realsense_ros_camera::DS5NodeletCamera, nodelet::Nodelet);
