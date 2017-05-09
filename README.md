@@ -1,13 +1,13 @@
 # ROS* support for Intel® RealSense™ R410 and 430 cameras 
 
-Version 2.5.3
+Version 2.5.7
 
 ## Features
-This package illustrates how to develop OSRF&reg; ROS* applications using the Intel® RealSense™ R410 and R430 camera. 
+This package illustrates how to develop OSRF&reg; ROS* applications using the Intel® RealSense™ RS410 and RS430 camera. 
 
 **Important:** This is pre-release software, please read the known issues below
 
-**Note:** This pre-release software requires Intel RealSense R410 or R430 camera FW 5.6.4.0 or newer. A warning message will be displayed if the software finds camera FW that is older.
+**Note:** This pre-release software requires Intel RealSense RS410, RS430 or RS430_MM camera FW 5.6.5.0 or newer. A warning message will be displayed if the software finds camera FW that is older.
 
 ## Installation Instructions
 
@@ -91,7 +91,7 @@ Although not built as part of this ROS package, the provided librealsense2 libra
 
 ## Known Issues
 * This pre-release software package requires Intel RealSense camera firmware 5.6.4.0 or newer.  Although it is not built by the ROS instructions above, the librealsense2 package can be built on the commandline using CMake with the parameter "-DBUILD_EXAMPLES-on", which will build a utility called 'cpp-enumerate'.  This utility will print the version number of your camera
-* This ROS node currently only supports the Intel RealSense R410 and R430 camera models
+* This ROS node currently only supports the Intel RealSense RS410 and RS430 camera models
 * This ROS node does not currently provide any dynamic reconfigure support for camera properties.
 * This ROS node does not currently provide support for using the RGBD package, but does support generation of a built-in point cloud topic stream.
 * This ROS node currently only provides the Depth stream from the camera sensor.  Future versions of the node will provide access to all camera streams.
