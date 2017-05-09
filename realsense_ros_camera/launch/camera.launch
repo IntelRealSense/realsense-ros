@@ -3,29 +3,54 @@
   <arg name="serial_no"           default="" />
   <arg name="camera"              default="camera"/>
   <arg name="depth"               default="depth" />
-  <arg name="depth_width"         default="640" />
-  <arg name="depth_height"        default="480" />
-  <arg name="enable_depth"        default="true" />
-  <arg name="depth_fps"           default="30" />
+  <arg name="rgb"                 default="color" />
   <arg name="fisheye"             default="fisheye" />
+  <arg name="accel"               default="accel" />
+  <arg name="gyro"                default="gyro" />
   <arg name="fisheye_width"       default="640" />
   <arg name="fisheye_height"      default="480" />
   <arg name="enable_fisheye"      default="false" />
+  <arg name="depth_width"         default="640" />
+  <arg name="depth_height"        default="480" />
+  <arg name="enable_depth"        default="true" />
+  <arg name="color_width"         default="640" />
+  <arg name="color_height"        default="480" />
+  <arg name="enable_color"        default="false" />
   <arg name="fisheye_fps"         default="30" />
+  <arg name="depth_fps"           default="30" />
+  <arg name="color_fps"           default="30" />
+  <arg name="gyro_fps"            default="1000" />
+  <arg name="enable_gyro"         default="false" />
+  <arg name="accel_fps"           default="1000" />
+  <arg name="enable_accel"        default="false" />
 
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/> 
   <node pkg="nodelet" type="nodelet" name="realsense_ros_$(arg camera)" args="load realsense_ros_camera/NodeletDS5Camera $(arg manager)" output="screen">
     <param name="serial_no"                type="str"  value="$(arg serial_no)" />
     
-    <param name="depth_width"              type="int"  value="$(arg depth_width)" />
-    <param name="depth_height"             type="int"  value="$(arg depth_height)" />
-    <param name="enable_depth"             type="bool" value="$(arg enable_depth)" />
-    <param name="depth_fps"                type="int"  value="$(arg depth_fps)" />
     <param name="fisheye_width"            type="int"  value="$(arg fisheye_width)" />
     <param name="fisheye_height"           type="int"  value="$(arg fisheye_height)" />
     <param name="enable_fisheye"           type="bool" value="$(arg enable_fisheye)" />
+    <param name="depth_width"              type="int"  value="$(arg depth_width)" />
+    <param name="depth_height"             type="int"  value="$(arg depth_height)" />
+    <param name="enable_depth"             type="bool" value="$(arg enable_depth)" />
+    <param name="color_width"              type="int"  value="$(arg color_width)" />
+    <param name="color_height"             type="int"  value="$(arg color_height)" />
+    <param name="enable_color"             type="bool" value="$(arg enable_color)" />
     <param name="fisheye_fps"              type="int"  value="$(arg fisheye_fps)" />
+    <param name="depth_fps"                type="int"  value="$(arg depth_fps)" />
+    <param name="color_fps"                type="int"  value="$(arg color_fps)" />
+    <param name="gyro_fps"                 type="int"  value="$(arg gyro_fps)" />
+    <param name="accel_fps"                type="int"  value="$(arg accel_fps)" />
+    <param name="enable_gyro"              type="bool" value="$(arg enable_gyro)" />
+    <param name="enable_accel"             type="bool" value="$(arg enable_accel)" />
 
     <param name="depth_optical_frame_id"   type="str"  value="$(arg camera)_depth_optical_frame" />
+    <param name="color_optical_frame_id"   type="str"  value="$(arg camera)_rgb_optical_frame" />
+    <param name="ir_optical_frame_id"      type="str"  value="$(arg camera)_ir_optical_frame" />
+    <param name="ir2_optical_frame_id"     type="str"  value="$(arg camera)_ir2_optical_frame" />
+    <param name="fisheye_optical_frame_id" type="str"  value="$(arg camera)_fisheye_optical_frame" />
+    <param name="accel_optical_frame_id"   type="str"  value="$(arg camera)_accel_optical_frame" />
+    <param name="gyro_optical_frame_id"    type="str"  value="$(arg camera)_gyro_optical_frame" />
   </node>
 </launch>
