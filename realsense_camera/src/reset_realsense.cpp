@@ -13,12 +13,11 @@
 
 void kill_node(std::string node)
 {
-
 SEARCH_AGAIN:
 
     // First grep for the node
     // It may be namespaced or may not exist
-    
+
     std::string popen_cmd = "rosnode list | grep -E '" + node + "'";
 
     FILE *node_list = popen(popen_cmd.c_str(), "r");  // Store the node name
@@ -27,16 +26,18 @@ SEARCH_AGAIN:
 
     if ( !fgets(buffer, sizeof(buffer), node_list) )  // Did not find this node
     {
-      pclose(node_list); // Close the list of ROS nodes
+      pclose(node_list);  // Close the list of ROS nodes
       return;
     }
-    
-    pclose(node_list); // Close the list of ROS nodes
- 
+
+    pclose(node_list);  // Close the list of ROS nodes
+
     // Then kill the node
     std::string str = "rosnode kill ";
     std::string kill_cmd = str + buffer;
-    system( kill_cmd.c_str() );
+    int systemRet = system(kill_cmd.c_str());
+    if (systemRet == -1)
+    	return;
 
     // There could be multiple nodes with the same names,
     // but namespaced. Search until they're all killed.
