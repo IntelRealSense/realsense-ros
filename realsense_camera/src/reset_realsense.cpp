@@ -11,6 +11,38 @@
 #include <linux/usbdevice_fs.h>
 #include <unistd.h>
 
+void kill_node(std::string node)
+{
+
+SEARCH_AGAIN:
+
+    // First grep for the node
+    // It may be namespaced or may not exist
+    
+    std::string popen_cmd = "rosnode list | grep -E '" + node + "'";
+
+    FILE *node_list = popen(popen_cmd.c_str(), "r");  // Store the node name
+
+    char buffer[2048];
+
+    if ( !fgets(buffer, sizeof(buffer), node_list) )  // Did not find this node
+    {
+      pclose(node_list); // Close the list of ROS nodes
+      return;
+    }
+    
+    pclose(node_list); // Close the list of ROS nodes
+ 
+    // Then kill the node
+    std::string str = "rosnode kill ";
+    std::string kill_cmd = str + buffer;
+    system( kill_cmd.c_str() );
+
+    // There could be multiple nodes with the same names,
+    // but namespaced. Search until they're all killed.
+    goto SEARCH_AGAIN;
+}
+
 int reset_all_devices(std::string device_type)
 {
     int fd = 0;
@@ -78,11 +110,23 @@ int reset_all_devices(std::string device_type)
 
 int main(int argc, char **argv)
 {
-    ///////////////////////////////////
-    // Kill any zombie camera processes
-    ///////////////////////////////////
-    if ( !system("killall nodelet") )
-      printf("Could not kill nodelet processes.");
+    ///////////////////////////////
+    // Kill any zombie camera nodes
+    ///////////////////////////////
+    kill_node("camera_nodelet_manager");
+    kill_node("depth_metric");
+    kill_node("depth_points");
+    kill_node("depth_rectify_depth");
+    kill_node("depth_registered_sw_metric_rect");
+    kill_node("disparity_depth");
+    kill_node("disparity_registered_sw");
+    kill_node("driver");
+    kill_node("ir_rectify_ir");
+    kill_node("points_xyzrgb_sw_registered");
+    kill_node("register_depth_rgb");
+    kill_node("rgb_debayer");
+    kill_node("rgb_rectify_color");
+    kill_node("rgb_rectify_mono");
 
 
     //////////////////////////////////
