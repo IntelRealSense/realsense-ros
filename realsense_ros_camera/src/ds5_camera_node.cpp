@@ -121,10 +121,9 @@ private:
     pnh_.param("enable_fisheye", enable_[rs2_stream::RS2_STREAM_FISHEYE], ENABLE_FISHEYE);
 
     pnh_.param("gyro_fps", fps_[rs2_stream::RS2_STREAM_GYRO], GYRO_FPS);
-    pnh_.param("enable_gyro", enable_[rs2_stream::RS2_STREAM_GYRO], ENABLE_GYRO);
-
     pnh_.param("accel_fps", fps_[rs2_stream::RS2_STREAM_ACCEL], ACCEL_FPS);
-    pnh_.param("enable_accel", enable_[rs2_stream::RS2_STREAM_ACCEL], ENABLE_ACCEL);
+    pnh_.param("enable_imu", enable_[rs2_stream::RS2_STREAM_GYRO], ENABLE_IMU);
+    pnh_.param("enable_imu", enable_[rs2_stream::RS2_STREAM_ACCEL], ENABLE_IMU);
 
     pnh_.param("base_frame_id", base_frame_id_, DEFAULT_BASE_FRAME_ID);
     pnh_.param("depth_frame_id", frame_id_[rs2_stream::RS2_STREAM_DEPTH], DEFAULT_DEPTH_FRAME_ID);

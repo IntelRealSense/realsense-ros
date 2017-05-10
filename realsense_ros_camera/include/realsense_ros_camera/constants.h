@@ -29,8 +29,7 @@ const int ACCEL_FPS       = 1000;
 const bool ENABLE_DEPTH   = true;
 const bool ENABLE_COLOR   = false;
 const bool ENABLE_FISHEYE = false;
-const bool ENABLE_GYRO    = false;
-const bool ENABLE_ACCEL   = false;
+const bool ENABLE_IMU     = false;
 
 const double ROTATION_IDENTITY[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 const float MILLIMETER_METERS  = 0.001;

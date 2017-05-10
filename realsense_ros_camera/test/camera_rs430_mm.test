@@ -7,7 +7,7 @@
   <arg name="fisheye_height"      default="480" />
   <arg name="fisheye_fps"         value="30" />
 
-  <arg name="accel_fps"         value="1000" />
+  <arg name="accel_fps"        value="1000" />
   <arg name="gyro_fps"         value="1000" />
 
   <!-- Start camera -->
@@ -23,10 +23,8 @@
     <arg name="enable_fisheye"      value="true" />
 
     <arg name="accel_fps"         value="$(arg accel_fps)" />
-    <arg name="enable_accel"      value="true" />
-
-    <arg name="gyro_fps"         value="$(arg gyro_fps)" />
-    <arg name="enable_gyro"      value="true" />
+    <arg name="gyro_fps"          value="$(arg gyro_fps)" />
+    <arg name="enable_imu"        value="true" />
   </include>
  
   <!-- Start test -->
@@ -37,6 +35,7 @@
     fisheye_width $(arg fisheye_width)
     fisheye_height $(arg fisheye_height)
     enable_depth true
-    enable_fisheye true"
+    enable_fisheye true
+    enable_imu true"
     retry="3" />
 </launch>
