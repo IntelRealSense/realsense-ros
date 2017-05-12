@@ -35,9 +35,8 @@ SEARCH_AGAIN:
     // Then kill the node
     std::string str = "rosnode kill ";
     std::string kill_cmd = str + buffer;
-    int systemRet = system(kill_cmd.c_str());
-    if (systemRet == -1)
-    	return;
+    if ( !system(kill_cmd.c_str()) )
+      printf("Could not kill ROS node.");
 
     // There could be multiple nodes with the same names,
     // but namespaced. Search until they're all killed.
