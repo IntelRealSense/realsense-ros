@@ -54,17 +54,37 @@ namespace rsimpl2
         hid_endpoint& _ep;
     };
 
-    class enable_auto_exposure_option : public option
+    class enable_motion_correction : public librealsense_option
     {
     public:
         void set(float value) override;
 
         float query() const override;
 
-        option_range get_range() const override
+        bool is_enabled() const override { return true; }
+
+        const char* get_description() const override
         {
-            return option_range{0, 1, 1, 1};
+            return "Enable/Disable Automatic Motion Data Correction";
         }
+
+        enable_motion_correction(endpoint* mm_ep,
+                                 const ds::imu_intrinsics& accel,
+                                 const ds::imu_intrinsics& gyro,
+                                 const option_range& opt_range);
+
+    private:
+        std::atomic<bool>  _is_enabled;
+        ds::imu_intrinsics _accel;
+        ds::imu_intrinsics _gyro;
+    };
+
+    class enable_auto_exposure_option : public librealsense_option
+    {
+    public:
+        void set(float value) override;
+
+        float query() const override;
 
         bool is_enabled() const override { return true; }
 
@@ -75,7 +95,8 @@ namespace rsimpl2
 
         enable_auto_exposure_option(uvc_endpoint* fisheye_ep,
                                     std::shared_ptr<auto_exposure_mechanism> auto_exposure,
-                                    std::shared_ptr<auto_exposure_state> auto_exposure_state);
+                                    std::shared_ptr<auto_exposure_state> auto_exposure_state,
+                                    const option_range& opt_range);
 
     private:
         std::shared_ptr<auto_exposure_state>         _auto_exposure_state;
@@ -83,20 +104,17 @@ namespace rsimpl2
         std::shared_ptr<auto_exposure_mechanism>     _auto_exposure;
     };
 
-    class auto_exposure_mode_option : public option
+    class auto_exposure_mode_option : public librealsense_option
     {
     public:
         auto_exposure_mode_option(std::shared_ptr<auto_exposure_mechanism> auto_exposure,
-                                  std::shared_ptr<auto_exposure_state> auto_exposure_state);
+                                  std::shared_ptr<auto_exposure_state> auto_exposure_state,
+                                  const option_range& opt_range,
+                                  const std::map<float, std::string>& description_per_value);
 
         void set(float value) override;
 
         float query() const override;
-
-        option_range get_range() const override
-        {
-            return option_range { 0, 2, 1, 0 };
-        }
 
         bool is_enabled() const override { return true; }
 
@@ -108,24 +126,22 @@ namespace rsimpl2
         const char* get_value_description(float val) const override;
 
     private:
+        const std::map<float, std::string>          _description_per_value;
         std::shared_ptr<auto_exposure_state>        _auto_exposure_state;
         std::shared_ptr<auto_exposure_mechanism>    _auto_exposure;
     };
 
-    class auto_exposure_antiflicker_rate_option : public option
+    class auto_exposure_antiflicker_rate_option : public librealsense_option
     {
     public:
         auto_exposure_antiflicker_rate_option(std::shared_ptr<auto_exposure_mechanism> auto_exposure,
-                                              std::shared_ptr<auto_exposure_state> auto_exposure_state);
+                                              std::shared_ptr<auto_exposure_state> auto_exposure_state,
+                                              const option_range& opt_range,
+                                              const std::map<float, std::string>& description_per_value);
 
         void set(float value) override;
 
         float query() const override;
-
-        option_range get_range() const override
-        {
-            return option_range { 50, 60, 10, 60 };
-        }
 
         bool is_enabled() const override { return true; }
 
@@ -137,6 +153,7 @@ namespace rsimpl2
         const char* get_value_description(float val) const override;
 
     private:
+        const std::map<float, std::string>           _description_per_value;
         std::shared_ptr<auto_exposure_state>         _auto_exposure_state;
         std::shared_ptr<auto_exposure_mechanism>     _auto_exposure;
     };

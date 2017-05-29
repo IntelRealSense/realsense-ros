@@ -1,13 +1,13 @@
 # ROS* support for Intel® RealSense™ R410 and 430 cameras 
 
-Version 2.5.7
+Version 2.6.0
 
 ## Features
 This package illustrates how to develop OSRF&reg; ROS* applications using the Intel® RealSense™ RS410 and RS430 camera. 
 
 **Important:** This is pre-release software, please read the known issues below
 
-**Note:** This pre-release software requires Intel RealSense RS410, RS430 or RS430_MM camera FW 5.6.5.0 or newer. A warning message will be displayed if the software finds camera FW that is older.
+**Note:** This pre-release software requires Intel RealSense RS410, RS430 or RS430_MM camera FW 5.6.9.0 or newer. A warning message will be displayed if the software finds camera FW that is older.
 
 ## Installation Instructions
 
