@@ -61,27 +61,27 @@ namespace rsimpl2
                 return temp;
             }));
 
-        int8_t temperature::* feild;
-        uint8_t temperature::* is_valid_feild;
+        int8_t temperature::* field;
+        uint8_t temperature::* is_valid_field;
 
         switch (_option)
         {
         case RS2_OPTION_ASIC_TEMPERATURE:
-            feild = &temperature::asic_temperature;
-            is_valid_feild = &temperature::is_asic_valid;
+            field = &temperature::asic_temperature;
+            is_valid_field = &temperature::is_asic_valid;
             break;
         case RS2_OPTION_PROJECTOR_TEMPERATURE:
-            feild = &temperature::projector_temperature;
-            is_valid_feild = &temperature::is_projector_valid;
+            field = &temperature::projector_temperature;
+            is_valid_field = &temperature::is_projector_valid;
             break;
         default:
             throw invalid_value_exception(to_string() << rs2_option_to_string(_option) << " is not temperature option!");
         }
 
-        if (!static_cast<bool>(temperature_data.*is_valid_feild))
+        if (0 == temperature_data.*is_valid_field)
             throw invalid_value_exception(to_string() << rs2_option_to_string(_option) << " value is not valid!");
 
-        return temperature_data.*feild;
+        return temperature_data.*field;
     }
 
     option_range asic_and_projector_temperature_options::get_range() const
@@ -162,9 +162,53 @@ namespace rsimpl2
         : _ep(ep)
     {}
 
+    void enable_motion_correction::set(float value)
+    {
+        if (!is_valid(value))
+            throw invalid_value_exception(to_string() << "set(enable_motion_correction) failed! Given value " << value << " is out of range.");
+
+        _is_enabled = value > _opt_range.min;
+    }
+
+    float enable_motion_correction::query() const
+    {
+        auto is_enabled = _is_enabled.load();
+        return is_enabled ? _opt_range.max : _opt_range.min;
+    }
+
+    enable_motion_correction::enable_motion_correction(endpoint* mm_ep,
+                                                       const ds::imu_intrinsics& accel,
+                                                       const ds::imu_intrinsics& gyro,
+                                                       const option_range& opt_range)
+        : librealsense_option(opt_range), _is_enabled(true), _accel(accel), _gyro(gyro)
+    {
+        mm_ep->register_on_before_frame_callback(
+                    [this](rs2_stream stream, rs2_frame& f, callback_invocation_holder callback)
+        {
+            auto fr = f.get();
+            if (_is_enabled.load() && fr->get_format() == RS2_FORMAT_MOTION_XYZ32F)
+            {
+                auto xyz = (float*)(fr->get_frame_data());
+
+                if (stream == RS2_STREAM_ACCEL)
+                {
+                    for (int i = 0; i < 3; i++)
+                        xyz[i] = xyz[i] * _accel.scale[i] - _accel.bias[i];
+                }
+
+                if (stream == RS2_STREAM_GYRO)
+                {
+                    for (int i = 0; i < 3; i++)
+                        xyz[i] = xyz[i] * _gyro.scale[i] - _gyro.bias[i];
+                }
+            }
+        });
+    }
+
     void enable_auto_exposure_option::set(float value)
     {
-        if (value <0 ) throw invalid_value_exception("Invalid Auto-Exposure mode request " + std::to_string(value));
+        if (!is_valid(value))
+            throw invalid_value_exception("set(enable_auto_exposure) failed! Invalid Auto-Exposure mode request " + std::to_string(value));
 
         auto auto_exposure_prev_state = _auto_exposure_state->get_enable_auto_exposure();
         _auto_exposure_state->set_enable_auto_exposure(0.f < std::fabs(value));
@@ -191,9 +235,11 @@ namespace rsimpl2
     }
 
     enable_auto_exposure_option::enable_auto_exposure_option(uvc_endpoint* fisheye_ep,
-                                std::shared_ptr<auto_exposure_mechanism> auto_exposure,
-                                std::shared_ptr<auto_exposure_state> auto_exposure_state)
-        : _auto_exposure_state(auto_exposure_state),
+                                                             std::shared_ptr<auto_exposure_mechanism> auto_exposure,
+                                                             std::shared_ptr<auto_exposure_state> auto_exposure_state,
+                                                             const option_range& opt_range)
+        : librealsense_option(opt_range),
+          _auto_exposure_state(auto_exposure_state),
           _to_add_frames((_auto_exposure_state->get_enable_auto_exposure())),
           _auto_exposure(auto_exposure)
     {
@@ -203,19 +249,27 @@ namespace rsimpl2
             if (!_to_add_frames || stream != RS2_STREAM_FISHEYE)
                 return;
 
+            f.get()->additional_data.fisheye_ae_mode = true;
+
             _auto_exposure->add_frame(f.get()->get_owner()->clone_frame(&f), std::move(callback));
         });
     }
 
-    auto_exposure_mode_option::auto_exposure_mode_option(
-                              std::shared_ptr<auto_exposure_mechanism> auto_exposure,
-                              std::shared_ptr<auto_exposure_state> auto_exposure_state)
-        : _auto_exposure_state(auto_exposure_state),
-          _auto_exposure(auto_exposure)
+    auto_exposure_mode_option::auto_exposure_mode_option(std::shared_ptr<auto_exposure_mechanism> auto_exposure,
+                                                         std::shared_ptr<auto_exposure_state> auto_exposure_state,
+                                                         const option_range& opt_range,
+                                                         const std::map<float, std::string>& description_per_value)
+        : librealsense_option(opt_range),
+          _auto_exposure_state(auto_exposure_state),
+          _auto_exposure(auto_exposure),
+          _description_per_value(description_per_value)
     {}
 
     void auto_exposure_mode_option::set(float value)
     {
+        if (!is_valid(value))
+            throw invalid_value_exception(to_string() << "set(auto_exposure_mode_option) failed! Given value " << value << " is out of range.");
+
         _auto_exposure_state->set_auto_exposure_mode(static_cast<auto_exposure_modes>((int)value));
         _auto_exposure->update_auto_exposure_state(*_auto_exposure_state);
     }
@@ -227,34 +281,30 @@ namespace rsimpl2
 
     const char* auto_exposure_mode_option::get_value_description(float val) const
     {
-        switch (static_cast<int>(val))
+        try{
+            return _description_per_value.at(val).c_str();
+        }
+        catch(std::out_of_range)
         {
-            case 0:
-            {
-                return "Static";
-            }
-            case 1:
-            {
-                return "Anti-Flicker";
-            }
-            case 2:
-            {
-                return "Hybrid";
-            }
-            default:
-                throw invalid_value_exception("value not found");
+            throw invalid_value_exception(to_string() << "auto_exposure_mode: get_value_description(...) failed! Description of value " << val << " is not found.");
         }
     }
 
-    auto_exposure_antiflicker_rate_option::auto_exposure_antiflicker_rate_option(
-                                          std::shared_ptr<auto_exposure_mechanism> auto_exposure,
-                                          std::shared_ptr<auto_exposure_state> auto_exposure_state)
-        : _auto_exposure_state(auto_exposure_state),
-          _auto_exposure(auto_exposure)
+    auto_exposure_antiflicker_rate_option::auto_exposure_antiflicker_rate_option(std::shared_ptr<auto_exposure_mechanism> auto_exposure,
+                                                                                 std::shared_ptr<auto_exposure_state> auto_exposure_state,
+                                                                                 const option_range& opt_range,
+                                                                                 const std::map<float, std::string>& description_per_value)
+        : librealsense_option(opt_range),
+          _auto_exposure_state(auto_exposure_state),
+          _auto_exposure(auto_exposure),
+          _description_per_value(description_per_value)
     {}
 
     void auto_exposure_antiflicker_rate_option::set(float value)
     {
+        if (!is_valid(value))
+            throw invalid_value_exception(to_string() << "set(auto_exposure_antiflicker_rate_option) failed! Given value " << value << " is out of range.");
+
         _auto_exposure_state->set_auto_exposure_antiflicker_rate(static_cast<uint32_t>(value));
         _auto_exposure->update_auto_exposure_state(*_auto_exposure_state);
     }
@@ -266,18 +316,12 @@ namespace rsimpl2
 
     const char* auto_exposure_antiflicker_rate_option::get_value_description(float val) const
     {
-        switch (static_cast<int>(val))
+        try{
+            return _description_per_value.at(val).c_str();
+        }
+        catch(std::out_of_range)
         {
-            case 50:
-            {
-                return "50Hz";
-            }
-            case 60:
-            {
-                return "60Hz";
-            }
-            default:
-                throw invalid_value_exception("antiflicker_rate: get_value_description(...) failed. value not found!");
+            throw invalid_value_exception(to_string() << "antiflicker_rate: get_value_description(...) failed! Description of value " << val << " is not found.");
         }
     }
 
@@ -314,7 +358,7 @@ namespace rsimpl2
         cmd.param1 = ds::etDepthTableControl;
 
         auto depth_table = get_depth_table(ds::GET_VAL);
-        depth_table.depth_units = 1000000 * value;
+        depth_table.depth_units = static_cast<uint32_t>(1000000 * value);
         auto ptr = (uint8_t*)(&depth_table);
         cmd.data = std::vector<uint8_t>(ptr, ptr + sizeof(ds::depth_table_control));
 
@@ -324,7 +368,7 @@ namespace rsimpl2
     float depth_scale_option::query() const
     {
         auto table = get_depth_table(ds::GET_VAL);
-        return (float)(0.000001 * table.depth_units);
+        return (float)(0.000001 * (float)table.depth_units);
     }
 
     option_range depth_scale_option::get_range() const

@@ -20,9 +20,8 @@
   <arg name="depth_fps"           default="30" />
   <arg name="color_fps"           default="30" />
   <arg name="gyro_fps"            default="1000" />
-  <arg name="enable_gyro"         default="false" />
   <arg name="accel_fps"           default="1000" />
-  <arg name="enable_accel"        default="false" />
+  <arg name="enable_imu"          default="false" />
 
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/> 
   <node pkg="nodelet" type="nodelet" name="realsense_ros_$(arg camera)" args="load realsense_ros_camera/NodeletDS5Camera $(arg manager)" output="screen">
@@ -42,8 +41,7 @@
     <param name="color_fps"                type="int"  value="$(arg color_fps)" />
     <param name="gyro_fps"                 type="int"  value="$(arg gyro_fps)" />
     <param name="accel_fps"                type="int"  value="$(arg accel_fps)" />
-    <param name="enable_gyro"              type="bool" value="$(arg enable_gyro)" />
-    <param name="enable_accel"             type="bool" value="$(arg enable_accel)" />
+    <param name="enable_imu"               type="bool" value="$(arg enable_imu)" />
 
     <param name="depth_optical_frame_id"   type="str"  value="$(arg camera)_depth_optical_frame" />
     <param name="color_optical_frame_id"   type="str"  value="$(arg camera)_rgb_optical_frame" />

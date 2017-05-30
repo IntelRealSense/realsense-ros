@@ -155,6 +155,7 @@ namespace rsimpl2
         CASE(OUTPUT_TRIGGER_ENABLED)
         CASE(MOTION_MODULE_TEMPERATURE)
         CASE(DEPTH_UNITS)
+        CASE(ENABLE_MOTION_CORRECTION)
         default: assert(!is_valid(value)); return unknown;
         }
         #undef CASE
@@ -219,6 +220,23 @@ namespace rsimpl2
         CASE(PRODUCT_ID)
         CASE(MOTION_MODULE_FIRMWARE_VERSION)
         CASE(IS_CAMERA_LOCKED)
+        default: assert(!is_valid(value)); return unknown;
+        }
+        #undef CASE
+    }
+
+    const char * get_string(rs2_frame_metadata value)
+    {
+        #define CASE(X) case RS2_FRAME_METADATA_##X: return #X;
+        switch (value)
+        {
+        CASE(FRAME_COUNTER)
+        CASE(FRAME_TIMESTAMP)
+        CASE(SENSOR_TIMESTAMP)
+        CASE(ACTUAL_EXPOSURE)
+        CASE(GAIN_LEVEL)
+        CASE(AUTO_EXPOSURE)
+        CASE(WHITE_BALANCE)
         default: assert(!is_valid(value)); return unknown;
         }
         #undef CASE
