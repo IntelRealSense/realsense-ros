@@ -46,6 +46,20 @@ public:
       unit_step_size_[rs2_stream::RS2_STREAM_DEPTH] = sizeof(uint16_t); // sensor_msgs::ImagePtr row step size
       stream_name_[rs2_stream::RS2_STREAM_DEPTH] = "depth";
 
+      // Infrared stream - Left
+      format_[rs2_stream::RS2_STREAM_INFRARED] = RS2_FORMAT_Y8;   // libRS type
+      image_format_[rs2_stream::RS2_STREAM_INFRARED] = CV_8UC1;    // CVBridge type
+      encoding_[rs2_stream::RS2_STREAM_INFRARED] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
+      unit_step_size_[rs2_stream::RS2_STREAM_INFRARED] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
+      stream_name_[rs2_stream::RS2_STREAM_INFRARED] = "infra1";
+
+      // Infrared stream - Right
+      format_[rs2_stream::RS2_STREAM_INFRARED2] = RS2_FORMAT_Y8;   // libRS type
+      image_format_[rs2_stream::RS2_STREAM_INFRARED2] = CV_8UC1;    // CVBridge type
+      encoding_[rs2_stream::RS2_STREAM_INFRARED2] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
+      unit_step_size_[rs2_stream::RS2_STREAM_INFRARED2] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
+      stream_name_[rs2_stream::RS2_STREAM_INFRARED2] = "infra2";
+
       // Types for fisheye stream
       format_[rs2_stream::RS2_STREAM_FISHEYE] = RS2_FORMAT_RAW8;   // libRS type
       image_format_[rs2_stream::RS2_STREAM_FISHEYE] = CV_8UC1;    // CVBridge type
@@ -73,6 +87,7 @@ public:
           if (cameraStarted_)
           {
               bool is_imu_stopped = false;
+              bool is_depth_or_ir_stopped = false;
               for (auto& kvp: devices)
               {
                   if (false == enable_[kvp.first])
@@ -88,6 +103,20 @@ public:
                            (rs2_stream::RS2_STREAM_GYRO == kvp.first))
                   {
                       is_imu_stopped = true;
+                  }
+
+                  if (is_imu_stopped &&
+                      (rs2_stream::RS2_STREAM_DEPTH == kvp.first) ||
+                      (rs2_stream::RS2_STREAM_INFRARED == kvp.first) ||
+                      (rs2_stream::RS2_STREAM_INFRARED2 == kvp.first))
+                  {
+                      continue;
+                  }
+                  else if ((rs2_stream::RS2_STREAM_DEPTH == kvp.first) ||
+                           (rs2_stream::RS2_STREAM_INFRARED == kvp.first) ||
+                           (rs2_stream::RS2_STREAM_INFRARED2 == kvp.first))
+                  {
+                      is_depth_or_ir_stopped = true;
                   }
 
                   kvp.second->stop();
@@ -129,6 +158,16 @@ private:
     pnh_.param("depth_fps", fps_[rs2_stream::RS2_STREAM_DEPTH], DEPTH_FPS);
     pnh_.param("enable_depth", enable_[rs2_stream::RS2_STREAM_DEPTH], ENABLE_DEPTH);
 
+    pnh_.param("infra1_width", width_[rs2_stream::RS2_STREAM_INFRARED], INFRA1_WIDTH);
+    pnh_.param("infra1_height", height_[rs2_stream::RS2_STREAM_INFRARED], INFRA1_HEIGHT);
+    pnh_.param("infra1_fps", fps_[rs2_stream::RS2_STREAM_INFRARED], INFRA1_FPS);
+    pnh_.param("enable_infra1", enable_[rs2_stream::RS2_STREAM_INFRARED], ENABLE_INFRA1);
+
+    pnh_.param("infra2_width", width_[rs2_stream::RS2_STREAM_INFRARED2], INFRA2_WIDTH);
+    pnh_.param("infra2_height", height_[rs2_stream::RS2_STREAM_INFRARED2], INFRA2_HEIGHT);
+    pnh_.param("infra2_fps", fps_[rs2_stream::RS2_STREAM_INFRARED2], INFRA2_FPS);
+    pnh_.param("enable_infra2", enable_[rs2_stream::RS2_STREAM_INFRARED2], ENABLE_INFRA2);
+
     pnh_.param("fisheye_width", width_[rs2_stream::RS2_STREAM_FISHEYE], FISHEYE_WIDTH);
     pnh_.param("fisheye_height", height_[rs2_stream::RS2_STREAM_FISHEYE], FISHEYE_HEIGHT);
     pnh_.param("fisheye_fps", fps_[rs2_stream::RS2_STREAM_FISHEYE], FISHEYE_FPS);
@@ -141,11 +180,15 @@ private:
 
     pnh_.param("base_frame_id", base_frame_id_, DEFAULT_BASE_FRAME_ID);
     pnh_.param("depth_frame_id", frame_id_[rs2_stream::RS2_STREAM_DEPTH], DEFAULT_DEPTH_FRAME_ID);
+    pnh_.param("infra1_frame_id", frame_id_[rs2_stream::RS2_STREAM_INFRARED], DEFAULT_INFRA1_FRAME_ID);
+    pnh_.param("infra2_frame_id", frame_id_[rs2_stream::RS2_STREAM_INFRARED2], DEFAULT_INFRA2_FRAME_ID);
     pnh_.param("fisheye_frame_id", frame_id_[rs2_stream::RS2_STREAM_FISHEYE], DEFAULT_FISHEYE_FRAME_ID);
     pnh_.param("imu_gyro_frame_id", frame_id_[rs2_stream::RS2_STREAM_GYRO], DEFAULT_IMU_FRAME_ID);
     pnh_.param("imu_accel_frame_id", frame_id_[rs2_stream::RS2_STREAM_ACCEL], DEFAULT_IMU_FRAME_ID);
 
     pnh_.param("depth_optical_frame_id", optical_frame_id_[rs2_stream::RS2_STREAM_DEPTH], DEFAULT_DEPTH_OPTICAL_FRAME_ID);
+    pnh_.param("infra1_optical_frame_id", optical_frame_id_[rs2_stream::RS2_STREAM_INFRARED], DEFAULT_INFRA1_OPTICAL_FRAME_ID);
+    pnh_.param("infra2_optical_frame_id", optical_frame_id_[rs2_stream::RS2_STREAM_INFRARED2], DEFAULT_INFRA2_OPTICAL_FRAME_ID);
     pnh_.param("fisheye_optical_frame_id", optical_frame_id_[rs2_stream::RS2_STREAM_FISHEYE], DEFAULT_FISHEYE_OPTICAL_FRAME_ID);
     pnh_.param("gyro_optical_frame_id", optical_frame_id_[rs2_stream::RS2_STREAM_GYRO], DEFAULT_GYRO_OPTICAL_FRAME_ID);
     pnh_.param("accel_optical_frame_id", optical_frame_id_[rs2_stream::RS2_STREAM_ACCEL], DEFAULT_ACCEL_OPTICAL_FRAME_ID);
@@ -174,6 +217,8 @@ private:
             if ("Stereo Module" == module_name)
             {
                 devices[rs2_stream::RS2_STREAM_DEPTH] = std::unique_ptr<rs2::device>(new rs2::device(dev));
+                devices[rs2_stream::RS2_STREAM_INFRARED] = std::unique_ptr<rs2::device>(new rs2::device(dev));
+                devices[rs2_stream::RS2_STREAM_INFRARED2] = std::unique_ptr<rs2::device>(new rs2::device(dev));
             }
             else if ("Fisheye Camera" == module_name)
             {
@@ -214,12 +259,26 @@ private:
       pointcloud_publisher_ = node_handle.advertise<sensor_msgs::PointCloud2>("/camera/points", 1);
     }
 
+    if (true == enable_[rs2_stream::RS2_STREAM_INFRARED])
+    {
+      image_publishers_[rs2_stream::RS2_STREAM_INFRARED] = image_transport.advertise("camera/infra1/image_raw", 1);
+      info_publisher_[rs2_stream::RS2_STREAM_INFRARED] = node_handle.advertise<sensor_msgs::CameraInfo>("camera/infra1/camera_info", 1);
+      pointcloud_publisher_ = node_handle.advertise<sensor_msgs::PointCloud2>("/camera/points", 1);
+    }
+
+    if (true == enable_[rs2_stream::RS2_STREAM_INFRARED2])
+    {
+      image_publishers_[rs2_stream::RS2_STREAM_INFRARED2] = image_transport.advertise("camera/infra2/image_raw", 1);
+      info_publisher_[rs2_stream::RS2_STREAM_INFRARED2] = node_handle.advertise<sensor_msgs::CameraInfo>("camera/infra2/camera_info", 1);
+      pointcloud_publisher_ = node_handle.advertise<sensor_msgs::PointCloud2>("/camera/points", 1);
+    }
+
     if (true == enable_[rs2_stream::RS2_STREAM_FISHEYE] &&
         true == enable_[rs2_stream::RS2_STREAM_DEPTH])
     {
         image_publishers_[rs2_stream::RS2_STREAM_FISHEYE] = image_transport.advertise("camera/fisheye/image_raw", 1);
         info_publisher_[rs2_stream::RS2_STREAM_FISHEYE] = node_handle.advertise<sensor_msgs::CameraInfo>("camera/fisheye/camera_info", 1);
-        fe2depth_publisher_ = node_handle.advertise<Extrinsics>("camera/extrinsics/fisheye2depth", 1, true);
+        fe_to_depth_publisher_ = node_handle.advertise<Extrinsics>("camera/extrinsics/fisheye2depth", 1, true);
     }
 
     if (true == enable_[rs2_stream::RS2_STREAM_GYRO])
@@ -238,7 +297,7 @@ private:
         (true == enable_[rs2_stream::RS2_STREAM_GYRO] ||
         true == enable_[rs2_stream::RS2_STREAM_ACCEL]))
     {
-        fe2imu_publisher_ = node_handle.advertise<Extrinsics>("camera/extrinsics/fisheye2imu", 1, true);
+        fe_to_imu_publisher_ = node_handle.advertise<Extrinsics>("camera/extrinsics/fisheye2imu", 1, true);
     }
   }//end setupPublishers
 
@@ -246,26 +305,43 @@ private:
   void setupStreams()
   {
       try{
-          static const rs2_stream image_streams[] = {rs2_stream::RS2_STREAM_DEPTH,
-                                                     rs2_stream::RS2_STREAM_FISHEYE};
+          static const std::vector<std::vector<rs2_stream>> image_streams =
+          {{rs2_stream::RS2_STREAM_DEPTH, rs2_stream::RS2_STREAM_INFRARED, rs2_stream::RS2_STREAM_INFRARED2},
+           {rs2_stream::RS2_STREAM_FISHEYE}};
 
-          for (const auto stream : image_streams)
+          std::vector<std::vector<rs2::stream_profile>> enabled_profiles;
+          for (const auto streams : image_streams)
           {
-            if (false == enable_[stream])
-              continue;
+              std::vector<rs2::stream_profile> enabled_profile;
+              for (auto& elem : streams)
+              {
+                  if (true == enable_[elem])
+                  {
+                      ROS_INFO_STREAM("  enabling " << stream_name_[elem] << " stream, width: " << width_[elem] << ", height: " << height_[elem] << ", fps: " << fps_[elem]);
+                      auto& dev = devices[elem];
+                      enabled_profile.push_back({elem, width_[elem], height_[elem], fps_[elem], format_[elem]});
+                      // Publish info about the stream
+                      getStreamCalibData(elem, dev.get());
 
-            auto& dev = devices[stream];
+                      // Setup stream callback for stream
+                      image_[elem] = cv::Mat(width_[elem], height_[elem], image_format_[elem], cv::Scalar(0, 0, 0));
+                  }
+              }
+              if (!enabled_profile.empty())
+              {
+                  enabled_profiles.push_back(enabled_profile);
+              }
+
+          }
+
+          for (auto& profiles : enabled_profiles)
+          {
+            auto& dev = devices[profiles.front().stream];
             // Enable the stream
-            dev->open({ stream, width_[stream], height_[stream], fps_[stream], format_[stream] });
-
-            // Publish info about the stream
-            getStreamCalibData(stream, dev.get());
-
-            // Setup stream callback for stream
-            image_[stream] = cv::Mat(width_[stream], height_[stream], image_format_[stream], cv::Scalar(0, 0, 0));
+            dev->open(profiles);
 
             // Start device with the following callback
-            dev->start([this, stream](rs2::frame frame)
+            dev->start([this](rs2::frame frame)
             {
                 // We compute a ROS timestamp which is based on an initial ROS time at point of first frame,
                 // and the incremental timestamp from the camera.
@@ -278,6 +354,7 @@ private:
                 double elapsed_camera_ms = (/*ms*/ frame.get_timestamp() - /*ms*/ camera_time_base_) / /*ms to seconds*/ 1000;
                 ros::Time t(ros_time_base_.toSec() + elapsed_camera_ms);
 
+                auto stream = frame.get_stream_type();
                 image_[stream].data = (uint8_t*)frame.get_data();
                 auto width = frame.get_width();
                 auto height = frame.get_height();
@@ -306,8 +383,6 @@ private:
                   image_publishers_[stream].publish(img);
               }
             });
-
-            ROS_INFO_STREAM("  enabled " << stream_name_[stream] << " stream, width: " << camera_info_[stream].width << " height: " << camera_info_[stream].height << " fps: " << fps_[stream]);
           }//end for
 
 
@@ -386,14 +461,14 @@ private:
               true == enable_[rs2_stream::RS2_STREAM_FISHEYE])
           {
               auto ex = getFisheye2DepthExtrinsicsMsg();
-              fe2depth_publisher_.publish(ex);
+              fe_to_depth_publisher_.publish(ex);
           }
 
           if (true == enable_[rs2_stream::RS2_STREAM_FISHEYE] &&
               (enable_[rs2_stream::RS2_STREAM_GYRO] || enable_[rs2_stream::RS2_STREAM_ACCEL]))
           {
               auto ex = getFisheye2ImuExtrinsicsMsg();
-              fe2imu_publisher_.publish(ex);
+              fe_to_imu_publisher_.publish(ex);
           }
 
           cameraStarted_ = true;
@@ -646,7 +721,7 @@ private:
   std::map<rs2_stream, int> seq_;
   std::map<rs2_stream, int> unit_step_size_;
   std::map<rs2_stream, sensor_msgs::CameraInfo> camera_info_;
-  ros::Publisher fe2depth_publisher_, fe2imu_publisher_;
+  ros::Publisher fe_to_depth_publisher_, fe_to_imu_publisher_;
 
   ros::Publisher pointcloud_publisher_;
   ros::Time ros_time_base_;

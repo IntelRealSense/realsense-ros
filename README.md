@@ -1,6 +1,6 @@
 # ROS* support for Intel® RealSense™ R410 and 430 cameras 
 
-Version 2.6.0
+Version 2.6.2
 
 ## Features
 This package illustrates how to develop OSRF&reg; ROS* applications using the Intel® RealSense™ RS410 and RS430 camera. 

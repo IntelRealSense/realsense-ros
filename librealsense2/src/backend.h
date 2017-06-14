@@ -17,6 +17,9 @@
 #include <tuple>
 #include <map>
 #include <cstring>
+#include <string>
+#include <sstream>
+
 
 const uint16_t MAX_RETRIES           = 100;
 const uint16_t VID_INTEL_CAMERA      = 0x8086;
@@ -29,6 +32,35 @@ const uint8_t MAX_META_DATA_SIZE      = 0xff; // UVC Metadata total length
 namespace rsimpl2
 {
     struct notification;
+
+    template<class T>
+    bool list_changed(const std::vector<T>& list1, 
+                      const std::vector<T>& list2, 
+                      std::function<bool(T, T)> comperizon = [](T first, T second) { return first == second; })
+    {
+        if (list1.size() != list2.size())
+            return true;
+
+        for (auto dev1 : list1)
+        {
+            bool found = false;
+            for (auto dev2 : list2)
+            {
+                if (comperizon(dev1,dev2))
+                {
+                    found = true;
+                }
+            }
+
+            if (!found)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     namespace uvc
     {
         struct control_range
@@ -43,18 +75,24 @@ namespace rsimpl2
                 populate_raw_data(step, in_step);
                 populate_raw_data(def, in_def);
             }
-
+            control_range(std::vector<uint8_t> in_min, std::vector<uint8_t> in_max, std::vector<uint8_t> in_step, std::vector<uint8_t> in_def)
+            {
+                min = in_min; max = in_max; step = in_step; def = in_def;
+            }
             std::vector<uint8_t> min;
             std::vector<uint8_t> max;
             std::vector<uint8_t> step;
             std::vector<uint8_t> def;
 
+            
         private:
             void populate_raw_data(std::vector<uint8_t>& vec, int32_t value)
             {
                 vec.resize(sizeof(value));
-                memcpy(vec.data(), &value, sizeof(value));
+                auto data = reinterpret_cast<const uint8_t*>(&value);
+                std::copy(data, data + sizeof(value), vec.data());
             }
+
         };
 
         class time_service
@@ -150,6 +188,19 @@ namespace rsimpl2
             uint16_t mi;
             std::string unique_id;
             std::string device_path;
+
+            operator std::string()
+            {
+                std::stringstream s;
+                s << "id- " << id <<
+                    "\nvid- " << std::hex << vid <<
+                    "\npid- " << std::hex << pid <<
+                    "\nmi- " << mi <<
+                    "\nunique_id- " << unique_id <<
+                    "\npath- " << device_path;
+
+                return s.str();
+            }
         };
 
         inline bool operator==(const uvc_device_info& a,
@@ -171,7 +222,29 @@ namespace rsimpl2
             uint16_t pid;
             uint16_t mi;
             std::string unique_id;
+
+            operator std::string()
+            {
+                std::stringstream s;
+
+                s << "vid- " << std::hex << vid <<
+                    "\npid- " << std::hex << pid <<
+                    "\nmi- " << mi <<
+                    "\nunique_id- " << unique_id;
+
+                return s.str();
+            }
         };
+
+        inline bool operator==(const usb_device_info& a,
+            const usb_device_info& b)
+        {
+            return  (a.id == b.id) &&
+                (a.vid == b.vid) &&
+                (a.pid == b.pid) &&
+                (a.mi == b.mi) &&
+                (a.unique_id == b.unique_id);
+        }
 
         struct hid_device_info
         {
@@ -180,7 +253,29 @@ namespace rsimpl2
             std::string pid;
             std::string unique_id;
             std::string device_path;
+
+            operator std::string()
+            {
+                std::stringstream s;
+                s << "id- " << id <<
+                    "\nvid- " << std::hex << vid <<
+                    "\npid- " << std::hex << pid <<
+                    "\nunique_id- " << unique_id <<
+                    "\npath- " << device_path;
+
+                return s.str();
+            }
         };
+
+        inline bool operator==(const hid_device_info& a,
+            const hid_device_info& b)
+        {
+            return  (a.id == b.id) &&
+                (a.vid == b.vid) &&
+                (a.pid == b.pid) &&
+                (a.unique_id == b.unique_id) &&
+                (a.device_path == b.device_path);
+        }
 
         struct hid_sensor
         {
@@ -239,10 +334,10 @@ namespace rsimpl2
         {
         public:
             virtual ~hid_device() = default;
-            virtual void open() = 0;
+            virtual void open(const std::vector<hid_profile>& hid_profiles) = 0;
             virtual void close() = 0;
             virtual void stop_capture() = 0;
-            virtual void start_capture(const std::vector<hid_profile>& hid_profiles, hid_callback callback) = 0;
+            virtual void start_capture(hid_callback callback) = 0;
             virtual std::vector<hid_sensor> get_sensors() = 0;
             virtual std::vector<uint8_t> get_custom_report_data(const std::string& custom_sensor_name,
                                                                 const std::string& report_name,
@@ -280,6 +375,7 @@ namespace rsimpl2
             virtual void unlock() const = 0;
 
             virtual std::string get_device_location() const = 0;
+
 
             virtual ~uvc_device() = default;
 
@@ -414,6 +510,64 @@ namespace rsimpl2
             // interupt endpoint and any additional USB specific stuff
         };
 
+
+
+        class device_watcher;
+
+        struct devices_data
+        {
+            devices_data(){}
+
+            devices_data(const std::vector<uvc_device_info>& uvc_devices, const std::vector<usb_device_info>& usb_devices, const std::vector<hid_device_info>& hid_devices)
+                :_uvc_devices(uvc_devices), _usb_devices(usb_devices), _hid_devices(hid_devices) {}
+
+            devices_data(const std::vector<usb_device_info>& usb_devices)
+                :_usb_devices(usb_devices) {}
+
+            devices_data(const std::vector<uvc_device_info>& uvc_devices, const std::vector<usb_device_info>& usb_devices)
+                :_uvc_devices(uvc_devices), _usb_devices(usb_devices) {}
+
+            std::vector<uvc_device_info> _uvc_devices;
+            std::vector<usb_device_info> _usb_devices;
+            std::vector<hid_device_info> _hid_devices;
+
+            bool operator == (const devices_data& other)
+            {
+                return !list_changed(_uvc_devices, other._uvc_devices) &&
+                    !list_changed(_hid_devices, other._hid_devices);
+            }
+
+            operator std::string()
+            {
+                std::string s;
+                s = _uvc_devices.size()>0 ? "uvc devices:\n" : "";
+                for (auto uvc : _uvc_devices)
+                {
+                    s += uvc;
+                    s += "\n\n";
+                }
+
+                s += _usb_devices.size()>0 ? "usb devices:\n" : "";
+                for (auto usb : _usb_devices)
+                {
+                    s += usb;
+                    s += "\n\n";
+                }
+
+                s += _hid_devices.size()>0 ? "hid devices: \n" : "";
+                for (auto hid : _hid_devices)
+                {
+                    s += hid;
+                    s += "\n\n";
+                }
+                return s;
+            }
+        };
+
+
+
+        typedef std::function<void(devices_data old, devices_data curr)> device_changed_callback;
+
         class backend
         {
         public:
@@ -428,15 +582,17 @@ namespace rsimpl2
 
             virtual std::shared_ptr<time_service> create_time_service() const = 0;
 
+            virtual std::shared_ptr<device_watcher> create_device_watcher() const = 0;
+
             virtual ~backend() = default;
         };
 
         class multi_pins_hid_device : public hid_device
         {
         public:
-            void open() override
+            void open(const std::vector<hid_profile>& sensor_iio) override
             {
-                for (auto&& dev : _dev) dev->open();
+                for (auto&& dev : _dev) dev->open(sensor_iio);
             }
 
             void close() override
@@ -449,9 +605,9 @@ namespace rsimpl2
                 _dev.front()->stop_capture();
             }
 
-            void start_capture(const std::vector<hid_profile>& sensor_iio, hid_callback callback) override
+            void start_capture(hid_callback callback) override
             {
-                _dev.front()->start_capture(sensor_iio, callback);
+                _dev.front()->start_capture(callback);
             }
 
             std::vector<hid_sensor> get_sensors() override
@@ -634,6 +790,15 @@ namespace rsimpl2
         };
 
         std::shared_ptr<backend> create_backend();
+
+
+
+        class device_watcher
+        {
+        public:
+           virtual void start(device_changed_callback callback) = 0;
+           virtual void stop() = 0;
+        };
     }
 }
 
