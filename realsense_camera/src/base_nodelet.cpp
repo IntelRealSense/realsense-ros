@@ -81,12 +81,10 @@ namespace realsense_camera
     catch(const std::exception& ex)
     {
         ROS_ERROR_STREAM(ex.what());
-        throw;
     }
     catch(...)
     {
         ROS_ERROR_STREAM("Unknown exception has occured!");
-        throw;
     }
   }
 
