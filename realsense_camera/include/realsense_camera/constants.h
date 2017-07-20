@@ -90,10 +90,14 @@ namespace realsense_camera
     const std::string DEFAULT_IR2_FRAME_ID = "camera_ir2_frame";
     const std::string DEFAULT_IR2_OPTICAL_FRAME_ID = "camera_ir2_optical_frame";
 
+
+
     // R200 Constants.
     // Indoor Range: 0.7m - 3.5m, Outdoor Range: 10m
     const float R200_MAX_Z = 10.0f;   // in meters
     const std::string R200_CAMERA_FW_VERSION = "1.0.72.06";
+    // LR200 Constants.
+    const std::string LR200_CAMERA_FW_VERSION = "2.0.71.18";
     // F200 Constants.
     // Indoor Range: 0.2m – 1.0m, Outdoor Range: n/a
     const float F200_MAX_Z = 1.0f;    // in meters
@@ -132,7 +136,8 @@ namespace realsense_camera
       stringpair("Intel RealSense SR300_camera", SR300_CAMERA_FW_VERSION),
       stringpair("Intel RealSense ZR300_camera", ZR300_CAMERA_FW_VERSION),
       stringpair("Intel RealSense ZR300_adapter", ZR300_ADAPTER_FW_VERSION),
-      stringpair("Intel RealSense ZR300_motion_module", ZR300_MOTION_MODULE_FW_VERSION)
+      stringpair("Intel RealSense ZR300_motion_module", ZR300_MOTION_MODULE_FW_VERSION),
+      stringpair("Intel RealSense LR200_camera", LR200_CAMERA_FW_VERSION)
     };
 
     const int MAP_START_VALUES_SIZE = sizeof(MAP_START_VALUES) /
