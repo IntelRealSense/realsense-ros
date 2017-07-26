@@ -49,31 +49,42 @@ namespace realsense_camera
    */
   BaseNodelet::~BaseNodelet()
   {
-    if (enable_tf_ == true && enable_tf_dynamic_ == true)
+    try
     {
-      transform_thread_->join();
+      if (enable_tf_ == true && enable_tf_dynamic_ == true)
+      {
+        transform_thread_->join();
+      }
+
+      stopCamera();
+
+      if (rs_context_)
+      {
+        rs_delete_context(rs_context_, &rs_error_);
+        rs_context_ = NULL;
+        checkError();
+      }
+
+      // Kill all old system progress groups
+      while (!system_proc_groups_.empty())
+      {
+        killpg(system_proc_groups_.front(), SIGHUP);
+        system_proc_groups_.pop();
+      }
+
+      ROS_INFO_STREAM(nodelet_name_ << " - Stopping...");
+      if (!ros::isShuttingDown())
+      {
+        ros::shutdown();
+      }
     }
-
-    stopCamera();
-
-    if (rs_context_)
+    catch(const std::exception& ex)
     {
-      rs_delete_context(rs_context_, &rs_error_);
-      rs_context_ = NULL;
-      checkError();
+        ROS_ERROR_STREAM(ex.what());
     }
-
-    // Kill all old system progress groups
-    while (!system_proc_groups_.empty())
+    catch(...)
     {
-      killpg(system_proc_groups_.front(), SIGHUP);
-      system_proc_groups_.pop();
-    }
-
-    ROS_INFO_STREAM(nodelet_name_ << " - Stopping...");
-    if (!ros::isShuttingDown())
-    {
-      ros::shutdown();
+        ROS_ERROR_STREAM("Unknown exception has occured!");
     }
   }
 
@@ -1239,7 +1250,7 @@ namespace realsense_camera
     }
   }
 
-  void BaseNodelet::wrappedSystem(std::vector<std::string> string_argv)
+  void BaseNodelet::wrappedSystem(const std::vector<std::string>& string_argv)
   {
     pid_t pid;
 
@@ -1288,16 +1299,33 @@ namespace realsense_camera
     }
   }
 
-  std::string BaseNodelet::checkFirmwareValidation(std::string fw_type, std::string current_fw, std::string camera_name,
-        std::string camera_serial_number)
+  std::string BaseNodelet::checkFirmwareValidation(const std::string& fw_type,
+                                                   const std::string& current_fw,
+                                                   const std::string& camera_name,
+                                                   const std::string& camera_serial_number)
   {
-    std::string validated_firmware = CAMERA_NAME_TO_VALIDATED_FIRMWARE.find(camera_name + "_" + fw_type)->second;
-    std::string warning_msg = "";
-    if (current_fw != validated_firmware)
+    for (auto& elem : CAMERA_NAME_TO_VALIDATED_FIRMWARE)
     {
-      warning_msg = camera_serial_number + "'s current " + fw_type + " firmware is " + current_fw +
-            ", Validated " + fw_type + " firmware is " + validated_firmware;
+        std::cout << elem.first << " ; " << elem.second << std::endl;
     }
+
+    std::string warning_msg = "";
+    std::string cam_name = camera_name + "_" + fw_type;
+    auto it = CAMERA_NAME_TO_VALIDATED_FIRMWARE.find(cam_name);
+    if (it == CAMERA_NAME_TO_VALIDATED_FIRMWARE.end())
+    {
+        warning_msg = "Camera " + cam_name + " not found!";
+    }
+    else
+    {
+        std::string validated_firmware = it->second;
+        if (current_fw != validated_firmware)
+        {
+            warning_msg = camera_serial_number + "'s current " + fw_type + " firmware is " + current_fw +
+                    ", Validated " + fw_type + " firmware is " + validated_firmware;
+        }
+    }
+
     return warning_msg;
   }
 
