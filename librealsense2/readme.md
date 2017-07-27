@@ -20,19 +20,16 @@ This project is a cross-platform library (Linux, Windows, Mac) for capturing dat
 Developer kits containing the necessary hardware to use this library are available for purchase at [this link](http://click.intel.com/realsense.html). This project is separate from the production software stack available in the [Intel® RealSense™ SDK](https://software.intel.com/en-us/intel-realsense-sdk), namely that this library only encompasses camera capture functionality without additional computer vision algorithms.
 
 ## Table of Contents
-* [Installation Guide](#installation-guide)
+* Installation Guide:
+  * [Linux](./doc/installation.md)
+  * [Windows](./doc/installation_windows.md)
+  * [Mac OS X](./doc/installation_osx.md)
 * [Documentation](#documentation)
 * [Functionality](#functionality)
 * [Compatible Devices](#compatible-devices)
 * [Compatible Platforms](#compatible-platforms)
 * [Integrations](#integrations)
 * [License](#license)
-
-## Installation Guide
-
-* [Linux](./doc/installation.md)
-* [Windows](./doc/installation_windows.md)
-* [Mac OS X](./doc/installation_osx.md)
 
 ## Documentation
 
@@ -43,12 +40,15 @@ A comprehensive suite of sample and tutorial applications are provided in the `/
 	* `doxygen doc/doxygen/doxyfile`
 * [C API](./include/librealsense2/rs.h) - With doxygen-style API comments
 * [Frame Management](./doc/frame_lifetime.md) - Frame Memory Management, Threading Model and Syncronization
+* [Frame Metadata](./doc/frame_metadata.md) - support for frame-metadata attributes
 * [Python Bindings](./doc/python.md) - official python bindings for librealsense
 * [What's New?](./doc/rs400_support.md) - changes in librealsense2
 * [Getting Started](./doc/stepbystep/getting_started_with_openCV.md) - Getting started with OpenCV
 * [Troubleshooting](./doc/troubleshooting.md) - Useful tips when debugging issues related to the camera
+* [Error Handling](./doc/error_handling.md) - Documents librealsense error handling policy
 * Device specific topics:
   * [RS400 and External Devices](./doc/rs400/external_devices.md) - Notes on integrating RS400 with external devices
+  * [RS400 Advanced Mode](./doc/rs400/rs400_advanced_mode.md) - Overview of the Advanced Mode APIs
 
 ## Functionality
 

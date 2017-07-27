@@ -64,6 +64,7 @@ namespace rsimpl2
         {
         public:
             hid_input(const std::string& iio_device_path, const std::string& input_name);
+            ~hid_input();
 
             // enable scan input. doing so cause the input to be part of the data provided in the polling.
             void enable(bool is_enable);
@@ -114,22 +115,22 @@ namespace rsimpl2
         // declare device sensor with all of its inputs.
         class iio_hid_sensor {
         public:
-            iio_hid_sensor(const std::string& device_path);
+            iio_hid_sensor(const std::string& device_path, uint32_t frequency);
 
             ~iio_hid_sensor();
 
             // start capturing and polling.
             void start_capture(hid_callback sensor_callback);
 
-            void set_frequency(uint32_t frequency);
-
             void stop_capture();
-
-            std::list<hid_input*>& get_inputs() { return _inputs; }
 
             const std::string& get_sensor_name() const { return _sensor_name; }
 
         private:
+            void clear_buffer();
+
+            void set_frequency(uint32_t frequency);
+
             void signal_stop();
 
             bool has_metadata();
@@ -139,7 +140,7 @@ namespace rsimpl2
             void create_channel_array();
 
             // initialize the device sensor. reading its name and all of its inputs.
-            void init();
+            void init(uint32_t frequency);
 
             // calculate the storage size of a scan
             uint32_t get_channel_size() const;
@@ -176,13 +177,13 @@ namespace rsimpl2
 
             ~v4l_hid_device();
 
-            void open();
+            void open(const std::vector<hid_profile>& hid_profiles);
 
             void close();
 
             std::vector<hid_sensor> get_sensors();
 
-            void start_capture(const std::vector<hid_profile>& hid_profiles, hid_callback callback);
+            void start_capture(hid_callback callback);
 
             void stop_capture();
 
@@ -195,6 +196,7 @@ namespace rsimpl2
         private:
             static bool get_hid_device_info(const char* dev_path, hid_device_info& device_info);
 
+            std::vector<hid_profile> _hid_profiles;
             std::vector<hid_device_info> _hid_device_infos;
             std::vector<std::unique_ptr<iio_hid_sensor>> _iio_hid_sensors;
             std::vector<std::unique_ptr<hid_custom_sensor>> _hid_custom_sensors;

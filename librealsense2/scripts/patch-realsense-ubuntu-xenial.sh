@@ -11,18 +11,21 @@ fi
 #Include usability functions
 source ./scripts/patch-utils.sh
 
+# Get the required tools and headers to build the kernel
+sudo apt-get install linux-headers-generic build-essential git
+
 #Additional packages to build patch
 require_package libusb-1.0-0-dev
 require_package libssl-dev
 
-# Get the required tools and headers to build the kernel
-sudo apt-get install linux-headers-generic build-essential git
-
 LINUX_BRANCH=$(uname -r)
 
-kernel_name="ubuntu-xenial"
+kernel_branch=$(choose_kernel_branch $LINUX_BRANCH)
+kernel_name="ubuntu-xenial-$kernel_branch"
+
+
 # Get the linux kernel and change into source tree
-[ ! -d ${kernel_name} ] && git clone git://kernel.ubuntu.com/ubuntu/ubuntu-xenial.git --depth 1
+[ ! -d ${kernel_name} ] && git clone -b $kernel_branch git://kernel.ubuntu.com/ubuntu/ubuntu-xenial.git --depth 1 ./${kernel_name}
 cd ${kernel_name}
 
 # Verify that there are no trailing changes., warn the user to make corrective action if needed
@@ -30,8 +33,10 @@ if [ $(git status | grep 'modified:' | wc -l) -ne 0 ];
 then
 	echo -e "\e[36mThe kernel has modified files:\e[0m"
 	git status | grep 'modified:'
-	echo -e "\e[36mProceeding will reset all local kernel changes. Press 'n' within 10 seconds to abort the procedure"
-	read -t 10 -r -p "Do you want to proceed? [Y/n]" response	
+	echo -e "\e[36mProceeding will reset all local kernel changes. Press 'n' within 10 seconds to abort the operation"
+	set +e
+	read -n 1 -t 10 -r -p "Do you want to proceed? [Y/n]" response
+	set -e
 	response=${response,,}    # tolower
 	if [[ $response =~ ^(n|N)$ ]]; 
 	then
@@ -51,15 +56,15 @@ fi
 
 if [ $reset_driver -eq 1 ];
 then 
-	echo -e "\e[43mUser requested to rebuild and reinstall ubuntu-xenial stock drivers\e[0m"	
+	echo -e "\e[43mUser requested to rebuild and reinstall ubuntu-xenial stock drivers\e[0m"
 else
 	# Patching kernel for RealSense devices
 	echo -e "\e[32mApplying realsense-uvc patch\e[0m"
 	patch -p1 < ../scripts/realsense-camera-formats_ubuntu-xenial.patch
 	echo -e "\e[32mApplying realsense-metadata patch\e[0m"
-	patch -p1 < ../scripts/realsense-metadata-ubuntu-xenial.patch	
+	patch -p1 < ../scripts/realsense-metadata-ubuntu-xenial.patch
 	echo -e "\e[32mApplying realsense-hid patch\e[0m"
-	patch -p1 < ../scripts/realsense-hid-ubuntu-xenial.patch
+	patch -p1 < ../scripts/realsense-hid-ubuntu-xenial-${kernel_branch}.patch
 fi
 
 # Copy configuration
@@ -76,22 +81,25 @@ KBASE=`pwd`
 cd drivers/media/usb/uvc
 sudo cp $KBASE/Module.symvers .
 echo -e "\e[32mCompiling uvc module\e[0m"
-sudo make -C $KBASE M=$KBASE/drivers/media/usb/uvc/ modules
+sudo make -j -C $KBASE M=$KBASE/drivers/media/usb/uvc/ modules
 echo -e "\e[32mCompiling accelerometer and gyro modules\e[0m"
-make -C $KBASE M=$KBASE/drivers/iio/accel modules
-make -C $KBASE M=$KBASE/drivers/iio/gyro modules
+make -j -C $KBASE M=$KBASE/drivers/iio/accel modules
+make -j -C $KBASE M=$KBASE/drivers/iio/gyro modules
+echo -e "\e[32mCompiling v4l2-core modules\e[0m"
+sudo make -j -C $KBASE M=$KBASE/drivers/media/v4l2-core modules
 
 # Copy the patched modules to a sane location
 sudo cp $KBASE/drivers/media/usb/uvc/uvcvideo.ko ~/$LINUX_BRANCH-uvcvideo.ko
 sudo cp $KBASE/drivers/iio/accel/hid-sensor-accel-3d.ko ~/$LINUX_BRANCH-hid-sensor-accel-3d.ko
 sudo cp $KBASE/drivers/iio/gyro/hid-sensor-gyro-3d.ko ~/$LINUX_BRANCH-hid-sensor-gyro-3d.ko
+sudo cp $KBASE/drivers/media/v4l2-core/videodev.ko ~/$LINUX_BRANCH-videodev.ko
 
-echo -e "\e[32mPatched kernels modules created successfully\n\e[0m"
+echo -e "\e[32mPatched kernels modules were created successfully\n\e[0m"
 
-# Load the newly built modules
-try_module_insert uvcvideo				~/$LINUX_BRANCH-uvcvideo.ko /lib/modules/`uname -r`/kernel/drivers/media/usb/uvc/uvcvideo.ko
-try_module_insert hid-sensor-accel-3d 	~/$LINUX_BRANCH-hid-sensor-accel-3d.ko /lib/modules/`uname -r`/kernel/drivers/iio/accel/hid-sensor-accel-3d.ko
-try_module_insert hid-sensor-gyro-3d	~/$LINUX_BRANCH-hid-sensor-gyro-3d.ko /lib/modules/`uname -r`/kernel/drivers/iio/gyro/hid-sensor-gyro-3d.ko
-
+# Load the newly-built modules
+try_module_insert videodev				~/$LINUX_BRANCH-videodev.ko 			/lib/modules/`uname -r`/kernel/drivers/media/v4l2-core/videodev.ko
+try_module_insert uvcvideo				~/$LINUX_BRANCH-uvcvideo.ko 			/lib/modules/`uname -r`/kernel/drivers/media/usb/uvc/uvcvideo.ko
+try_module_insert hid-sensor-accel-3d 	~/$LINUX_BRANCH-hid-sensor-accel-3d.ko 	/lib/modules/`uname -r`/kernel/drivers/iio/accel/hid-sensor-accel-3d.ko
+try_module_insert hid-sensor-gyro-3d	~/$LINUX_BRANCH-hid-sensor-gyro-3d.ko 	/lib/modules/`uname -r`/kernel/drivers/iio/gyro/hid-sensor-gyro-3d.ko
 
 echo -e "\e[92m\n\e[1mScript has completed. Please consult the installation guide for further instruction.\n\e[0m"

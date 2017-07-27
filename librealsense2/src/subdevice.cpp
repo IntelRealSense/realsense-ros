@@ -3,10 +3,12 @@
 
 #include "device.h"
 #include "image.h"
+#include "algo.h"
+#include "metadata-parser.h"
+
 #include <array>
 #include <set>
 #include <unordered_set>
-#include "algo.h"
 
 namespace rsimpl2
 {
@@ -52,6 +54,8 @@ namespace rsimpl2
     {
         _options[RS2_OPTION_FRAMES_QUEUE_SIZE] = std::make_shared<frame_queue_size>(&_max_publish_list_size,
                                                                                     option_range{ 0, 64, 1, 16 });
+
+        register_metadata(RS2_FRAME_METADATA_TIME_OF_ARRIVAL, std::make_shared<rsimpl2::md_time_of_arrival_parser>());
     }
 
     void endpoint::register_notifications_callback(notifications_callback_ptr callback)
@@ -245,7 +249,7 @@ namespace rsimpl2
         {
             uint32_t device_fourcc = reinterpret_cast<const big_endian<uint32_t>&>(elem);
             char fourcc[sizeof(device_fourcc) + 1];
-            memcpy(fourcc, &device_fourcc, sizeof(device_fourcc));
+            rsimpl2::copy(fourcc, &device_fourcc, sizeof(device_fourcc));
             fourcc[sizeof(device_fourcc)] = 0;
             LOG_WARNING("Unutilized format " << fourcc);
         }
@@ -257,7 +261,7 @@ namespace rsimpl2
             {
                 uint32_t device_fourcc = reinterpret_cast<const big_endian<uint32_t>&>(elem);
                 char fourcc[sizeof(device_fourcc) + 1];
-                memcpy(fourcc, &device_fourcc, sizeof(device_fourcc));
+                rsimpl2::copy(fourcc, &device_fourcc, sizeof(device_fourcc));
                 fourcc[sizeof(device_fourcc)] = 0;
                 ss << fourcc << std::endl;
             }
@@ -644,7 +648,6 @@ namespace rsimpl2
             throw wrong_api_call_sequence_exception("Hid device is already opened!");
 
         auto mapping = resolve_requests(requests);
-        _hid_device->open();
         for (auto& request : requests)
         {
             auto sensor_name = rs2_stream_to_sensor_name(request.stream);
@@ -669,6 +672,13 @@ namespace rsimpl2
                 }
             }
         }
+
+        std::vector<uvc::hid_profile> configured_hid_profiles;
+        for (auto& elem : _configured_profiles)
+        {
+            configured_hid_profiles.push_back(uvc::hid_profile{elem.first, elem.second.fps});
+        }
+        _hid_device->open(configured_hid_profiles);
         _is_opened = true;
     }
 
@@ -712,13 +722,7 @@ namespace rsimpl2
 
         _archive = std::make_shared<frame_archive>(&_max_publish_list_size, _ts, nullptr, _metadata_parsers);
         _callback = std::move(callback);
-        std::vector<uvc::hid_profile> configured_hid_profiles;
-        for (auto& elem : _configured_profiles)
-        {
-            configured_hid_profiles.push_back(uvc::hid_profile{elem.first, elem.second.fps});
-        }
-
-        _hid_device->start_capture(configured_hid_profiles, [this](const uvc::sensor_data& sensor_data)
+        _hid_device->start_capture([this](const uvc::sensor_data& sensor_data)
         {
             auto system_time = _ts->get_time();
             auto timestamp_reader = _hid_iio_timestamp_reader.get();
@@ -776,6 +780,7 @@ namespace rsimpl2
             additional_data.timestamp = timestamp;
             additional_data.frame_number = frame_counter;
             additional_data.timestamp_domain = timestamp_reader->get_frame_timestamp_domain(mode, sensor_data.fo);
+            additional_data.system_time = system_time;
 
             LOG_DEBUG("FrameAccepted," << get_string(additional_data.stream_type) << "," << frame_counter
                       << ",Arrived," << std::fixed << system_time

@@ -40,7 +40,8 @@ namespace rs2
                                      std::map<rs2_stream, Dev> devices)
                     : profiles(std::move(profiles)),
                       devices(std::move(devices)),
-                      results(std::move(results)) {}
+                      results(std::move(results))
+                {}
 
                 template<class T>
                 void start(T callback)
@@ -53,6 +54,12 @@ namespace rs2
                 {
                     for (auto&& dev : results)
                         dev.stop();
+                }
+
+                void close()
+                {
+                    for (auto&& dev : results)
+                        dev.close();
                 }
 
                 rs2_intrinsics get_intrinsics(rs2_stream stream) try
@@ -73,6 +80,10 @@ namespace rs2
                     throw std::runtime_error(std::string("config doesnt have extrinsics for ") + rs2_stream_to_string(from) + "->" + rs2_stream_to_string(to));
                 }
 
+                std::map<rs2_stream, stream_profile> get_profiles() const
+                {
+                    return profiles;
+                }
             private:
                 std::map<rs2_stream, stream_profile> profiles;
                 std::map<rs2_stream, Dev> devices;
@@ -297,6 +308,103 @@ namespace rs2
         };
 
         typedef Config<> config;
+
+        /**
+        * device_hub class - encapsulate the handling of connect and disconnect events
+        */
+        class device_hub
+        {
+        public:
+            device_hub(const context& ctx)
+                : _ctx(ctx)
+            {
+                _device_list = _ctx.query_devices();
+
+                _ctx.set_devices_changed_callback([&](event_information& info)
+                {
+                    std::unique_lock<std::mutex> lock(_mutex);
+                    _device_list = _ctx.query_devices();
+
+                    // Current device will point to the first available device
+                    _camera_index = 0;
+                    if (_device_list.size() > 0)
+                    {
+                        _cv.notify_all();
+                    }
+                });
+            }
+
+            /**
+             * If any device is connected return it, otherwise wait until next RealSense device connects.
+             * Calling this method multiple times will cycle through connected devices
+             */
+            device wait_for_device()
+            {
+                {
+                    std::unique_lock<std::mutex> lock(_mutex);
+                    // check if there is at least one device connected
+                    if (_device_list.size() > 0)
+                    {
+                        // user can switch the devices by calling to wait_for_device until he get the desire device
+                        // _camera_index is the curr device that user want to work with
+
+                        auto dev = _device_list[_camera_index % _device_list.size()];
+                        _camera_index = ++_camera_index % _device_list.size();
+                        return dev;
+                    }
+                    else
+                    {
+                        std::cout<<"No device connected\n";
+                    }
+                }
+                // if there are no devices connected or something wrong happened while enumeration
+                // wait for event of device connection
+                // and do it until camera connected and succeed in its creation
+                while (true)
+                {
+                    std::unique_lock<std::mutex> lock(_mutex);
+                    if (_device_list.size() == 0)
+                    {
+                        _cv.wait_for(lock, std::chrono::hours(999999), [&]() {return _device_list.size()>0; });
+                    }
+                    try
+                    {
+                        return  _device_list[0];
+                    }
+                    catch (...)
+                    {
+                        std::cout<<"Couldn't create the device\n";
+                    }
+                }
+            }
+
+            /**
+            * Checks if device is still connected
+            */
+            bool is_connected(const device& dev)
+            {
+                rs2_error* e = nullptr;
+
+                if (!dev)
+                    return false;
+
+                try
+                {
+                    std::unique_lock<std::mutex> lock(_mutex);
+                    auto result = rs2_device_list_contains(_device_list.get_list(), dev.get(), &e);
+                    if (e) return false;
+                    return result > 0;
+                }
+                catch (...)  { return false; }
+            }
+
+        private:
+            const context& _ctx;
+            std::mutex _mutex;
+            std::condition_variable _cv;
+            device_list _device_list;
+            int _camera_index = 0;
+        };
     }
 }
 

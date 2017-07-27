@@ -75,6 +75,11 @@ namespace rsimpl2
             init();
         }
 
+        hid_input::~hid_input()
+        {
+            enable(false);
+        }
+
         // enable scan input. doing so cause the input to be part of the data provided in the polling.
         void hid_input::enable(bool is_enable)
         {
@@ -431,7 +436,7 @@ namespace rsimpl2
             }
         }
 
-        iio_hid_sensor::iio_hid_sensor(const std::string& device_path)
+        iio_hid_sensor::iio_hid_sensor(const std::string& device_path, uint32_t frequency)
             : _iio_device_path(device_path),
               _sensor_name(""),
               _callback(nullptr),
@@ -440,12 +445,15 @@ namespace rsimpl2
               _fd(0),
               _stop_pipe_fd{}
         {
-            init();
+            init(frequency);
         }
 
         iio_hid_sensor::~iio_hid_sensor()
         {
+            write_integer_to_param("buffer/enable", 0);
             stop_capture();
+
+            clear_buffer();
 
             // clear inputs.
             _inputs.clear();
@@ -474,9 +482,6 @@ namespace rsimpl2
             // count number of enabled count elements and sort by their index.
             create_channel_array();
 
-            write_integer_to_param("buffer/length", buf_len);
-            write_integer_to_param("buffer/enable", 1);
-
             const auto max_retries = 10;
             auto retries = 0;
             while(++retries < max_retries)
@@ -490,7 +495,6 @@ namespace rsimpl2
 
             if ((retries == max_retries) && (_fd <= 0))
             {
-                write_integer_to_param("buffer/enable", 0);
                 _channels.clear();
                 throw linux_backend_exception("open() failed with all retries!");
             }
@@ -498,14 +502,13 @@ namespace rsimpl2
             if (pipe(_stop_pipe_fd) < 0)
             {
                 close(_fd);
-                write_integer_to_param("buffer/enable", 0);
                 _channels.clear();
                 throw linux_backend_exception("iio_hid_sensor: Cannot create pipe!");
             }
 
             _callback = sensor_callback;
             _is_capturing = true;
-            _hid_thread = std::unique_ptr<std::thread>(new std::thread([this, iio_read_device_path_str](){
+            _hid_thread = std::unique_ptr<std::thread>(new std::thread([this](){
                 const uint32_t channel_size = get_channel_size();
                 auto raw_data_size = channel_size*buf_len;
 
@@ -580,7 +583,6 @@ namespace rsimpl2
             _is_capturing = false;
             signal_stop();
             _hid_thread->join();
-            write_integer_to_param("buffer/enable", 0);
             _callback = NULL;
             _channels.clear();
 
@@ -594,6 +596,44 @@ namespace rsimpl2
 
             _fd = 0;
             _stop_pipe_fd[0] = _stop_pipe_fd[1] = 0;
+        }
+
+        void iio_hid_sensor::clear_buffer()
+        {
+            std::ostringstream iio_read_device_path;
+            iio_read_device_path << "/dev/" << IIO_DEVICE_PREFIX << _iio_device_number;
+
+            const auto max_retries = 10;
+            auto retries = 0;
+            while(++retries < max_retries)
+            {
+                if ((_fd = open(iio_read_device_path.str().c_str(), O_RDONLY | O_NONBLOCK)) > 0)
+                    break;
+
+                LOG_WARNING("open() failed!");
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            }
+
+            if ((retries == max_retries) && (_fd <= 0))
+            {
+                throw linux_backend_exception("open() failed with all retries!");
+            }
+
+            // count number of enabled count elements and sort by their index.
+            create_channel_array();
+
+            const uint32_t channel_size = get_channel_size();
+            auto raw_data_size = channel_size*buf_len;
+
+            std::vector<uint8_t> raw_data(raw_data_size);
+
+            auto read_size = read(_fd, raw_data.data(), raw_data_size);
+            while(read_size > 0)
+                read_size = read(_fd, raw_data.data(), raw_data_size);
+
+            _channels.clear();
+            if(::close(_fd) < 0)
+                throw linux_backend_exception("iio_hid_sensor: close(_fd) failed");
         }
 
         void iio_hid_sensor::set_frequency(uint32_t frequency)
@@ -647,7 +687,7 @@ namespace rsimpl2
         }
 
         // initialize the device sensor. reading its name and all of its inputs.
-        void iio_hid_sensor::init()
+        void iio_hid_sensor::init(uint32_t frequency)
         {
             std::ifstream iio_device_file(_iio_device_path + "/name");
 
@@ -684,6 +724,13 @@ namespace rsimpl2
 
             // get the specific name of sampling_frequency
             _sampling_frequency_name = get_sampling_frequency_name();
+
+            for (auto& input : _inputs)
+                input->enable(true);
+
+            set_frequency(frequency);
+            write_integer_to_param("buffer/length", buf_len);
+            write_integer_to_param("buffer/enable", 1);
         }
 
         // calculate the storage size of a scan
@@ -845,10 +892,11 @@ namespace rsimpl2
             }
         }
 
-        void v4l_hid_device::open()
+        void v4l_hid_device::open(const std::vector<hid_profile>& hid_profiles)
         {
+            _hid_profiles = hid_profiles;
             for (auto& device_info : _hid_device_infos)
-            {
+             {
                 try
                 {
                     if (device_info.id == custom_id)
@@ -859,7 +907,20 @@ namespace rsimpl2
                     }
                     else
                     {
-                        auto device = std::unique_ptr<iio_hid_sensor>(new iio_hid_sensor(device_info.device_path));
+                        uint32_t frequency = 0;
+                        for (auto& profile : hid_profiles)
+                        {
+                            if (profile.sensor_name == device_info.id)
+                            {
+                                frequency = profile.frequency;
+                                break;
+                            }
+                        }
+
+                        if (frequency == 0)
+                            continue;
+
+                        auto device = std::unique_ptr<iio_hid_sensor>(new iio_hid_sensor(device_info.device_path, frequency));
                         _iio_hid_sensors.push_back(std::move(device));
                     }
                 }
@@ -906,22 +967,15 @@ namespace rsimpl2
             return iio_sensors;
         }
 
-        void v4l_hid_device::start_capture(const std::vector<hid_profile>& hid_profiles, hid_callback callback)
+        void v4l_hid_device::start_capture(hid_callback callback)
         {
-            for (auto& profile : hid_profiles)
+            for (auto& profile : _hid_profiles)
             {
                 for (auto& sensor : _iio_hid_sensors)
                 {
                     if (sensor->get_sensor_name() == profile.sensor_name)
                     {
-                        sensor->set_frequency(profile.frequency);
-
-                        auto inputs = sensor->get_inputs();
-                        for (auto input : inputs)
-                        {
-                            input->enable(true);
-                            _streaming_iio_sensors.push_back(sensor.get());
-                        }
+                        _streaming_iio_sensors.push_back(sensor.get());
                     }
                 }
 
@@ -983,13 +1037,7 @@ namespace rsimpl2
         {
             for (auto& sensor : _iio_hid_sensors)
             {
-                auto inputs = sensor->get_inputs();
-                for (auto input : inputs)
-                {
-                    input->enable(false);
                     sensor->stop_capture();
-                    break;
-                }
             }
 
             _streaming_iio_sensors.clear();

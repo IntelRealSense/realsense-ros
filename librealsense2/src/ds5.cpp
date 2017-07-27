@@ -102,6 +102,10 @@ namespace rsimpl2
         {
             auto& devices = group.first;
             auto& hids = group.second;
+
+            if((group.first[0].pid == ds::RS430_MM_PID || group.first[0].pid == ds::RS420_MM_PID) &&  hids.size()==0)
+                continue;
+
             if (!devices.empty() &&
                 mi_present(devices, 0))
             {
@@ -508,7 +512,7 @@ namespace rsimpl2
              depth_ep.register_option(RS2_OPTION_ASIC_TEMPERATURE,
                                       std::make_shared<asic_and_projector_temperature_options>(depth_ep,
                                                                                                RS2_OPTION_ASIC_TEMPERATURE));
-             if (pid == RS430_MM_PID)
+             if (pid == RS430_MM_PID || pid == RS420_MM_PID)
                  motion_module_fw_version = _hw_monitor->get_firmware_version_string(GVD, motion_module_fw_version_offset);
          }
 
@@ -528,7 +532,8 @@ namespace rsimpl2
                 offsetof(md_depth_y_normal_mode, intel_capture_timing);
 
         depth_ep.register_metadata(RS2_FRAME_METADATA_FRAME_COUNTER,    make_attribute_parser(&md_capture_timing::frame_counter, md_capture_timing_attributes::frame_counter_attribute,md_prop_offset));
-        depth_ep.register_metadata(RS2_FRAME_METADATA_SENSOR_TIMESTAMP, make_attribute_parser(&md_capture_timing::sensor_timestamp, md_capture_timing_attributes::sensor_timestamp_attribute, md_prop_offset));
+        depth_ep.register_metadata(RS2_FRAME_METADATA_SENSOR_TIMESTAMP, make_rs4xx_sensor_ts_parser(make_uvc_header_parser(&uvc::uvc_header::timestamp),
+                make_attribute_parser(&md_capture_timing::sensor_timestamp, md_capture_timing_attributes::sensor_timestamp_attribute, md_prop_offset)));
 
         // attributes of md_capture_stats
         md_prop_offset = offsetof(metadata_raw, mode) +
@@ -600,7 +605,8 @@ namespace rsimpl2
                        offsetof(md_fisheye_normal_mode, intel_capture_timing);
 
             fisheye_ep->register_metadata(RS2_FRAME_METADATA_FRAME_COUNTER,     make_attribute_parser(&md_capture_timing::frame_counter, md_capture_timing_attributes::frame_counter_attribute,md_prop_offset));
-            fisheye_ep->register_metadata(RS2_FRAME_METADATA_SENSOR_TIMESTAMP,  make_attribute_parser(&md_capture_timing::sensor_timestamp, md_capture_timing_attributes::sensor_timestamp_attribute, md_prop_offset));
+            fisheye_ep->register_metadata(RS2_FRAME_METADATA_SENSOR_TIMESTAMP, make_rs4xx_sensor_ts_parser(make_uvc_header_parser(&uvc::uvc_header::timestamp),
+                    make_attribute_parser(&md_capture_timing::sensor_timestamp, md_capture_timing_attributes::sensor_timestamp_attribute, md_prop_offset)));
 
             // attributes of md_capture_stats
             md_prop_offset = offsetof(metadata_raw, mode) +
