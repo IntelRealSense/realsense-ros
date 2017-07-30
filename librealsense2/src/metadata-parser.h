@@ -8,9 +8,9 @@
 #include "archive.h"
 #include "metadata.h"
 
-using namespace rsimpl2;
+using namespace librealsense;
 
-namespace rsimpl2
+namespace librealsense
 {
 /** \brief Metadata fields that are utilized internally by librealsense
     Provides extention to the r2_frame_metadata list of attributes*/
@@ -34,6 +34,10 @@ namespace rsimpl2
         virtual ~md_attribute_parser_base() = default;
     };
 
+    /**\brief Post-processing adjustment of the metadata attribute
+     *  e.g change auto_exposure enum to boolean, change units from nano->ms,etc'*/
+    typedef std::function<rs2_metadata_t(const rs2_metadata_t& param)> attrib_modifyer;
+
     class md_time_of_arrival_parser : public md_attribute_parser_base
     {
     public:
@@ -43,12 +47,12 @@ namespace rsimpl2
         }
 
         bool supports(const frame& frm) const override
-        { 
-            return true; 
+        {
+            return true;
         }
     };
 
-    /**\brief The metadata parser class directly access the metadata attribute in the blob recieved from HW.
+    /**\brief The metadata parser class directly access the metadata attribute in the blob received from HW.
     *   Given the metadata-nested construct, and the c++ lack of pointers
     *   to the inner struct, we pre-calculate and store the attribute offset internally
     *   http://stackoverflow.com/questions/1929887/is-pointer-to-inner-struct-member-forbidden*/
@@ -89,15 +93,16 @@ namespace rsimpl2
                 if ((s->header.md_type_id != expected_type) || (s->header.md_size !=sizeof(*s)))
                 {
                     std::string type = (md_type_desc.count(s->header.md_type_id) > 0) ?
-                                md_type_desc.at(s->header.md_type_id) : (to_string() << static_cast<uint32_t>(s->header.md_type_id));
-                    LOG_DEBUG("metadata mismatch - received: " << type << ", expected: " << md_type_desc.at(expected_type));
+                                md_type_desc.at(s->header.md_type_id) : (to_string() << "0x" << static_cast<uint32_t>(s->header.md_type_id));
+                    LOG_DEBUG("Metadata mismatch - actual: " << type
+                        << ", expected: " << md_type_desc.at(expected_type) << "(0x" << std::hex << (uint32_t)expected_type << std::dec << ")");
                     return false;
                 }
 
                  // Check if the attribute's flag is set
                  auto attribute_enabled =  (0 !=(s->flags & static_cast<uint32_t>(_md_flag)));
                  if (!attribute_enabled)
-                    LOG_DEBUG("metadata attribute No: "<< (*s.*_md_attribute) << "is not active");
+                    LOG_DEBUG("Metadata attribute No: "<< (*s.*_md_attribute) << "is not active");
 
                  return attribute_enabled;
             }
@@ -125,31 +130,32 @@ namespace rsimpl2
     class md_uvc_header_parser : public md_attribute_parser_base
     {
     public:
-        md_uvc_header_parser(Attribute St::* attribute_name) :
-            _md_attribute(attribute_name) {};
+        md_uvc_header_parser(Attribute St::* attribute_name, attrib_modifyer mod) :
+            _md_attribute(attribute_name), _modifyer(mod){};
 
         rs2_metadata_t get(const frame & frm) const override
         {
-            auto val = static_cast<rs2_metadata_t>((*reinterpret_cast<const St*>((const uint8_t*)frm.additional_data.metadata_blob.data())).*_md_attribute);
-
-            return val;
+            auto attrib=  static_cast<rs2_metadata_t>((*reinterpret_cast<const St*>((const uint8_t*)frm.additional_data.metadata_blob.data())).*_md_attribute);
+            if (_modifyer) attrib = _modifyer(attrib);
+            return attrib;
         }
 
         bool supports(const frame & frm) const override
-        { return true; }
+        { return (frm.additional_data.metadata_size >= platform::uvc_header_size); }
 
     private:
         md_uvc_header_parser() = delete;
         md_uvc_header_parser(const md_uvc_header_parser&) = delete;
 
-        Attribute St::*          _md_attribute;      // Pointer to the attribute within uvc header that provides the relevant data
+        Attribute St::*     _md_attribute;  // Pointer to the attribute within uvc header that provides the relevant data
+        attrib_modifyer     _modifyer;      // Post-processing on received attribute
     };
 
-    /**\brief A utility function to create uvh header parser*/
+    /**\brief A utility function to create UVC metadata header parser*/
     template<class St, class Attribute>
-    std::shared_ptr<md_attribute_parser_base> make_uvc_header_parser(Attribute St::* attribute)
+    std::shared_ptr<md_attribute_parser_base> make_uvc_header_parser(Attribute St::* attribute, attrib_modifyer mod = nullptr)
     {
-        std::shared_ptr<md_uvc_header_parser<St, Attribute>> parser(new md_uvc_header_parser<St, Attribute>(attribute));
+        std::shared_ptr<md_uvc_header_parser<St, Attribute>> parser(new md_uvc_header_parser<St, Attribute>(attribute, mod));
         return parser;
     }
 
@@ -185,17 +191,17 @@ namespace rsimpl2
     }
 
     /**\brief Optical timestamp for RS4xx devices is calculated internally*/
-    class md_rs4xx_sensor_timestamp : public md_attribute_parser_base
+    class md_rs400_sensor_timestamp : public md_attribute_parser_base
     {
         std::shared_ptr<md_attribute_parser_base> _sensor_ts_parser = nullptr;
         std::shared_ptr<md_attribute_parser_base> _frame_ts_parser = nullptr;
 
     public:
-        explicit md_rs4xx_sensor_timestamp(std::shared_ptr<md_attribute_parser_base> sensor_ts_parser,
+        explicit md_rs400_sensor_timestamp(std::shared_ptr<md_attribute_parser_base> sensor_ts_parser,
             std::shared_ptr<md_attribute_parser_base> frame_ts_parser) :
             _sensor_ts_parser(sensor_ts_parser), _frame_ts_parser(frame_ts_parser) {};
 
-        virtual ~md_rs4xx_sensor_timestamp() { _sensor_ts_parser = nullptr; _frame_ts_parser = nullptr; };
+        virtual ~md_rs400_sensor_timestamp() { _sensor_ts_parser = nullptr; _frame_ts_parser = nullptr; };
 
         // The sensor's timestamp is defined as the middle of exposure time. Sensor_ts= Frame_ts - (Actual_Exposure/2)
         // For RS4xx the metadata payload holds only the (Actual_Exposure/2) offset, and the actual value needs to be calculated
@@ -211,10 +217,51 @@ namespace rsimpl2
     };
 
     /**\brief A helper function to create a specialized parser for RS4xx sensor timestamp*/
-    inline std::shared_ptr<md_attribute_parser_base> make_rs4xx_sensor_ts_parser(std::shared_ptr<md_attribute_parser_base> frame_ts_parser,
+    inline std::shared_ptr<md_attribute_parser_base> make_rs400_sensor_ts_parser(std::shared_ptr<md_attribute_parser_base> frame_ts_parser,
         std::shared_ptr<md_attribute_parser_base> sensor_ts_parser)
     {
-        std::shared_ptr<md_rs4xx_sensor_timestamp> parser(new md_rs4xx_sensor_timestamp(sensor_ts_parser, frame_ts_parser));
+        std::shared_ptr<md_rs400_sensor_timestamp> parser(new md_rs400_sensor_timestamp(sensor_ts_parser, frame_ts_parser));
+        return parser;
+    }
+
+    /**\brief The SR300 metadata parser class*/
+    template<class S, class Attribute>
+    class md_sr300_attribute_parser : public md_attribute_parser_base
+    {
+    public:
+        md_sr300_attribute_parser(Attribute S::* attribute_name, unsigned long long offset, attrib_modifyer mod) :
+            _md_attribute(attribute_name), _offset(offset), _modifyer(mod){};
+
+        rs2_metadata_t get(const frame & frm) const override
+        {
+            auto s = reinterpret_cast<const S*>((frm.additional_data.metadata_blob.data()) + _offset);
+
+            auto param = static_cast<rs2_metadata_t>((*s).*_md_attribute);
+            if (_modifyer)
+                param = _modifyer(param);
+            return param;
+        }
+
+        bool supports(const frame & frm) const override
+        {
+            return (frm.additional_data.metadata_size >= (sizeof(S) + platform::uvc_header_size));
+        }
+
+    private:
+        md_sr300_attribute_parser() = delete;
+        md_sr300_attribute_parser(const md_sr300_attribute_parser&) = delete;
+
+        Attribute S::*      _md_attribute;  // Pointer to the actual data field
+        unsigned long long  _offset;        // Inner struct offset with regard to the most outer one
+        attrib_modifyer     _modifyer;      // Post-processing on received attribute
+    };
+
+    /**\brief A helper function to create a specialized attribute parser.
+    *  Return it as a pointer to a base-class*/
+    template<class S, class Attribute>
+    std::shared_ptr<md_attribute_parser_base> make_sr300_attribute_parser(Attribute S::* attribute, unsigned long long offset, attrib_modifyer  mod = nullptr)
+    {
+        std::shared_ptr<md_sr300_attribute_parser<S, Attribute>> parser(new md_sr300_attribute_parser<S, Attribute>(attribute, offset, mod));
         return parser;
     }
 }
