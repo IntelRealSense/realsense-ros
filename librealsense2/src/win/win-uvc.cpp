@@ -7,15 +7,32 @@
 #error At least Visual Studio 2013 Update 4 is required to compile this backend
 #endif
 
+#include <ntverp.h>
+#if VER_PRODUCTBUILD <= 9600    // (WinSDK 8.1)
+#ifdef ENFORCE_METADATA
+#error( "Librealsense Error!: Featuring UVC Metadata requires WinSDK 10.0.10586.0. \
+ Install the required toolset to proceed. Alternatively, uncheck ENFORCE_METADATA option in CMake GUI tool")
+#else
+#pragma message ( "\nLibrealsense notification: Featuring UVC Metadata requires WinSDK 10.0.10586.0 toolset. \
+The library will be compiled without the metadata support!\n")
+#endif // ENFORCE_METADATA
+#else
+#define METADATA_SUPPORT
+#endif      // (WinSDK 8.1)
+
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 
 #include "win-uvc.h"
 #include "../types.h"
 
 #include "Shlwapi.h"
 #include <Windows.h>
+#include <limits>
 #include "mfapi.h"
 #include <vidcap.h>
+#include <ksmedia.h>    // Metadata Extension
 #include <Mferror.h>
 
 #pragma comment(lib, "Shlwapi.lib")
@@ -29,19 +46,104 @@
 
 #define DEVICE_NOT_READY_ERROR _HRESULT_TYPEDEF_(0x80070015L)
 
-namespace rsimpl2
+namespace librealsense
 {
-    namespace uvc
+    namespace platform
     {
         // we are using standard fourcc codes to represent formats, while MF is using GUIDs
         // occasionally there is a mismatch between the code and the guid data
         const std::unordered_map<uint32_t, uint32_t> fourcc_map = {
             { 0x59382020, 0x47524559 },    /* 'GREY' from 'Y8  ' */
             { 0x52573130, 0x70524141 },    /* 'pRAA' from 'RW10'.*/
-            { 0x32000000, 0x47524559 },    /* 'GREY' from 'L8  '   */
-            { 0x50000000, 0x5a313620 },    /* 'Z16'  from 'D16 '    */
-            { 0x52415738, 0x47524559 }     /* 'GREY' from 'RAW8 '    */
+            { 0x32000000, 0x47524559 },    /* 'GREY' from 'L8  ' */
+            { 0x50000000, 0x5a313620 },    /* 'Z16'  from 'D16 ' */
+            { 0x52415738, 0x47524559 },    /* 'GREY' from 'RAW8' */
+            { 0x52573136, 0x42595232 }     /* 'RW16' from 'BYR2' */
         };
+
+#ifdef METADATA_SUPPORT
+
+#pragma pack(push, 1)
+            struct ms_proprietary_md_blob
+            {
+                // These fields are identical in layout and content with the standard UVC header
+                uint32_t        timestamp;
+                uint8_t         source_clock[6];
+                // MS internal
+                uint8_t         reserved[6];
+            };
+
+            struct ms_metadata_header
+            {
+                KSCAMERA_METADATA_ITEMHEADER    ms_header;
+                ms_proprietary_md_blob          ms_blobs[2]; // The blobs content is identical
+            };
+#pragma pack(pop)
+
+            constexpr uint8_t ms_header_size = sizeof(ms_metadata_header);
+
+            bool try_read_metadata(IMFSample *pSample, uint8_t& metadata_size, byte** bytes)
+            {
+                CComPtr<IUnknown>       spUnknown;
+                CComPtr<IMFAttributes>  spSample;
+                HRESULT hr = S_OK;
+
+                CHECK_HR(hr = pSample->QueryInterface(IID_PPV_ARGS(&spSample)));
+                LOG_HR(hr = spSample->GetUnknown(MFSampleExtension_CaptureMetadata, IID_PPV_ARGS(&spUnknown)));
+
+                if (SUCCEEDED(hr))
+                {
+                    CComPtr<IMFAttributes>          spMetadata;
+                    CComPtr<IMFMediaBuffer>         spBuffer;
+                    PKSCAMERA_METADATA_ITEMHEADER   pMetadata = nullptr;
+                    DWORD                           dwMaxLength = 0;
+                    DWORD                           dwCurrentLength = 0;
+
+                    CHECK_HR(hr = spUnknown->QueryInterface(IID_PPV_ARGS(&spMetadata)));
+                    CHECK_HR(hr = spMetadata->GetUnknown(MF_CAPTURE_METADATA_FRAME_RAWSTREAM, IID_PPV_ARGS(&spBuffer)));
+                    CHECK_HR(hr = spBuffer->Lock((BYTE**)&pMetadata, &dwMaxLength, &dwCurrentLength));
+
+                    if (nullptr == pMetadata) // Bail, no data.
+                        return false;
+
+                    if (pMetadata->MetadataId != MetadataId_UsbVideoHeader) // Wrong metadata type, bail.
+                        return false;
+
+                    // Microsoft converts the standard UVC (12-byte) header into MS proprietary 40-bytes struct
+                    // Therefore we revert it to the original structure for uniform handling
+                    static const uint8_t md_lenth_max = 0xff;
+                    auto md_raw = reinterpret_cast<byte*>(pMetadata);
+                    ms_metadata_header *ms_hdr = reinterpret_cast<ms_metadata_header*>(md_raw);
+                    uvc_header *uvc_hdr = reinterpret_cast<uvc_header*>(md_raw + ms_header_size - uvc_header_size);
+                    try
+                    {        // restore the original timestamp and source clock fields
+                        memcpy(&(uvc_hdr->timestamp), &ms_hdr->ms_blobs[0], 10);
+                    }
+                    catch (...)
+                    {
+                        return false;
+                    }
+
+                    // Metadata for Bulk endpoints is limited to 255 bytes by design
+                    auto payload_length = ms_hdr->ms_header.Size - ms_header_size;
+                    if ((int)payload_length > (md_lenth_max - uvc_header_size))
+                    {
+                        LOG_WARNING("Invalid metadata payload, length"
+                            << payload_length << ", expected [0-" << int(md_lenth_max - uvc_header_size) << "]");
+                        return false;
+                    }
+                    uvc_hdr->length = static_cast<uint8_t>(payload_length);
+                    uvc_hdr->info = 0x0; // TODO - currently not available
+                    metadata_size = static_cast<uint8_t>(uvc_hdr->length + uvc_header_size);
+
+                    *bytes = (byte*)uvc_hdr;
+
+                    return true;
+                }
+                else
+                    return false;
+            }
+#endif // METADATA_SUPPORT
 
         STDMETHODIMP source_reader_callback::QueryInterface(REFIID iid, void** ppv)
         {
@@ -93,12 +195,17 @@ namespace rsimpl2
                         DWORD max_length{}, current_length{};
                         if (SUCCEEDED(buffer->Lock(&byte_buffer, &max_length, &current_length)))
                         {
+                            byte* metadata = nullptr;
+                            uint8_t metadata_size = 0;
+#ifdef METADATA_SUPPORT
+                            try_read_metadata(sample, metadata_size, &metadata);
+#endif
                             try
                             {
                                 auto& stream = owner->_streams[dwStreamIndex];
                                 std::lock_guard<std::mutex> lock(owner->_streams_mutex);
                                 auto profile = stream.profile;
-                                frame_object f{ current_length, 0, byte_buffer, nullptr };
+                                frame_object f{ current_length, metadata_size, byte_buffer, metadata };
 
                                 auto continuation = [buffer, this]()
                                 {
@@ -210,7 +317,7 @@ namespace rsimpl2
                 return false;
 
             if (bytes_received != len)
-                throw std::runtime_error("XU read did not return enough data");
+                throw std::runtime_error(to_string() << "Get XU n:" << (int)ctrl << " received " << bytes_received << "/" << len << " bytes");
 
             CHECK_HR(hr);
             return true;
@@ -248,13 +355,13 @@ namespace rsimpl2
 
                 auto pStruct = next_struct;
                 cfg.step.resize(option_range_size);
-                rsimpl2::copy(cfg.step.data(), pStruct, field_width);
+                librealsense::copy(cfg.step.data(), pStruct, field_width);
                 pStruct += length;
                 cfg.min.resize(option_range_size);
-                rsimpl2::copy(cfg.min.data(), pStruct, field_width);
+                librealsense::copy(cfg.min.data(), pStruct, field_width);
                 pStruct += length;
                 cfg.max.resize(option_range_size);
-                rsimpl2::copy(cfg.max.data(), pStruct, field_width);
+                librealsense::copy(cfg.max.data(), pStruct, field_width);
                 return;
             }
             case KSPROPERTY_MEMBER_VALUES:
@@ -272,7 +379,7 @@ namespace rsimpl2
                     }
 
                     cfg.def.resize(option_range_size);
-                    rsimpl2::copy(cfg.def.data(), next_struct, field_width);
+                    librealsense::copy(cfg.def.data(), next_struct, field_width);
                 }
                 return;
             }
@@ -352,59 +459,50 @@ namespace rsimpl2
 
         struct pu_control { rs2_option option; long property; bool enable_auto; };
         static const pu_control pu_controls[] = {
-            { RS2_OPTION_BACKLIGHT_COMPENSATION, VideoProcAmp_BacklightCompensation },
-            { RS2_OPTION_BRIGHTNESS, VideoProcAmp_Brightness },
-            { RS2_OPTION_CONTRAST, VideoProcAmp_Contrast },
-            { RS2_OPTION_GAIN, VideoProcAmp_Gain },
-            { RS2_OPTION_GAMMA, VideoProcAmp_Gamma },
-            { RS2_OPTION_HUE, VideoProcAmp_Hue },
-            { RS2_OPTION_SATURATION, VideoProcAmp_Saturation },
-            { RS2_OPTION_SHARPNESS, VideoProcAmp_Sharpness },
-            { RS2_OPTION_WHITE_BALANCE, VideoProcAmp_WhiteBalance },
-            { RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE, VideoProcAmp_WhiteBalance, true },
+            { RS2_OPTION_BRIGHTNESS,                    KSPROPERTY_VIDEOPROCAMP_BRIGHTNESS },
+            { RS2_OPTION_CONTRAST,                      KSPROPERTY_VIDEOPROCAMP_CONTRAST },
+            { RS2_OPTION_HUE,                           KSPROPERTY_VIDEOPROCAMP_HUE },
+            { RS2_OPTION_SATURATION,                    KSPROPERTY_VIDEOPROCAMP_SATURATION },
+            { RS2_OPTION_SHARPNESS,                     KSPROPERTY_VIDEOPROCAMP_SHARPNESS },
+            { RS2_OPTION_GAMMA,                         KSPROPERTY_VIDEOPROCAMP_GAMMA },
+            { RS2_OPTION_WHITE_BALANCE,                 KSPROPERTY_VIDEOPROCAMP_WHITEBALANCE },
+            { RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE,     KSPROPERTY_VIDEOPROCAMP_WHITEBALANCE, true },
+            { RS2_OPTION_BACKLIGHT_COMPENSATION,        KSPROPERTY_VIDEOPROCAMP_BACKLIGHT_COMPENSATION },
+            { RS2_OPTION_GAIN,                          KSPROPERTY_VIDEOPROCAMP_GAIN },
+            { RS2_OPTION_POWER_LINE_FREQUENCY,          KSPROPERTY_VIDEOPROCAMP_POWERLINE_FREQUENCY }
         };
 
         bool wmf_uvc_device::get_pu(rs2_option opt, int32_t& value) const
         {
             long val = 0, flags = 0;
-            if (opt == RS2_OPTION_EXPOSURE)
+            if ((opt == RS2_OPTION_EXPOSURE) || (opt == RS2_OPTION_ENABLE_AUTO_EXPOSURE))
             {
+                if (!_camera_control.p) throw std::runtime_error("No camera control!");
                 auto hr = _camera_control->Get(CameraControl_Exposure, &val, &flags);
                 if (hr == DEVICE_NOT_READY_ERROR)
                     return false;
 
-                value = val;
+                value = (opt == RS2_OPTION_EXPOSURE) ? val : (flags == CameraControl_Flags_Auto);
                 CHECK_HR(hr);
                 return true;
             }
-            if (opt == RS2_OPTION_ENABLE_AUTO_EXPOSURE)
-            {
-                auto hr = _camera_control->Get(CameraControl_Exposure, &val, &flags);
-                if (hr == DEVICE_NOT_READY_ERROR)
-                    return false;
 
-                value = (flags == CameraControl_Flags_Auto);
-                CHECK_HR(hr);
-                return true;
-            }
             for (auto & pu : pu_controls)
             {
                 if (opt == pu.option)
                 {
+                    if (!_video_proc.p) throw std::runtime_error("No video proc!");
                     auto hr = _video_proc->Get(pu.property, &val, &flags);
                     if (hr == DEVICE_NOT_READY_ERROR)
                         return false;
 
-                    if (pu.enable_auto)
-                        value = (flags == VideoProcAmp_Flags_Auto);
-                    else
-                        value = val;
+                    value = (pu.enable_auto) ? (flags == VideoProcAmp_Flags_Auto) : val;
 
                     CHECK_HR(hr);
                     return true;
                 }
             }
-            throw std::runtime_error("Unsupported control!");
+            throw std::runtime_error(to_string() << "Unsupported control - " << opt);
         }
 
         bool wmf_uvc_device::set_pu(rs2_option opt, int value)
@@ -486,7 +584,7 @@ namespace rsimpl2
                     return true;
                 }
             }
-            throw std::runtime_error("Unsupported control!");
+            throw std::runtime_error(to_string() << "Unsupported control - " << opt);
         }
 
         control_range wmf_uvc_device::get_pu_range(rs2_option opt) const
@@ -565,7 +663,7 @@ namespace rsimpl2
 
         void wmf_uvc_device::set_power_state(power_state state)
         {
-            auto rs2 = is_win10_redstone2();
+            static auto rs2 = is_win10_redstone2();
 
             // This is temporary work-around for Windows 10 Red-Stone2 build
             // There seem to be issues re-creating Media Foundation objects frequently
@@ -581,7 +679,7 @@ namespace rsimpl2
                         if (i == _info && device)
                         {
                             wchar_t did[256];
-                            HRESULT hr;
+                            HRESULT hr = S_OK;
                             int count = 0;
                             CHECK_HR(device->GetString(did_guid, did, sizeof(did) / sizeof(wchar_t), nullptr));
 
@@ -611,18 +709,16 @@ namespace rsimpl2
                                 CHECK_HR(_reader_attrs->SetUINT32(MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, TRUE));
                                 CHECK_HR(MFCreateSourceReaderFromMediaSource(_source, _reader_attrs, &_reader));
                             }
-                            _source->QueryInterface(__uuidof(IAMCameraControl),
-                                reinterpret_cast<void **>(&_camera_control.p));
-                            _source->QueryInterface(__uuidof(IAMVideoProcAmp),
-                                reinterpret_cast<void **>(&_video_proc.p));
+                            LOG_HR(_source->QueryInterface(__uuidof(IAMCameraControl),
+                                reinterpret_cast<void **>(&_camera_control.p)));
+                            LOG_HR(_source->QueryInterface(__uuidof(IAMVideoProcAmp),
+                                reinterpret_cast<void **>(&_video_proc.p)));
 
-                            UINT32 streamIndex;
+                            UINT32 streamIndex{};
                             CHECK_HR(_device_attrs->GetCount(&streamIndex));
                             _streams.resize(streamIndex);
                             for (auto& elem : _streams)
-                            {
                                 elem.callback = nullptr;
-                            }
 
                             CHECK_HR(_reader->SetStreamSelection(static_cast<DWORD>(MF_SOURCE_READER_ALL_STREAMS), TRUE));
                         }
@@ -664,18 +760,17 @@ namespace rsimpl2
                             CHECK_HR(_activate->ActivateObject(IID_IMFMediaSource, reinterpret_cast<void **>(&_source)));
                             CHECK_HR(MFCreateSourceReaderFromMediaSource(_source, _reader_attrs, &_reader));
 
-                            _source->QueryInterface(__uuidof(IAMCameraControl),
-                                reinterpret_cast<void **>(&_camera_control.p));
-                            _source->QueryInterface(__uuidof(IAMVideoProcAmp),
-                                reinterpret_cast<void **>(&_video_proc.p));
+                            LOG_HR(_source->QueryInterface(__uuidof(IAMCameraControl),
+                                reinterpret_cast<void **>(&_camera_control.p)));
+                            LOG_HR(_source->QueryInterface(__uuidof(IAMVideoProcAmp),
+                                reinterpret_cast<void **>(&_video_proc.p)));
 
-                            UINT32 streamIndex;
+                            UINT32 streamIndex{};
                             CHECK_HR(_device_attrs->GetCount(&streamIndex));
                             _streams.resize(streamIndex);
                             for (auto& elem : _streams)
-                            {
                                 elem.callback = nullptr;
-                            }
+
                             CHECK_HR(_reader->SetStreamSelection(static_cast<DWORD>(MF_SOURCE_READER_ALL_STREAMS), TRUE));
                         }
                     });
@@ -792,7 +887,9 @@ namespace rsimpl2
                 if (_source)
                 {
                     _ks_controls.clear();
+                    _camera_control.Release();
                     _camera_control = nullptr;
+                    _video_proc.Release();
                     _video_proc = nullptr;
                     _source.Release();
                     _source = nullptr;
@@ -812,7 +909,7 @@ namespace rsimpl2
             }
         }
 
-        void wmf_uvc_device::probe_and_commit(stream_profile profile, frame_callback callback, int /*buffers*/)
+        void wmf_uvc_device::probe_and_commit( stream_profile profile, bool zero_copy,  frame_callback callback, int /*buffers*/)
         {
             if (_streaming)
                 throw std::runtime_error("Device is already streaming!");

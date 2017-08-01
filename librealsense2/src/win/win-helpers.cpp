@@ -7,9 +7,8 @@
     #error At least Visual Studio 2013 Update 4 is required to compile this backend
 #endif
 
-#include "win-helpers.h"
-
 #include "../types.h"
+#include "win-helpers.h"
 
 #include <Cfgmgr32.h>
 #include <usbioctl.h>
@@ -33,9 +32,9 @@ DEFINE_GUID(GUID_DEVINTERFACE_IMAGE, 0x6bdd1fc6L, 0x810f, 0x11d0, 0xbe, 0xc7, 0x
 
 #define CREATE_MUTEX_RETRY_NUM  (5)
 
-namespace rsimpl2
+namespace librealsense
 {
-    namespace uvc
+    namespace platform
     {
         std::string hr_to_string(HRESULT hr)
         {
@@ -66,10 +65,11 @@ namespace rsimpl2
         {
             if (FAILED(hr))
             {
-                std::string error = to_string() << call << " returned: " << hr_to_string(hr);
-                LOG_WARNING(error);
+                std::string descr = to_string() << call << " returned: " << hr_to_string(hr);
                 if (to_throw)
-                    throw windows_backend_exception(error);
+                    throw windows_backend_exception(descr);
+                else
+                    LOG_INFO(descr);
 
                 return false;
             }
