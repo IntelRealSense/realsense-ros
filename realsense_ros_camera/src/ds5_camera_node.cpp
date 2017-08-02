@@ -250,7 +250,6 @@ private:
         ROS_INFO_STREAM("Device Sensors: ");
         for(auto&& elem : dev_sensors)
         {
-            ((sensor)elem).as<>();
             std::string module_name = elem.get_info(RS2_CAMERA_INFO_NAME);
             if ("Stereo Module" == module_name)
             {
