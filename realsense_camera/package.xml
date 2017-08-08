@@ -4,7 +4,8 @@
   <version>1.8.0</version>
   <description>RealSense Camera package allowing access to Intel 3D cameras and advanced modules</description>
 
-  <maintainer email="matthew.c.curfman@intel.com">Matt Curfman</maintainer>
+  <maintainer email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</maintainer>
+  <maintainer email="itay.carpis@intel.com">Itay Carpis</maintainer>
 
   <license>BSD 3-clause. See license attached</license>
 
