@@ -680,7 +680,16 @@ namespace realsense_camera
   void BaseNodelet::getStreamCalibData(rs_stream stream_index)
   {
     rs_intrinsics intrinsic;
-    rs_get_stream_intrinsics(rs_device_, stream_index, &intrinsic, &rs_error_);
+
+    if (stream_index == RS_STREAM_COLOR)
+    {
+      rs_get_stream_intrinsics(rs_device_, RS_STREAM_RECTIFIED_COLOR, &intrinsic, &rs_error_);
+    }
+    else
+    {
+      rs_get_stream_intrinsics(rs_device_, stream_index, &intrinsic, &rs_error_);
+    }
+
     if (rs_error_)
     {
       ROS_ERROR_STREAM(nodelet_name_ << " - Verify camera firmware version and/or calibration data!");
