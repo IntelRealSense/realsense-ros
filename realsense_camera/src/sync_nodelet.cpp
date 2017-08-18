@@ -191,7 +191,8 @@ namespace realsense_camera
       {
         image_[stream_index].data = (unsigned char *) (rs_get_frame_data(rs_device_, RS_STREAM_RECTIFIED_COLOR, 0));
         //image_[stream_index].data = (unsigned char *) (frame.get_data());
-      }else
+      }
+      else
       {
         image_[stream_index].data = (unsigned char *) (rs_get_frame_data(rs_device_, stream_index, 0));
       }
