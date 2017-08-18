@@ -187,8 +187,11 @@ namespace realsense_camera
           cvWrapper_.convertTo(image_[stream_index], cv_type_[stream_index],
                 static_cast<double>(depth_scale_meters) / static_cast<double>(MILLIMETER_METERS));
         }
-      }
-      else
+      } else if (stream_index == RS_STREAM_COLOR)
+      {
+        image_[stream_index].data = (unsigned char *) (rs_get_frame_data(rs_device_, RS_STREAM_RECTIFIED_COLOR, 0));
+        //image_[stream_index].data = (unsigned char *) (frame.get_data());
+      }else
       {
         image_[stream_index].data = (unsigned char *) (rs_get_frame_data(rs_device_, stream_index, 0));
       }
