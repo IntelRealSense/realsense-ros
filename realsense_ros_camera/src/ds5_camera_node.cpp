@@ -350,7 +350,7 @@ namespace realsense_ros_camera
             }
 
             if (true == _enable[FISHEYE] &&
-                    true == _enable[DEPTH])
+                true == _enable[DEPTH])
             {
                 _image_publishers[FISHEYE] = image_transport.advertise("camera/fisheye/image_raw", 1);
                 _info_publisher[FISHEYE] = _node_handle.advertise<sensor_msgs::CameraInfo>("camera/fisheye/camera_info", 1);
@@ -662,18 +662,27 @@ namespace realsense_ros_camera
             ROS_INFO("publishStaticTransforms...");
             // Publish transforms for the cameras
             tf::Quaternion q_c2co;
+            geometry_msgs::TransformStamped b2c_msg; // Base to Color
+            geometry_msgs::TransformStamped c2co_msg; // Color to Color_Optical
+
             tf::Quaternion q_d2do;
-            geometry_msgs::TransformStamped b2c_msg;
-            geometry_msgs::TransformStamped c2co_msg;
-            geometry_msgs::TransformStamped b2d_msg;
-            geometry_msgs::TransformStamped d2do_msg;
+            geometry_msgs::TransformStamped b2d_msg; // Base to Depth
+            geometry_msgs::TransformStamped d2do_msg; // Depth to Depth_Optical
+
+            tf::Quaternion ir1_2_ir1o;
+            geometry_msgs::TransformStamped b2ir1_msg; // Base to IR1
+            geometry_msgs::TransformStamped ir1_2_ir1o_msg; // IR1 to IR1_Optical
+
+            tf::Quaternion ir2_2_ir2o;
+            geometry_msgs::TransformStamped b2ir2_msg; // Base to IR2
+            geometry_msgs::TransformStamped ir2_2_ir2o_msg; // IR2 to IR2_Optical
 
             // Get the current timestamp for all static transforms
             ros::Time transform_ts_ = ros::Time::now();
 
             if (true == _enable[COLOR])
             {
-                // Transform base frame to depth frame
+                // Transform base frame to color frame
                 b2c_msg.header.stamp = transform_ts_;
                 b2c_msg.header.frame_id = _base_frame_id;
                 b2c_msg.child_frame_id = _frame_id[COLOR];
@@ -686,7 +695,7 @@ namespace realsense_ros_camera
                 b2c_msg.transform.rotation.w = 1;
                 _static_tf_broadcaster.sendTransform(b2c_msg);
 
-                // Transform depth frame to depth optical frame
+                // Transform color frame to color optical frame
                 q_c2co.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
                 c2co_msg.header.stamp = transform_ts_;
                 c2co_msg.header.frame_id = _frame_id[COLOR];
@@ -730,6 +739,66 @@ namespace realsense_ros_camera
                 d2do_msg.transform.rotation.w = q_d2do.getW();
                 _static_tf_broadcaster.sendTransform(d2do_msg);
             }
+
+            if (true == _enable[INFRA1])
+            {
+                // Transform base frame to infra1
+                b2ir1_msg.header.stamp = transform_ts_;
+                b2ir1_msg.header.frame_id = _base_frame_id;
+                b2ir1_msg.child_frame_id = _frame_id[INFRA1];
+                b2ir1_msg.transform.translation.x = 0;
+                b2ir1_msg.transform.translation.y = 0;
+                b2ir1_msg.transform.translation.z = 0;
+                b2ir1_msg.transform.rotation.x = 0;
+                b2ir1_msg.transform.rotation.y = 0;
+                b2ir1_msg.transform.rotation.z = 0;
+                b2ir1_msg.transform.rotation.w = 1;
+                _static_tf_broadcaster.sendTransform(b2ir1_msg);
+
+                // Transform infra1 frame to infra1 optical frame
+                ir1_2_ir1o.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
+                ir1_2_ir1o_msg.header.stamp = transform_ts_;
+                ir1_2_ir1o_msg.header.frame_id = _frame_id[INFRA1];
+                ir1_2_ir1o_msg.child_frame_id = _optical_frame_id[INFRA1];
+                ir1_2_ir1o_msg.transform.translation.x = 0;
+                ir1_2_ir1o_msg.transform.translation.y = 0;
+                ir1_2_ir1o_msg.transform.translation.z = 0;
+                ir1_2_ir1o_msg.transform.rotation.x = ir1_2_ir1o.getX();
+                ir1_2_ir1o_msg.transform.rotation.y = ir1_2_ir1o.getY();
+                ir1_2_ir1o_msg.transform.rotation.z = ir1_2_ir1o.getZ();
+                ir1_2_ir1o_msg.transform.rotation.w = ir1_2_ir1o.getW();
+                _static_tf_broadcaster.sendTransform(ir1_2_ir1o_msg);
+            }
+
+            if (true == _enable[INFRA2])
+            {
+                // Transform base frame to infra2
+                b2ir2_msg.header.stamp = transform_ts_;
+                b2ir2_msg.header.frame_id = _base_frame_id;
+                b2ir2_msg.child_frame_id = _frame_id[INFRA2];
+                b2ir2_msg.transform.translation.x = 0;
+                b2ir2_msg.transform.translation.y = 0;
+                b2ir2_msg.transform.translation.z = 0;
+                b2ir2_msg.transform.rotation.x = 0;
+                b2ir2_msg.transform.rotation.y = 0;
+                b2ir2_msg.transform.rotation.z = 0;
+                b2ir2_msg.transform.rotation.w = 1;
+                _static_tf_broadcaster.sendTransform(b2ir2_msg);
+
+                // Transform infra2 frame to infra1 optical frame
+                ir2_2_ir2o.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
+                ir2_2_ir2o_msg.header.stamp = transform_ts_;
+                ir2_2_ir2o_msg.header.frame_id = _frame_id[INFRA2];
+                ir2_2_ir2o_msg.child_frame_id = _optical_frame_id[INFRA2];
+                ir2_2_ir2o_msg.transform.translation.x = 0;
+                ir2_2_ir2o_msg.transform.translation.y = 0;
+                ir2_2_ir2o_msg.transform.translation.z = 0;
+                ir2_2_ir2o_msg.transform.rotation.x = ir2_2_ir2o.getX();
+                ir2_2_ir2o_msg.transform.rotation.y = ir2_2_ir2o.getY();
+                ir2_2_ir2o_msg.transform.rotation.z = ir2_2_ir2o.getZ();
+                ir2_2_ir2o_msg.transform.rotation.w = ir2_2_ir2o.getW();
+                _static_tf_broadcaster.sendTransform(ir2_2_ir2o_msg);
+            }
         }
 
         void publishPCTopic(const ros::Time& t, const rs2::stream_profile& profile)
@@ -765,7 +834,7 @@ namespace realsense_ros_camera
 
                     // Retrieve depth value, and scale it in terms of meters
                     depth_offset = (u * sizeof(uint16_t)) + (v * sizeof(uint16_t) * depth_intrinsic.width);
-                    memcpy(&depth_value, &_image[DEPTH].data[depth_offset], sizeof(uint16_t));
+                    depth_value = _image[DEPTH].data[depth_offset];
                     scaled_depth = static_cast<float>(depth_value) * depth_scale_meters;
                     if (scaled_depth <= 0.0f || scaled_depth > 40.0)
                     {
@@ -782,9 +851,8 @@ namespace realsense_ros_camera
                     }
 
                     // Assign 3d point
-                    memcpy(&msg_pointcloud.data[cloud_offset + msg_pointcloud.fields[0].offset], &depth_point[0], sizeof(float)); // X
-                    memcpy(&msg_pointcloud.data[cloud_offset + msg_pointcloud.fields[1].offset], &depth_point[1], sizeof(float)); // Y
-                    memcpy(&msg_pointcloud.data[cloud_offset + msg_pointcloud.fields[2].offset], &depth_point[2], sizeof(float)); // Z
+                    for (int i = 0; i < 2; ++i)
+                        msg_pointcloud.data[cloud_offset + msg_pointcloud.fields[i].offset] = depth_point[i];
                 } // for
 
             _pointcloud_publisher.publish(msg_pointcloud);
