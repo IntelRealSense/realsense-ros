@@ -5,7 +5,6 @@
 #include <functional>
 #include <iomanip>
 #include <map>
-#include <atomic>
 #include <pluginlib/class_list_macros.h>
 #include <nodelet/nodelet.h>
 #include <image_transport/image_transport.h>
@@ -48,7 +47,7 @@ namespace realsense_ros_camera
 
     inline void signalHandler(int signum)
     {
-        std::cout << "\n\"Ctrl+C\" is being pressed! Terminate RealSense Node...\n";
+        ROS_INFO("\"Ctrl+C\" is being pressed! Terminate RealSense Node...");
         ros::shutdown();
         exit(signum);
     }
@@ -57,12 +56,13 @@ namespace realsense_ros_camera
     {
     public:
         DS5NodeletCamera() :
-            _cameraStarted(false),
             _base_frame_id(""),
             _intialize_time_base(false)
         {
             signal(SIGINT, signalHandler);
-            rs2::log_to_console(rs2_log_severity::RS2_LOG_SEVERITY_ERROR);
+            auto severity = rs2_log_severity::RS2_LOG_SEVERITY_ERROR;
+            tryGetLogSeverity(severity);
+            rs2::log_to_console(severity);
             ROS_INFO("Running with LibRealSense v%s", RS2_API_VERSION_STR);
 
             // Types for depth stream
@@ -89,7 +89,7 @@ namespace realsense_ros_camera
             // Types for color stream
             _format[COLOR] = RS2_FORMAT_RGB8;   // libRS type
             _image_format[COLOR] = CV_8UC3;    // CVBridge type
-            _encoding[COLOR] = sensor_msgs::image_encodings::TYPE_8UC3; // ROS message type
+            _encoding[COLOR] = sensor_msgs::image_encodings::RGB8; // ROS message type
             _unit_step_size[COLOR] = 3; // sensor_msgs::ImagePtr row step size
             _stream_name[COLOR] = "color";
 
@@ -115,53 +115,7 @@ namespace realsense_ros_camera
         }
 
         virtual ~DS5NodeletCamera()
-        {
-            try{
-                ROS_INFO("~DS5NodeletCamera()");
-                if (_cameraStarted)
-                {
-                    bool is_imu_stopped = false;
-                    for (auto& kvp: _sensors)
-                    {
-                        if (false == _enable[kvp.first])
-                            continue;
-
-                        if (is_imu_stopped &&
-                            ((ACCEL == kvp.first) ||
-                             (GYRO == kvp.first)))
-                        {
-                            continue;
-                        }
-                        else if ((ACCEL == kvp.first) ||
-                                 (GYRO == kvp.first))
-                        {
-                            is_imu_stopped = true;
-                        }
-
-                        if (is_imu_stopped &&
-                            ((DEPTH == kvp.first) ||
-                             (INFRA1 == kvp.first) ||
-                             (INFRA2 == kvp.first)))
-                        {
-                            continue;
-                        }
-
-                        kvp.second->stop();
-                        kvp.second->close();
-                    }
-                }
-                usleep(250);
-                _ctx.reset();
-            }
-            catch(const std::exception& ex)
-            {
-                ROS_ERROR_STREAM("An exception has been thrown: " << ex.what());
-            }
-            catch(...)
-            {
-                ROS_ERROR_STREAM("An unknown error has occurred!");
-            }
-        }
+        {}
 
     private:
         virtual void onInit()
@@ -240,9 +194,9 @@ namespace realsense_ros_camera
                 if (0 == list.size())
                 {
                     _ctx.reset();
-                    ROS_ERROR("No RealSense devices were found!");
+                    ROS_ERROR("No RealSense devices were found! Terminate RealSense Node...");
                     ros::shutdown();
-                    return;
+                    exit(1);
                 }
 
                 // Take the first device in the list.
@@ -252,20 +206,24 @@ namespace realsense_ros_camera
                 {
                     if (info.was_removed(_dev))
                     {
-                        ROS_FATAL("The device has been disconnected!");
+                        ROS_FATAL("The device has been disconnected! Terminate RealSense Node...");
                         ros::shutdown();
+                        exit(1);
                     }
                 });
 
                 _serial_no = _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
                 ROS_INFO_STREAM("Device Serial No: " << _serial_no);
+                auto pid = _dev.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
+                ROS_INFO_STREAM("Device Product ID: " << pid);
+
                 auto dev_sensors = _dev.query_sensors();
 
                 ROS_INFO_STREAM("Device Sensors: ");
                 for(auto&& elem : dev_sensors)
                 {
                     std::string module_name = elem.get_info(RS2_CAMERA_INFO_NAME);
-                    if ("Stereo Module" == module_name)
+                    if ("Stereo Module" == module_name || "Coded-Light Depth Sensor" == module_name)
                     {
                         auto sen = new rs2::sensor(elem);
                         _sensors[DEPTH] = std::unique_ptr<rs2::sensor>(sen);
@@ -288,9 +246,9 @@ namespace realsense_ros_camera
                     }
                     else
                     {
-                        ROS_ERROR_STREAM("Module Name \"" << module_name << "\" isn't supported by LibRealSense!");
+                        ROS_ERROR_STREAM("Module Name \"" << module_name << "\" isn't supported by LibRealSense! Terminate RealSense Node...");
                         ros::shutdown();
-                        return;
+                        exit(1);
                     }
                     ROS_INFO_STREAM(std::string(elem.get_info(RS2_CAMERA_INFO_NAME)) << " was found.");
                 }
@@ -304,7 +262,7 @@ namespace realsense_ros_camera
                     {
                         if (true == _enable[stream_index] && _sensors.find(stream_index) == _sensors.end()) // check if device supports the enabled stream
                         {
-                            ROS_INFO_STREAM(rs2_stream_to_string(stream_index.first) << " stream isn't supported by current device! -- Skipping...");
+                            ROS_INFO_STREAM(rs2_stream_to_string(stream_index.first) << " sensor isn't supported by current device! -- Skipping...");
                             _enable[stream_index] = false;
                         }
                     }
@@ -313,6 +271,11 @@ namespace realsense_ros_camera
             catch(const std::exception& ex)
             {
                 ROS_ERROR_STREAM("An exception has been thrown: " << ex.what());
+                throw;
+            }
+            catch(...)
+            {
+                ROS_ERROR_STREAM("An unknown error has occurred!");
                 throw;
             }
         }
@@ -333,14 +296,12 @@ namespace realsense_ros_camera
             {
                 _image_publishers[INFRA1] = image_transport.advertise("camera/infra1/image_raw", 1);
                 _info_publisher[INFRA1] = _node_handle.advertise<sensor_msgs::CameraInfo>("camera/infra1/camera_info", 1);
-                _pointcloud_publisher = _node_handle.advertise<sensor_msgs::PointCloud2>("/camera/points", 1);
             }
 
             if (true == _enable[INFRA2])
             {
                 _image_publishers[INFRA2] = image_transport.advertise("camera/infra2/image_raw", 1);
                 _info_publisher[INFRA2] = _node_handle.advertise<sensor_msgs::CameraInfo>("camera/infra2/camera_info", 1);
-                _pointcloud_publisher = _node_handle.advertise<sensor_msgs::PointCloud2>("/camera/points", 1);
             }
 
             if (true == _enable[COLOR])
@@ -399,8 +360,6 @@ namespace realsense_ros_camera
                                     video_profile.stream_index() == elem.second)
                                 {
                                     _enabled_profiles[elem].push_back(profile);
-                                    // Publish info about the stream
-                                    updateStreamCalibData(video_profile);
 
                                     // Setup stream callback for stream
                                     _image[elem] = cv::Mat(_width[elem], _height[elem], _image_format[elem], cv::Scalar(0, 0, 0));
@@ -408,7 +367,27 @@ namespace realsense_ros_camera
                                     break;
                                 }
                             }
+                            if (_enabled_profiles.find(elem) == _enabled_profiles.end())
+                            {
+                                ROS_WARN_STREAM("Given stream configuration is not supported by the device! " <<
+                                                " Stream: " << rs2_stream_to_string(elem.first) <<
+                                                ", Format: " << _format[elem] <<
+                                                ", Width: " << _width[elem] <<
+                                                ", Height: " << _height[elem] <<
+                                                ", FPS: " << _fps[elem]);
+                                _enable[elem] = false;
+                            }
                         }
+                    }
+                }
+
+                // Publish image stream info
+                for (auto& profiles : _enabled_profiles)
+                {
+                    for (auto& profile : profiles.second)
+                    {
+                        auto video_profile = profile.as<rs2::video_stream_profile>();
+                        updateStreamCalibData(video_profile);
                     }
                 }
 
@@ -433,6 +412,12 @@ namespace realsense_ros_camera
                         // Enable the stream
                         sens->open(profiles);
 
+                        if (stream == DEPTH)
+                        {
+                            auto depth_sensor = sens->as<rs2::depth_sensor>();
+                            _depth_scale_meters = depth_sensor.get_depth_scale();
+                        }
+
                         // Start device with the following callback
                         sens->start([this](rs2::frame frame)
                         {
@@ -447,29 +432,37 @@ namespace realsense_ros_camera
                             double elapsed_camera_ms = (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000;
                             ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
 
-                            ROS_DEBUG("Frame arrived: stream: %s ; index: %d", rs2_stream_to_string(frame.get_profile().stream_type()), frame.get_profile().stream_index());
+                            ROS_DEBUG("Frame arrived: stream: %s ; index: %d ; Timestamp Domain: %s",
+                                      rs2_stream_to_string(frame.get_profile().stream_type()),
+                                      frame.get_profile().stream_index(),
+                                      rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
+
                             stream_index_pair stream{frame.get_profile().stream_type(), frame.get_profile().stream_index()};
-                            _image[stream].data = (uint8_t*)frame.get_data();
-                            auto width = 0;
-                            auto height = 0;
-                            auto bpp = 1;
-                            if (frame.is<rs2::video_frame>())
-                            {
-                                auto image = frame.as<rs2::video_frame>();
-                                width = image.get_width();
-                                height = image.get_height();
-                                bpp = image.get_bytes_per_pixel();
-                            }
+                            auto& image = _image[stream];
+                            image.data = (uint8_t*)frame.get_data();
 
                             if((DEPTH == stream) && (0 != _pointcloud_publisher.getNumSubscribers()))
-                                publishPCTopic(t, frame.get_profile());
+                                publishPCTopic(t);
 
-                            _seq[stream] += 1;
-                            if(0 != _info_publisher[stream].getNumSubscribers() ||
-                               0 != _image_publishers[stream].getNumSubscribers())
+                            ++(_seq[stream]);
+                            auto& info_publisher = _info_publisher[stream];
+                            auto& image_publisher = _image_publishers[stream];
+                            if(0 != info_publisher.getNumSubscribers() ||
+                               0 != image_publisher.getNumSubscribers())
                             {
+                                auto width = 0;
+                                auto height = 0;
+                                auto bpp = 1;
+                                if (frame.is<rs2::video_frame>())
+                                {
+                                    auto image = frame.as<rs2::video_frame>();
+                                    width = image.get_width();
+                                    height = image.get_height();
+                                    bpp = image.get_bytes_per_pixel();
+                                }
+
                                 sensor_msgs::ImagePtr img;
-                                img = cv_bridge::CvImage(std_msgs::Header(), _encoding[stream], _image[stream]).toImageMsg();
+                                img = cv_bridge::CvImage(std_msgs::Header(), _encoding[stream], image).toImageMsg();
                                 img->width = width;
                                 img->height = height;
                                 img->is_bigendian = false;
@@ -478,13 +471,16 @@ namespace realsense_ros_camera
                                 img->header.stamp = t;
                                 img->header.seq = _seq[stream];
 
-                                _camera_info[stream].header.stamp = t;
-                                _camera_info[stream].header.seq = _seq[stream];
-                                _info_publisher[stream].publish(_camera_info[stream]);
+                                auto& cam_info = _camera_info[stream];
+                                cam_info.header.stamp = t;
+                                cam_info.header.seq = _seq[stream];
+                                info_publisher.publish(cam_info);
 
-                                _image_publishers[stream].publish(img);
-                                ROS_DEBUG("Publish stream: %s", rs2_stream_to_string(frame.get_profile().stream_type()));
+                                image_publisher.publish(img);
+                                ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
+                                return;
                             }
+                            ROS_DEBUG("Skipping publish %s stream. Topic is not subscribed!", rs2_stream_to_string(frame.get_profile().stream_type()));
                         });
                     }
                 }//end for
@@ -529,11 +525,14 @@ namespace realsense_ros_camera
                         if (false == _intialize_time_base)
                             return;
 
-                        ROS_DEBUG("Frame arrived: stream: %s ; index: %d", rs2_stream_to_string(frame.get_profile().stream_type()), frame.get_profile().stream_index());
+                        ROS_DEBUG("Frame arrived: stream: %s ; index: %d ; Timestamp Domain: %s",
+                                  rs2_stream_to_string(frame.get_profile().stream_type()),
+                                  frame.get_profile().stream_index(),
+                                  rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
 
                         auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
                         if (0 != _info_publisher[stream_index].getNumSubscribers() ||
-                                0 != _imu_publishers[stream_index].getNumSubscribers())
+                            0 != _imu_publishers[stream_index].getNumSubscribers())
                         {
                             double elapsed_camera_ms = (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000;
                             ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
@@ -563,7 +562,7 @@ namespace realsense_ros_camera
                             imu_msg.header.seq = _seq[stream_index];
                             imu_msg.header.stamp = t;
                             _imu_publishers[stream_index].publish(imu_msg);
-                            ROS_DEBUG("Publish stream: %s", rs2_stream_to_string(frame.get_profile().stream_type()));
+                            ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
                         }
                     });
 
@@ -596,21 +595,24 @@ namespace realsense_ros_camera
                     auto ex = getFisheye2ImuExtrinsicsMsg();
                     _fe_to_imu_publisher.publish(ex);
                 }
-
-                _cameraStarted = true;
             }
             catch(const std::exception& ex)
             {
                 ROS_ERROR_STREAM("An exception has been thrown: " << ex.what());
                 throw;
             }
-
+            catch(...)
+            {
+                ROS_ERROR_STREAM("An unknown error has occurred!");
+                throw;
+            }
         }
 
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile)
         {
             stream_index_pair stream_index{video_profile.stream_type(), video_profile.stream_index()};
             auto intrinsic = video_profile.get_intrinsics();
+            _stream_intrinsics[stream_index] = intrinsic;
 
             _camera_info[stream_index].width = intrinsic.width;
             _camera_info[stream_index].height = intrinsic.height;
@@ -635,21 +637,29 @@ namespace realsense_ros_camera
             _camera_info[stream_index].P.at(10) = 1;
             _camera_info[stream_index].P.at(11) = 0;
 
+            // TODO: ?
+            if (stream_index == DEPTH && _enable[DEPTH] && _enable[COLOR])
+            {
+                // set depth to color translation values in Projection matrix (P)
+                auto depth_profile = _enabled_profiles[DEPTH].front();
+                auto d2c_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[COLOR].front());
+                _camera_info[stream_index].P.at(3) = d2c_extrinsics.translation[0];     // Tx
+                _camera_info[stream_index].P.at(7) = d2c_extrinsics.translation[1];     // Ty
+                _camera_info[stream_index].P.at(11) = d2c_extrinsics.translation[2];    // Tz
+            }
+
             _camera_info[stream_index].distortion_model = "plumb_bob";
 
             // set R (rotation matrix) values to identity matrix
-            if (stream_index != DEPTH)
-            {
-                _camera_info[stream_index].R.at(0) = 1.0;
-                _camera_info[stream_index].R.at(1) = 0.0;
-                _camera_info[stream_index].R.at(2) = 0.0;
-                _camera_info[stream_index].R.at(3) = 0.0;
-                _camera_info[stream_index].R.at(4) = 1.0;
-                _camera_info[stream_index].R.at(5) = 0.0;
-                _camera_info[stream_index].R.at(6) = 0.0;
-                _camera_info[stream_index].R.at(7) = 0.0;
-                _camera_info[stream_index].R.at(8) = 1.0;
-            }
+            _camera_info[stream_index].R.at(0) = 1.0;
+            _camera_info[stream_index].R.at(1) = 0.0;
+            _camera_info[stream_index].R.at(2) = 0.0;
+            _camera_info[stream_index].R.at(3) = 0.0;
+            _camera_info[stream_index].R.at(4) = 1.0;
+            _camera_info[stream_index].R.at(5) = 0.0;
+            _camera_info[stream_index].R.at(6) = 0.0;
+            _camera_info[stream_index].R.at(7) = 0.0;
+            _camera_info[stream_index].R.at(8) = 1.0;
 
             for (int i = 0; i < 5; i++)
             {
@@ -680,15 +690,49 @@ namespace realsense_ros_camera
             // Get the current timestamp for all static transforms
             ros::Time transform_ts_ = ros::Time::now();
 
+            // The depth frame is used as the base frame.
+            // Hence no additional transformation is done from base frame to depth frame.
+            // Transform base frame to depth frame
+            b2d_msg.header.stamp = transform_ts_;
+            b2d_msg.header.frame_id = _base_frame_id;
+            b2d_msg.child_frame_id = _frame_id[DEPTH];
+            b2d_msg.transform.translation.x = 0;
+            b2d_msg.transform.translation.y = 0;
+            b2d_msg.transform.translation.z = 0;
+            b2d_msg.transform.rotation.x = 0;
+            b2d_msg.transform.rotation.y = 0;
+            b2d_msg.transform.rotation.z = 0;
+            b2d_msg.transform.rotation.w = 1;
+            _static_tf_broadcaster.sendTransform(b2d_msg);
+
+            // Transform depth frame to depth optical frame
+            q_d2do.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
+            d2do_msg.header.stamp = transform_ts_;
+            d2do_msg.header.frame_id = _frame_id[DEPTH];
+            d2do_msg.child_frame_id = _optical_frame_id[DEPTH];
+            d2do_msg.transform.translation.x = 0;
+            d2do_msg.transform.translation.y = 0;
+            d2do_msg.transform.translation.z = 0;
+            d2do_msg.transform.rotation.x = q_d2do.getX();
+            d2do_msg.transform.rotation.y = q_d2do.getY();
+            d2do_msg.transform.rotation.z = q_d2do.getZ();
+            d2do_msg.transform.rotation.w = q_d2do.getW();
+            _static_tf_broadcaster.sendTransform(d2do_msg);
+
+            // All DS5 SKUs have Depth sensor
+            auto& sens = _sensors[DEPTH];
+            auto depth_profile = sens->get_stream_profiles().front();
             if (true == _enable[COLOR])
             {
+                auto d2c_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[COLOR].front());
+
                 // Transform base frame to color frame
                 b2c_msg.header.stamp = transform_ts_;
                 b2c_msg.header.frame_id = _base_frame_id;
                 b2c_msg.child_frame_id = _frame_id[COLOR];
-                b2c_msg.transform.translation.x = 0;
-                b2c_msg.transform.translation.y = 0;
-                b2c_msg.transform.translation.z = 0;
+                b2c_msg.transform.translation.x = d2c_extrinsics.translation[2];
+                b2c_msg.transform.translation.y = -d2c_extrinsics.translation[0];
+                b2c_msg.transform.translation.z = -d2c_extrinsics.translation[1];
                 b2c_msg.transform.rotation.x = 0;
                 b2c_msg.transform.rotation.y = 0;
                 b2c_msg.transform.rotation.z = 0;
@@ -710,45 +754,17 @@ namespace realsense_ros_camera
                 _static_tf_broadcaster.sendTransform(c2co_msg);
             }
 
-            if (true == _enable[DEPTH])
-            {
-                // Transform base frame to depth frame
-                b2d_msg.header.stamp = transform_ts_;
-                b2d_msg.header.frame_id = _base_frame_id;
-                b2d_msg.child_frame_id = _frame_id[DEPTH];
-                b2d_msg.transform.translation.x = 0;
-                b2d_msg.transform.translation.y = 0;
-                b2d_msg.transform.translation.z = 0;
-                b2d_msg.transform.rotation.x = 0;
-                b2d_msg.transform.rotation.y = 0;
-                b2d_msg.transform.rotation.z = 0;
-                b2d_msg.transform.rotation.w = 1;
-                _static_tf_broadcaster.sendTransform(b2d_msg);
-
-                // Transform depth frame to depth optical frame
-                q_d2do.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
-                d2do_msg.header.stamp = transform_ts_;
-                d2do_msg.header.frame_id = _frame_id[DEPTH];
-                d2do_msg.child_frame_id = _optical_frame_id[DEPTH];
-                d2do_msg.transform.translation.x = 0;
-                d2do_msg.transform.translation.y = 0;
-                d2do_msg.transform.translation.z = 0;
-                d2do_msg.transform.rotation.x = q_d2do.getX();
-                d2do_msg.transform.rotation.y = q_d2do.getY();
-                d2do_msg.transform.rotation.z = q_d2do.getZ();
-                d2do_msg.transform.rotation.w = q_d2do.getW();
-                _static_tf_broadcaster.sendTransform(d2do_msg);
-            }
-
             if (true == _enable[INFRA1])
             {
+                auto d2ir1_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[INFRA1].front());
+
                 // Transform base frame to infra1
                 b2ir1_msg.header.stamp = transform_ts_;
                 b2ir1_msg.header.frame_id = _base_frame_id;
                 b2ir1_msg.child_frame_id = _frame_id[INFRA1];
-                b2ir1_msg.transform.translation.x = 0;
-                b2ir1_msg.transform.translation.y = 0;
-                b2ir1_msg.transform.translation.z = 0;
+                b2ir1_msg.transform.translation.x = d2ir1_extrinsics.translation[2];
+                b2ir1_msg.transform.translation.y = -d2ir1_extrinsics.translation[0];
+                b2ir1_msg.transform.translation.z = -d2ir1_extrinsics.translation[1];
                 b2ir1_msg.transform.rotation.x = 0;
                 b2ir1_msg.transform.rotation.y = 0;
                 b2ir1_msg.transform.rotation.z = 0;
@@ -772,13 +788,15 @@ namespace realsense_ros_camera
 
             if (true == _enable[INFRA2])
             {
+                auto d2ir2_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[INFRA2].front());
+
                 // Transform base frame to infra2
                 b2ir2_msg.header.stamp = transform_ts_;
                 b2ir2_msg.header.frame_id = _base_frame_id;
                 b2ir2_msg.child_frame_id = _frame_id[INFRA2];
-                b2ir2_msg.transform.translation.x = 0;
-                b2ir2_msg.transform.translation.y = 0;
-                b2ir2_msg.transform.translation.z = 0;
+                b2ir2_msg.transform.translation.x = d2ir2_extrinsics.translation[2];
+                b2ir2_msg.transform.translation.y = -d2ir2_extrinsics.translation[0];
+                b2ir2_msg.transform.translation.z = -d2ir2_extrinsics.translation[1];
                 b2ir2_msg.transform.rotation.x = 0;
                 b2ir2_msg.transform.rotation.y = 0;
                 b2ir2_msg.transform.rotation.z = 0;
@@ -799,15 +817,13 @@ namespace realsense_ros_camera
                 ir2_2_ir2o_msg.transform.rotation.w = ir2_2_ir2o.getW();
                 _static_tf_broadcaster.sendTransform(ir2_2_ir2o_msg);
             }
+            // TODO: Publish Fisheye TF
         }
 
-        void publishPCTopic(const ros::Time& t, const rs2::stream_profile& profile)
+        void publishPCTopic(const ros::Time& t)
         {
-            auto depth_sensor = _sensors[DEPTH]->as<rs2::depth_sensor>();
-            auto video_profile = profile.as<rs2::video_stream_profile>();
-            auto depth_intrinsic = video_profile.get_intrinsics();
-            auto depth_scale_meters = depth_sensor.get_depth_scale();
-
+            auto& depth_intrinsic = _stream_intrinsics[DEPTH];
+            auto& depth_image = _image[DEPTH];
             sensor_msgs::PointCloud2 msg_pointcloud;
             msg_pointcloud.header.stamp = t;
             msg_pointcloud.header.frame_id = _optical_frame_id[DEPTH];
@@ -822,8 +838,9 @@ namespace realsense_ros_camera
                                           "z", 1, sensor_msgs::PointField::FLOAT32);
             modifier.setPointCloud2FieldsByString(1, "xyz");
 
-            for (int v = 0; v < depth_intrinsic.height; v++)
-                for (int u = 0; u < depth_intrinsic.width; u++)
+            for (int v = 0; v < depth_intrinsic.height; ++v)
+            {
+                for (int u = 0; u < depth_intrinsic.width; ++u)
                 {
                     float depth_point[3], scaled_depth;
                     uint16_t depth_value;
@@ -834,9 +851,9 @@ namespace realsense_ros_camera
 
                     // Retrieve depth value, and scale it in terms of meters
                     depth_offset = (u * sizeof(uint16_t)) + (v * sizeof(uint16_t) * depth_intrinsic.width);
-                    depth_value = _image[DEPTH].data[depth_offset];
-                    scaled_depth = static_cast<float>(depth_value) * depth_scale_meters;
-                    if (scaled_depth <= 0.0f || scaled_depth > 40.0)
+                    memcpy(&depth_value, &depth_image.data[depth_offset], sizeof(uint16_t));
+                    scaled_depth = static_cast<float>(depth_value) * _depth_scale_meters;
+                    if (scaled_depth <= 0.0f || scaled_depth > 40.0) // TODO: 40?
                     {
                         // Depth value is invalid, so zero it out.
                         depth_point[0] = 0.0f;
@@ -851,14 +868,15 @@ namespace realsense_ros_camera
                     }
 
                     // Assign 3d point
-                    for (int i = 0; i < 2; ++i)
-                        msg_pointcloud.data[cloud_offset + msg_pointcloud.fields[i].offset] = depth_point[i];
+                    for (int i = 0; i < 3; ++i)
+                        memcpy(&msg_pointcloud.data[cloud_offset + msg_pointcloud.fields[i].offset], &depth_point[i], sizeof(float));
                 } // for
+            } // for
 
             _pointcloud_publisher.publish(msg_pointcloud);
         }
 
-        Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics)
+        Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics) const
         {
             Extrinsics extrinsicsMsg;
             for (int i = 0; i < 9; ++i)
@@ -921,18 +939,39 @@ namespace realsense_ros_camera
             return info;
         }
 
+        void tryGetLogSeverity(rs2_log_severity& severity) const
+        {
+            static const char* severity_var_name = "LRS_LOG_LEVEL";
+            auto content = getenv(severity_var_name);
+
+            if (content)
+            {
+                std::string content_str(content);
+                std::transform(content_str.begin(), content_str.end(), content_str.begin(), ::toupper);
+
+                for (uint32_t i = 0; i < RS2_LOG_SEVERITY_COUNT; i++)
+                {
+                    auto current = std::string(rs2_log_severity_to_string((rs2_log_severity)i));
+                    std::transform(current.begin(), current.end(), current.begin(), ::toupper);
+                    if (content_str == current)
+                    {
+                        severity = (rs2_log_severity)i;
+                        break;
+                    }
+                }
+            }
+        }
+
         ros::NodeHandle _node_handle, _pnh;
-        bool _cameraStarted;
         std::unique_ptr<rs2::context> _ctx;
         rs2::device _dev;
 
         std::map<stream_index_pair, std::unique_ptr<rs2::sensor>> _sensors;
 
         std::string _serial_no;
-        std::string _dev_location;
-        std::string _usb_port_id;
-        std::string _camera_type;
+        float _depth_scale_meters;
 
+        std::map<stream_index_pair, rs2_intrinsics> _stream_intrinsics;
         std::map<stream_index_pair, int> _width;
         std::map<stream_index_pair, int> _height;
         std::map<stream_index_pair, int> _fps;
@@ -940,7 +979,6 @@ namespace realsense_ros_camera
         std::map<stream_index_pair, std::string> _stream_name;
         tf2_ros::StaticTransformBroadcaster _static_tf_broadcaster;
 
-        // DS5 types
         std::map<stream_index_pair, image_transport::Publisher> _image_publishers;
         std::map<stream_index_pair, ros::Publisher> _imu_publishers;
         std::map<stream_index_pair, int> _image_format;
@@ -948,6 +986,7 @@ namespace realsense_ros_camera
         std::map<stream_index_pair, ros::Publisher> _info_publisher;
         std::map<stream_index_pair, cv::Mat> _image;
         std::map<stream_index_pair, std::string> _encoding;
+
         std::string _base_frame_id;
         std::map<stream_index_pair, std::string> _frame_id;
         std::map<stream_index_pair, std::string> _optical_frame_id;

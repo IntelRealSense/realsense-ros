@@ -14,9 +14,11 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(OpenCV REQUIRED)
 
-#-O2
+if (CMAKE_BUILD_TYPE EQUAL "RELEASE")
+    set(CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}")
+endif()
 
-set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11  -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -fopenmp -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
 
 add_message_files(
     FILES
