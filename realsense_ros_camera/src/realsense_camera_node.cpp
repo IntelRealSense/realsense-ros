@@ -2,8 +2,6 @@
 // Copyright(c) 2017 Intel Corporation. All Rights Reserved
 
 #include <iostream>
-#include <functional>
-#include <iomanip>
 #include <map>
 #include <pluginlib/class_list_macros.h>
 #include <nodelet/nodelet.h>
@@ -13,9 +11,6 @@
 #include <librealsense2/rs.hpp>
 #include <librealsense2/rsutil.h>
 #include <cv_bridge/cv_bridge.h>
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/core/version.hpp>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
@@ -52,16 +47,19 @@ namespace realsense_ros_camera
         exit(signum);
     }
 
-    class DS5NodeletCamera: public nodelet::Nodelet
+    class RealSenseCameraNodelet: public nodelet::Nodelet
     {
     public:
-        DS5NodeletCamera() :
+        RealSenseCameraNodelet() :
             _base_frame_id(""),
             _intialize_time_base(false)
         {
             signal(SIGINT, signalHandler);
             auto severity = rs2_log_severity::RS2_LOG_SEVERITY_ERROR;
             tryGetLogSeverity(severity);
+            if (rs2_log_severity::RS2_LOG_SEVERITY_DEBUG == severity)
+                ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
+
             rs2::log_to_console(severity);
             ROS_INFO("Running with LibRealSense v%s", RS2_API_VERSION_STR);
 
@@ -114,7 +112,7 @@ namespace realsense_ros_camera
             _stream_name[ACCEL] = "accel";
         }
 
-        virtual ~DS5NodeletCamera()
+        virtual ~RealSenseCameraNodelet()
         {}
 
     private:
@@ -133,8 +131,6 @@ namespace realsense_ros_camera
             ROS_INFO("getParameters...");
 
             _pnh = getPrivateNodeHandle();
-
-            _pnh.param("serial_no", _serial_no, DEFAULT_SERIAL_NO);
 
             _pnh.param("depth_width", _width[DEPTH], DEPTH_WIDTH);
             _pnh.param("depth_height", _height[DEPTH], DEPTH_HEIGHT);
@@ -201,7 +197,7 @@ namespace realsense_ros_camera
 
                 // Take the first device in the list.
                 // TODO: Add an ability to get the specific device to work with from outside
-                _dev = list[0];
+                _dev = list.front();
                 _ctx->set_devices_changed_callback([this](rs2::event_information& info)
                 {
                     if (info.was_removed(_dev))
@@ -212,8 +208,12 @@ namespace realsense_ros_camera
                     }
                 });
 
+                auto camera_name = _dev.get_info(RS2_CAMERA_INFO_NAME);
+                ROS_INFO_STREAM("Device Name: " << camera_name);
+
                 _serial_no = _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
                 ROS_INFO_STREAM("Device Serial No: " << _serial_no);
+
                 auto pid = _dev.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
                 ROS_INFO_STREAM("Device Product ID: " << pid);
 
@@ -275,7 +275,7 @@ namespace realsense_ros_camera
             }
             catch(...)
             {
-                ROS_ERROR_STREAM("An unknown error has occurred!");
+                ROS_ERROR_STREAM("Unknown exception has occured!");
                 throw;
             }
         }
@@ -603,7 +603,7 @@ namespace realsense_ros_camera
             }
             catch(...)
             {
-                ROS_ERROR_STREAM("An unknown error has occurred!");
+                ROS_ERROR_STREAM("Unknown exception has occured!");
                 throw;
             }
         }
@@ -637,7 +637,7 @@ namespace realsense_ros_camera
             _camera_info[stream_index].P.at(10) = 1;
             _camera_info[stream_index].P.at(11) = 0;
 
-            // TODO: ?
+            // TODO: Depth to Color?
             if (stream_index == DEPTH && _enable[DEPTH] && _enable[COLOR])
             {
                 // set depth to color translation values in Projection matrix (P)
@@ -669,6 +669,7 @@ namespace realsense_ros_camera
 
         void publishStaticTransforms()
         {
+            // TODO: Add the extrinsics rotation matrix
             ROS_INFO("publishStaticTransforms...");
             // Publish transforms for the cameras
             tf::Quaternion q_c2co;
@@ -719,7 +720,7 @@ namespace realsense_ros_camera
             d2do_msg.transform.rotation.w = q_d2do.getW();
             _static_tf_broadcaster.sendTransform(d2do_msg);
 
-            // All DS5 SKUs have Depth sensor
+            // Assuming that all D400 SKUs have depth sensor
             auto& sens = _sensors[DEPTH];
             auto depth_profile = sens->get_stream_profiles().front();
             if (true == _enable[COLOR])
@@ -853,7 +854,7 @@ namespace realsense_ros_camera
                     depth_offset = (u * sizeof(uint16_t)) + (v * sizeof(uint16_t) * depth_intrinsic.width);
                     memcpy(&depth_value, &depth_image.data[depth_offset], sizeof(uint16_t));
                     scaled_depth = static_cast<float>(depth_value) * _depth_scale_meters;
-                    if (scaled_depth <= 0.0f || scaled_depth > 40.0) // TODO: 40?
+                    if (scaled_depth <= 0.0f || scaled_depth > 5.0) // TODO: move to constants
                     {
                         // Depth value is invalid, so zero it out.
                         depth_point[0] = 0.0f;
@@ -1002,6 +1003,6 @@ namespace realsense_ros_camera
         ros::Time _ros_time_base;
     };//end class
 
-    PLUGINLIB_EXPORT_CLASS(realsense_ros_camera::DS5NodeletCamera, nodelet::Nodelet)
+    PLUGINLIB_EXPORT_CLASS(realsense_ros_camera::RealSenseCameraNodelet, nodelet::Nodelet)
 
 }//end namespace

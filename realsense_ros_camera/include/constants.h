@@ -9,10 +9,6 @@
 
 namespace realsense_ros_camera
 {
-    // Default Constants.
-    const std::string DEFAULT_SERIAL_NO = "";
-
-
     const int DEPTH_WIDTH     = 640;
     const int DEPTH_HEIGHT    = 480;
 
