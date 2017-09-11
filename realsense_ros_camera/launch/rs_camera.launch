@@ -1,6 +1,5 @@
 <launch>
   <arg name="manager"             default="realsense_ros_camera_manager"/>
-  <arg name="serial_no"           default="" />
   <arg name="camera"              default="camera"/>
   <arg name="depth"               default="depth" />
   <arg name="infra1"              default="infra1" />
@@ -41,8 +40,7 @@
 
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/> 
   <node pkg="nodelet" type="nodelet" name="realsense_ros_$(arg camera)" args="load realsense_ros_camera/NodeletDS5Camera $(arg manager)" output="screen">
-    <param name="serial_no"                type="str"  value="$(arg serial_no)" />
-    
+
     <param name="fisheye_width"            type="int"  value="$(arg fisheye_width)" />
     <param name="fisheye_height"           type="int"  value="$(arg fisheye_height)" />
     <param name="enable_fisheye"           type="bool" value="$(arg enable_fisheye)" />
