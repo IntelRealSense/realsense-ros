@@ -39,7 +39,7 @@
   <arg name="enable_imu"          default="true" />
 
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/> 
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_$(arg camera)" args="load realsense_ros_camera/NodeletDS5Camera $(arg manager)" output="screen">
+  <node pkg="nodelet" type="nodelet" name="realsense_ros_$(arg camera)" args="load realsense_ros_camera/RealSenseCameraNodelet $(arg manager)" output="screen">
 
     <param name="fisheye_width"            type="int"  value="$(arg fisheye_width)" />
     <param name="fisheye_height"           type="int"  value="$(arg fisheye_height)" />

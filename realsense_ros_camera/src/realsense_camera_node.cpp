@@ -22,6 +22,9 @@
 #include <realsense_ros_camera/IMUInfo.h>
 #include <csignal>
 
+#define REALSENSE_ROS_EMBEDDED_VERSION_STR (VAR_ARG_STRING(VERSION: REALSENSE_ROS_MAJOR_VERSION.REALSENSE_ROS_MINOR_VERSION.REALSENSE_ROS_PATCH_VERSION))
+constexpr auto realsense_ros_camera_version = REALSENSE_ROS_EMBEDDED_VERSION_STR;
+
 namespace realsense_ros_camera
 {
     using stream_index_pair = std::pair<rs2_stream, int>;
@@ -54,6 +57,9 @@ namespace realsense_ros_camera
             _base_frame_id(""),
             _intialize_time_base(false)
         {
+            ROS_INFO("RealSense ROS v%s", REALSENSE_ROS_VERSION_STR);
+            ROS_INFO("Running with LibRealSense v%s", RS2_API_VERSION_STR);
+
             signal(SIGINT, signalHandler);
             auto severity = rs2_log_severity::RS2_LOG_SEVERITY_ERROR;
             tryGetLogSeverity(severity);
@@ -61,7 +67,6 @@ namespace realsense_ros_camera
                 ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
 
             rs2::log_to_console(severity);
-            ROS_INFO("Running with LibRealSense v%s", RS2_API_VERSION_STR);
 
             // Types for depth stream
             _format[DEPTH] = RS2_FORMAT_Z16;   // libRS type
