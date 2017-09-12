@@ -7,6 +7,9 @@
     <arg name="depth"               default="depth" />
     <arg name="rgb"                 default="rgb" />
     <arg name="ir"                  default="ir" />
+    <arg name="ir2"                 default="ir2" />
+    <arg name="imu"                 default="imu" />
+    <arg name="fisheye"             default="fisheye" />
 <!-- rgbd_launch -->
 
 <!-- realsense_camera -->
@@ -20,7 +23,6 @@
     <arg name="color_height"        default="" />
     <arg name="depth_fps"           default="" />
     <arg name="color_fps"           default="" />
-    <arg name="ir2"                 default="ir2" />
 
     <arg name="enable_depth"        default="true" />
     <arg name="enable_color"        default="true" />
@@ -57,14 +59,22 @@
         <param name="base_frame_id"           type="str"  value="$(arg camera)_link" />
         <param name="depth_frame_id"          type="str"  value="$(arg camera)_$(arg depth)_frame" />
         <param name="color_frame_id"          type="str"  value="$(arg camera)_$(arg rgb)_frame" />
-        <param name="depth_optical_frame_id"  type="str"  value="$(arg camera)_$(arg depth)_optical_frame" />
-        <param name="color_optical_frame_id"  type="str"  value="$(arg camera)_$(arg rgb)_optical_frame" />
         <param name="ir_frame_id"             type="str"  value="$(arg camera)_$(arg ir)_frame" />
         <param name="ir2_frame_id"            type="str"  value="$(arg camera)_$(arg ir2)_frame" />
+        <param name="fisheye_frame_id"        type="str"  value="$(arg camera)_$(arg fisheye)_frame" />
+        <param name="imu_frame_id"            type="str"  value="$(arg camera)_$(arg imu)_frame" />
+        <param name="depth_optical_frame_id"  type="str"  value="$(arg camera)_$(arg depth)_optical_frame" />
+        <param name="color_optical_frame_id"  type="str"  value="$(arg camera)_$(arg rgb)_optical_frame" />
+        <param name="ir_optical_frame_id"     type="str"  value="$(arg camera)_$(arg ir)_optical_frame" />
+        <param name="ir2_optical_frame_id"    type="str"  value="$(arg camera)_$(arg ir2)_optical_frame" />
+        <param name="fisheye_optical_frame_id" type="str"  value="$(arg camera)_$(arg fisheye)_optical_frame" />
+        <param name="imu_optical_frame_id"    type="str"  value="$(arg camera)_$(arg imu)_optical_frame" />
 
         <remap from="depth"    to="$(arg depth)" />
         <remap from="color"    to="$(arg rgb)" />
         <remap from="ir"       to="$(arg ir)" />
         <remap from="ir2"      to="$(arg ir2)" />
+        <remap from="fisheye"  to="$(arg fisheye)" />
+        <remap from="imu"      to="$(arg imu)" />
     </node>
 </launch>
