@@ -1,12 +1,12 @@
 # Intel&reg; RealSense&trade; ROS
-Intel&reg; RealSense&trade; ROS is a package for using Intel&reg; RealSense&trade; depth cameras (D400 series and the SR300) with ROS.
+These are packages for using Intel RealSense cameras (D400 series and the SR300) with ROS.
 
 ## Installation Instructions
 
 The following instructions support ROS Indigo, on **Ubuntu 14.04**, and ROS Kinetic, on **Ubutnu 16.04**.
 
 ### Step 1: Install the latest Intel&reg; RealSense&trade; SDK 2.0
-Download the latest Intel&reg; RealSense&trade; SDK 2.0 from [here](https://github.com/IntelRealSense/librealsense/releases) and follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/development/doc/installation.md).
+Download the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/latest) and follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/development/doc/installation.md).
 
 ### Step 2: Install the ROS distribution
 - #### Install [ROS Indigo](http://wiki.ros.org/indigo/Installation/Ubuntu), on Ubuntu 14.04
@@ -57,6 +57,7 @@ This will launch [RViz](http://wiki.ros.org/rviz) and display the depth pointclo
 ## Known Issues
 * This ROS node does not currently provide RGB point cloud.
 * This ROS node does not currently provide any dynamic reconfigure support for camera properties/presets.
+* This ROS node does not currently offer temporal syncronization of depth and color data.
 * This ROS node does not currently support [ROS Lunar Loggerhead](http://wiki.ros.org/lunar).
 * This ROS node does not currently work with [ROS 2](https://github.com/ros2/ros2/wiki).
 * This ROS node currently does not provide the unit-tests which ensure the proper operation of the camera.  Future versions of the node will provide ROS compatible unit-tests.
