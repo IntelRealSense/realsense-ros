@@ -1,4 +1,4 @@
-# Intel&reg; RealSense&trade; ROS
+# ROS Wrapper for Intel&reg; RealSense&trade; Devices
 These are packages for using Intel RealSense cameras (D400 series and the SR300) with ROS.
 
 ## Installation Instructions
