@@ -55,7 +55,6 @@ This will launch [RViz](http://wiki.ros.org/rviz) and display the depth pointclo
 
 
 ## Known Issues
-* This ROS node does not currently provide RGB point cloud.
 * This ROS node does not currently provide any dynamic reconfigure support for camera properties/presets.
 * This ROS node does not currently offer temporal syncronization of depth and color data.
 * This ROS node does not currently support [ROS Lunar Loggerhead](http://wiki.ros.org/lunar).
