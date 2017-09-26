@@ -38,8 +38,14 @@
   <arg name="accel_fps"           default="1000" />
   <arg name="enable_imu"          default="true" />
 
+  <arg name="enable_pointcloud"   default="false" />
+  <arg name="enable_sync"         default="false" />
+
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/> 
   <node pkg="nodelet" type="nodelet" name="realsense_ros_$(arg camera)" args="load realsense_ros_camera/RealSenseCameraNodelet $(arg manager)" output="screen">
+
+    <param name="enable_pointcloud"        type="bool" value="$(arg enable_pointcloud)" />
+    <param name="enable_sync"              type="bool" value="$(arg enable_sync)" />
 
     <param name="fisheye_width"            type="int"  value="$(arg fisheye_width)" />
     <param name="fisheye_height"           type="int"  value="$(arg fisheye_height)" />

@@ -10,6 +10,7 @@
 #include <ros/package.h>
 #include <librealsense2/rs.hpp>
 #include <librealsense2/rsutil.h>
+#include <librealsense2/hpp/rs_processing.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -54,6 +55,7 @@ namespace realsense_ros_camera
     {
     public:
         RealSenseCameraNodelet() :
+            _serial_no(""),
             _base_frame_id(""),
             _intialize_time_base(false)
         {
@@ -137,6 +139,13 @@ namespace realsense_ros_camera
 
             _pnh = getPrivateNodeHandle();
 
+            _pnh.param("enable_pointcloud", _pointcloud, POINTCLOUD);
+            _pnh.param("enable_sync", _sync_frames, SYNC_FRAMES);
+            if (_pointcloud)
+                _sync_frames = true;
+
+            _pnh.param("serial_no", _serial_no);
+
             _pnh.param("depth_width", _width[DEPTH], DEPTH_WIDTH);
             _pnh.param("depth_height", _height[DEPTH], DEPTH_HEIGHT);
             _pnh.param("depth_fps", _fps[DEPTH], DEPTH_FPS);
@@ -219,6 +228,9 @@ namespace realsense_ros_camera
                 _serial_no = _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
                 ROS_INFO_STREAM("Device Serial No: " << _serial_no);
 
+                auto fw_ver = _dev.get_info(RS2_CAMERA_INFO_FIRMWARE_VERSION);
+                ROS_INFO_STREAM("Device FW version: " << fw_ver);
+
                 auto pid = _dev.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
                 ROS_INFO_STREAM("Device Product ID: " << pid);
 
@@ -294,7 +306,9 @@ namespace realsense_ros_camera
             {
                 _image_publishers[DEPTH] = image_transport.advertise("camera/depth/image_raw", 1);
                 _info_publisher[DEPTH] = _node_handle.advertise<sensor_msgs::CameraInfo>("camera/depth/camera_info", 1);
-                _pointcloud_publisher = _node_handle.advertise<sensor_msgs::PointCloud2>("/camera/points", 1);
+
+                if (_pointcloud)
+                    _pointcloud_publisher = _node_handle.advertise<sensor_msgs::PointCloud2>("/camera/points", 1);
             }
 
             if (true == _enable[INFRA1])
@@ -396,6 +410,63 @@ namespace realsense_ros_camera
                     }
                 }
 
+                auto frame_callback = [this](rs2::frame frame)
+                {
+                    // We compute a ROS timestamp which is based on an initial ROS time at point of first frame,
+                    // and the incremental timestamp from the camera.
+                    // In sync mode the timestamp is based on ROS time
+                    if (false == _intialize_time_base)
+                    {
+                        _intialize_time_base = true;
+                        _ros_time_base = ros::Time::now();
+                        _camera_time_base = frame.get_timestamp();
+                    }
+
+                    ros::Time t;
+                    if (_sync_frames)
+                        t = ros::Time::now();
+                    else
+                        t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
+
+                    auto is_color_frame_arrived = false;
+                    auto is_depth_frame_arrived = false;
+                    if (frame.is<rs2::frameset>())
+                    {
+                        ROS_DEBUG("Frameset arrived");
+                        auto frameset = frame.as<rs2::frameset>();
+                        for (auto it = frameset.begin(); it != frameset.end(); ++it)
+                        {
+                            auto f = (*it);
+                            auto stream_type = f.get_profile().stream_type();
+                            if (RS2_STREAM_COLOR == stream_type)
+                                is_color_frame_arrived = true;
+                            else if (RS2_STREAM_DEPTH == stream_type)
+                                is_depth_frame_arrived = true;
+
+                            ROS_DEBUG("Frameset contain %s frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
+                                      rs2_stream_to_string(stream_type), frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+                            publishFrame(f, t);
+                        }
+                    }
+                    else
+                    {
+                        auto stream_type = frame.get_profile().stream_type();
+                        if (RS2_STREAM_DEPTH == stream_type)
+                            is_depth_frame_arrived = true;
+
+                        ROS_DEBUG("%s video frame arrived. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
+                                  rs2_stream_to_string(stream_type), frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+                        publishFrame(frame, t);
+                    }
+
+                    if(_pointcloud && is_depth_frame_arrived && is_color_frame_arrived &&
+                       (0 != _pointcloud_publisher.getNumSubscribers()))
+                    {
+                        ROS_DEBUG("publishPCTopic(...)");
+                        publishPCTopic(t);
+                    }
+                };
+
                 // Streaming IMAGES
                 for (auto& streams : IMAGE_STREAMS)
                 {
@@ -414,79 +485,24 @@ namespace realsense_ros_camera
                     {
                         auto stream = streams.front();
                         auto& sens = _sensors[stream];
-                        // Enable the stream
                         sens->open(profiles);
 
-                        if (stream == DEPTH)
+                        if (DEPTH == stream)
                         {
                             auto depth_sensor = sens->as<rs2::depth_sensor>();
                             _depth_scale_meters = depth_sensor.get_depth_scale();
                         }
 
-                        // Start device with the following callback
-                        sens->start([this](rs2::frame frame)
+                        if (_sync_frames &&
+                            (DEPTH == stream || COLOR == stream))
                         {
-                            // We compute a ROS timestamp which is based on an initial ROS time at point of first frame,
-                            // and the incremental timestamp from the camera.
-                            if (false == _intialize_time_base)
-                            {
-                                _intialize_time_base = true;
-                                _ros_time_base = ros::Time::now();
-                                _camera_time_base = frame.get_timestamp();
-                            }
-                            double elapsed_camera_ms = (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000;
-                            ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
-
-                            ROS_DEBUG("Frame arrived: stream: %s ; index: %d ; Timestamp Domain: %s",
-                                      rs2_stream_to_string(frame.get_profile().stream_type()),
-                                      frame.get_profile().stream_index(),
-                                      rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
-
-                            stream_index_pair stream{frame.get_profile().stream_type(), frame.get_profile().stream_index()};
-                            auto& image = _image[stream];
-                            image.data = (uint8_t*)frame.get_data();
-
-                            if((DEPTH == stream) && (0 != _pointcloud_publisher.getNumSubscribers()))
-                                publishPCTopic(t);
-
-                            ++(_seq[stream]);
-                            auto& info_publisher = _info_publisher[stream];
-                            auto& image_publisher = _image_publishers[stream];
-                            if(0 != info_publisher.getNumSubscribers() ||
-                               0 != image_publisher.getNumSubscribers())
-                            {
-                                auto width = 0;
-                                auto height = 0;
-                                auto bpp = 1;
-                                if (frame.is<rs2::video_frame>())
-                                {
-                                    auto image = frame.as<rs2::video_frame>();
-                                    width = image.get_width();
-                                    height = image.get_height();
-                                    bpp = image.get_bytes_per_pixel();
-                                }
-
-                                sensor_msgs::ImagePtr img;
-                                img = cv_bridge::CvImage(std_msgs::Header(), _encoding[stream], image).toImageMsg();
-                                img->width = width;
-                                img->height = height;
-                                img->is_bigendian = false;
-                                img->step = width * bpp;
-                                img->header.frame_id = _optical_frame_id[stream];
-                                img->header.stamp = t;
-                                img->header.seq = _seq[stream];
-
-                                auto& cam_info = _camera_info[stream];
-                                cam_info.header.stamp = t;
-                                cam_info.header.seq = _seq[stream];
-                                info_publisher.publish(cam_info);
-
-                                image_publisher.publish(img);
-                                ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
-                                return;
-                            }
-                            ROS_DEBUG("Skipping publish %s stream. Topic is not subscribed!", rs2_stream_to_string(frame.get_profile().stream_type()));
-                        });
+                            sens->start(_syncer);
+                            _syncer.start(frame_callback);
+                        }
+                        else
+                        {
+                            sens->start(frame_callback);
+                        }
                     }
                 }//end for
 
@@ -642,15 +658,22 @@ namespace realsense_ros_camera
             _camera_info[stream_index].P.at(10) = 1;
             _camera_info[stream_index].P.at(11) = 0;
 
+            rs2::stream_profile depth_profile;
+            if (!get_enabled_profile(DEPTH, depth_profile))
+            {
+                ROS_ERROR_STREAM("Depth profile not found!");
+                ros::shutdown();
+                exit(1);
+            }
+
             // TODO: Depth to Color?
             if (stream_index == DEPTH && _enable[DEPTH] && _enable[COLOR])
             {
+                _depth2color_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[COLOR].front());
                 // set depth to color translation values in Projection matrix (P)
-                auto depth_profile = _enabled_profiles[DEPTH].front();
-                auto d2c_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[COLOR].front());
-                _camera_info[stream_index].P.at(3) = d2c_extrinsics.translation[0];     // Tx
-                _camera_info[stream_index].P.at(7) = d2c_extrinsics.translation[1];     // Ty
-                _camera_info[stream_index].P.at(11) = d2c_extrinsics.translation[2];    // Tz
+                _camera_info[stream_index].P.at(3) = _depth2color_extrinsics.translation[0];     // Tx
+                _camera_info[stream_index].P.at(7) = _depth2color_extrinsics.translation[1];     // Ty
+                _camera_info[stream_index].P.at(11) = _depth2color_extrinsics.translation[2];    // Tz
             }
 
             _camera_info[stream_index].distortion_model = "plumb_bob";
@@ -725,20 +748,23 @@ namespace realsense_ros_camera
             d2do_msg.transform.rotation.w = q_d2do.getW();
             _static_tf_broadcaster.sendTransform(d2do_msg);
 
-            // Assuming that all D400 SKUs have depth sensor
-            auto& sens = _sensors[DEPTH];
-            auto depth_profile = sens->get_stream_profiles().front();
+            rs2::stream_profile depth_profile;
+            if (!get_enabled_profile(DEPTH, depth_profile))
+            {
+                ROS_ERROR_STREAM("Depth profile not found!");
+                ros::shutdown();
+                exit(1);
+            }
+
             if (true == _enable[COLOR])
             {
-                auto d2c_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[COLOR].front());
-
                 // Transform base frame to color frame
                 b2c_msg.header.stamp = transform_ts_;
                 b2c_msg.header.frame_id = _base_frame_id;
                 b2c_msg.child_frame_id = _frame_id[COLOR];
-                b2c_msg.transform.translation.x = d2c_extrinsics.translation[2];
-                b2c_msg.transform.translation.y = -d2c_extrinsics.translation[0];
-                b2c_msg.transform.translation.z = -d2c_extrinsics.translation[1];
+                b2c_msg.transform.translation.x = _depth2color_extrinsics.translation[2];
+                b2c_msg.transform.translation.y = -_depth2color_extrinsics.translation[0];
+                b2c_msg.transform.translation.z = -_depth2color_extrinsics.translation[1];
                 b2c_msg.transform.rotation.x = 0;
                 b2c_msg.transform.rotation.y = 0;
                 b2c_msg.transform.rotation.z = 0;
@@ -828,57 +854,84 @@ namespace realsense_ros_camera
 
         void publishPCTopic(const ros::Time& t)
         {
-            auto& depth_intrinsic = _stream_intrinsics[DEPTH];
-            auto& depth_image = _image[DEPTH];
+            auto color_intrinsics = _stream_intrinsics[COLOR];
+            auto image_depth16 = reinterpret_cast<const uint16_t*>(_image[DEPTH].data);
+            auto depth_intrinsics = _stream_intrinsics[DEPTH];
             sensor_msgs::PointCloud2 msg_pointcloud;
             msg_pointcloud.header.stamp = t;
             msg_pointcloud.header.frame_id = _optical_frame_id[DEPTH];
-            msg_pointcloud.width = depth_intrinsic.width;
-            msg_pointcloud.height = depth_intrinsic.height;
+            msg_pointcloud.width = depth_intrinsics.width;
+            msg_pointcloud.height = depth_intrinsics.height;
             msg_pointcloud.is_dense = true;
 
             sensor_msgs::PointCloud2Modifier modifier(msg_pointcloud);
-            modifier.setPointCloud2Fields(3,
+
+            modifier.setPointCloud2Fields(4,
                                           "x", 1, sensor_msgs::PointField::FLOAT32,
                                           "y", 1, sensor_msgs::PointField::FLOAT32,
-                                          "z", 1, sensor_msgs::PointField::FLOAT32);
-            modifier.setPointCloud2FieldsByString(1, "xyz");
+                                          "z", 1, sensor_msgs::PointField::FLOAT32,
+                                          "rgb", 1, sensor_msgs::PointField::FLOAT32);
+            modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
 
-            for (int v = 0; v < depth_intrinsic.height; ++v)
+            sensor_msgs::PointCloud2Iterator<float>iter_x(msg_pointcloud, "x");
+            sensor_msgs::PointCloud2Iterator<float>iter_y(msg_pointcloud, "y");
+            sensor_msgs::PointCloud2Iterator<float>iter_z(msg_pointcloud, "z");
+
+            sensor_msgs::PointCloud2Iterator<uint8_t>iter_r(msg_pointcloud, "r");
+            sensor_msgs::PointCloud2Iterator<uint8_t>iter_g(msg_pointcloud, "g");
+            sensor_msgs::PointCloud2Iterator<uint8_t>iter_b(msg_pointcloud, "b");
+
+            float depth_point[3], color_point[3], color_pixel[2], scaled_depth;
+            unsigned char* color_data = _image[COLOR].data;
+
+            // Fill the PointCloud2 fields
+            for (int y = 0; y < depth_intrinsics.height; ++y)
             {
-                for (int u = 0; u < depth_intrinsic.width; ++u)
+                for (int x = 0; x < depth_intrinsics.width; ++x)
                 {
-                    float depth_point[3], scaled_depth;
-                    uint16_t depth_value;
-                    int depth_offset, cloud_offset;
+                    scaled_depth = static_cast<float>(*image_depth16) * _depth_scale_meters;
+                    float depth_pixel[2] = {static_cast<float>(x), static_cast<float>(y)};
+                    rs2_deproject_pixel_to_point(depth_point, &depth_intrinsics, depth_pixel, scaled_depth);
 
-                    // Offset into point cloud data, for point at u, v
-                    cloud_offset = (v * msg_pointcloud.row_step) + (u * msg_pointcloud.point_step);
-
-                    // Retrieve depth value, and scale it in terms of meters
-                    depth_offset = (u * sizeof(uint16_t)) + (v * sizeof(uint16_t) * depth_intrinsic.width);
-                    memcpy(&depth_value, &depth_image.data[depth_offset], sizeof(uint16_t));
-                    scaled_depth = static_cast<float>(depth_value) * _depth_scale_meters;
-                    if (scaled_depth <= 0.0f || scaled_depth > 5.0) // TODO: move to constants
+                    if (depth_point[2] <= 0.f || depth_point[2] > 5.f)
                     {
-                        // Depth value is invalid, so zero it out.
-                        depth_point[0] = 0.0f;
-                        depth_point[1] = 0.0f;
-                        depth_point[2] = 0.0f;
+                        depth_point[0] = 0.f;
+                        depth_point[1] = 0.f;
+                        depth_point[2] = 0.f;
+                    }
+
+                    *iter_x = depth_point[0];
+                    *iter_y = depth_point[1];
+                    *iter_z = depth_point[2];
+
+                    rs2_transform_point_to_point(color_point, &_depth2color_extrinsics, depth_point);
+                    rs2_project_point_to_pixel(color_pixel, &color_intrinsics, color_point);
+
+                    if (color_pixel[1] < 0.f || color_pixel[1] > color_intrinsics.height
+                        || color_pixel[0] < 0.f || color_pixel[0] > color_intrinsics.width)
+                    {
+                        // For out of bounds color data, default to a shade of blue in order to visually distinguish holes.
+                        // This color value is same as the librealsense out of bounds color value.
+                        *iter_r = static_cast<uint8_t>(96);
+                        *iter_g = static_cast<uint8_t>(157);
+                        *iter_b = static_cast<uint8_t>(198);
                     }
                     else
                     {
-                        // Convert depth image to points in 3D space
-                        float depth_pixel[2] = {static_cast<float>(u), static_cast<float>(v)};
-                        rs2_deproject_pixel_to_point(depth_point, &depth_intrinsic, depth_pixel, scaled_depth);
+                        auto i = static_cast<int>(color_pixel[0]);
+                        auto j = static_cast<int>(color_pixel[1]);
+
+                        auto offset = i * 3 + j * color_intrinsics.width * 3;
+                        *iter_r = static_cast<uint8_t>(color_data[offset]);
+                        *iter_g = static_cast<uint8_t>(color_data[offset + 1]);
+                        *iter_b = static_cast<uint8_t>(color_data[offset + 2]);
                     }
 
-                    // Assign 3d point
-                    for (int i = 0; i < 3; ++i)
-                        memcpy(&msg_pointcloud.data[cloud_offset + msg_pointcloud.fields[i].offset], &depth_point[i], sizeof(float));
-                } // for
-            } // for
-
+                    ++image_depth16;
+                    ++iter_x; ++iter_y; ++iter_z;
+                    ++iter_r; ++iter_g; ++iter_b;
+                }
+            }
             _pointcloud_publisher.publish(msg_pointcloud);
         }
 
@@ -968,6 +1021,63 @@ namespace realsense_ros_camera
             }
         }
 
+        void publishFrame(rs2::frame f, const ros::Time& t)
+        {
+            ROS_DEBUG("publishFrame(...)");
+            stream_index_pair stream{f.get_profile().stream_type(), f.get_profile().stream_index()};
+            auto& image = _image[stream];
+            image.data = (uint8_t*)f.get_data();
+            ++(_seq[stream]);
+            auto& info_publisher = _info_publisher[stream];
+            auto& image_publisher = _image_publishers[stream];
+            if(0 != info_publisher.getNumSubscribers() ||
+               0 != image_publisher.getNumSubscribers())
+            {
+                auto width = 0;
+                auto height = 0;
+                auto bpp = 1;
+                if (f.is<rs2::video_frame>())
+                {
+                    auto image = f.as<rs2::video_frame>();
+                    width = image.get_width();
+                    height = image.get_height();
+                    bpp = image.get_bytes_per_pixel();
+                }
+
+                sensor_msgs::ImagePtr img;
+                img = cv_bridge::CvImage(std_msgs::Header(), _encoding[stream], image).toImageMsg();
+                img->width = width;
+                img->height = height;
+                img->is_bigendian = false;
+                img->step = width * bpp;
+                img->header.frame_id = _optical_frame_id[stream];
+                img->header.stamp = t;
+                img->header.seq = _seq[stream];
+
+                auto& cam_info = _camera_info[stream];
+                cam_info.header.stamp = t;
+                cam_info.header.seq = _seq[stream];
+                info_publisher.publish(cam_info);
+
+                image_publisher.publish(img);
+                ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
+            }
+        }
+
+        bool get_enabled_profile(stream_index_pair stream_index, rs2::stream_profile& profile)
+        {
+            // Assuming that all D400 SKUs have depth sensor
+            auto profiles = _enabled_profiles[stream_index];
+            auto it = std::find_if(profiles.begin(), profiles.end(),
+                                   [&](const rs2::stream_profile& profile)
+                                   { return (profile.stream_type() == stream_index.first); });
+            if (it == profiles.end())
+                return false;
+
+            profile =  *it;
+            return true;
+        }
+
         ros::NodeHandle _node_handle, _pnh;
         std::unique_ptr<rs2::context> _ctx;
         rs2::device _dev;
@@ -1006,6 +1116,10 @@ namespace realsense_ros_camera
 
         ros::Publisher _pointcloud_publisher;
         ros::Time _ros_time_base;
+        bool _sync_frames;
+        bool _pointcloud;
+        rs2::syncer_processing_block _syncer;
+        rs2_extrinsics _depth2color_extrinsics;
     };//end class
 
     PLUGINLIB_EXPORT_CLASS(realsense_ros_camera::RealSenseCameraNodelet, nodelet::Nodelet)
