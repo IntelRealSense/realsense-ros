@@ -46,7 +46,7 @@ namespace realsense_ros_camera
 
     inline void signalHandler(int signum)
     {
-        ROS_INFO("\"Ctrl+C\" is being pressed! Terminate RealSense Node...");
+        ROS_INFO_STREAM(strsignal(signum) << " Signal is received! Terminate RealSense Node...");
         ros::shutdown();
         exit(signum);
     }
@@ -234,6 +234,8 @@ namespace realsense_ros_camera
                 auto pid = _dev.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
                 ROS_INFO_STREAM("Device Product ID: " << pid);
 
+                ROS_INFO_STREAM("Sync Mode: " << ((_sync_frames)?"On":"Off"));
+
                 auto dev_sensors = _dev.query_sensors();
 
                 ROS_INFO_STREAM("Device Sensors: ");
@@ -273,7 +275,7 @@ namespace realsense_ros_camera
                 // Update "enable" map
                 std::vector<std::vector<stream_index_pair>> streams(IMAGE_STREAMS);
                 streams.insert(streams.end(), HID_STREAMS.begin(), HID_STREAMS.end());
-                for (auto elem : streams)
+                for (auto& elem : streams)
                 {
                     for (auto& stream_index : elem)
                     {
@@ -369,7 +371,7 @@ namespace realsense_ros_camera
                         {
                             auto& sens = _sensors[elem];
                             auto profiles = sens->get_stream_profiles();
-                            for (rs2::stream_profile& profile : profiles)
+                            for (auto& profile : profiles)
                             {
                                 auto video_profile = profile.as<rs2::video_stream_profile>();
                                 if (video_profile.format() == _format[elem] &&
@@ -380,7 +382,6 @@ namespace realsense_ros_camera
                                 {
                                     _enabled_profiles[elem].push_back(profile);
 
-                                    // Setup stream callback for stream
                                     _image[elem] = cv::Mat(_width[elem], _height[elem], _image_format[elem], cv::Scalar(0, 0, 0));
                                     ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem]);
                                     break;
@@ -451,9 +452,6 @@ namespace realsense_ros_camera
                     else
                     {
                         auto stream_type = frame.get_profile().stream_type();
-                        if (RS2_STREAM_DEPTH == stream_type)
-                            is_depth_frame_arrived = true;
-
                         ROS_DEBUG("%s video frame arrived. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
                                   rs2_stream_to_string(stream_type), frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
                         publishFrame(frame, t);
@@ -493,11 +491,9 @@ namespace realsense_ros_camera
                             _depth_scale_meters = depth_sensor.get_depth_scale();
                         }
 
-                        if (_sync_frames &&
-                            (DEPTH == stream || COLOR == stream))
+                        if (_sync_frames)
                         {
                             sens->start(_syncer);
-                            _syncer.start(frame_callback);
                         }
                         else
                         {
@@ -506,6 +502,10 @@ namespace realsense_ros_camera
                     }
                 }//end for
 
+                if (_sync_frames)
+                {
+                    _syncer.start(frame_callback);
+                }
 
                 // Streaming HID
                 for (const auto streams : HID_STREAMS)
@@ -519,7 +519,7 @@ namespace realsense_ros_camera
                             for (rs2::stream_profile& profile : profiles)
                             {
                                 if (profile.fps() == _fps[elem] &&
-                                        profile.format() == _format[elem])
+                                    profile.format() == _format[elem])
                                 {
                                     _enabled_profiles[elem].push_back(profile);
                                     break;
