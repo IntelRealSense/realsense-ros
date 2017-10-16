@@ -22,6 +22,8 @@
 #include <sensor_msgs/Imu.h>
 #include <realsense_ros_camera/IMUInfo.h>
 #include <csignal>
+#include <eigen3/Eigen/Geometry>
+
 
 #define REALSENSE_ROS_EMBEDDED_VERSION_STR (VAR_ARG_STRING(VERSION: REALSENSE_ROS_MAJOR_VERSION.REALSENSE_ROS_MINOR_VERSION.REALSENSE_ROS_PATCH_VERSION))
 constexpr auto realsense_ros_camera_version = REALSENSE_ROS_EMBEDDED_VERSION_STR;
@@ -659,14 +661,14 @@ namespace realsense_ros_camera
             _camera_info[stream_index].P.at(11) = 0;
 
             rs2::stream_profile depth_profile;
-            if (!get_enabled_profile(DEPTH, depth_profile))
+            if (!getEnabledProfile(DEPTH, depth_profile))
             {
                 ROS_ERROR_STREAM("Depth profile not found!");
                 ros::shutdown();
                 exit(1);
             }
 
-            // TODO: Depth to Color?
+            // TODO: Why Depth to Color?
             if (stream_index == DEPTH && _enable[DEPTH] && _enable[COLOR])
             {
                 _depth2color_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[COLOR].front());
@@ -695,9 +697,18 @@ namespace realsense_ros_camera
             }
         }
 
+        Eigen::Quaternionf rotationMatrixToQuaternion(float rotation[3]) const
+        {
+            Eigen::Matrix3f m;
+            m << rotation[0], rotation[1], rotation[2],
+                 rotation[3], rotation[4], rotation[5],
+                 rotation[6], rotation[7], rotation[8];
+            Eigen::Quaternionf q(m);
+            return q;
+        }
+
         void publishStaticTransforms()
         {
-            // TODO: Add the extrinsics rotation matrix
             ROS_INFO("publishStaticTransforms...");
             // Publish transforms for the cameras
             tf::Quaternion q_c2co;
@@ -749,7 +760,7 @@ namespace realsense_ros_camera
             _static_tf_broadcaster.sendTransform(d2do_msg);
 
             rs2::stream_profile depth_profile;
-            if (!get_enabled_profile(DEPTH, depth_profile))
+            if (!getEnabledProfile(DEPTH, depth_profile))
             {
                 ROS_ERROR_STREAM("Depth profile not found!");
                 ros::shutdown();
@@ -759,16 +770,18 @@ namespace realsense_ros_camera
             if (true == _enable[COLOR])
             {
                 // Transform base frame to color frame
+                auto q = rotationMatrixToQuaternion(_depth2color_extrinsics.rotation);
+
                 b2c_msg.header.stamp = transform_ts_;
                 b2c_msg.header.frame_id = _base_frame_id;
                 b2c_msg.child_frame_id = _frame_id[COLOR];
                 b2c_msg.transform.translation.x = _depth2color_extrinsics.translation[2];
                 b2c_msg.transform.translation.y = -_depth2color_extrinsics.translation[0];
                 b2c_msg.transform.translation.z = -_depth2color_extrinsics.translation[1];
-                b2c_msg.transform.rotation.x = 0;
-                b2c_msg.transform.rotation.y = 0;
-                b2c_msg.transform.rotation.z = 0;
-                b2c_msg.transform.rotation.w = 1;
+                b2c_msg.transform.rotation.x = q.x();
+                b2c_msg.transform.rotation.y = q.y();
+                b2c_msg.transform.rotation.z = q.z();
+                b2c_msg.transform.rotation.w = q.w();
                 _static_tf_broadcaster.sendTransform(b2c_msg);
 
                 // Transform color frame to color optical frame
@@ -789,6 +802,7 @@ namespace realsense_ros_camera
             if (true == _enable[INFRA1])
             {
                 auto d2ir1_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[INFRA1].front());
+                auto q = rotationMatrixToQuaternion(d2ir1_extrinsics.rotation);
 
                 // Transform base frame to infra1
                 b2ir1_msg.header.stamp = transform_ts_;
@@ -797,10 +811,11 @@ namespace realsense_ros_camera
                 b2ir1_msg.transform.translation.x = d2ir1_extrinsics.translation[2];
                 b2ir1_msg.transform.translation.y = -d2ir1_extrinsics.translation[0];
                 b2ir1_msg.transform.translation.z = -d2ir1_extrinsics.translation[1];
-                b2ir1_msg.transform.rotation.x = 0;
-                b2ir1_msg.transform.rotation.y = 0;
-                b2ir1_msg.transform.rotation.z = 0;
-                b2ir1_msg.transform.rotation.w = 1;
+
+                b2ir1_msg.transform.rotation.x = q.x();
+                b2ir1_msg.transform.rotation.y = q.y();
+                b2ir1_msg.transform.rotation.z = q.z();
+                b2ir1_msg.transform.rotation.w = q.w();
                 _static_tf_broadcaster.sendTransform(b2ir1_msg);
 
                 // Transform infra1 frame to infra1 optical frame
@@ -821,6 +836,7 @@ namespace realsense_ros_camera
             if (true == _enable[INFRA2])
             {
                 auto d2ir2_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[INFRA2].front());
+                auto q = rotationMatrixToQuaternion(d2ir2_extrinsics.rotation);
 
                 // Transform base frame to infra2
                 b2ir2_msg.header.stamp = transform_ts_;
@@ -829,10 +845,10 @@ namespace realsense_ros_camera
                 b2ir2_msg.transform.translation.x = d2ir2_extrinsics.translation[2];
                 b2ir2_msg.transform.translation.y = -d2ir2_extrinsics.translation[0];
                 b2ir2_msg.transform.translation.z = -d2ir2_extrinsics.translation[1];
-                b2ir2_msg.transform.rotation.x = 0;
-                b2ir2_msg.transform.rotation.y = 0;
-                b2ir2_msg.transform.rotation.z = 0;
-                b2ir2_msg.transform.rotation.w = 1;
+                b2ir2_msg.transform.rotation.x = q.x();
+                b2ir2_msg.transform.rotation.y = q.y();
+                b2ir2_msg.transform.rotation.z = q.z();
+                b2ir2_msg.transform.rotation.w = q.w();
                 _static_tf_broadcaster.sendTransform(b2ir2_msg);
 
                 // Transform infra2 frame to infra1 optical frame
@@ -1064,7 +1080,7 @@ namespace realsense_ros_camera
             }
         }
 
-        bool get_enabled_profile(stream_index_pair stream_index, rs2::stream_profile& profile)
+        bool getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile)
         {
             // Assuming that all D400 SKUs have depth sensor
             auto profiles = _enabled_profiles[stream_index];
@@ -1118,7 +1134,7 @@ namespace realsense_ros_camera
         ros::Time _ros_time_base;
         bool _sync_frames;
         bool _pointcloud;
-        rs2::syncer_processing_block _syncer;
+        rs2::asynchronous_syncer _syncer;
         rs2_extrinsics _depth2color_extrinsics;
     };//end class
 
