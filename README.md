@@ -56,7 +56,6 @@ This will launch [RViz](http://wiki.ros.org/rviz) and display the depth pointclo
 
 ## Known Issues
 * This ROS node does not currently provide any dynamic reconfigure support for camera properties/presets.
-* This ROS node does not currently offer temporal syncronization of depth and color data.
 * This ROS node does not currently support [ROS Lunar Loggerhead](http://wiki.ros.org/lunar).
 * This ROS node does not currently work with [ROS 2](https://github.com/ros2/ros2/wiki).
 * This ROS node currently does not provide the unit-tests which ensure the proper operation of the camera.  Future versions of the node will provide ROS compatible unit-tests.
