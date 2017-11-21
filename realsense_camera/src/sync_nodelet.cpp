@@ -138,7 +138,13 @@ namespace realsense_camera
         rs_is_stream_enabled(rs_device_, (rs_stream) stream_index, 0) == 1)
     {
       double frame_ts = rs_get_frame_timestamp(rs_device_, (rs_stream) stream_index, 0);
-      if (ts_[stream_index] != frame_ts)  // Publish frames only if its not duplicate
+
+      // Return if insufficient time has passed since last frame.
+      auto index = (rs_stream) stream_index;
+      if (enable_throttle_ && (frame_ts - ts_[index]) <= frame_period_[index])
+    	  return;
+
+      if (ts_[stream_index] != frame_ts )
       {
         setImageData(stream_index);
 
@@ -165,6 +171,7 @@ namespace realsense_camera
       }
 
       ts_[stream_index] = frame_ts;
+
     }
   }
 

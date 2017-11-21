@@ -52,6 +52,7 @@ namespace realsense_camera
     const int FISHEYE_FPS = 60;
     const bool ENABLE_DEPTH = true;
     const bool ENABLE_COLOR = true;
+    const bool ENABLE_THROTTLE = false;   // software throttle
     const bool ENABLE_IR = false;
     const bool ENABLE_IR2 = false;
     const bool ENABLE_FISHEYE = true;

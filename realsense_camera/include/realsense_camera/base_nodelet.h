@@ -81,6 +81,7 @@ public:
   virtual void onInit();
   virtual ~BaseNodelet();
   virtual void setDepthEnable(bool &enable_depth);
+  virtual void setThrottleEnable(bool &enable_throttle);
   virtual bool getCameraOptionValues(realsense_camera::CameraConfiguration::Request & req,
       realsense_camera::CameraConfiguration::Response & res);
   virtual bool setPowerCameraService(realsense_camera::SetPower::Request & req,
@@ -91,6 +92,11 @@ public:
       realsense_camera::IsPowered::Response & res);
 
 protected:
+  /* Throttle Variables */
+  int fps_throttle_[STREAM_COUNT];
+  int frame_period_[STREAM_COUNT];
+  bool enable_throttle_;
+
   // Member Variables.
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;

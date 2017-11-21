@@ -167,7 +167,7 @@ namespace realsense_camera
     pnh_.param("enable_depth", enable_[RS_STREAM_DEPTH], ENABLE_DEPTH);
     pnh_.param("enable_color", enable_[RS_STREAM_COLOR], ENABLE_COLOR);
     pnh_.param("enable_ir", enable_[RS_STREAM_INFRARED], ENABLE_IR);
-    pnh_.param("enable_pointcloud", enable_pointcloud_, ENABLE_PC);
+    pnh_.param("enable_pointcloud", enable_pointcloud_,  ENABLE_PC);
     pnh_.param("enable_tf", enable_tf_, ENABLE_TF);
     pnh_.param("enable_tf_dynamic", enable_tf_dynamic_, ENABLE_TF_DYNAMIC);
     pnh_.param("tf_publication_rate", tf_publication_rate_, TF_PUBLICATION_RATE);
@@ -184,6 +184,17 @@ namespace realsense_camera
     pnh_.param("depth_optical_frame_id", optical_frame_id_[RS_STREAM_DEPTH], DEFAULT_DEPTH_OPTICAL_FRAME_ID);
     pnh_.param("color_optical_frame_id", optical_frame_id_[RS_STREAM_COLOR], DEFAULT_COLOR_OPTICAL_FRAME_ID);
     pnh_.param("ir_optical_frame_id", optical_frame_id_[RS_STREAM_INFRARED], DEFAULT_IR_OPTICAL_FRAME_ID);
+
+    /* Software FPS Throttle  */
+    pnh_.param("enable_throttle",    enable_throttle_,                  ENABLE_THROTTLE);
+    pnh_.param("throttle_color_fps", fps_throttle_[RS_STREAM_COLOR],    COLOR_FPS      );
+    pnh_.param("throttle_depth_fps", fps_throttle_[RS_STREAM_DEPTH],    DEPTH_FPS      );
+    pnh_.param("throttle_infra_fps", fps_throttle_[RS_STREAM_INFRARED], DEPTH_FPS      );
+
+    /* Set Stream Throttle Periods */
+    frame_period_[RS_STREAM_COLOR]    = 1000 / fps_throttle_[RS_STREAM_COLOR   ];
+    frame_period_[RS_STREAM_DEPTH]    = 1000 / fps_throttle_[RS_STREAM_DEPTH   ];
+    frame_period_[RS_STREAM_INFRARED] = 1000 / fps_throttle_[RS_STREAM_INFRARED];
 
     // set IR stream to match depth
     width_[RS_STREAM_INFRARED] = width_[RS_STREAM_DEPTH];
@@ -672,6 +683,7 @@ namespace realsense_camera
           camera_info_ptr_[stream_index]->width, cv_type_[stream_index], cv::Scalar(0, 0, 0));
     }
     ts_[stream_index] = -1;
+    //ts_throttle_[stream_index] = -1;
   }
 
   /*
@@ -863,6 +875,19 @@ namespace realsense_camera
   }
 
   /*
+  * Set throttle enable
+  */
+  void BaseNodelet::setThrottleEnable(bool &enable_throttle)
+  {
+    // Set flags
+    if (enable_throttle && !enable_throttle_)
+	  ROS_INFO_STREAM(nodelet_name_ << " - Enabling stream throttling.");
+	else if (!enable_throttle && enable_throttle_)
+	  ROS_INFO_STREAM(nodelet_name_ << " - Disabling stream throttling.");
+	enable_throttle_ = enable_throttle;
+  }
+
+  /*
    * Determine the timestamp for the publish topic.
    */
   ros::Time BaseNodelet::getTimestamp(rs_stream stream_index, double frame_ts)
@@ -879,6 +904,12 @@ namespace realsense_camera
     std::unique_lock<std::mutex> lock(frame_mutex_[stream_index]);
 
     double frame_ts = frame.get_timestamp();
+
+    // Return if insufficient time has passed since last frame.
+    auto index = (rs_stream) stream_index;
+    if (enable_throttle_ && (frame_ts - ts_[index]) <= frame_period_[index])
+    	return;
+
     if (ts_[stream_index] != frame_ts)  // Publish frames only if its not duplicate
     {
       setImageData(stream_index, frame);
