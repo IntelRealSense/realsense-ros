@@ -186,20 +186,26 @@ namespace realsense_camera
     pnh_.param("ir_optical_frame_id", optical_frame_id_[RS_STREAM_INFRARED], DEFAULT_IR_OPTICAL_FRAME_ID);
 
     /* Software FPS Throttle  */
-    pnh_.param("enable_throttle",    enable_throttle_,                  ENABLE_THROTTLE);
-    pnh_.param("throttle_color_fps", fps_throttle_[RS_STREAM_COLOR],    COLOR_FPS      );
-    pnh_.param("throttle_depth_fps", fps_throttle_[RS_STREAM_DEPTH],    DEPTH_FPS      );
-    pnh_.param("throttle_infra_fps", fps_throttle_[RS_STREAM_INFRARED], DEPTH_FPS      );
+    pnh_.param("enable_throttle",      enable_throttle_,                   ENABLE_THROTTLE);
+    pnh_.param("throttle_color_fps",   fps_throttle_[RS_STREAM_COLOR],     COLOR_FPS      );
+    pnh_.param("throttle_depth_fps",   fps_throttle_[RS_STREAM_DEPTH],     DEPTH_FPS      );
+    pnh_.param("throttle_infra_fps",   fps_throttle_[RS_STREAM_INFRARED],  DEPTH_FPS      );
+    pnh_.param("throttle_infra_fps",   fps_throttle_[RS_STREAM_INFRARED2], DEPTH_FPS      );
+    pnh_.param("throttle_fisheye_fps", fps_throttle_[RS_STREAM_FISHEYE],   FISHEYE_FPS    );
 
     /* Set Stream Throttle Periods */
-    frame_period_[RS_STREAM_COLOR]    = 1000 / fps_throttle_[RS_STREAM_COLOR   ];
-    frame_period_[RS_STREAM_DEPTH]    = 1000 / fps_throttle_[RS_STREAM_DEPTH   ];
-    frame_period_[RS_STREAM_INFRARED] = 1000 / fps_throttle_[RS_STREAM_INFRARED];
+    for (int index=0; index < STREAM_COUNT; index++)
+    	frame_period_[index] = 1000 / fps_throttle_[index];
 
     // set IR stream to match depth
     width_[RS_STREAM_INFRARED] = width_[RS_STREAM_DEPTH];
     height_[RS_STREAM_INFRARED] = height_[RS_STREAM_DEPTH];
     fps_[RS_STREAM_INFRARED] = fps_[RS_STREAM_DEPTH];
+
+    // set IR2 stream to match depth
+    width_[RS_STREAM_INFRARED2] = width_[RS_STREAM_DEPTH];
+    height_[RS_STREAM_INFRARED2] = height_[RS_STREAM_DEPTH];
+    fps_[RS_STREAM_INFRARED2] = fps_[RS_STREAM_DEPTH];
   }
 
   /*
@@ -955,6 +961,11 @@ namespace realsense_camera
    */
   void BaseNodelet::publishPCTopic()
   {
+
+	double t_now = (double)ros::Time::now().nsec * (1e-6);
+	if ((t_now - ts_[RS_STREAM_DEPTH]) <= fps_throttle_[RS_STREAM_DEPTH])
+		return;
+
     cv::Mat & image_color = image_[RS_STREAM_COLOR];
     // Publish pointcloud only if there is at least one subscriber.
     if (pointcloud_publisher_.getNumSubscribers() > 0 && rs_is_stream_enabled(rs_device_, RS_STREAM_DEPTH, 0) == 1)

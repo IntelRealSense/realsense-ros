@@ -291,14 +291,15 @@ namespace realsense_camera
 
     // Set R200 throttle options
     if (bit_level.test(1)) {
-    	fps_throttle_[RS_STREAM_COLOR]    = config.r200_throttle_fps_color;
-    	fps_throttle_[RS_STREAM_DEPTH]    = config.r200_throttle_fps_depth;
-    	fps_throttle_[RS_STREAM_INFRARED] = config.r200_throttle_fps_infra;
+    	fps_throttle_[RS_STREAM_COLOR]     = config.r200_throttle_fps_color;
+    	fps_throttle_[RS_STREAM_DEPTH]     = config.r200_throttle_fps_depth;
+    	fps_throttle_[RS_STREAM_INFRARED]  = config.r200_throttle_fps_infra;
+    	fps_throttle_[RS_STREAM_INFRARED2] = config.r200_throttle_fps_infra;
 
-    	frame_period_[RS_STREAM_COLOR]    = 1000 / fps_throttle_[RS_STREAM_COLOR   ];
-    	frame_period_[RS_STREAM_DEPTH]    = 1000 / fps_throttle_[RS_STREAM_DEPTH   ];
-    	frame_period_[RS_STREAM_INFRARED] = 1000 / fps_throttle_[RS_STREAM_INFRARED];
-    	}
+    	// Update frame periods.
+    	for (int index=0; index<STREAM_COUNT; index++)
+    		frame_period_[index] = 1000 / fps_throttle_[index];
+    }
 
     // Set R200 specific options
     rs_set_device_option(rs_device_, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, config.r200_lr_auto_exposure_enabled, 0);
