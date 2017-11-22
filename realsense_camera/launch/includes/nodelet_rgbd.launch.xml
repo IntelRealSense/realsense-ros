@@ -9,7 +9,7 @@
     <arg name="ir"                  default="ir" />
     <arg name="ir2"                 default="ir2" />
     <arg name="imu"                 default="imu" />
-    <arg name="fisheye"             default="fisheye" />
+    <arg name="fisheye"             default="fisheye" />z
 <!-- rgbd_launch -->
 
 <!-- realsense_camera -->
@@ -24,12 +24,19 @@
     <arg name="depth_fps"           default="" />
     <arg name="color_fps"           default="" />
 
-    <arg name="enable_depth"        default="true" />
-    <arg name="enable_color"        default="true" />
-    <arg name="enable_ir"           default="true" />
-    <arg name="enable_ir2"          default="true" />
+    <arg name="enable_depth"        default="true"  />
+    <arg name="enable_color"        default="true"  />
+    <arg name="enable_ir"           default="true"  />
+    <arg name="enable_ir2"          default="true"  />
     <arg name="enable_fisheye"      default="false" />
     <arg name="enable_imu"          default="false" />
+    
+    <!-- Software Framerate Throttle -->
+    <arg name="enable_throttle"     default="false" />
+    <arg name="throttle_color"      default="60"    />
+    <arg name="throttle_depth"      default="60"    />
+    <arg name="throttle_infra"      default="60"    />
+    <arg name="throttle_fisheye"    default="60"    />
 
      <!-- "enable_pointcloud" is set to false by default because rgbd_launch uses standard ROS packages
           to generate point clouds. -->
@@ -67,8 +74,14 @@
         <param name="color_optical_frame_id"  type="str"  value="$(arg camera)_$(arg rgb)_optical_frame" />
         <param name="ir_optical_frame_id"     type="str"  value="$(arg camera)_$(arg ir)_optical_frame" />
         <param name="ir2_optical_frame_id"    type="str"  value="$(arg camera)_$(arg ir2)_optical_frame" />
-        <param name="fisheye_optical_frame_id" type="str"  value="$(arg camera)_$(arg fisheye)_optical_frame" />
+        <param name="fisheye_optical_frame_id" type="str" value="$(arg camera)_$(arg fisheye)_optical_frame" />
         <param name="imu_optical_frame_id"    type="str"  value="$(arg camera)_$(arg imu)_optical_frame" />
+        
+        <param name="enable_throttle"         type="bool" value="$(arg enable_throttle)"  />
+        <param name="throttle_color"          type="int"  value="$(arg throttle_color)"   />
+        <param name="throttle_depth"          type="int"  value="$(arg throttle_depth)"   />
+        <param name="throttle_infra"          type="int"  value="$(arg throttle_infra)"   />
+        <param name="throttle_fisheye"        type="int"  value="$(arg throttle_fisheye)" />
 
         <remap from="depth"    to="$(arg depth)" />
         <remap from="color"    to="$(arg rgb)" />

@@ -186,12 +186,12 @@ namespace realsense_camera
     pnh_.param("ir_optical_frame_id", optical_frame_id_[RS_STREAM_INFRARED], DEFAULT_IR_OPTICAL_FRAME_ID);
 
     /* Software FPS Throttle  */
-    pnh_.param("enable_throttle",      enable_throttle_,                   ENABLE_THROTTLE);
-    pnh_.param("throttle_color_fps",   fps_throttle_[RS_STREAM_COLOR],     COLOR_FPS      );
-    pnh_.param("throttle_depth_fps",   fps_throttle_[RS_STREAM_DEPTH],     DEPTH_FPS      );
-    pnh_.param("throttle_infra_fps",   fps_throttle_[RS_STREAM_INFRARED],  DEPTH_FPS      );
-    pnh_.param("throttle_infra_fps",   fps_throttle_[RS_STREAM_INFRARED2], DEPTH_FPS      );
-    pnh_.param("throttle_fisheye_fps", fps_throttle_[RS_STREAM_FISHEYE],   FISHEYE_FPS    );
+    pnh_.param("enable_throttle",  enable_throttle_,                   ENABLE_THROTTLE);
+    pnh_.param("throttle_color",   fps_throttle_[RS_STREAM_COLOR],     COLOR_FPS      );
+    pnh_.param("throttle_depth",   fps_throttle_[RS_STREAM_DEPTH],     DEPTH_FPS      );
+    pnh_.param("throttle_infra",   fps_throttle_[RS_STREAM_INFRARED],  DEPTH_FPS      );
+    pnh_.param("throttle_infra",   fps_throttle_[RS_STREAM_INFRARED2], DEPTH_FPS      );
+    pnh_.param("throttle_fisheye", fps_throttle_[RS_STREAM_FISHEYE],   FISHEYE_FPS    );
 
     /* Set Stream Throttle Periods */
     for (int index=0; index < STREAM_COUNT; index++)
@@ -689,7 +689,6 @@ namespace realsense_camera
           camera_info_ptr_[stream_index]->width, cv_type_[stream_index], cv::Scalar(0, 0, 0));
     }
     ts_[stream_index] = -1;
-    //ts_throttle_[stream_index] = -1;
   }
 
   /*

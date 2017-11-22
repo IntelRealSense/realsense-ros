@@ -21,12 +21,19 @@
   <arg name="depth_fps"       default="30" />
   <arg name="color_fps"       default="30" />
 
-  <!-- Arguments for remapping all device namespaces -->
-  <arg name="depth"            default="depth" />
-  <arg name="rgb"              default="rgb" />
-  <arg name="ir"               default="ir" />
+  <!-- Arguments for remapping all device namespaces     -->
+  <arg name="depth"            default="depth"            />
+  <arg name="rgb"              default="rgb"              />
+  <arg name="ir"               default="ir"               />
   <arg name="depth_registered" default="depth_registered" />
-  <arg name="projector"        default="projector" />
+  <arg name="projector"        default="projector"        />
+
+  <!-- Arguments for Software Throttle Control -->
+  <arg name="enable_throttle"  default="false"  />
+  <arg name="throttle_color"   default="30"     />
+  <arg name="throttle_depth"   default="30"     />
+  <arg name="throttle_infra"   default="30"     />
+  <arg name="throttle_fisheye" default="30"     />
 
   <!-- Size of message queue for synchronizing subscribed topics in depth_image_proc package.
        Increase this value for higher resolution and/or frame rates.
@@ -69,24 +76,31 @@
     </include>
 
     <!-- Load driver -->
-    <include if="$(arg load_driver)"
-             file="$(find realsense_camera)/launch/includes/nodelet_rgbd.launch.xml">
-      <arg name="manager"                   value="$(arg manager)" />
-      <arg name="camera"                    value="$(arg camera)" />
-      <arg name="camera_type"               value="$(arg camera_type)" />
-      <arg name="serial_no"                 value="$(arg serial_no)" />
-      <arg name="usb_port_id"               value="$(arg usb_port_id)" />
-      <arg name="depth"                     value="$(arg depth)" />
-      <arg name="rgb"                       value="$(arg rgb)" />
-      <arg name="ir"                        value="$(arg ir)" />
-      <arg name="publish_tf"                value="$(arg publish_tf)" />
-      <arg name="mode"                      value="$(arg mode)" />
-      <arg name="depth_width"               value="$(arg depth_width)" />
-      <arg name="depth_height"              value="$(arg depth_height)" />
-      <arg name="color_width"               value="$(arg color_width)" />
-      <arg name="color_height"              value="$(arg color_height)" />
-      <arg name="depth_fps"                 value="$(arg depth_fps)" />
-      <arg name="color_fps"                 value="$(arg color_fps)" />
+    <include if="$(arg load_driver)" file="$(find realsense_camera)/launch/includes/nodelet_rgbd.launch.xml">
+      <arg name="manager"               value="$(arg manager)"              />
+      <arg name="camera"                value="$(arg camera)"               />
+      <arg name="camera_type"           value="$(arg camera_type)"          />
+      <arg name="serial_no"             value="$(arg serial_no)"            />
+      <arg name="usb_port_id"           value="$(arg usb_port_id)"          />
+      <arg name="depth"                 value="$(arg depth)"                />
+      <arg name="rgb"                   value="$(arg rgb)"                  />
+      <arg name="ir"                    value="$(arg ir)"                   />
+      <arg name="publish_tf"            value="$(arg publish_tf)"           />
+      <arg name="mode"                  value="$(arg mode)"                 />
+      <arg name="depth_width"           value="$(arg depth_width)"          />
+      <arg name="depth_height"          value="$(arg depth_height)"         />
+      <arg name="color_width"           value="$(arg color_width)"          />
+      <arg name="color_height"          value="$(arg color_height)"         />
+      <arg name="depth_fps"             value="$(arg depth_fps)"            />
+      <arg name="color_fps"             value="$(arg color_fps)"            />
+      
+      <arg name="enable_throttle"       value="$(arg enable_throttle)"      />
+      <arg name="throttle_color"        value="$(arg throttle_color)"       />
+      <arg name="throttle_depth"        value="$(arg throttle_depth)"       />
+      <arg name="throttle_infra"        value="$(arg throttle_infra)"       />
+      <arg name="throttle_fisheye"      value="$(arg throttle_fisheye)"     />
+      
+      
     </include>
 
     <!-- Load standard constellation of processing nodelets -->

@@ -11,6 +11,14 @@
   <arg name="imu"          default="imu" />
   <arg name="serial_no"    default="" />
   <arg name="usb_port_id"  default="" />
+  
+  <!-- Software Framerate Throttle -->
+  <arg name="enable_throttle"  default="false" />
+  <arg name="throttle_color"   default="60"    />
+  <arg name="throttle_depth"   default="60"    />
+  <arg name="throttle_infra"   default="60"    />
+  <arg name="throttle_fisheye" default="60"    />
+  
   <node pkg="nodelet" type="nodelet" name="driver"
     args="load realsense_camera/$(arg camera_type)Nodelet $(arg manager)">
     <param name="serial_no"                type="str"  value="$(arg serial_no)" />
@@ -30,11 +38,17 @@
     <param name="fisheye_optical_frame_id" type="str"  value="$(arg camera)_fisheye_optical_frame" />
     <param name="imu_optical_frame_id"     type="str"  value="$(arg camera)_imu_optical_frame" />
 
-    <remap from="depth"    to="$(arg depth)" />
-    <remap from="color"    to="$(arg rgb)" />
-    <remap from="ir"       to="$(arg ir)" />
-    <remap from="ir2"      to="$(arg ir2)" />
+	<param name="enable_throttle"          type="bool" value="$(arg enable_throttle)"  />
+    <param name="throttle_color"           type="int"  value="$(arg throttle_color)"   />
+    <param name="throttle_depth"           type="int"  value="$(arg throttle_depth)"   />
+    <param name="throttle_infra"           type="int"  value="$(arg throttle_infra)"   />
+    <param name="throttle_fisheye"         type="int"  value="$(arg throttle_fisheye)" />
+
+    <remap from="depth"    to="$(arg depth)"   />
+    <remap from="color"    to="$(arg rgb)"     />
+    <remap from="ir"       to="$(arg ir)"      />
+    <remap from="ir2"      to="$(arg ir2)"     />
     <remap from="fisheye"  to="$(arg fisheye)" />
-    <remap from="imu"      to="$(arg imu)" />
+    <remap from="imu"      to="$(arg imu)"     />
   </node>
 </launch>
