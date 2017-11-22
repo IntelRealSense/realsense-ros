@@ -2,6 +2,9 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 1.8.0 (2017-03-27)
 ------------------
 * Enable configuration of the TF publication rate when using tf_dynamic
