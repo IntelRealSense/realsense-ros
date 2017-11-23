@@ -2,12 +2,8 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
+1.9.0 (2017-11-23)
 -----------
-* Added launch file for multiple R200 rgbd nodes.
-* 1.9.0
-* Contributors: Duncan Iglesias
-
 * Added launch file for multiple R200 rgbd nodes.
 * Added software throttling to streams.
 * Contributors: Duncan Iglesias
