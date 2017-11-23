@@ -1,0 +1,273 @@
+<!-- Launch file for multiple RealSense R200 cameras (rgbd)    -->
+<launch>
+
+  <!-- Debugging Only -->
+  <arg name="r200_1"               default="true"               /> <!-- Enable/disable camera -->
+  <arg name="r200_2"               default="true"               /> <!-- Enable/disable camera -->
+  <arg name="r200_3"               default="true"               /> <!-- Enable/disable camera -->
+  <arg name="r200_4"               default="true"               /> <!-- Enable/disable camera -->
+
+  <!-- RealSense Camera Array -->
+  <arg name="camera1"              default="camera1"            />
+  <arg name="camera1_type"         default="R200"               />
+  <arg name="camera1_serial_no"    default=""                   /> <!-- Add Camera1 serial number -->
+  <arg name="camera1_usb_port_id"  default=""                   />
+  <arg name="camera2"              default="camera2"            />
+  <arg name="camera2_type"         default="R200"               />
+  <arg name="camera2_serial_no"    default=""                   /> <!-- Add Camera2 serial number -->
+  <arg name="camera2_usb_port_id"  default=""                   />
+  <arg name="camera3"              default="camera3"            />
+  <arg name="camera3_type"         default="R200"               />
+  <arg name="camera3_serial_no"    default=""                   /> <!-- Add Camera3 serial number -->
+  <arg name="camera3_usb_port_id"  default=""                   />
+  <arg name="camera4"              default="camera4"            />
+  <arg name="camera4_type"         default="R200"               />
+  <arg name="camera4_serial_no"    default=""                   /> <!-- Add Camera4 serial number -->
+  <arg name="camera4_usb_port_id"  default=""                   />
+
+  <!-- Camera Configurations for Depth Registered Point Cloud. -->
+  <arg name="mode"                 default="manual"             />
+  <arg name="color_width"          default="640"                />
+  <arg name="color_height"         default="480"                />
+  <arg name="depth_width"          default="320"                />
+  <arg name="depth_height"         default="240"                />
+  <arg name="depth_fps"            default="30"                 />
+  <arg name="color_fps"            default="30"                 />
+
+  <!-- Remap Device Namespaces -->
+  <arg name="depth"                default="depth"              />
+  <arg name="rgb"                  default="rgb"                />
+  <arg name="ir"                   default="ir"                 />
+  <arg name="depth_registered"     default="depth_registered"   />
+  <arg name="projector"            default="projector"          />
+  <arg name="queue_size"           default="1"                  />
+  
+  <!-- Set Queue Size -->
+  <param name="$(arg camera1)/points_xyzrgb_sw_registered/queue_size" type="int" value="$(arg queue_size)" />
+  <param name="$(arg camera2)/points_xyzrgb_sw_registered/queue_size" type="int" value="$(arg queue_size)" />
+  <param name="$(arg camera3)/points_xyzrgb_sw_registered/queue_size" type="int" value="$(arg queue_size)" />
+  <param name="$(arg camera4)/points_xyzrgb_sw_registered/queue_size" type="int" value="$(arg queue_size)" />
+
+  <!-- Optionally suppress loading the driver nodelet. Useful while playing back recorded raw data from a bag.-->
+  <arg name="load_driver"          default="true"               />
+  <arg name="publish_tf"           default="true"               />
+
+  <!-- Software Framerate Throttle -->
+  <arg name="enable_throttle"      default="true"               />
+  <arg name="throttle_color"       default="15"                  />
+  <arg name="throttle_depth"       default="15"                  />
+  <arg name="throttle_infra"       default="15"                  />
+
+  <!-- Processing Modules -->
+  <arg name="rgb_processing"                  default="false" />
+  <arg name="debayer_processing"              default="false" />
+  <arg name="ir_processing"                   default="false" />
+  <arg name="depth_processing"                default="true"  />
+  <arg name="depth_registered_processing"     default="false" />
+  <arg name="disparity_processing"            default="false" />
+  <arg name="disparity_registered_processing" default="false" />
+  <arg name="hw_registered_processing"        default="false" />
+  <arg name="sw_registered_processing"        default="false" />
+
+  <!-- Single Nodelet Manager -->
+  <arg name="manager"              value="camera_nodelet_manager" /> 
+  <arg name="debug"                default="false"                />
+  <arg name="num_worker_threads"   default="4"                    />
+  <arg name="respawn"              default="true"                 />
+
+  <include file="$(find rgbd_launch)/launch/includes/manager.launch.xml">
+    <arg name="name"               value="$(arg manager)"              />
+    <arg name="debug"              value="$(arg debug)"                />
+    <arg name="num_worker_threads" value="$(arg num_worker_threads)"   />
+  </include>
+
+  <!-- Push Down Each Camera into a Custom Namespace -->
+  <!-- R200 Camera #1 -->
+  <group if="$(arg r200_1)" ns="$(arg camera1)">
+    <!-- Load driver -->
+    <include if="$(arg load_driver)" file="$(find realsense_camera)/launch/includes/nodelet_rgbd.launch.xml">
+      <arg name="manager"                         value="/$(arg manager)"                       />
+      <arg name="camera"                          value="$(arg camera1)"                        />
+      <arg name="camera_type"                     value="$(arg camera1_type)"                   />
+      <arg name="serial_no"                       value="$(arg camera1_serial_no)"              />
+      <arg name="usb_port_id"                     value="$(arg camera1_usb_port_id)"            />
+      <arg name="depth"                           value="$(arg depth)"                          />
+      <arg name="rgb"                             value="$(arg rgb)"                            />
+      <arg name="ir"                              value="$(arg ir)"                             />
+      <arg name="publish_tf"                      value="$(arg publish_tf)"                     />
+      <arg name="mode"                            value="$(arg mode)"                           />
+      <arg name="depth_width"                     value="$(arg depth_width)"                    />
+      <arg name="depth_height"                    value="$(arg depth_height)"                   />
+      <arg name="color_width"                     value="$(arg color_width)"                    />
+      <arg name="color_height"                    value="$(arg color_height)"                   />
+      <arg name="depth_fps"                       value="$(arg depth_fps)"                      />
+      <arg name="color_fps"                       value="$(arg color_fps)"                      />
+      <arg name="enable_throttle"                 value="$(arg enable_throttle)"                />
+      <arg name="throttle_color"                  value="$(arg throttle_color)"                 />
+      <arg name="throttle_depth"                  value="$(arg throttle_depth)"                 />
+      <arg name="throttle_infra"                  value="$(arg throttle_infra)"                 />
+    </include>
+
+    <!-- Load standard constellation of processing nodelets -->
+    <include file="$(find rgbd_launch)/launch/includes/processing.launch.xml">
+      <arg name="manager"                         value="/$(arg manager)"                       />
+      <arg name="rgb"                             value="$(arg rgb)"                            />
+      <arg name="ir"                              value="$(arg ir)"                             />
+      <arg name="depth"                           value="$(arg depth)"                          />
+      <arg name="depth_registered"                value="$(arg depth_registered)"               />
+      <arg name="projector"                       value="$(arg projector)"                      />
+      <arg name="respawn"                         value="$(arg respawn)"                        />
+      <arg name="rgb_processing"                  value="$(arg rgb_processing)"                 />
+      <arg name="debayer_processing"              value="$(arg debayer_processing)"             />
+      <arg name="ir_processing"                   value="$(arg ir_processing)"                  />
+      <arg name="depth_processing"                value="$(arg depth_processing)"               />
+      <arg name="depth_registered_processing"     value="$(arg depth_registered_processing)"    />
+      <arg name="disparity_processing"            value="$(arg disparity_processing)"           />
+      <arg name="disparity_registered_processing" value="$(arg disparity_registered_processing)"/>
+      <arg name="hw_registered_processing"        value="$(arg hw_registered_processing)"       />
+      <arg name="sw_registered_processing"        value="$(arg sw_registered_processing)"       />
+    </include>
+  </group> 
+
+  <!-- R200 Camera #2 -->
+  <group if="$(arg r200_2)" ns="$(arg camera2)">  
+    <!-- Load driver -->
+    <include if="$(arg load_driver)" file="$(find realsense_camera)/launch/includes/nodelet_rgbd.launch.xml">
+      <arg name="manager"                         value="/$(arg manager)"                       />
+      <arg name="camera"                          value="$(arg camera2)"                        />
+      <arg name="camera_type"                     value="$(arg camera2_type)"                   />
+      <arg name="serial_no"                       value="$(arg camera2_serial_no)"              />
+      <arg name="usb_port_id"                     value="$(arg camera2_usb_port_id)"            />
+      <arg name="depth"                           value="$(arg depth)"                          />
+      <arg name="rgb"                             value="$(arg rgb)"                            />
+      <arg name="ir"                              value="$(arg ir)"                             />
+      <arg name="publish_tf"                      value="$(arg publish_tf)"                     />
+      <arg name="mode"                            value="$(arg mode)"                           />
+      <arg name="depth_width"                     value="$(arg depth_width)"                    />
+      <arg name="depth_height"                    value="$(arg depth_height)"                   />
+      <arg name="color_width"                     value="$(arg color_width)"                    />
+      <arg name="color_height"                    value="$(arg color_height)"                   />
+      <arg name="depth_fps"                       value="$(arg depth_fps)"                      />
+      <arg name="color_fps"                       value="$(arg color_fps)"                      />
+      <arg name="enable_throttle"                 value="$(arg enable_throttle)"                />
+      <arg name="throttle_color"                  value="$(arg throttle_color)"                 />
+      <arg name="throttle_depth"                  value="$(arg throttle_depth)"                 />
+      <arg name="throttle_infra"                  value="$(arg throttle_infra)"                 />
+    </include>
+
+    <!-- Load standard constellation of processing nodelets -->
+    <include file="$(find rgbd_launch)/launch/includes/processing.launch.xml">
+      <arg name="manager"                         value="/$(arg manager)"                       />
+      <arg name="rgb"                             value="$(arg rgb)"                            />
+      <arg name="ir"                              value="$(arg ir)"                             />
+      <arg name="depth"                           value="$(arg depth)"                          />
+      <arg name="depth_registered"                value="$(arg depth_registered)"               />
+      <arg name="projector"                       value="$(arg projector)"                      />
+      <arg name="respawn"                         value="$(arg respawn)"                        />
+      <arg name="rgb_processing"                  value="$(arg rgb_processing)"                 />
+      <arg name="debayer_processing"              value="$(arg debayer_processing)"             />
+      <arg name="ir_processing"                   value="$(arg ir_processing)"                  />
+      <arg name="depth_processing"                value="$(arg depth_processing)"               />
+      <arg name="depth_registered_processing"     value="$(arg depth_registered_processing)"    />
+      <arg name="disparity_processing"            value="$(arg disparity_processing)"           />
+      <arg name="disparity_registered_processing" value="$(arg disparity_registered_processing)"/>
+      <arg name="hw_registered_processing"        value="$(arg hw_registered_processing)"       />
+      <arg name="sw_registered_processing"        value="$(arg sw_registered_processing)"       />
+    </include>
+  </group> 
+
+  <!-- R200 Camera #3 -->
+  <group if="$(arg r200_3)" ns="$(arg camera3)">
+    <!-- Load driver -->
+    <include if="$(arg load_driver)" file="$(find realsense_camera)/launch/includes/nodelet_rgbd.launch.xml">
+      <arg name="manager"                         value="/$(arg manager)"                       />
+      <arg name="camera"                          value="$(arg camera3)"                        />
+      <arg name="camera_type"                     value="$(arg camera3_type)"                   />
+      <arg name="serial_no"                       value="$(arg camera3_serial_no)"              />
+      <arg name="usb_port_id"                     value="$(arg camera3_usb_port_id)"            />
+      <arg name="depth"                           value="$(arg depth)"                          />
+      <arg name="rgb"                             value="$(arg rgb)"                            />
+      <arg name="ir"                              value="$(arg ir)"                             />
+      <arg name="publish_tf"                      value="$(arg publish_tf)"                     />
+      <arg name="mode"                            value="$(arg mode)"                           />
+      <arg name="depth_width"                     value="$(arg depth_width)"                    />
+      <arg name="depth_height"                    value="$(arg depth_height)"                   />
+      <arg name="color_width"                     value="$(arg color_width)"                    />
+      <arg name="color_height"                    value="$(arg color_height)"                   />
+      <arg name="depth_fps"                       value="$(arg depth_fps)"                      />
+      <arg name="color_fps"                       value="$(arg color_fps)"                      />
+      <arg name="enable_throttle"                 value="$(arg enable_throttle)"                />
+      <arg name="throttle_color"                  value="$(arg throttle_color)"                 />
+      <arg name="throttle_depth"                  value="$(arg throttle_depth)"                 />
+      <arg name="throttle_infra"                  value="$(arg throttle_infra)"                 />
+    </include>
+
+    <!-- Load standard constellation of processing nodelets -->
+    <include file="$(find rgbd_launch)/launch/includes/processing.launch.xml">
+      <arg name="manager"                         value="/$(arg manager)"                       />
+      <arg name="rgb"                             value="$(arg rgb)"                            />
+      <arg name="ir"                              value="$(arg ir)"                             />
+      <arg name="depth"                           value="$(arg depth)"                          />
+      <arg name="depth_registered"                value="$(arg depth_registered)"               />
+      <arg name="projector"                       value="$(arg projector)"                      />
+      <arg name="respawn"                         value="$(arg respawn)"                        />
+      <arg name="rgb_processing"                  value="$(arg rgb_processing)"                 />
+      <arg name="debayer_processing"              value="$(arg debayer_processing)"             />
+      <arg name="ir_processing"                   value="$(arg ir_processing)"                  />
+      <arg name="depth_processing"                value="$(arg depth_processing)"               />
+      <arg name="depth_registered_processing"     value="$(arg depth_registered_processing)"    />
+      <arg name="disparity_processing"            value="$(arg disparity_processing)"           />
+      <arg name="disparity_registered_processing" value="$(arg disparity_registered_processing)"/>
+      <arg name="hw_registered_processing"        value="$(arg hw_registered_processing)"       />
+      <arg name="sw_registered_processing"        value="$(arg sw_registered_processing)"       />
+    </include>
+  </group> 
+
+  <!-- R200 Camera #4 -->
+  <group if="$(arg r200_4)" ns="$(arg camera4)">
+    <!-- Load driver -->
+    <include if="$(arg load_driver)" file="$(find realsense_camera)/launch/includes/nodelet_rgbd.launch.xml">
+      <arg name="manager"                         value="/$(arg manager)"                       />
+      <arg name="camera"                          value="$(arg camera4)"                        />
+      <arg name="camera_type"                     value="$(arg camera4_type)"                   />
+      <arg name="serial_no"                       value="$(arg camera4_serial_no)"              />
+      <arg name="usb_port_id"                     value="$(arg camera4_usb_port_id)"            />
+      <arg name="depth"                           value="$(arg depth)"                          />
+      <arg name="rgb"                             value="$(arg rgb)"                            />
+      <arg name="ir"                              value="$(arg ir)"                             />
+      <arg name="publish_tf"                      value="$(arg publish_tf)"                     />
+      <arg name="mode"                            value="$(arg mode)"                           />
+      <arg name="depth_width"                     value="$(arg depth_width)"                    />
+      <arg name="depth_height"                    value="$(arg depth_height)"                   />
+      <arg name="color_width"                     value="$(arg color_width)"                    />
+      <arg name="color_height"                    value="$(arg color_height)"                   />
+      <arg name="depth_fps"                       value="$(arg depth_fps)"                      />
+      <arg name="color_fps"                       value="$(arg color_fps)"                      />
+      <arg name="enable_throttle"                 value="$(arg enable_throttle)"                />
+      <arg name="throttle_color"                  value="$(arg throttle_color)"                 />
+      <arg name="throttle_depth"                  value="$(arg throttle_depth)"                 />
+      <arg name="throttle_infra"                  value="$(arg throttle_infra)"                 />
+    </include>
+
+    <!-- Load standard constellation of processing nodelets -->
+    <include file="$(find rgbd_launch)/launch/includes/processing.launch.xml">
+      <arg name="manager"                         value="/$(arg manager)"                       />
+      <arg name="rgb"                             value="$(arg rgb)"                            />
+      <arg name="ir"                              value="$(arg ir)"                             />
+      <arg name="depth"                           value="$(arg depth)"                          />
+      <arg name="depth_registered"                value="$(arg depth_registered)"               />
+      <arg name="projector"                       value="$(arg projector)"                      />
+      <arg name="respawn"                         value="$(arg respawn)"                        />
+      <arg name="rgb_processing"                  value="$(arg rgb_processing)"                 />
+      <arg name="debayer_processing"              value="$(arg debayer_processing)"             />
+      <arg name="ir_processing"                   value="$(arg ir_processing)"                  />
+      <arg name="depth_processing"                value="$(arg depth_processing)"               />
+      <arg name="depth_registered_processing"     value="$(arg depth_registered_processing)"    />
+      <arg name="disparity_processing"            value="$(arg disparity_processing)"           />
+      <arg name="disparity_registered_processing" value="$(arg disparity_registered_processing)"/>
+      <arg name="hw_registered_processing"        value="$(arg hw_registered_processing)"       />
+      <arg name="sw_registered_processing"        value="$(arg sw_registered_processing)"       />
+    </include>
+  </group> 
+  
+</launch>

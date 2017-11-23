@@ -960,9 +960,9 @@ namespace realsense_camera
    */
   void BaseNodelet::publishPCTopic()
   {
-
+	// Return if insufficient time has passed since last frame.
 	double t_now = (double)ros::Time::now().nsec * (1e-6);
-	if ((t_now - ts_[RS_STREAM_DEPTH]) <= fps_throttle_[RS_STREAM_DEPTH])
+	if ((t_now - ts_[RS_STREAM_DEPTH]) <= frame_period_[RS_STREAM_DEPTH])
 		return;
 
     cv::Mat & image_color = image_[RS_STREAM_COLOR];
