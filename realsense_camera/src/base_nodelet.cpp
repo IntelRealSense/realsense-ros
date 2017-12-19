@@ -373,7 +373,7 @@ namespace realsense_camera
           warning_msg = warning_msg + "\n\t\t\t\t- " + motion_module_warning_msg;
         }
       }
-      ROS_INFO_STREAM(nodelet_name_ + detected_camera_msg);
+      //ROS_INFO_STREAM(nodelet_name_ + detected_camera_msg);
       if (warning_msg != " - Detected unvalidated firmware:")
       {
         ROS_WARN_STREAM(nodelet_name_ + warning_msg);
@@ -1345,10 +1345,8 @@ namespace realsense_camera
                                                    const std::string& camera_name,
                                                    const std::string& camera_serial_number)
   {
-    for (auto& elem : CAMERA_NAME_TO_VALIDATED_FIRMWARE)
-    {
-        std::cout << elem.first << " ; " << elem.second << std::endl;
-    }
+    //for (auto& elem : CAMERA_NAME_TO_VALIDATED_FIRMWARE)
+    //    std::cout << elem.first << " ; " << elem.second << std::endl;
 
     std::string warning_msg = "";
     std::string cam_name = camera_name + "_" + fw_type;

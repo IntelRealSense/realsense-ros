@@ -10,19 +10,19 @@
   <!-- RealSense Camera Array -->
   <arg name="camera1"              default="camera1"            />
   <arg name="camera1_type"         default="R200"               />
-  <arg name="camera1_serial_no"    default=""                   /> <!-- Add Camera1 serial number -->
+  <arg name="camera1_serial_no"    default="2411014756"         />
   <arg name="camera1_usb_port_id"  default=""                   />
   <arg name="camera2"              default="camera2"            />
   <arg name="camera2_type"         default="R200"               />
-  <arg name="camera2_serial_no"    default=""                   /> <!-- Add Camera2 serial number -->
+  <arg name="camera2_serial_no"    default="3311800763"         />
   <arg name="camera2_usb_port_id"  default=""                   />
   <arg name="camera3"              default="camera3"            />
   <arg name="camera3_type"         default="R200"               />
-  <arg name="camera3_serial_no"    default=""                   /> <!-- Add Camera3 serial number -->
+  <arg name="camera3_serial_no"    default="3311800761"         />
   <arg name="camera3_usb_port_id"  default=""                   />
   <arg name="camera4"              default="camera4"            />
   <arg name="camera4_type"         default="R200"               />
-  <arg name="camera4_serial_no"    default=""                   /> <!-- Add Camera4 serial number -->
+  <arg name="camera4_serial_no"    default="3311800810"         />
   <arg name="camera4_usb_port_id"  default=""                   />
 
   <!-- Camera Configurations for Depth Registered Point Cloud. -->
