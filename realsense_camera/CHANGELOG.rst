@@ -2,6 +2,15 @@
 Changelog for package realsense_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.8.1 (2017-12-20)
+-----------
+* Added missing ZR300 launch file arguments (#259)
+* Fixed ZR300 launch file typo (#244)
+* Added LR200 support (#245)
+* Added RGDB launch file for the ZR300
+* Updated code to cache ZR300 IMU data (#186)
+* Contributors: Benjamin Maidel, Dinesh Bolkensteyn, Itay Carpis, Junya Hayashi, Matt Curfman, Murilo Belluzzo, Reagan Lopez, Sergey Dorodnicov
+
 1.8.0 (2017-03-27)
 ------------------
 * Enable configuration of the TF publication rate when using tf_dynamic
