@@ -25,7 +25,9 @@ cd catkin_ws/src/
 ```bash
 catkin_init_workspace 
 cd ..
-catkin_make
+catkin_make clean
+catkin_make -DCMAKE_BUILD_TYPE=Release
+catkin_make install
 echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 ```
