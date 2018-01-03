@@ -1,11 +1,9 @@
 // License: Apache 2.0. See LICENSE file in root directory.
 // Copyright(c) 2017 Intel Corporation. All Rights Reserved
 
-#include <string>
-
 #pragma once
-#ifndef REALSENSE_CAMERA_CONSTANTS_H
-#define REALSENSE_CAMERA_CONSTANTS_H
+
+#include <string>
 
 #define REALSENSE_ROS_MAJOR_VERSION    2
 #define REALSENSE_ROS_MINOR_VERSION    0
@@ -18,6 +16,22 @@
 
 namespace realsense_ros_camera
 {
+    const uint16_t SR300_PID        = 0x0aa5; // SR300
+    const uint16_t RS400_PID        = 0x0ad1; // PSR
+    const uint16_t RS410_PID        = 0x0ad2; // ASR
+    const uint16_t RS415_PID        = 0x0ad3; // ASRC
+    const uint16_t RS430_PID        = 0x0ad4; // AWG
+    const uint16_t RS430_MM_PID     = 0x0ad5; // AWGT
+    const uint16_t RS_USB2_PID      = 0x0ad6; // USB2
+    const uint16_t RS420_PID        = 0x0af6; // PWG
+    const uint16_t RS420_MM_PID     = 0x0afe; // PWGT
+    const uint16_t RS410_MM_PID     = 0x0aff; // ASR
+    const uint16_t RS400_MM_PID     = 0x0b00; // PSR
+    const uint16_t RS430_MM_RGB_PID = 0x0b01; // AWGCT
+    const uint16_t RS460_PID        = 0x0b03; // DS5U
+    const uint16_t RS435_RGB_PID    = 0x0b07; // AWGC
+    const uint16_t RS405_PID        = 0x0b0c; // DS5U
+
     const bool POINTCLOUD     = false;
     const bool SYNC_FRAMES    = false;
 
@@ -69,5 +83,6 @@ namespace realsense_ros_camera
     const std::string DEFAULT_ACCEL_OPTICAL_FRAME_ID   = "camera_accel_optical_frame";
     const std::string DEFAULT_GYRO_OPTICAL_FRAME_ID    = "camera_gyro_optical_frame";
     const std::string DEFAULT_IMU_OPTICAL_FRAME_ID     = "camera_imu_optical_frame";
+
+    using stream_index_pair = std::pair<rs2_stream, int>;
 }  // namespace realsense_ros_camera
-#endif  // REALSENSE_CAMERA_CONSTANTS_H

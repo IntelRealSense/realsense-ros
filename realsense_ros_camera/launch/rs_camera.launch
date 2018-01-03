@@ -1,87 +1,76 @@
 <launch>
-  <arg name="manager"             default="realsense_ros_camera_manager"/>
-  <arg name="camera"              default="camera"/>
-  <arg name="depth"               default="depth" />
-  <arg name="infra1"              default="infra1" />
-  <arg name="infra2"              default="infra2" />
-  <arg name="rgb"                 default="color" />
-  <arg name="fisheye"             default="fisheye" />
-  <arg name="accel"               default="accel" />
-  <arg name="gyro"                default="gyro" />
+  <arg name="serial_no" default=""/>
+  <arg name="json_file_path" default=""/>
 
-  <arg name="fisheye_width"       default="640" />
-  <arg name="fisheye_height"      default="480" />
-  <arg name="enable_fisheye"      default="true" />
+  <arg name="fisheye_width"       default="640"/>
+  <arg name="fisheye_height"      default="480"/>
+  <arg name="enable_fisheye"      default="true"/>
 
-  <arg name="depth_width"         default="640" />
-  <arg name="depth_height"        default="480" />
-  <arg name="enable_depth"        default="true" />
+  <arg name="depth_width"         default="640"/>
+  <arg name="depth_height"        default="480"/>
+  <arg name="enable_depth"        default="true"/>
 
-  <arg name="infra1_width"        default="640" />
-  <arg name="infra1_height"       default="480" />
-  <arg name="enable_infra1"       default="true" />
+  <arg name="infra1_width"        default="640"/>
+  <arg name="infra1_height"       default="480"/>
+  <arg name="enable_infra1"       default="true"/>
 
-  <arg name="infra2_width"        default="640" />
-  <arg name="infra2_height"       default="480" />
-  <arg name="enable_infra2"       default="true" />
+  <arg name="infra2_width"        default="640"/>
+  <arg name="infra2_height"       default="480"/>
+  <arg name="enable_infra2"       default="true"/>
 
-  <arg name="color_width"         default="640" />
-  <arg name="color_height"        default="480" />
-  <arg name="enable_color"        default="true" />
+  <arg name="color_width"         default="640"/>
+  <arg name="color_height"        default="480"/>
+  <arg name="enable_color"        default="true"/>
 
-  <arg name="fisheye_fps"         default="30" />
-  <arg name="depth_fps"           default="30" />
-  <arg name="infra1_fps"          default="30" />
-  <arg name="infra2_fps"          default="30" />
-  <arg name="color_fps"           default="30" />
-  <arg name="gyro_fps"            default="1000" />
-  <arg name="accel_fps"           default="1000" />
-  <arg name="enable_imu"          default="true" />
+  <arg name="fisheye_fps"         default="30"/>
+  <arg name="depth_fps"           default="30"/>
+  <arg name="infra1_fps"          default="30"/>
+  <arg name="infra2_fps"          default="30"/>
+  <arg name="color_fps"           default="30"/>
+  <arg name="gyro_fps"            default="1000"/>
+  <arg name="accel_fps"           default="1000"/>
+  <arg name="enable_imu"          default="true"/>
 
-  <arg name="enable_pointcloud"   default="false" />
-  <arg name="enable_sync"         default="false" />
+  <arg name="enable_pointcloud"   default="false"/>
+  <arg name="enable_sync"         default="false"/>
 
-  <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/> 
-  <node pkg="nodelet" type="nodelet" name="realsense_ros_$(arg camera)" args="load realsense_ros_camera/RealSenseCameraNodelet $(arg manager)" output="screen">
 
-    <param name="enable_pointcloud"        type="bool" value="$(arg enable_pointcloud)" />
-    <param name="enable_sync"              type="bool" value="$(arg enable_sync)" />
+  <group ns="camera">
+    <include file="$(find realsense_ros_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="serial_no"                value="$(arg serial_no)"/>
+      <arg name="json_file_path"           value="$(arg json_file_path)"/>
 
-    <param name="fisheye_width"            type="int"  value="$(arg fisheye_width)" />
-    <param name="fisheye_height"           type="int"  value="$(arg fisheye_height)" />
-    <param name="enable_fisheye"           type="bool" value="$(arg enable_fisheye)" />
+      <arg name="enable_pointcloud"        value="$(arg enable_pointcloud)"/>
+      <arg name="enable_sync"              value="$(arg enable_sync)"/>
 
-    <param name="depth_width"              type="int"  value="$(arg depth_width)" />
-    <param name="depth_height"             type="int"  value="$(arg depth_height)" />
-    <param name="enable_depth"             type="bool" value="$(arg enable_depth)" />
+      <arg name="fisheye_width"            value="$(arg fisheye_width)"/>
+      <arg name="fisheye_height"           value="$(arg fisheye_height)"/>
+      <arg name="enable_fisheye"           value="$(arg enable_fisheye)"/>
 
-    <param name="color_width"              type="int"  value="$(arg color_width)" />
-    <param name="color_height"             type="int"  value="$(arg color_height)" />
-    <param name="enable_color"             type="bool" value="$(arg enable_color)" />
+      <arg name="depth_width"              value="$(arg depth_width)"/>
+      <arg name="depth_height"             value="$(arg depth_height)"/>
+      <arg name="enable_depth"             value="$(arg enable_depth)"/>
 
-    <param name="infra1_width"             type="int"  value="$(arg infra1_width)" />
-    <param name="infra1_height"            type="int"  value="$(arg infra1_height)" />
-    <param name="enable_infra1"            type="bool" value="$(arg enable_infra1)" />
+      <arg name="color_width"              value="$(arg color_width)"/>
+      <arg name="color_height"             value="$(arg color_height)"/>
+      <arg name="enable_color"             value="$(arg enable_color)"/>
 
-    <param name="infra2_width"             type="int"  value="$(arg infra2_width)" />
-    <param name="infra2_height"            type="int"  value="$(arg infra2_height)" />
-    <param name="enable_infra2"            type="bool" value="$(arg enable_infra2)" />
+      <arg name="infra1_width"             value="$(arg infra1_width)"/>
+      <arg name="infra1_height"            value="$(arg infra1_height)"/>
+      <arg name="enable_infra1"            value="$(arg enable_infra1)"/>
 
-    <param name="fisheye_fps"              type="int"  value="$(arg fisheye_fps)" />
-    <param name="depth_fps"                type="int"  value="$(arg depth_fps)" />
-    <param name="infra1_fps"               type="int"  value="$(arg infra1_fps)" />
-    <param name="infra2_fps"               type="int"  value="$(arg infra2_fps)" />
-    <param name="color_fps"                type="int"  value="$(arg color_fps)" />
-    <param name="gyro_fps"                 type="int"  value="$(arg gyro_fps)" />
-    <param name="accel_fps"                type="int"  value="$(arg accel_fps)" />
-    <param name="enable_imu"               type="bool" value="$(arg enable_imu)" />
+      <arg name="infra2_width"             value="$(arg infra2_width)"/>
+      <arg name="infra2_height"            value="$(arg infra2_height)"/>
+      <arg name="enable_infra2"            value="$(arg enable_infra2)"/>
 
-    <param name="depth_optical_frame_id"   type="str"  value="$(arg camera)_depth_optical_frame" />
-    <param name="infra1_optical_frame_id"  type="str"  value="$(arg camera)_infra1_optical_frame" />
-    <param name="infra2_optical_frame_id"  type="str"  value="$(arg camera)_infra2_optical_frame" />
-    <param name="color_optical_frame_id"   type="str"  value="$(arg camera)_rgb_optical_frame" />
-    <param name="fisheye_optical_frame_id" type="str"  value="$(arg camera)_fisheye_optical_frame" />
-    <param name="accel_optical_frame_id"   type="str"  value="$(arg camera)_accel_optical_frame" />
-    <param name="gyro_optical_frame_id"    type="str"  value="$(arg camera)_gyro_optical_frame" />
-  </node>
+      <arg name="fisheye_fps"              value="$(arg fisheye_fps)"/>
+      <arg name="depth_fps"                value="$(arg depth_fps)"/>
+      <arg name="infra1_fps"               value="$(arg infra1_fps)"/>
+      <arg name="infra2_fps"               value="$(arg infra2_fps)"/>
+      <arg name="color_fps"                value="$(arg color_fps)"/>
+      <arg name="gyro_fps"                 value="$(arg gyro_fps)"/>
+      <arg name="accel_fps"                value="$(arg accel_fps)"/>
+      <arg name="enable_imu"               value="$(arg enable_imu)"/>
+    </include>
+  </group>
 </launch>

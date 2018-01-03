@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
     cv_bridge
     image_transport
     tf
+    dynamic_reconfigure
     )
 
 find_package(realsense2)
@@ -43,6 +44,14 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
     )
 
+# Generate dynamic reconfigure options from .cfg files
+generate_dynamic_reconfigure_options(
+  cfg/base_d400_params.cfg
+  cfg/sr300_params.cfg
+  cfg/rs415_params.cfg
+  cfg/rs435_params.cfg
+)
+
 # RealSense ROS Node
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
@@ -50,15 +59,27 @@ catkin_package(
     nodelet
     cv_bridge
     image_transport
+    dynamic_reconfigure
     )
 
 add_library(${PROJECT_NAME}
     include/constants.h
-    src/realsense_camera_node.cpp
+    include/realsense_node_factory.h
+    include/base_realsense_node.h
+    include/rs415_node.h
+    include/rs435_node.h
+    include/sr300_node.h
+    src/realsense_node_factory.cpp
+    src/base_realsense_node.cpp
+    src/rs415_node.cpp
+    src/rs435_node.cpp
+    src/sr300_node.cpp
     )
 
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
+
 
 target_link_libraries(${PROJECT_NAME}
     realsense2
