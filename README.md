@@ -6,7 +6,10 @@ These are packages for using Intel RealSense cameras (D400 series and the SR300)
 The following instructions support ROS Indigo, on **Ubuntu 14.04**, and ROS Kinetic, on **Ubutnu 16.04**.
 
 ### Step 1: Install the latest Intel&reg; RealSense&trade; SDK 2.0
-Download the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/latest) and follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/development/doc/installation.md).
+- #### Build from sources. Download the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/latest) and follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md).
+
+#### OR
+- #### Install from [Debian Package](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages)
 
 ### Step 2: Install the ROS distribution
 - #### Install [ROS Indigo](http://wiki.ros.org/indigo/Installation/Ubuntu), on Ubuntu 14.04
@@ -26,7 +29,7 @@ cd catkin_ws/src/
 catkin_init_workspace 
 cd ..
 catkin_make clean
-catkin_make -DCMAKE_BUILD_TYPE=Release
+catkin_make -DCATKIN_ENABLE_TESTING=False -DCMAKE_BUILD_TYPE=Release
 catkin_make install
 echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
 source ~/.bashrc
