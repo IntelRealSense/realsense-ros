@@ -49,21 +49,54 @@ namespace realsense_ros_camera
             float x, y, z;
         };
 
+        struct quaternion
+        {
+            double x, y, z, w;
+        };
+
+        static std::string getNamespaceStr();
         void getParameters();
         void setupDevice();
         void setupPublishers();
         void setupStreams();
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
-        Eigen::Quaternionf rotationMatrixToQuaternion(float rotation[3]) const;
+        Eigen::Quaternionf rotationMatrixToQuaternion(const float rotation[3]) const;
+        void publish_static_tf(const ros::Time& t,
+                               const float3& trans,
+                               const quaternion& q,
+                               const std::string& from,
+                               const std::string& to);
         void publishStaticTransforms();
-        void publishPCTopic(const ros::Time& t);
-        Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics) const;
-        Extrinsics getFisheye2ImuExtrinsicsMsg();
-        Extrinsics getFisheye2DepthExtrinsicsMsg();
+        void publishRgbToDepthPCTopic(const ros::Time& t, const std::map<stream_index_pair, bool>& is_frame_arrived);
+        Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
+        rs2_extrinsics getRsExtrinsics(const stream_index_pair& from_stream, const stream_index_pair& to_stream);
 
         IMUInfo getImuInfo(const stream_index_pair& stream_index);
-        void publishFrame(rs2::frame f, const ros::Time& t);
+        void publishFrame(rs2::frame f, const ros::Time& t,
+                          const stream_index_pair& stream,
+                          std::map<stream_index_pair, cv::Mat>& images,
+                          const std::map<stream_index_pair, ros::Publisher>& info_publishers,
+                          const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
+                          std::map<stream_index_pair, int>& seq,
+                          std::map<stream_index_pair, sensor_msgs::CameraInfo>& camera_info,
+                          const std::map<stream_index_pair, std::string>& optical_frame_id,
+                          const std::map<stream_index_pair, std::string>& encoding,
+                          bool copy_data_from_frame = true);
         bool getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile);
+
+        void updateIsFrameArrived(std::map<stream_index_pair, bool>& is_frame_arrived,
+                                  rs2_stream stream_type, int stream_index);
+
+        void publishAlignedDepthToOthers(rs2::frame depth_frame, const std::vector<rs2::frame>& frames, const ros::Time& t);
+
+        void alignFrame(const rs2_intrinsics& from_intrin,
+                        const rs2_intrinsics& other_intrin,
+                        rs2::frame from_image,
+                        uint32_t output_image_bytes_per_pixel,
+                        const rs2_extrinsics& from_to_other,
+                        std::vector<uint8_t>& out_vec);
+
+        const rs2_extrinsics _i_ex{{1, 0, 0, 0, 1, 0, 0, 0, 1}, {0, 0, 0}};
 
         std::string _json_file_path;
         std::string _serial_no;
@@ -84,6 +117,7 @@ namespace realsense_ros_camera
         std::map<stream_index_pair, ros::Publisher> _info_publisher;
         std::map<stream_index_pair, cv::Mat> _image;
         std::map<stream_index_pair, std::string> _encoding;
+        std::map<stream_index_pair, std::vector<uint8_t>> _aligned_depth_images;
 
         std::string _base_frame_id;
         std::map<stream_index_pair, std::string> _frame_id;
@@ -91,17 +125,30 @@ namespace realsense_ros_camera
         std::map<stream_index_pair, int> _seq;
         std::map<stream_index_pair, int> _unit_step_size;
         std::map<stream_index_pair, sensor_msgs::CameraInfo> _camera_info;
-        ros::Publisher _fe_to_depth_publisher, _fe_to_imu_publisher;
         bool _intialize_time_base;
         double _camera_time_base;
         std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
 
         ros::Publisher _pointcloud_publisher;
         ros::Time _ros_time_base;
+        bool _align_depth;
         bool _sync_frames;
         bool _pointcloud;
         rs2::asynchronous_syncer _syncer;
-        rs2_extrinsics _depth2color_extrinsics;
+
+        std::map<stream_index_pair, cv::Mat> _aligned_image;
+        std::map<stream_index_pair, std::string> _aligned_encoding;
+        std::map<stream_index_pair, sensor_msgs::CameraInfo> _aligned_camera_info;
+        std::map<stream_index_pair, int> _aligned_seq;
+        std::map<stream_index_pair, ros::Publisher> _aligned_info_publisher;
+        std::map<stream_index_pair, image_transport::Publisher> _aligned_image_publishers;
+        std::map<stream_index_pair, std::string> _aligned_frame_id;
+        std::map<stream_index_pair, std::string> _aligned_optical_frame_id;
+        std::map<stream_index_pair, ros::Publisher> _depth_to_other_extrinsics_publishers;
+        std::map<stream_index_pair, rs2_extrinsics> _depth_to_other_extrinsics;
+
+        std::map<stream_index_pair, bool> _is_frame_arrived;
+        const std::string _namespace;
     };//end class
 
     class BaseD400Node : public BaseRealSenseNode
