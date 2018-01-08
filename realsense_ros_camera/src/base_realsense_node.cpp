@@ -12,6 +12,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _intialize_time_base(false)
 {
     // Types for depth stream
+    _is_frame_arrived[DEPTH] = false;
     _format[DEPTH] = RS2_FORMAT_Z16;   // libRS type
     _image_format[DEPTH] = CV_16UC1;    // CVBridge type
     _encoding[DEPTH] = sensor_msgs::image_encodings::TYPE_16UC1; // ROS message type
@@ -19,6 +20,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _stream_name[DEPTH] = "depth";
 
     // Infrared stream - Left
+    _is_frame_arrived[INFRA1] = false;
     _format[INFRA1] = RS2_FORMAT_Y8;   // libRS type
     _image_format[INFRA1] = CV_8UC1;    // CVBridge type
     _encoding[INFRA1] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
@@ -26,6 +28,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _stream_name[INFRA1] = "infra1";
 
     // Infrared stream - Right
+    _is_frame_arrived[INFRA2] = false;
     _format[INFRA2] = RS2_FORMAT_Y8;   // libRS type
     _image_format[INFRA2] = CV_8UC1;    // CVBridge type
     _encoding[INFRA2] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
@@ -33,6 +36,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _stream_name[INFRA2] = "infra2";
 
     // Types for color stream
+    _is_frame_arrived[COLOR] = false;
     _format[COLOR] = RS2_FORMAT_RGB8;   // libRS type
     _image_format[COLOR] = CV_8UC3;    // CVBridge type
     _encoding[COLOR] = sensor_msgs::image_encodings::RGB8; // ROS message type
@@ -40,6 +44,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _stream_name[COLOR] = "color";
 
     // Types for fisheye stream
+    _is_frame_arrived[FISHEYE] = false;
     _format[FISHEYE] = RS2_FORMAT_RAW8;   // libRS type
     _image_format[FISHEYE] = CV_8UC1;    // CVBridge type
     _encoding[FISHEYE] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
@@ -47,12 +52,14 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _stream_name[FISHEYE] = "fisheye";
 
     // Types for Motion-Module streams
+    _is_frame_arrived[GYRO] = false;
     _format[GYRO] = RS2_FORMAT_MOTION_XYZ32F;   // libRS type
     _image_format[GYRO] = CV_8UC1;    // CVBridge type
     _encoding[GYRO] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
     _unit_step_size[GYRO] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
     _stream_name[GYRO] = "gyro";
 
+    _is_frame_arrived[ACCEL] = false;
     _format[ACCEL] = RS2_FORMAT_MOTION_XYZ32F;   // libRS type
     _image_format[ACCEL] = CV_8UC1;    // CVBridge type
     _encoding[ACCEL] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
@@ -79,9 +86,10 @@ void BaseRealSenseNode::getParameters()
 {
     ROS_INFO("getParameters...");
 
+    _pnh.param("align_frames", _align_frames, ALIGN_FRAMES);
     _pnh.param("enable_pointcloud", _pointcloud, POINTCLOUD);
     _pnh.param("enable_sync", _sync_frames, SYNC_FRAMES);
-    if (_pointcloud)
+    if (_pointcloud || _align_frames)
         _sync_frames = true;
 
     _pnh.param("json_file_path", _json_file_path, std::string(""));
@@ -95,21 +103,25 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("infra1_height", _height[INFRA1], INFRA1_HEIGHT);
     _pnh.param("infra1_fps", _fps[INFRA1], INFRA1_FPS);
     _pnh.param("enable_infra1", _enable[INFRA1], ENABLE_INFRA1);
+    _aligned_images[INFRA1].resize(_width[INFRA1] * _height[INFRA1] * _unit_step_size[INFRA1]);
 
     _pnh.param("infra2_width", _width[INFRA2], INFRA2_WIDTH);
     _pnh.param("infra2_height", _height[INFRA2], INFRA2_HEIGHT);
     _pnh.param("infra2_fps", _fps[INFRA2], INFRA2_FPS);
     _pnh.param("enable_infra2", _enable[INFRA2], ENABLE_INFRA2);
+    _aligned_images[INFRA2].resize(_width[INFRA2] * _height[INFRA2] * _unit_step_size[INFRA2]);
 
     _pnh.param("color_width", _width[COLOR], COLOR_WIDTH);
     _pnh.param("color_height", _height[COLOR], COLOR_HEIGHT);
     _pnh.param("color_fps", _fps[COLOR], COLOR_FPS);
     _pnh.param("enable_color", _enable[COLOR], ENABLE_COLOR);
+    _aligned_images[COLOR].resize(_width[COLOR] * _height[COLOR] * _unit_step_size[COLOR]);
 
     _pnh.param("fisheye_width", _width[FISHEYE], FISHEYE_WIDTH);
     _pnh.param("fisheye_height", _height[FISHEYE], FISHEYE_HEIGHT);
     _pnh.param("fisheye_fps", _fps[FISHEYE], FISHEYE_FPS);
     _pnh.param("enable_fisheye", _enable[FISHEYE], ENABLE_FISHEYE);
+    _aligned_images[FISHEYE].resize(_width[FISHEYE] * _height[FISHEYE] * _unit_step_size[FISHEYE]);
 
     _pnh.param("gyro_fps", _fps[GYRO], GYRO_FPS);
     _pnh.param("accel_fps", _fps[ACCEL], ACCEL_FPS);
@@ -173,6 +185,8 @@ void BaseRealSenseNode::setupDevice()
         auto pid = _dev.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
         ROS_INFO_STREAM("Device Product ID: " << pid);
 
+        ROS_INFO_STREAM("Enable PointCloud: " << ((_pointcloud)?"On":"Off"));
+        ROS_INFO_STREAM("Align Frames: " << ((_align_frames)?"On":"Off"));
         ROS_INFO_STREAM("Sync Mode: " << ((_sync_frames)?"On":"Off"));
 
         auto dev_sensors = _dev.query_sensors();
@@ -271,7 +285,25 @@ void BaseRealSenseNode::setupPublishers()
     if (_enable[FISHEYE] &&
         _enable[DEPTH])
     {
-        _fe_to_depth_publisher = _node_handle.advertise<Extrinsics>("extrinsics/fisheye2depth", 1, true);
+        _stream_to_depth_publishers[FISHEYE] = _node_handle.advertise<Extrinsics>("extrinsics/fisheye_to_depth", 1, true);
+    }
+
+    if (_enable[COLOR] &&
+        _enable[DEPTH])
+    {
+        _stream_to_depth_publishers[COLOR] = _node_handle.advertise<Extrinsics>("extrinsics/color_to_depth", 1, true);
+    }
+
+    if (_enable[INFRA1] &&
+        _enable[DEPTH])
+    {
+        _stream_to_depth_publishers[INFRA1] = _node_handle.advertise<Extrinsics>("extrinsics/infra1_to_depth", 1, true);
+    }
+
+    if (_enable[INFRA2] &&
+        _enable[DEPTH])
+    {
+        _stream_to_depth_publishers[INFRA2] = _node_handle.advertise<Extrinsics>("extrinsics/infra2_to_depth", 1, true);
     }
 
     if (_enable[GYRO])
@@ -285,12 +317,104 @@ void BaseRealSenseNode::setupPublishers()
         _imu_publishers[ACCEL] = _node_handle.advertise<sensor_msgs::Imu>("accel/sample", 100);
         _info_publisher[ACCEL] = _node_handle.advertise<IMUInfo>("accel/imu_info", 1, true);
     }
+}
 
-    if (_enable[FISHEYE] &&
-        (_enable[GYRO] ||
-         _enable[ACCEL]))
+void BaseRealSenseNode::alignFrame(const rs2_intrinsics& from_intrin,
+                                   const rs2_intrinsics& other_intrin,
+                                   rs2::frame from_image,
+                                   uint32_t output_image_bytes_per_pixel,
+                                   const rs2_extrinsics& from_to_other,
+                                   std::vector<uint8_t>& out_vec)
+{
+    uint8_t* p_out_frame = out_vec.data();
+    auto from_vid_frame = from_image.as<rs2::video_frame>();
+    auto from_bytes_per_pixel = from_vid_frame.get_bytes_per_pixel();
+
+    static const auto blank_color = 0x00;
+    memset(p_out_frame, blank_color, other_intrin.height * other_intrin.width * output_image_bytes_per_pixel);
+
+    auto p_from_frame = reinterpret_cast<const uint8_t*>(from_image.get_data());
+    auto from_stream_type = from_image.get_profile().stream_type();
+    float depth_units = ((from_stream_type == RS2_STREAM_DEPTH)?_depth_scale_meters:1.f);
+#pragma omp parallel for schedule(dynamic)
+    for (int from_y = 0; from_y < from_intrin.height; ++from_y)
     {
-        _fe_to_imu_publisher = _node_handle.advertise<Extrinsics>("extrinsics/fisheye2imu", 1, true);
+        int from_pixel_index = from_y * from_intrin.width;
+        for (int from_x = 0; from_x < from_intrin.width; ++from_x, ++from_pixel_index)
+        {
+            // Skip over depth pixels with the value of zero
+            float depth = (from_stream_type == RS2_STREAM_DEPTH)?(depth_units * ((const uint16_t*)p_from_frame)[from_pixel_index]): 1.f;
+            if (depth)
+            {
+                // Map the top-left corner of the depth pixel onto the other image
+                float from_pixel[2] = { from_x - 0.5f, from_y - 0.5f }, from_point[3], other_point[3], other_pixel[2];
+                rs2_deproject_pixel_to_point(from_point, &from_intrin, from_pixel, depth);
+                rs2_transform_point_to_point(other_point, &from_to_other, from_point);
+                rs2_project_point_to_pixel(other_pixel, &other_intrin, other_point);
+                const int other_x0 = static_cast<int>(other_pixel[0] + 0.5f);
+                const int other_y0 = static_cast<int>(other_pixel[1] + 0.5f);
+
+                // Map the bottom-right corner of the depth pixel onto the other image
+                from_pixel[0] = from_x + 0.5f; from_pixel[1] = from_y + 0.5f;
+                rs2_deproject_pixel_to_point(from_point, &from_intrin, from_pixel, depth);
+                rs2_transform_point_to_point(other_point, &from_to_other, from_point);
+                rs2_project_point_to_pixel(other_pixel, &other_intrin, other_point);
+                const int other_x1 = static_cast<int>(other_pixel[0] + 0.5f);
+                const int other_y1 = static_cast<int>(other_pixel[1] + 0.5f);
+
+                if (other_x0 < 0 || other_y0 < 0 || other_x1 >= other_intrin.width || other_y1 >= other_intrin.height)
+                    continue;
+
+                for (int y = other_y0; y <= other_y1; ++y)
+                {
+                    for (int x = other_x0; x <= other_x1; ++x)
+                    {
+                        int out_pixel_index = y * other_intrin.width + x;
+                        //Tranfer n-bit pixel to n-bit pixel
+                        for (int i = 0; i < from_bytes_per_pixel; i++)
+                        {
+                            const auto out_offset = out_pixel_index * output_image_bytes_per_pixel + i;
+                            const auto from_offset = from_pixel_index * output_image_bytes_per_pixel + i;
+                            p_out_frame[out_offset] = p_out_frame[out_offset] ?
+                                std::min((int)(p_out_frame[out_offset]), (int)(p_from_frame[from_offset]))
+                                : p_from_frame[from_offset];
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void BaseRealSenseNode::updateIsFrameArrived(std::map<stream_index_pair, bool>& is_frame_arrived,
+                                             rs2_stream stream_type, int stream_index)
+{
+    try
+    {
+        is_frame_arrived.at({stream_type, stream_index}) = true;
+    }
+    catch (std::out_of_range)
+    {
+        ROS_ERROR_STREAM("Stream type is not supported! (" << stream_type << ", " << stream_index << ")");
+    }
+}
+
+void BaseRealSenseNode::publishAlignFramesToDepth(const std::vector<rs2::frame>& frames, const ros::Time& t)
+{
+    for (auto&& from_frame : frames)
+    {
+        auto stream_type = from_frame.get_profile().stream_type();
+        assert(RS2_STREAM_DEPTH != stream_type);
+        auto stream_index = from_frame.get_profile().stream_index();
+        stream_index_pair sip{stream_type, stream_index};
+        auto from_image_frame = from_frame.as<rs2::video_frame>();
+        auto& out_vec = _aligned_images[sip];
+        alignFrame(_stream_intrinsics[sip], _stream_intrinsics[DEPTH], from_frame, from_image_frame.get_bytes_per_pixel(), _stream_to_depth_extrinsics[sip], out_vec);
+
+        auto& from_image = _image[sip];
+        from_image.data = out_vec.data();
+
+        publishFrame(from_frame, t, false);
     }
 }
 
@@ -353,6 +477,9 @@ void BaseRealSenseNode::setupStreams()
             // In sync mode the timestamp is based on ROS time
             if (false == _intialize_time_base)
             {
+                if (RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain())
+                    ROS_WARN("Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)");
+
                 _intialize_time_base = true;
                 _ros_time_base = ros::Time::now();
                 _camera_time_base = frame.get_timestamp();
@@ -364,39 +491,48 @@ void BaseRealSenseNode::setupStreams()
             else
                 t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
 
-            auto is_color_frame_arrived = false;
-            auto is_depth_frame_arrived = false;
+            std::map<stream_index_pair, bool> is_frame_arrived(_is_frame_arrived);
+            std::vector<rs2::frame> frames;
             if (frame.is<rs2::frameset>())
             {
-                ROS_DEBUG("Frameset arrived");
+                ROS_DEBUG("Frameset arrived.");
                 auto frameset = frame.as<rs2::frameset>();
                 for (auto it = frameset.begin(); it != frameset.end(); ++it)
                 {
                     auto f = (*it);
                     auto stream_type = f.get_profile().stream_type();
-                    if (RS2_STREAM_COLOR == stream_type)
-                        is_color_frame_arrived = true;
-                    else if (RS2_STREAM_DEPTH == stream_type)
-                        is_depth_frame_arrived = true;
+                    auto stream_index = f.get_profile().stream_index();
+                    updateIsFrameArrived(is_frame_arrived, stream_type, stream_index);
 
-                    ROS_DEBUG("Frameset contain %s frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                              rs2_stream_to_string(stream_type), frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
-                    publishFrame(f, t);
+                    ROS_DEBUG("Frameset contain (%s, %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
+                              rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+
+                    if (_align_frames && stream_type != RS2_STREAM_DEPTH)
+                    {
+                        frames.push_back(f);
+                    }
+                    else
+                        publishFrame(f, t);
+                }
+
+                if (_align_frames)
+                {
+                    publishAlignFramesToDepth(frames, t);
                 }
             }
             else
             {
                 auto stream_type = frame.get_profile().stream_type();
-                ROS_DEBUG("%s video frame arrived. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                          rs2_stream_to_string(stream_type), frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
-                publishFrame(frame, t);
+                auto stream_index = frame.get_profile().stream_index();
+                updateIsFrameArrived(is_frame_arrived, stream_type, stream_index);
+                ROS_DEBUG("Single video frame arrived (%s, %d). frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
+                          rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
             }
 
-            if(_pointcloud && is_depth_frame_arrived && is_color_frame_arrived &&
-               (0 != _pointcloud_publisher.getNumSubscribers()))
+            if(_pointcloud && (0 != _pointcloud_publisher.getNumSubscribers()))
             {
                 ROS_DEBUG("publishPCTopic(...)");
-                publishPCTopic(t);
+                publishRgbToDepthPCTopic(t, is_frame_arrived);
             }
         };
 
@@ -537,19 +673,40 @@ void BaseRealSenseNode::setupStreams()
             }
         }
 
-
         if (_enable[DEPTH] &&
             _enable[FISHEYE])
         {
-            auto ex = getFisheye2DepthExtrinsicsMsg();
-            _fe_to_depth_publisher.publish(ex);
+            static const char* frame_id = "fisheye_to_depth_extrinsics";
+            auto ex = getStreamToDepthRsExtrinsics(FISHEYE);
+            _stream_to_depth_extrinsics[FISHEYE] = ex;
+            _stream_to_depth_publishers[FISHEYE].publish(rsExtrinsicsToMsg(ex, frame_id));
         }
 
-        if (_enable[FISHEYE] &&
-            (_enable[GYRO] || _enable[ACCEL]))
+        if (_enable[DEPTH] &&
+            _enable[COLOR])
         {
-            auto ex = getFisheye2ImuExtrinsicsMsg();
-            _fe_to_imu_publisher.publish(ex);
+            static const char* frame_id = "color_to_depth_extrinsics";
+            auto ex = getStreamToDepthRsExtrinsics(COLOR);
+            _stream_to_depth_extrinsics[COLOR] = ex;
+            _stream_to_depth_publishers[COLOR].publish(rsExtrinsicsToMsg(ex, frame_id));
+        }
+
+        if (_enable[DEPTH] &&
+            _enable[INFRA1])
+        {
+            static const char* frame_id = "infra1_to_depth_extrinsics";
+            auto ex = getStreamToDepthRsExtrinsics(INFRA1);
+            _stream_to_depth_extrinsics[INFRA1] = ex;
+            _stream_to_depth_publishers[INFRA1].publish(rsExtrinsicsToMsg(ex, frame_id));
+        }
+
+        if (_enable[DEPTH] &&
+            _enable[INFRA2])
+        {
+            static const char* frame_id = "infra2_to_depth_extrinsics";
+            auto ex = getStreamToDepthRsExtrinsics(INFRA2);
+            _stream_to_depth_extrinsics[INFRA2] = ex;
+            _stream_to_depth_publishers[INFRA2].publish(rsExtrinsicsToMsg(ex, frame_id));
         }
     }
     catch(const std::exception& ex)
@@ -601,14 +758,14 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
         exit(1);
     }
 
-    // TODO: Why Depth to Color?
     if (stream_index == DEPTH && _enable[DEPTH] && _enable[COLOR])
     {
         _depth2color_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[COLOR].front());
-        // set depth to color translation values in Projection matrix (P)
-        _camera_info[stream_index].P.at(3) = _depth2color_extrinsics.translation[0];     // Tx
-        _camera_info[stream_index].P.at(7) = _depth2color_extrinsics.translation[1];     // Ty
-        _camera_info[stream_index].P.at(11) = _depth2color_extrinsics.translation[2];    // Tz
+        // TODO
+//        // set depth to color translation values in Projection matrix (P)
+//        _camera_info[stream_index].P.at(3) = _depth2color_extrinsics.translation[0];     // Tx
+//        _camera_info[stream_index].P.at(7) = _depth2color_extrinsics.translation[1];     // Ty
+//        _camera_info[stream_index].P.at(11) = _depth2color_extrinsics.translation[2];    // Tz
     }
 
     _camera_info[stream_index].distortion_model = "plumb_bob";
@@ -644,21 +801,21 @@ void BaseRealSenseNode::publishStaticTransforms()
 {
     ROS_INFO("publishStaticTransforms...");
     // Publish transforms for the cameras
-    tf::Quaternion q_c2co;
-    geometry_msgs::TransformStamped b2c_msg; // Base to Color
-    geometry_msgs::TransformStamped c2co_msg; // Color to Color_Optical
+    tf::Quaternion c_to_co;
+    geometry_msgs::TransformStamped c_to_b_msg; // Color to Base
+    geometry_msgs::TransformStamped c_to_co_msg; // Color to Color_Optical
 
-    tf::Quaternion q_d2do;
-    geometry_msgs::TransformStamped b2d_msg; // Base to Depth
-    geometry_msgs::TransformStamped d2do_msg; // Depth to Depth_Optical
+    tf::Quaternion d_to_do;
+    geometry_msgs::TransformStamped d_to_b_msg; // Depth to Base
+    geometry_msgs::TransformStamped d_to_do_msg; // Depth to Depth_Optical
 
-    tf::Quaternion ir1_2_ir1o;
-    geometry_msgs::TransformStamped b2ir1_msg; // Base to IR1
-    geometry_msgs::TransformStamped ir1_2_ir1o_msg; // IR1 to IR1_Optical
+    tf::Quaternion ir1_to_ir1o;
+    geometry_msgs::TransformStamped ir1_to_b_msg; // IR1 to Base
+    geometry_msgs::TransformStamped ir1_to_ir1o_msg; // IR1 to IR1_Optical
 
-    tf::Quaternion ir2_2_ir2o;
-    geometry_msgs::TransformStamped b2ir2_msg; // Base to IR2
-    geometry_msgs::TransformStamped ir2_2_ir2o_msg; // IR2 to IR2_Optical
+    tf::Quaternion ir2_to_ir2o;
+    geometry_msgs::TransformStamped ir2_to_b_msg; // IR2 to Base
+    geometry_msgs::TransformStamped ir2_to_ir2o_msg; // IR2 to IR2_Optical
 
     // Get the current timestamp for all static transforms
     ros::Time transform_ts_ = ros::Time::now();
@@ -666,31 +823,31 @@ void BaseRealSenseNode::publishStaticTransforms()
     // The depth frame is used as the base frame.
     // Hence no additional transformation is done from base frame to depth frame.
     // Transform base frame to depth frame
-    b2d_msg.header.stamp = transform_ts_;
-    b2d_msg.header.frame_id = _base_frame_id;
-    b2d_msg.child_frame_id = _frame_id[DEPTH];
-    b2d_msg.transform.translation.x = 0;
-    b2d_msg.transform.translation.y = 0;
-    b2d_msg.transform.translation.z = 0;
-    b2d_msg.transform.rotation.x = 0;
-    b2d_msg.transform.rotation.y = 0;
-    b2d_msg.transform.rotation.z = 0;
-    b2d_msg.transform.rotation.w = 1;
-    _static_tf_broadcaster.sendTransform(b2d_msg);
+    d_to_b_msg.header.stamp = transform_ts_;
+    d_to_b_msg.header.frame_id = _base_frame_id;
+    d_to_b_msg.child_frame_id = _frame_id[DEPTH];
+    d_to_b_msg.transform.translation.x = 0;
+    d_to_b_msg.transform.translation.y = 0;
+    d_to_b_msg.transform.translation.z = 0;
+    d_to_b_msg.transform.rotation.x = 0;
+    d_to_b_msg.transform.rotation.y = 0;
+    d_to_b_msg.transform.rotation.z = 0;
+    d_to_b_msg.transform.rotation.w = 1;
+    _static_tf_broadcaster.sendTransform(d_to_b_msg);
 
     // Transform depth frame to depth optical frame
-    q_d2do.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
-    d2do_msg.header.stamp = transform_ts_;
-    d2do_msg.header.frame_id = _frame_id[DEPTH];
-    d2do_msg.child_frame_id = _optical_frame_id[DEPTH];
-    d2do_msg.transform.translation.x = 0;
-    d2do_msg.transform.translation.y = 0;
-    d2do_msg.transform.translation.z = 0;
-    d2do_msg.transform.rotation.x = q_d2do.getX();
-    d2do_msg.transform.rotation.y = q_d2do.getY();
-    d2do_msg.transform.rotation.z = q_d2do.getZ();
-    d2do_msg.transform.rotation.w = q_d2do.getW();
-    _static_tf_broadcaster.sendTransform(d2do_msg);
+    d_to_do.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
+    d_to_do_msg.header.stamp = transform_ts_;
+    d_to_do_msg.header.frame_id = _frame_id[DEPTH];
+    d_to_do_msg.child_frame_id = _optical_frame_id[DEPTH];
+    d_to_do_msg.transform.translation.x = 0;
+    d_to_do_msg.transform.translation.y = 0;
+    d_to_do_msg.transform.translation.z = 0;
+    d_to_do_msg.transform.rotation.x = d_to_do.getX();
+    d_to_do_msg.transform.rotation.y = d_to_do.getY();
+    d_to_do_msg.transform.rotation.z = d_to_do.getZ();
+    d_to_do_msg.transform.rotation.w = d_to_do.getW();
+    _static_tf_broadcaster.sendTransform(d_to_do_msg);
 
     rs2::stream_profile depth_profile;
     if (!getEnabledProfile(DEPTH, depth_profile))
@@ -702,107 +859,122 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[COLOR])
     {
-        // Transform base frame to color frame
-        auto q = rotationMatrixToQuaternion(_depth2color_extrinsics.rotation);
+        // Transform color to base frame
+        auto& ex = _stream_to_depth_extrinsics[COLOR];
+        auto q = rotationMatrixToQuaternion(ex.rotation);
 
-        b2c_msg.header.stamp = transform_ts_;
-        b2c_msg.header.frame_id = _base_frame_id;
-        b2c_msg.child_frame_id = _frame_id[COLOR];
-        b2c_msg.transform.translation.x = _depth2color_extrinsics.translation[2];
-        b2c_msg.transform.translation.y = -_depth2color_extrinsics.translation[0];
-        b2c_msg.transform.translation.z = -_depth2color_extrinsics.translation[1];
-        b2c_msg.transform.rotation.x = q.x();
-        b2c_msg.transform.rotation.y = q.y();
-        b2c_msg.transform.rotation.z = q.z();
-        b2c_msg.transform.rotation.w = q.w();
-        _static_tf_broadcaster.sendTransform(b2c_msg);
+        c_to_b_msg.header.stamp = transform_ts_;
+        c_to_b_msg.header.frame_id = _base_frame_id;
+        c_to_b_msg.child_frame_id = _frame_id[COLOR];
+        c_to_b_msg.transform.translation.x = ex.translation[2];
+        c_to_b_msg.transform.translation.y = -ex.translation[0];
+        c_to_b_msg.transform.translation.z = -ex.translation[1];
+        c_to_b_msg.transform.rotation.x = q.x();
+        c_to_b_msg.transform.rotation.y = q.y();
+        c_to_b_msg.transform.rotation.z = q.z();
+        c_to_b_msg.transform.rotation.w = q.w();
+        _static_tf_broadcaster.sendTransform(c_to_b_msg);
 
         // Transform color frame to color optical frame
-        q_c2co.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
-        c2co_msg.header.stamp = transform_ts_;
-        c2co_msg.header.frame_id = _frame_id[COLOR];
-        c2co_msg.child_frame_id = _optical_frame_id[COLOR];
-        c2co_msg.transform.translation.x = 0;
-        c2co_msg.transform.translation.y = 0;
-        c2co_msg.transform.translation.z = 0;
-        c2co_msg.transform.rotation.x = q_c2co.getX();
-        c2co_msg.transform.rotation.y = q_c2co.getY();
-        c2co_msg.transform.rotation.z = q_c2co.getZ();
-        c2co_msg.transform.rotation.w = q_c2co.getW();
-        _static_tf_broadcaster.sendTransform(c2co_msg);
+        c_to_co.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
+        c_to_co_msg.header.stamp = transform_ts_;
+        c_to_co_msg.header.frame_id = _frame_id[COLOR];
+        c_to_co_msg.child_frame_id = _optical_frame_id[COLOR];
+        c_to_co_msg.transform.translation.x = 0;
+        c_to_co_msg.transform.translation.y = 0;
+        c_to_co_msg.transform.translation.z = 0;
+        c_to_co_msg.transform.rotation.x = c_to_co.getX();
+        c_to_co_msg.transform.rotation.y = c_to_co.getY();
+        c_to_co_msg.transform.rotation.z = c_to_co.getZ();
+        c_to_co_msg.transform.rotation.w = c_to_co.getW();
+        _static_tf_broadcaster.sendTransform(c_to_co_msg);
     }
 
     if (_enable[INFRA1])
     {
-        auto d2ir1_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[INFRA1].front());
-        auto q = rotationMatrixToQuaternion(d2ir1_extrinsics.rotation);
+        auto& ex = _stream_to_depth_extrinsics[INFRA1];
+        auto q = rotationMatrixToQuaternion(ex.rotation);
 
         // Transform base frame to infra1
-        b2ir1_msg.header.stamp = transform_ts_;
-        b2ir1_msg.header.frame_id = _base_frame_id;
-        b2ir1_msg.child_frame_id = _frame_id[INFRA1];
-        b2ir1_msg.transform.translation.x = d2ir1_extrinsics.translation[2];
-        b2ir1_msg.transform.translation.y = -d2ir1_extrinsics.translation[0];
-        b2ir1_msg.transform.translation.z = -d2ir1_extrinsics.translation[1];
+        ir1_to_b_msg.header.stamp = transform_ts_;
+        ir1_to_b_msg.header.frame_id = _base_frame_id;
+        ir1_to_b_msg.child_frame_id = _frame_id[INFRA1];
+        ir1_to_b_msg.transform.translation.x = ex.translation[2];
+        ir1_to_b_msg.transform.translation.y = -ex.translation[0];
+        ir1_to_b_msg.transform.translation.z = -ex.translation[1];
 
-        b2ir1_msg.transform.rotation.x = q.x();
-        b2ir1_msg.transform.rotation.y = q.y();
-        b2ir1_msg.transform.rotation.z = q.z();
-        b2ir1_msg.transform.rotation.w = q.w();
-        _static_tf_broadcaster.sendTransform(b2ir1_msg);
+        ir1_to_b_msg.transform.rotation.x = q.x();
+        ir1_to_b_msg.transform.rotation.y = q.y();
+        ir1_to_b_msg.transform.rotation.z = q.z();
+        ir1_to_b_msg.transform.rotation.w = q.w();
+        _static_tf_broadcaster.sendTransform(ir1_to_b_msg);
 
         // Transform infra1 frame to infra1 optical frame
-        ir1_2_ir1o.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
-        ir1_2_ir1o_msg.header.stamp = transform_ts_;
-        ir1_2_ir1o_msg.header.frame_id = _frame_id[INFRA1];
-        ir1_2_ir1o_msg.child_frame_id = _optical_frame_id[INFRA1];
-        ir1_2_ir1o_msg.transform.translation.x = 0;
-        ir1_2_ir1o_msg.transform.translation.y = 0;
-        ir1_2_ir1o_msg.transform.translation.z = 0;
-        ir1_2_ir1o_msg.transform.rotation.x = ir1_2_ir1o.getX();
-        ir1_2_ir1o_msg.transform.rotation.y = ir1_2_ir1o.getY();
-        ir1_2_ir1o_msg.transform.rotation.z = ir1_2_ir1o.getZ();
-        ir1_2_ir1o_msg.transform.rotation.w = ir1_2_ir1o.getW();
-        _static_tf_broadcaster.sendTransform(ir1_2_ir1o_msg);
+        ir1_to_ir1o.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
+        ir1_to_ir1o_msg.header.stamp = transform_ts_;
+        ir1_to_ir1o_msg.header.frame_id = _frame_id[INFRA1];
+        ir1_to_ir1o_msg.child_frame_id = _optical_frame_id[INFRA1];
+        ir1_to_ir1o_msg.transform.translation.x = 0;
+        ir1_to_ir1o_msg.transform.translation.y = 0;
+        ir1_to_ir1o_msg.transform.translation.z = 0;
+        ir1_to_ir1o_msg.transform.rotation.x = ir1_to_ir1o.getX();
+        ir1_to_ir1o_msg.transform.rotation.y = ir1_to_ir1o.getY();
+        ir1_to_ir1o_msg.transform.rotation.z = ir1_to_ir1o.getZ();
+        ir1_to_ir1o_msg.transform.rotation.w = ir1_to_ir1o.getW();
+        _static_tf_broadcaster.sendTransform(ir1_to_ir1o_msg);
     }
 
     if (_enable[INFRA2])
     {
-        auto d2ir2_extrinsics = depth_profile.get_extrinsics_to(_enabled_profiles[INFRA2].front());
-        auto q = rotationMatrixToQuaternion(d2ir2_extrinsics.rotation);
+        auto& ex = _stream_to_depth_extrinsics[INFRA1];
+        auto q = rotationMatrixToQuaternion(ex.rotation);
 
         // Transform base frame to infra2
-        b2ir2_msg.header.stamp = transform_ts_;
-        b2ir2_msg.header.frame_id = _base_frame_id;
-        b2ir2_msg.child_frame_id = _frame_id[INFRA2];
-        b2ir2_msg.transform.translation.x = d2ir2_extrinsics.translation[2];
-        b2ir2_msg.transform.translation.y = -d2ir2_extrinsics.translation[0];
-        b2ir2_msg.transform.translation.z = -d2ir2_extrinsics.translation[1];
-        b2ir2_msg.transform.rotation.x = q.x();
-        b2ir2_msg.transform.rotation.y = q.y();
-        b2ir2_msg.transform.rotation.z = q.z();
-        b2ir2_msg.transform.rotation.w = q.w();
-        _static_tf_broadcaster.sendTransform(b2ir2_msg);
+        ir2_to_b_msg.header.stamp = transform_ts_;
+        ir2_to_b_msg.header.frame_id = _base_frame_id;
+        ir2_to_b_msg.child_frame_id = _frame_id[INFRA2];
+        ir2_to_b_msg.transform.translation.x = ex.translation[2];
+        ir2_to_b_msg.transform.translation.y = -ex.translation[0];
+        ir2_to_b_msg.transform.translation.z = -ex.translation[1];
+        ir2_to_b_msg.transform.rotation.x = q.x();
+        ir2_to_b_msg.transform.rotation.y = q.y();
+        ir2_to_b_msg.transform.rotation.z = q.z();
+        ir2_to_b_msg.transform.rotation.w = q.w();
+        _static_tf_broadcaster.sendTransform(ir2_to_b_msg);
 
         // Transform infra2 frame to infra1 optical frame
-        ir2_2_ir2o.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
-        ir2_2_ir2o_msg.header.stamp = transform_ts_;
-        ir2_2_ir2o_msg.header.frame_id = _frame_id[INFRA2];
-        ir2_2_ir2o_msg.child_frame_id = _optical_frame_id[INFRA2];
-        ir2_2_ir2o_msg.transform.translation.x = 0;
-        ir2_2_ir2o_msg.transform.translation.y = 0;
-        ir2_2_ir2o_msg.transform.translation.z = 0;
-        ir2_2_ir2o_msg.transform.rotation.x = ir2_2_ir2o.getX();
-        ir2_2_ir2o_msg.transform.rotation.y = ir2_2_ir2o.getY();
-        ir2_2_ir2o_msg.transform.rotation.z = ir2_2_ir2o.getZ();
-        ir2_2_ir2o_msg.transform.rotation.w = ir2_2_ir2o.getW();
-        _static_tf_broadcaster.sendTransform(ir2_2_ir2o_msg);
+        ir2_to_ir2o.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
+        ir2_to_ir2o_msg.header.stamp = transform_ts_;
+        ir2_to_ir2o_msg.header.frame_id = _frame_id[INFRA2];
+        ir2_to_ir2o_msg.child_frame_id = _optical_frame_id[INFRA2];
+        ir2_to_ir2o_msg.transform.translation.x = 0;
+        ir2_to_ir2o_msg.transform.translation.y = 0;
+        ir2_to_ir2o_msg.transform.translation.z = 0;
+        ir2_to_ir2o_msg.transform.rotation.x = ir2_to_ir2o.getX();
+        ir2_to_ir2o_msg.transform.rotation.y = ir2_to_ir2o.getY();
+        ir2_to_ir2o_msg.transform.rotation.z = ir2_to_ir2o.getZ();
+        ir2_to_ir2o_msg.transform.rotation.w = ir2_to_ir2o.getW();
+        _static_tf_broadcaster.sendTransform(ir2_to_ir2o_msg);
     }
     // TODO: Publish Fisheye TF
 }
 
-void BaseRealSenseNode::publishPCTopic(const ros::Time& t)
+void BaseRealSenseNode::publishRgbToDepthPCTopic(const ros::Time& t, const std::map<stream_index_pair, bool>& is_frame_arrived)
 {
+    try
+    {
+        if (!is_frame_arrived.at(COLOR) || !is_frame_arrived.at(DEPTH))
+        {
+            ROS_DEBUG("Skipping publish PC topic! Color or Depth frame didn't arrive.");
+            return;
+        }
+    }
+    catch (std::out_of_range)
+    {
+        ROS_DEBUG("Skipping publish PC topic! Color or Depth frame didn't configure.");
+        return;
+    }
+
     auto color_intrinsics = _stream_intrinsics[COLOR];
     auto image_depth16 = reinterpret_cast<const uint16_t*>(_image[DEPTH].data);
     auto depth_intrinsics = _stream_intrinsics[DEPTH];
@@ -881,10 +1053,11 @@ void BaseRealSenseNode::publishPCTopic(const ros::Time& t)
             ++iter_r; ++iter_g; ++iter_b;
         }
     }
+
     _pointcloud_publisher.publish(msg_pointcloud);
 }
 
-Extrinsics BaseRealSenseNode::rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics) const
+Extrinsics BaseRealSenseNode::rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const
 {
     Extrinsics extrinsicsMsg;
     for (int i = 0; i < 9; ++i)
@@ -894,25 +1067,15 @@ Extrinsics BaseRealSenseNode::rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics
             extrinsicsMsg.translation[i] = extrinsics.translation[i];
     }
 
+    extrinsicsMsg.header.frame_id = frame_id;
     return extrinsicsMsg;
 }
 
-Extrinsics BaseRealSenseNode::getFisheye2ImuExtrinsicsMsg()
+rs2_extrinsics BaseRealSenseNode::getStreamToDepthRsExtrinsics(const stream_index_pair& from_stream)
 {
-    auto& fisheye = _enabled_profiles[FISHEYE].front();
-    auto& hid = _enabled_profiles[GYRO].front();
-    Extrinsics extrinsicsMsg = rsExtrinsicsToMsg(fisheye.get_extrinsics_to(hid));
-    extrinsicsMsg.header.frame_id = "fisheye2imu_extrinsics";
-    return extrinsicsMsg;
-}
-
-Extrinsics BaseRealSenseNode::getFisheye2DepthExtrinsicsMsg()
-{
-    auto& fisheye = _enabled_profiles[FISHEYE].front();
+    auto& from = _enabled_profiles[from_stream].front();
     auto& depth = _enabled_profiles[DEPTH].front();
-    Extrinsics extrinsicsMsg = rsExtrinsicsToMsg(fisheye.get_extrinsics_to(depth));
-    extrinsicsMsg.header.frame_id = "fisheye2depth_extrinsics";
-    return extrinsicsMsg;
+    return from.get_extrinsics_to(depth);
 }
 
 IMUInfo BaseRealSenseNode::getImuInfo(const stream_index_pair& stream_index)
@@ -942,12 +1105,17 @@ IMUInfo BaseRealSenseNode::getImuInfo(const stream_index_pair& stream_index)
     return info;
 }
 
-void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t)
+void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t, bool copy_data_from_frame)
 {
     ROS_DEBUG("publishFrame(...)");
     stream_index_pair stream{f.get_profile().stream_type(), f.get_profile().stream_index()};
+
+
     auto& image = _image[stream];
-    image.data = (uint8_t*)f.get_data();
+
+    if (copy_data_from_frame)
+        image.data = (uint8_t*)f.get_data();
+
     ++(_seq[stream]);
     auto& info_publisher = _info_publisher[stream];
     auto& image_publisher = _image_publishers[stream];
@@ -1015,7 +1183,10 @@ void BaseD400Node::callback(base_d400_paramsConfig &config, uint32_t level)
     if (set_default_dynamic_reconfig_values == level)
     {
         for (int i = 1 ; i < base_depth_count ; ++i)
+        {
+            ROS_DEBUG_STREAM("base_depth_param = " << i);
             setParam(config ,(base_depth_param)i);
+        }
     }
     else
     {
@@ -1064,27 +1235,34 @@ void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param par
 
     switch (param) {
     case base_depth_gain:
+        ROS_DEBUG_STREAM("base_depth_gain: " << config.base_depth_gain);
         setOption(DEPTH, RS2_OPTION_GAIN, config.base_depth_gain);
         break;
     case base_depth_enable_auto_exposure:
+        ROS_DEBUG_STREAM("base_depth_enable_auto_exposure: " << config.base_depth_enable_auto_exposure);
         setOption(DEPTH, RS2_OPTION_ENABLE_AUTO_EXPOSURE, config.base_depth_enable_auto_exposure);
         break;
     case base_depth_visual_preset:
+        ROS_DEBUG_STREAM("base_depth_enable_auto_exposure: " << config.base_depth_visual_preset);
         setOption(DEPTH, RS2_OPTION_VISUAL_PRESET, config.base_depth_visual_preset);
         break;
     case base_depth_frames_queue_size:
+        ROS_DEBUG_STREAM("base_depth_frames_queue_size: " << config.base_depth_frames_queue_size);
         setOption(DEPTH, RS2_OPTION_FRAMES_QUEUE_SIZE, config.base_depth_frames_queue_size);
         break;
     case base_depth_error_polling_enabled:
+        ROS_DEBUG_STREAM("base_depth_error_polling_enabled: " << config.base_depth_error_polling_enabled);
         setOption(DEPTH, RS2_OPTION_ERROR_POLLING_ENABLED, config.base_depth_error_polling_enabled);
         break;
     case base_depth_output_trigger_enabled:
+        ROS_DEBUG_STREAM("base_depth_error_polling_enabled: " << config.base_depth_output_trigger_enabled);
         setOption(DEPTH, RS2_OPTION_OUTPUT_TRIGGER_ENABLED, config.base_depth_output_trigger_enabled);
         break;
     case base_depth_units:
         break;
     case base_JSON_file_path:
     {
+        ROS_DEBUG_STREAM("base_JSON_file_path: " << config.base_JSON_file_path);
         auto adv_dev = _dev.as<rs400::advanced_mode>();
         if (!adv_dev)
         {
