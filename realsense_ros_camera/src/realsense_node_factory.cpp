@@ -35,7 +35,7 @@ void RealSenseNodeFactory::onInit()
         auto list = _ctx.query_devices();
         if (0 == list.size())
         {
-            ROS_ERROR("No RealSense devices were found! Terminate RealSense Node...");
+            ROS_ERROR("No RealSense devices were found! Terminating RealSense Node...");
             ros::shutdown();
             exit(1);
         }
@@ -75,7 +75,7 @@ void RealSenseNodeFactory::onInit()
         {
             if (info.was_removed(_device))
             {
-                ROS_FATAL("The device has been disconnected! Terminate RealSense Node...");
+                ROS_FATAL("The device has been disconnected! Terminating RealSense Node...");
                 ros::shutdown();
                 exit(1);
             }

@@ -136,14 +136,13 @@ namespace realsense_ros_camera
         bool _pointcloud;
         rs2::asynchronous_syncer _syncer;
 
-        std::map<stream_index_pair, cv::Mat> _aligned_image;
-        std::map<stream_index_pair, std::string> _aligned_encoding;
-        std::map<stream_index_pair, sensor_msgs::CameraInfo> _aligned_camera_info;
-        std::map<stream_index_pair, int> _aligned_seq;
-        std::map<stream_index_pair, ros::Publisher> _aligned_info_publisher;
-        std::map<stream_index_pair, image_transport::Publisher> _aligned_image_publishers;
-        std::map<stream_index_pair, std::string> _aligned_frame_id;
-        std::map<stream_index_pair, std::string> _aligned_optical_frame_id;
+        std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
+        std::map<stream_index_pair, std::string> _depth_aligned_encoding;
+        std::map<stream_index_pair, sensor_msgs::CameraInfo> _depth_aligned_camera_info;
+        std::map<stream_index_pair, int> _depth_aligned_seq;
+        std::map<stream_index_pair, ros::Publisher> _depth_aligned_info_publisher;
+        std::map<stream_index_pair, image_transport::Publisher> _depth_aligned_image_publishers;
+        std::map<stream_index_pair, std::string> _depth_aligned_frame_id;
         std::map<stream_index_pair, ros::Publisher> _depth_to_other_extrinsics_publishers;
         std::map<stream_index_pair, rs2_extrinsics> _depth_to_other_extrinsics;
 

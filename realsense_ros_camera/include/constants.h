@@ -91,10 +91,5 @@ namespace realsense_ros_camera
     const std::string DEFAULT_ALIGNED_DEPTH_TO_INFRA2_FRAME_ID = "camera_aligned_depth_to_infra2_frame";
     const std::string DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID = "camera_aligned_depth_to_fisheye_frame";
 
-    const std::string DEFAULT_ALIGNED_DEPTH_TO_COLOR_OPTICAL_FRAME_ID = "camera_aligned_depth_to_color_optical_frame";
-    const std::string DEFAULT_ALIGNED_DEPTH_TO_INFRA1_OPTICAL_FRAME_ID = "camera_aligned_depth_to_infra1_optical_frame";
-    const std::string DEFAULT_ALIGNED_DEPTH_TO_INFRA2_OPTICAL_FRAME_ID = "camera_aligned_depth_to_infra2_optical_frame";
-    const std::string DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_OPTICAL_FRAME_ID = "camera_aligned_depth_to_fisheye_optical_frame";
-
     using stream_index_pair = std::pair<rs2_stream, int>;
 }  // namespace realsense_ros_camera

@@ -20,7 +20,7 @@ if(BUILD_WITH_OPENMP)
     if(NOT OpenMP_FOUND)
         message(FATAL_ERROR "\n\n OpenMP is missing!\n\n")
     else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -fopenmp")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
     endif()
 endif()
@@ -37,7 +37,7 @@ else()
     message(STATUS "Create Debug Build.")
 endif()
 
-set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -fopenmp -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
 
 add_message_files(
     FILES

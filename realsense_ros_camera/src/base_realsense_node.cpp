@@ -1,4 +1,5 @@
 #include "../include/base_realsense_node.h"
+#include "../include/sr300_node.h"
 
 using namespace realsense_ros_camera;
 
@@ -26,7 +27,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _encoding[DEPTH] = sensor_msgs::image_encodings::TYPE_16UC1; // ROS message type
     _unit_step_size[DEPTH] = sizeof(uint16_t); // sensor_msgs::ImagePtr row step size
     _stream_name[DEPTH] = "depth";
-    _aligned_encoding[DEPTH] = sensor_msgs::image_encodings::TYPE_16UC1;
+    _depth_aligned_encoding[DEPTH] = sensor_msgs::image_encodings::TYPE_16UC1;
 
     // Infrared stream - Left
     _is_frame_arrived[INFRA1] = false;
@@ -35,7 +36,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _encoding[INFRA1] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
     _unit_step_size[INFRA1] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
     _stream_name[INFRA1] = "infra1";
-    _aligned_encoding[INFRA1] = sensor_msgs::image_encodings::TYPE_16UC1;
+    _depth_aligned_encoding[INFRA1] = sensor_msgs::image_encodings::TYPE_16UC1;
 
     // Infrared stream - Right
     _is_frame_arrived[INFRA2] = false;
@@ -44,7 +45,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _encoding[INFRA2] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
     _unit_step_size[INFRA2] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
     _stream_name[INFRA2] = "infra2";
-    _aligned_encoding[INFRA2] = sensor_msgs::image_encodings::TYPE_16UC1;
+    _depth_aligned_encoding[INFRA2] = sensor_msgs::image_encodings::TYPE_16UC1;
 
     // Types for color stream
     _is_frame_arrived[COLOR] = false;
@@ -53,7 +54,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _encoding[COLOR] = sensor_msgs::image_encodings::RGB8; // ROS message type
     _unit_step_size[COLOR] = 3; // sensor_msgs::ImagePtr row step size
     _stream_name[COLOR] = "color";
-    _aligned_encoding[COLOR] = sensor_msgs::image_encodings::TYPE_16UC1;
+    _depth_aligned_encoding[COLOR] = sensor_msgs::image_encodings::TYPE_16UC1;
 
     // Types for fisheye stream
     _is_frame_arrived[FISHEYE] = false;
@@ -62,7 +63,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _encoding[FISHEYE] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
     _unit_step_size[FISHEYE] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
     _stream_name[FISHEYE] = "fisheye";
-    _aligned_encoding[FISHEYE] = sensor_msgs::image_encodings::TYPE_16UC1;
+    _depth_aligned_encoding[FISHEYE] = sensor_msgs::image_encodings::TYPE_16UC1;
 
     // Types for Motion-Module streams
     _is_frame_arrived[GYRO] = false;
@@ -159,15 +160,10 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("gyro_optical_frame_id", _optical_frame_id[GYRO], DEFAULT_GYRO_OPTICAL_FRAME_ID);
     _pnh.param("accel_optical_frame_id", _optical_frame_id[ACCEL], DEFAULT_ACCEL_OPTICAL_FRAME_ID);
 
-    _pnh.param("aligned_depth_to_color_frame_id",   _aligned_frame_id[COLOR],   DEFAULT_ALIGNED_DEPTH_TO_COLOR_FRAME_ID);
-    _pnh.param("aligned_depth_to_infra1_frame_id",  _aligned_frame_id[INFRA1],  DEFAULT_ALIGNED_DEPTH_TO_INFRA1_FRAME_ID);
-    _pnh.param("aligned_depth_to_infra2_frame_id",  _aligned_frame_id[INFRA2],  DEFAULT_ALIGNED_DEPTH_TO_INFRA2_FRAME_ID);
-    _pnh.param("aligned_depth_to_fisheye_frame_id", _aligned_frame_id[FISHEYE], DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID);
-
-    _pnh.param("aligned_depth_to_color_optical_frame_id",   _aligned_optical_frame_id[COLOR],   DEFAULT_ALIGNED_DEPTH_TO_COLOR_OPTICAL_FRAME_ID);
-    _pnh.param("aligned_depth_to_infra1_optical_frame_id",  _aligned_optical_frame_id[INFRA1],  DEFAULT_ALIGNED_DEPTH_TO_INFRA1_OPTICAL_FRAME_ID);
-    _pnh.param("aligned_depth_to_infra2_optical_frame_id",  _aligned_optical_frame_id[INFRA2],  DEFAULT_ALIGNED_DEPTH_TO_INFRA2_OPTICAL_FRAME_ID);
-    _pnh.param("aligned_depth_to_fisheye_optical_frame_id", _aligned_optical_frame_id[FISHEYE], DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_OPTICAL_FRAME_ID);
+    _pnh.param("aligned_depth_to_color_frame_id",   _depth_aligned_frame_id[COLOR],   DEFAULT_ALIGNED_DEPTH_TO_COLOR_FRAME_ID);
+    _pnh.param("aligned_depth_to_infra1_frame_id",  _depth_aligned_frame_id[INFRA1],  DEFAULT_ALIGNED_DEPTH_TO_INFRA1_FRAME_ID);
+    _pnh.param("aligned_depth_to_infra2_frame_id",  _depth_aligned_frame_id[INFRA2],  DEFAULT_ALIGNED_DEPTH_TO_INFRA2_FRAME_ID);
+    _pnh.param("aligned_depth_to_fisheye_frame_id", _depth_aligned_frame_id[FISHEYE], DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID);
 }
 
 void BaseRealSenseNode::setupDevice()
@@ -247,7 +243,7 @@ void BaseRealSenseNode::setupDevice()
             }
             else
             {
-                ROS_ERROR_STREAM("Module Name \"" << module_name << "\" isn't supported by LibRealSense! Terminate RealSense Node...");
+                ROS_ERROR_STREAM("Module Name \"" << module_name << "\" isn't supported by LibRealSense! Terminating RealSense Node...");
                 ros::shutdown();
                 exit(1);
             }
@@ -300,7 +296,11 @@ void BaseRealSenseNode::setupPublishers()
         if (_enable[stream])
         {
             std::stringstream image_raw, camera_info;
-            image_raw << _stream_name[stream] << "/image_raw";
+            bool rectified_image = false;
+            if (stream == DEPTH || stream == INFRA1 || stream == INFRA2)
+                rectified_image = true;
+
+            image_raw << _stream_name[stream] << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << _stream_name[stream] << "/camera_info";
 
             _image_publishers[stream] = image_transport.advertise(image_raw.str(), 1);
@@ -312,8 +312,8 @@ void BaseRealSenseNode::setupPublishers()
                 aligned_image_raw << "aligned_depth_to_" << _stream_name[stream] << "/image_raw";
                 aligned_camera_info << "aligned_depth_to_" << _stream_name[stream] << "/camera_info";
 
-                _aligned_image_publishers[stream] = image_transport.advertise(aligned_image_raw.str(), 1);
-                _aligned_info_publisher[stream] = _node_handle.advertise<sensor_msgs::CameraInfo>(aligned_camera_info.str(), 1);
+                _depth_aligned_image_publishers[stream] = image_transport.advertise(aligned_image_raw.str(), 1);
+                _depth_aligned_info_publisher[stream] = _node_handle.advertise<sensor_msgs::CameraInfo>(aligned_camera_info.str(), 1);
             }
 
             if (stream == DEPTH && _pointcloud)
@@ -456,15 +456,15 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frame depth_frame, cons
                    depth_frame, from_image_frame.get_bytes_per_pixel(),
                    _depth_to_other_extrinsics[sip], out_vec);
 
-        auto& from_image = _aligned_image[sip];
+        auto& from_image = _depth_aligned_image[sip];
         from_image.data = out_vec.data();
 
         publishFrame(depth_frame, t, sip,
-                     _aligned_image,
-                     _aligned_info_publisher,
-                     _aligned_image_publishers, _aligned_seq,
-                     _aligned_camera_info, _aligned_optical_frame_id,
-                     _aligned_encoding, false);
+                     _depth_aligned_image,
+                     _depth_aligned_info_publisher,
+                     _depth_aligned_image_publishers, _depth_aligned_seq,
+                     _depth_aligned_camera_info, _optical_frame_id,
+                     _depth_aligned_encoding, false);
     }
 }
 
@@ -494,7 +494,7 @@ void BaseRealSenseNode::setupStreams()
                             _image[elem] = cv::Mat(_width[elem], _height[elem], _image_format[elem], cv::Scalar(0, 0, 0));
 
                             if (_align_depth)
-                                _aligned_image[elem] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
+                                _depth_aligned_image[elem] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
 
                             ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem]);
                             break;
@@ -890,8 +890,7 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
             {
                 auto video_profile = profile.as<rs2::video_stream_profile>();
                 stream_index_pair stream_index{video_profile.stream_type(), video_profile.stream_index()};
-                _aligned_camera_info[stream_index] = _camera_info[DEPTH];
-                _aligned_camera_info[stream_index].header.frame_id = _aligned_optical_frame_id[stream_index];
+                _depth_aligned_camera_info[stream_index] = _camera_info[DEPTH];
             }
         }
     }
@@ -972,8 +971,8 @@ void BaseRealSenseNode::publishStaticTransforms()
 
         if (_align_depth)
         {
-            publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _aligned_frame_id[COLOR]);
-            publish_static_tf(transform_ts_, zero_trans, q2, _aligned_frame_id[COLOR], _aligned_optical_frame_id[COLOR]);
+            publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _depth_aligned_frame_id[COLOR]);
+            publish_static_tf(transform_ts_, zero_trans, q2, _depth_aligned_frame_id[COLOR], _optical_frame_id[COLOR]);
         }
     }
 
@@ -993,8 +992,8 @@ void BaseRealSenseNode::publishStaticTransforms()
 
         if (_align_depth)
         {
-            publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _aligned_frame_id[INFRA1]);
-            publish_static_tf(transform_ts_, zero_trans, q2, _aligned_frame_id[INFRA1], _aligned_optical_frame_id[INFRA1]);
+            publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _depth_aligned_frame_id[INFRA1]);
+            publish_static_tf(transform_ts_, zero_trans, q2, _depth_aligned_frame_id[INFRA1], _optical_frame_id[INFRA1]);
         }
     }
 
@@ -1014,8 +1013,8 @@ void BaseRealSenseNode::publishStaticTransforms()
 
         if (_align_depth)
         {
-            publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _aligned_frame_id[INFRA2]);
-            publish_static_tf(transform_ts_, zero_trans, q2, _aligned_frame_id[INFRA2], _aligned_optical_frame_id[INFRA2]);
+            publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _depth_aligned_frame_id[INFRA2]);
+            publish_static_tf(transform_ts_, zero_trans, q2, _depth_aligned_frame_id[INFRA2], _optical_frame_id[INFRA2]);
         }
     }
 
@@ -1035,8 +1034,8 @@ void BaseRealSenseNode::publishStaticTransforms()
 
         if (_align_depth)
         {
-            publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _aligned_frame_id[FISHEYE]);
-            publish_static_tf(transform_ts_, zero_trans, q2, _aligned_frame_id[FISHEYE], _aligned_optical_frame_id[FISHEYE]);
+            publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _depth_aligned_frame_id[FISHEYE]);
+            publish_static_tf(transform_ts_, zero_trans, q2, _depth_aligned_frame_id[FISHEYE], _optical_frame_id[FISHEYE]);
         }
     }
 }
@@ -1164,7 +1163,8 @@ rs2_extrinsics BaseRealSenseNode::getRsExtrinsics(const stream_index_pair& from_
 IMUInfo BaseRealSenseNode::getImuInfo(const stream_index_pair& stream_index)
 {
     IMUInfo info{};
-    auto imuIntrinsics = _sensors[stream_index].get_motion_intrinsics(stream_index.first);
+    auto sp = _enabled_profiles[stream_index].front().as<rs2::motion_stream_profile>();
+    auto imuIntrinsics = sp.get_motion_intrinsics();
     if (GYRO == stream_index)
     {
         info.header.frame_id = "imu_gyro";
