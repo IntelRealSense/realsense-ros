@@ -11,8 +11,6 @@ The following instructions support ROS Indigo, on **Ubuntu 14.04**, and ROS Kine
 #### OR
 - #### Build from sources by downloading the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/latest) and follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md)
 
-
-
 ### Step 2: Install the ROS distribution
 - #### Install [ROS Indigo](http://wiki.ros.org/indigo/Installation/Ubuntu), on Ubuntu 14.04
 
@@ -51,8 +49,7 @@ This will stream all camera sensors and publish on the appropriate ROS topics.
 Other stream resolutions and frame rates can optionally be provided as parameters to the 'rs_camera.launch' file.
 
 ### Visualize Depth Point Cloud
-
-To start the camera node in ROS and view the depth pointcloud, type the following command:
+To start the camera node and view the depth pointcloud, type the following command:
 
 ```bash
 roslaunch realsense_ros_camera demo_pointcloud.launch
@@ -60,15 +57,34 @@ roslaunch realsense_ros_camera demo_pointcloud.launch
 
 This will launch [RViz](http://wiki.ros.org/rviz) and display the depth pointcloud.
 
+### Work with multiple cameras
+Here is an example of how to start the camera node and streaming with two cameras using the [rs_multiple_devices.launch](./realsense_ros_camera/launch/rs_multiple_devices.launch).
+```bash
+roslaunch realsense_ros_camera rs_multiple_devices.launch serial_no_camera1:=<serial number of the first camera> serial_no_camera2:=<serial number of the second camera>
+```
+The camera serial number should be provided to `serial_no_camera1` and `serial_no_camera2` parameters. One way to get the serial number is from the [rs-enumerate-devices](https://github.com/IntelRealSense/librealsense/blob/58d99783cc2781b1026eeed959aa3f7b562b20ca/tools/enumerate-devices/readme.md) tool.
+
+### Aligned Depth Frames
+Here is an example of how to start the camera node and make it publish the aligned depth stream to other available streams such as color or infra-red.
+```bash
+roslaunch realsense_ros_camera rs_aligned_depth.launch
+```
+<p align="center"><img width=50% src="https://user-images.githubusercontent.com/17433152/35343104-6eede0f0-0132-11e8-8866-e6c7524dd079.png" /></p>
+
+
+
+## Packages using RealSense ROS Camera
+| Title | Links |
+| ----- | ----- |
+| ROS Object Analytics | [github](https://github.com/intel/ros_object_analytics) / [ROS Wiki](http://wiki.ros.org/IntelROSProject)
 
 ## Known Issues
-* This ROS node does not currently provide any dynamic reconfigure support for camera properties/presets.
 * This ROS node does not currently support [ROS Lunar Loggerhead](http://wiki.ros.org/lunar).
 * This ROS node does not currently work with [ROS 2](https://github.com/ros2/ros2/wiki).
 * This ROS node currently does not provide the unit-tests which ensure the proper operation of the camera.  Future versions of the node will provide ROS compatible unit-tests.
 
 ## License
-Copyright 2017 Intel Corporation
+Copyright 2018 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this project except in compliance with the License.

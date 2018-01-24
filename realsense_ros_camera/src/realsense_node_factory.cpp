@@ -21,7 +21,7 @@ RealSenseNodeFactory::RealSenseNodeFactory()
     ROS_INFO("Running with LibRealSense v%s", RS2_API_VERSION_STR);
 
     signal(SIGINT, signalHandler);
-    auto severity = rs2_log_severity::RS2_LOG_SEVERITY_ERROR;
+    auto severity = rs2_log_severity::RS2_LOG_SEVERITY_WARN;
     tryGetLogSeverity(severity);
     if (rs2_log_severity::RS2_LOG_SEVERITY_DEBUG == severity)
         ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
@@ -35,7 +35,7 @@ void RealSenseNodeFactory::onInit()
         auto list = _ctx.query_devices();
         if (0 == list.size())
         {
-            ROS_ERROR("No RealSense devices were found! Terminate RealSense Node...");
+            ROS_ERROR("No RealSense devices were found! Terminating RealSense Node...");
             ros::shutdown();
             exit(1);
         }
@@ -75,7 +75,7 @@ void RealSenseNodeFactory::onInit()
         {
             if (info.was_removed(_device))
             {
-                ROS_FATAL("The device has been disconnected! Terminate RealSense Node...");
+                ROS_FATAL("The device has been disconnected! Terminating RealSense Node...");
                 ros::shutdown();
                 exit(1);
             }

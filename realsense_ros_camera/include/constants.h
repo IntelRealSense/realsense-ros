@@ -32,6 +32,7 @@ namespace realsense_ros_camera
     const uint16_t RS435_RGB_PID    = 0x0b07; // AWGC
     const uint16_t RS405_PID        = 0x0b0c; // DS5U
 
+    const bool ALIGN_DEPTH    = false;
     const bool POINTCLOUD     = false;
     const bool SYNC_FRAMES    = false;
 
@@ -75,6 +76,7 @@ namespace realsense_ros_camera
     const std::string DEFAULT_COLOR_FRAME_ID           = "camera_color_frame";
     const std::string DEFAULT_FISHEYE_FRAME_ID         = "camera_fisheye_frame";
     const std::string DEFAULT_IMU_FRAME_ID             = "camera_imu_frame";
+
     const std::string DEFAULT_DEPTH_OPTICAL_FRAME_ID   = "camera_depth_optical_frame";
     const std::string DEFAULT_INFRA1_OPTICAL_FRAME_ID  = "camera_infra1_optical_frame";
     const std::string DEFAULT_INFRA2_OPTICAL_FRAME_ID  = "camera_infra2_optical_frame";
@@ -83,6 +85,11 @@ namespace realsense_ros_camera
     const std::string DEFAULT_ACCEL_OPTICAL_FRAME_ID   = "camera_accel_optical_frame";
     const std::string DEFAULT_GYRO_OPTICAL_FRAME_ID    = "camera_gyro_optical_frame";
     const std::string DEFAULT_IMU_OPTICAL_FRAME_ID     = "camera_imu_optical_frame";
+
+    const std::string DEFAULT_ALIGNED_DEPTH_TO_COLOR_FRAME_ID = "camera_aligned_depth_to_color_frame";
+    const std::string DEFAULT_ALIGNED_DEPTH_TO_INFRA1_FRAME_ID = "camera_aligned_depth_to_infra1_frame";
+    const std::string DEFAULT_ALIGNED_DEPTH_TO_INFRA2_FRAME_ID = "camera_aligned_depth_to_infra2_frame";
+    const std::string DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID = "camera_aligned_depth_to_fisheye_frame";
 
     using stream_index_pair = std::pair<rs2_stream, int>;
 }  // namespace realsense_ros_camera
