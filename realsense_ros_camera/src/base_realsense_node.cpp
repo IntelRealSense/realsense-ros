@@ -416,9 +416,7 @@ void BaseRealSenseNode::alignFrame(const rs2_intrinsics& from_intrin,
                         {
                             const auto out_offset = out_pixel_index * output_image_bytes_per_pixel + i;
                             const auto from_offset = from_pixel_index * output_image_bytes_per_pixel + i;
-                            p_out_frame[out_offset] = p_out_frame[out_offset] ?
-                                std::min((int)(p_out_frame[out_offset]), (int)(p_from_frame[from_offset]))
-                                : p_from_frame[from_offset];
+                            p_out_frame[out_offset] = p_from_frame[from_offset];
                         }
                     }
                 }
