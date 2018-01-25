@@ -48,21 +48,12 @@ This will stream all camera sensors and publish on the appropriate ROS topics.
 
 Other stream resolutions and frame rates can optionally be provided as parameters to the 'rs_camera.launch' file.
 
-### Visualize Depth Point Cloud
-To start the camera node and view the depth pointcloud, type the following command:
-
+### RGBD Point Cloud
+Here is an example of how to start the camera node and make it publish the RGBD point cloud using aligned depth topic.
 ```bash
-roslaunch realsense_ros_camera demo_pointcloud.launch
+roslaunch realsense_ros_camera rs_rgbd.launch
 ```
-
-This will launch [RViz](http://wiki.ros.org/rviz) and display the depth pointcloud.
-
-### Work with multiple cameras
-Here is an example of how to start the camera node and streaming with two cameras using the [rs_multiple_devices.launch](./realsense_ros_camera/launch/rs_multiple_devices.launch).
-```bash
-roslaunch realsense_ros_camera rs_multiple_devices.launch serial_no_camera1:=<serial number of the first camera> serial_no_camera2:=<serial number of the second camera>
-```
-The camera serial number should be provided to `serial_no_camera1` and `serial_no_camera2` parameters. One way to get the serial number is from the [rs-enumerate-devices](https://github.com/IntelRealSense/librealsense/blob/58d99783cc2781b1026eeed959aa3f7b562b20ca/tools/enumerate-devices/readme.md) tool.
+<p align="center"><img src="https://user-images.githubusercontent.com/17433152/35396613-ddcb1d6c-01f5-11e8-8887-4debf178d0cc.gif" /></p>
 
 ### Aligned Depth Frames
 Here is an example of how to start the camera node and make it publish the aligned depth stream to other available streams such as color or infra-red.
@@ -71,6 +62,19 @@ roslaunch realsense_ros_camera rs_aligned_depth.launch
 ```
 <p align="center"><img width=50% src="https://user-images.githubusercontent.com/17433152/35343104-6eede0f0-0132-11e8-8866-e6c7524dd079.png" /></p>
 
+### Set Camera Controls Using Dynamic Reconfigure Params
+The following command allow to change camera control values using [http://wiki.ros.org/rqt_reconfigure].
+```bash
+rosrun rqt_reconfigure rqt_reconfigure
+```
+<p align="center"><img src="https://user-images.githubusercontent.com/17433152/35397261-b4e846ac-01f7-11e8-8512-1e3671b4003b.png" /></p>
+
+### Work with multiple cameras
+Here is an example of how to start the camera node and streaming with two cameras using the [rs_multiple_devices.launch](./realsense_ros_camera/launch/rs_multiple_devices.launch).
+```bash
+roslaunch realsense_ros_camera rs_multiple_devices.launch serial_no_camera1:=<serial number of the first camera> serial_no_camera2:=<serial number of the second camera>
+```
+The camera serial number should be provided to `serial_no_camera1` and `serial_no_camera2` parameters. One way to get the serial number is from the [rs-enumerate-devices](https://github.com/IntelRealSense/librealsense/blob/58d99783cc2781b1026eeed959aa3f7b562b20ca/tools/enumerate-devices/readme.md) tool.
 
 
 ## Packages using RealSense ROS Camera
