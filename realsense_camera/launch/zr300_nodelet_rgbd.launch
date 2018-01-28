@@ -1,4 +1,4 @@
-<!-- Sample launch file for using RealSense R200 camera with rgbd_launch -->
+<!-- Sample launch file for using RealSense ZR300 camera with rgbd_launch -->
 <launch>
 
   <!-- "camera" should be a user friendly string to uniquely identify the device namespace.
@@ -44,7 +44,7 @@
   <arg name="publish_tf"    default="true" />
 
   <!-- Processing Modules -->
-  <arg name="rgb_processing"                  default="true"/>
+  <arg name="rgb_processing"                  default="false"/>
   <arg name="ir_processing"                   default="true"/>
   <arg name="depth_processing"                default="true"/>
   <arg name="depth_registered_processing"     default="true"/>
