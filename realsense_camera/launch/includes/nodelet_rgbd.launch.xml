@@ -72,6 +72,7 @@
 
         <remap from="depth"    to="$(arg depth)" />
         <remap from="color"    to="$(arg rgb)" />
+        <remap from="rgb/image_raw"    to="rgb/image_rect_color" />
         <remap from="ir"       to="$(arg ir)" />
         <remap from="ir2"      to="$(arg ir2)" />
         <remap from="fisheye"  to="$(arg fisheye)" />

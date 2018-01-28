@@ -188,6 +188,10 @@ namespace realsense_camera
                 static_cast<double>(depth_scale_meters) / static_cast<double>(MILLIMETER_METERS));
         }
       }
+      else if (stream_index == RS_STREAM_COLOR)
+      {
+        image_[stream_index].data = (unsigned char *) (rs_get_frame_data(rs_device_, RS_STREAM_RECTIFIED_COLOR, 0));
+      }
       else
       {
         image_[stream_index].data = (unsigned char *) (rs_get_frame_data(rs_device_, stream_index, 0));

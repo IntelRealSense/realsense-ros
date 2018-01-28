@@ -40,7 +40,7 @@
   <arg name="publish_tf"    default="true" />
 
   <!-- Processing Modules -->
-  <arg name="rgb_processing"                  default="true"/>
+  <arg name="rgb_processing"                  default="false"/>
   <arg name="debayer_processing"              default="true" />
   <arg name="ir_processing"                   default="true"/>
   <arg name="depth_processing"                default="true"/>
