@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>realsense_ros_camera</name>
-  <version>2.0.1</version>
+  <version>2.0.2</version>
   <description>The realsense_ros_camera package</description>
   <maintainer email="realsense-sw@intel.com">Intel RealSense</maintainer>
   <license>Apache 2.0</license>
