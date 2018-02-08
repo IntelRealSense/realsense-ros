@@ -29,47 +29,75 @@ RealSenseNodeFactory::RealSenseNodeFactory()
     rs2::log_to_console(severity);
 }
 
+rs2::device RealSenseNodeFactory::getDevice(std::string& serial_no)
+{
+    auto list = _ctx.query_devices();
+    if (0 == list.size())
+    {
+        ROS_ERROR("No RealSense devices were found! Terminating RealSense Node...");
+        ros::shutdown();
+        exit(1);
+    }
+
+    bool found = false;
+    rs2::device retDev;
+
+    for (auto&& dev : list)
+    {
+        auto sn = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+        ROS_DEBUG_STREAM("Device with serial number " << sn << " was found.");
+        if (serial_no.empty())
+        {
+            retDev = dev;
+            serial_no = sn;
+            found = true;
+            break;
+        }
+        else if (sn == serial_no)
+        {
+            retDev = dev;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        ROS_FATAL_STREAM("The requested device with serial number " << serial_no << " is NOT found!");
+        ros::shutdown();
+        exit(1);
+    }
+
+    return retDev;
+}
+
 void RealSenseNodeFactory::onInit()
 {
     try{
-        auto list = _ctx.query_devices();
-        if (0 == list.size())
+        std::mutex mtx;
+        std::condition_variable cv;
+        rs2::device dev;
+        _ctx.set_devices_changed_callback([&dev, &cv](rs2::event_information& info)
         {
-            ROS_ERROR("No RealSense devices were found! Terminating RealSense Node...");
-            ros::shutdown();
-            exit(1);
-        }
+            if (info.was_removed(dev))
+            {
+                cv.notify_one();
+            }
+        });
 
         auto privateNh = getPrivateNodeHandle();
-        auto nh = getNodeHandle();
         std::string serial_no("");
         privateNh.param("serial_no", serial_no, std::string(""));
-        bool found = false;
-        for (auto&& dev : list)
+        dev = getDevice(serial_no);
+        ROS_INFO("Resetting device...");
+        dev.hardware_reset();
+
         {
-            auto sn = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
-            ROS_DEBUG_STREAM("Device with serial number " << sn << " was found.");
-            if (serial_no.empty())
-            {
-                _device = dev;
-                serial_no = sn;
-                found = true;
-                break;
-            }
-            else if (sn == serial_no)
-            {
-                _device = dev;
-                found = true;
-                break;
-            }
+             std::unique_lock<std::mutex> lk(mtx);
+             cv.wait(lk);
         }
 
-        if (!found)
-        {
-            ROS_FATAL_STREAM("The requested device with serial number " << serial_no << " is NOT found!");
-            ros::shutdown();
-            exit(1);
-        }
+        _device = getDevice(serial_no);
 
         _ctx.set_devices_changed_callback([this](rs2::event_information& info)
         {
@@ -82,6 +110,7 @@ void RealSenseNodeFactory::onInit()
         });
 
         // TODO
+        auto nh = getNodeHandle();
         auto pid_str = _device.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
         uint16_t pid;
         std::stringstream ss;
