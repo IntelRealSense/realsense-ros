@@ -127,7 +127,7 @@ void RealSenseNodeFactory::onInit()
             _realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
             break;
         default:
-            ROS_FATAL_STREAM("Unsupported device!" << "Product ID: " << pid_str);
+            ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);
             ros::shutdown();
             exit(1);
         }
