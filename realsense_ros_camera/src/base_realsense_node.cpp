@@ -205,7 +205,7 @@ void BaseRealSenseNode::setupDevice()
         ROS_INFO_STREAM("Device FW version: " << fw_ver);
 
         auto pid = _dev.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
-        ROS_INFO_STREAM("Device Product ID: " << pid);
+        ROS_INFO_STREAM("Device Product ID: 0x" << pid);
 
         ROS_INFO_STREAM("Enable PointCloud: " << ((_pointcloud)?"On":"Off"));
         ROS_INFO_STREAM("Align Depth: " << ((_align_depth)?"On":"Off"));
