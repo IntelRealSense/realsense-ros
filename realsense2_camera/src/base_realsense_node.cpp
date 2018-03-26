@@ -367,6 +367,7 @@ void BaseRealSenseNode::alignFrame(const rs2_intrinsics& from_intrin,
                                    const rs2_extrinsics& from_to_other,
                                    std::vector<uint8_t>& out_vec)
 {
+    static const auto meter_to_mm = 0.001f;
     uint8_t* p_out_frame = out_vec.data();
     auto from_vid_frame = from_image.as<rs2::video_frame>();
     auto from_bytes_per_pixel = from_vid_frame.get_bytes_per_pixel();
@@ -416,7 +417,7 @@ void BaseRealSenseNode::alignFrame(const rs2_intrinsics& from_intrin,
                         {
                             const auto out_offset = out_pixel_index * output_image_bytes_per_pixel + i;
                             const auto from_offset = from_pixel_index * output_image_bytes_per_pixel + i;
-                            p_out_frame[out_offset] = p_from_frame[from_offset];
+                            p_out_frame[out_offset] = p_from_frame[from_offset] * (depth_units / meter_to_mm);
                         }
                     }
                 }
@@ -448,21 +449,27 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frame depth_frame, cons
 
         auto stream_index = other_frame.get_profile().stream_index();
         stream_index_pair sip{stream_type, stream_index};
-        auto from_image_frame = depth_frame.as<rs2::video_frame>();
-        auto& out_vec = _aligned_depth_images[sip];
-        alignFrame(_stream_intrinsics[DEPTH], _stream_intrinsics[sip],
-                   depth_frame, from_image_frame.get_bytes_per_pixel(),
-                   _depth_to_other_extrinsics[sip], out_vec);
+        auto& info_publisher = _depth_aligned_info_publisher.at(sip);
+        auto& image_publisher = _depth_aligned_image_publishers.at(sip);
+        if(0 != info_publisher.getNumSubscribers() ||
+           0 != image_publisher.getNumSubscribers())
+        {
+            auto from_image_frame = depth_frame.as<rs2::video_frame>();
+            auto& out_vec = _aligned_depth_images[sip];
+            alignFrame(_stream_intrinsics[DEPTH], _stream_intrinsics[sip],
+                       depth_frame, from_image_frame.get_bytes_per_pixel(),
+                       _depth_to_other_extrinsics[sip], out_vec);
 
-        auto& from_image = _depth_aligned_image[sip];
-        from_image.data = out_vec.data();
+            auto& from_image = _depth_aligned_image[sip];
+            from_image.data = out_vec.data();
 
-        publishFrame(depth_frame, t, sip,
-                     _depth_aligned_image,
-                     _depth_aligned_info_publisher,
-                     _depth_aligned_image_publishers, _depth_aligned_seq,
-                     _depth_aligned_camera_info, _optical_frame_id,
-                     _depth_aligned_encoding, false);
+            publishFrame(depth_frame, t, sip,
+                         _depth_aligned_image,
+                         _depth_aligned_info_publisher,
+                         _depth_aligned_image_publishers, _depth_aligned_seq,
+                         _depth_aligned_camera_info, _optical_frame_id,
+                         _depth_aligned_encoding, false);
+        }
     }
 }
 
