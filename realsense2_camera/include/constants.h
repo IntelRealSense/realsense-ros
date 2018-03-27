@@ -1,5 +1,5 @@
 // License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2017 Intel Corporation. All Rights Reserved
+// Copyright(c) 2018 Intel Corporation. All Rights Reserved
 
 #pragma once
 
@@ -7,7 +7,7 @@
 
 #define REALSENSE_ROS_MAJOR_VERSION    2
 #define REALSENSE_ROS_MINOR_VERSION    0
-#define REALSENSE_ROS_PATCH_VERSION    2
+#define REALSENSE_ROS_PATCH_VERSION    3
 
 #define STRINGIFY(arg) #arg
 #define VAR_ARG_STRING(arg) STRINGIFY(arg)
