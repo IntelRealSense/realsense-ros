@@ -21,7 +21,7 @@ The following instructions support ROS Indigo, on **Ubuntu 14.04**, and ROS Kine
 - Create a [catkin](http://wiki.ros.org/catkin#Installing_catkin) workspace
 ```bash
 mkdir -p ~/catkin_ws/src
-cd catkin_ws/src/
+cd ~/catkin_ws/src/
 ```
 - Clone the latest Intel&reg; RealSense&trade; ROS from [here](https://github.com/intel-ros/realsense/releases) into 'catkin_ws/src/'
 
