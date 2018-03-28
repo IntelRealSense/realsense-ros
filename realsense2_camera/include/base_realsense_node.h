@@ -31,7 +31,7 @@ namespace realsense2_camera
     {
       FrequencyDiagnostics(double expected_frequency, std::string name, std::string hardware_id) :
         expected_frequency_(expected_frequency),
-        frequency_status_(diagnostic_updater::FrequencyStatusParam(&expected_frequency, &expected_frequency)),
+        frequency_status_(diagnostic_updater::FrequencyStatusParam(&expected_frequency_, &expected_frequency_)),
         diagnostic_updater_(ros::NodeHandle(), ros::NodeHandle("~"), ros::this_node::getName() + "_" + name)
       {
         ROS_INFO("Expected frequency for %s = %.5f", name.c_str(), expected_frequency_);
