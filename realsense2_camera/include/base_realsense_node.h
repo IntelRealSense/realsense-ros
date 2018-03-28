@@ -9,6 +9,9 @@
 #include <realsense2_camera/rs415_paramsConfig.h>
 #include <realsense2_camera/rs435_paramsConfig.h>
 
+#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/update_functions.h>
+
 
 namespace realsense2_camera
 {
@@ -23,6 +26,31 @@ namespace realsense2_camera
         base_JSON_file_path,
         base_depth_count
     };
+
+    struct FrequencyDiagnostics
+    {
+      FrequencyDiagnostics(double expected_frequency, std::string name, std::string hardware_id) :
+        expected_frequency_(expected_frequency),
+        frequency_param_(&expected_frequency, &expected_frequency),
+        frequency_status_(frequency_param_),
+        diagnostic_updater_(ros::NodeHandle(), ros::NodeHandle("~"), ros::this_node::getName() + "_" + name)
+      {
+        diagnostic_updater_.setHardwareID(hardware_id);
+        diagnostic_updater_.add(frequency_status_);
+      }
+
+      void update()
+      {
+        frequency_status_.tick();
+        diagnostic_updater_.update();
+      }
+
+      double expected_frequency_;
+      diagnostic_updater::FrequencyStatusParam frequency_param_;
+      diagnostic_updater::FrequencyStatus frequency_status_;
+      diagnostic_updater::Updater diagnostic_updater_;
+    };
+    typedef std::pair<image_transport::Publisher, std::shared_ptr<FrequencyDiagnostics>> ImagePublisherWithFrequencyDiagnostics;
 
     class BaseRealSenseNode : public InterfaceRealSenseNode
     {
@@ -76,7 +104,7 @@ namespace realsense2_camera
                           const stream_index_pair& stream,
                           std::map<stream_index_pair, cv::Mat>& images,
                           const std::map<stream_index_pair, ros::Publisher>& info_publishers,
-                          const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
+                          const std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics>& image_publishers,
                           std::map<stream_index_pair, int>& seq,
                           std::map<stream_index_pair, sensor_msgs::CameraInfo>& camera_info,
                           const std::map<stream_index_pair, std::string>& optical_frame_id,
@@ -110,7 +138,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, std::string> _stream_name;
         tf2_ros::StaticTransformBroadcaster _static_tf_broadcaster;
 
-        std::map<stream_index_pair, image_transport::Publisher> _image_publishers;
+        std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics> _image_publishers;
         std::map<stream_index_pair, ros::Publisher> _imu_publishers;
         std::map<stream_index_pair, int> _image_format;
         std::map<stream_index_pair, rs2_format> _format;
@@ -141,7 +169,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, sensor_msgs::CameraInfo> _depth_aligned_camera_info;
         std::map<stream_index_pair, int> _depth_aligned_seq;
         std::map<stream_index_pair, ros::Publisher> _depth_aligned_info_publisher;
-        std::map<stream_index_pair, image_transport::Publisher> _depth_aligned_image_publishers;
+        std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics> _depth_aligned_image_publishers;
         std::map<stream_index_pair, std::string> _depth_aligned_frame_id;
         std::map<stream_index_pair, ros::Publisher> _depth_to_other_extrinsics_publishers;
         std::map<stream_index_pair, rs2_extrinsics> _depth_to_other_extrinsics;
