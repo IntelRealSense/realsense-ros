@@ -1,8 +1,0 @@
-<launch>
-  <include file="$(find realsense_camera)/launch/realsense_r200_rgbd.launch">
-  </include>
-
-<!-- Test -->
-   <test pkg="realsense_camera" type="realsense_camera_test_rgbd" test-name="realsense_camera_test_rgbd" />      
-</launch> 
-
