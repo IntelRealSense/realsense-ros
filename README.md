@@ -3,7 +3,7 @@ These are packages for using Intel RealSense cameras (D400 series and the SR300)
 
 ## Installation Instructions
 
-The following instructions support ROS Indigo, on **Ubuntu 14.04**, and ROS Kinetic, on **Ubutnu 16.04**.
+The following instructions support ROS Indigo, on **Ubuntu 14.04**, and ROS Kinetic, on **Ubuntu 16.04**.
 
 ### Step 1: Install the latest Intel&reg; RealSense&trade; SDK 2.0
 - #### Install from [Debian Package](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages)
