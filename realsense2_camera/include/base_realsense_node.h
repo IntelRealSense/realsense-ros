@@ -95,6 +95,7 @@ namespace realsense2_camera
                                const std::string& to);
         void publishStaticTransforms();
         void publishRgbToDepthPCTopic(const ros::Time& t, const std::map<stream_index_pair, bool>& is_frame_arrived);
+        void publishDepthPCTopic(const ros::Time& t, const std::map<stream_index_pair, bool>& is_frame_arrived);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
         rs2_extrinsics getRsExtrinsics(const stream_index_pair& from_stream, const stream_index_pair& to_stream);
 
@@ -156,7 +157,8 @@ namespace realsense2_camera
         double _camera_time_base;
         std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
 
-        ros::Publisher _pointcloud_publisher;
+        ros::Publisher _pointcloud_xyz_publisher;
+        ros::Publisher _pointcloud_xyzrgb_publisher;
         ros::Time _ros_time_base;
         bool _align_depth;
         bool _sync_frames;
