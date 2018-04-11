@@ -484,6 +484,16 @@ void BaseRealSenseNode::setupStreams()
         {
             for (auto& elem : streams)
             {
+                ROS_ERROR_STREAM("Stream: " << rs2_stream_to_string(elem.first));
+                int width = _width[elem];
+                int height = _height[elem];
+                std::string stream_name = rs2_stream_to_string(elem.first);
+                if (stream_name == "Color")
+                {
+                    ROS_ERROR_STREAM("HERE");
+                    width = 1920;
+                    height = 1080;
+                }
                 if (_enable[elem])
                 {
                     auto& sens = _sensors[elem];
@@ -492,11 +502,12 @@ void BaseRealSenseNode::setupStreams()
                     {
                         auto video_profile = profile.as<rs2::video_stream_profile>();
                         if (video_profile.format() == _format[elem] &&
-                            video_profile.width()  == _width[elem] &&
-                            video_profile.height() == _height[elem] &&
+                            video_profile.width()  == width &&
+                            video_profile.height() == height &&
                             video_profile.fps()    == _fps[elem] &&
                             video_profile.stream_index() == elem.second)
                         {
+
                             _enabled_profiles[elem].push_back(profile);
 
                             _image[elem] = cv::Mat(_width[elem], _height[elem], _image_format[elem], cv::Scalar(0, 0, 0));
@@ -504,7 +515,7 @@ void BaseRealSenseNode::setupStreams()
                             if (_align_depth)
                                 _depth_aligned_image[elem] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
 
-                            ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem]);
+                            ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << width << ", height: " << height << ", fps: " << _fps[elem]);
                             break;
                         }
                     }
@@ -1208,10 +1219,25 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
                                      bool copy_data_from_frame)
 {
     ROS_DEBUG("publishFrame(...)");
+
     auto& image = images[stream];
 
-    if (copy_data_from_frame)
-        image.data = (uint8_t*)f.get_data();
+    std::string stream_name = rs2_stream_to_string(f.get_profile().stream_type());
+    if (copy_data_from_frame) {
+        if (stream_name == "Color")
+        {
+            cv::Mat temp_image(1920, 1080, CV_8UC3, cv::Scalar(0, 0, 0));
+            temp_image.data = (uint8_t*)f.get_data();
+            cv::imshow("temp_image", temp_image);
+            cv::waitKey(0);
+            ROS_ERROR_STREAM("width: " << temp_image.size().width << ", height: " << temp_image.size().height);
+            // cv::resize(temp_image, image, image.size());
+            image.data = (uint8_t*)f.get_data();
+        }
+        else {
+            image.data = (uint8_t*)f.get_data();
+        }
+    }
 
     ++(seq[stream]);
     auto& info_publisher = info_publishers.at(stream);
@@ -1224,10 +1250,17 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
         auto bpp = 1;
         if (f.is<rs2::video_frame>())
         {
-            auto image = f.as<rs2::video_frame>();
-            width = image.get_width();
-            height = image.get_height();
-            bpp = image.get_bytes_per_pixel();
+            if (stream_name == "Color") {
+                ROS_ERROR_STREAM("HERE");
+                width = 1280;
+                height = 720;
+            }
+            else {
+                auto image = f.as<rs2::video_frame>();
+                width = image.get_width();
+                height = image.get_height();
+                bpp = image.get_bytes_per_pixel();
+            }
         }
 
         sensor_msgs::ImagePtr img;
