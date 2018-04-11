@@ -1226,13 +1226,10 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
     if (copy_data_from_frame) {
         if (stream_name == "Color")
         {
-            cv::Mat temp_image(1920, 1080, CV_8UC3, cv::Scalar(0, 0, 0));
+            cv::Mat temp_image(1080, 1920, CV_8UC3, cv::Scalar(0, 0, 0));
             temp_image.data = (uint8_t*)f.get_data();
-            cv::imshow("temp_image", temp_image);
-            cv::waitKey(0);
             ROS_ERROR_STREAM("width: " << temp_image.size().width << ", height: " << temp_image.size().height);
-            // cv::resize(temp_image, image, image.size());
-            image.data = (uint8_t*)f.get_data();
+            cv::resize(temp_image, image, image.size());
         }
         else {
             image.data = (uint8_t*)f.get_data();
@@ -1254,6 +1251,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
                 ROS_ERROR_STREAM("HERE");
                 width = 1280;
                 height = 720;
+                // bpp = image.get_bytes_per_pixel();
             }
             else {
                 auto image = f.as<rs2::video_frame>();
