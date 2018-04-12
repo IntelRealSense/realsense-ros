@@ -181,11 +181,19 @@ Processing enabled by this node:
       <!-- Publish registered XYZRGB point cloud with hardware registered input (ROS Realsense depth alignment) -->
       <node pkg="nodelet" type="nodelet" name="points_xyzrgb_hw_registered"
             args="load depth_image_proc/point_cloud_xyzrgb $(arg manager) $(arg bond)" respawn="$(arg respawn)">
+        <remap from="rgb/image_rect_color"        to="$(arg rgb)/image_rect_color" />
+        <remap from="rgb/camera_info"             to="$(arg rgb)/camera_info" />
+        <remap from="depth_registered/image_rect" to="$(arg depth_registered)/image_raw" />
+        <remap from="depth_registered/points"     to="$(arg depth_registered_pub)/points" />
+      </node>
+
+      <!-- Publish registered Full HD XYZRGB point cloud -->
+      <node pkg="nodelet" type="nodelet" name="points_fhd_xyzrgb_hw_registered"
+            args="load depth_image_proc/point_cloud_xyzrgb $(arg manager) $(arg bond)" respawn="$(arg respawn)">
         <remap from="rgb/image_rect_color"        to="color_fhd/image_raw" />
         <remap from="rgb/camera_info"             to="color_resized/camera_info" />
-        <!-- <remap from="depth_registered/image_rect" to="$(arg depth_registered)/image_raw" /> -->
         <remap from="depth_registered/image_rect" to="$(arg depth_registered)/sw_registered/image_rect_raw" />
-        <remap from="depth_registered/points"     to="$(arg depth_registered_pub)/points" />
+        <remap from="depth_registered/points"     to="$(arg depth_registered_pub)/fhd/points" />
       </node>
 
       <node pkg="nodelet" type="nodelet" name="register_depth"
@@ -205,16 +213,6 @@ Processing enabled by this node:
         <param name="width"         value="1920"/>
         <param name="height"        value="1080"/>
       </node>
-
-      <!-- <node pkg="nodelet" type="nodelet" name="color_resized2"
-            args="load image_proc/resize $(arg manager) $(arg bond)" respawn="$(arg respawn)">
-        <remap from="image"         to="$(arg rgb)/image_rect_color" />
-        <remap from="camera_info"   to="$(arg rgb)/camera_info" />
-        
-        <param name="use_scale"     value="false"/>
-        <param name="width"         value="3840"/>
-        <param name="height"        value="2160"/>
-      </node> -->
     </group>
 
   </group>

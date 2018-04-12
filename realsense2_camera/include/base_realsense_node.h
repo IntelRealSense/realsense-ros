@@ -12,8 +12,6 @@
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/update_functions.h>
 
-#include <opencv2/highgui/highgui.hpp>
-
 
 namespace realsense2_camera
 {
