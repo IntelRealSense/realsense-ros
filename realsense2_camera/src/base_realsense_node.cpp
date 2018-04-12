@@ -495,7 +495,7 @@ void BaseRealSenseNode::setupStreams()
                 {
                     width = 1920;
                     height = 1080;
-                    _fhd_image = cv::Mat(width, height, CV_8UC3, cv::Scalar(0, 0, 0));
+                    _fhd_image = cv::Mat(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
                 }
                 if (_enable[elem])
                 {
@@ -525,10 +525,10 @@ void BaseRealSenseNode::setupStreams()
 
                             _enabled_profiles[elem].push_back(profile);
 
-                            _image[elem] = cv::Mat(_width[elem], _height[elem], _image_format[elem], cv::Scalar(0, 0, 0));
+                            _image[elem] = cv::Mat(_height[elem], _width[elem], _image_format[elem], cv::Scalar(0, 0, 0));
 
                             if (_align_depth)
-                                _depth_aligned_image[elem] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
+                                _depth_aligned_image[elem] = cv::Mat(_height[DEPTH], _width[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
 
                             ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << width << ", height: " << height << ", fps: " << _fps[elem]);
                             if (stream_name != "Color") {
@@ -1254,9 +1254,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
         if (stream_name == "Color")
         {
             _fhd_image.data = (uint8_t*)f.get_data();
-
             cv::resize(_fhd_image, image, image.size(), CV_INTER_LINEAR);
-            image.convertTo(image, CV_8UC3);
 
             sensor_msgs::ImagePtr fhd_img;
             fhd_img = cv_bridge::CvImage(std_msgs::Header(), encoding.at(stream), _fhd_image).toImageMsg();
@@ -1288,7 +1286,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
             if (stream_name == "Color") {
                 width = 1280;
                 height = 720;
-                bpp = 3;
+                bpp = vf.get_bytes_per_pixel();
             }
             else {
                 width = vf.get_width();
