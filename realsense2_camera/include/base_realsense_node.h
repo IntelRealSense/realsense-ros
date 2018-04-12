@@ -147,7 +147,6 @@ namespace realsense2_camera
         std::map<stream_index_pair, ros::Publisher> _info_publisher;
         std::map<stream_index_pair, cv::Mat> _image;
         cv::Mat _fhd_image;
-        rs2::stream_profile _color_profile;
 
         std::map<stream_index_pair, std::string> _encoding;
         std::map<stream_index_pair, std::vector<uint8_t>> _aligned_depth_images;
