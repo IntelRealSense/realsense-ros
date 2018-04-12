@@ -488,7 +488,6 @@ void BaseRealSenseNode::setupStreams()
         {
             for (auto& elem : streams)
             {
-                ROS_ERROR_STREAM("Stream: " << rs2_stream_to_string(elem.first));
                 int width = _width[elem];
                 int height = _height[elem];
                 std::string stream_name = rs2_stream_to_string(elem.first);
@@ -513,7 +512,6 @@ void BaseRealSenseNode::setupStreams()
                                 video_profile.fps()    == _fps[elem] &&
                                 video_profile.stream_index() == elem.second)
                             {
-                                ROS_ERROR_STREAM("HERE ###########");
                                 color_profile = profile;
                             }
                         }
@@ -562,10 +560,6 @@ void BaseRealSenseNode::setupStreams()
                 auto color_video_profile = color_profile.as<rs2::video_stream_profile>();
                 std::string stream_name = rs2_stream_to_string(video_profile.stream_type());
                 if (stream_name == "Color") {
-                    ROS_ERROR_STREAM("video_profile stream_type: " << video_profile.stream_type());
-                    ROS_ERROR_STREAM("video_profile stream_index: " << video_profile.stream_index());
-                    ROS_ERROR_STREAM("color_video_profile stream_type: " << color_video_profile.stream_type());
-                    ROS_ERROR_STREAM("color_video_profile stream_index: " << color_video_profile.stream_index());
                     updateStreamCalibData(color_video_profile);
                 }
                 else {
@@ -1260,7 +1254,6 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
         if (stream_name == "Color")
         {
             _fhd_image.data = (uint8_t*)f.get_data();
-            ROS_ERROR_STREAM("bpp: " << vf.get_bytes_per_pixel() << ", width: " << _fhd_image.size().width << ", height: " << _fhd_image.size().height);
 
             cv::resize(_fhd_image, image, image.size(), CV_INTER_LINEAR);
             image.convertTo(image, CV_8UC3);
@@ -1293,7 +1286,6 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
         if (f.is<rs2::video_frame>())
         {
             if (stream_name == "Color") {
-                ROS_ERROR_STREAM("HERE");
                 width = 1280;
                 height = 720;
                 bpp = 3;
