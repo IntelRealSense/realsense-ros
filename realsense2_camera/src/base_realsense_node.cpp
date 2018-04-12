@@ -481,6 +481,7 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frame depth_frame, cons
 
 void BaseRealSenseNode::setupStreams()
 {
+    rs2::stream_profile color_profile;
     ROS_INFO("setupStreams...");
     try{
         for (auto& streams : IMAGE_STREAMS)
@@ -493,7 +494,6 @@ void BaseRealSenseNode::setupStreams()
                 std::string stream_name = rs2_stream_to_string(elem.first);
                 if (stream_name == "Color")
                 {
-                    ROS_ERROR_STREAM("HERE");
                     width = 1920;
                     height = 1080;
                     _fhd_image = cv::Mat(width, height, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -513,7 +513,8 @@ void BaseRealSenseNode::setupStreams()
                                 video_profile.fps()    == _fps[elem] &&
                                 video_profile.stream_index() == elem.second)
                             {
-                                _color_profile = profile;
+                                ROS_ERROR_STREAM("HERE ###########");
+                                color_profile = profile;
                             }
                         }
 
@@ -532,7 +533,9 @@ void BaseRealSenseNode::setupStreams()
                                 _depth_aligned_image[elem] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
 
                             ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << width << ", height: " << height << ", fps: " << _fps[elem]);
-                            break;
+                            if (stream_name != "Color") {
+                                break;
+                            }
                         }
                     }
                     if (_enabled_profiles.find(elem) == _enabled_profiles.end())
@@ -556,14 +559,14 @@ void BaseRealSenseNode::setupStreams()
             for (auto& profile : profiles.second)
             {
                 auto video_profile = profile.as<rs2::video_stream_profile>();
-                auto color_video_profile = _color_profile.as<rs2::video_stream_profile>();
+                auto color_video_profile = color_profile.as<rs2::video_stream_profile>();
                 std::string stream_name = rs2_stream_to_string(video_profile.stream_type());
                 if (stream_name == "Color") {
                     ROS_ERROR_STREAM("video_profile stream_type: " << video_profile.stream_type());
                     ROS_ERROR_STREAM("video_profile stream_index: " << video_profile.stream_index());
                     ROS_ERROR_STREAM("color_video_profile stream_type: " << color_video_profile.stream_type());
                     ROS_ERROR_STREAM("color_video_profile stream_index: " << color_video_profile.stream_index());
-                    updateStreamCalibData(video_profile);
+                    updateStreamCalibData(color_video_profile);
                 }
                 else {
                     updateStreamCalibData(video_profile);
