@@ -898,7 +898,7 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
             {
                 auto video_profile = profile.as<rs2::video_stream_profile>();
                 stream_index_pair stream_index{video_profile.stream_type(), video_profile.stream_index()};
-                _depth_aligned_camera_info[stream_index] = _camera_info[DEPTH];
+                _depth_aligned_camera_info[stream_index] = _camera_info[stream_index];
             }
         }
     }
