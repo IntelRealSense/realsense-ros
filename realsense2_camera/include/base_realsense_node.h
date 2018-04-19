@@ -12,6 +12,8 @@
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/update_functions.h>
 
+#include <opencv2/highgui/highgui.hpp>
+
 
 namespace realsense2_camera
 {
@@ -138,11 +140,14 @@ namespace realsense2_camera
         tf2_ros::StaticTransformBroadcaster _static_tf_broadcaster;
 
         std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics> _image_publishers;
+        ImagePublisherWithFrequencyDiagnostics _fhd_color_image_publisher;
         std::map<stream_index_pair, ros::Publisher> _imu_publishers;
         std::map<stream_index_pair, int> _image_format;
         std::map<stream_index_pair, rs2_format> _format;
         std::map<stream_index_pair, ros::Publisher> _info_publisher;
         std::map<stream_index_pair, cv::Mat> _image;
+        cv::Mat _fhd_image;
+
         std::map<stream_index_pair, std::string> _encoding;
         std::map<stream_index_pair, std::vector<uint8_t>> _aligned_depth_images;
 
