@@ -372,8 +372,6 @@ void BaseRealSenseNode::alignFrame(const rs2_intrinsics& from_intrin,
 {
     static const auto meter_to_mm = 0.001f;
     uint8_t* p_out_frame = out_vec.data();
-    auto from_vid_frame = from_image.as<rs2::video_frame>();
-    auto from_bytes_per_pixel = from_vid_frame.get_bytes_per_pixel();
 
     static const auto blank_color = 0x00;
     memset(p_out_frame, blank_color, other_intrin.height * other_intrin.width * output_image_bytes_per_pixel);
@@ -415,13 +413,9 @@ void BaseRealSenseNode::alignFrame(const rs2_intrinsics& from_intrin,
                     for (int x = other_x0; x <= other_x1; ++x)
                     {
                         int out_pixel_index = y * other_intrin.width + x;
-                        //Tranfer n-bit pixel to n-bit pixel
-                        for (int i = 0; i < from_bytes_per_pixel; i++)
-                        {
-                            const auto out_offset = out_pixel_index * output_image_bytes_per_pixel + i;
-                            const auto from_offset = from_pixel_index * output_image_bytes_per_pixel + i;
-                            p_out_frame[out_offset] = p_from_frame[from_offset] * (depth_units / meter_to_mm);
-                        }
+                        uint16_t* p_from_depth_frame = (uint16_t*)p_from_frame;
+                        uint16_t* p_out_depth_frame = (uint16_t*)p_out_frame;
+                        p_out_depth_frame[out_pixel_index] = p_from_depth_frame[from_pixel_index] * (depth_units / meter_to_mm);
                     }
                 }
             }
