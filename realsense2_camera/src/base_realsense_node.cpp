@@ -1104,7 +1104,7 @@ void BaseRealSenseNode::publishDepthPCTopic(const ros::Time& t, const std::map<s
             float depth_pixel[2] = {static_cast<float>(x), static_cast<float>(y)};
             rs2_deproject_pixel_to_point(depth_point, &depth_intrinsics, depth_pixel, scaled_depth);
 
-            if (depth_point[2] <= 0.f || depth_point[2] > 5.f)
+            if (depth_point[2] <= 0.f)
             {
                 depth_point[0] = 0.f;
                 depth_point[1] = 0.f;
