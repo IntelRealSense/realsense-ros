@@ -68,7 +68,7 @@ generate_dynamic_reconfigure_options(
 # RealSense ROS Node
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs librealsense2
+    CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs
     nodelet
     cv_bridge
     image_transport
