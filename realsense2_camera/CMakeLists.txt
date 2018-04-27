@@ -68,11 +68,13 @@ generate_dynamic_reconfigure_options(
 # RealSense ROS Node
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs librealsense2
-    nodelet
-    cv_bridge
-    image_transport
-    dynamic_reconfigure
+    CATKIN_DEPENDS 
+        message_runtime roscpp sensor_msgs std_msgs
+        nodelet cv_bridge image_transport dynamic_reconfigure
+    DEPENDS
+        librealsense2
+    INCLUDE_DIRS 
+        ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_INCLUDE_DESTINATION}/
     )
 
 add_library(${PROJECT_NAME}
@@ -109,6 +111,12 @@ install(TARGETS ${PROJECT_NAME}
 
 # Install header files
 install(DIRECTORY include/
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+    )
+
+# Install generated header files (messages & dynamic reconfigure definitions)
+install(
+    DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_INCLUDE_DESTINATION}/
     DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
     )
 
