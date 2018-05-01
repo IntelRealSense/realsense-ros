@@ -30,10 +30,10 @@
 
   <!-- Arguments for Software Throttle Control -->
   <arg name="enable_throttle"  default="false"  />
-  <arg name="throttle_color"   default="30"     />
-  <arg name="throttle_depth"   default="30"     />
-  <arg name="throttle_infra"   default="30"     />
-  <arg name="throttle_fisheye" default="30"     />
+  <arg name="throttle_color"   default="10"     />
+  <arg name="throttle_depth"   default="10"     />
+  <arg name="throttle_infra"   default="10"     />
+  <arg name="throttle_fisheye" default="10"     />
 
   <!-- Size of message queue for synchronizing subscribed topics in depth_image_proc package.
        Increase this value for higher resolution and/or frame rates.
