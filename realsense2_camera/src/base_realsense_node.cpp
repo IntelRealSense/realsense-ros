@@ -968,7 +968,7 @@ void BaseRealSenseNode::publishStaticTransforms()
     if (_enable[COLOR])
     {
         // Transform base to color
-        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(COLOR, DEPTH));
+        const auto& ex = getRsExtrinsics(COLOR, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
 
         float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
@@ -988,7 +988,7 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[INFRA1])
     {
-        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(INFRA1, DEPTH));
+        const auto& ex = getRsExtrinsics(INFRA1, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
 
         // Transform base to infra1
@@ -1009,7 +1009,7 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[INFRA2])
     {
-        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(INFRA2, DEPTH));
+        const auto& ex = getRsExtrinsics(INFRA2, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
 
         // Transform base to infra2
@@ -1030,7 +1030,7 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[FISHEYE])
     {
-        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(FISHEYE, DEPTH));
+        const auto& ex = getRsExtrinsics(FISHEYE, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
 
         // Transform base to infra2
