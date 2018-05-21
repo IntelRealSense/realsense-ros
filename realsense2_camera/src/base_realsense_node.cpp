@@ -907,9 +907,11 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
 Eigen::Quaternionf BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[3]) const
 {
     Eigen::Matrix3f m;
-    m << rotation[0], rotation[1], rotation[2],
-         rotation[3], rotation[4], rotation[5],
-         rotation[6], rotation[7], rotation[8];
+    // We need to be careful about the order, as RS2 rotation matrix is
+    // column-major, while Eigen::Matrix3f expects row-major.
+    m << rotation[0], rotation[3], rotation[6],
+         rotation[1], rotation[4], rotation[7],
+         rotation[2], rotation[5], rotation[8];
     Eigen::Quaternionf q(m);
     return q;
 }
@@ -966,7 +968,7 @@ void BaseRealSenseNode::publishStaticTransforms()
     if (_enable[COLOR])
     {
         // Transform base to color
-        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(DEPTH, COLOR));
+        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(COLOR, DEPTH));
         auto Q = rotationMatrixToQuaternion(ex.rotation);
 
         float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
@@ -986,7 +988,7 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[INFRA1])
     {
-        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(DEPTH, INFRA1));
+        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(INFRA1, DEPTH));
         auto Q = rotationMatrixToQuaternion(ex.rotation);
 
         // Transform base to infra1
@@ -1007,7 +1009,7 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[INFRA2])
     {
-        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(DEPTH, INFRA2));
+        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(INFRA2, DEPTH));
         auto Q = rotationMatrixToQuaternion(ex.rotation);
 
         // Transform base to infra2
@@ -1028,7 +1030,7 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[FISHEYE])
     {
-        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(DEPTH, FISHEYE));
+        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(FISHEYE, DEPTH));
         auto Q = rotationMatrixToQuaternion(ex.rotation);
 
         // Transform base to infra2
