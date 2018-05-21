@@ -904,7 +904,7 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     }
 }
 
-Eigen::Quaternionf BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[3]) const
+tf::Quaternion BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[3]) const
 {
     Eigen::Matrix3f m;
     // We need to be careful about the order, as RS2 rotation matrix is
@@ -913,7 +913,7 @@ Eigen::Quaternionf BaseRealSenseNode::rotationMatrixToQuaternion(const float rot
          rotation[1], rotation[4], rotation[7],
          rotation[2], rotation[5], rotation[8];
     Eigen::Quaternionf q(m);
-    return q;
+    return tf::Quaternion(q.x(), q.y(), q.z(), q.w());
 }
 
 void BaseRealSenseNode::publish_static_tf(const ros::Time& t,
@@ -970,9 +970,10 @@ void BaseRealSenseNode::publishStaticTransforms()
         // Transform base to color
         const auto& ex = getRsExtrinsics(COLOR, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
+        Q = quaternion_optical * Q * quaternion_optical.inverse();
 
         float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
-        quaternion q1{Q.x(), Q.y(), Q.z(), Q.w()};
+        quaternion q1{Q.getX(), Q.getY(), Q.getZ(), Q.getW()};
         publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _frame_id[COLOR]);
 
         // Transform color frame to color optical frame
@@ -990,10 +991,11 @@ void BaseRealSenseNode::publishStaticTransforms()
     {
         const auto& ex = getRsExtrinsics(INFRA1, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
+        Q = quaternion_optical * Q * quaternion_optical.inverse();
 
         // Transform base to infra1
         float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
-        quaternion q1{Q.x(), Q.y(), Q.z(), Q.w()};
+        quaternion q1{Q.getX(), Q.getY(), Q.getZ(), Q.getW()};
         publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _frame_id[INFRA1]);
 
         // Transform infra1 frame to infra1 optical frame
@@ -1011,10 +1013,11 @@ void BaseRealSenseNode::publishStaticTransforms()
     {
         const auto& ex = getRsExtrinsics(INFRA2, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
+        Q = quaternion_optical * Q * quaternion_optical.inverse();
 
         // Transform base to infra2
         float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
-        quaternion q1{Q.x(), Q.y(), Q.z(), Q.w()};
+        quaternion q1{Q.getX(), Q.getY(), Q.getZ(), Q.getW()};
         publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _frame_id[INFRA2]);
 
         // Transform infra2 frame to infra1 optical frame
@@ -1032,10 +1035,11 @@ void BaseRealSenseNode::publishStaticTransforms()
     {
         const auto& ex = getRsExtrinsics(FISHEYE, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
+        Q = quaternion_optical * Q * quaternion_optical.inverse();
 
         // Transform base to infra2
         float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
-        quaternion q1{Q.x(), Q.y(), Q.z(), Q.w()};
+        quaternion q1{Q.getX(), Q.getY(), Q.getZ(), Q.getW()};
         publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _frame_id[FISHEYE]);
 
         // Transform infra2 frame to infra1 optical frame
