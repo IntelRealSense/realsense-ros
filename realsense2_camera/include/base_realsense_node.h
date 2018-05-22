@@ -123,8 +123,6 @@ namespace realsense2_camera
                         const rs2_extrinsics& from_to_other,
                         std::vector<uint8_t>& out_vec);
 
-        const rs2_extrinsics _i_ex{{1, 0, 0, 0, 1, 0, 0, 0, 1}, {0, 0, 0}};
-
         std::string _json_file_path;
         std::string _serial_no;
         float _depth_scale_meters;

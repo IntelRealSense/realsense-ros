@@ -771,10 +771,6 @@ void BaseRealSenseNode::setupStreams()
             static const char* frame_id = "depth_to_fisheye_extrinsics";
             auto ex = getRsExtrinsics(DEPTH, FISHEYE);
             _depth_to_other_extrinsics[FISHEYE] = ex;
-
-            if (_align_depth)
-                ex = _i_ex;
-
             _depth_to_other_extrinsics_publishers[FISHEYE].publish(rsExtrinsicsToMsg(ex, frame_id));
         }
 
@@ -784,10 +780,6 @@ void BaseRealSenseNode::setupStreams()
             static const char* frame_id = "depth_to_color_extrinsics";
             auto ex = getRsExtrinsics(DEPTH, COLOR);
             _depth_to_other_extrinsics[COLOR] = ex;
-
-            if (_align_depth)
-                ex = _i_ex;
-
             _depth_to_other_extrinsics_publishers[COLOR].publish(rsExtrinsicsToMsg(ex, frame_id));
         }
 
@@ -797,10 +789,6 @@ void BaseRealSenseNode::setupStreams()
             static const char* frame_id = "depth_to_infra1_extrinsics";
             auto ex = getRsExtrinsics(DEPTH, INFRA1);
             _depth_to_other_extrinsics[INFRA1] = ex;
-
-            if (_align_depth)
-                ex = _i_ex;
-
             _depth_to_other_extrinsics_publishers[INFRA1].publish(rsExtrinsicsToMsg(ex, frame_id));
         }
 
@@ -810,10 +798,6 @@ void BaseRealSenseNode::setupStreams()
             static const char* frame_id = "depth_to_infra2_extrinsics";
             auto ex = getRsExtrinsics(DEPTH, INFRA2);
             _depth_to_other_extrinsics[INFRA2] = ex;
-
-            if (_align_depth)
-                ex = _i_ex;
-
             _depth_to_other_extrinsics_publishers[INFRA2].publish(rsExtrinsicsToMsg(ex, frame_id));
         }
     }
