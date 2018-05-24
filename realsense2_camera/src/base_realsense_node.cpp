@@ -79,6 +79,18 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _encoding[ACCEL] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
     _unit_step_size[ACCEL] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
     _stream_name[ACCEL] = "accel";
+
+    // TODO: Improve the pipeline to accept decimation filter
+    // TODO: Provide disparity map if requested
+    filters.emplace_back("Depth_to_Disparity", depth_to_disparity);
+    filters.emplace_back("Spatial", spat_filter);
+    filters.emplace_back("Temporal", temp_filter);
+    filters.emplace_back("Disparity_to_Depth", disparity_to_depth);
+
+    filters[0].is_enabled = false;
+    filters[1].is_enabled = false;
+    filters[2].is_enabled = false;
+    filters[3].is_enabled = false;
 }
 
 void BaseRealSenseNode::publishTopics()
@@ -477,6 +489,17 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frame depth_frame, cons
     }
 }
 
+void BaseRealSenseNode::filterFrame(rs2::frame& frame)
+{
+    for (auto&& filter : filters)
+    {
+        if (filter.is_enabled)
+        {
+            frame = filter.filter.process(frame);
+        }
+    }
+}
+
 void BaseRealSenseNode::setupStreams()
 {
     ROS_INFO("setupStreams...");
@@ -574,6 +597,11 @@ void BaseRealSenseNode::setupStreams()
                         ROS_DEBUG("Frameset contain (%s, %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
                                   rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
 
+                        if (stream_type == RS2_STREAM_DEPTH)
+                        {
+                            filterFrame(f);
+                        }
+
                         stream_index_pair sip{stream_type,stream_index};
                         publishFrame(f, t,
                                      sip,
@@ -606,6 +634,11 @@ void BaseRealSenseNode::setupStreams()
                     updateIsFrameArrived(is_frame_arrived, stream_type, stream_index);
                     ROS_DEBUG("Single video frame arrived (%s, %d). frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
                               rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+
+                    if (stream_type == RS2_STREAM_DEPTH)
+                    {
+                        filterFrame(frame);
+                    }
 
                     stream_index_pair sip{stream_type,stream_index};
                     publishFrame(frame, t,
@@ -1383,6 +1416,17 @@ void BaseD400Node::setParam(rs435_paramsConfig &config, base_depth_param param)
     base_config.base_depth_output_trigger_enabled = config.rs435_depth_output_trigger_enabled;
     base_config.base_depth_units = config.rs435_depth_units;
     base_config.base_JSON_file_path = config.rs435_JSON_file_path;
+    base_config.base_enable_depth_to_disparity_filter = config.rs435_enable_depth_to_disparity_filter;
+    base_config.base_enable_spatial_filter = config.rs435_enable_spatial_filter;
+    base_config.base_enable_temporal_filter = config.rs435_enable_temporal_filter;
+    base_config.base_enable_disparity_to_depth_filter = config.rs435_enable_disparity_to_depth_filter;
+    base_config.base_spatial_filter_magnitude = config.rs435_spatial_filter_magnitude;
+    base_config.base_spatial_filter_smooth_alpha = config.rs435_spatial_filter_smooth_alpha;
+    base_config.base_spatial_filter_smooth_delta = config.rs435_spatial_filter_smooth_delta;
+    base_config.base_spatial_filter_holes_fill = config.rs435_spatial_filter_holes_fill;
+    base_config.base_temporal_filter_smooth_alpha = config.rs435_temporal_filter_smooth_alpha;
+    base_config.base_temporal_filter_smooth_delta = config.rs435_temporal_filter_smooth_delta;
+    base_config.base_temporal_filter_holes_fill = config.rs435_temporal_filter_holes_fill;
     setParam(base_config, param);
 }
 
@@ -1397,6 +1441,17 @@ void BaseD400Node::setParam(rs415_paramsConfig &config, base_depth_param param)
     base_config.base_depth_output_trigger_enabled = config.rs415_depth_output_trigger_enabled;
     base_config.base_depth_units = config.rs415_depth_units;
     base_config.base_JSON_file_path = config.rs415_JSON_file_path;
+    base_config.base_enable_depth_to_disparity_filter = config.rs415_enable_depth_to_disparity_filter;
+    base_config.base_enable_spatial_filter = config.rs415_enable_spatial_filter;
+    base_config.base_enable_temporal_filter = config.rs415_enable_temporal_filter;
+    base_config.base_enable_disparity_to_depth_filter = config.rs415_enable_disparity_to_depth_filter;
+    base_config.base_spatial_filter_magnitude = config.rs415_spatial_filter_magnitude;
+    base_config.base_spatial_filter_smooth_alpha = config.rs415_spatial_filter_smooth_alpha;
+    base_config.base_spatial_filter_smooth_delta = config.rs415_spatial_filter_smooth_delta;
+    base_config.base_spatial_filter_holes_fill = config.rs415_spatial_filter_holes_fill;
+    base_config.base_temporal_filter_smooth_alpha = config.rs415_temporal_filter_smooth_alpha;
+    base_config.base_temporal_filter_smooth_delta = config.rs415_temporal_filter_smooth_delta;
+    base_config.base_temporal_filter_holes_fill = config.rs415_temporal_filter_holes_fill;
     setParam(base_config, param);
 }
 
@@ -1455,6 +1510,50 @@ void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param par
         }
         break;
     }
+    case base_enable_depth_to_disparity_filter:
+        ROS_DEBUG_STREAM("base_enable_depth_to_disparity_filter: " << config.base_enable_depth_to_disparity_filter);
+        filters[DEPTH_TO_DISPARITY].is_enabled = config.base_enable_depth_to_disparity_filter;
+        break;
+    case base_enable_spatial_filter:
+        ROS_DEBUG_STREAM("base_enable_spatial_filter: " << config.base_enable_spatial_filter);
+        filters[SPATIAL].is_enabled = config.base_enable_spatial_filter;
+        break;
+    case base_enable_temporal_filter:
+        ROS_DEBUG_STREAM("base_enable_temporal_filter: " << config.base_enable_temporal_filter);
+        filters[TEMPORAL].is_enabled = config.base_enable_temporal_filter;
+        break;
+    case base_enable_disparity_to_depth_filter:
+        ROS_DEBUG_STREAM("base_enable_disparity_to_depth_filter: " << config.base_enable_disparity_to_depth_filter);
+        filters[DISPARITY_TO_DEPTH].is_enabled = config.base_enable_disparity_to_depth_filter;
+        break;
+    case base_spatial_filter_magnitude:
+        ROS_DEBUG_STREAM("base_spatial_filter_magnitude: " << config.base_spatial_filter_magnitude);
+        filters[SPATIAL].filter.set_option(RS2_OPTION_FILTER_MAGNITUDE, config.base_spatial_filter_magnitude);
+        break;
+    case base_spatial_filter_smooth_alpha:
+        ROS_DEBUG_STREAM("base_spatial_filter_smooth_alpha: " << config.base_spatial_filter_smooth_alpha);
+        filters[SPATIAL].filter.set_option(RS2_OPTION_FILTER_SMOOTH_ALPHA, config.base_spatial_filter_smooth_alpha);
+        break;
+    case base_spatial_filter_smooth_delta:
+        ROS_DEBUG_STREAM("base_spatial_filter_smooth_delta: " << config.base_spatial_filter_smooth_delta);
+        filters[SPATIAL].filter.set_option(RS2_OPTION_FILTER_SMOOTH_DELTA, config.base_spatial_filter_smooth_delta);
+        break;
+    case base_spatial_filter_holes_fill:
+        ROS_DEBUG_STREAM("base_spatial_filter_holes_fill: " << config.base_spatial_filter_holes_fill);
+        filters[SPATIAL].filter.set_option(RS2_OPTION_HOLES_FILL, config.base_spatial_filter_holes_fill);
+        break;
+    case base_temporal_filter_smooth_alpha:
+        ROS_DEBUG_STREAM("base_temporal_filter_smooth_alpha: " << config.base_temporal_filter_smooth_alpha);
+        filters[TEMPORAL].filter.set_option(RS2_OPTION_FILTER_SMOOTH_ALPHA, config.base_temporal_filter_smooth_alpha);
+        break;
+    case base_temporal_filter_smooth_delta:
+        ROS_DEBUG_STREAM("base_temporal_filter_smooth_delta: " << config.base_temporal_filter_smooth_delta);
+        filters[TEMPORAL].filter.set_option(RS2_OPTION_FILTER_SMOOTH_DELTA, config.base_temporal_filter_smooth_delta);
+        break;
+    case base_temporal_filter_holes_fill:
+        ROS_DEBUG_STREAM("base_temporal_filter_holes_fill: " << config.base_temporal_filter_holes_fill);
+        filters[TEMPORAL].filter.set_option(RS2_OPTION_HOLES_FILL, config.base_temporal_filter_holes_fill);
+        break;
     default:
         ROS_WARN_STREAM("Unrecognized D400 param (" << param << ")");
         break;
@@ -1467,3 +1566,16 @@ void BaseD400Node::registerDynamicReconfigCb()
     _f = boost::bind(&BaseD400Node::callback, this, _1, _2);
     _server->setCallback(_f);
 }
+
+/**
+Constructor for filter_options, takes a name and a filter.
+*/
+filter_options::filter_options(const std::string name, rs2::process_interface& filter) :
+    filter_name(name),
+    filter(filter),
+    is_enabled(true) {}
+
+filter_options::filter_options(filter_options&& other) :
+    filter_name(std::move(other.filter_name)),
+    filter(other.filter),
+    is_enabled(other.is_enabled.load()) {}
