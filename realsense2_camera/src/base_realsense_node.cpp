@@ -1471,7 +1471,7 @@ void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param par
         setOption(DEPTH, RS2_OPTION_ENABLE_AUTO_EXPOSURE, config.base_depth_enable_auto_exposure);
         break;
     case base_depth_visual_preset:
-        ROS_DEBUG_STREAM("base_depth_enable_auto_exposure: " << config.base_depth_visual_preset);
+        ROS_DEBUG_STREAM("base_depth_visual_preset: " << config.base_depth_visual_preset);
         setOption(DEPTH, RS2_OPTION_VISUAL_PRESET, config.base_depth_visual_preset);
         break;
     case base_depth_frames_queue_size:
@@ -1483,7 +1483,7 @@ void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param par
         setOption(DEPTH, RS2_OPTION_ERROR_POLLING_ENABLED, config.base_depth_error_polling_enabled);
         break;
     case base_depth_output_trigger_enabled:
-        ROS_DEBUG_STREAM("base_depth_error_polling_enabled: " << config.base_depth_output_trigger_enabled);
+        ROS_DEBUG_STREAM("base_depth_output_trigger_enabled: " << config.base_depth_output_trigger_enabled);
         setOption(DEPTH, RS2_OPTION_OUTPUT_TRIGGER_ENABLED, config.base_depth_output_trigger_enabled);
         break;
     case base_depth_units:
