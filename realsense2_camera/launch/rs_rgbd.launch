@@ -111,6 +111,7 @@ Processing enabled by this node:
 
     <!-- Launch the camera device nodelet-->
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="namespace"                value="$(arg namespace)"/>
       <arg name="manager"                  value="$(arg manager)"/>
       <arg name="serial_no"                value="$(arg serial_no)"/>
       <arg name="json_file_path"           value="$(arg json_file_path)"/>
