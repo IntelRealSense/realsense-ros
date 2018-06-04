@@ -6,7 +6,7 @@ from dynamic_reconfigure.parameter_generator_catkin import *
 def add_base_params(gen, prefix):
   #             Name                                               Type    Level Description                  Default    Min     Max
   gen.add(str(prefix) + "depth_gain",                              int_t,    1,  "Gain",                      16,        16,     248)
-  gen.add(str(prefix) + "depth_enable_auto_exposure",              bool_t,   2,  "Enable Auto Exposure",      True)
+  gen.add(str(prefix) + "depth_enable_auto_exposure",              bool_t,   2,  "Enable Auto Exposure",      False)
   preset_enum = gen.enum([gen.const("Custom",        int_t,  0,  "Custom"),
                           gen.const("Default",       int_t,  1,  "Default Preset"),
                           gen.const("Hand",          int_t,  2,  "Hand Gesture"),
