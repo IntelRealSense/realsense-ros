@@ -102,14 +102,6 @@
     <param name="accel_fps"                type="int"  value="$(arg accel_fps)"/>
     <param name="enable_imu"               type="bool" value="$(arg enable_imu)"/>
 
-    <param name="depth_optical_frame_id"   type="str"  value="$(arg depth_optical_frame_id)"/>
-    <param name="infra1_optical_frame_id"  type="str"  value="$(arg infra1_optical_frame_id)"/>
-    <param name="infra2_optical_frame_id"  type="str"  value="$(arg infra2_optical_frame_id)"/>
-    <param name="color_optical_frame_id"   type="str"  value="$(arg color_optical_frame_id)"/>
-    <param name="fisheye_optical_frame_id" type="str"  value="$(arg fisheye_optical_frame_id)"/>
-    <param name="accel_optical_frame_id"   type="str"  value="$(arg accel_optical_frame_id)"/>
-    <param name="gyro_optical_frame_id"    type="str"  value="$(arg gyro_optical_frame_id)"/>
-
     <param name="base_frame_id" type="str" value="$(arg base_frame_id)"/>
     <param name="depth_frame_id" type="str" value="$(arg depth_frame_id)"/>
     <param name="infra1_frame_id" type="str" value="$(arg infra1_frame_id)"/>

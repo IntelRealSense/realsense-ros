@@ -326,9 +326,6 @@ void BaseRealSenseNode::setupPublishers()
         }
     }
 
-    std::shared_ptr<FrequencyDiagnostics> frequency_diagnostics(new FrequencyDiagnostics(_fps[COLOR], _stream_name[COLOR], _serial_no));
-    _fhd_color_image_publisher = {image_transport.advertise("color_fhd/image_raw", 1), frequency_diagnostics};
-
     if (_enable[FISHEYE] &&
         _enable[DEPTH])
     {
@@ -481,22 +478,12 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frame depth_frame, cons
 
 void BaseRealSenseNode::setupStreams()
 {
-    rs2::stream_profile color_profile;
     ROS_INFO("setupStreams...");
     try{
         for (auto& streams : IMAGE_STREAMS)
         {
             for (auto& elem : streams)
             {
-                int width = _width[elem];
-                int height = _height[elem];
-                std::string stream_name = rs2_stream_to_string(elem.first);
-                if (stream_name == "Color")
-                {
-                    width = 1920;
-                    height = 1080;
-                    _fhd_image = cv::Mat(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
-                }
                 if (_enable[elem])
                 {
                     auto& sens = _sensors[elem];
@@ -504,36 +491,21 @@ void BaseRealSenseNode::setupStreams()
                     for (auto& profile : profiles)
                     {
                         auto video_profile = profile.as<rs2::video_stream_profile>();
-
-                        if (stream_name == "Color") {
-                            if (video_profile.format() == _format[elem] &&
-                                video_profile.width()  == _width[elem] &&
-                                video_profile.height() == _height[elem] &&
-                                video_profile.fps()    == _fps[elem] &&
-                                video_profile.stream_index() == elem.second)
-                            {
-                                color_profile = profile;
-                            }
-                        }
-
                         if (video_profile.format() == _format[elem] &&
-                            video_profile.width()  == width &&
-                            video_profile.height() == height &&
+                            video_profile.width()  == _width[elem] &&
+                            video_profile.height() == _height[elem] &&
                             video_profile.fps()    == _fps[elem] &&
                             video_profile.stream_index() == elem.second)
                         {
-
                             _enabled_profiles[elem].push_back(profile);
 
-                            _image[elem] = cv::Mat(_height[elem], _width[elem], _image_format[elem], cv::Scalar(0, 0, 0));
+                            _image[elem] = cv::Mat(_width[elem], _height[elem], _image_format[elem], cv::Scalar(0, 0, 0));
 
                             if (_align_depth)
-                                _depth_aligned_image[elem] = cv::Mat(_height[DEPTH], _width[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
+                                _depth_aligned_image[elem] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
 
-                            ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << width << ", height: " << height << ", fps: " << _fps[elem]);
-                            if (stream_name != "Color") {
-                                break;
-                            }
+                            ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem]);
+                            break;
                         }
                     }
                     if (_enabled_profiles.find(elem) == _enabled_profiles.end())
@@ -557,14 +529,7 @@ void BaseRealSenseNode::setupStreams()
             for (auto& profile : profiles.second)
             {
                 auto video_profile = profile.as<rs2::video_stream_profile>();
-                auto color_video_profile = color_profile.as<rs2::video_stream_profile>();
-                std::string stream_name = rs2_stream_to_string(video_profile.stream_type());
-                if (stream_name == "Color") {
-                    updateStreamCalibData(color_video_profile);
-                }
-                else {
-                    updateStreamCalibData(video_profile);
-                }
+                updateStreamCalibData(video_profile);
             }
         }
 
@@ -1243,36 +1208,12 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
                                      bool copy_data_from_frame)
 {
     ROS_DEBUG("publishFrame(...)");
-
     auto& image = images[stream];
+
+    if (copy_data_from_frame)
+        image.data = (uint8_t*)f.get_data();
+
     ++(seq[stream]);
-
-    auto vf = f.as<rs2::video_frame>();
-
-    std::string stream_name = rs2_stream_to_string(f.get_profile().stream_type());
-    if (copy_data_from_frame) {
-        if (stream_name == "Color")
-        {
-            _fhd_image.data = (uint8_t*)f.get_data();
-            cv::resize(_fhd_image, image, image.size(), CV_INTER_LINEAR);
-
-            sensor_msgs::ImagePtr fhd_img;
-            fhd_img = cv_bridge::CvImage(std_msgs::Header(), encoding.at(stream), _fhd_image).toImageMsg();
-            fhd_img->width = vf.get_width();
-            fhd_img->height = vf.get_height();
-            fhd_img->is_bigendian = false;
-            fhd_img->step = fhd_img->width * vf.get_bytes_per_pixel();
-            fhd_img->header.frame_id = optical_frame_id.at(stream);
-            fhd_img->header.stamp = t;
-            fhd_img->header.seq = seq[stream];
-            _fhd_color_image_publisher.first.publish(fhd_img);
-            _fhd_color_image_publisher.second->update();
-        }
-        else {
-            image.data = (uint8_t*)f.get_data();
-        }
-    }
-
     auto& info_publisher = info_publishers.at(stream);
     auto& image_publisher = image_publishers.at(stream);
     if(0 != info_publisher.getNumSubscribers() ||
@@ -1283,16 +1224,10 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
         auto bpp = 1;
         if (f.is<rs2::video_frame>())
         {
-            if (stream_name == "Color") {
-                width = 1280;
-                height = 720;
-                bpp = vf.get_bytes_per_pixel();
-            }
-            else {
-                width = vf.get_width();
-                height = vf.get_height();
-                bpp = vf.get_bytes_per_pixel();
-            }
+            auto image = f.as<rs2::video_frame>();
+            width = image.get_width();
+            height = image.get_height();
+            bpp = image.get_bytes_per_pixel();
         }
 
         sensor_msgs::ImagePtr img;
@@ -1305,14 +1240,13 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
         img->header.stamp = t;
         img->header.seq = seq[stream];
 
-        image_publisher.first.publish(img);
-        image_publisher.second->update();
-
         auto& cam_info = camera_info.at(stream);
         cam_info.header.stamp = t;
         cam_info.header.seq = seq[stream];
         info_publisher.publish(cam_info);
 
+        image_publisher.first.publish(img);
+        image_publisher.second->update();
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
     }
 }
