@@ -1318,6 +1318,16 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
     ROS_DEBUG("publishFrame(...)");
     auto& image = images[stream];
 
+    if (copy_data_from_frame) {
+        if (stream != DEPTH) {
+            image.data = (uint8_t*)f.get_data();
+        } else {
+            auto depth_data = (uint16_t*)f.get_data();
+            auto& image_data = reinterpret_cast<uint16_t*&>(image.data);
+            image_data = depth_data;
+        }
+    }
+
     if (copy_data_from_frame)
         image.data = (uint8_t*)f.get_data();
 
