@@ -1012,8 +1012,8 @@ namespace realsense_camera
             rs_transform_point_to_point(color_point, &z_extrinsic, depth_point);
             rs_project_point_to_pixel(color_pixel, &color_intrinsic, color_point);
 
-            if (color_pixel[1] < 0.0f || color_pixel[1] > image_color.rows
-                || color_pixel[0] < 0.0f || color_pixel[0] > image_color.cols)
+            if (color_pixel[1] < 0.0f || color_pixel[1] >= image_color.rows
+                || color_pixel[0] < 0.0f || color_pixel[0] >= image_color.cols)
             {
               // For out of bounds color data, default to a shade of blue in order to visually distinguish holes.
               // This color value is same as the librealsense out of bounds color value.
