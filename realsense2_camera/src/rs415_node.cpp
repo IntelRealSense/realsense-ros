@@ -91,6 +91,11 @@ void RS415Node::setParam(rs415_paramsConfig &config, rs415_param param)
         static const auto rs415_depth_exposure_factor = 20;
         ROS_DEBUG_STREAM("rs415_depth_exposure: " << config.rs415_depth_exposure * rs415_depth_exposure_factor);
         _sensors[DEPTH].set_option(rs2_option::RS2_OPTION_EXPOSURE, config.rs415_depth_exposure * rs415_depth_exposure_factor);
+        // Workaround, as the depth auto exposure is not correctly initialized.
+        if (config.rs415_depth_enable_auto_exposure)
+        {
+            BaseD400Node::setParam(config, base_depth_enable_auto_exposure);
+        }
     }
         break;
     case rs415_depth_laser_power:
