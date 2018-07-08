@@ -904,7 +904,7 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     }
 }
 
-Eigen::Quaternionf BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[3]) const
+Eigen::Quaternionf BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[9]) const
 {
     Eigen::Matrix3f m;
     m << rotation[0], rotation[1], rotation[2],
