@@ -87,7 +87,7 @@ namespace realsense2_camera
         void setupPublishers();
         void setupStreams();
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
-        Eigen::Quaternionf rotationMatrixToQuaternion(const float rotation[3]) const;
+        tf::Quaternion rotationMatrixToQuaternion(const float rotation[3]) const;
         void publish_static_tf(const ros::Time& t,
                                const float3& trans,
                                const quaternion& q,
@@ -122,8 +122,6 @@ namespace realsense2_camera
                         uint32_t output_image_bytes_per_pixel,
                         const rs2_extrinsics& from_to_other,
                         std::vector<uint8_t>& out_vec);
-
-        const rs2_extrinsics _i_ex{{1, 0, 0, 0, 1, 0, 0, 0, 1}, {0, 0, 0}};
 
         std::string _json_file_path;
         std::string _serial_no;
