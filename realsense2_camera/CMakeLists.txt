@@ -94,8 +94,11 @@ add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
 
 
+target_include_directories(${PROJECT_NAME}
+  PRIVATE ${realsense_INCLUDE_DIR})
+
 target_link_libraries(${PROJECT_NAME}
-    realsense2
+    ${realsense2_LIBRARY}
     ${catkin_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     )
