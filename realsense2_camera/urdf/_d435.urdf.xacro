@@ -13,9 +13,9 @@ aluminum peripherial evaluation case.
 
   <!-- The following values are approximate, and the camera node
    publishing TF values with actual calibrated camera extrinsic values -->
-  <xacro:property name="d435_cam_depth_to_left_ir_offset" value="-0.025"/>
-  <xacro:property name="d435_cam_depth_to_right_ir_offset" value="0.025"/>
-  <xacro:property name="d435_cam_depth_to_fisheye_offset" value="0.040"/>
+  <xacro:property name="d435_cam_depth_to_left_ir_offset" value="0.0"/>
+  <xacro:property name="d435_cam_depth_to_right_ir_offset" value="-0.050"/>
+  <xacro:property name="d435_cam_depth_to_color_offset" value="0.015"/>
 
   <!-- The following values model the aluminum peripherial case for the
     D435 camera, with the camera joint represented by the actual 
@@ -28,7 +28,7 @@ aluminum peripherial evaluation case.
   <!-- The following offset is relative the the physical D435 camera peripherial
     camera tripod mount -->
   <xacro:property name="d435_cam_depth_px" value="${d435_cam_mount_from_center_offset}"/>
-  <xacro:property name="d435_cam_depth_py" value="-0.0075"/>
+  <xacro:property name="d435_cam_depth_py" value="0.0175"/>
   <xacro:property name="d435_cam_depth_pz" value="${d435_cam_height/2}"/>
 
   <material name="aluminum">
@@ -114,19 +114,19 @@ aluminum peripherial evaluation case.
     </joint>
     <link name="camera_right_ir_optical_frame"/>
 
-    <!-- camera fisheye joints and links -->
-    <joint name="camera_fisheye_joint" type="fixed">
-      <origin xyz="0 ${d435_cam_depth_to_fisheye_offset} 0" rpy="0 0 0" />
+    <!-- camera color joints and links -->
+    <joint name="camera_color_joint" type="fixed">
+      <origin xyz="0 ${d435_cam_depth_to_color_offset} 0" rpy="0 0 0" />
       <parent link="camera_depth_frame" />
-      <child link="camera_fisheye_frame" />
+      <child link="camera_color_frame" />
     </joint>
-    <link name="camera_fisheye_frame"/>
+    <link name="camera_color_frame"/>
 
-    <joint name="camera_fisheye_optical_joint" type="fixed">
+    <joint name="camera_color_optical_joint" type="fixed">
       <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
-      <parent link="camera_fisheye_frame" />
-      <child link="camera_fisheye_optical_frame" />
+      <parent link="camera_color_frame" />
+      <child link="camera_color_optical_frame" />
     </joint>
-    <link name="camera_fisheye_optical_frame"/>
+    <link name="camera_color_optical_frame"/>
   </xacro:macro>
 </robot>
