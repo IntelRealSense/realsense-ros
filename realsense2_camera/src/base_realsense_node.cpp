@@ -1102,8 +1102,8 @@ void BaseRealSenseNode::publishRgbToDepthPCTopic(const ros::Time& t, const std::
             rs2_transform_point_to_point(color_point, &depth2color_extrinsics, depth_point);
             rs2_project_point_to_pixel(color_pixel, &color_intrinsics, color_point);
 
-            if (color_pixel[1] < 0.f || color_pixel[1] > color_intrinsics.height
-                || color_pixel[0] < 0.f || color_pixel[0] > color_intrinsics.width)
+            if (color_pixel[1] < 0.f || color_pixel[1] >= color_intrinsics.height
+                || color_pixel[0] < 0.f || color_pixel[0] >= color_intrinsics.width)
             {
                 // For out of bounds color data, default to a shade of blue in order to visually distinguish holes.
                 // This color value is same as the librealsense out of bounds color value.
