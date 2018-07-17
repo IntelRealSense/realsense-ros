@@ -9,33 +9,33 @@ aluminum peripherial evaluation case.
 -->
 
 <robot name="sensor_d435" xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:property name="M_PI" value="3.1415926535897931" />
-
-  <!-- The following values are approximate, and the camera node
-   publishing TF values with actual calibrated camera extrinsic values -->
-  <xacro:property name="d435_cam_depth_to_left_ir_offset" value="0.0"/>
-  <xacro:property name="d435_cam_depth_to_right_ir_offset" value="-0.050"/>
-  <xacro:property name="d435_cam_depth_to_color_offset" value="0.015"/>
-
-  <!-- The following values model the aluminum peripherial case for the
-    D435 camera, with the camera joint represented by the actual 
-    peripherial camera tripod mount -->
-  <xacro:property name="d435_cam_width" value="0.090"/>
-  <xacro:property name="d435_cam_height" value="0.025"/>
-  <xacro:property name="d435_cam_depth" value="0.02505"/>
-  <xacro:property name="d435_cam_mount_from_center_offset" value="0.0149"/>
-
-  <!-- The following offset is relative the the physical D435 camera peripherial
-    camera tripod mount -->
-  <xacro:property name="d435_cam_depth_px" value="${d435_cam_mount_from_center_offset}"/>
-  <xacro:property name="d435_cam_depth_py" value="0.0175"/>
-  <xacro:property name="d435_cam_depth_pz" value="${d435_cam_height/2}"/>
-
-  <material name="aluminum">
-    <color rgba="0.5 0.5 0.5 1"/>
-  </material>
-
   <xacro:macro name="sensor_d435" params="parent *origin">
+    <xacro:property name="M_PI" value="3.1415926535897931" />
+  
+    <!-- The following values are approximate, and the camera node
+     publishing TF values with actual calibrated camera extrinsic values -->
+    <xacro:property name="d435_cam_depth_to_left_ir_offset" value="0.0"/>
+    <xacro:property name="d435_cam_depth_to_right_ir_offset" value="-0.050"/>
+    <xacro:property name="d435_cam_depth_to_color_offset" value="0.015"/>
+  
+    <!-- The following values model the aluminum peripherial case for the
+  	D435 camera, with the camera joint represented by the actual 
+  	peripherial camera tripod mount -->
+    <xacro:property name="d435_cam_width" value="0.090"/>
+    <xacro:property name="d435_cam_height" value="0.025"/>
+    <xacro:property name="d435_cam_depth" value="0.02505"/>
+    <xacro:property name="d435_cam_mount_from_center_offset" value="0.0149"/>
+  
+    <!-- The following offset is relative the the physical D435 camera peripherial
+  	camera tripod mount -->
+    <xacro:property name="d435_cam_depth_px" value="${d435_cam_mount_from_center_offset}"/>
+    <xacro:property name="d435_cam_depth_py" value="0.0175"/>
+    <xacro:property name="d435_cam_depth_pz" value="${d435_cam_height/2}"/>
+
+    <material name="aluminum">
+	  <color rgba="0.5 0.5 0.5 1"/>
+    </material>
+
 
     <!-- camera body, with origin at bottom screw mount -->
     <joint name="camera_joint" type="fixed">
