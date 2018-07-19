@@ -36,20 +36,29 @@ namespace realsense2_camera
     const bool POINTCLOUD     = false;
     const bool SYNC_FRAMES    = false;
 
-    const int DEPTH_WIDTH     = 640;
-    const int DEPTH_HEIGHT    = 480;
+    /* Modified for Brain */
+    const int FRAME_MAX_HEIGHT = 720;
+    const int FRAME_MAX_WIDTH = 1280;
+    const int FRAME_PRIME_HEIGHT = 240;
+    const int FRAME_PRIME_WIDTH = 424;
+    const int STEP = 12;
+    const float DEFAULT_THLD = 0.95;
+    const int MAX_LOG_MESSAGES = 10;
 
-    const int INFRA1_WIDTH    = 640;
-    const int INFRA1_HEIGHT   = 480;
+    const int DEPTH_WIDTH     = 424;
+    const int DEPTH_HEIGHT    = 240;
 
-    const int INFRA2_WIDTH    = 640;
-    const int INFRA2_HEIGHT   = 480;
+    const int INFRA1_WIDTH    = 424;
+    const int INFRA1_HEIGHT   = 240;
 
-    const int COLOR_WIDTH     = 640;
-    const int COLOR_HEIGHT    = 480;
+    const int INFRA2_WIDTH    = 424;
+    const int INFRA2_HEIGHT   = 240;
 
-    const int FISHEYE_WIDTH   = 640;
-    const int FISHEYE_HEIGHT  = 480;
+    const int COLOR_WIDTH     = 424;
+    const int COLOR_HEIGHT    = 240;
+
+    const int FISHEYE_WIDTH   = 424;
+    const int FISHEYE_HEIGHT  = 240;
 
 
     const int DEPTH_FPS       = 30;
