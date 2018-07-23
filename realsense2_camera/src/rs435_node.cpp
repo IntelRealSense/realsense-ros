@@ -66,6 +66,10 @@ void RS435Node::setParam(rs435_paramsConfig &config, rs435_param param)
         ROS_DEBUG_STREAM("rs435_color_white_balance: " << config.rs435_color_white_balance * 10);
         _sensors[COLOR].set_option(rs2_option::RS2_OPTION_WHITE_BALANCE, config.rs435_color_white_balance * 10);
         break;
+    case rs435_color_enable_auto_white_balance:
+        ROS_DEBUG_STREAM("rs435_color_enable_auto_white_balance: " << config.rs435_color_enable_auto_white_balance);
+        _sensors[COLOR].set_option(rs2_option::RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE, config.rs435_color_enable_auto_white_balance);
+        break;
     case rs435_color_frames_queue_size:
         ROS_DEBUG_STREAM("rs435_color_frames_queue_size: " << config.rs435_color_frames_queue_size);
         _sensors[COLOR].set_option(rs2_option::RS2_OPTION_FRAMES_QUEUE_SIZE, config.rs435_color_frames_queue_size);
