@@ -85,6 +85,7 @@ namespace realsense2_camera
         void getParameters();
         void setupDevice();
         void setupPublishers();
+		void enable_devices();
         void setupStreams();
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         tf::Quaternion rotationMatrixToQuaternion(const float rotation[3]) const;

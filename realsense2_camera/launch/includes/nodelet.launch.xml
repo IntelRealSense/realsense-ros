@@ -2,6 +2,7 @@
   <arg name="manager"             default="realsense2_camera_manager"/>
   <arg name="serial_no"           default=""/>
   <arg name="json_file_path"      default=""/>
+  <arg name="rosbag_filename"     default=""/>
   <arg name="depth"               default="depth"/>
   <arg name="infra1"              default="infra1"/>
   <arg name="infra2"              default="infra2"/>
@@ -47,6 +48,7 @@
   <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)">
     <param name="serial_no"                type="str"  value="$(arg serial_no)"/>
     <param name="json_file_path"           type="str"  value="$(arg json_file_path)"/>
+    <param name="rosbag_filename"          type="str"  value="$(arg rosbag_filename)"/>
 
     <param name="enable_pointcloud"        type="bool" value="$(arg enable_pointcloud)"/>
     <param name="enable_sync"              type="bool" value="$(arg enable_sync)"/>
