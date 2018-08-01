@@ -1,6 +1,46 @@
 sudo: required
 dist: trusty
 
+before_install:
+  # - sudo apt-key adv --keyserver keys.gnupg.net --recv-key 6F3EFCDE
+  - echo 'deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main' | sudo tee /etc/apt/sources.list.d/realsense-public.list
+  - sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE | sudo apt-key adv --keyserver hkp://keys.gnupg.net:80 --recv-key C8B3A55A6F3EFCDE
+  - sudo apt-get update -qq
+  # - sudo apt-get install linux-headers-$(uname -r) -y
+  - sudo apt-get install librealsense2-dkms -y
+  - sudo apt-get install librealsense2-dev -y
+  
+  # install ROS:
+  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+  - sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+  - sudo apt-get update -qq
+  - sudo apt-get install ros-kinetic-ros-base -y
+  - sudo rosdep init
+  - rosdep update
+  - echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+  - source ~/.bashrc
+  - sudo apt-get install ros-kinetic-cv-bridge -y
+  - sudo apt-get install ros-kinetic-image-transport
+  - sudo apt-get install ros-kinetic-tf -y
+  - sudo apt-get install ros-kinetic-diagnostic-updater -y
+  - mkdir -p ~/catkin_ws/src
+    
+  # install realsense2-camera
+  # - git clone -v --progress https://github.com/doronhi/realsense.git  # This is Done automatically by TravisCI
+  - mv realsense/ ~/catkin_ws/src
+  - cd ~/catkin_ws/src/
+  - catkin_init_workspace 
+  - cd ..
+  - catkin_make clean
+  - catkin_make -DCATKIN_ENABLE_TESTING=False -DCMAKE_BUILD_TYPE=Release
+  - catkin_make install
+  - echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+  - source ~/.bashrc
+  
+  # Run test:
+  - python src/realsense/realsense2_camera/scripts/rs2_test.py --all
+  
+  
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/

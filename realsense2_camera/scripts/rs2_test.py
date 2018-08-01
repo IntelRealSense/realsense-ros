@@ -36,17 +36,25 @@ def ImageColorGetData(rec_filename):
 def ImageColorTest(data, gt_data):
     # check that all data['num_channels'] are the same as gt_data['num_channels'] and that avg value of all
     # images are within epsilon of gt_data['avg']
-    channels = list(set(data['num_channels']))
-    if len(channels) > 1 or channels[0] != gt_data['num_channels']:
-        return False
-    if abs(np.array(data['avg']) - gt_data['avg']).max() > gt_data['epsilon']:
+    try:
+        channels = list(set(data['num_channels']))
+        if len(channels) > 1 or channels[0] != gt_data['num_channels']:
+            return False
+        if abs(np.array(data['avg']) - gt_data['avg']).max() > gt_data['epsilon']:
+            return False
+    except Exception as e:
+        print 'Test Failed: %s' % e
         return False
     return True
 
 
 test_types = {'vis_avg': {'listener_theme': 'colorStream',
                           'data_func': ImageColorGetData,
-                          'test_func': ImageColorTest}}
+                          'test_func': ImageColorTest},
+              'no_file': {'listener_theme': 'colorStream',
+                          'data_func': lambda x: None,
+                          'test_func': lambda x, y: not ImageColorTest(x, y)},
+              }
 
 
 def run_test(test, listener_res):
@@ -93,7 +101,7 @@ def run_tests(tests):
     return results
 
 def main():
-    all_tests = [{'name': 'vis_avg_1', 'type': 'vis_avg', 'rec_filename': '/home/non_existent_file.txt'},
+    all_tests = [{'name': 'vis_avg_1', 'type': 'no_file', 'rec_filename': '/home/non_existent_file.txt'},
                  {'name': 'vis_avg_2', 'type': 'vis_avg', 'rec_filename': '/home/doronhi/Downloads/checkerboard_30cm.bag'}]
 
     if len(sys.argv) < 2 or '--help' in sys.argv or '/?' in sys.argv:
