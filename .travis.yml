@@ -3,8 +3,8 @@ dist: trusty
 
 before_install:
   # - sudo apt-key adv --keyserver keys.gnupg.net --recv-key 6F3EFCDE
-  - echo 'deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main' | sudo tee /etc/apt/sources.list.d/realsense-public.list
-  - sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE | sudo apt-key adv --keyserver hkp://keys.gnupg.net:80 --recv-key C8B3A55A6F3EFCDE
+  - echo 'deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main' || sudo tee /etc/apt/sources.list.d/realsense-public.list
+  - sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keys.gnupg.net:80 --recv-key C8B3A55A6F3EFCDE
   - sudo apt-get update -qq
   # - sudo apt-get install linux-headers-$(uname -r) -y
   - sudo apt-get install librealsense2-dkms -y
@@ -37,7 +37,12 @@ before_install:
   - echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
   - source ~/.bashrc
   
+    # download data:
+  - bag_filename="http://realsense-hw-public.s3.amazonaws.com/rs-tests/TestData/outdoors.bag";
+  - wget $filename -P "records/outdoors.bag"
+    
   # Run test:
+ 
   - python src/realsense/realsense2_camera/scripts/rs2_test.py --all
   
   

@@ -38,8 +38,10 @@ def ImageColorTest(data, gt_data):
     # images are within epsilon of gt_data['avg']
     try:
         channels = list(set(data['num_channels']))
+        print 'Expect %d channels. Got %d channels.' % (channels[0], gt_data['num_channels'])
         if len(channels) > 1 or channels[0] != gt_data['num_channels']:
             return False
+        print 'Expect avarage of %.3f. Got avarage of %.3f.' % (np.array(data['avg']).mean(), gt_data['avg'].mean())
         if abs(np.array(data['avg']) - gt_data['avg']).max() > gt_data['epsilon']:
             return False
     except Exception as e:
@@ -102,7 +104,8 @@ def run_tests(tests):
 
 def main():
     all_tests = [{'name': 'vis_avg_1', 'type': 'no_file', 'rec_filename': '/home/non_existent_file.txt'},
-                 {'name': 'vis_avg_2', 'type': 'vis_avg', 'rec_filename': '/home/doronhi/Downloads/checkerboard_30cm.bag'}]
+                 # {'name': 'vis_avg_2', 'type': 'vis_avg', 'rec_filename': '/home/doronhi/Downloads/checkerboard_30cm.bag'},
+                 {'name': 'vis_avg_2', 'type': 'vis_avg', 'rec_filename': './records/outdoors.bag'}]
 
     if len(sys.argv) < 2 or '--help' in sys.argv or '/?' in sys.argv:
         print 'USAGE:'
