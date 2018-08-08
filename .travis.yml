@@ -40,7 +40,7 @@ before_install:
   
     # download data:
   - bag_filename="http://realsense-hw-public.s3.amazonaws.com/rs-tests/TestData/outdoors.bag";
-  - wget $filename -P "records/"
+  - wget $bag_filename -P "records/"
     
   # Run test:
  
