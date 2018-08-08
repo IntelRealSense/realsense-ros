@@ -29,7 +29,6 @@ before_install:
   # install realsense2-camera
   # - git clone -v --progress https://github.com/doronhi/realsense.git  # This is Done automatically by TravisCI
   - mv * ~/catkin_ws/src/realsense/
-  - mv .* ~/catkin_ws/src/realsense/
   - cd ~/catkin_ws/src/
   - catkin_init_workspace 
   - cd ..
