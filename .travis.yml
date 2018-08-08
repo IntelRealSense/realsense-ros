@@ -24,11 +24,12 @@ before_install:
   - sudo apt-get install ros-kinetic-tf -y
   - sudo apt-get install ros-kinetic-diagnostic-updater -y
   - source ~/.bashrc
-  - mkdir -p ~/catkin_ws/src
+  - mkdir -p ~/catkin_ws/src/realsense
     
   # install realsense2-camera
   # - git clone -v --progress https://github.com/doronhi/realsense.git  # This is Done automatically by TravisCI
-  - mv doronhi/realsense/ ~/catkin_ws/src
+  - mv * ~/catkin_ws/src/realsense/
+  - mv .* ~/catkin_ws/src/realsense/
   - cd ~/catkin_ws/src/
   - catkin_init_workspace 
   - cd ..
