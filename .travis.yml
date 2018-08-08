@@ -2,8 +2,6 @@ sudo: required
 dist: xenial
 
 before_install:
-  - pwd
-  - ls -l
   # - sudo apt-key adv --keyserver keys.gnupg.net --recv-key 6F3EFCDE
   - echo 'deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main' || sudo tee /etc/apt/sources.list.d/realsense-public.list
   - sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keys.gnupg.net:80 --recv-key C8B3A55A6F3EFCDE
@@ -30,9 +28,7 @@ before_install:
     
   # install realsense2-camera
   # - git clone -v --progress https://github.com/doronhi/realsense.git  # This is Done automatically by TravisCI
-  - pwd
-  - ls -l
-  - mv builds/realsense/ ~/catkin_ws/src
+  - mv doronhi/realsense/ ~/catkin_ws/src
   - cd ~/catkin_ws/src/
   - catkin_init_workspace 
   - cd ..
