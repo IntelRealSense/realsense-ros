@@ -1,5 +1,5 @@
 sudo: required
-dist: trusty
+dist: xenial
 
 before_install:
   # - sudo apt-key adv --keyserver keys.gnupg.net --recv-key 6F3EFCDE
