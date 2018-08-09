@@ -43,7 +43,7 @@ before_install:
   - wget $bag_filename -P "records/"
     
   # Run test:
- script:
+script:
   - python src/realsense/realsense2_camera/scripts/rs2_test.py --all
   
   
