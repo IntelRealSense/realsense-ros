@@ -32,110 +32,131 @@ RealSenseNodeFactory::RealSenseNodeFactory()
 void RealSenseNodeFactory::onInit()
 {
     try{
-        auto list = _ctx.query_devices();
-        if (0 == list.size())
+#ifdef BPDEBUG
+		std::cout << "Attach to Process: " << getpid() << std::endl;
+		std::cout << "Press <ENTER> key to continue." << std::endl;
+		std::cin.get();
+#endif
+		auto nh = getNodeHandle();
+		auto privateNh = getPrivateNodeHandle();
+		std::string serial_no("");
+		privateNh.param("serial_no", serial_no, std::string(""));
+		
+		std::string rosbag_filename("");
+        privateNh.param("rosbag_filename", rosbag_filename, std::string(""));
+        if (!rosbag_filename.empty())
         {
-            ROS_ERROR("No RealSense devices were found! Terminating RealSense Node...");
-            ros::shutdown();
-            exit(1);
-        }
-
-        auto privateNh = getPrivateNodeHandle();
-        auto nh = getNodeHandle();
-        std::string serial_no("");
-        privateNh.param("serial_no", serial_no, std::string(""));
-        bool found = false;
-        for (auto&& dev : list)
+			ROS_INFO_STREAM("publish topics from rosbag file: " << rosbag_filename.c_str());
+			auto pipe = std::make_shared<rs2::pipeline>();
+			rs2::config cfg;
+			cfg.enable_device_from_file(rosbag_filename.c_str(), false);
+			cfg.enable_all_streams();
+			pipe->start(cfg); //File will be opened in read mode at this point
+			auto _device = pipe->get_active_profile().get_device();
+			_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(nh, privateNh, _device, serial_no));
+		}
+        else
         {
-            auto sn = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
-            ROS_DEBUG_STREAM("Device with serial number " << sn << " was found.");
-            if (serial_no.empty())
-            {
-                _device = dev;
-                serial_no = sn;
-                found = true;
-                break;
-            }
-            else if (sn == serial_no)
-            {
-                _device = dev;
-                found = true;
-                break;
-            }
-        }
+			auto list = _ctx.query_devices();
+			if (0 == list.size())
+			{
+				ROS_ERROR("No RealSense devices were found! Terminating RealSense Node...");
+				ros::shutdown();
+				exit(1);
+			}
 
-        if (!found)
-        {
-            ROS_FATAL_STREAM("The requested device with serial number " << serial_no << " is NOT found!");
-            ros::shutdown();
-            exit(1);
-        }
+			bool found = false;
+			for (auto&& dev : list)
+			{
+				auto sn = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+				ROS_DEBUG_STREAM("Device with serial number " << sn << " was found.");
+				if (serial_no.empty())
+				{
+					_device = dev;
+					serial_no = sn;
+					found = true;
+					break;
+				}
+				else if (sn == serial_no)
+				{
+					_device = dev;
+					found = true;
+					break;
+				}
+			}
 
-        _ctx.set_devices_changed_callback([this](rs2::event_information& info)
-        {
-            if (info.was_removed(_device))
-            {
-                ROS_FATAL("The device has been disconnected! Terminating RealSense Node...");
-                ros::shutdown();
-                exit(1);
-            }
-        });
+			if (!found)
+			{
+				ROS_FATAL_STREAM("The requested device with serial number " << serial_no << " is NOT found!");
+				ros::shutdown();
+				exit(1);
+			}
 
-        // TODO
-        auto pid_str = _device.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
-        uint16_t pid;
-        std::stringstream ss;
-        ss << std::hex << pid_str;
-        ss >> pid;
-        switch(pid)
-        {
-        case SR300_PID:
-            _realSenseNode = std::unique_ptr<SR300Node>(new SR300Node(nh, privateNh, _device, serial_no));
-            break;
-        case RS400_PID:
-            _realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-            break;
-        case RS405_PID:
-            _realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-            break;
-        case RS410_PID:
-        case RS460_PID:
-            _realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-            break;
-        case RS415_PID:
-            _realSenseNode = std::unique_ptr<RS415Node>(new RS415Node(nh, privateNh, _device, serial_no));
-            break;
-        case RS420_PID:
-            _realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-            break;
-        case RS420_MM_PID:
-            _realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-            break;
-        case RS430_PID:
-            _realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-            break;
-        case RS430_MM_PID:
-            _realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-            break;
-        case RS430_MM_RGB_PID:
-            _realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-            break;
-        case RS435_RGB_PID:
-            _realSenseNode = std::unique_ptr<RS435Node>(new RS435Node(nh, privateNh, _device, serial_no));
-            break;
-        case RS_USB2_PID:
-            _realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-            break;
-        default:
-            ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);
-            ros::shutdown();
-            exit(1);
-        }
+			_ctx.set_devices_changed_callback([this](rs2::event_information& info)
+			{
+				if (info.was_removed(_device))
+				{
+					ROS_FATAL("The device has been disconnected! Terminating RealSense Node...");
+					ros::shutdown();
+					exit(1);
+				}
+			});
 
-        assert(_realSenseNode);
+			// TODO
+			auto pid_str = _device.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
+			uint16_t pid;
+			std::stringstream ss;
+			ss << std::hex << pid_str;
+			ss >> pid;
+			switch(pid)
+			{
+			case SR300_PID:
+				_realSenseNode = std::unique_ptr<SR300Node>(new SR300Node(nh, privateNh, _device, serial_no));
+				break;
+			case RS400_PID:
+				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
+				break;
+			case RS405_PID:
+				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
+				break;
+			case RS410_PID:
+			case RS460_PID:
+				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
+				break;
+			case RS415_PID:
+				_realSenseNode = std::unique_ptr<RS415Node>(new RS415Node(nh, privateNh, _device, serial_no));
+				break;
+			case RS420_PID:
+				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
+				break;
+			case RS420_MM_PID:
+				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
+				break;
+			case RS430_PID:
+				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
+				break;
+			case RS430_MM_PID:
+				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
+				break;
+			case RS430_MM_RGB_PID:
+				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
+				break;
+			case RS435_RGB_PID:
+				_realSenseNode = std::unique_ptr<RS435Node>(new RS435Node(nh, privateNh, _device, serial_no));
+				break;
+			case RS_USB2_PID:
+				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
+				break;
+			default:
+				ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);
+				ros::shutdown();
+				exit(1);
+			}
+		}
+		assert(_realSenseNode);
         _realSenseNode->publishTopics();
-        _realSenseNode->registerDynamicReconfigCb();
-    }
+		_realSenseNode->registerDynamicReconfigCb();
+	}
     catch(const std::exception& ex)
     {
         ROS_ERROR_STREAM("An exception has been thrown: " << ex.what());
