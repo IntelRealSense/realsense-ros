@@ -1,16 +1,16 @@
 sudo: required
 dist: xenial
 
+  # - git clone -v --progress https://github.com/doronhi/realsense.git  # This is Done automatically by TravisCI
 before_install:
-  # - sudo apt-key adv --keyserver keys.gnupg.net --recv-key 6F3EFCDE
   - echo 'deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main' || sudo tee /etc/apt/sources.list.d/realsense-public.list
   - sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keys.gnupg.net:80 --recv-key C8B3A55A6F3EFCDE
   - sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main"
   - sudo apt-get update -qq
-  # - sudo apt-get install linux-headers-$(uname -r) -y
-  - sudo apt-get install librealsense2-dkms --allow-unauthenticated -y
-  - sudo apt-get install librealsense2-dev --allow-unauthenticated -y
+  - sudo apt-get install librealsense2-dkms -y
+  - sudo apt-get install librealsense2-dev -y
   
+install:
   # install ROS:
   - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
   - sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
@@ -27,8 +27,7 @@ before_install:
   - mkdir -p ~/catkin_ws/src/realsense
     
   # install realsense2-camera
-  # - git clone -v --progress https://github.com/doronhi/realsense.git  # This is Done automatically by TravisCI
-  - mv * ~/catkin_ws/src/realsense/
+  - mv * ~/catkin_ws/src/realsense/     # This leaves behind .git, .gitignore and .travis.yml but no matter.
   - cd ~/catkin_ws/src/
   - catkin_init_workspace 
   - cd ..
@@ -46,7 +45,7 @@ before_install:
 script:
   - python src/realsense/realsense2_camera/scripts/rs2_test.py --all
   
-  
+ 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
