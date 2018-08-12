@@ -900,7 +900,7 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     }
 }
 
-tf::Quaternion BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[3]) const
+tf::Quaternion BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[9]) const
 {
     Eigen::Matrix3f m;
     // We need to be careful about the order, as RS2 rotation matrix is
