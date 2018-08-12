@@ -1,7 +1,7 @@
 <launch>
   <arg name="serial_no"         default=""/>
   <arg name="json_file_path"    default=""/>
-  <arg name="namespace"         default="camera"/>
+  <arg name="camera"            default="camera"/>
   <arg name="rosbag_filename"   default=""/>
   
   <arg name="fisheye_width"       default="0"/>
@@ -38,7 +38,7 @@
 
   <arg name="align_depth"         default="false"/>
 
-  <group ns="$(arg namespace)">
+  <group ns="$(arg camera)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="serial_no"                value="$(arg serial_no)"/>
       <arg name="json_file_path"           value="$(arg json_file_path)"/>
