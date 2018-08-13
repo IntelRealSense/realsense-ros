@@ -1328,9 +1328,6 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
         }
     }
 
-    if (copy_data_from_frame)
-        image.data = (uint8_t*)f.get_data();
-
     ++(seq[stream]);
     auto& info_publisher = info_publishers.at(stream);
     auto& image_publisher = image_publishers.at(stream);
