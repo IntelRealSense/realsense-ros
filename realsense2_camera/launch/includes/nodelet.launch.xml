@@ -2,6 +2,7 @@
   <arg name="manager"             default="realsense2_camera_manager"/>
   <arg name="serial_no"           default=""/>
   <arg name="json_file_path"      default=""/>
+  <arg name="rosbag_filename"     default=""/>
   <arg name="depth"               default="depth"/>
   <arg name="infra1"              default="infra1"/>
   <arg name="infra2"              default="infra2"/>
@@ -47,6 +48,7 @@
   <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)">
     <param name="serial_no"                type="str"  value="$(arg serial_no)"/>
     <param name="json_file_path"           type="str"  value="$(arg json_file_path)"/>
+    <param name="rosbag_filename"          type="str"  value="$(arg rosbag_filename)"/>
 
     <param name="enable_pointcloud"        type="bool" value="$(arg enable_pointcloud)"/>
     <param name="enable_sync"              type="bool" value="$(arg enable_sync)"/>
@@ -89,10 +91,10 @@
     <param name="accel_optical_frame_id"   type="str"  value="camera_accel_optical_frame"/>
     <param name="gyro_optical_frame_id"    type="str"  value="camera_gyro_optical_frame"/>
 
-    <param name="camera_aligned_depth_to_color_frame_id"   type="str"  value="camera_aligned_depth_to_color_frame"/>
-    <param name="camera_aligned_depth_to_infra1_frame_id"  type="str"  value="camera_aligned_depth_to_infra1_frame"/>
-    <param name="camera_aligned_depth_to_infra2_frame_id"  type="str"  value="camera_aligned_depth_to_infra2_frame"/>
-    <param name="camera_aligned_depth_to_fisheye_frame_id" type="str"  value="camera_aligned_depth_to_fisheye_frame"/>
+    <param name="aligned_depth_to_color_frame_id"   type="str"  value="camera_aligned_depth_to_color_frame"/>
+    <param name="aligned_depth_to_infra1_frame_id"  type="str"  value="camera_aligned_depth_to_infra1_frame"/>
+    <param name="aligned_depth_to_infra2_frame_id"  type="str"  value="camera_aligned_depth_to_infra2_frame"/>
+    <param name="aligned_depth_to_fisheye_frame_id" type="str"  value="camera_aligned_depth_to_fisheye_frame"/>
   </node>
 </launch>
 
