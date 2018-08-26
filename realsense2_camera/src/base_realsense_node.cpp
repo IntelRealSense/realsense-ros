@@ -385,8 +385,6 @@ void BaseRealSenseNode::alignFrame(const rs2_intrinsics& from_intrin,
 {
     static const auto meter_to_mm = 0.001f;
     uint8_t* p_out_frame = out_vec.data();
-    auto from_vid_frame = from_image.as<rs2::video_frame>();
-    auto from_bytes_per_pixel = from_vid_frame.get_bytes_per_pixel();
 
     static const auto blank_color = 0x00;
     memset(p_out_frame, blank_color, other_intrin.height * other_intrin.width * output_image_bytes_per_pixel);
@@ -428,13 +426,9 @@ void BaseRealSenseNode::alignFrame(const rs2_intrinsics& from_intrin,
                     for (int x = other_x0; x <= other_x1; ++x)
                     {
                         int out_pixel_index = y * other_intrin.width + x;
-                        //Tranfer n-bit pixel to n-bit pixel
-                        for (int i = 0; i < from_bytes_per_pixel; i++)
-                        {
-                            const auto out_offset = out_pixel_index * output_image_bytes_per_pixel + i;
-                            const auto from_offset = from_pixel_index * output_image_bytes_per_pixel + i;
-                            p_out_frame[out_offset] = p_from_frame[from_offset] * (depth_units / meter_to_mm);
-                        }
+                        uint16_t* p_from_depth_frame = (uint16_t*)p_from_frame;
+                        uint16_t* p_out_depth_frame = (uint16_t*)p_out_frame;
+                        p_out_depth_frame[out_pixel_index] = p_from_depth_frame[from_pixel_index] * (depth_units / meter_to_mm);
                     }
                 }
             }
@@ -500,54 +494,72 @@ void BaseRealSenseNode::filterFrame(rs2::frame& frame)
     }
 }
 
+void BaseRealSenseNode::enable_devices()
+{
+	for (auto& streams : IMAGE_STREAMS)
+	{
+		for (auto& elem : streams)
+		{
+			if (_enable[elem])
+			{
+				auto& sens = _sensors[elem];
+				auto profiles = sens.get_stream_profiles();
+				for (auto& profile : profiles)
+				{
+					auto video_profile = profile.as<rs2::video_stream_profile>();
+					ROS_DEBUG_STREAM("Sensor profile: " <<
+									 "Format: " << video_profile.format() <<
+									 ", Width: " << video_profile.width() <<
+									 ", Height: " << video_profile.height() <<
+									 ", FPS: " << video_profile.fps());
+
+					if (video_profile.format() == _format[elem] &&
+						(_width[elem] == 0 || video_profile.width() == _width[elem]) &&
+						(_height[elem] == 0 || video_profile.height() == _height[elem]) &&
+						(_fps[elem] == 0 || video_profile.fps() == _fps[elem]) &&
+						video_profile.stream_index() == elem.second)
+					{
+						_width[elem] = video_profile.width();
+						_height[elem] = video_profile.height();
+						_fps[elem] = video_profile.fps();
+
+						_enabled_profiles[elem].push_back(profile);
+
+						_image[elem] = cv::Mat(_width[elem], _height[elem], _image_format[elem], cv::Scalar(0, 0, 0));
+
+						ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem]);
+						break;
+					}
+				}
+				if (_enabled_profiles.find(elem) == _enabled_profiles.end())
+				{
+					ROS_WARN_STREAM("Given stream configuration is not supported by the device! " <<
+						" Stream: " << rs2_stream_to_string(elem.first) <<
+						", Stream Index: " << elem.second <<
+						", Format: " << _format[elem] <<
+						", Width: " << _width[elem] <<
+						", Height: " << _height[elem] <<
+						", FPS: " << _fps[elem]);
+					_enable[elem] = false;
+				}
+			}
+		}
+	}
+	if (_align_depth)
+	{
+		for (auto& profiles : _enabled_profiles)
+		{
+			_depth_aligned_image[profiles.first] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
+		}
+	}
+}
+
 void BaseRealSenseNode::setupStreams()
 {
-    ROS_INFO("setupStreams...");
+	ROS_INFO("setupStreams...");
+	enable_devices();
     try{
-        for (auto& streams : IMAGE_STREAMS)
-        {
-            for (auto& elem : streams)
-            {
-                if (_enable[elem])
-                {
-                    auto& sens = _sensors[elem];
-                    auto profiles = sens.get_stream_profiles();
-                    for (auto& profile : profiles)
-                    {
-                        auto video_profile = profile.as<rs2::video_stream_profile>();
-                        if (video_profile.format() == _format[elem] &&
-                            video_profile.width()  == _width[elem] &&
-                            video_profile.height() == _height[elem] &&
-                            video_profile.fps()    == _fps[elem] &&
-                            video_profile.stream_index() == elem.second)
-                        {
-                            _enabled_profiles[elem].push_back(profile);
-
-                            _image[elem] = cv::Mat(_width[elem], _height[elem], _image_format[elem], cv::Scalar(0, 0, 0));
-
-                            if (_align_depth)
-                                _depth_aligned_image[elem] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
-
-                            ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem]);
-                            break;
-                        }
-                    }
-                    if (_enabled_profiles.find(elem) == _enabled_profiles.end())
-                    {
-                        ROS_WARN_STREAM("Given stream configuration is not supported by the device! " <<
-                                        " Stream: " << rs2_stream_to_string(elem.first) <<
-                                        ", Stream Index: " << elem.second <<
-                                        ", Format: " << _format[elem] <<
-                                        ", Width: " << _width[elem] <<
-                                        ", Height: " << _height[elem] <<
-                                        ", FPS: " << _fps[elem]);
-                        _enable[elem] = false;
-                    }
-                }
-            }
-        }
-
-        // Publish image stream info
+		// Publish image stream info
         for (auto& profiles : _enabled_profiles)
         {
             for (auto& profile : profiles.second)
@@ -810,10 +822,6 @@ void BaseRealSenseNode::setupStreams()
             static const char* frame_id = "depth_to_fisheye_extrinsics";
             auto ex = getRsExtrinsics(DEPTH, FISHEYE);
             _depth_to_other_extrinsics[FISHEYE] = ex;
-
-            if (_align_depth)
-                ex = _i_ex;
-
             _depth_to_other_extrinsics_publishers[FISHEYE].publish(rsExtrinsicsToMsg(ex, frame_id));
         }
 
@@ -823,10 +831,6 @@ void BaseRealSenseNode::setupStreams()
             static const char* frame_id = "depth_to_color_extrinsics";
             auto ex = getRsExtrinsics(DEPTH, COLOR);
             _depth_to_other_extrinsics[COLOR] = ex;
-
-            if (_align_depth)
-                ex = _i_ex;
-
             _depth_to_other_extrinsics_publishers[COLOR].publish(rsExtrinsicsToMsg(ex, frame_id));
         }
 
@@ -836,10 +840,6 @@ void BaseRealSenseNode::setupStreams()
             static const char* frame_id = "depth_to_infra1_extrinsics";
             auto ex = getRsExtrinsics(DEPTH, INFRA1);
             _depth_to_other_extrinsics[INFRA1] = ex;
-
-            if (_align_depth)
-                ex = _i_ex;
-
             _depth_to_other_extrinsics_publishers[INFRA1].publish(rsExtrinsicsToMsg(ex, frame_id));
         }
 
@@ -849,10 +849,6 @@ void BaseRealSenseNode::setupStreams()
             static const char* frame_id = "depth_to_infra2_extrinsics";
             auto ex = getRsExtrinsics(DEPTH, INFRA2);
             _depth_to_other_extrinsics[INFRA2] = ex;
-
-            if (_align_depth)
-                ex = _i_ex;
-
             _depth_to_other_extrinsics_publishers[INFRA2].publish(rsExtrinsicsToMsg(ex, frame_id));
         }
     }
@@ -943,14 +939,16 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     }
 }
 
-Eigen::Quaternionf BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[3]) const
+tf::Quaternion BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[9]) const
 {
     Eigen::Matrix3f m;
-    m << rotation[0], rotation[1], rotation[2],
-         rotation[3], rotation[4], rotation[5],
-         rotation[6], rotation[7], rotation[8];
+    // We need to be careful about the order, as RS2 rotation matrix is
+    // column-major, while Eigen::Matrix3f expects row-major.
+    m << rotation[0], rotation[3], rotation[6],
+         rotation[1], rotation[4], rotation[7],
+         rotation[2], rotation[5], rotation[8];
     Eigen::Quaternionf q(m);
-    return q;
+    return tf::Quaternion(q.x(), q.y(), q.z(), q.w());
 }
 
 void BaseRealSenseNode::publish_static_tf(const ros::Time& t,
@@ -1005,11 +1003,12 @@ void BaseRealSenseNode::publishStaticTransforms()
     if (_enable[COLOR])
     {
         // Transform base to color
-        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(DEPTH, COLOR));
+        const auto& ex = getRsExtrinsics(COLOR, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
+        Q = quaternion_optical * Q * quaternion_optical.inverse();
 
         float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
-        quaternion q1{Q.x(), Q.y(), Q.z(), Q.w()};
+        quaternion q1{Q.getX(), Q.getY(), Q.getZ(), Q.getW()};
         publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _frame_id[COLOR]);
 
         // Transform color frame to color optical frame
@@ -1025,12 +1024,13 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[INFRA1])
     {
-        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(DEPTH, INFRA1));
+        const auto& ex = getRsExtrinsics(INFRA1, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
+        Q = quaternion_optical * Q * quaternion_optical.inverse();
 
         // Transform base to infra1
         float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
-        quaternion q1{Q.x(), Q.y(), Q.z(), Q.w()};
+        quaternion q1{Q.getX(), Q.getY(), Q.getZ(), Q.getW()};
         publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _frame_id[INFRA1]);
 
         // Transform infra1 frame to infra1 optical frame
@@ -1046,12 +1046,13 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[INFRA2])
     {
-        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(DEPTH, INFRA2));
+        const auto& ex = getRsExtrinsics(INFRA2, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
+        Q = quaternion_optical * Q * quaternion_optical.inverse();
 
         // Transform base to infra2
         float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
-        quaternion q1{Q.x(), Q.y(), Q.z(), Q.w()};
+        quaternion q1{Q.getX(), Q.getY(), Q.getZ(), Q.getW()};
         publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _frame_id[INFRA2]);
 
         // Transform infra2 frame to infra1 optical frame
@@ -1067,12 +1068,13 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[FISHEYE])
     {
-        auto& ex = (_align_depth)?(_i_ex):(getRsExtrinsics(DEPTH, FISHEYE));
+        const auto& ex = getRsExtrinsics(FISHEYE, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
+        Q = quaternion_optical * Q * quaternion_optical.inverse();
 
         // Transform base to infra2
         float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
-        quaternion q1{Q.x(), Q.y(), Q.z(), Q.w()};
+        quaternion q1{Q.getX(), Q.getY(), Q.getZ(), Q.getW()};
         publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _frame_id[FISHEYE]);
 
         // Transform infra2 frame to infra1 optical frame
@@ -1226,8 +1228,8 @@ void BaseRealSenseNode::publishRgbToDepthPCTopic(const ros::Time& t, const std::
             rs2_transform_point_to_point(color_point, &depth2color_extrinsics, depth_point);
             rs2_project_point_to_pixel(color_pixel, &color_intrinsics, color_point);
 
-            if (color_pixel[1] < 0.f || color_pixel[1] > color_intrinsics.height
-                || color_pixel[0] < 0.f || color_pixel[0] > color_intrinsics.width)
+            if (color_pixel[1] < 0.f || color_pixel[1] >= color_intrinsics.height
+                || color_pixel[0] < 0.f || color_pixel[0] >= color_intrinsics.width)
             {
                 // For out of bounds color data, default to a shade of blue in order to visually distinguish holes.
                 // This color value is same as the librealsense out of bounds color value.
@@ -1327,9 +1329,6 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
             image_data = depth_data;
         }
     }
-
-    if (copy_data_from_frame)
-        image.data = (uint8_t*)f.get_data();
 
     ++(seq[stream]);
     auto& info_publisher = info_publishers.at(stream);

@@ -38,7 +38,12 @@ source ~/.bashrc
 ## Usage Instructions
 
 ### Start the camera node
-To start the camera node in ROS, plug in the camera, then type the following command:
+To start the camera node in ROS, install rgbd_launch:
+
+```bash
+sudo apt-get install ros-kinetic-rgbd-launch
+```
+Then type:
 
 ```bash
 roslaunch realsense2_camera rs_camera.launch
