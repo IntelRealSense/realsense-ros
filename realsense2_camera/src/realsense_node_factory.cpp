@@ -109,42 +109,6 @@ void RealSenseNodeFactory::onInit()
             auto _device = pipe->get_active_profile().get_device();
             _realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(nh, privateNh, _device, serial_no));
         }else{
-
-            auto list = _ctx.query_devices();
-            if (0 == list.size())
-            {
-                ROS_ERROR("No RealSense devices were found! Terminating RealSense Node...");
-                ros::shutdown();
-                exit(1);
-            }
-
-            bool found = false;
-            for (auto&& dev : list)
-            {
-                auto sn = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
-                ROS_DEBUG_STREAM("Device with serial number " << sn << " was found.");
-                if (serial_no.empty())
-                {
-                    _device = dev;
-                    serial_no = sn;
-                    found = true;
-                    break;
-                }
-                else if (sn == serial_no)
-                {
-                    _device = dev;
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found)
-            {
-                ROS_FATAL_STREAM("The requested device with serial number " << serial_no << " is NOT found!");
-                ros::shutdown();
-                exit(1);
-            }
-
             ROS_INFO("Resetting device...");
             dev = getDevice(serial_no);
             dev.hardware_reset();
