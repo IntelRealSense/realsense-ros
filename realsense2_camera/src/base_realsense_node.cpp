@@ -470,54 +470,72 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frame depth_frame, cons
     }
 }
 
+void BaseRealSenseNode::enable_devices()
+{
+	for (auto& streams : IMAGE_STREAMS)
+	{
+		for (auto& elem : streams)
+		{
+			if (_enable[elem])
+			{
+				auto& sens = _sensors[elem];
+				auto profiles = sens.get_stream_profiles();
+				for (auto& profile : profiles)
+				{
+					auto video_profile = profile.as<rs2::video_stream_profile>();
+					ROS_DEBUG_STREAM("Sensor profile: " <<
+									 "Format: " << video_profile.format() <<
+									 ", Width: " << video_profile.width() <<
+									 ", Height: " << video_profile.height() <<
+									 ", FPS: " << video_profile.fps());
+
+					if (video_profile.format() == _format[elem] &&
+						(_width[elem] == 0 || video_profile.width() == _width[elem]) &&
+						(_height[elem] == 0 || video_profile.height() == _height[elem]) &&
+						(_fps[elem] == 0 || video_profile.fps() == _fps[elem]) &&
+						video_profile.stream_index() == elem.second)
+					{
+						_width[elem] = video_profile.width();
+						_height[elem] = video_profile.height();
+						_fps[elem] = video_profile.fps();
+
+						_enabled_profiles[elem].push_back(profile);
+
+						_image[elem] = cv::Mat(_width[elem], _height[elem], _image_format[elem], cv::Scalar(0, 0, 0));
+
+						ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem]);
+						break;
+					}
+				}
+				if (_enabled_profiles.find(elem) == _enabled_profiles.end())
+				{
+					ROS_WARN_STREAM("Given stream configuration is not supported by the device! " <<
+						" Stream: " << rs2_stream_to_string(elem.first) <<
+						", Stream Index: " << elem.second <<
+						", Format: " << _format[elem] <<
+						", Width: " << _width[elem] <<
+						", Height: " << _height[elem] <<
+						", FPS: " << _fps[elem]);
+					_enable[elem] = false;
+				}
+			}
+		}
+	}
+	if (_align_depth)
+	{
+		for (auto& profiles : _enabled_profiles)
+		{
+			_depth_aligned_image[profiles.first] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
+		}
+	}
+}
+
 void BaseRealSenseNode::setupStreams()
 {
-    ROS_INFO("setupStreams...");
+	ROS_INFO("setupStreams...");
+	enable_devices();
     try{
-        for (auto& streams : IMAGE_STREAMS)
-        {
-            for (auto& elem : streams)
-            {
-                if (_enable[elem])
-                {
-                    auto& sens = _sensors[elem];
-                    auto profiles = sens.get_stream_profiles();
-                    for (auto& profile : profiles)
-                    {
-                        auto video_profile = profile.as<rs2::video_stream_profile>();
-                        if (video_profile.format() == _format[elem] &&
-                            video_profile.width()  == _width[elem] &&
-                            video_profile.height() == _height[elem] &&
-                            video_profile.fps()    == _fps[elem] &&
-                            video_profile.stream_index() == elem.second)
-                        {
-                            _enabled_profiles[elem].push_back(profile);
-
-                            _image[elem] = cv::Mat(_width[elem], _height[elem], _image_format[elem], cv::Scalar(0, 0, 0));
-
-                            if (_align_depth)
-                                _depth_aligned_image[elem] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
-
-                            ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem]);
-                            break;
-                        }
-                    }
-                    if (_enabled_profiles.find(elem) == _enabled_profiles.end())
-                    {
-                        ROS_WARN_STREAM("Given stream configuration is not supported by the device! " <<
-                                        " Stream: " << rs2_stream_to_string(elem.first) <<
-                                        ", Stream Index: " << elem.second <<
-                                        ", Format: " << _format[elem] <<
-                                        ", Width: " << _width[elem] <<
-                                        ", Height: " << _height[elem] <<
-                                        ", FPS: " << _fps[elem]);
-                        _enable[elem] = false;
-                    }
-                }
-            }
-        }
-
-        // Publish image stream info
+		// Publish image stream info
         for (auto& profiles : _enabled_profiles)
         {
             for (auto& profile : profiles.second)
@@ -882,7 +900,7 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     }
 }
 
-tf::Quaternion BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[3]) const
+tf::Quaternion BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[9]) const
 {
     Eigen::Matrix3f m;
     // We need to be careful about the order, as RS2 rotation matrix is

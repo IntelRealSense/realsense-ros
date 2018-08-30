@@ -3,6 +3,7 @@ project(realsense2_camera)
 add_compile_options(-std=c++11)
 
 option(BUILD_WITH_OPENMP "Use OpenMP" OFF)
+option(SET_USER_BREAK_AT_STARTUP "Set user wait point in startup (for debug)" OFF)
 
 find_package(catkin REQUIRED COMPONENTS
     message_generation
@@ -25,6 +26,11 @@ if(BUILD_WITH_OPENMP)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -fopenmp")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
     endif()
+endif()
+
+if(SET_USER_BREAK_AT_STARTUP)
+	message("GOT FLAG IN CmakeLists.txt")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBPDEBUG")
 endif()
 
 find_package(realsense2)
@@ -56,6 +62,7 @@ generate_messages(
 include_directories(
     include
     ${catkin_INCLUDE_DIRS}
+    ${realsense_INCLUDE_DIR}
     )
 
 # Generate dynamic reconfigure options from .cfg files
@@ -69,7 +76,7 @@ generate_dynamic_reconfigure_options(
 # RealSense ROS Node
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs librealsense2
+    CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs
     nodelet
     cv_bridge
     image_transport

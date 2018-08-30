@@ -1,46 +1,48 @@
 <launch>
-  <arg name="serial_no"           default=""/>
-  <arg name="json_file_path"      default=""/>
-  <arg name="camera"              default="camera"/>
-
-  <arg name="fisheye_width"       default="640"/>
-  <arg name="fisheye_height"      default="480"/>
+  <arg name="serial_no"         default=""/>
+  <arg name="json_file_path"    default=""/>
+  <arg name="camera"            default="camera"/>
+  <arg name="rosbag_filename"   default=""/>
+  
+  <arg name="fisheye_width"       default="0"/>
+  <arg name="fisheye_height"      default="0"/>
   <arg name="enable_fisheye"      default="true"/>
 
-  <arg name="depth_width"         default="640"/>
-  <arg name="depth_height"        default="480"/>
+  <arg name="depth_width"         default="0"/>
+  <arg name="depth_height"        default="0"/>
   <arg name="enable_depth"        default="true"/>
 
-  <arg name="infra1_width"        default="640"/>
-  <arg name="infra1_height"       default="480"/>
+  <arg name="infra1_width"        default="0"/>
+  <arg name="infra1_height"       default="0"/>
   <arg name="enable_infra1"       default="true"/>
 
-  <arg name="infra2_width"        default="640"/>
-  <arg name="infra2_height"       default="480"/>
+  <arg name="infra2_width"        default="0"/>
+  <arg name="infra2_height"       default="0"/>
   <arg name="enable_infra2"       default="true"/>
 
-  <arg name="color_width"         default="640"/>
-  <arg name="color_height"        default="480"/>
+  <arg name="color_width"         default="0"/>
+  <arg name="color_height"        default="0"/>
   <arg name="enable_color"        default="true"/>
 
-  <arg name="fisheye_fps"         default="30"/>
-  <arg name="depth_fps"           default="30"/>
-  <arg name="infra1_fps"          default="30"/>
-  <arg name="infra2_fps"          default="30"/>
-  <arg name="color_fps"           default="30"/>
+  <arg name="fisheye_fps"         default="0"/>
+  <arg name="depth_fps"           default="0"/>
+  <arg name="infra1_fps"          default="0"/>
+  <arg name="infra2_fps"          default="0"/>
+  <arg name="color_fps"           default="0"/>
   <arg name="gyro_fps"            default="1000"/>
   <arg name="accel_fps"           default="1000"/>
   <arg name="enable_imu"          default="true"/>
 
   <arg name="enable_pointcloud"   default="false"/>
-  <arg name="enable_sync"         default="true"/>
-  <arg name="align_depth"         default="true"/>
+  <arg name="enable_sync"         default="false"/>
 
+  <arg name="align_depth"         default="false"/>
 
   <group ns="$(arg camera)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="serial_no"                value="$(arg serial_no)"/>
       <arg name="json_file_path"           value="$(arg json_file_path)"/>
+      <arg name="rosbag_filename"           value="$(arg rosbag_filename)"/>
 
       <arg name="enable_pointcloud"        value="$(arg enable_pointcloud)"/>
       <arg name="enable_sync"              value="$(arg enable_sync)"/>
