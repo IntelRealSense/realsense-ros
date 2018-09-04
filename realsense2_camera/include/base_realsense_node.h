@@ -95,6 +95,7 @@ namespace realsense2_camera
         void setupDevice();
         void setupPublishers();
         void enable_devices();
+        void setupFilters();
         void setupStreams();
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         tf::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
@@ -170,6 +171,9 @@ namespace realsense2_camera
         bool _sync_frames;
         bool _pointcloud;
 		PipelineSyncer _syncer;
+		std::map<string, std::shared_ptr<rs2::processing_block> _filters;
+        // Declare pointcloud object, for calculating pointclouds and texture mappings
+        // rs2::pointcloud _pc_filter;
 
         std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
         std::map<stream_index_pair, std::string> _depth_aligned_encoding;

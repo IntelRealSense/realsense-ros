@@ -87,6 +87,7 @@ void BaseRealSenseNode::publishTopics()
     setupDevice();
     setupPublishers();
     setupStreams();
+    setupFilters();
     publishStaticTransforms();
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
@@ -528,6 +529,14 @@ void BaseRealSenseNode::enable_devices()
 			_depth_aligned_image[profiles.first] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
 		}
 	}
+}
+
+void BaseRealSenseNode::setupFilters()
+{
+    if (_pointcloud)
+    {
+        _filters["pointcloud"] = std::make_shared<rs2::pointcloud>();
+    }
 }
 
 void BaseRealSenseNode::setupStreams()
