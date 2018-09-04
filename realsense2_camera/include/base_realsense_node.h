@@ -170,8 +170,8 @@ namespace realsense2_camera
         bool _align_depth;
         bool _sync_frames;
         bool _pointcloud;
-		PipelineSyncer _syncer;
-		std::map<string, std::shared_ptr<rs2::processing_block> _filters;
+        PipelineSyncer _syncer;
+        std::map<std::string, std::shared_ptr<rs2::processing_block>> _filters;
         // Declare pointcloud object, for calculating pointclouds and texture mappings
         // rs2::pointcloud _pc_filter;
 

@@ -593,6 +593,22 @@ void BaseRealSenseNode::setupStreams()
 
                         ROS_DEBUG("Frameset contain (%s, %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
                                   rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+                    }
+                    for (std::map<std::string, std::shared_ptr<rs2::processing_block>>::const_iterator filter_it = _filters.begin(); filter_it != _filters.end(); filter_it++)
+                    {
+                        ROS_DEBUG("Applying filter: %s", filter_it->first.c_str());
+                        filter_it->second->process(frame);
+                    }
+
+                    ROS_DEBUG("List of frameset after applying filters:");
+                    for (auto it = frameset.begin(); it != frameset.end(); ++it)
+                    {
+                        auto f = (*it);
+                        auto stream_type = f.get_profile().stream_type();
+                        auto stream_index = f.get_profile().stream_index();
+
+                        ROS_DEBUG("Frameset contain (%s, %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
+                                  rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
 
                         stream_index_pair sip{stream_type,stream_index};
                         publishFrame(f, t,
