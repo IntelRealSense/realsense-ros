@@ -103,6 +103,7 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("align_depth", _align_depth, ALIGN_DEPTH);
     _pnh.param("enable_pointcloud", _pointcloud, POINTCLOUD);
     _pnh.param("enable_sync", _sync_frames, SYNC_FRAMES);
+    _pnh.param("max_depth", _max_depth, MAX_DEPTH);
     if (_pointcloud || _align_depth)
         _sync_frames = true;
 
@@ -1106,7 +1107,7 @@ void BaseRealSenseNode::publishRgbToDepthPCTopic(const ros::Time& t, const std::
             float depth_pixel[2] = {static_cast<float>(x), static_cast<float>(y)};
             rs2_deproject_pixel_to_point(depth_point, &depth_intrinsics, depth_pixel, scaled_depth);
 
-            if (depth_point[2] <= 0.f || depth_point[2] > 5.f)
+            if (depth_point[2] <= 0.f || depth_point[2] > _max_depth)
             {
                 depth_point[0] = 0.f;
                 depth_point[1] = 0.f;
