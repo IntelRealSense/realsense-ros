@@ -92,6 +92,6 @@ namespace realsense2_camera
     const std::string DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID = "camera_aligned_depth_to_fisheye_frame";
 
     const std::string DEFAULT_FILTERS                  = "";
-
+    const std::string DEFAULT_REQUIRED_FIRMWARE_VERSION = "";
     using stream_index_pair = std::pair<rs2_stream, int>;
 }  // namespace realsense2_camera

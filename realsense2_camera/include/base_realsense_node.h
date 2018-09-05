@@ -103,6 +103,8 @@ namespace realsense2_camera
         };
 
         static std::string getNamespaceStr();
+        static bool isFirmwareLatest(const std::string& current_version,
+                                     const std::string& required_version);
         void getParameters();
         void setupDevice();
         void setupPublishers();
@@ -147,6 +149,7 @@ namespace realsense2_camera
                         const rs2_extrinsics& from_to_other,
                         std::vector<uint8_t>& out_vec);
 
+        std::string _required_firmware_version;
         std::string _json_file_path;
         std::string _serial_no;
         float _depth_scale_meters;

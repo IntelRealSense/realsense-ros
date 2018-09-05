@@ -12,6 +12,22 @@ std::string BaseRealSenseNode::getNamespaceStr()
     return ns;
 }
 
+bool BaseRealSenseNode::isFirmwareLatest(const std::string& current_version,
+                                         const std::string& required_version)
+{
+    std::istringstream current_stream(current_version);
+    std::istringstream required_stream(required_version);
+    std::string str;
+    while (getline(required_stream, str, '.'))
+    {
+        const int required_version = atoi(str.c_str());
+        if (!getline(current_stream, str, '.')) str = "";
+        const int current_version = atoi(str.c_str());
+        if (current_version < required_version) return false;
+    }
+    return true;
+}
+
 BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
                                      ros::NodeHandle& privateNodeHandle,
                                      rs2::device dev,
@@ -131,6 +147,7 @@ void BaseRealSenseNode::getParameters()
     if (_pointcloud || _align_depth || _filters_str.size() > 0)
         _sync_frames = true;
 
+    _pnh.param("required_firmware_version", _required_firmware_version, DEFAULT_REQUIRED_FIRMWARE_VERSION);
     _pnh.param("json_file_path", _json_file_path, std::string(""));
 
     _pnh.param("depth_width", _width[DEPTH], DEPTH_WIDTH);
@@ -228,6 +245,12 @@ void BaseRealSenseNode::setupDevice()
 
         auto fw_ver = _dev.get_info(RS2_CAMERA_INFO_FIRMWARE_VERSION);
         ROS_INFO_STREAM("Device FW version: " << fw_ver);
+        if (!isFirmwareLatest(fw_ver, _required_firmware_version))
+        {
+            ROS_ERROR_STREAM("Current FW is older than the required: " << _required_firmware_version);
+            ros::shutdown();
+            exit(1);
+        }
 
         auto pid = _dev.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
         ROS_INFO_STREAM("Device Product ID: 0x" << pid);
