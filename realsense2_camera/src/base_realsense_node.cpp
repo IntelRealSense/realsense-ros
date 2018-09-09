@@ -87,7 +87,9 @@ void BaseRealSenseNode::publishTopics()
     setupDevice();
     setupPublishers();
     setupStreams();
-    publishStaticTransforms();
+    if (_enable[DEPTH]) {
+      publishStaticTransforms();
+    }
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
@@ -854,7 +856,7 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     _camera_info[stream_index].P.at(11) = 0;
 
     rs2::stream_profile depth_profile;
-    if (!getEnabledProfile(DEPTH, depth_profile))
+    if (_enable[DEPTH] && !getEnabledProfile(DEPTH, depth_profile))
     {
         ROS_ERROR_STREAM("Given depth profile is not supported by current device!");
         ros::shutdown();
@@ -960,7 +962,6 @@ void BaseRealSenseNode::publishStaticTransforms()
         exit(1);
     }
 
-
     if (_enable[COLOR])
     {
         // Transform base to color
@@ -1048,6 +1049,7 @@ void BaseRealSenseNode::publishStaticTransforms()
             publish_static_tf(transform_ts_, zero_trans, q2, _depth_aligned_frame_id[FISHEYE], _optical_frame_id[FISHEYE]);
         }
     }
+
 }
 
 void BaseRealSenseNode::publishRgbToDepthPCTopic(const ros::Time& t, const std::map<stream_index_pair, bool>& is_frame_arrived)
