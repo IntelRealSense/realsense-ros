@@ -32,6 +32,8 @@ namespace realsense2_camera
     const uint16_t RS435_RGB_PID    = 0x0b07; // AWGC
     const uint16_t RS405_PID        = 0x0b0c; // DS5U
 
+    const float CLOCK_OFFSET_FILTER_WIDTH = 1.f;
+    const double DEPTH_LATENCY = 0.;
     const bool ALIGN_DEPTH    = false;
     const bool POINTCLOUD     = false;
     const bool SYNC_FRAMES    = false;

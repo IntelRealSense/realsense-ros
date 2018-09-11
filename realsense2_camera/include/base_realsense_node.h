@@ -147,6 +147,8 @@ namespace realsense2_camera
                         const rs2_extrinsics& from_to_other,
                         std::vector<uint8_t>& out_vec);
 
+        void updateClockOffset(const ros::Time& ros_time, const rs2::frame& frame);
+
         std::string _json_file_path;
         std::string _serial_no;
         float _depth_scale_meters;
@@ -175,11 +177,12 @@ namespace realsense2_camera
         std::map<stream_index_pair, int> _unit_step_size;
         std::map<stream_index_pair, sensor_msgs::CameraInfo> _camera_info;
         bool _intialize_time_base;
-        double _camera_time_base;
+        double _last_sync_time;
+        double _clock_offset;
+        double _depth_latency;
         std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
 
         ros::Publisher _pointcloud_publisher;
-        ros::Time _ros_time_base;
         bool _align_depth;
         bool _sync_frames;
         bool _pointcloud;
