@@ -853,15 +853,6 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     _camera_info[stream_index].P.at(10) = 1;
     _camera_info[stream_index].P.at(11) = 0;
 
-    rs2::stream_profile depth_profile;
-    if (!getEnabledProfile(DEPTH, depth_profile))
-    {
-        ROS_ERROR_STREAM("Given depth profile is not supported by current device!");
-        ros::shutdown();
-        exit(1);
-    }
-
-
     _camera_info[stream_index].distortion_model = "plumb_bob";
 
     // set R (rotation matrix) values to identity matrix
@@ -952,16 +943,7 @@ void BaseRealSenseNode::publishStaticTransforms()
     quaternion q{quaternion_optical.getX(), quaternion_optical.getY(), quaternion_optical.getZ(), quaternion_optical.getW()};
     publish_static_tf(transform_ts_, zero_trans, q, _frame_id[DEPTH], _optical_frame_id[DEPTH]);
 
-    rs2::stream_profile depth_profile;
-    if (!getEnabledProfile(DEPTH, depth_profile))
-    {
-        ROS_ERROR_STREAM("Given depth profile is not supported by current device!");
-        ros::shutdown();
-        exit(1);
-    }
-
-
-    if (_enable[COLOR])
+    if (_enable[COLOR] && _enable[DEPTH])
     {
         // Transform base to color
         const auto& ex = getRsExtrinsics(COLOR, DEPTH);
@@ -983,7 +965,7 @@ void BaseRealSenseNode::publishStaticTransforms()
         }
     }
 
-    if (_enable[INFRA1])
+    if (_enable[INFRA1] && _enable[DEPTH])
     {
         const auto& ex = getRsExtrinsics(INFRA1, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
@@ -1005,7 +987,7 @@ void BaseRealSenseNode::publishStaticTransforms()
         }
     }
 
-    if (_enable[INFRA2])
+    if (_enable[INFRA2] && _enable[DEPTH])
     {
         const auto& ex = getRsExtrinsics(INFRA2, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
@@ -1027,7 +1009,7 @@ void BaseRealSenseNode::publishStaticTransforms()
         }
     }
 
-    if (_enable[FISHEYE])
+    if (_enable[FISHEYE] && _enable[DEPTH])
     {
         const auto& ex = getRsExtrinsics(FISHEYE, DEPTH);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
