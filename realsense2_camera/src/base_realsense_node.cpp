@@ -1,5 +1,7 @@
 #include "../include/base_realsense_node.h"
 #include "../include/sr300_node.h"
+#include "assert.h"
+#include <boost/algorithm/string.hpp>
 
 using namespace realsense2_camera;
 
@@ -97,14 +99,33 @@ void BaseRealSenseNode::registerDynamicReconfigCb()
     ROS_INFO("Dynamic reconfig parameters is not implemented in the base node.");
 }
 
+rs2_stream BaseRealSenseNode::rs2_string_to_stream(std::string str)
+{
+    if (str == "RS2_STREAM_COLOR")
+        return RS2_STREAM_COLOR;
+    if (str == "RS2_STREAM_INFRARED")
+        return RS2_STREAM_INFRARED;
+    if (str == "RS2_STREAM_FISHEYE")
+        return RS2_STREAM_FISHEYE;
+    throw std::runtime_error("Unknown stream string " + str);
+}
+
 void BaseRealSenseNode::getParameters()
 {
     ROS_INFO("getParameters...");
 
     _pnh.param("align_depth", _align_depth, ALIGN_DEPTH);
     _pnh.param("enable_pointcloud", _pointcloud, POINTCLOUD);
+    std::string pc_texture_stream("");
+    int pc_texture_idx;
+    _pnh.param("pointcloud_texture_stream", pc_texture_stream, std::string("RS2_STREAM_COLOR"));
+    _pnh.param("pointcloud_texture_index", pc_texture_idx, 0);
+    _pointcloud_texture = stream_index_pair{rs2_string_to_stream(pc_texture_stream), pc_texture_idx};
+
+    _pnh.param("filters", _filters_str, DEFAULT_FILTERS);
+
     _pnh.param("enable_sync", _sync_frames, SYNC_FRAMES);
-    if (_pointcloud || _align_depth)
+    if (_pointcloud || _align_depth || _filters_str.size() > 0)
         _sync_frames = true;
 
     _pnh.param("json_file_path", _json_file_path, std::string(""));
@@ -533,10 +554,37 @@ void BaseRealSenseNode::enable_devices()
 
 void BaseRealSenseNode::setupFilters()
 {
+    std::vector<std::string> filters_str;
+    boost::split(filters_str, _filters_str, [](char c){return c == '|';});
+    for (std::vector<std::string>::const_iterator s_iter=filters_str.begin(); s_iter!=filters_str.end(); s_iter++)
+    {
+        if ((*s_iter) == "colorizer")
+        {
+            ROS_INFO("Add Filter: colorizer");
+            _filters["colorizer"] = std::make_shared<rs2::colorizer>();
+
+            // Types for depth stream
+            _format[DEPTH] = _format[COLOR];   // libRS type
+            _image_format[DEPTH] = _image_format[COLOR];    // CVBridge type
+            _encoding[DEPTH] = _encoding[COLOR]; // ROS message type
+            _unit_step_size[DEPTH] = _unit_step_size[COLOR]; // sensor_msgs::ImagePtr row step size
+
+            _width[DEPTH] = _width[COLOR];
+            _height[DEPTH] = _height[COLOR];
+            _image[DEPTH] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
+        }
+        else if ((*s_iter).size() > 0)
+        {
+            ROS_INFO_STREAM("Unknown Filter: " << (*s_iter));
+            throw;
+        }
+    }
     if (_pointcloud)
     {
-        _filters["pointcloud"] = std::make_shared<rs2::pointcloud>();
+    	ROS_INFO("Add Filter: pointcloud");
+        _filters["pointcloud"] = std::make_shared<rs2::pointcloud>(_pointcloud_texture.first, _pointcloud_texture.second);
     }
+    ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));
 }
 
 void BaseRealSenseNode::setupStreams()
@@ -584,32 +632,82 @@ void BaseRealSenseNode::setupStreams()
                     bool is_depth_arrived = false;
                     rs2::frame depth_frame;
                     auto frameset = frame.as<rs2::frameset>();
+                    ROS_DEBUG("List of frameset before applying filters: size: %d", static_cast<int>(frameset.size()));
                     for (auto it = frameset.begin(); it != frameset.end(); ++it)
                     {
                         auto f = (*it);
                         auto stream_type = f.get_profile().stream_type();
                         auto stream_index = f.get_profile().stream_index();
+                        auto stream_format = f.get_profile().format();
+                        auto stream_unique_id = f.get_profile().unique_id();
                         updateIsFrameArrived(is_frame_arrived, stream_type, stream_index);
 
-                        ROS_DEBUG("Frameset contain (%s, %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                                  rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+                        ROS_DEBUG("Frameset contain (%s, %d, %s %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
+                                  rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
                     }
+                    ROS_DEBUG("num_filters: %d", static_cast<int>(_filters.size()));
                     for (std::map<std::string, std::shared_ptr<rs2::processing_block>>::const_iterator filter_it = _filters.begin(); filter_it != _filters.end(); filter_it++)
                     {
                         ROS_DEBUG("Applying filter: %s", filter_it->first.c_str());
-                        filter_it->second->process(frame);
+                        frameset = filter_it->second->process(frameset);
                     }
 
-                    ROS_DEBUG("List of frameset after applying filters:");
+                    ROS_DEBUG("List of frameset after applying filters: size: %d", static_cast<int>(frameset.size()));
                     for (auto it = frameset.begin(); it != frameset.end(); ++it)
                     {
                         auto f = (*it);
                         auto stream_type = f.get_profile().stream_type();
                         auto stream_index = f.get_profile().stream_index();
+                        auto stream_format = f.get_profile().format();
+                        auto stream_unique_id = f.get_profile().unique_id();
 
-                        ROS_DEBUG("Frameset contain (%s, %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                                  rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+                        ROS_DEBUG("Frameset contain (%s, %d, %s %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
+                                  rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+                    }
+                    ROS_DEBUG("END OF LIST");
+                    ROS_DEBUG_STREAM("Remove streams with same type and index:");
+                    std::map<stream_index_pair, rs2::frame> frames_to_publish;
+                    for (auto it = frameset.begin(); it != frameset.end(); ++it)
+                    {
+                        auto f = (*it);
+                        auto stream_type = f.get_profile().stream_type();
+                        auto stream_index = f.get_profile().stream_index();
+                        stream_index_pair sip{stream_type,stream_index};
+                        frames_to_publish.insert(std::pair<stream_index_pair, rs2::frame>(sip, f));
+                    }
+                    for (auto it = frames_to_publish.begin(); it != frames_to_publish.end(); ++it)
+                    {
+                        auto f = it->second;
+                        auto stream_type = f.get_profile().stream_type();
+                        auto stream_index = f.get_profile().stream_index();
+                        auto stream_format = f.get_profile().format();
+                        auto stream_unique_id = f.get_profile().unique_id();
 
+                        ROS_DEBUG("Frameset contain (%s, %d, %s %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
+                                  rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+                    }
+
+                    for (auto it = frames_to_publish.begin(); it != frames_to_publish.end(); ++it)
+                    {
+                        auto f = it->second;
+                        auto stream_type = f.get_profile().stream_type();
+                        auto stream_index = f.get_profile().stream_index();
+                        auto stream_format = f.get_profile().format();
+
+                        ROS_DEBUG("Frameset contain (%s, %d, %s) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
+                                  rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+
+                        // if (stream_type == RS2_STREAM_DEPTH && stream_format == RS2_FORMAT_XYZ32F)
+                        if (f.is<rs2::points>() /*&& (0 != _pointcloud_publisher.getNumSubscribers())*/)
+                        {
+                            ROS_DEBUG("Publish pointscloud");
+                            publishPointCloud(f.as<rs2::points>(), t, frameset);
+                            continue;
+                        }
+                        else
+                        {
+                            ROS_DEBUG("Not points");
+                        }
                         stream_index_pair sip{stream_type,stream_index};
                         publishFrame(f, t,
                                      sip,
@@ -651,12 +749,6 @@ void BaseRealSenseNode::setupStreams()
                                  _image_publishers, _seq,
                                  _camera_info, _optical_frame_id,
                                  _encoding);
-                }
-
-                if(_pointcloud && (0 != _pointcloud_publisher.getNumSubscribers()))
-                {
-                    ROS_DEBUG("publishPCTopic(...)");
-                    publishRgbToDepthPCTopic(t, is_frame_arrived);
                 }
             }
             catch(const std::exception& ex)
@@ -1075,31 +1167,38 @@ void BaseRealSenseNode::publishStaticTransforms()
     }
 }
 
-void BaseRealSenseNode::publishRgbToDepthPCTopic(const ros::Time& t, const std::map<stream_index_pair, bool>& is_frame_arrived)
+rs2::frame BaseRealSenseNode::get_frame(const rs2::frameset& frameset, const rs2_stream stream, const int index)
 {
-    try
-    {
-        if (!is_frame_arrived.at(COLOR) || !is_frame_arrived.at(DEPTH))
-        {
-            ROS_DEBUG("Skipping publish PC topic! Color or Depth frame didn't arrive.");
-            return;
-        }
-    }
-    catch (std::out_of_range)
-    {
-        ROS_DEBUG("Skipping publish PC topic! Color or Depth frame didn't configure.");
-        return;
-    }
+    rs2::frame f;
+    frameset.foreach([&f, index, stream](const rs2::frame& frame) {
+        if (frame.get_profile().stream_type() == stream && frame.get_profile().stream_index() == index)
+            f = frame;
+    });
+    return f;
+}
 
-    auto& depth2color_extrinsics = _depth_to_other_extrinsics[COLOR];
-    auto color_intrinsics = _stream_intrinsics[COLOR];
-    auto image_depth16 = reinterpret_cast<const uint16_t*>(_image[DEPTH].data);
-    auto depth_intrinsics = _stream_intrinsics[DEPTH];
+
+void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, const rs2::frameset& frameset)
+{
+    rs2::video_frame texture_frame = get_frame(frameset, _pointcloud_texture.first, _pointcloud_texture.second).as<rs2::video_frame>();
+    auto f = texture_frame;
+    auto stream_type = f.get_profile().stream_type();
+    auto stream_index = f.get_profile().stream_index();
+    auto stream_format = f.get_profile().format();
+
+    ROS_DEBUG("get_frame() found: (%s, %d, %s) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
+              rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), f.get_frame_number(), f.get_timestamp(), t.toNSec());
+
+    unsigned char* color_data = (uint8_t*)texture_frame.get_data();
+    int texture_width = texture_frame.get_width();
+    int bpp = texture_frame.get_bytes_per_pixel();
+    assert(bpp == 3); // TODO: Need to support PointCloud based in IR image.
+
     sensor_msgs::PointCloud2 msg_pointcloud;
     msg_pointcloud.header.stamp = t;
     msg_pointcloud.header.frame_id = _optical_frame_id[DEPTH];
-    msg_pointcloud.width = depth_intrinsics.width;
-    msg_pointcloud.height = depth_intrinsics.height;
+    msg_pointcloud.width = pc.size();
+    msg_pointcloud.height = 1;
     msg_pointcloud.is_dense = true;
 
     sensor_msgs::PointCloud2Modifier modifier(msg_pointcloud);
@@ -1119,60 +1218,30 @@ void BaseRealSenseNode::publishRgbToDepthPCTopic(const ros::Time& t, const std::
     sensor_msgs::PointCloud2Iterator<uint8_t>iter_g(msg_pointcloud, "g");
     sensor_msgs::PointCloud2Iterator<uint8_t>iter_b(msg_pointcloud, "b");
 
-    float depth_point[3], color_point[3], color_pixel[2], scaled_depth;
-    unsigned char* color_data = _image[COLOR].data;
-
     // Fill the PointCloud2 fields
-    for (int y = 0; y < depth_intrinsics.height; ++y)
+    const rs2::vertex* vertex = pc.get_vertices();
+    const rs2::texture_coordinate* color_pixel = pc.get_texture_coordinates();
+
+    for (size_t point_idx=0; point_idx < pc.size(); point_idx++, vertex++, color_pixel++)
     {
-        for (int x = 0; x < depth_intrinsics.width; ++x)
-        {
-            scaled_depth = static_cast<float>(*image_depth16) * _depth_scale_meters;
-            float depth_pixel[2] = {static_cast<float>(x), static_cast<float>(y)};
-            rs2_deproject_pixel_to_point(depth_point, &depth_intrinsics, depth_pixel, scaled_depth);
+        *iter_x = vertex->x;
+        *iter_y = vertex->y;
+        *iter_z = vertex->z;
 
-            if (depth_point[2] <= 0.f || depth_point[2] > 5.f)
-            {
-                depth_point[0] = 0.f;
-                depth_point[1] = 0.f;
-                depth_point[2] = 0.f;
-            }
+        int i = static_cast<int>(color_pixel->u);
+        int j = static_cast<int>(color_pixel->v);
 
-            *iter_x = depth_point[0];
-            *iter_y = depth_point[1];
-            *iter_z = depth_point[2];
+        auto offset = (j * texture_width + i ) * 3;
+        *iter_r = static_cast<uint8_t>(color_data[offset]);
+        *iter_g = static_cast<uint8_t>(color_data[offset + 1]);
+        *iter_b = static_cast<uint8_t>(color_data[offset + 2]);
 
-            rs2_transform_point_to_point(color_point, &depth2color_extrinsics, depth_point);
-            rs2_project_point_to_pixel(color_pixel, &color_intrinsics, color_point);
-
-            if (color_pixel[1] < 0.f || color_pixel[1] >= color_intrinsics.height
-                || color_pixel[0] < 0.f || color_pixel[0] >= color_intrinsics.width)
-            {
-                // For out of bounds color data, default to a shade of blue in order to visually distinguish holes.
-                // This color value is same as the librealsense out of bounds color value.
-                *iter_r = static_cast<uint8_t>(96);
-                *iter_g = static_cast<uint8_t>(157);
-                *iter_b = static_cast<uint8_t>(198);
-            }
-            else
-            {
-                auto i = static_cast<int>(color_pixel[0]);
-                auto j = static_cast<int>(color_pixel[1]);
-
-                auto offset = i * 3 + j * color_intrinsics.width * 3;
-                *iter_r = static_cast<uint8_t>(color_data[offset]);
-                *iter_g = static_cast<uint8_t>(color_data[offset + 1]);
-                *iter_b = static_cast<uint8_t>(color_data[offset + 2]);
-            }
-
-            ++image_depth16;
-            ++iter_x; ++iter_y; ++iter_z;
-            ++iter_r; ++iter_g; ++iter_b;
-        }
+        ++iter_x; ++iter_y; ++iter_z;
+        ++iter_r; ++iter_g; ++iter_b;
     }
-
     _pointcloud_publisher.publish(msg_pointcloud);
 }
+
 
 Extrinsics BaseRealSenseNode::rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const
 {
@@ -1243,8 +1312,8 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
     ++(seq[stream]);
     auto& info_publisher = info_publishers.at(stream);
     auto& image_publisher = image_publishers.at(stream);
-    if(0 != info_publisher.getNumSubscribers() ||
-       0 != image_publisher.first.getNumSubscribers())
+    // if(0 != info_publisher.getNumSubscribers() ||
+    //    0 != image_publisher.first.getNumSubscribers())
     {
         auto width = 0;
         auto height = 0;
@@ -1368,7 +1437,7 @@ void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param par
         setOption(DEPTH, RS2_OPTION_ENABLE_AUTO_EXPOSURE, config.base_depth_enable_auto_exposure);
         break;
     case base_depth_visual_preset:
-        ROS_DEBUG_STREAM("base_depth_enable_auto_exposure: " << config.base_depth_visual_preset);
+        ROS_DEBUG_STREAM("base_depth_visual_preset: " << config.base_depth_visual_preset);
         setOption(DEPTH, RS2_OPTION_VISUAL_PRESET, config.base_depth_visual_preset);
         break;
     case base_depth_frames_queue_size:

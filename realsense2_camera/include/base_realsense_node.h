@@ -105,7 +105,8 @@ namespace realsense2_camera
                                const std::string& from,
                                const std::string& to);
         void publishStaticTransforms();
-        void publishRgbToDepthPCTopic(const ros::Time& t, const std::map<stream_index_pair, bool>& is_frame_arrived);
+        void publishPointCloud(rs2::points f, const ros::Time& t, const rs2::frameset& frameset);
+        rs2::frame get_frame(const rs2::frameset& frameset, const rs2_stream stream, const int index = 0);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
         rs2_extrinsics getRsExtrinsics(const stream_index_pair& from_stream, const stream_index_pair& to_stream);
 
@@ -126,7 +127,7 @@ namespace realsense2_camera
                                   rs2_stream stream_type, int stream_index);
 
         void publishAlignedDepthToOthers(rs2::frame depth_frame, const std::vector<rs2::frame>& frames, const ros::Time& t);
-
+        rs2_stream rs2_string_to_stream(std::string str);
         void alignFrame(const rs2_intrinsics& from_intrin,
                         const rs2_intrinsics& other_intrin,
                         rs2::frame from_image,
@@ -170,6 +171,8 @@ namespace realsense2_camera
         bool _align_depth;
         bool _sync_frames;
         bool _pointcloud;
+        std::string _filters_str;
+        stream_index_pair _pointcloud_texture;
         PipelineSyncer _syncer;
         std::map<std::string, std::shared_ptr<rs2::processing_block>> _filters;
         // Declare pointcloud object, for calculating pointclouds and texture mappings
