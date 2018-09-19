@@ -1,8 +1,9 @@
 <launch>
-  <arg name="serial_no"    default=""/>
-  <arg name="json_file_path"  default=""/>
+  <arg name="serial_no"             default=""/>
+  <arg name="json_file_path"        default=""/>
+  <arg name="camera"                default="camera"/>
 
-  <group ns="camera">
+  <group ns="$(arg camera)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="serial_no"         value="$(arg serial_no)"/>
       <arg name="json_file_path"    value="$(arg json_file_path)"/>

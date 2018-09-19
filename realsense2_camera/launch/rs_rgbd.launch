@@ -38,7 +38,7 @@ Processing enabled by this node:
 -->
 
 <launch>
-  <arg name="namespace"           default="camera"/>
+  <arg name="camera"              default="camera"/>
   <arg name="manager"             default="realsense2_camera_manager"/>
 
   <!-- Camera device specific arguments -->
@@ -107,7 +107,7 @@ Processing enabled by this node:
   <arg name="sw_registered_processing"        default="true" unless="$(arg align_depth)" />
   <arg name="sw_registered_processing"        default="false" if="$(arg align_depth)" />
 
-  <group ns="$(arg namespace)">
+  <group ns="$(arg camera)">
 
     <!-- Launch the camera device nodelet-->
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
