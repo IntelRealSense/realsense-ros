@@ -45,24 +45,24 @@
   <arg name="enable_sync"         default="false"/>
   <arg name="align_depth"         default="false"/>
   
-  <arg name="base_frame_id"            default="$(arg tf_prefix)camera_link"/>
-  <arg name="depth_frame_id"           default="$(arg tf_prefix)camera_depth_frame"/>
-  <arg name="infra1_frame_id"          default="$(arg tf_prefix)camera_infra1_frame"/>
-  <arg name="infra2_frame_id"          default="$(arg tf_prefix)camera_infra2_frame"/>
-  <arg name="color_frame_id"           default="$(arg tf_prefix)camera_color_frame"/>
+  <arg name="base_frame_id"            default="$(arg tf_prefix)_link"/>
+  <arg name="depth_frame_id"           default="$(arg tf_prefix)_depth_frame"/>
+  <arg name="infra1_frame_id"          default="$(arg tf_prefix)_infra1_frame"/>
+  <arg name="infra2_frame_id"          default="$(arg tf_prefix)_infra2_frame"/>
+  <arg name="color_frame_id"           default="$(arg tf_prefix)_color_frame"/>
   
-  <arg name="depth_optical_frame_id"   default="$(arg tf_prefix)camera_depth_optical_frame"/>
-  <arg name="infra1_optical_frame_id"  default="$(arg tf_prefix)camera_infra1_optical_frame"/>
-  <arg name="infra2_optical_frame_id"  default="$(arg tf_prefix)camera_infra2_optical_frame"/>
-  <arg name="color_optical_frame_id"   default="$(arg tf_prefix)camera_color_optical_frame"/>
-  <arg name="fisheye_optical_frame_id" default="$(arg tf_prefix)camera_fisheye_optical_frame"/>
-  <arg name="accel_optical_frame_id"   default="$(arg tf_prefix)camera_accel_optical_frame"/>
-  <arg name="gyro_optical_frame_id"    default="$(arg tf_prefix)camera_gyro_optical_frame"/>
+  <arg name="depth_optical_frame_id"   default="$(arg tf_prefix)_depth_optical_frame"/>
+  <arg name="infra1_optical_frame_id"  default="$(arg tf_prefix)_infra1_optical_frame"/>
+  <arg name="infra2_optical_frame_id"  default="$(arg tf_prefix)_infra2_optical_frame"/>
+  <arg name="color_optical_frame_id"   default="$(arg tf_prefix)_color_optical_frame"/>
+  <arg name="fisheye_optical_frame_id" default="$(arg tf_prefix)_fisheye_optical_frame"/>
+  <arg name="accel_optical_frame_id"   default="$(arg tf_prefix)_accel_optical_frame"/>
+  <arg name="gyro_optical_frame_id"    default="$(arg tf_prefix)_gyro_optical_frame"/>
   
-  <arg name="aligned_depth_to_color_frame_id"   default="$(arg tf_prefix)camera_aligned_depth_to_color_frame"/>
-  <arg name="aligned_depth_to_infra1_frame_id" default="$(arg tf_prefix)camera_aligned_depth_to_infra1_frame"/>
-  <arg name="aligned_depth_to_infra2_frame_id"   default="$(arg tf_prefix)camera_aligned_depth_to_infra2_frame"/>
-  <arg name="aligned_depth_to_fisheye_frame_id"    default="$(arg tf_prefix)camera_aligned_depth_to_fisheye_frame"/>
+  <arg name="aligned_depth_to_color_frame_id"   default="$(arg tf_prefix)_aligned_depth_to_color_frame"/>
+  <arg name="aligned_depth_to_infra1_frame_id" default="$(arg tf_prefix)_aligned_depth_to_infra1_frame"/>
+  <arg name="aligned_depth_to_infra2_frame_id"   default="$(arg tf_prefix)_aligned_depth_to_infra2_frame"/>
+  <arg name="aligned_depth_to_fisheye_frame_id"    default="$(arg tf_prefix)_aligned_depth_to_fisheye_frame"/>
 
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
   <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)">
