@@ -1390,7 +1390,7 @@ void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param par
 
 void BaseD400Node::registerDynamicReconfigCb()
 {
-    _server = std::make_shared<dynamic_reconfigure::Server<base_d400_paramsConfig>>();
+    _server = std::make_shared<dynamic_reconfigure::Server<base_d400_paramsConfig>>(_pnh);
     _f = boost::bind(&BaseD400Node::callback, this, _1, _2);
     _server->setCallback(_f);
 }

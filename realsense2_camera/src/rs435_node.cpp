@@ -2,12 +2,11 @@
 
 using namespace realsense2_camera;
 
-
-RS435Node::RS435Node(ros::NodeHandle& nodeHandle,
-                     ros::NodeHandle& privateNodeHandle,
-                     rs2::device dev, const std::string& serial_no)
-    : BaseD400Node(nodeHandle, privateNodeHandle, dev, serial_no)
-{}
+RS435Node::RS435Node(ros::NodeHandle &nodeHandle,
+                     ros::NodeHandle &privateNodeHandle, rs2::device dev,
+                     const std::string &serial_no)
+    : BaseD400Node(nodeHandle, privateNodeHandle, dev, serial_no),
+      _server(privateNodeHandle) {}
 
 void RS435Node::registerDynamicReconfigCb()
 {
