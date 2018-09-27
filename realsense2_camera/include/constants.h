@@ -6,8 +6,8 @@
 #include <string>
 
 #define REALSENSE_ROS_MAJOR_VERSION    2
-#define REALSENSE_ROS_MINOR_VERSION    0
-#define REALSENSE_ROS_PATCH_VERSION    3
+#define REALSENSE_ROS_MINOR_VERSION    1
+#define REALSENSE_ROS_PATCH_VERSION    0
 
 #define STRINGIFY(arg) #arg
 #define VAR_ARG_STRING(arg) STRINGIFY(arg)
@@ -90,6 +90,8 @@ namespace realsense2_camera
     const std::string DEFAULT_ALIGNED_DEPTH_TO_INFRA1_FRAME_ID = "camera_aligned_depth_to_infra1_frame";
     const std::string DEFAULT_ALIGNED_DEPTH_TO_INFRA2_FRAME_ID = "camera_aligned_depth_to_infra2_frame";
     const std::string DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID = "camera_aligned_depth_to_fisheye_frame";
+
+    const std::string DEFAULT_FILTERS                  = "";
 
     using stream_index_pair = std::pair<rs2_stream, int>;
 }  // namespace realsense2_camera

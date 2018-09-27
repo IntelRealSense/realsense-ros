@@ -42,6 +42,9 @@
   <arg name="enable_imu"          default="true"/>
 
   <arg name="enable_pointcloud"   default="false"/>
+  <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>  <!-- use RS2_STREAM_ANY to avoid using texture -->
+  <arg name="pointcloud_texture_index"  default="0"/>
+
   <arg name="enable_sync"         default="false"/>
   <arg name="align_depth"         default="false"/>
   
@@ -64,6 +67,9 @@
   <arg name="aligned_depth_to_infra2_frame_id"   default="$(arg tf_prefix)_aligned_depth_to_infra2_frame"/>
   <arg name="aligned_depth_to_fisheye_frame_id"    default="$(arg tf_prefix)_aligned_depth_to_fisheye_frame"/>
 
+  <arg name="filters"             default=""/>
+
+
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
   <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)">
     <param name="serial_no"                type="str"  value="$(arg serial_no)"/>
@@ -71,6 +77,8 @@
     <param name="rosbag_filename"          type="str"  value="$(arg rosbag_filename)"/>
 
     <param name="enable_pointcloud"        type="bool" value="$(arg enable_pointcloud)"/>
+    <param name="pointcloud_texture_stream" type="str" value="$(arg pointcloud_texture_stream)"/>
+    <param name="pointcloud_texture_index"  type="int" value="$(arg pointcloud_texture_index)"/>
     <param name="enable_sync"              type="bool" value="$(arg enable_sync)"/>
     <param name="align_depth"              type="bool" value="$(arg align_depth)"/>
 
@@ -122,6 +130,7 @@
     <param name="aligned_depth_to_infra2_frame_id"  type="str"  value="$(arg aligned_depth_to_infra2_frame_id)"/>
     <param name="aligned_depth_to_fisheye_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye_frame_id)"/>
     
+    <param name="filters" type="str"  value="$(arg filters)"/>
   </node>
 </launch>
 
