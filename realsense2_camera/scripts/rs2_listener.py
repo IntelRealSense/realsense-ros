@@ -70,11 +70,18 @@ class CWaitForMessage:
         func_name = inspect.stack()[0][3]
         theme_name = [key for key, value in self.themes.items() if func_name in value['callback'].__name__][0]
 
+        self.func_data[theme_name].setdefault('frame_counter', 0)
         self.func_data[theme_name].setdefault('avg', [])
         self.func_data[theme_name].setdefault('size', [])
         self.func_data[theme_name].setdefault('width', [])
         self.func_data[theme_name].setdefault('height', [])
         # until parsing pointcloud is done in real time, I'll use only the first frame.
+        self.func_data[theme_name]['frame_counter'] += 1
+
+        if self.func_data[theme_name]['frame_counter'] == 1:
+            # Known issue - 1st pointcloud published has invalid texture. Skip 1st frame.
+            return
+
         if len(self.func_data[theme_name]['width']) > 0:
             return
 
@@ -83,7 +90,6 @@ class CWaitForMessage:
         except Exception as e:
             print(e)
             return
-        print 'len(avg)=%d' % (len(self.func_data[theme_name]['avg']))
         self.func_data[theme_name]['avg'].append(points.mean(0))
         self.func_data[theme_name]['size'].append(len(points))
         self.func_data[theme_name]['width'].append(data.width)
