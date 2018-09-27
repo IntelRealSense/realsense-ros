@@ -71,7 +71,8 @@ test_types = {'vis_avg': {'listener_theme': 'colorStream',
                           'data_func': lambda x: None,
                           'test_func': lambda x, y: not ImageColorTest(x, y)},
               'pointscloud_avg': {'listener_theme': 'pointscloud',
-                          'data_func': lambda x: {'width': [1280], 'height': [720], 'avg': [np.array([ 1.50336195,  0.0145172 ,  4.55452856, 73, 103, 115])], 'epsilon': [0.02, 2]},
+                          'data_func': lambda x: {'width': [921600], 'height': [1], 'avg': [np.array([ 1.50336195,  0.0145172 ,  4.55452856, 73, 103, 115])], 'epsilon': [0.02, 2]},
+						  # 'data_func': lambda x: {'width': [1280], 'height': [720], 'avg': [np.array([ 1.50336195,  0.0145172 ,  4.55452856, 73, 103, 115])], 'epsilon': [0.02, 2]},
                           'test_func': PointCloudTest},
               }
 
