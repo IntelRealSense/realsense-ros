@@ -1208,8 +1208,7 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
         color_data = (uint8_t*)texture_frame.get_data();
         texture_width = texture_frame.get_width();
         texture_height = texture_frame.get_height();
-        int bpp = texture_frame.get_bytes_per_pixel();
-        assert(bpp == 3); // TODO: Need to support PointCloud based in IR image.
+        assert(texture_frame.get_bytes_per_pixel() == 3); // TODO: Need to support IR image texture.
     }
     else
     {
