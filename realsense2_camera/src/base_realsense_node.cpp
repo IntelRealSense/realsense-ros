@@ -125,6 +125,7 @@ void BaseRealSenseNode::getParameters()
     _pointcloud_texture = stream_index_pair{rs2_string_to_stream(pc_texture_stream), pc_texture_idx};
 
     _pnh.param("filters", _filters_str, DEFAULT_FILTERS);
+    _pointcloud |= (_filters_str.find("pointcloud") != std::string::npos);
 
     _pnh.param("enable_sync", _sync_frames, SYNC_FRAMES);
     if (_pointcloud || _align_depth || _filters_str.size() > 0)
@@ -557,13 +558,13 @@ void BaseRealSenseNode::enable_devices()
 void BaseRealSenseNode::setupFilters()
 {
     std::vector<std::string> filters_str;
-    boost::split(filters_str, _filters_str, [](char c){return c == '|';});
+    boost::split(filters_str, _filters_str, [](char c){return c == ',';});
     for (std::vector<std::string>::const_iterator s_iter=filters_str.begin(); s_iter!=filters_str.end(); s_iter++)
     {
         if ((*s_iter) == "colorizer")
         {
             ROS_INFO("Add Filter: colorizer");
-            _filters["colorizer"] = std::make_shared<rs2::colorizer>();
+            _filters.push_back(NamedFilter("colorizer", std::make_shared<rs2::colorizer>()));
 
             // Types for depth stream
             _format[DEPTH] = _format[COLOR];   // libRS type
@@ -575,16 +576,30 @@ void BaseRealSenseNode::setupFilters()
             _height[DEPTH] = _height[COLOR];
             _image[DEPTH] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
         }
+        else if ((*s_iter) == "spatial")
+        {
+            ROS_INFO("Add Filter: spatial");
+            _filters.push_back(NamedFilter("spatial", std::make_shared<rs2::spatial_filter>()));
+        }
+        else if ((*s_iter) == "temporal")
+        {
+            ROS_INFO("Add Filter: temporal");
+            _filters.push_back(NamedFilter("temporal", std::make_shared<rs2::temporal_filter>()));
+        }
+        else if ((*s_iter) == "pointcloud")
+        {
+            assert(_pointcloud); // For now, it is set in getParameters()..
+        }
         else if ((*s_iter).size() > 0)
         {
-            ROS_INFO_STREAM("Unknown Filter: " << (*s_iter));
+            ROS_ERROR_STREAM("Unknown Filter: " << (*s_iter));
             throw;
         }
     }
     if (_pointcloud)
     {
     	ROS_INFO("Add Filter: pointcloud");
-        _filters["pointcloud"] = std::make_shared<rs2::pointcloud>(_pointcloud_texture.first, _pointcloud_texture.second);
+        _filters.push_back(NamedFilter("pointcloud", std::make_shared<rs2::pointcloud>(_pointcloud_texture.first, _pointcloud_texture.second)));
     }
     ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));
 }
@@ -648,10 +663,10 @@ void BaseRealSenseNode::setupStreams()
                                   rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
                     }
                     ROS_DEBUG("num_filters: %d", static_cast<int>(_filters.size()));
-                    for (std::map<std::string, std::shared_ptr<rs2::processing_block>>::const_iterator filter_it = _filters.begin(); filter_it != _filters.end(); filter_it++)
+                    for (std::vector<NamedFilter>::const_iterator filter_it = _filters.begin(); filter_it != _filters.end(); filter_it++)
                     {
-                        ROS_DEBUG("Applying filter: %s", filter_it->first.c_str());
-                        frameset = filter_it->second->process(frameset);
+                        ROS_DEBUG("Applying filter: %s", filter_it->_name.c_str());
+                        frameset = filter_it->_filter->process(frameset);
                     }
 
                     ROS_DEBUG("List of frameset after applying filters: size: %d", static_cast<int>(frameset.size()));

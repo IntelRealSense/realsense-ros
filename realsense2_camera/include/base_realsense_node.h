@@ -51,6 +51,18 @@ namespace realsense2_camera
     };
     typedef std::pair<image_transport::Publisher, std::shared_ptr<FrequencyDiagnostics>> ImagePublisherWithFrequencyDiagnostics;
 
+    class NamedFilter
+    {
+        public:
+            std::string _name;
+            std::shared_ptr<rs2::processing_block> _filter;
+
+        public:
+            NamedFilter(std::string name, std::shared_ptr<rs2::processing_block> filter):
+            _name(name), _filter(filter)
+            {}
+    };
+
 	class PipelineSyncer : public rs2::asynchronous_syncer
 	{
 	public: 
@@ -174,7 +186,7 @@ namespace realsense2_camera
         std::string _filters_str;
         stream_index_pair _pointcloud_texture;
         PipelineSyncer _syncer;
-        std::map<std::string, std::shared_ptr<rs2::processing_block>> _filters;
+        std::vector<NamedFilter> _filters;
         // Declare pointcloud object, for calculating pointclouds and texture mappings
         // rs2::pointcloud _pc_filter;
 
