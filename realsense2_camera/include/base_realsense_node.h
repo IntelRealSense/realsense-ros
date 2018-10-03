@@ -51,6 +51,18 @@ namespace realsense2_camera
     };
     typedef std::pair<image_transport::Publisher, std::shared_ptr<FrequencyDiagnostics>> ImagePublisherWithFrequencyDiagnostics;
 
+    class NamedFilter
+    {
+        public:
+            std::string _name;
+            std::shared_ptr<rs2::processing_block> _filter;
+
+        public:
+            NamedFilter(std::string name, std::shared_ptr<rs2::processing_block> filter):
+            _name(name), _filter(filter)
+            {}
+    };
+
 	class PipelineSyncer : public rs2::asynchronous_syncer
 	{
 	public: 
@@ -95,6 +107,7 @@ namespace realsense2_camera
         void setupDevice();
         void setupPublishers();
         void enable_devices();
+        void setupFilters();
         void setupStreams();
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         tf::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
@@ -104,7 +117,8 @@ namespace realsense2_camera
                                const std::string& from,
                                const std::string& to);
         void publishStaticTransforms();
-        void publishRgbToDepthPCTopic(const ros::Time& t, const std::map<stream_index_pair, bool>& is_frame_arrived);
+        void publishPointCloud(rs2::points f, const ros::Time& t, const rs2::frameset& frameset);
+        rs2::frame get_frame(const rs2::frameset& frameset, const rs2_stream stream, const int index = 0);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
         rs2_extrinsics getRsExtrinsics(const stream_index_pair& from_stream, const stream_index_pair& to_stream);
 
@@ -125,7 +139,7 @@ namespace realsense2_camera
                                   rs2_stream stream_type, int stream_index);
 
         void publishAlignedDepthToOthers(rs2::frame depth_frame, const std::vector<rs2::frame>& frames, const ros::Time& t);
-
+        rs2_stream rs2_string_to_stream(std::string str);
         void alignFrame(const rs2_intrinsics& from_intrin,
                         const rs2_intrinsics& other_intrin,
                         rs2::frame from_image,
@@ -169,7 +183,12 @@ namespace realsense2_camera
         bool _align_depth;
         bool _sync_frames;
         bool _pointcloud;
-		PipelineSyncer _syncer;
+        std::string _filters_str;
+        stream_index_pair _pointcloud_texture;
+        PipelineSyncer _syncer;
+        std::vector<NamedFilter> _filters;
+        // Declare pointcloud object, for calculating pointclouds and texture mappings
+        // rs2::pointcloud _pc_filter;
 
         std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
         std::map<stream_index_pair, std::string> _depth_aligned_encoding;

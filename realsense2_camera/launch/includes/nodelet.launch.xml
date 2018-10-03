@@ -1,6 +1,7 @@
 <launch>
   <arg name="manager"             default="realsense2_camera_manager"/>
   <arg name="serial_no"           default=""/>
+  <arg name="tf_prefix"           default=""/>
   <arg name="json_file_path"      default=""/>
   <arg name="rosbag_filename"     default=""/>
   <arg name="depth"               default="depth"/>
@@ -41,8 +42,33 @@
   <arg name="enable_imu"          default="true"/>
 
   <arg name="enable_pointcloud"   default="false"/>
+  <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>  <!-- use RS2_STREAM_ANY to avoid using texture -->
+  <arg name="pointcloud_texture_index"  default="0"/>
+
   <arg name="enable_sync"         default="false"/>
   <arg name="align_depth"         default="false"/>
+  
+  <arg name="base_frame_id"            default="$(arg tf_prefix)_link"/>
+  <arg name="depth_frame_id"           default="$(arg tf_prefix)_depth_frame"/>
+  <arg name="infra1_frame_id"          default="$(arg tf_prefix)_infra1_frame"/>
+  <arg name="infra2_frame_id"          default="$(arg tf_prefix)_infra2_frame"/>
+  <arg name="color_frame_id"           default="$(arg tf_prefix)_color_frame"/>
+  
+  <arg name="depth_optical_frame_id"   default="$(arg tf_prefix)_depth_optical_frame"/>
+  <arg name="infra1_optical_frame_id"  default="$(arg tf_prefix)_infra1_optical_frame"/>
+  <arg name="infra2_optical_frame_id"  default="$(arg tf_prefix)_infra2_optical_frame"/>
+  <arg name="color_optical_frame_id"   default="$(arg tf_prefix)_color_optical_frame"/>
+  <arg name="fisheye_optical_frame_id" default="$(arg tf_prefix)_fisheye_optical_frame"/>
+  <arg name="accel_optical_frame_id"   default="$(arg tf_prefix)_accel_optical_frame"/>
+  <arg name="gyro_optical_frame_id"    default="$(arg tf_prefix)_gyro_optical_frame"/>
+  
+  <arg name="aligned_depth_to_color_frame_id"   default="$(arg tf_prefix)_aligned_depth_to_color_frame"/>
+  <arg name="aligned_depth_to_infra1_frame_id" default="$(arg tf_prefix)_aligned_depth_to_infra1_frame"/>
+  <arg name="aligned_depth_to_infra2_frame_id"   default="$(arg tf_prefix)_aligned_depth_to_infra2_frame"/>
+  <arg name="aligned_depth_to_fisheye_frame_id"    default="$(arg tf_prefix)_aligned_depth_to_fisheye_frame"/>
+
+  <arg name="filters"             default=""/>
+
 
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
   <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)">
@@ -51,6 +77,8 @@
     <param name="rosbag_filename"          type="str"  value="$(arg rosbag_filename)"/>
 
     <param name="enable_pointcloud"        type="bool" value="$(arg enable_pointcloud)"/>
+    <param name="pointcloud_texture_stream" type="str" value="$(arg pointcloud_texture_stream)"/>
+    <param name="pointcloud_texture_index"  type="int" value="$(arg pointcloud_texture_index)"/>
     <param name="enable_sync"              type="bool" value="$(arg enable_sync)"/>
     <param name="align_depth"              type="bool" value="$(arg align_depth)"/>
 
@@ -83,18 +111,26 @@
     <param name="accel_fps"                type="int"  value="$(arg accel_fps)"/>
     <param name="enable_imu"               type="bool" value="$(arg enable_imu)"/>
 
-    <param name="depth_optical_frame_id"   type="str"  value="camera_depth_optical_frame"/>
-    <param name="infra1_optical_frame_id"  type="str"  value="camera_infra1_optical_frame"/>
-    <param name="infra2_optical_frame_id"  type="str"  value="camera_infra2_optical_frame"/>
-    <param name="color_optical_frame_id"   type="str"  value="camera_color_optical_frame"/>
-    <param name="fisheye_optical_frame_id" type="str"  value="camera_fisheye_optical_frame"/>
-    <param name="accel_optical_frame_id"   type="str"  value="camera_accel_optical_frame"/>
-    <param name="gyro_optical_frame_id"    type="str"  value="camera_gyro_optical_frame"/>
-
-    <param name="aligned_depth_to_color_frame_id"   type="str"  value="camera_aligned_depth_to_color_frame"/>
-    <param name="aligned_depth_to_infra1_frame_id"  type="str"  value="camera_aligned_depth_to_infra1_frame"/>
-    <param name="aligned_depth_to_infra2_frame_id"  type="str"  value="camera_aligned_depth_to_infra2_frame"/>
-    <param name="aligned_depth_to_fisheye_frame_id" type="str"  value="camera_aligned_depth_to_fisheye_frame"/>
+    <param name="base_frame_id"            type="str"  value="$(arg base_frame_id)"/>
+    <param name="depth_frame_id"           type="str"  value="$(arg depth_frame_id)"/>
+    <param name="infra1_frame_id"          type="str"  value="$(arg infra1_frame_id)"/>
+    <param name="infra2_frame_id"          type="str"  value="$(arg infra2_frame_id)"/>
+    <param name="color_frame_id"           type="str"  value="$(arg color_frame_id)"/>
+    
+    <param name="depth_optical_frame_id"   type="str"  value="$(arg depth_optical_frame_id)"/>
+    <param name="infra1_optical_frame_id"  type="str"  value="$(arg infra1_optical_frame_id)"/>
+    <param name="infra2_optical_frame_id"  type="str"  value="$(arg infra2_optical_frame_id)"/>
+    <param name="color_optical_frame_id"   type="str"  value="$(arg color_optical_frame_id)"/>
+    <param name="fisheye_optical_frame_id" type="str"  value="$(arg fisheye_optical_frame_id)"/>
+    <param name="accel_optical_frame_id"   type="str"  value="$(arg accel_optical_frame_id)"/>
+    <param name="gyro_optical_frame_id"    type="str"  value="$(arg gyro_optical_frame_id)"/>
+    
+    <param name="aligned_depth_to_color_frame_id"   type="str"  value="$(arg aligned_depth_to_color_frame_id)"/>
+    <param name="aligned_depth_to_infra1_frame_id"  type="str"  value="$(arg aligned_depth_to_infra1_frame_id)"/>
+    <param name="aligned_depth_to_infra2_frame_id"  type="str"  value="$(arg aligned_depth_to_infra2_frame_id)"/>
+    <param name="aligned_depth_to_fisheye_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye_frame_id)"/>
+    
+    <param name="filters" type="str"  value="$(arg filters)"/>
   </node>
 </launch>
 

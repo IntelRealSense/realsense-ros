@@ -4,14 +4,14 @@
   <version>2.0.3</version>
   <description>RealSense Camera package allowing access to Intel 3D D400 cameras</description>
   <maintainer email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</maintainer>
-  <maintainer email="itay.carpis@intel.com">Itay Carpis</maintainer>
+  <maintainer email="doron.hirshberg@intel.com">Doron Hirshberg</maintainer>
   <license>Apache 2.0</license>
   
   <url type="website">http://www.ros.org/wiki/RealSense</url>
   <url type="bugtracker">https://github.com/intel-ros/realsense/issues</url>
 
   <author email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</author>
-  <author email="itay.carpis@intel.com">Itay Carpis</author>
+  <author email="doron.hirshberg@intel.com">Doron Hirshberg</author>
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>roscpp</build_depend>
