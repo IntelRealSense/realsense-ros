@@ -83,9 +83,16 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _stream_name[ACCEL] = "accel";
 }
 
-void BaseRealSenseNode::toggleROSPublication(bool enabled)
+void BaseRealSenseNode::toggleSensors(bool enabled)
 {
-    _ros_publication_enabled = enabled;
+    for (auto it=_sensors.begin(); it != _sensors.end(); it++)
+    {
+        auto& sens = _sensors[it->first];
+        if (enabled)
+            sens.start(_syncer);
+        else
+            sens.stop();
+    }
 }
 
 void BaseRealSenseNode::publishTopics()
@@ -813,7 +820,6 @@ void BaseRealSenseNode::setupStreams()
                     auto depth_sensor = sens.as<rs2::depth_sensor>();
                     _depth_scale_meters = depth_sensor.get_depth_scale();
                 }
-
                 if (_sync_frames)
                 {
                     sens.start(_syncer);
@@ -1211,104 +1217,101 @@ rs2::frame BaseRealSenseNode::get_frame(const rs2::frameset& frameset, const rs2
 
 void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, const rs2::frameset& frameset)
 {
-    if (_ros_publication_enabled)
+    bool use_texture = (_pointcloud_texture.first != RS2_STREAM_ANY);
+    unsigned char* color_data;
+    int texture_width(0), texture_height(0);
+    unsigned char no_color[3] = { 255, 255, 255 };
+    if (use_texture)
     {
-        bool use_texture = (_pointcloud_texture.first != RS2_STREAM_ANY);
-        unsigned char* color_data;
-        int texture_width(0), texture_height(0);
-        unsigned char no_color[3] = { 255, 255, 255 };
+        rs2::frame temp_frame = get_frame(frameset, _pointcloud_texture.first, _pointcloud_texture.second).as<rs2::video_frame>();
+        if (!temp_frame.is<rs2::video_frame>())
+        {
+            ROS_DEBUG_STREAM("texture frame not found");
+            return;
+        }
+
+        rs2::video_frame texture_frame = temp_frame.as<rs2::video_frame>();
+        color_data = (uint8_t*)texture_frame.get_data();
+        texture_width = texture_frame.get_width();
+        texture_height = texture_frame.get_height();
+        assert(texture_frame.get_bytes_per_pixel() == 3); // TODO: Need to support IR image texture.
+    }
+    else
+    {
+        color_data = no_color;;
+    }
+
+    const rs2::texture_coordinate* color_point = pc.get_texture_coordinates();
+    int num_valid_points(0);
+    for (size_t point_idx=0; point_idx < pc.size(); point_idx++, color_point++)
+    {
+        float i = static_cast<float>(color_point->u);
+        float j = static_cast<float>(color_point->v);
+
+        if (i >= 0.f && i <= 1.f && j >= 0.f && j <= 1.f)
+        {
+            num_valid_points++;
+        }
+    }
+
+    sensor_msgs::PointCloud2 msg_pointcloud;
+    msg_pointcloud.header.stamp = t;
+    msg_pointcloud.header.frame_id = _optical_frame_id[DEPTH];
+    msg_pointcloud.width = num_valid_points;
+    msg_pointcloud.height = 1;
+    msg_pointcloud.is_dense = true;
+
+    sensor_msgs::PointCloud2Modifier modifier(msg_pointcloud);
+
+    modifier.setPointCloud2Fields(4,
+                                  "x", 1, sensor_msgs::PointField::FLOAT32,
+                                  "y", 1, sensor_msgs::PointField::FLOAT32,
+                                  "z", 1, sensor_msgs::PointField::FLOAT32,
+                                  "rgb", 1, sensor_msgs::PointField::FLOAT32);
+    modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
+
+    sensor_msgs::PointCloud2Iterator<float>iter_x(msg_pointcloud, "x");
+    sensor_msgs::PointCloud2Iterator<float>iter_y(msg_pointcloud, "y");
+    sensor_msgs::PointCloud2Iterator<float>iter_z(msg_pointcloud, "z");
+
+    sensor_msgs::PointCloud2Iterator<uint8_t>iter_r(msg_pointcloud, "r");
+    sensor_msgs::PointCloud2Iterator<uint8_t>iter_g(msg_pointcloud, "g");
+    sensor_msgs::PointCloud2Iterator<uint8_t>iter_b(msg_pointcloud, "b");
+
+    // Fill the PointCloud2 fields
+    const rs2::vertex* vertex = pc.get_vertices();
+    color_point = pc.get_texture_coordinates();
+
+    float color_pixel[2];
+    for (size_t point_idx=0; point_idx < pc.size(); vertex++, point_idx++, color_point++)
+    {
+        float i(0), j(0);
         if (use_texture)
         {
-            rs2::frame temp_frame = get_frame(frameset, _pointcloud_texture.first, _pointcloud_texture.second).as<rs2::video_frame>();
-            if (!temp_frame.is<rs2::video_frame>())
-            {
-                ROS_DEBUG_STREAM("texture frame not found");
-                return;
-            }
-
-            rs2::video_frame texture_frame = temp_frame.as<rs2::video_frame>();
-            color_data = (uint8_t*)texture_frame.get_data();
-            texture_width = texture_frame.get_width();
-            texture_height = texture_frame.get_height();
-            assert(texture_frame.get_bytes_per_pixel() == 3); // TODO: Need to support IR image texture.
+            i = static_cast<float>(color_point->u);
+            j = static_cast<float>(color_point->v);
         }
-        else
+        if (i >= 0.f && i <= 1.f && j >= 0.f && j <= 1.f)
         {
-            color_data = no_color;;
+            *iter_x = vertex->x;
+            *iter_y = vertex->y;
+            *iter_z = vertex->z;
+
+            color_pixel[0] = i * texture_width;
+            color_pixel[1] = j * texture_height;
+
+            int pixx = static_cast<int>(color_pixel[0]);
+            int pixy = static_cast<int>(color_pixel[1]);
+            int offset = (pixy * texture_width + pixx) * 3;
+            *iter_r = static_cast<uint8_t>(color_data[offset]);
+            *iter_g = static_cast<uint8_t>(color_data[offset + 1]);
+            *iter_b = static_cast<uint8_t>(color_data[offset + 2]);
+
+            ++iter_x; ++iter_y; ++iter_z;
+            ++iter_r; ++iter_g; ++iter_b;
         }
-
-        const rs2::texture_coordinate* color_point = pc.get_texture_coordinates();
-        int num_valid_points(0);
-        for (size_t point_idx=0; point_idx < pc.size(); point_idx++, color_point++)
-        {
-            float i = static_cast<float>(color_point->u);
-            float j = static_cast<float>(color_point->v);
-
-            if (i >= 0.f && i <= 1.f && j >= 0.f && j <= 1.f)
-            {
-                num_valid_points++;
-            }
-        }
-
-        sensor_msgs::PointCloud2 msg_pointcloud;
-        msg_pointcloud.header.stamp = t;
-        msg_pointcloud.header.frame_id = _optical_frame_id[DEPTH];
-        msg_pointcloud.width = num_valid_points;
-        msg_pointcloud.height = 1;
-        msg_pointcloud.is_dense = true;
-
-        sensor_msgs::PointCloud2Modifier modifier(msg_pointcloud);
-
-        modifier.setPointCloud2Fields(4,
-                                      "x", 1, sensor_msgs::PointField::FLOAT32,
-                                      "y", 1, sensor_msgs::PointField::FLOAT32,
-                                      "z", 1, sensor_msgs::PointField::FLOAT32,
-                                      "rgb", 1, sensor_msgs::PointField::FLOAT32);
-        modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
-
-        sensor_msgs::PointCloud2Iterator<float>iter_x(msg_pointcloud, "x");
-        sensor_msgs::PointCloud2Iterator<float>iter_y(msg_pointcloud, "y");
-        sensor_msgs::PointCloud2Iterator<float>iter_z(msg_pointcloud, "z");
-
-        sensor_msgs::PointCloud2Iterator<uint8_t>iter_r(msg_pointcloud, "r");
-        sensor_msgs::PointCloud2Iterator<uint8_t>iter_g(msg_pointcloud, "g");
-        sensor_msgs::PointCloud2Iterator<uint8_t>iter_b(msg_pointcloud, "b");
-
-        // Fill the PointCloud2 fields
-        const rs2::vertex* vertex = pc.get_vertices();
-        color_point = pc.get_texture_coordinates();
-
-        float color_pixel[2];
-        for (size_t point_idx=0; point_idx < pc.size(); vertex++, point_idx++, color_point++)
-        {
-            float i(0), j(0);
-            if (use_texture)
-            {
-                i = static_cast<float>(color_point->u);
-                j = static_cast<float>(color_point->v);
-            }
-            if (i >= 0.f && i <= 1.f && j >= 0.f && j <= 1.f)
-            {
-                *iter_x = vertex->x;
-                *iter_y = vertex->y;
-                *iter_z = vertex->z;
-
-                color_pixel[0] = i * texture_width;
-                color_pixel[1] = j * texture_height;
-
-                int pixx = static_cast<int>(color_pixel[0]);
-                int pixy = static_cast<int>(color_pixel[1]);
-                int offset = (pixy * texture_width + pixx) * 3;
-                *iter_r = static_cast<uint8_t>(color_data[offset]);
-                *iter_g = static_cast<uint8_t>(color_data[offset + 1]);
-                *iter_b = static_cast<uint8_t>(color_data[offset + 2]);
-
-                ++iter_x; ++iter_y; ++iter_z;
-                ++iter_r; ++iter_g; ++iter_b;
-            }
-        }
-        _pointcloud_publisher.publish(msg_pointcloud);
     }
+    _pointcloud_publisher.publish(msg_pointcloud);
 }
 
 
@@ -1372,50 +1375,47 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
                                      const std::map<stream_index_pair, std::string>& encoding,
                                      bool copy_data_from_frame)
 {
-    if (_ros_publication_enabled)
+    ROS_DEBUG("publishFrame(...)");
+    auto& image = images[stream];
+
+    if (copy_data_from_frame)
+        image.data = (uint8_t*)f.get_data();
+
+    ++(seq[stream]);
+    auto& info_publisher = info_publishers.at(stream);
+    auto& image_publisher = image_publishers.at(stream);
+    if(0 != info_publisher.getNumSubscribers() ||
+       0 != image_publisher.first.getNumSubscribers())
     {
-        ROS_DEBUG("publishFrame(...)");
-        auto& image = images[stream];
-
-        if (copy_data_from_frame)
-            image.data = (uint8_t*)f.get_data();
-
-        ++(seq[stream]);
-        auto& info_publisher = info_publishers.at(stream);
-        auto& image_publisher = image_publishers.at(stream);
-        if(0 != info_publisher.getNumSubscribers() ||
-           0 != image_publisher.first.getNumSubscribers())
+        auto width = 0;
+        auto height = 0;
+        auto bpp = 1;
+        if (f.is<rs2::video_frame>())
         {
-            auto width = 0;
-            auto height = 0;
-            auto bpp = 1;
-            if (f.is<rs2::video_frame>())
-            {
-                auto image = f.as<rs2::video_frame>();
-                width = image.get_width();
-                height = image.get_height();
-                bpp = image.get_bytes_per_pixel();
-            }
-
-            sensor_msgs::ImagePtr img;
-            img = cv_bridge::CvImage(std_msgs::Header(), encoding.at(stream), image).toImageMsg();
-            img->width = width;
-            img->height = height;
-            img->is_bigendian = false;
-            img->step = width * bpp;
-            img->header.frame_id = optical_frame_id.at(stream);
-            img->header.stamp = t;
-            img->header.seq = seq[stream];
-
-            auto& cam_info = camera_info.at(stream);
-            cam_info.header.stamp = t;
-            cam_info.header.seq = seq[stream];
-            info_publisher.publish(cam_info);
-
-            image_publisher.first.publish(img);
-            image_publisher.second->update();
-            ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
+            auto image = f.as<rs2::video_frame>();
+            width = image.get_width();
+            height = image.get_height();
+            bpp = image.get_bytes_per_pixel();
         }
+
+        sensor_msgs::ImagePtr img;
+        img = cv_bridge::CvImage(std_msgs::Header(), encoding.at(stream), image).toImageMsg();
+        img->width = width;
+        img->height = height;
+        img->is_bigendian = false;
+        img->step = width * bpp;
+        img->header.frame_id = optical_frame_id.at(stream);
+        img->header.stamp = t;
+        img->header.seq = seq[stream];
+
+        auto& cam_info = camera_info.at(stream);
+        cam_info.header.stamp = t;
+        cam_info.header.seq = seq[stream];
+        info_publisher.publish(cam_info);
+
+        image_publisher.first.publish(img);
+        image_publisher.second->update();
+        ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
     }
 }
 
@@ -1476,7 +1476,7 @@ void BaseD400Node::setParam(rs435_paramsConfig &config, base_depth_param param)
     base_config.base_depth_output_trigger_enabled = config.rs435_depth_output_trigger_enabled;
     base_config.base_depth_units = config.rs435_depth_units;
     base_config.base_JSON_file_path = config.rs435_JSON_file_path;
-    base_config.base_ROS_publication_enabled = config.rs435_ROS_publication_enabled;
+    base_config.base_sensors_enabled = config.rs435_sensors_enabled;
     setParam(base_config, param);
 }
 
@@ -1491,7 +1491,7 @@ void BaseD400Node::setParam(rs415_paramsConfig &config, base_depth_param param)
     base_config.base_depth_output_trigger_enabled = config.rs415_depth_output_trigger_enabled;
     base_config.base_depth_units = config.rs415_depth_units;
     base_config.base_JSON_file_path = config.rs415_JSON_file_path;
-    base_config.base_ROS_publication_enabled = config.rs415_ROS_publication_enabled;
+    base_config.base_sensors_enabled = config.rs415_sensors_enabled;
     setParam(base_config, param);
 }
 
@@ -1529,10 +1529,10 @@ void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param par
         break;
     case base_depth_units:
         break;
-    case base_ROS_publication_enabled:
+    case base_sensors_enabled:
     {
-        ROS_DEBUG_STREAM("base_ROS_publication_enabled: " << config.base_ROS_publication_enabled);
-        toggleROSPublication(config.base_ROS_publication_enabled);
+        ROS_DEBUG_STREAM("base_sensors_enabled: " << config.base_sensors_enabled);
+        toggleSensors(config.base_sensors_enabled);
         break;
     }
     case base_JSON_file_path:

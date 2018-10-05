@@ -19,5 +19,5 @@ def add_base_params(gen, prefix):
   gen.add(str(prefix) + "depth_error_polling_enabled",             bool_t,   5,  "Error Polling Enabled",     False)
   gen.add(str(prefix) + "depth_output_trigger_enabled",            bool_t,   6,  "Output Trigger Enabled",    False)
   gen.add(str(prefix) + "depth_units",                             double_t, 7,  "Depth Units",               0.001,     0.001,  0.001)
-  gen.add(str(prefix) + "ROS_publication_enabled",                 bool_t,   8,  "ROS_Publication_Enabled",   True)
+  gen.add(str(prefix) + "sensors_enabled",                 bool_t,   8,  "Sensors Enabled",   True)
   gen.add(str(prefix) + "JSON_file_path",                          str_t,    9,  "JSON_file_path",            "")

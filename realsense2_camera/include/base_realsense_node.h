@@ -23,7 +23,7 @@ namespace realsense2_camera
         base_depth_error_polling_enabled,
         base_depth_output_trigger_enabled,
         base_depth_units,
-        base_ROS_publication_enabled,
+        base_sensors_enabled,
         base_JSON_file_path,
         base_depth_count
     };
@@ -81,7 +81,7 @@ namespace realsense2_camera
                           rs2::device dev,
                           const std::string& serial_no);
 
-        void toggleROSPublication(bool enabled);
+        void toggleSensors(bool enabled);
         virtual void publishTopics() override;
         virtual void registerDynamicReconfigCb() override;
         virtual ~BaseRealSenseNode() {}
@@ -179,7 +179,6 @@ namespace realsense2_camera
         bool _intialize_time_base;
         double _camera_time_base;
         std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
-        bool _ros_publication_enabled = true;
 
         ros::Publisher _pointcloud_publisher;
         ros::Time _ros_time_base;
