@@ -8,6 +8,8 @@
 #include <iostream>
 #include <map>
 
+#include <unistd.h>
+
 using namespace realsense2_camera;
 
 #define REALSENSE_ROS_EMBEDDED_VERSION_STR (VAR_ARG_STRING(VERSION: REALSENSE_ROS_MAJOR_VERSION.REALSENSE_ROS_MINOR_VERSION.REALSENSE_ROS_PATCH_VERSION))
@@ -57,6 +59,8 @@ void RealSenseNodeFactory::onInit()
 		}
         else
         {
+			// HACK: For now, assume there is only a single device and don't check for serial numbers
+			/**
 			auto list = _ctx.query_devices();
 			if (0 == list.size())
 			{
@@ -90,7 +94,17 @@ void RealSenseNodeFactory::onInit()
 				ROS_FATAL_STREAM("The requested device with serial number " << serial_no << " is NOT found!");
 				ros::shutdown();
 				exit(1);
-			}
+			} 
+			*/
+			
+			// HACK: Do a hardware reset of the camera and wait for a fixed time
+			_device = _ctx.query_devices().front(); // Reset the first device
+			int hardware_reset_time = 8; // Testing showed that 7 seconds was too short. Exact time unkown, 8 sec seems to work.
+			ROS_INFO("Device is being hardware reset for %d seconds", hardware_reset_time);
+			_device.hardware_reset();
+			usleep(hardware_reset_time * 1000000);
+			rs2::device_hub hub(_ctx);
+			_device = hub.wait_for_device();
 
 			_ctx.set_devices_changed_callback([this](rs2::event_information& info)
 			{
