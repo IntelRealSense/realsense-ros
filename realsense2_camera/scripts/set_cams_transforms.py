@@ -55,7 +55,7 @@ def publish_status(broadcaster, status):
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         print 'USAGE:'
-        print 'set_cams_transforms.py from_cam to_cam x y z roll pitch azimuth'
+        print 'set_cams_transforms.py from_cam to_cam x y z azimuth pitch roll'
         print 'x, y, z: in meters'
         print 'azimuth, pitch, roll: in degrees'
         print
@@ -74,20 +74,24 @@ if __name__ == '__main__':
         print 'Using default file %s' % os.path.abspath(filename)
 
     if len(sys.argv) >= 9:
-        x, y, z, roll, pitch, yaw = [float(arg) for arg in sys.argv[3:10]]
+        x, y, z, yaw, pitch, roll = [float(arg) for arg in sys.argv[3:10]]
         status = {'mode': 'pitch',
                   'x': {'value': x, 'step': 0.1},
-                  'y': {'value': x, 'step': 0.1},
-                  'z': {'value': x, 'step': 0.1},
-                  'azimuth': {'value': x, 'step': 1},
-                  'pitch': {'value': x, 'step': 1},
-                  'roll': {'value': x, 'step': 1},
+                  'y': {'value': y, 'step': 0.1},
+                  'z': {'value': z, 'step': 0.1},
+                  'azimuth': {'value': yaw, 'step': 1},
+                  'pitch': {'value': pitch, 'step': 1},
+                  'roll': {'value': roll, 'step': 1},
                   'message': ''}
         print 'Use given initial values.'
     else:
-        status = json.load(open(filename, 'r'))
-        print 'Read initial values from file.'
-
+        try:
+            status = json.load(open(filename, 'r'))
+            print 'Read initial values from file.'
+        except IOError as e:
+            print 'Failed reading initial parameters from file %s' % filename
+            print 'Initial parameters must be given for initial run or if an un-initialized file has been given.'
+            sys.exit(-1)
 
     rospy.init_node('my_static_tf2_broadcaster')
     broadcaster = tf2_ros.StaticTransformBroadcaster()
