@@ -1510,7 +1510,7 @@ void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param par
         setOption(DEPTH, RS2_OPTION_ERROR_POLLING_ENABLED, config.base_depth_error_polling_enabled);
         break;
     case base_depth_output_trigger_enabled:
-        ROS_DEBUG_STREAM("base_depth_error_polling_enabled: " << config.base_depth_output_trigger_enabled);
+        ROS_DEBUG_STREAM("base_depth_output_trigger_enabled: " << config.base_depth_output_trigger_enabled);
         setOption(DEPTH, RS2_OPTION_OUTPUT_TRIGGER_ENABLED, config.base_depth_output_trigger_enabled);
         break;
     case base_depth_units:
