@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
     tf
     dynamic_reconfigure
     diagnostic_updater
+    rgbd_launch
     )
 
 if(BUILD_WITH_OPENMP)
@@ -80,6 +81,7 @@ catkin_package(
     cv_bridge
     image_transport
     dynamic_reconfigure
+    rgbd_launch
     )
 
 add_library(${PROJECT_NAME}
