@@ -80,6 +80,32 @@ roslaunch realsense2_camera rs_multiple_devices.launch serial_no_camera1:=<seria
 ```
 The camera serial number should be provided to `serial_no_camera1` and `serial_no_camera2` parameters. One way to get the serial number is from the [rs-enumerate-devices](https://github.com/IntelRealSense/librealsense/blob/58d99783cc2781b1026eeed959aa3f7b562b20ca/tools/enumerate-devices/readme.md) tool.
 
+Another war of obtaining the serial number is connecting the camera alone, running 
+```bash
+roslaunch realsense2_camera rs_camera.launch
+```
+and looking for the serial number in the log printed to screen under "[INFO][...]Device Serial No:".
+
+Another way to use multiple cameras is running each from a different terminal. Make sure you set a different namespace for each camera using the "camera" argument:
+
+```bash
+roslaunch realsense2_camera rs_camera.launch camera:=cam_1 serial_no:=<serial number of the first camera>
+roslaunch realsense2_camera rs_camera.launch camera:=cam_2 serial_no:=<serial number of the second camera>
+...
+
+```
+### Enabling post processing filters.
+realsense2_camera includes some built in post processing filters:
+colorizer - creates an RGB image instead of depth image. Used to visualize the depth image.
+spatial - filter the depth image spatially.
+temporal - filter the depth image temporally.
+pointcloud - it is now possible to enable point cloud with the same command as any other post processing filter.
+
+to activate the filters, use the argument "filters" and deperate them with a comma:
+```bash
+roslaunch realsense2_camera rs_camera.launch filters:=temporal,spatial,pointcloud
+```
+
 
 ## Packages using RealSense ROS Camera
 | Title | Links |
