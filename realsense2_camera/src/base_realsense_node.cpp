@@ -711,8 +711,14 @@ void BaseRealSenseNode::setupStreams()
                         auto f = (*it);
                         auto stream_type = f.get_profile().stream_type();
                         auto stream_index = f.get_profile().stream_index();
+                        auto stream_format = f.get_profile().format();
                         stream_index_pair sip{stream_type,stream_index};
                         frames_to_publish.insert(std::pair<stream_index_pair, rs2::frame>(sip, f));
+                        if (_align_depth && stream_type == RS2_STREAM_DEPTH && stream_format == RS2_FORMAT_Z16)
+                        {
+                            depth_frame = f;
+                            is_depth_arrived = true;
+                        }
                     }
 //                    for (auto it = frames_to_publish.begin(); it != frames_to_publish.end(); ++it)
 //                    {
@@ -757,11 +763,6 @@ void BaseRealSenseNode::setupStreams()
                         if (_align_depth && stream_type != RS2_STREAM_DEPTH)
                         {
                             frames.push_back(f);
-                        }
-                        else
-                        {
-                            depth_frame = f;
-                            is_depth_arrived = true;
                         }
                     }
 
