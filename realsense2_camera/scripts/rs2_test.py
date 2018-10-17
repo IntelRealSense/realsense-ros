@@ -9,15 +9,15 @@ import numpy as np
 import subprocess
 
 
-def ImageColorGetData(rec_filename):
+def ImageGetData(rec_filename, topic):
     bag = rosbag.Bag(rec_filename)
     bridge = CvBridge()
     all_avg = []
     res = dict()
 
-    for topic, msg, t in bag.read_messages(topics='/device_0/sensor_1/Color_0/image/data'):
+    for topic, msg, t in bag.read_messages(topics=topic):
         try:
-            cv_image = bridge.imgmsg_to_cv2(msg, "bgr8")
+            cv_image = bridge.imgmsg_to_cv2(msg, msg.encoding)
         except CvBridgeError as e:
             print(e)
             continue
@@ -25,12 +25,20 @@ def ImageColorGetData(rec_filename):
         all_avg.append(pyimg.mean())
 
     all_avg = np.array(all_avg)
-    (rows, cols, channels) = cv_image.shape
+    channels = cv_image.shape[2] if len(cv_image.shape) > 2 else 1
     res['num_channels'] = channels
     res['avg'] = all_avg.mean()
-    res['epsilon'] =  max(all_avg.max() - res['avg'], res['avg'] - all_avg.min())
+    res['epsilon'] = max(all_avg.max() - res['avg'], res['avg'] - all_avg.min())
 
     return res
+
+
+def ImageColorGetData(rec_filename):
+    return ImageGetData(rec_filename, '/device_0/sensor_1/Color_0/image/data')
+
+
+def ImageDepthGetData(rec_filename):
+    return ImageGetData(rec_filename, '/device_0/sensor_0/Depth_0/image/data')
 
 
 def ImageColorTest(data, gt_data):
@@ -51,8 +59,8 @@ def ImageColorTest(data, gt_data):
 
 
 def PointCloudTest(data, gt_data):
-    print 'Expect image size %d, %d. Got %d, %d.' % (gt_data['width'][0], gt_data['height'][0], data['width'][0], data['height'][0])
-    if data['width'][0] != gt_data['width'][0] or data['height'][0] != gt_data['height'][0]:
+    print 'Expect image size %d(+-%d), %d. Got %d, %d.' % (gt_data['width'][0], gt_data['width'][1], gt_data['height'][0], data['width'][0], data['height'][0])
+    if abs(data['width'][0] - gt_data['width'][0]) > gt_data['width'][1] or data['height'][0] != gt_data['height'][0]:
         return False
     print 'Expect average position of %s (+-%.3f). Got average of %s.' % (gt_data['avg'][0][:3], gt_data['epsilon'][0], data['avg'][0][:3])
     if abs(data['avg'][0][:3] - gt_data['avg'][0][:3]).max() > gt_data['epsilon'][0]:
@@ -67,12 +75,18 @@ def PointCloudTest(data, gt_data):
 test_types = {'vis_avg': {'listener_theme': 'colorStream',
                           'data_func': ImageColorGetData,
                           'test_func': ImageColorTest},
+              'depth_avg': {'listener_theme': 'depthStream',
+                            'data_func': ImageDepthGetData,
+                            'test_func': ImageColorTest},
               'no_file': {'listener_theme': 'colorStream',
                           'data_func': lambda x: None,
                           'test_func': lambda x, y: not ImageColorTest(x, y)},
               'pointscloud_avg': {'listener_theme': 'pointscloud',
-                          'data_func': lambda x: {'width': [776534], 'height': [1], 'avg': [np.array([ 1.28251814, -0.15839984, 4.82235184, 65, 88, 95])], 'epsilon': [0.02, 2]},
+                          'data_func': lambda x: {'width': [776534, 2300], 'height': [1], 'avg': [np.array([ 1.28251814, -0.15839984, 4.82235184, 65, 88, 95])], 'epsilon': [0.02, 2]},
                           'test_func': PointCloudTest},
+              'align_depth_ir1': {'listener_theme': 'alignedDepthInfra1',
+                                  'data_func': ImageDepthGetData,
+                                  'test_func': ImageColorTest},
               }
 
 
@@ -128,7 +142,10 @@ def main():
     all_tests = [{'name': 'vis_avg_1', 'type': 'no_file', 'params': {'rosbag_filename': '/home/non_existent_file.txt'}},
                  # {'name': 'vis_avg_2', 'type': 'vis_avg', 'params': {'rosbag_filename': '/home/doronhi/Downloads/checkerboard_30cm.bag'}},
                  {'name': 'vis_avg_2', 'type': 'vis_avg', 'params': {'rosbag_filename': './records/outdoors.bag'}},
-                 {'name': 'points_cloud_1', 'type': 'pointscloud_avg', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true'}}]
+                 {'name': 'depth_avg_1', 'type': 'depth_avg', 'params': {'rosbag_filename': './records/outdoors.bag'}},
+                 {'name': 'points_cloud_1', 'type': 'pointscloud_avg', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true'}},
+                 {'name': 'align_depth_ir1_1', 'type': 'align_depth_ir1', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true', 'align_depth': 'true'}}
+                 ]
 
     # Normalize parameters:
     for test in all_tests:
