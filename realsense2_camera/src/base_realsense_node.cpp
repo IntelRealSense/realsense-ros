@@ -149,31 +149,26 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("depth_height", _height[DEPTH], DEPTH_HEIGHT);
     _pnh.param("depth_fps", _fps[DEPTH], DEPTH_FPS);
     _pnh.param("enable_depth", _enable[DEPTH], ENABLE_DEPTH);
-    _aligned_depth_images[DEPTH].resize(_width[DEPTH] * _height[DEPTH] * _unit_step_size[DEPTH]);
 
     _pnh.param("infra1_width", _width[INFRA1], INFRA1_WIDTH);
     _pnh.param("infra1_height", _height[INFRA1], INFRA1_HEIGHT);
     _pnh.param("infra1_fps", _fps[INFRA1], INFRA1_FPS);
     _pnh.param("enable_infra1", _enable[INFRA1], ENABLE_INFRA1);
-    _aligned_depth_images[INFRA1].resize(_width[DEPTH] * _height[DEPTH] * _unit_step_size[DEPTH]);
 
     _pnh.param("infra2_width", _width[INFRA2], INFRA2_WIDTH);
     _pnh.param("infra2_height", _height[INFRA2], INFRA2_HEIGHT);
     _pnh.param("infra2_fps", _fps[INFRA2], INFRA2_FPS);
     _pnh.param("enable_infra2", _enable[INFRA2], ENABLE_INFRA2);
-    _aligned_depth_images[INFRA2].resize(_width[DEPTH] * _height[DEPTH] * _unit_step_size[DEPTH]);
 
     _pnh.param("color_width", _width[COLOR], COLOR_WIDTH);
     _pnh.param("color_height", _height[COLOR], COLOR_HEIGHT);
     _pnh.param("color_fps", _fps[COLOR], COLOR_FPS);
     _pnh.param("enable_color", _enable[COLOR], ENABLE_COLOR);
-    _aligned_depth_images[COLOR].resize(_width[DEPTH] * _height[DEPTH] * _unit_step_size[DEPTH]);
 
     _pnh.param("fisheye_width", _width[FISHEYE], FISHEYE_WIDTH);
     _pnh.param("fisheye_height", _height[FISHEYE], FISHEYE_HEIGHT);
     _pnh.param("fisheye_fps", _fps[FISHEYE], FISHEYE_FPS);
     _pnh.param("enable_fisheye", _enable[FISHEYE], ENABLE_FISHEYE);
-    _aligned_depth_images[FISHEYE].resize(_width[DEPTH] * _height[DEPTH] * _unit_step_size[DEPTH]);
 
     _pnh.param("gyro_fps", _fps[GYRO], GYRO_FPS);
     _pnh.param("accel_fps", _fps[ACCEL], ACCEL_FPS);
@@ -408,6 +403,10 @@ void BaseRealSenseNode::alignFrame(const rs2_intrinsics& from_intrin,
                                    std::vector<uint8_t>& out_vec)
 {
     static const auto meter_to_mm = 0.001f;
+    if (out_vec.size() != other_intrin.height * other_intrin.width * output_image_bytes_per_pixel)
+    {
+        out_vec.resize(other_intrin.height * other_intrin.width * output_image_bytes_per_pixel);
+    }
     uint8_t* p_out_frame = out_vec.data();
 
     static const auto blank_color = 0x00;
