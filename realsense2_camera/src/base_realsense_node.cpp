@@ -83,6 +83,18 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _stream_name[ACCEL] = "accel";
 }
 
+void BaseRealSenseNode::toggleSensors(bool enabled)
+{
+    for (auto it=_sensors.begin(); it != _sensors.end(); it++)
+    {
+        auto& sens = _sensors[it->first];
+        if (enabled)
+            sens.start(_syncer);
+        else
+            sens.stop();
+    }
+}
+
 void BaseRealSenseNode::publishTopics()
 {
     getParameters();
@@ -699,8 +711,14 @@ void BaseRealSenseNode::setupStreams()
                         auto f = (*it);
                         auto stream_type = f.get_profile().stream_type();
                         auto stream_index = f.get_profile().stream_index();
+                        auto stream_format = f.get_profile().format();
                         stream_index_pair sip{stream_type,stream_index};
                         frames_to_publish.insert(std::pair<stream_index_pair, rs2::frame>(sip, f));
+                        if (_align_depth && stream_type == RS2_STREAM_DEPTH && stream_format == RS2_FORMAT_Z16)
+                        {
+                            depth_frame = f;
+                            is_depth_arrived = true;
+                        }
                     }
 //                    for (auto it = frames_to_publish.begin(); it != frames_to_publish.end(); ++it)
 //                    {
@@ -745,11 +763,6 @@ void BaseRealSenseNode::setupStreams()
                         if (_align_depth && stream_type != RS2_STREAM_DEPTH)
                         {
                             frames.push_back(f);
-                        }
-                        else
-                        {
-                            depth_frame = f;
-                            is_depth_arrived = true;
                         }
                     }
 
@@ -808,7 +821,6 @@ void BaseRealSenseNode::setupStreams()
                     auto depth_sensor = sens.as<rs2::depth_sensor>();
                     _depth_scale_meters = depth_sensor.get_depth_scale();
                 }
-
                 if (_sync_frames)
                 {
                     sens.start(_syncer);
@@ -1465,6 +1477,7 @@ void BaseD400Node::setParam(rs435_paramsConfig &config, base_depth_param param)
     base_config.base_depth_output_trigger_enabled = config.rs435_depth_output_trigger_enabled;
     base_config.base_depth_units = config.rs435_depth_units;
     base_config.base_JSON_file_path = config.rs435_JSON_file_path;
+    base_config.base_sensors_enabled = config.rs435_sensors_enabled;
     setParam(base_config, param);
 }
 
@@ -1479,6 +1492,7 @@ void BaseD400Node::setParam(rs415_paramsConfig &config, base_depth_param param)
     base_config.base_depth_output_trigger_enabled = config.rs415_depth_output_trigger_enabled;
     base_config.base_depth_units = config.rs415_depth_units;
     base_config.base_JSON_file_path = config.rs415_JSON_file_path;
+    base_config.base_sensors_enabled = config.rs415_sensors_enabled;
     setParam(base_config, param);
 }
 
@@ -1488,6 +1502,7 @@ void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param par
     if (0 == param)
         return;
 
+    // Switch based on the level, defined in .py or .cfg file
     switch (param) {
     case base_depth_gain:
         ROS_DEBUG_STREAM("base_depth_gain: " << config.base_depth_gain);
@@ -1510,11 +1525,17 @@ void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param par
         setOption(DEPTH, RS2_OPTION_ERROR_POLLING_ENABLED, config.base_depth_error_polling_enabled);
         break;
     case base_depth_output_trigger_enabled:
-        ROS_DEBUG_STREAM("base_depth_error_polling_enabled: " << config.base_depth_output_trigger_enabled);
+        ROS_DEBUG_STREAM("base_depth_output_trigger_enabled: " << config.base_depth_output_trigger_enabled);
         setOption(DEPTH, RS2_OPTION_OUTPUT_TRIGGER_ENABLED, config.base_depth_output_trigger_enabled);
         break;
     case base_depth_units:
         break;
+    case base_sensors_enabled:
+    {
+        ROS_DEBUG_STREAM("base_sensors_enabled: " << config.base_sensors_enabled);
+        toggleSensors(config.base_sensors_enabled);
+        break;
+    }
     case base_JSON_file_path:
     {
         ROS_DEBUG_STREAM("base_JSON_file_path: " << config.base_JSON_file_path);

@@ -23,6 +23,7 @@ namespace realsense2_camera
         base_depth_error_polling_enabled,
         base_depth_output_trigger_enabled,
         base_depth_units,
+        base_sensors_enabled,
         base_JSON_file_path,
         base_depth_count
     };
@@ -80,6 +81,7 @@ namespace realsense2_camera
                           rs2::device dev,
                           const std::string& serial_no);
 
+        void toggleSensors(bool enabled);
         virtual void publishTopics() override;
         virtual void registerDynamicReconfigCb() override;
         virtual ~BaseRealSenseNode() {}
