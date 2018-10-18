@@ -140,14 +140,8 @@ namespace realsense2_camera
         void updateIsFrameArrived(std::map<stream_index_pair, bool>& is_frame_arrived,
                                   rs2_stream stream_type, int stream_index);
 
-        void publishAlignedDepthToOthers(rs2::frame depth_frame, const std::vector<rs2::frame>& frames, const ros::Time& t);
+        void publishAlignedDepthToOthers(rs2::frameset frames, const ros::Time& t);
         rs2_stream rs2_string_to_stream(std::string str);
-        void alignFrame(const rs2_intrinsics& from_intrin,
-                        const rs2_intrinsics& other_intrin,
-                        rs2::frame from_image,
-                        uint32_t output_image_bytes_per_pixel,
-                        const rs2_extrinsics& from_to_other,
-                        std::vector<uint8_t>& out_vec);
 
         std::string _json_file_path;
         std::string _serial_no;

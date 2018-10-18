@@ -395,70 +395,6 @@ void BaseRealSenseNode::setupPublishers()
     }
 }
 
-void BaseRealSenseNode::alignFrame(const rs2_intrinsics& from_intrin,
-                                   const rs2_intrinsics& other_intrin,
-                                   rs2::frame from_image,
-                                   uint32_t output_image_bytes_per_pixel,
-                                   const rs2_extrinsics& from_to_other,
-                                   std::vector<uint8_t>& out_vec)
-{
-    static const auto meter_to_mm = 0.001f;
-    if (out_vec.size() != other_intrin.height * other_intrin.width * output_image_bytes_per_pixel)
-    {
-        out_vec.resize(other_intrin.height * other_intrin.width * output_image_bytes_per_pixel);
-    }
-    uint8_t* p_out_frame = out_vec.data();
-
-    static const auto blank_color = 0x00;
-    memset(p_out_frame, blank_color, other_intrin.height * other_intrin.width * output_image_bytes_per_pixel);
-
-    auto p_from_frame = reinterpret_cast<const uint8_t*>(from_image.get_data());
-    auto from_stream_type = from_image.get_profile().stream_type();
-    float depth_units = ((from_stream_type == RS2_STREAM_DEPTH)?_depth_scale_meters:1.f);
-#pragma omp parallel for schedule(dynamic)
-    for (int from_y = 0; from_y < from_intrin.height; ++from_y)
-    {
-        int from_pixel_index = from_y * from_intrin.width;
-        for (int from_x = 0; from_x < from_intrin.width; ++from_x, ++from_pixel_index)
-        {
-            // Skip over depth pixels with the value of zero
-            float depth = (from_stream_type == RS2_STREAM_DEPTH)?(depth_units * ((const uint16_t*)p_from_frame)[from_pixel_index]): 1.f;
-            if (depth)
-            {
-                // Map the top-left corner of the depth pixel onto the other image
-                float from_pixel[2] = { from_x - 0.5f, from_y - 0.5f }, from_point[3], other_point[3], other_pixel[2];
-                rs2_deproject_pixel_to_point(from_point, &from_intrin, from_pixel, depth);
-                rs2_transform_point_to_point(other_point, &from_to_other, from_point);
-                rs2_project_point_to_pixel(other_pixel, &other_intrin, other_point);
-                const int other_x0 = static_cast<int>(other_pixel[0] + 0.5f);
-                const int other_y0 = static_cast<int>(other_pixel[1] + 0.5f);
-
-                // Map the bottom-right corner of the depth pixel onto the other image
-                from_pixel[0] = from_x + 0.5f; from_pixel[1] = from_y + 0.5f;
-                rs2_deproject_pixel_to_point(from_point, &from_intrin, from_pixel, depth);
-                rs2_transform_point_to_point(other_point, &from_to_other, from_point);
-                rs2_project_point_to_pixel(other_pixel, &other_intrin, other_point);
-                const int other_x1 = static_cast<int>(other_pixel[0] + 0.5f);
-                const int other_y1 = static_cast<int>(other_pixel[1] + 0.5f);
-
-                if (other_x0 < 0 || other_y0 < 0 || other_x1 >= other_intrin.width || other_y1 >= other_intrin.height)
-                    continue;
-
-                for (int y = other_y0; y <= other_y1; ++y)
-                {
-                    for (int x = other_x0; x <= other_x1; ++x)
-                    {
-                        int out_pixel_index = y * other_intrin.width + x;
-                        uint16_t* p_from_depth_frame = (uint16_t*)p_from_frame;
-                        uint16_t* p_out_depth_frame = (uint16_t*)p_out_frame;
-                        p_out_depth_frame[out_pixel_index] = p_from_depth_frame[from_pixel_index] * (depth_units / meter_to_mm);
-                    }
-                }
-            }
-        }
-    }
-}
-
 void BaseRealSenseNode::updateIsFrameArrived(std::map<stream_index_pair, bool>& is_frame_arrived,
                                              rs2_stream stream_type, int stream_index)
 {
@@ -472,36 +408,34 @@ void BaseRealSenseNode::updateIsFrameArrived(std::map<stream_index_pair, bool>& 
     }
 }
 
-void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frame depth_frame, const std::vector<rs2::frame>& frames, const ros::Time& t)
+void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const ros::Time& t)
 {
-    for (auto&& other_frame : frames)
+    for (auto it = frames.begin(); it != frames.end(); ++it)
     {
-        auto stream_type = other_frame.get_profile().stream_type();
+        auto frame = (*it);
+        auto stream_type = frame.get_profile().stream_type();
+
         if (RS2_STREAM_DEPTH == stream_type)
             continue;
 
-        auto stream_index = other_frame.get_profile().stream_index();
+        auto stream_index = frame.get_profile().stream_index();
         stream_index_pair sip{stream_type, stream_index};
         auto& info_publisher = _depth_aligned_info_publisher.at(sip);
         auto& image_publisher = _depth_aligned_image_publishers.at(sip);
+
         if(0 != info_publisher.getNumSubscribers() ||
            0 != image_publisher.first.getNumSubscribers())
         {
-            auto from_image_frame = depth_frame.as<rs2::video_frame>();
-            auto& out_vec = _aligned_depth_images[sip];
-            alignFrame(_stream_intrinsics[DEPTH], _stream_intrinsics[sip],
-                       depth_frame, from_image_frame.get_bytes_per_pixel(),
-                       _depth_to_other_extrinsics[sip], out_vec);
+            rs2::align align(stream_type);
+            rs2::frameset processed = frames.apply_filter(align);
+            rs2::depth_frame aligned_depth_frame = processed.get_depth_frame();
 
-            auto& from_image = _depth_aligned_image[sip];
-            from_image.data = out_vec.data();
-
-            publishFrame(depth_frame, t, sip,
+            publishFrame(aligned_depth_frame, t, sip,
                          _depth_aligned_image,
                          _depth_aligned_info_publisher,
                          _depth_aligned_image_publishers, _depth_aligned_seq,
                          _depth_aligned_camera_info, _optical_frame_id,
-                         _depth_aligned_encoding, false);
+                         _depth_aligned_encoding, true);
         }
     }
 }
@@ -719,17 +653,6 @@ void BaseRealSenseNode::setupStreams()
                             is_depth_arrived = true;
                         }
                     }
-//                    for (auto it = frames_to_publish.begin(); it != frames_to_publish.end(); ++it)
-//                    {
-//                        auto f = it->second;
-//                        auto stream_type = f.get_profile().stream_type();
-//                        auto stream_index = f.get_profile().stream_index();
-//                        auto stream_format = f.get_profile().format();
-//                        auto stream_unique_id = f.get_profile().unique_id();
-//
-//                        ROS_DEBUG("Frameset contain (%s, %d, %s %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-//                                  rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
-//                    }
 
                     for (auto it = frames_to_publish.begin(); it != frames_to_publish.end(); ++it)
                     {
@@ -768,7 +691,7 @@ void BaseRealSenseNode::setupStreams()
                     if (_align_depth && is_depth_arrived)
                     {
                         ROS_DEBUG("publishAlignedDepthToOthers(...)");
-                        publishAlignedDepthToOthers(depth_frame, frames, t);
+                        publishAlignedDepthToOthers(frameset, t);
                     }
                 }
                 else

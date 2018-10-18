@@ -50,12 +50,17 @@ def ImageColorTest(data, gt_data):
         if len(channels) > 1 or channels[0] != gt_data['num_channels']:
             return False
         print 'Expect average of %.3f (+-%.3f). Got average of %.3f.' % (gt_data['avg'].mean(), gt_data['epsilon'], np.array(data['avg']).mean())
-        if abs(np.array(data['avg']) - gt_data['avg']).max() > gt_data['epsilon']:
+        if abs(np.array(data['avg']).mean() - gt_data['avg'].mean()) > gt_data['epsilon']:
             return False
     except Exception as e:
         print 'Test Failed: %s' % e
         return False
     return True
+
+
+def ImageColorTest_3epsilon(data, gt_data):
+    gt_data['epsilon'] *= 3
+    return ImageColorTest(data, gt_data)
 
 
 def PointCloudTest(data, gt_data):
@@ -87,6 +92,9 @@ test_types = {'vis_avg': {'listener_theme': 'colorStream',
               'align_depth_ir1': {'listener_theme': 'alignedDepthInfra1',
                                   'data_func': ImageDepthGetData,
                                   'test_func': ImageColorTest},
+              'align_depth_color': {'listener_theme': 'alignedDepthColor',
+                                   'data_func': ImageDepthGetData,
+                                   'test_func': ImageColorTest_3epsilon},
               }
 
 
@@ -144,6 +152,7 @@ def main():
                  {'name': 'vis_avg_2', 'type': 'vis_avg', 'params': {'rosbag_filename': './records/outdoors.bag'}},
                  {'name': 'depth_avg_1', 'type': 'depth_avg', 'params': {'rosbag_filename': './records/outdoors.bag'}},
                  {'name': 'points_cloud_1', 'type': 'pointscloud_avg', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true'}},
+                 {'name': 'align_depth_color_1', 'type': 'align_depth_color', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true', 'align_depth': 'true'}},
                  {'name': 'align_depth_ir1_1', 'type': 'align_depth_ir1', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true', 'align_depth': 'true'}}
                  ]
 
