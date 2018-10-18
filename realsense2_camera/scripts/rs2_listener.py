@@ -52,6 +52,8 @@ class CWaitForMessage:
             self.prev_time = time.time()
             self.func_data[theme_name].setdefault('avg', [])
             self.func_data[theme_name].setdefault('num_channels', [])
+            self.func_data[theme_name].setdefault('shape', [])
+            self.func_data[theme_name].setdefault('reported_size', [])
 
             try:
                 cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
@@ -62,6 +64,8 @@ class CWaitForMessage:
             pyimg = np.asarray(cv_image)
             self.func_data[theme_name]['avg'].append(pyimg.mean())
             self.func_data[theme_name]['num_channels'].append(channels)
+            self.func_data[theme_name]['shape'].append(cv_image.shape)
+            self.func_data[theme_name]['reported_size'].append((data.width, data.height, data.step))
         return _imageColorCallback
 
     def imageDepthCallback(self, data):

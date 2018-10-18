@@ -27,8 +27,10 @@ def ImageGetData(rec_filename, topic):
     all_avg = np.array(all_avg)
     channels = cv_image.shape[2] if len(cv_image.shape) > 2 else 1
     res['num_channels'] = channels
+    res['shape'] = cv_image.shape
     res['avg'] = all_avg.mean()
     res['epsilon'] = max(all_avg.max() - res['avg'], res['avg'] - all_avg.min())
+    res['reported_size'] = [msg.width, msg.height, msg.step]
 
     return res
 
@@ -48,6 +50,15 @@ def ImageColorTest(data, gt_data):
         channels = list(set(data['num_channels']))
         print 'Expect %d channels. Got %d channels.' % (channels[0], gt_data['num_channels'])
         if len(channels) > 1 or channels[0] != gt_data['num_channels']:
+            return False
+        print 'Expected all received images to be the same shape. Got %s' % str(set(data['shape']))
+        if len(set(data['shape'])) > 1:
+            return False
+        print 'Expected shape to be %s. Got %s' % (list(set(data['shape']))[0], gt_data['shape'])
+        if (np.array(list(set(data['shape']))[0]) != np.array(gt_data['shape'])).any():
+            return False
+        print 'Expected header [width, height, step] to be %s. Got %s' % (list(set(data['reported_size']))[0], gt_data['reported_size'])
+        if (np.array(list(set(data['reported_size']))[0]) != np.array(gt_data['reported_size'])).any():
             return False
         print 'Expect average of %.3f (+-%.3f). Got average of %.3f.' % (gt_data['avg'].mean(), gt_data['epsilon'], np.array(data['avg']).mean())
         if abs(np.array(data['avg']).mean() - gt_data['avg'].mean()) > gt_data['epsilon']:
@@ -151,6 +162,7 @@ def main():
                  # {'name': 'vis_avg_2', 'type': 'vis_avg', 'params': {'rosbag_filename': '/home/doronhi/Downloads/checkerboard_30cm.bag'}},
                  {'name': 'vis_avg_2', 'type': 'vis_avg', 'params': {'rosbag_filename': './records/outdoors.bag'}},
                  {'name': 'depth_avg_1', 'type': 'depth_avg', 'params': {'rosbag_filename': './records/outdoors.bag'}},
+                 {'name': 'depth_w_cloud_1', 'type': 'depth_avg', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true'}},
                  {'name': 'points_cloud_1', 'type': 'pointscloud_avg', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true'}},
                  {'name': 'align_depth_color_1', 'type': 'align_depth_color', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true', 'align_depth': 'true'}},
                  {'name': 'align_depth_ir1_1', 'type': 'align_depth_ir1', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true', 'align_depth': 'true'}}
