@@ -2,6 +2,7 @@
 #include "../include/sr300_node.h"
 #include "assert.h"
 #include <boost/algorithm/string.hpp>
+#include <algorithm>
 
 using namespace realsense2_camera;
 
@@ -587,7 +588,6 @@ void BaseRealSenseNode::setupStreams()
                     t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
 
                 std::map<stream_index_pair, bool> is_frame_arrived(_is_frame_arrived);
-                std::vector<rs2::frame> frames;
                 if (frame.is<rs2::frameset>())
                 {
                     ROS_DEBUG("Frameset arrived.");
@@ -638,15 +638,30 @@ void BaseRealSenseNode::setupStreams()
                     // another publisher.
                     // That's why currently it can't send both pointcloud and colorized depth image.
                     //
-                    std::map<stream_index_pair, rs2::frame> frames_to_publish;
+                    bool points_in_set(false);
+                    std::vector<rs2::frame> frames_to_publish;
+                    std::vector<stream_index_pair> is_in_set;
                     for (auto it = frameset.begin(); it != frameset.end(); ++it)
                     {
                         auto f = (*it);
                         auto stream_type = f.get_profile().stream_type();
                         auto stream_index = f.get_profile().stream_index();
                         auto stream_format = f.get_profile().format();
+                        if (f.is<rs2::points>())
+                        {
+                            if (!points_in_set)
+                            {
+                                points_in_set = true;
+                                frames_to_publish.push_back(f);
+                            }
+                            continue;
+                        }
                         stream_index_pair sip{stream_type,stream_index};
-                        frames_to_publish.insert(std::pair<stream_index_pair, rs2::frame>(sip, f));
+                        if (std::find(is_in_set.begin(), is_in_set.end(), sip) == is_in_set.end())
+                        {
+                            is_in_set.push_back(sip);
+                            frames_to_publish.push_back(f);
+                        }
                         if (_align_depth && stream_type == RS2_STREAM_DEPTH && stream_format == RS2_FORMAT_Z16)
                         {
                             depth_frame = f;
@@ -656,7 +671,7 @@ void BaseRealSenseNode::setupStreams()
 
                     for (auto it = frames_to_publish.begin(); it != frames_to_publish.end(); ++it)
                     {
-                        auto f = it->second;
+                        auto f = (*it);
                         auto stream_type = f.get_profile().stream_type();
                         auto stream_index = f.get_profile().stream_index();
                         auto stream_format = f.get_profile().format();
@@ -664,10 +679,13 @@ void BaseRealSenseNode::setupStreams()
                         ROS_DEBUG("Frameset contain (%s, %d, %s) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
                                   rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
 
-                        if (f.is<rs2::points>() && (0 != _pointcloud_publisher.getNumSubscribers()))
+                        if (f.is<rs2::points>())
                         {
-                            ROS_DEBUG("Publish pointscloud");
-                            publishPointCloud(f.as<rs2::points>(), t, frameset);
+                            if (0 != _pointcloud_publisher.getNumSubscribers())
+                            {
+                                ROS_DEBUG("Publish pointscloud");
+                                publishPointCloud(f.as<rs2::points>(), t, frameset);
+                            }
                             continue;
                         }
                         else
@@ -682,10 +700,6 @@ void BaseRealSenseNode::setupStreams()
                                      _image_publishers, _seq,
                                      _camera_info, _optical_frame_id,
                                      _encoding);
-                        if (_align_depth && stream_type != RS2_STREAM_DEPTH)
-                        {
-                            frames.push_back(f);
-                        }
                     }
 
                     if (_align_depth && is_depth_arrived)

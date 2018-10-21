@@ -43,6 +43,15 @@ def ImageDepthGetData(rec_filename):
     return ImageGetData(rec_filename, '/device_0/sensor_0/Depth_0/image/data')
 
 
+def ImageDepthInColorShapeGetData(rec_filename):
+    gt_data = ImageDepthGetData(rec_filename)
+    color_data = ImageColorGetData(rec_filename)
+    gt_data['shape'] = color_data['shape'][:2]
+    gt_data['reported_size'] = color_data['reported_size']
+    gt_data['reported_size'][2] = gt_data['reported_size'][0]*2
+    return gt_data
+
+
 def ImageColorTest(data, gt_data):
     # check that all data['num_channels'] are the same as gt_data['num_channels'] and that avg value of all
     # images are within epsilon of gt_data['avg']
@@ -54,10 +63,10 @@ def ImageColorTest(data, gt_data):
         print 'Expected all received images to be the same shape. Got %s' % str(set(data['shape']))
         if len(set(data['shape'])) > 1:
             return False
-        print 'Expected shape to be %s. Got %s' % (list(set(data['shape']))[0], gt_data['shape'])
+        print 'Expected shape to be %s. Got %s' % (gt_data['shape'], list(set(data['shape']))[0])
         if (np.array(list(set(data['shape']))[0]) != np.array(gt_data['shape'])).any():
             return False
-        print 'Expected header [width, height, step] to be %s. Got %s' % (list(set(data['reported_size']))[0], gt_data['reported_size'])
+        print 'Expected header [width, height, step] to be %s. Got %s' % (gt_data['reported_size'], list(set(data['reported_size']))[0])
         if (np.array(list(set(data['reported_size']))[0]) != np.array(gt_data['reported_size'])).any():
             return False
         print 'Expect average of %.3f (+-%.3f). Got average of %.3f.' % (gt_data['avg'].mean(), gt_data['epsilon'], np.array(data['avg']).mean())
@@ -104,7 +113,7 @@ test_types = {'vis_avg': {'listener_theme': 'colorStream',
                                   'data_func': ImageDepthGetData,
                                   'test_func': ImageColorTest},
               'align_depth_color': {'listener_theme': 'alignedDepthColor',
-                                   'data_func': ImageDepthGetData,
+                                   'data_func': ImageDepthInColorShapeGetData,
                                    'test_func': ImageColorTest_3epsilon},
               }
 
