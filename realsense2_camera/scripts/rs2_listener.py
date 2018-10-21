@@ -38,62 +38,69 @@ class CWaitForMessage:
         self.node_name = params.get('node_name', 'rs2_listener')
         self.bridge = CvBridge()
 
-        self.themes = {'depthStream': {'topic': '', 'callback': self.imageDepthCallback, 'msg_type': msg_Image},
+        self.themes = {'depthStream': {'topic': '/camera/depth/image_rect_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
                        'colorStream': {'topic': '/camera/color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
-                       'pointscloud': {'topic': '/camera/depth/color/points', 'callback': self.pointscloudCallback, 'msg_type': msg_PointCloud2},}
+                       'pointscloud': {'topic': '/camera/depth/color/points', 'callback': self.pointscloudCallback, 'msg_type': msg_PointCloud2},
+                       'alignedDepthInfra1': {'topic': '/camera/aligned_depth_to_infra1/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
+                       'alignedDepthColor': {'topic': '/camera/aligned_depth_to_color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
+                       }
 
         self.func_data = dict()
 
-    def imageColorCallback(self, data):
-        self.prev_time = time.time()
-        func_name = inspect.stack()[0][3]
-        theme_name = [key for key, value in self.themes.items() if func_name in value['callback'].__name__][0]
-        self.func_data[theme_name].setdefault('avg', [])
-        self.func_data[theme_name].setdefault('num_channels', [])
+    def imageColorCallback(self, theme_name):
+        def _imageColorCallback(data):
+            self.prev_time = time.time()
+            self.func_data[theme_name].setdefault('avg', [])
+            self.func_data[theme_name].setdefault('num_channels', [])
+            self.func_data[theme_name].setdefault('shape', [])
+            self.func_data[theme_name].setdefault('reported_size', [])
 
-        try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-        except CvBridgeError as e:
-            print(e)
-            return
-        (rows, cols, channels) = cv_image.shape
-        pyimg = np.asarray(cv_image)
-        self.func_data[theme_name]['avg'].append(pyimg.mean())
-        self.func_data[theme_name]['num_channels'].append(channels)
+            try:
+                cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
+            except CvBridgeError as e:
+                print(e)
+                return
+            channels = cv_image.shape[2] if len(cv_image.shape) > 2 else 1
+            pyimg = np.asarray(cv_image)
+            self.func_data[theme_name]['avg'].append(pyimg.mean())
+            self.func_data[theme_name]['num_channels'].append(channels)
+            self.func_data[theme_name]['shape'].append(cv_image.shape)
+            self.func_data[theme_name]['reported_size'].append((data.width, data.height, data.step))
+        return _imageColorCallback
 
     def imageDepthCallback(self, data):
         pass
 
-    def pointscloudCallback(self, data):
-        self.prev_time = time.time()
-        print 'Got pointcloud: %d, %d' % (data.width, data.height)
-        func_name = inspect.stack()[0][3]
-        theme_name = [key for key, value in self.themes.items() if func_name in value['callback'].__name__][0]
+    def pointscloudCallback(self, theme_name):
+        def _pointscloudCallback(data):
+            self.prev_time = time.time()
+            print 'Got pointcloud: %d, %d' % (data.width, data.height)
 
-        self.func_data[theme_name].setdefault('frame_counter', 0)
-        self.func_data[theme_name].setdefault('avg', [])
-        self.func_data[theme_name].setdefault('size', [])
-        self.func_data[theme_name].setdefault('width', [])
-        self.func_data[theme_name].setdefault('height', [])
-        # until parsing pointcloud is done in real time, I'll use only the first frame.
-        self.func_data[theme_name]['frame_counter'] += 1
+            self.func_data[theme_name].setdefault('frame_counter', 0)
+            self.func_data[theme_name].setdefault('avg', [])
+            self.func_data[theme_name].setdefault('size', [])
+            self.func_data[theme_name].setdefault('width', [])
+            self.func_data[theme_name].setdefault('height', [])
+            # until parsing pointcloud is done in real time, I'll use only the first frame.
+            self.func_data[theme_name]['frame_counter'] += 1
 
-        if self.func_data[theme_name]['frame_counter'] == 1:
-            # Known issue - 1st pointcloud published has invalid texture. Skip 1st frame.
-            return
+            if self.func_data[theme_name]['frame_counter'] == 1:
+                # Known issue - 1st pointcloud published has invalid texture. Skip 1st frame.
+                return
 
-        if len(self.func_data[theme_name]['width']) > 0:
-            return
+            if len(self.func_data[theme_name]['width']) > 0:
+                return
 
-        try:
-            points = np.array([pc2_to_xyzrgb(pp) for pp in pc2.read_points(data, skip_nans=True, field_names=("x", "y", "z", "rgb")) if pp[0] > 0])
-        except Exception as e:
-            print(e)
-            return
-        self.func_data[theme_name]['avg'].append(points.mean(0))
-        self.func_data[theme_name]['size'].append(len(points))
-        self.func_data[theme_name]['width'].append(data.width)
-        self.func_data[theme_name]['height'].append(data.height)
+            try:
+                points = np.array([pc2_to_xyzrgb(pp) for pp in pc2.read_points(data, skip_nans=True, field_names=("x", "y", "z", "rgb")) if pp[0] > 0])
+            except Exception as e:
+                print(e)
+                return
+            self.func_data[theme_name]['avg'].append(points.mean(0))
+            self.func_data[theme_name]['size'].append(len(points))
+            self.func_data[theme_name]['width'].append(data.width)
+            self.func_data[theme_name]['height'].append(data.height)
+        return _pointscloudCallback
 
     def wait_for_message(self, params):
         topic = params['topic']
@@ -128,7 +135,7 @@ class CWaitForMessage:
         for theme_name in themes:
             theme = self.themes[theme_name]
             rospy.loginfo('Subscribing %s on topic: %s' % (theme_name, theme['topic']))
-            self.func_data[theme_name]['sub'] = rospy.Subscriber(theme['topic'], theme['msg_type'], theme['callback'])
+            self.func_data[theme_name]['sub'] = rospy.Subscriber(theme['topic'], theme['msg_type'], theme['callback'](theme_name))
 
         self.prev_time = time.time()
         break_timeout = False
