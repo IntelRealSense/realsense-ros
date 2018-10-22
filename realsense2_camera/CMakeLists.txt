@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
     cv_bridge
     image_transport
     tf
-    dynamic_reconfigure
+    ddynamic_reconfigure
     diagnostic_updater
     )
 
@@ -65,12 +65,12 @@ include_directories(
     )
 
 # Generate dynamic reconfigure options from .cfg files
-generate_dynamic_reconfigure_options(
-  cfg/base_d400_params.cfg
-  cfg/sr300_params.cfg
-  cfg/rs415_params.cfg
-  cfg/rs435_params.cfg
-)
+#generate_dynamic_reconfigure_options(
+#  cfg/base_d400_params.cfg
+#  cfg/sr300_params.cfg
+#  cfg/rs415_params.cfg
+#  cfg/rs435_params.cfg
+#)
 
 # RealSense ROS Node
 catkin_package(
@@ -79,7 +79,7 @@ catkin_package(
     nodelet
     cv_bridge
     image_transport
-    dynamic_reconfigure
+    ddynamic_reconfigure
     )
 
 add_library(${PROJECT_NAME}

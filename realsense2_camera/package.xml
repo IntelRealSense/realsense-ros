@@ -22,7 +22,7 @@
   <build_depend>cv_bridge</build_depend>
   <build_depend>image_transport</build_depend>
   <build_depend>tf</build_depend>
-  <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>ddynamic_reconfigure</build_depend>
   <build_depend>diagnostic_updater</build_depend>
   <run_depend>image_transport</run_depend>
   <run_depend>cv_bridge</run_depend>
@@ -33,7 +33,7 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>tf</run_depend>
-  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>ddynamic_reconfigure</run_depend>
   <run_depend>diagnostic_updater</run_depend>
   <export>
     <nodelet plugin="${prefix}/nodelet_plugins.xml" />

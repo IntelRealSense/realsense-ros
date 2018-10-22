@@ -4,10 +4,15 @@
 #pragma once
 
 #include "../include/realsense_node_factory.h"
-#include <dynamic_reconfigure/server.h>
-#include <realsense2_camera/base_d400_paramsConfig.h>
-#include <realsense2_camera/rs415_paramsConfig.h>
-#include <realsense2_camera/rs435_paramsConfig.h>
+//#include <dynamic_reconfigure/server.h>
+//#include <realsense2_camera/base_d400_paramsConfig.h>
+//#include <realsense2_camera/rs415_paramsConfig.h>
+//#include <realsense2_camera/rs435_paramsConfig.h>
+// #include <ros/ros.h>
+// using namespace std;
+#include <ddynamic_reconfigure/ddynamic_reconfigure.h>
+#include <ddynamic_reconfigure/param/dd_all_params.h>
+
 
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/update_functions.h>
@@ -15,18 +20,18 @@
 
 namespace realsense2_camera
 {
-    enum base_depth_param{
-        base_depth_gain = 1,
-        base_depth_enable_auto_exposure,
-        base_depth_visual_preset,
-        base_depth_frames_queue_size,
-        base_depth_error_polling_enabled,
-        base_depth_output_trigger_enabled,
-        base_depth_units,
-        base_sensors_enabled,
-        base_JSON_file_path,
-        base_depth_count
-    };
+//    enum base_depth_param{
+//        base_depth_gain = 1,
+//        base_depth_enable_auto_exposure,
+//        base_depth_visual_preset,
+//        base_depth_frames_queue_size,
+//        base_depth_error_polling_enabled,
+//        base_depth_output_trigger_enabled,
+//        base_depth_units,
+//        base_sensors_enabled,
+//        base_JSON_file_path,
+//        base_depth_count
+//    };
 
     struct FrequencyDiagnostics
     {
@@ -83,7 +88,7 @@ namespace realsense2_camera
 
         void toggleSensors(bool enabled);
         virtual void publishTopics() override;
-        virtual void registerDynamicReconfigCb() override;
+        virtual void registerDynamicReconfigCb(ros::NodeHandle& nh) override;
         virtual ~BaseRealSenseNode() {}
 
     protected:
@@ -92,6 +97,8 @@ namespace realsense2_camera
         rs2::device _dev;
         ros::NodeHandle& _node_handle, _pnh;
         std::map<stream_index_pair, rs2::sensor> _sensors;
+
+        static void callback(const ddynamic_reconfigure::DDMap& map, int);
 
     private:
         struct float3
@@ -198,6 +205,8 @@ namespace realsense2_camera
 
         std::map<stream_index_pair, bool> _is_frame_arrived;
         const std::string _namespace;
+        std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> _dd;
+
     };//end class
 
     class BaseD400Node : public BaseRealSenseNode
@@ -206,18 +215,18 @@ namespace realsense2_camera
         BaseD400Node(ros::NodeHandle& nodeHandle,
                      ros::NodeHandle& privateNodeHandle,
                      rs2::device dev, const std::string& serial_no);
-        virtual void registerDynamicReconfigCb() override;
+//        virtual void registerDynamicReconfigCb() override;
 
     protected:
-        void setParam(rs415_paramsConfig &config, base_depth_param param);
-        void setParam(rs435_paramsConfig &config, base_depth_param param);
+//        void setParam(rs415_paramsConfig &config, base_depth_param param);
+//        void setParam(rs435_paramsConfig &config, base_depth_param param);
 
     private:
-        void callback(base_d400_paramsConfig &config, uint32_t level);
+//        void callback(base_d400_paramsConfig &config, uint32_t level);
         void setOption(stream_index_pair sip, rs2_option opt, float val);
-        void setParam(base_d400_paramsConfig &config, base_depth_param param);
+//        void setParam(base_d400_paramsConfig &config, base_depth_param param);
 
-        std::shared_ptr<dynamic_reconfigure::Server<base_d400_paramsConfig>> _server;
-        dynamic_reconfigure::Server<base_d400_paramsConfig>::CallbackType _f;
+//        std::shared_ptr<dynamic_reconfigure::Server<base_d400_paramsConfig>> _server;
+//        dynamic_reconfigure::Server<base_d400_paramsConfig>::CallbackType _f;
     };
 }

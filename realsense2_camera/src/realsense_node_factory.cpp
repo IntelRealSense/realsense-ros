@@ -154,8 +154,8 @@ void RealSenseNodeFactory::onInit()
 			}
 		}
 		assert(_realSenseNode);
-        _realSenseNode->publishTopics();
-		_realSenseNode->registerDynamicReconfigCb();
+//        _realSenseNode->publishTopics();
+		_realSenseNode->registerDynamicReconfigCb(nh);
 	}
     catch(const std::exception& ex)
     {

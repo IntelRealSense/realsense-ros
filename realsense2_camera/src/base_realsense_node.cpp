@@ -5,6 +5,7 @@
 #include <algorithm>
 
 using namespace realsense2_camera;
+using namespace ddynamic_reconfigure;
 
 std::string BaseRealSenseNode::getNamespaceStr()
 {
@@ -114,9 +115,25 @@ void BaseRealSenseNode::publishTopics()
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
-void BaseRealSenseNode::registerDynamicReconfigCb()
+void BaseRealSenseNode::registerDynamicReconfigCb(ros::NodeHandle& nh)
 {
-    ROS_INFO("Dynamic reconfig parameters is not implemented in the base node.");
+    ROS_INFO("Setting Dynamic reconfig parameters.");
+    // DDynamic setup stage
+    _dd = std::make_shared<ddynamic_reconfigure::DDynamicReconfigure>(nh);
+    //    _server = std::make_shared<dynamic_reconfigure::Server<base_d400_paramsConfig>>();
+//    DDynamicReconfigure dd(nh);
+    _dd->add(new DDInt("int_param", 0, "An Integer parameter", 50, 0, 100));
+//    _dd->add(new DDDouble("double_param", 0, "A double parameter", .5, 0, 1));
+//    _dd->add(new DDString("str_param", 0, "A string parameter", "Hello World"));
+//    _dd->add(new DDBool("bool_param", 0, "A Boolean parameter", true));
+//    std::map<std::string, int> dict; // An enum to set size
+//        dict["Small"] = 0;      // A small constant
+//        dict["Medium"] = 1;     // A medium constant
+//        dict["Large"] = 2;      // A large constant
+//        dict["ExtraLarge"] = 3; // An extra large constant
+//    _dd->add(new DDEnum("enum_param", 0, "A size parameter which is edited via an enum", 1, dict));
+    _dd->start(callback);
+    ROS_INFO("Done Setting Dynamic reconfig parameters.");
 }
 
 rs2_stream BaseRealSenseNode::rs2_string_to_stream(std::string str)
@@ -575,6 +592,7 @@ void BaseRealSenseNode::setupStreams()
         auto frame_callback = [this](rs2::frame frame)
         {
             try{
+                ROS_INFO_STREAM("DD:" << _dd);
                 // We compute a ROS timestamp which is based on an initial ROS time at point of first frame,
                 // and the incremental timestamp from the camera.
                 // In sync mode the timestamp is based on ROS time
@@ -1386,130 +1404,138 @@ BaseD400Node::BaseD400Node(ros::NodeHandle& nodeHandle,
                         dev, serial_no)
 {}
 
-void BaseD400Node::callback(base_d400_paramsConfig &config, uint32_t level)
-{
-    ROS_DEBUG_STREAM("D400 - Level: " << level);
-
-    if (set_default_dynamic_reconfig_values == level)
-    {
-        for (int i = 1 ; i < base_depth_count ; ++i)
-        {
-            ROS_DEBUG_STREAM("base_depth_param = " << i);
-            setParam(config ,(base_depth_param)i);
-        }
-    }
-    else
-    {
-        setParam(config, (base_depth_param)level);
-    }
-}
+//void BaseD400Node::callback(base_d400_paramsConfig &config, uint32_t level)
+//{
+//    ROS_DEBUG_STREAM("D400 - Level: " << level);
+//
+//    if (set_default_dynamic_reconfig_values == level)
+//    {
+//        for (int i = 1 ; i < base_depth_count ; ++i)
+//        {
+//            ROS_DEBUG_STREAM("base_depth_param = " << i);
+//            setParam(config ,(base_depth_param)i);
+//        }
+//    }
+//    else
+//    {
+//        setParam(config, (base_depth_param)level);
+//    }
+//}
 
 void BaseD400Node::setOption(stream_index_pair sip, rs2_option opt, float val)
 {
     _sensors[sip].set_option(opt, val);
 }
 
-void BaseD400Node::setParam(rs435_paramsConfig &config, base_depth_param param)
-{
-    base_d400_paramsConfig base_config;
-    base_config.base_depth_gain = config.rs435_depth_gain;
-    base_config.base_depth_enable_auto_exposure = config.rs435_depth_enable_auto_exposure;
-    base_config.base_depth_visual_preset = config.rs435_depth_visual_preset;
-    base_config.base_depth_frames_queue_size = config.rs435_depth_frames_queue_size;
-    base_config.base_depth_error_polling_enabled = config.rs435_depth_error_polling_enabled;
-    base_config.base_depth_output_trigger_enabled = config.rs435_depth_output_trigger_enabled;
-    base_config.base_depth_units = config.rs435_depth_units;
-    base_config.base_JSON_file_path = config.rs435_JSON_file_path;
-    base_config.base_sensors_enabled = config.rs435_sensors_enabled;
-    setParam(base_config, param);
-}
+//void BaseD400Node::setParam(rs435_paramsConfig &config, base_depth_param param)
+//{
+//    base_d400_paramsConfig base_config;
+//    base_config.base_depth_gain = config.rs435_depth_gain;
+//    base_config.base_depth_enable_auto_exposure = config.rs435_depth_enable_auto_exposure;
+//    base_config.base_depth_visual_preset = config.rs435_depth_visual_preset;
+//    base_config.base_depth_frames_queue_size = config.rs435_depth_frames_queue_size;
+//    base_config.base_depth_error_polling_enabled = config.rs435_depth_error_polling_enabled;
+//    base_config.base_depth_output_trigger_enabled = config.rs435_depth_output_trigger_enabled;
+//    base_config.base_depth_units = config.rs435_depth_units;
+//    base_config.base_JSON_file_path = config.rs435_JSON_file_path;
+//    base_config.base_sensors_enabled = config.rs435_sensors_enabled;
+//    setParam(base_config, param);
+//}
+//
+//void BaseD400Node::setParam(rs415_paramsConfig &config, base_depth_param param)
+//{
+//    base_d400_paramsConfig base_config;
+//    base_config.base_depth_gain = config.rs415_depth_gain;
+//    base_config.base_depth_enable_auto_exposure = config.rs415_depth_enable_auto_exposure;
+//    base_config.base_depth_visual_preset = config.rs415_depth_visual_preset;
+//    base_config.base_depth_frames_queue_size = config.rs415_depth_frames_queue_size;
+//    base_config.base_depth_error_polling_enabled = config.rs415_depth_error_polling_enabled;
+//    base_config.base_depth_output_trigger_enabled = config.rs415_depth_output_trigger_enabled;
+//    base_config.base_depth_units = config.rs415_depth_units;
+//    base_config.base_JSON_file_path = config.rs415_JSON_file_path;
+//    base_config.base_sensors_enabled = config.rs415_sensors_enabled;
+//    setParam(base_config, param);
+//}
 
-void BaseD400Node::setParam(rs415_paramsConfig &config, base_depth_param param)
-{
-    base_d400_paramsConfig base_config;
-    base_config.base_depth_gain = config.rs415_depth_gain;
-    base_config.base_depth_enable_auto_exposure = config.rs415_depth_enable_auto_exposure;
-    base_config.base_depth_visual_preset = config.rs415_depth_visual_preset;
-    base_config.base_depth_frames_queue_size = config.rs415_depth_frames_queue_size;
-    base_config.base_depth_error_polling_enabled = config.rs415_depth_error_polling_enabled;
-    base_config.base_depth_output_trigger_enabled = config.rs415_depth_output_trigger_enabled;
-    base_config.base_depth_units = config.rs415_depth_units;
-    base_config.base_JSON_file_path = config.rs415_JSON_file_path;
-    base_config.base_sensors_enabled = config.rs415_sensors_enabled;
-    setParam(base_config, param);
-}
+//void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param param)
+//{
+//    // W/O for zero param
+//    if (0 == param)
+//        return;
+//
+//    // Switch based on the level, defined in .py or .cfg file
+//    switch (param) {
+//    case base_depth_gain:
+//        ROS_DEBUG_STREAM("base_depth_gain: " << config.base_depth_gain);
+//        setOption(DEPTH, RS2_OPTION_GAIN, config.base_depth_gain);
+//        break;
+//    case base_depth_enable_auto_exposure:
+//        ROS_DEBUG_STREAM("base_depth_enable_auto_exposure: " << config.base_depth_enable_auto_exposure);
+//        setOption(DEPTH, RS2_OPTION_ENABLE_AUTO_EXPOSURE, config.base_depth_enable_auto_exposure);
+//        break;
+//    case base_depth_visual_preset:
+//        ROS_DEBUG_STREAM("base_depth_visual_preset: " << config.base_depth_visual_preset);
+//        setOption(DEPTH, RS2_OPTION_VISUAL_PRESET, config.base_depth_visual_preset);
+//        break;
+//    case base_depth_frames_queue_size:
+//        ROS_DEBUG_STREAM("base_depth_frames_queue_size: " << config.base_depth_frames_queue_size);
+//        setOption(DEPTH, RS2_OPTION_FRAMES_QUEUE_SIZE, config.base_depth_frames_queue_size);
+//        break;
+//    case base_depth_error_polling_enabled:
+//        ROS_DEBUG_STREAM("base_depth_error_polling_enabled: " << config.base_depth_error_polling_enabled);
+//        setOption(DEPTH, RS2_OPTION_ERROR_POLLING_ENABLED, config.base_depth_error_polling_enabled);
+//        break;
+//    case base_depth_output_trigger_enabled:
+//        ROS_DEBUG_STREAM("base_depth_output_trigger_enabled: " << config.base_depth_output_trigger_enabled);
+//        setOption(DEPTH, RS2_OPTION_OUTPUT_TRIGGER_ENABLED, config.base_depth_output_trigger_enabled);
+//        break;
+//    case base_depth_units:
+//        break;
+//    case base_sensors_enabled:
+//    {
+//        ROS_DEBUG_STREAM("base_sensors_enabled: " << config.base_sensors_enabled);
+//        toggleSensors(config.base_sensors_enabled);
+//        break;
+//    }
+//    case base_JSON_file_path:
+//    {
+//        ROS_DEBUG_STREAM("base_JSON_file_path: " << config.base_JSON_file_path);
+//        auto adv_dev = _dev.as<rs400::advanced_mode>();
+//        if (!adv_dev)
+//        {
+//            ROS_WARN_STREAM("Device doesn't support Advanced Mode!");
+//            return;
+//        }
+//        if (!config.base_JSON_file_path.empty())
+//        {
+//            std::ifstream in(config.base_JSON_file_path);
+//            if (!in.is_open())
+//            {
+//                ROS_WARN_STREAM("JSON file provided doesn't exist!");
+//                return;
+//            }
+//
+//            adv_dev.load_json(config.base_JSON_file_path);
+//        }
+//        break;
+//    }
+//    default:
+//        ROS_WARN_STREAM("Unrecognized D400 param (" << param << ")");
+//        break;
+//    }
+//}
 
-void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param param)
-{
-    // W/O for zero param
-    if (0 == param)
-        return;
+//void BaseD400Node::registerDynamicReconfigCb()
+//{
+//    _server = std::make_shared<dynamic_reconfigure::Server<base_d400_paramsConfig>>();
+//    _f = boost::bind(&BaseD400Node::callback, this, _1, _2);
+//    _server->setCallback(_f);
+//}
 
-    // Switch based on the level, defined in .py or .cfg file
-    switch (param) {
-    case base_depth_gain:
-        ROS_DEBUG_STREAM("base_depth_gain: " << config.base_depth_gain);
-        setOption(DEPTH, RS2_OPTION_GAIN, config.base_depth_gain);
-        break;
-    case base_depth_enable_auto_exposure:
-        ROS_DEBUG_STREAM("base_depth_enable_auto_exposure: " << config.base_depth_enable_auto_exposure);
-        setOption(DEPTH, RS2_OPTION_ENABLE_AUTO_EXPOSURE, config.base_depth_enable_auto_exposure);
-        break;
-    case base_depth_visual_preset:
-        ROS_DEBUG_STREAM("base_depth_visual_preset: " << config.base_depth_visual_preset);
-        setOption(DEPTH, RS2_OPTION_VISUAL_PRESET, config.base_depth_visual_preset);
-        break;
-    case base_depth_frames_queue_size:
-        ROS_DEBUG_STREAM("base_depth_frames_queue_size: " << config.base_depth_frames_queue_size);
-        setOption(DEPTH, RS2_OPTION_FRAMES_QUEUE_SIZE, config.base_depth_frames_queue_size);
-        break;
-    case base_depth_error_polling_enabled:
-        ROS_DEBUG_STREAM("base_depth_error_polling_enabled: " << config.base_depth_error_polling_enabled);
-        setOption(DEPTH, RS2_OPTION_ERROR_POLLING_ENABLED, config.base_depth_error_polling_enabled);
-        break;
-    case base_depth_output_trigger_enabled:
-        ROS_DEBUG_STREAM("base_depth_output_trigger_enabled: " << config.base_depth_output_trigger_enabled);
-        setOption(DEPTH, RS2_OPTION_OUTPUT_TRIGGER_ENABLED, config.base_depth_output_trigger_enabled);
-        break;
-    case base_depth_units:
-        break;
-    case base_sensors_enabled:
-    {
-        ROS_DEBUG_STREAM("base_sensors_enabled: " << config.base_sensors_enabled);
-        toggleSensors(config.base_sensors_enabled);
-        break;
-    }
-    case base_JSON_file_path:
-    {
-        ROS_DEBUG_STREAM("base_JSON_file_path: " << config.base_JSON_file_path);
-        auto adv_dev = _dev.as<rs400::advanced_mode>();
-        if (!adv_dev)
-        {
-            ROS_WARN_STREAM("Device doesn't support Advanced Mode!");
-            return;
-        }
-        if (!config.base_JSON_file_path.empty())
-        {
-            std::ifstream in(config.base_JSON_file_path);
-            if (!in.is_open())
-            {
-                ROS_WARN_STREAM("JSON file provided doesn't exist!");
-                return;
-            }
-
-            adv_dev.load_json(config.base_JSON_file_path);
-        }
-        break;
-    }
-    default:
-        ROS_WARN_STREAM("Unrecognized D400 param (" << param << ")");
-        break;
-    }
-}
-
-void BaseD400Node::registerDynamicReconfigCb()
-{
-    _server = std::make_shared<dynamic_reconfigure::Server<base_d400_paramsConfig>>();
-    _f = boost::bind(&BaseD400Node::callback, this, _1, _2);
-    _server->setCallback(_f);
+void BaseRealSenseNode::callback(const ddynamic_reconfigure::DDMap& map, int) {
+    ROS_INFO("Reconfigure Request: %d %f %s %s %ld",
+            get(map, "int_param").toInt(), get(map, "double_param").toDouble(),
+            get(map, "str_param").toString().c_str(),
+            get(map, "bool_param").toBool() ? "True" : "False",
+            map.size());
 }
