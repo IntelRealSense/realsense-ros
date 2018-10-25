@@ -95,11 +95,14 @@ roslaunch realsense2_camera rs_camera.launch camera:=cam_2 serial_no:=<serial nu
 
 ```
 ### Enabling post processing filters.
-realsense2_camera includes some built in post processing filters:
-colorizer - creates an RGB image instead of depth image. Used to visualize the depth image.
-spatial - filter the depth image spatially.
-temporal - filter the depth image temporally.
-pointcloud - it is now possible to enable point cloud with the same command as any other post processing filter.
+realsense2_camera includes some built in post processing filters:<br>
+colorizer - creates an RGB image instead of depth image. Used to visualize the depth image.<br>
+spatial - filter the depth image spatially.<br>
+temporal - filter the depth image temporally.<br>
+pointcloud - it is now possible to enable point cloud with the same command as any other post processing filter.<br>
+
+The colorizer filter replaces the image in the topic: /<camera>/depth/image_rect_raw.
+The spatial and temporal filters affect the depth image and all that is derived from it, i.e. pointcloud and colorizer.
 
 to activate the filters, use the argument "filters" and deperate them with a comma:
 ```bash
