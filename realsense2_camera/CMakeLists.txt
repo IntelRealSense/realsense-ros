@@ -86,14 +86,8 @@ add_library(${PROJECT_NAME}
     include/constants.h
     include/realsense_node_factory.h
     include/base_realsense_node.h
-    include/rs415_node.h
-    include/rs435_node.h
-    include/sr300_node.h
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
-    src/rs415_node.cpp
-    src/rs435_node.cpp
-    src/sr300_node.cpp
     )
 
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)

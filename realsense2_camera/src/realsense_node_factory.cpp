@@ -2,9 +2,7 @@
 // Copyright(c) 2017 Intel Corporation. All Rights Reserved
 
 #include "../include/realsense_node_factory.h"
-#include "../include/sr300_node.h"
-#include "../include/rs415_node.h"
-#include "../include/rs435_node.h"
+#include "../include/base_realsense_node.h"
 #include <iostream>
 #include <map>
 
@@ -111,41 +109,19 @@ void RealSenseNodeFactory::onInit()
 			switch(pid)
 			{
 			case SR300_PID:
-				_realSenseNode = std::unique_ptr<SR300Node>(new SR300Node(nh, privateNh, _device, serial_no));
-				break;
 			case RS400_PID:
-				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-				break;
 			case RS405_PID:
-				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-				break;
 			case RS410_PID:
 			case RS460_PID:
-				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-				break;
 			case RS415_PID:
-				_realSenseNode = std::unique_ptr<RS415Node>(new RS415Node(nh, privateNh, _device, serial_no));
-				break;
 			case RS420_PID:
-				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-				break;
 			case RS420_MM_PID:
-				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-				break;
 			case RS430_PID:
-				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-				break;
 			case RS430_MM_PID:
-				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-				break;
 			case RS430_MM_RGB_PID:
-				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
-				break;
 			case RS435_RGB_PID:
-				_realSenseNode = std::unique_ptr<RS435Node>(new RS435Node(nh, privateNh, _device, serial_no));
-				break;
 			case RS_USB2_PID:
-				_realSenseNode = std::unique_ptr<BaseD400Node>(new BaseD400Node(nh, privateNh, _device, serial_no));
+				_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(nh, privateNh, _device, serial_no));
 				break;
 			default:
 				ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);
@@ -154,7 +130,7 @@ void RealSenseNodeFactory::onInit()
 			}
 		}
 		assert(_realSenseNode);
-//        _realSenseNode->publishTopics();
+        _realSenseNode->publishTopics();
 		_realSenseNode->registerDynamicReconfigCb(nh);
 	}
     catch(const std::exception& ex)
