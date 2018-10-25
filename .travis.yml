@@ -28,6 +28,7 @@ install:
 
   # download ddynamic_reconfigure:
   - git clone -v --progress https://github.com/doronhi/ddynamic_reconfigure.git
+  - git checkout enum_bug
 
   # install realsense2-camera
   - mv * ~/catkin_ws/src/realsense/     # This leaves behind .git, .gitignore and .travis.yml but no matter.
