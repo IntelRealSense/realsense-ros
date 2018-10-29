@@ -1395,7 +1395,14 @@ void BaseD400Node::callback(base_d400_paramsConfig &config, uint32_t level)
         for (int i = 1 ; i < base_depth_count ; ++i)
         {
             ROS_DEBUG_STREAM("base_depth_param = " << i);
-            setParam(config ,(base_depth_param)i);
+            try
+            {
+                setParam(config ,(base_depth_param)i);
+            }
+            catch(...)
+            {
+                ROS_ERROR_STREAM("Failed. Skip initialization of parameter " << (base_depth_param)i);
+            }
         }
     }
     else
@@ -1501,6 +1508,8 @@ void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param par
         }
         break;
     }
+    case base_depth_count:
+        break;
     }
 }
 

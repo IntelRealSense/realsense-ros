@@ -136,7 +136,14 @@ void SR300Node::callback(sr300_paramsConfig &config, uint32_t level)
         for (int i = 1 ; i < base_depth_count ; ++i)
         {
             ROS_DEBUG_STREAM("sr300_param = " << i);
-            setParam(config ,(sr300_param)i);
+            try
+            {
+                setParam(config ,(sr300_param)i);
+            }
+            catch(...)
+            {
+                ROS_ERROR_STREAM("Failed. Skip initialization of parameter " << (sr300_param)i);
+            }
         }
     }
     else

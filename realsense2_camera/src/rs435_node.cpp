@@ -117,7 +117,7 @@ void RS435Node::callback(rs435_paramsConfig &config, uint32_t level)
             }
             catch(...)
             {
-                ROS_ERROR_STREAM("Failed. Skip initialization of parameter");
+                ROS_ERROR_STREAM("Failed. Skip initialization of parameter " << (rs435_param)i);
             }
         }
     }
