@@ -148,6 +148,38 @@ std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option optio
     return dict;
 }
 
+void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name)
+{
+    ros::NodeHandle nh1(module_name);
+    std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec = std::make_shared<ddynamic_reconfigure::DDynamicReconfigure>(nh1);
+    for (auto i = 0; i < RS2_OPTION_COUNT; i++)
+    {
+        rs2_option option = static_cast<rs2_option>(i);
+        if (!sensor.supports(option) || sensor.is_option_read_only(option))
+        {
+            continue;
+        }
+        if (is_checkbox(sensor, option))
+        {
+            ddynrec->add(new DDBool(rs2_option_to_string(option), i, sensor.get_option_description(option), bool(sensor.get_option(option))));
+            continue;
+        }
+        std::map<std::string, int> enum_dict = get_enum_method(sensor, option);
+        if (enum_dict.empty())
+        {
+            rs2::option_range op_range = sensor.get_option_range(option);
+            ddynrec->add(new DDDouble(rs2_option_to_string(option), i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
+        }
+        else
+        {
+            ROS_INFO_STREAM("Add enum: " << rs2_option_to_string(option) << ". value=" << int(sensor.get_option(option)));
+            ddynrec->add(new DDEnum(rs2_option_to_string(option), i, sensor.get_option_description(option), int(sensor.get_option(option)), enum_dict));
+        }
+    }
+    ddynrec->start(boost::bind(callback, _1, _2, sensor));
+    _ddynrec.push_back(ddynrec);
+}
+
 void BaseRealSenseNode::registerDynamicReconfigCb(ros::NodeHandle& nh)
 {
     ROS_INFO("Setting Dynamic reconfig parameters.");
@@ -159,79 +191,15 @@ void BaseRealSenseNode::registerDynamicReconfigCb(ros::NodeHandle& nh)
         std::string module_name = sensor.get_info(RS2_CAMERA_INFO_NAME);
         std::replace( module_name.begin(), module_name.end(), ' ', '_'); // replace all ' ' to '_'
         ROS_DEBUG_STREAM("module_name:" << module_name);
-        ros::NodeHandle nh1(module_name);
-        std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec = std::make_shared<ddynamic_reconfigure::DDynamicReconfigure>(nh1);
-        for (auto i = 0; i < RS2_OPTION_COUNT; i++)
-        {
-            rs2_option option = static_cast<rs2_option>(i);
-            if (!sensor.supports(option) || sensor.is_option_read_only(option))
-            {
-                continue;
-            }
-            if (is_checkbox(sensor, option))
-            {
-                ddynrec->add(new DDBool(rs2_option_to_string(option), i, sensor.get_option_description(option), bool(sensor.get_option(option))));
-                continue;
-            }
-            std::map<std::string, int> enum_dict = get_enum_method(sensor, option);
-            if (enum_dict.empty())
-            {
-                rs2::option_range op_range = sensor.get_option_range(option);
-                ddynrec->add(new DDDouble(rs2_option_to_string(option), i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
-            }
-            else
-            {
-                ROS_INFO_STREAM("Add enum: " << rs2_option_to_string(option) << ". value=" << int(sensor.get_option(option)));
-                ddynrec->add(new DDEnum(rs2_option_to_string(option), i, sensor.get_option_description(option), int(sensor.get_option(option)), enum_dict));
-            }
-        }
-        ddynrec->start(boost::bind(callback, _1, _2, sensor));
-        _ddynrec.push_back(ddynrec);
+        registerDynamicOption(nh, sensor, module_name);
     }
-    registerDynamicReconfigCb_filters(nh);
-    ROS_INFO("Done Setting Dynamic reconfig parameters.");
-}
-
-void BaseRealSenseNode::registerDynamicReconfigCb_filters(ros::NodeHandle& nh)
-{
-    ROS_INFO("Setting Dynamic reconfig parameters.");
-
-    std::vector<rs2::sensor> dev_sensors = _dev.query_sensors();
 
     for (NamedFilter nfilter : _filters)
     {
         std::string module_name = nfilter._name;
         auto sensor = *(nfilter._filter);
         ROS_DEBUG_STREAM("module_name:" << module_name);
-        ros::NodeHandle nh1(module_name);
-        std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec = std::make_shared<ddynamic_reconfigure::DDynamicReconfigure>(nh1);
-        for (auto i = 0; i < RS2_OPTION_COUNT; i++)
-        {
-            rs2_option option = static_cast<rs2_option>(i);
-            if (!sensor.supports(option) || sensor.is_option_read_only(option))
-            {
-                continue;
-            }
-            ROS_INFO_STREAM("Add filter option: " << rs2_option_to_string(option));
-            if (is_checkbox(sensor, option))
-            {
-                ddynrec->add(new DDBool(rs2_option_to_string(option), i, sensor.get_option_description(option), bool(sensor.get_option(option))));
-                continue;
-            }
-            std::map<std::string, int> enum_dict = get_enum_method(sensor, option);
-            if (enum_dict.empty())
-            {
-                rs2::option_range op_range = sensor.get_option_range(option);
-                ddynrec->add(new DDDouble(rs2_option_to_string(option), i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
-            }
-            else
-            {
-                ROS_INFO_STREAM("Add enum: " << rs2_option_to_string(option) << ". value=" << int(sensor.get_option(option)));
-                ddynrec->add(new DDEnum(rs2_option_to_string(option), i, sensor.get_option_description(option), int(sensor.get_option(option)), enum_dict));
-            }
-        }
-        ddynrec->start(boost::bind(callback, _1, _2, sensor));
-        _ddynrec.push_back(ddynrec);
+        registerDynamicOption(nh, sensor, module_name);
     }
     ROS_INFO("Done Setting Dynamic reconfig parameters.");
 }

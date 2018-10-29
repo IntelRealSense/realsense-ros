@@ -80,7 +80,7 @@ namespace realsense2_camera
         std::vector<std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure>> _ddynrec;
 
         static void callback(const ddynamic_reconfigure::DDMap& map, int, rs2::options sensor);
-        void registerDynamicReconfigCb_filters(ros::NodeHandle& nh);
+        void registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name);
 
     private:
         struct float3
