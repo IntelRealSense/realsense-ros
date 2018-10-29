@@ -89,10 +89,17 @@ void BaseRealSenseNode::toggleSensors(bool enabled)
     for (auto it=_sensors.begin(); it != _sensors.end(); it++)
     {
         auto& sens = _sensors[it->first];
-        if (enabled)
-            sens.start(_syncer);
-        else
-            sens.stop();
+        try
+        {
+            if (enabled)
+                sens.start(_syncer);
+            else
+                sens.stop();
+        }
+        catch(const rs2::wrong_api_call_sequence_error& ex)
+        {
+            ROS_DEBUG_STREAM("toggleSensors: " << ex.what());
+        }
     }
 }
 
