@@ -13,6 +13,7 @@ def ImageGetData(rec_filename, topic):
     bag = rosbag.Bag(rec_filename)
     bridge = CvBridge()
     all_avg = []
+    ok_percent = []
     res = dict()
 
     for topic, msg, t in bag.read_messages(topics=topic):
@@ -22,13 +23,16 @@ def ImageGetData(rec_filename, topic):
             print(e)
             continue
         pyimg = np.asarray(cv_image)
-        all_avg.append(pyimg.mean())
+        ok_number = (pyimg != 0).sum()
+        ok_percent.append(float(ok_number) / (pyimg.shape[0] * pyimg.shape[1]))
+        all_avg.append(pyimg.sum() / ok_number)
 
     all_avg = np.array(all_avg)
     channels = cv_image.shape[2] if len(cv_image.shape) > 2 else 1
     res['num_channels'] = channels
     res['shape'] = cv_image.shape
     res['avg'] = all_avg.mean()
+    res['ok_percent'] = {'value': (np.array(ok_percent).mean()) / channels, 'epsilon': 0.01}
     res['epsilon'] = max(all_avg.max() - res['avg'], res['avg'] - all_avg.min())
     res['reported_size'] = [msg.width, msg.height, msg.step]
 
@@ -49,8 +53,15 @@ def ImageDepthInColorShapeGetData(rec_filename):
     gt_data['shape'] = color_data['shape'][:2]
     gt_data['reported_size'] = color_data['reported_size']
     gt_data['reported_size'][2] = gt_data['reported_size'][0]*2
+    gt_data['ok_percent']['epsilon'] *= 3
     return gt_data
 
+def ImageDepthGetData_decimation(rec_filename):
+    gt_data = ImageDepthGetData(rec_filename)
+    gt_data['shape'] = [x/2 for x in gt_data['shape']]
+    gt_data['reported_size'] = [x/2 for x in gt_data['reported_size']]
+    gt_data['epsilon'] *= 3
+    return gt_data
 
 def ImageColorTest(data, gt_data):
     # check that all data['num_channels'] are the same as gt_data['num_channels'] and that avg value of all
@@ -72,6 +83,11 @@ def ImageColorTest(data, gt_data):
         print 'Expect average of %.3f (+-%.3f). Got average of %.3f.' % (gt_data['avg'].mean(), gt_data['epsilon'], np.array(data['avg']).mean())
         if abs(np.array(data['avg']).mean() - gt_data['avg'].mean()) > gt_data['epsilon']:
             return False
+
+        print 'Expect no holes percent > %.3f. Got %.3f.' % (gt_data['ok_percent']['value']-gt_data['ok_percent']['epsilon'], np.array(data['ok_percent']).mean())
+        if np.array(data['ok_percent']).mean() < gt_data['ok_percent']['value']-gt_data['ok_percent']['epsilon']:
+            return False
+
     except Exception as e:
         print 'Test Failed: %s' % e
         return False
@@ -115,6 +131,12 @@ test_types = {'vis_avg': {'listener_theme': 'colorStream',
               'align_depth_color': {'listener_theme': 'alignedDepthColor',
                                    'data_func': ImageDepthInColorShapeGetData,
                                    'test_func': ImageColorTest_3epsilon},
+              'depth_avg_decimation': {'listener_theme': 'depthStream',
+                                   'data_func': ImageDepthGetData_decimation,
+                                   'test_func': ImageColorTest},
+              'align_depth_ir1_decimation': {'listener_theme': 'alignedDepthInfra1',
+                                  'data_func': ImageDepthGetData,
+                                  'test_func': ImageColorTest},
               }
 
 
@@ -173,8 +195,12 @@ def main():
                  {'name': 'depth_avg_1', 'type': 'depth_avg', 'params': {'rosbag_filename': './records/outdoors.bag'}},
                  {'name': 'depth_w_cloud_1', 'type': 'depth_avg', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true'}},
                  {'name': 'points_cloud_1', 'type': 'pointscloud_avg', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true'}},
-                 {'name': 'align_depth_color_1', 'type': 'align_depth_color', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true', 'align_depth': 'true'}},
-                 {'name': 'align_depth_ir1_1', 'type': 'align_depth_ir1', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true', 'align_depth': 'true'}}
+                 {'name': 'align_depth_color_1', 'type': 'align_depth_color', 'params': {'rosbag_filename': './records/outdoors.bag', 'align_depth': 'true'}},
+                 {'name': 'align_depth_ir1_1', 'type': 'align_depth_ir1', 'params': {'rosbag_filename': './records/outdoors.bag', 'align_depth': 'true'}},
+                 {'name': 'depth_decimation_1', 'type': 'align_depth_ir1_decimation', 'params': {'rosbag_filename': './records/outdoors.bag', 'filters': 'decimation', 'align_depth': 'true'}},
+                 {'name': 'depth_avg_decimation_1', 'type': 'depth_avg_decimation', 'params': {'rosbag_filename': './records/outdoors.bag', 'filters': 'decimation'}},
+                 {'name': 'align_depth_ir1_decimation_1', 'type': 'align_depth_ir1_decimation', 'params': {'rosbag_filename': './records/outdoors.bag', 'filters': 'decimation', 'align_depth': 'true'}}
+
                  ]
 
     # Normalize parameters:
