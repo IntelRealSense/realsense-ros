@@ -51,6 +51,7 @@ class CWaitForMessage:
         def _imageColorCallback(data):
             self.prev_time = time.time()
             self.func_data[theme_name].setdefault('avg', [])
+            self.func_data[theme_name].setdefault('ok_percent', [])
             self.func_data[theme_name].setdefault('num_channels', [])
             self.func_data[theme_name].setdefault('shape', [])
             self.func_data[theme_name].setdefault('reported_size', [])
@@ -62,7 +63,11 @@ class CWaitForMessage:
                 return
             channels = cv_image.shape[2] if len(cv_image.shape) > 2 else 1
             pyimg = np.asarray(cv_image)
-            self.func_data[theme_name]['avg'].append(pyimg.mean())
+
+            ok_number = (pyimg != 0).sum()
+
+            self.func_data[theme_name]['avg'].append(pyimg.sum() / ok_number)
+            self.func_data[theme_name]['ok_percent'].append(float(ok_number) / (pyimg.shape[0] * pyimg.shape[1]) / channels)
             self.func_data[theme_name]['num_channels'].append(channels)
             self.func_data[theme_name]['shape'].append(cv_image.shape)
             self.func_data[theme_name]['reported_size'].append((data.width, data.height, data.step))
