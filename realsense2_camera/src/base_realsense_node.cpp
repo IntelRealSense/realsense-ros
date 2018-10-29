@@ -443,7 +443,7 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
                          _depth_aligned_info_publisher,
                          _depth_aligned_image_publishers, _depth_aligned_seq,
                          _depth_aligned_camera_info, _optical_frame_id,
-                         _depth_aligned_encoding, true);
+                         _depth_aligned_encoding);
         }
     }
 }
@@ -479,7 +479,7 @@ void BaseRealSenseNode::enable_devices()
 
 						_enabled_profiles[elem].push_back(profile);
 
-						_image[elem] = cv::Mat(_width[elem], _height[elem], _image_format[elem], cv::Scalar(0, 0, 0));
+						_image[elem] = cv::Mat(_height[elem], _width[elem], _image_format[elem], cv::Scalar(0, 0, 0));
 
 						ROS_INFO_STREAM(_stream_name[elem] << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem]);
 						break;
@@ -503,7 +503,7 @@ void BaseRealSenseNode::enable_devices()
 	{
 		for (auto& profiles : _enabled_profiles)
 		{
-			_depth_aligned_image[profiles.first] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
+			_depth_aligned_image[profiles.first] = cv::Mat(_height[DEPTH], _width[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
 		}
 	}
 }
@@ -527,7 +527,7 @@ void BaseRealSenseNode::setupFilters()
 
             _width[DEPTH] = _width[COLOR];
             _height[DEPTH] = _height[COLOR];
-            _image[DEPTH] = cv::Mat(_width[DEPTH], _height[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
+            _image[DEPTH] = cv::Mat(_height[DEPTH], _width[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
         }
         else if ((*s_iter) == "spatial")
         {
@@ -1325,10 +1325,26 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
                                      bool copy_data_from_frame)
 {
     ROS_DEBUG("publishFrame(...)");
+    auto width = 0;
+    auto height = 0;
+    auto bpp = 1;
+    if (f.is<rs2::video_frame>())
+    {
+        auto image = f.as<rs2::video_frame>();
+        width = image.get_width();
+        height = image.get_height();
+        bpp = image.get_bytes_per_pixel();
+    }
     auto& image = images[stream];
 
     if (copy_data_from_frame)
+    {
+        if (images[stream].size() != cv::Size(width, height))
+        {
+            image.create(height, width, _image_format[stream]);
+        }
         image.data = (uint8_t*)f.get_data();
+    }
 
     ++(seq[stream]);
     auto& info_publisher = info_publishers.at(stream);
@@ -1336,17 +1352,6 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
     if(0 != info_publisher.getNumSubscribers() ||
        0 != image_publisher.first.getNumSubscribers())
     {
-        auto width = 0;
-        auto height = 0;
-        auto bpp = 1;
-        if (f.is<rs2::video_frame>())
-        {
-            auto image = f.as<rs2::video_frame>();
-            width = image.get_width();
-            height = image.get_height();
-            bpp = image.get_bytes_per_pixel();
-        }
-
         sensor_msgs::ImagePtr img;
         img = cv_bridge::CvImage(std_msgs::Header(), encoding.at(stream), image).toImageMsg();
         img->width = width;
