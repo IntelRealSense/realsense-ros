@@ -539,6 +539,11 @@ void BaseRealSenseNode::setupFilters()
             ROS_INFO("Add Filter: temporal");
             _filters.push_back(NamedFilter("temporal", std::make_shared<rs2::temporal_filter>()));
         }
+        else if ((*s_iter) == "decimation")
+        {
+            ROS_INFO("Add Filter: decimation");
+            _filters.push_back(NamedFilter("decimation", std::make_shared<rs2::decimation_filter>()));
+        }
         else if ((*s_iter) == "pointcloud")
         {
             assert(_pointcloud); // For now, it is set in getParameters()..
