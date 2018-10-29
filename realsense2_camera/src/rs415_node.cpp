@@ -120,7 +120,7 @@ void RS415Node::callback(rs415_paramsConfig &config, uint32_t level)
 
     if (set_default_dynamic_reconfig_values == level)
     {
-        for (int i = 1 ; i < rs415_param_count ; ++i)
+        for (int i = 1 ; i < base_depth_count ; ++i)
         {
             ROS_DEBUG_STREAM("rs415_param = " << i);
             setParam(config ,(rs415_param)i);

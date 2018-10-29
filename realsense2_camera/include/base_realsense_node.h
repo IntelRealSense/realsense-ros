@@ -17,7 +17,6 @@ namespace realsense2_camera
 {
     enum base_depth_param{
         base_depth_gain = 1,
-        base_depth_enable_auto_exposure,
         base_depth_visual_preset,
         base_depth_frames_queue_size,
         base_depth_error_polling_enabled,
@@ -25,6 +24,7 @@ namespace realsense2_camera
         base_depth_units,
         base_sensors_enabled,
         base_JSON_file_path,
+        base_depth_enable_auto_exposure = 100,
         base_depth_count
     };
 

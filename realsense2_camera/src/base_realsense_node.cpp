@@ -1501,9 +1501,6 @@ void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param par
         }
         break;
     }
-    default:
-        ROS_WARN_STREAM("Unrecognized D400 param (" << param << ")");
-        break;
     }
 }
 

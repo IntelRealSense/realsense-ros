@@ -133,7 +133,7 @@ void SR300Node::callback(sr300_paramsConfig &config, uint32_t level)
 
     if (set_default_dynamic_reconfig_values == level)
     {
-        for (int i = 1 ; i < sr300_param_count ; ++i)
+        for (int i = 1 ; i < base_depth_count ; ++i)
         {
             ROS_DEBUG_STREAM("sr300_param = " << i);
             setParam(config ,(sr300_param)i);

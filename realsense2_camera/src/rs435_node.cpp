@@ -108,10 +108,17 @@ void RS435Node::callback(rs435_paramsConfig &config, uint32_t level)
 
     if (set_default_dynamic_reconfig_values == level)
     {
-        for (int i = 1 ; i < rs435_param_count ; ++i)
+        for (int i = 1 ; i < base_depth_count ; ++i)
         {
             ROS_DEBUG_STREAM("rs435_param = " << i);
-            setParam(config ,(rs435_param)i);
+            try
+            {
+                setParam(config ,(rs435_param)i);
+            }
+            catch(...)
+            {
+                ROS_ERROR_STREAM("Failed. Skip initialization of parameter");
+            }
         }
     }
     else
