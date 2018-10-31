@@ -512,22 +512,17 @@ void BaseRealSenseNode::setupFilters()
 {
     std::vector<std::string> filters_str;
     boost::split(filters_str, _filters_str, [](char c){return c == ',';});
+    bool use_disparity_filter(false);
+    bool use_colorizer_filter(false);
     for (std::vector<std::string>::const_iterator s_iter=filters_str.begin(); s_iter!=filters_str.end(); s_iter++)
     {
         if ((*s_iter) == "colorizer")
         {
-            ROS_INFO("Add Filter: colorizer");
-            _filters.push_back(NamedFilter("colorizer", std::make_shared<rs2::colorizer>()));
-
-            // Types for depth stream
-            _format[DEPTH] = _format[COLOR];   // libRS type
-            _image_format[DEPTH] = _image_format[COLOR];    // CVBridge type
-            _encoding[DEPTH] = _encoding[COLOR]; // ROS message type
-            _unit_step_size[DEPTH] = _unit_step_size[COLOR]; // sensor_msgs::ImagePtr row step size
-
-            _width[DEPTH] = _width[COLOR];
-            _height[DEPTH] = _height[COLOR];
-            _image[DEPTH] = cv::Mat(_height[DEPTH], _width[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
+            use_colorizer_filter = true;
+        }
+        else if ((*s_iter) == "disparity")
+        {
+            use_disparity_filter = true;
         }
         else if ((*s_iter) == "spatial")
         {
@@ -553,6 +548,28 @@ void BaseRealSenseNode::setupFilters()
             ROS_ERROR_STREAM("Unknown Filter: " << (*s_iter));
             throw;
         }
+    }
+    if (use_disparity_filter)
+    {
+        ROS_INFO("Add Filter: disparity");
+        _filters.insert(_filters.begin(), NamedFilter("disparity_start", std::make_shared<rs2::disparity_transform>()));
+        _filters.push_back(NamedFilter("disparity_end", std::make_shared<rs2::disparity_transform>(false)));
+        ROS_INFO("Done Add Filter: disparity");
+    }
+    if (use_colorizer_filter)
+    {
+        ROS_INFO("Add Filter: colorizer");
+        _filters.push_back(NamedFilter("colorizer", std::make_shared<rs2::colorizer>()));
+
+        // Types for depth stream
+        _format[DEPTH] = _format[COLOR];   // libRS type
+        _image_format[DEPTH] = _image_format[COLOR];    // CVBridge type
+        _encoding[DEPTH] = _encoding[COLOR]; // ROS message type
+        _unit_step_size[DEPTH] = _unit_step_size[COLOR]; // sensor_msgs::ImagePtr row step size
+
+        _width[DEPTH] = _width[COLOR];
+        _height[DEPTH] = _height[COLOR];
+        _image[DEPTH] = cv::Mat(_height[DEPTH], _width[DEPTH], _image_format[DEPTH], cv::Scalar(0, 0, 0));
     }
     if (_pointcloud)
     {
