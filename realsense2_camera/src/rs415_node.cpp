@@ -116,6 +116,7 @@ void RS415Node::setParam(rs415_paramsConfig &config, rs415_param param)
 
 void RS415Node::callback(rs415_paramsConfig &config, uint32_t level)
 {
+    ROS_INFO_STREAM("Start updating dynamic parameters...");
     ROS_DEBUG_STREAM("RS415Node - Level: " << level);
 
     if (set_default_dynamic_reconfig_values == level)
@@ -137,4 +138,5 @@ void RS415Node::callback(rs415_paramsConfig &config, uint32_t level)
     {
         setParam(config, (rs415_param)level);
     }
+    ROS_INFO_STREAM("Done updating dynamic parameters...");
 }
