@@ -40,6 +40,8 @@ find_package(catkin REQUIRED COMPONENTS
   ${REALSENSE_CATKIN_BASED_DEPS}
 )
 
+find_package(PCL REQUIRED)
+
 add_message_files(
   FILES
   IMUInfo.msg
@@ -130,6 +132,7 @@ if (CATKIN_ENABLE_TESTING)
   target_link_libraries(tests_camera_core
     ${catkin_LIBRARIES}
     ${GTEST_LIBRARIES}
+    ${PCL_LIBRARIES}
     )
   add_dependencies(tests_camera_core ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
   add_dependencies(tests_camera_core ${catkin_EXPORTED_TARGETS})
