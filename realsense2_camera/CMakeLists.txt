@@ -86,6 +86,7 @@ add_library(${PROJECT_NAME}
     include/constants.h
     include/realsense_node_factory.h
     include/base_realsense_node.h
+    include/rs435_external_timestamping.h
     include/rs415_node.h
     include/rs435_node.h
     include/sr300_node.h

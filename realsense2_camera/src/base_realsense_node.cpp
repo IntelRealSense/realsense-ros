@@ -21,7 +21,8 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _pnh(privateNodeHandle), _json_file_path(""),
     _serial_no(serial_no), _base_frame_id(""),
     _intialize_time_base(false),
-    _namespace(getNamespaceStr())
+    _namespace(getNamespaceStr()),
+    _external_timestamper(std::set<stream_index_pair>({INFRA1}))
 {
     // Types for depth stream
     _is_frame_arrived[DEPTH] = false;
@@ -204,6 +205,10 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("aligned_depth_to_infra1_frame_id",  _depth_aligned_frame_id[INFRA1],  DEFAULT_ALIGNED_DEPTH_TO_INFRA1_FRAME_ID);
     _pnh.param("aligned_depth_to_infra2_frame_id",  _depth_aligned_frame_id[INFRA2],  DEFAULT_ALIGNED_DEPTH_TO_INFRA2_FRAME_ID);
     _pnh.param("aligned_depth_to_fisheye_frame_id", _depth_aligned_frame_id[FISHEYE], DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID);
+
+    _pnh.param("inter_cam_sync_mode", _inter_cam_sync_mode, INTER_CAM_SYNC_MODE);
+    _pnh.param("enable_external_hw_sync", _enable_external_hw_sync, EXTERNAL_HW_SYNC);
+    _pnh.param("static_time_offset", _static_time_offset, STATIC_TIME_OFFSET);
 }
 
 void BaseRealSenseNode::setupDevice()
@@ -303,6 +308,14 @@ void BaseRealSenseNode::setupDevice()
                     _enable[stream_index] = false;
                 }
             }
+        }
+
+        // set inter cam sync mode
+        if(_inter_cam_sync_mode != 0)
+        {
+            _sensors[DEPTH].set_option(RS2_OPTION_INTER_CAM_SYNC_MODE, _inter_cam_sync_mode);
+            _sensors[DEPTH].set_option(RS2_OPTION_OUTPUT_TRIGGER_ENABLED, 1);
+            ROS_INFO_STREAM("Inter cam sync mode set to " << _inter_cam_sync_mode);
         }
     }
     catch(const std::exception& ex)
@@ -594,8 +607,39 @@ void BaseRealSenseNode::setupStreams()
             }
         }
 
+        if(_enable_external_hw_sync) {
+            // setup external hardware synchronization
+            // define function to publish restamped frames
+            std::function<void(const stream_index_pair& channel,
+                               const ros::Time& new_stamp,
+                               const sensor_msgs::ImagePtr image,
+                               const sensor_msgs::CameraInfo)> publish_frame_fn = [this](const stream_index_pair& channel,
+                                                                                         const ros::Time& new_stamp,
+                                                                                         const sensor_msgs::ImagePtr img,
+                                                                                         sensor_msgs::CameraInfo info){
+                // restamp frame
+                img->header.stamp = new_stamp;
+                info.header.stamp = new_stamp;
+
+                //publish
+                auto& info_publisher = this->_info_publisher.at(channel);
+                auto& image_publisher = this->_image_publishers.at(channel);
+                info_publisher.publish(info);
+
+                image_publisher.first.publish(img);
+                image_publisher.second->update();
+
+                ROS_DEBUG("%s stream published", rs2_stream_to_string(channel.first));
+            };
+            // setup and pass publisher function 
+            _external_timestamper.setup(publish_frame_fn, _fps[DEPTH], _static_time_offset, _inter_cam_sync_mode);
+            _external_timestamper.start();
+        }
+
         auto frame_callback = [this](rs2::frame frame)
         {
+          ros::spinOnce();
+
             try{
                 // We compute a ROS timestamp which is based on an initial ROS time at point of first frame,
                 // and the incremental timestamp from the camera.
@@ -611,7 +655,7 @@ void BaseRealSenseNode::setupStreams()
                 }
 
                 ros::Time t;
-                if (_sync_frames)
+                if (_sync_frames || _enable_external_hw_sync)
                     t = ros::Time::now();
                 else
                     t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
@@ -746,6 +790,8 @@ void BaseRealSenseNode::setupStreams()
                               rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
 
                     stream_index_pair sip{stream_type,stream_index};
+
+                    ros::spinOnce();
                     publishFrame(frame, t,
                                  sip,
                                  _image,
@@ -1384,10 +1430,32 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
         cam_info.header.seq = seq[stream];
         info_publisher.publish(cam_info);
 
+        if(_enable_external_hw_sync) {
+            if(_sensors[DEPTH].get_option(RS2_OPTION_OUTPUT_TRIGGER_ENABLED) != 1) {
+        	_sensors[DEPTH].set_option(RS2_OPTION_OUTPUT_TRIGGER_ENABLED, 1);
+	    }
+            double exposure;
+            if(f.supports_frame_metadata(RS2_FRAME_METADATA_ACTUAL_EXPOSURE)) {
+                exposure = static_cast<double>(f.get_frame_metadata(RS2_FRAME_METADATA_ACTUAL_EXPOSURE));
+            } else {
+                ROS_WARN_ONCE("Frame does not provide exposure metadata. Using fixed exposure for timestamp.");
+                exposure = _sensors[DEPTH].get_option(RS2_OPTION_EXPOSURE);
+            }
+
+            ros::spinOnce();
+            if(!_external_timestamper.lookupHardwareStamp(stream, img->header.seq, t, exposure, img, cam_info)){
+                // buffer frame if no matching timestamp was found
+                _external_timestamper.bufferFrame(stream, img->header.seq, t, exposure, img, cam_info);
+            }
+            return;
+        }
+            
+        // no hw_sync: publish w/o restamping
         image_publisher.first.publish(img);
         image_publisher.second->update();
-        ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
     }
+
+    ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
 }
 
 bool BaseRealSenseNode::getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile)

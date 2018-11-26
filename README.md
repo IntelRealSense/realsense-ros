@@ -109,6 +109,35 @@ to activate the filters, use the argument "filters" and deperate them with a com
 roslaunch realsense2_camera rs_camera.launch filters:=temporal,spatial,pointcloud
 ```
 
+### Restamp depth and infra-red images using an external time reference (VIO setup)
+By default, depth and IR frames are stamped using frame metadata. The metadata timestamps are based on the RealSense's on-board clock. For applications like VIO that require time-synchronization of multiple sensors such as GPS, IMU and cameras it is required to read all of them based on the same time reference. The RealSense D435i will allow you to get time-synchronized image and IMU streams without any further setup. However, if you intend to use more sensor than just IMU and camera or if you are using D435/D415 without and onborad IMU you can use an external time reference and restamp frames before publishing.
+
+The realsense will try to match incoming depth and IR frames to stamps that it receives on topic /hw_stamp.
+As soon as it correlates frame and stamp the frame is re-stamped and published. Note that depth and IR and depth frames will not be published until the node receives timestamps to restamp them.
+
+Requirements:
+* RealSense D435: FW 5.10.3 or newer, D415: 5.9.14 or newer
+* Seperate microcontroller (MC) that allows to capture 1.8V pulses.
+* ROS wrapper to connect to the MC and publish messages with the captured timestamps
+
+Setup:
+* Prepare the microcontroller to read camera output pulses. This could be an arduino or a UAV's flight controller. All the other relevant sensors should be read by this board so that they are based on the same time reference. Setup the relevant digital input pin and make sure that you can capture pulses of 100us length. Note: You might need to convert the signal to a higher voltage if you board cannot caputure pulses at 1.8V
+* Setup the microcontroller's ROS node to publish a message of type std_msgs/Header to rostopic /hw_stamp for each measured pulse.
+* Connect the cameras digital output pin the MCs input pin (Check the multi-cam [whitepaper](https://realsense.intel.com/wp-content/uploads/sites/63/Multiple_Camera_WhitePaper_rev1.1.pdf) for the correct pin mapping).
+* Set the cameras inter_cam_sync mode to 1 to run the device as master (If you use multiple cameras: Set one camera as master and the rest as slave).
+* Launch the realsense node and your microcontroller's node. Make sure to set the device as master and to set enable external hardware synchronization. If you use rs_camera.launch you can specify them from the command-line:
+```
+roslaunch realsense2_camera rs_camera inter_cam_sync_mode:=1 enable_external_hw_sync:=true
+```
+* Launch the microcontroller's ROS node to measure camera output pulses and publish the measured time stamps.
+
+Troubleshooting:
+* Check that the RealSense is sending output triggers. Launch the node and use a logic analyzer to verify.
+* Check that your microcontroller is receiving camera output pulses
+* Check that timestamps are published and arrive at the same rate as the cameras fps.
+```
+rostopic hz /hw_stamp
+```
 
 ## Packages using RealSense ROS Camera
 | Title | Links |

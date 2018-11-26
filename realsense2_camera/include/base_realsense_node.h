@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "../include/rs435_external_timestamping.h"
 #include "../include/realsense_node_factory.h"
 #include <dynamic_reconfigure/server.h>
 #include <realsense2_camera/base_d400_paramsConfig.h>
@@ -198,6 +199,11 @@ namespace realsense2_camera
 
         std::map<stream_index_pair, bool> _is_frame_arrived;
         const std::string _namespace;
+        
+        int _inter_cam_sync_mode;
+        bool _enable_external_hw_sync;
+        double _static_time_offset;
+        external_timestamping::ExternalTimestamping<stream_index_pair> _external_timestamper;
     };//end class
 
     class BaseD400Node : public BaseRealSenseNode

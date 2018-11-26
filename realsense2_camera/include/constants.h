@@ -35,6 +35,7 @@ namespace realsense2_camera
     const bool ALIGN_DEPTH    = false;
     const bool POINTCLOUD     = false;
     const bool SYNC_FRAMES    = false;
+    const bool MAVROS_TRIGGERING = false;
 
     const int DEPTH_WIDTH     = 640;
     const int DEPTH_HEIGHT    = 480;
@@ -92,6 +93,9 @@ namespace realsense2_camera
     const std::string DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID = "camera_aligned_depth_to_fisheye_frame";
 
     const std::string DEFAULT_FILTERS                  = "";
+    const int INTER_CAM_SYNC_MODE                      = 0;
+    const double STATIC_TIME_OFFSET                    = 0.0;
+    const bool EXTERNAL_HW_SYNC                        = false;
 
     using stream_index_pair = std::pair<rs2_stream, int>;
 }  // namespace realsense2_camera

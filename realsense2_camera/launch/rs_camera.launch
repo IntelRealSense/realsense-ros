@@ -42,6 +42,10 @@
 
   <arg name="filters"             default=""/>
 
+  <arg name="inter_cam_sync_mode" default="0"/>
+  <arg name="enable_external_hw_sync"   default="false"/>
+  <arg name="static_time_offset"  default="0.0"/>
+
   <group ns="$(arg camera)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="tf_prefix"                value="$(arg tf_prefix)"/>
@@ -84,6 +88,10 @@
       <arg name="enable_imu"               value="$(arg enable_imu)"/>
 
       <arg name="filters"                  value="$(arg filters)"/>
+      
+      <arg name="inter_cam_sync_mode"      value="$(arg inter_cam_sync_mode)"/>
+      <arg name="enable_external_hw_sync"  value="$(arg enable_external_hw_sync)"/>
+      <arg name="static_time_offset"       value="$(arg static_time_offset)"/>
     </include>
   </group>
 </launch>

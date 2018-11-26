@@ -68,7 +68,9 @@
   <arg name="aligned_depth_to_fisheye_frame_id"    default="$(arg tf_prefix)_aligned_depth_to_fisheye_frame"/>
 
   <arg name="filters"             default=""/>
-
+  <arg name="inter_cam_sync_mode" default="0"/>
+  <arg name="enable_external_hw_sync"    default="false"/>
+  <arg name="static_time_offset"  default="0.0"/>
 
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
   <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)">
@@ -131,6 +133,9 @@
     <param name="aligned_depth_to_fisheye_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye_frame_id)"/>
     
     <param name="filters" type="str"  value="$(arg filters)"/>
+    <param name="inter_cam_sync_mode"      type="int"  value="$(arg inter_cam_sync_mode)"/>
+    <param name="enable_external_hw_sync"         type="bool" value="$(arg enable_external_hw_sync)" />
+    <param name="static_time_offset"       type="double" value="$(arg static_time_offset)"/>
   </node>
 </launch>
 
