@@ -562,11 +562,22 @@ void BaseRealSenseNode::setupStreams()
                 }
 
                 ros::Time t;
+                //ros::Time test_t;
                 if (_sync_frames)
+                {
                     t = ros::Time::now();
+                //    test_t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
+                }
                 else
                     t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
 
+                //ROS_INFO_STREAM("Time diff: " << (t - test_t).toSec());
+
+                // Taking just the ROS time leads to incorrect timestamps, especially at higher CPU loads.
+                // Even though the frame timestamp might not theoretically be correct here, it's a much better estimate than the ROS time 
+                // So always take the frame timestamp, even if frames are synced
+                t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
+				
                 std::map<stream_index_pair, bool> is_frame_arrived(_is_frame_arrived);
                 std::vector<rs2::frame> frames;
                 if (frame.is<rs2::frameset>())
