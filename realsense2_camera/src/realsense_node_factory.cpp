@@ -99,7 +99,7 @@ void RealSenseNodeFactory::onInit()
 			
 			// HACK: Do a hardware reset of the camera and wait for a fixed time
 			_device = _ctx.query_devices().front(); // Reset the first device
-			int hardware_reset_time = 8; // Testing showed that 7 seconds was too short. Exact time unkown, 8 sec seems to work.
+			int hardware_reset_time = 9; // Testing showed that 8 seconds was too short. Exact time unkown, 9 sec seems to work.
 			ROS_INFO("Device is being hardware reset for %d seconds", hardware_reset_time);
 			_device.hardware_reset();
 			usleep(hardware_reset_time * 1000000);
