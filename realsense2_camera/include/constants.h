@@ -69,6 +69,7 @@ namespace realsense2_camera
     const bool ENABLE_FISHEYE = true;
     const bool ENABLE_IMU     = true;
     const bool UNITE_IMU      = true;
+    const bool HOLD_BACK_IMU_FOR_FRAMES = false;
 
 
     const std::string DEFAULT_BASE_FRAME_ID            = "camera_link";

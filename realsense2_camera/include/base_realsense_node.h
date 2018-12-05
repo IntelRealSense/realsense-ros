@@ -164,6 +164,7 @@ namespace realsense2_camera
         float _depth_scale_meters;
         float _clipping_distance;
         float _linear_accel_cov;
+        bool  _hold_back_imu_for_frames;
 
         std::map<stream_index_pair, rs2_intrinsics> _stream_intrinsics;
         std::map<stream_index_pair, int> _width;

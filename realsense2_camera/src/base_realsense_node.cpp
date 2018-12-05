@@ -32,8 +32,7 @@ void SyncedImuPublisher::Publish(sensor_msgs::Imu imu_msg)
     else
     {
         _publisher.publish(imu_msg);
-        // ROS_INFO_STREAM("iid: " << imu_msg.header.seq << ", time: " << std::setprecision (20) << imu_msg.header.stamp.toSec());        
-        // ROS_INFO_STREAM("publish 1: " << _pendeing_messages.size());
+        // ROS_INFO_STREAM("iid1:" << imu_msg.header.seq << ", time: " << std::setprecision (20) << imu_msg.header.stamp.toSec());
     }
     return;
 }
@@ -59,7 +58,7 @@ void SyncedImuPublisher::PublishPendingMessages()
     {
         const sensor_msgs::Imu &imu_msg = _pendeing_messages.front();
         _publisher.publish(imu_msg);
-        // ROS_INFO_STREAM("id: " << imu_msg.header.seq << ", time: " << std::setprecision (20) << imu_msg.header.stamp.toSec());        
+        // ROS_INFO_STREAM("iid2:" << imu_msg.header.seq << ", time: " << std::setprecision (20) << imu_msg.header.stamp.toSec());
         _pendeing_messages.pop();
     }
 }
@@ -364,6 +363,7 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("aligned_depth_to_fisheye_frame_id", _depth_aligned_frame_id[FISHEYE], DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID);
     _pnh.param("clip_distance", _clipping_distance, static_cast<float>(-1.0));
     _pnh.param("linear_accel_cov", _linear_accel_cov, static_cast<float>(0.01));
+    _pnh.param("hold_back_imu_for_frames", _hold_back_imu_for_frames, HOLD_BACK_IMU_FOR_FRAMES);
 }
 
 void BaseRealSenseNode::setupDevice()
@@ -553,9 +553,8 @@ void BaseRealSenseNode::setupPublishers()
     if (_unite_imu && _enable[GYRO] && _enable[ACCEL])
     {
         ROS_INFO("Start publisher IMU");
-        // _imu_publishers[GYRO] = _node_handle.advertise<sensor_msgs::Imu>("imu", 1);
         _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node_handle.advertise<sensor_msgs::Imu>("imu", 1));
-        _synced_imu_publisher->Enable(false);
+        _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
 
         _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("imu_info", 1, true);
     }
@@ -1117,8 +1116,6 @@ void BaseRealSenseNode::setupStreams()
                     ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
                     seq += 1;
 
-                    // if (0 != _info_publisher[stream_imu].getNumSubscribers() ||
-                    //     0 != _imu_publishers[stream_imu].getNumSubscribers())
                     if (0 != _synced_imu_publisher->getNumSubscribers())
                     {
                         auto axis = *(reinterpret_cast<const float3*>(frame.get_data()));
@@ -1168,7 +1165,6 @@ void BaseRealSenseNode::setupStreams()
                         imu_msg.header.stamp = t;
                         if (!(init_gyro && init_accel))
                             break;
-                        // _imu_publishers[stream_imu].publish(imu_msg);
                         _synced_imu_publisher->Publish(imu_msg);
                         ROS_DEBUG("Publish united %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
                     }
