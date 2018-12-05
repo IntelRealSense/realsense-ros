@@ -30,6 +30,7 @@ namespace realsense2_camera
     const uint16_t RS430_MM_RGB_PID = 0x0b01; // AWGCT
     const uint16_t RS460_PID        = 0x0b03; // DS5U
     const uint16_t RS435_RGB_PID    = 0x0b07; // AWGC
+    const uint16_t RS435i_RGB_PID    = 0x0B3A; // AWGC_MM
     const uint16_t RS405_PID        = 0x0b0c; // DS5U
 
     const bool ALIGN_DEPTH    = false;
@@ -57,8 +58,8 @@ namespace realsense2_camera
     const int INFRA2_FPS      = 30;
     const int COLOR_FPS       = 30;
     const int FISHEYE_FPS     = 30;
-    const int GYRO_FPS        = 1000;
-    const int ACCEL_FPS       = 1000;
+    const int GYRO_FPS        = 400;
+    const int ACCEL_FPS       = 500;
 
 
     const bool ENABLE_DEPTH   = true;
@@ -67,6 +68,7 @@ namespace realsense2_camera
     const bool ENABLE_COLOR   = true;
     const bool ENABLE_FISHEYE = true;
     const bool ENABLE_IMU     = true;
+    const bool UNITE_IMU      = true;
 
 
     const std::string DEFAULT_BASE_FRAME_ID            = "camera_link";

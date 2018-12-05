@@ -10,6 +10,9 @@
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/update_functions.h>
 
+#include <queue>
+#include <mutex>
+
 
 namespace realsense2_camera
 {
@@ -58,6 +61,29 @@ namespace realsense2_camera
 		}
 	};
 
+    class SyncedImuPublisher
+    {
+        public:
+            SyncedImuPublisher(ros::Publisher imu_publisher, std::size_t waiting_list_size=1000);
+            ~SyncedImuPublisher();
+            void Pause();   // Pause sending messages. All messages from now on are saved in queue.
+            void Resume();  // Send all pending messages and allow sending future messages.
+            void Publish(sensor_msgs::Imu msg);     //either send or hold message.
+            uint32_t getNumSubscribers() { return _publisher.getNumSubscribers();};
+            void Enable(bool is_enabled) {_is_enabled=is_enabled;};
+        
+        private:
+            void PublishPendingMessages();
+
+        private:
+            std::mutex                    _mutex;
+            ros::Publisher                _publisher;
+            bool                          _pause_mode;
+            std::queue<sensor_msgs::Imu>  _pendeing_messages;
+            std::size_t                     _waiting_list_size;
+            bool                          _is_enabled;
+    };
+
     class BaseRealSenseNode : public InterfaceRealSenseNode
     {
     public:
@@ -100,6 +126,7 @@ namespace realsense2_camera
         void enable_devices();
         void setupFilters();
         void setupStreams();
+        void clip_depth(rs2::depth_frame& depth_frame, float depth_scale, float clipping_dist);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         tf::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
         void publish_static_tf(const ros::Time& t,
@@ -135,6 +162,8 @@ namespace realsense2_camera
         std::string _json_file_path;
         std::string _serial_no;
         float _depth_scale_meters;
+        float _clipping_distance;
+        float _linear_accel_cov;
 
         std::map<stream_index_pair, rs2_intrinsics> _stream_intrinsics;
         std::map<stream_index_pair, int> _width;
@@ -146,6 +175,7 @@ namespace realsense2_camera
 
         std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics> _image_publishers;
         std::map<stream_index_pair, ros::Publisher> _imu_publishers;
+        std::shared_ptr<SyncedImuPublisher> _synced_imu_publisher;
         std::map<stream_index_pair, int> _image_format;
         std::map<stream_index_pair, rs2_format> _format;
         std::map<stream_index_pair, ros::Publisher> _info_publisher;
@@ -168,6 +198,7 @@ namespace realsense2_camera
         bool _align_depth;
         bool _sync_frames;
         bool _pointcloud;
+        bool _unite_imu;
         std::string _filters_str;
         stream_index_pair _pointcloud_texture;
         PipelineSyncer _syncer;
