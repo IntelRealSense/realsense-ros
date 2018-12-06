@@ -54,12 +54,19 @@ namespace realsense2_camera
 
     class NamedFilter
     {
-        public:
-            std::string _name;
-            std::shared_ptr<rs2::processing_block> _filter;
+        private:
+#if RS2_API_VERSION >= 21700
+            typedef rs2::filter RS2_FilterType;
+#else  // RS2_API_VERSION
+            typedef rs2::processing_block RS2_FilterType;
+#endif // RS2_API_VERSION
 
         public:
-            NamedFilter(std::string name, std::shared_ptr<rs2::processing_block> filter):
+            std::string _name;
+            std::shared_ptr<RS2_FilterType> _filter;
+
+        public:
+            NamedFilter(std::string name, std::shared_ptr<RS2_FilterType> filter):
             _name(name), _filter(filter)
             {}
     };
