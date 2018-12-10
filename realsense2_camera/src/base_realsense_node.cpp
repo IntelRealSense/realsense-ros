@@ -241,9 +241,7 @@ void BaseRealSenseNode::registerDynamicReconfigCb(ros::NodeHandle& nh)
 {
     ROS_INFO("Setting Dynamic reconfig parameters.");
 
-    std::vector<rs2::sensor> dev_sensors = _dev.query_sensors();
-
-    for(rs2::sensor sensor : dev_sensors)
+    for(rs2::sensor sensor : _dev_sensors)
     {
         std::string module_name = sensor.get_info(RS2_CAMERA_INFO_NAME);
         std::replace( module_name.begin(), module_name.end(), ' ', '_'); // replace all ' ' to '_'
@@ -411,10 +409,10 @@ void BaseRealSenseNode::setupDevice()
         ROS_INFO_STREAM("Align Depth: " << ((_align_depth)?"On":"Off"));
         ROS_INFO_STREAM("Sync Mode: " << ((_sync_frames)?"On":"Off"));
 
-        auto dev_sensors = _dev.query_sensors();
+        _dev_sensors = _dev.query_sensors();
 
         ROS_INFO_STREAM("Device Sensors: ");
-        for(auto&& elem : dev_sensors)
+        for(auto&& elem : _dev_sensors)
         {
             std::string module_name = elem.get_info(RS2_CAMERA_INFO_NAME);
             if ("Stereo Module" == module_name)
@@ -550,6 +548,7 @@ void BaseRealSenseNode::setupPublishers()
         _depth_to_other_extrinsics_publishers[INFRA2] = _node_handle.advertise<Extrinsics>("extrinsics/depth_to_infra2", 1, true);
     }
 
+    _synced_imu_publisher = std::make_shared<SyncedImuPublisher>();
     if (_unite_imu && _enable[GYRO] && _enable[ACCEL])
     {
         ROS_INFO("Start publisher IMU");
@@ -1027,6 +1026,7 @@ void BaseRealSenseNode::setupStreams()
         if (gyro_profile != _enabled_profiles.end() &&
             accel_profile != _enabled_profiles.end())
         {
+            ROS_INFO("starting imu...");
             std::vector<rs2::stream_profile> profiles;
             profiles.insert(profiles.begin(), gyro_profile->second.begin(), gyro_profile->second.end());
             profiles.insert(profiles.begin(), accel_profile->second.begin(), accel_profile->second.end());
