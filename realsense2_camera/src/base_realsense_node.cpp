@@ -1009,11 +1009,22 @@ void BaseRealSenseNode::setupStreams()
                     auto profiles = sens.get_stream_profiles();
                     for (rs2::stream_profile& profile : profiles)
                     {
-                        if (profile.fps() == _fps[elem] &&
+                        if (profile.stream_type() == elem.first &&
+                            profile.fps() == _fps[elem] &&
                             profile.format() == _format[elem])
                         {
                             _enabled_profiles[elem].push_back(profile);
                             break;
+                        }
+                    }
+                    if (_enabled_profiles[elem].size() == 0)
+                    {
+                        ROS_WARN_STREAM("No mathcing profile found for " << _stream_name[elem] << " with fps=" << _fps[elem] << " and format=" << _format[elem]);
+                        ROS_WARN_STREAM("profiles found for " << _stream_name[elem] << ":");
+                        for (rs2::stream_profile& profile : profiles)
+                        {
+                            if (profile.stream_type() != elem.first) continue;
+                            ROS_WARN_STREAM("fps: " << profile.fps() << ". format: " << profile.format());
                         }
                     }
                 }
@@ -1097,9 +1108,7 @@ void BaseRealSenseNode::setupStreams()
                 imu_msg.linear_acceleration_covariance = { _linear_accel_cov, 0.0, 0.0, 0.0, _linear_accel_cov, 0.0, 0.0, 0.0, _linear_accel_cov};
                 imu_msg.angular_velocity_covariance = { 0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01};
 
-                // ROS_WARN("want to Lock()");
                 m_mutex.lock();
-                // ROS_WARN("Locked()");
 
                 while (true)
                 {
@@ -1170,9 +1179,7 @@ void BaseRealSenseNode::setupStreams()
                     }
                     break;
                 }
-                // ROS_WARN("want to unlock()");
                 m_mutex.unlock();
-                // ROS_WARN("UnLocked()");
             };
             if (_unite_imu)
             {

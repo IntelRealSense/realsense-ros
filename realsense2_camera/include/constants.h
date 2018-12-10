@@ -59,7 +59,7 @@ namespace realsense2_camera
     const int COLOR_FPS       = 30;
     const int FISHEYE_FPS     = 30;
     const int GYRO_FPS        = 400;
-    const int ACCEL_FPS       = 500;
+    const int ACCEL_FPS       = 250;
 
 
     const bool ENABLE_DEPTH   = true;

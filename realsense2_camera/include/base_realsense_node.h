@@ -44,10 +44,10 @@ namespace realsense2_camera
     {
         public:
             std::string _name;
-            std::shared_ptr<rs2::processing_block> _filter;
+            std::shared_ptr<rs2::filter> _filter;
 
         public:
-            NamedFilter(std::string name, std::shared_ptr<rs2::processing_block> filter):
+            NamedFilter(std::string name, std::shared_ptr<rs2::filter> filter):
             _name(name), _filter(filter)
             {}
     };
