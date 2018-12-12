@@ -1,0 +1,3 @@
+<launch>
+  <test test-name="dd_string_test" pkg="ddynamic_reconfigure" type="dd_string-test" />
+</launch>

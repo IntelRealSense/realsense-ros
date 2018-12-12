@@ -1,0 +1,4 @@
+<launch>
+    <node name="dd_server" pkg="ddynamic_reconfigure" type="dd_server" output="screen"/>
+    <test test-name="dd_full_scale_test" pkg="ddynamic_reconfigure" type="dd_full_scale-test" />
+</launch>
