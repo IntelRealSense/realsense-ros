@@ -1,5 +1,7 @@
 <launch>
-    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+    <arg name="offline"          default="false"/>
+    <include unless="$(arg offline)" 
+        file="$(find realsense2_camera)/launch/rs_camera.launch">
         <arg name="align_depth" value="true"/>
         <arg name="linear_accel_cov" value="1.0"/>
     </include>
