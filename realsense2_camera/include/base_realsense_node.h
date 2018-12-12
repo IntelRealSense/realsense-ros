@@ -64,6 +64,7 @@ namespace realsense2_camera
     class SyncedImuPublisher
     {
         public:
+            SyncedImuPublisher() {_is_enabled=false;};
             SyncedImuPublisher(ros::Publisher imu_publisher, std::size_t waiting_list_size=1000);
             ~SyncedImuPublisher();
             void Pause();   // Pause sending messages. All messages from now on are saved in queue.
@@ -204,6 +205,7 @@ namespace realsense2_camera
         stream_index_pair _pointcloud_texture;
         PipelineSyncer _syncer;
         std::vector<NamedFilter> _filters;
+        std::vector<rs2::sensor> _dev_sensors;
         // Declare pointcloud object, for calculating pointclouds and texture mappings
         // rs2::pointcloud _pc_filter;
 

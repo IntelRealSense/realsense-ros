@@ -191,6 +191,12 @@ bool is_enum_option(rs2::options sensor, rs2_option option)
     return true;
 }
 
+bool is_int_option(rs2::options sensor, rs2_option option)
+{
+    rs2::option_range op_range = sensor.get_option_range(option);
+    return (op_range.step == 1.0);
+}
+
 std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option option)
 {
     std::map<std::string, int> dict; // An enum to set size
@@ -225,11 +231,18 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
         if (enum_dict.empty())
         {
             rs2::option_range op_range = sensor.get_option_range(option);
-            ddynrec->add(new DDDouble(rs2_option_to_string(option), i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
+            if (is_int_option(sensor, option))
+            {
+                ddynrec->add(new DDInt(rs2_option_to_string(option), i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
+            }
+            else
+            {
+                ddynrec->add(new DDDouble(rs2_option_to_string(option), i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
+            }
         }
         else
         {
-            ROS_INFO_STREAM("Add enum: " << rs2_option_to_string(option) << ". value=" << int(sensor.get_option(option)));
+            ROS_DEBUG_STREAM("Add enum: " << rs2_option_to_string(option) << ". value=" << int(sensor.get_option(option)));
             ddynrec->add(new DDEnum(rs2_option_to_string(option), i, sensor.get_option_description(option), int(sensor.get_option(option)), enum_dict));
         }
     }
@@ -241,9 +254,7 @@ void BaseRealSenseNode::registerDynamicReconfigCb(ros::NodeHandle& nh)
 {
     ROS_INFO("Setting Dynamic reconfig parameters.");
 
-    std::vector<rs2::sensor> dev_sensors = _dev.query_sensors();
-
-    for(rs2::sensor sensor : dev_sensors)
+    for(rs2::sensor sensor : _dev_sensors)
     {
         std::string module_name = sensor.get_info(RS2_CAMERA_INFO_NAME);
         std::replace( module_name.begin(), module_name.end(), ' ', '_'); // replace all ' ' to '_'
@@ -411,10 +422,10 @@ void BaseRealSenseNode::setupDevice()
         ROS_INFO_STREAM("Align Depth: " << ((_align_depth)?"On":"Off"));
         ROS_INFO_STREAM("Sync Mode: " << ((_sync_frames)?"On":"Off"));
 
-        auto dev_sensors = _dev.query_sensors();
+        _dev_sensors = _dev.query_sensors();
 
         ROS_INFO_STREAM("Device Sensors: ");
-        for(auto&& elem : dev_sensors)
+        for(auto&& elem : _dev_sensors)
         {
             std::string module_name = elem.get_info(RS2_CAMERA_INFO_NAME);
             if ("Stereo Module" == module_name)
@@ -550,6 +561,7 @@ void BaseRealSenseNode::setupPublishers()
         _depth_to_other_extrinsics_publishers[INFRA2] = _node_handle.advertise<Extrinsics>("extrinsics/depth_to_infra2", 1, true);
     }
 
+    _synced_imu_publisher = std::make_shared<SyncedImuPublisher>();
     if (_unite_imu && _enable[GYRO] && _enable[ACCEL])
     {
         ROS_INFO("Start publisher IMU");
@@ -1038,6 +1050,7 @@ void BaseRealSenseNode::setupStreams()
         if (gyro_profile != _enabled_profiles.end() &&
             accel_profile != _enabled_profiles.end())
         {
+            ROS_INFO("starting imu...");
             std::vector<rs2::stream_profile> profiles;
             profiles.insert(profiles.begin(), gyro_profile->second.begin(), gyro_profile->second.end());
             profiles.insert(profiles.begin(), accel_profile->second.begin(), accel_profile->second.end());
@@ -1183,7 +1196,7 @@ void BaseRealSenseNode::setupStreams()
             };
             if (_unite_imu)
             {
-                ROS_INFO_STREAM("Gyro and accelometer are enabled to IMU message at " << "fps: " << (_fps[GYRO] + _fps[ACCEL]));
+                ROS_INFO_STREAM("Gyro and accelometer are enabled and combined to IMU message at " << "fps: " << (_fps[GYRO] + _fps[ACCEL]));
                 sens.start(imu_callback_sync);
             }
             else
