@@ -1,0 +1,6 @@
+---
+int32 int_param
+float64 double_param
+string str_param
+bool bool_param
+int32 enum_param

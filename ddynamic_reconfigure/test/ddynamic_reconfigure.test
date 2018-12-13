@@ -1,0 +1,3 @@
+<launch>
+  <test test-name="ddynamic_reconfigure_test" pkg="ddynamic_reconfigure" type="ddynamic_reconfigure-test" />
+</launch>

@@ -29,8 +29,8 @@
   <arg name="infra1_fps"          default="30"/>
   <arg name="infra2_fps"          default="30"/>
   <arg name="color_fps"           default="30"/>
-  <arg name="gyro_fps"            default="1000"/>
-  <arg name="accel_fps"           default="1000"/>
+  <arg name="gyro_fps"            default="400"/>
+  <arg name="accel_fps"           default="250"/>
   <arg name="enable_imu"          default="true"/>
 
   <arg name="enable_pointcloud"         default="false"/>
@@ -41,6 +41,8 @@
   <arg name="align_depth"         default="false"/>
 
   <arg name="filters"             default=""/>
+  <arg name="clip_distance"       default="-2"/>
+  <arg name="linear_accel_cov"       default="0.01"/>
 
   <group ns="$(arg camera)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
@@ -84,6 +86,8 @@
       <arg name="enable_imu"               value="$(arg enable_imu)"/>
 
       <arg name="filters"                  value="$(arg filters)"/>
+      <arg name="clip_distance"            value="$(arg clip_distance)"/>
+      <arg name="linear_accel_cov"            value="$(arg linear_accel_cov)"/>
     </include>
   </group>
 </launch>

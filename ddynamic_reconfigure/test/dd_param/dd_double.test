@@ -1,0 +1,3 @@
+<launch>
+  <test test-name="dd_double_test" pkg="ddynamic_reconfigure" type="dd_double-test" />
+</launch>

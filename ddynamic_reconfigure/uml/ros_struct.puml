@@ -1,0 +1,22 @@
+@startuml
+component DDynamicReconfigure as ddr {
+    rectangle update_pub_ <<Publisher>> as uppub
+    rectangle desc_pub_ <<Publisher>> as descpub
+    rectangle set_service_ <<ServiceServer>> as set
+    set -[hidden]->descpub
+    descpub -[hidden]->uppub
+}
+component client {
+    cloud "/set_parameters" as pset
+}
+component dynamic_reconfigure\ncommandline {
+    cloud "/parameter_descriptions" as pdesc
+    cloud "/parameter_updates" as pup
+    pdesc -[hidden]->pup
+}
+
+uppub -> pup
+descpub -> pdesc
+set -> pset
+pset -l-> set
+@enduml
