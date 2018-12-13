@@ -1,0 +1,38 @@
+@startuml
+package ddynamic_reconfigure as ddynamic_reconfigure_pkg {
+    file ddynamic_reconfigure {
+        component at #Yellow
+        component get #Yellow
+        component DDynamicReconfigure
+
+        DDynamicReconfigure .u.> at
+        DDynamicReconfigure .u.> get
+    }
+    interface DDParam
+    folder param {
+        component DDInt
+        component DDDouble
+        component DDBool
+        component DDString
+        component DDEnum
+        file dd_all_params
+
+        DDInt -u-> DDParam
+        DDDouble -u-> DDParam
+        DDBool -u-> DDParam
+        DDString -u-> DDParam
+        DDEnum -u-> DDInt
+        dd_all_params -u-> DDInt
+        dd_all_params -u--> DDDouble
+        dd_all_params -u--> DDBool
+        dd_all_params -u--> DDString
+        dd_all_params -u-> DDEnum
+    }
+    component DDValue
+    DDynamicReconfigure --> DDParam
+    DDParam -> DDValue
+}
+component "ddynamic\nserver" as server
+server -> dd_all_params
+server -> ddynamic_reconfigure
+@enduml

@@ -1,0 +1,104 @@
+@startuml
+class DDynamicReconfigure {
+    #nh_ : NodeHandle
+    #params_ : DDMap
+    #desc_pub_ : Publisher
+    #update_pub_ : Publisher
+    -callback_ : shared_ptr<DDFunc>
+    -set_service_ : ServiceServer
+    __
+    +add() : void
+    +remove(): void
+    +setCallback() : void
+    +clearCallback() : void
+    +start() : void
+    ..getters..
+    +get() : Value
+    +at() : DDPtr
+    +operator<<() : ostream&
+    ..internal..
+    #makeDescription() : void
+    #makeConfig() : void
+    #{static} internalCallback() : bool
+    -reassign() <<T>> : int
+    -getUpdates() : int
+}
+note right: DDPtr := shared_ptr<DDParam>\nDDMap := map<string,DDPtr>\nDDFunc := function<void(const DDMap&,int)>
+class DDValue {
+    -int_val_ : int
+    -double_val_ : double
+    -bool_val_ : bool
+    -str_val_ : string
+    -type_ : string
+    +getType() : string
+    +toInt() : int
+    +toDouble() : double
+    +toBool() : bool
+    +toString() : string
+}
+package dd_param <<Rectangle>> {
+    interface DDParam {
+        __
+        +{abstract} getName() : string
+        +{abstract} getLevel() : u_int
+        +{abstract} getValue() : DDValue
+        +operator<<() : ostream&
+        ..setters..
+        +{abstract} setValue() : void
+        ..testers..
+        +{abstract} sameType() : bool
+        +{abstract} sameValue() : bool
+        ..internal..
+        +{abstract} prepGroup() : void
+        +{abstract} prepConfig() : void
+        +{abstract} prepConfigDescription() : void
+    }
+    class DDInt {
+        #level_ : u_int
+        #name_ : string
+        #desc_ : string
+        #def_ : int
+        #val_ : int
+        #max_ : int
+        #min_ : int
+    }
+    class DDDouble {
+        #level_ : u_int
+        #name_ : string
+        #desc_ : string
+        #def_ : double
+        #val_ : double
+        #max_ : double
+        #min_ : double
+    }
+    class DDBool {
+        #level_ : u_int
+        #name_ : string
+        #desc_ : string
+        #def_ : bool
+        #val_ : bool
+    }
+    class DDString {
+        #level_ : u_int
+        #name_ : string
+        #desc_ : string
+        #def_ : string
+        #val_ : string
+    }
+    class DDEnum {
+      #dict_ : const map<string,pair<int,string> >
+      #enum_description_ : string
+      -lookup() : int
+      -makeEditMethod() : string
+      -makeConst() : string
+    }
+}
+
+DDParam .> DDValue
+DDInt .u.|> DDParam
+DDDouble .u.|> DDParam
+DDBool .u.|> DDParam
+DDString .u.|> DDParam
+DDEnum -u-|> DDInt
+DDynamicReconfigure "0..*" --o DDParam
+@enduml

@@ -25,7 +25,10 @@ install:
   - sudo apt-get install ros-kinetic-diagnostic-updater -y
   - source ~/.bashrc
   - mkdir -p ~/catkin_ws/src/realsense
-    
+
+  # download ddynamic_reconfigure:
+  - git clone -v --progress https://github.com/awesomebytes/ddynamic_reconfigure.git
+
   # install realsense2-camera
   - mv * ~/catkin_ws/src/realsense/     # This leaves behind .git, .gitignore and .travis.yml but no matter.
   - cd ~/catkin_ws/src/

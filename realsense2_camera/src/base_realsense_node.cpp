@@ -1,10 +1,67 @@
 #include "../include/base_realsense_node.h"
-#include "../include/sr300_node.h"
 #include "assert.h"
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
+#include <mutex>
+#include <sys/time.h>
 
 using namespace realsense2_camera;
+using namespace ddynamic_reconfigure;
+
+SyncedImuPublisher::SyncedImuPublisher(ros::Publisher imu_publisher, std::size_t waiting_list_size):
+            _publisher(imu_publisher),
+            _waiting_list_size(waiting_list_size)
+            {}
+
+SyncedImuPublisher::~SyncedImuPublisher()
+{
+    PublishPendingMessages();
+}
+
+void SyncedImuPublisher::Publish(sensor_msgs::Imu imu_msg)
+{
+    std::lock_guard<std::mutex> lock_guard(_mutex);
+    if (_pause_mode)
+    {
+        if (_pendeing_messages.size() >= _waiting_list_size)
+        {
+            throw std::runtime_error("SyncedImuPublisher inner list reached maximum size of " + std::to_string(_pendeing_messages.size()));
+        }
+        _pendeing_messages.push(imu_msg);
+    }
+    else
+    {
+        _publisher.publish(imu_msg);
+        // ROS_INFO_STREAM("iid1:" << imu_msg.header.seq << ", time: " << std::setprecision (20) << imu_msg.header.stamp.toSec());
+    }
+    return;
+}
+
+void SyncedImuPublisher::Pause()
+{
+    if (!_is_enabled) return;
+    std::lock_guard<std::mutex> lock_guard(_mutex);
+    _pause_mode = true;
+}
+
+void SyncedImuPublisher::Resume()
+{
+    std::lock_guard<std::mutex> lock_guard(_mutex);
+    PublishPendingMessages();
+    _pause_mode = false;
+}
+
+void SyncedImuPublisher::PublishPendingMessages()
+{
+    // ROS_INFO_STREAM("publish imu: " << _pendeing_messages.size());
+    while (!_pendeing_messages.empty())
+    {
+        const sensor_msgs::Imu &imu_msg = _pendeing_messages.front();
+        _publisher.publish(imu_msg);
+        // ROS_INFO_STREAM("iid2:" << imu_msg.header.seq << ", time: " << std::setprecision (20) << imu_msg.header.stamp.toSec());
+        _pendeing_messages.pop();
+    }
+}
 
 std::string BaseRealSenseNode::getNamespaceStr()
 {
@@ -114,9 +171,112 @@ void BaseRealSenseNode::publishTopics()
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
-void BaseRealSenseNode::registerDynamicReconfigCb()
+bool is_checkbox(rs2::options sensor, rs2_option option)
 {
-    ROS_INFO("Dynamic reconfig parameters is not implemented in the base node.");
+    rs2::option_range op_range = sensor.get_option_range(option);
+    return op_range.max == 1.0f &&
+        op_range.min == 0.0f &&
+        op_range.step == 1.0f;
+}
+
+bool is_enum_option(rs2::options sensor, rs2_option option)
+{
+    rs2::option_range op_range = sensor.get_option_range(option);
+    if (op_range.step < 0.001f) return false;
+    for (auto i = op_range.min; i <= op_range.max; i += op_range.step)
+    {
+        if (sensor.get_option_value_description(option, i) == nullptr)
+            return false;
+    }
+    return true;
+}
+
+bool is_int_option(rs2::options sensor, rs2_option option)
+{
+    rs2::option_range op_range = sensor.get_option_range(option);
+    return (op_range.step == 1.0);
+}
+
+std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option option)
+{
+    std::map<std::string, int> dict; // An enum to set size
+    if (is_enum_option(sensor, option))
+    {
+        rs2::option_range op_range = sensor.get_option_range(option);
+        for (auto val = op_range.min; val <= op_range.max; val += op_range.step)
+        {
+            dict[sensor.get_option_value_description(option, val)] = int(val);
+        }
+    }
+    return dict;
+}
+
+void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name)
+{
+    ros::NodeHandle nh1(module_name);
+    std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec = std::make_shared<ddynamic_reconfigure::DDynamicReconfigure>(nh1);
+    for (auto i = 0; i < RS2_OPTION_COUNT; i++)
+    {
+        rs2_option option = static_cast<rs2_option>(i);
+        if (!sensor.supports(option) || sensor.is_option_read_only(option))
+        {
+            continue;
+        }
+        if (is_checkbox(sensor, option))
+        {
+            ddynrec->add(new DDBool(rs2_option_to_string(option), i, sensor.get_option_description(option), bool(sensor.get_option(option))));
+            continue;
+        }
+        std::map<std::string, int> enum_dict = get_enum_method(sensor, option);
+        if (enum_dict.empty())
+        {
+            rs2::option_range op_range = sensor.get_option_range(option);
+            if (is_int_option(sensor, option))
+            {
+                ddynrec->add(new DDInt(rs2_option_to_string(option), i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
+            }
+            else
+            {
+                ddynrec->add(new DDDouble(rs2_option_to_string(option), i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
+            }
+        }
+        else
+        {
+            ROS_DEBUG_STREAM("Add enum: " << rs2_option_to_string(option) << ". value=" << int(sensor.get_option(option)));
+            ddynrec->add(new DDEnum(rs2_option_to_string(option), i, sensor.get_option_description(option), int(sensor.get_option(option)), enum_dict));
+        }
+    }
+    ddynrec->start(boost::bind(callback, _1, _2, sensor));
+    _ddynrec.push_back(ddynrec);
+}
+
+void BaseRealSenseNode::registerDynamicReconfigCb(ros::NodeHandle& nh)
+{
+    ROS_INFO("Setting Dynamic reconfig parameters.");
+
+    for(rs2::sensor sensor : _dev_sensors)
+    {
+        std::string module_name = sensor.get_info(RS2_CAMERA_INFO_NAME);
+        std::replace( module_name.begin(), module_name.end(), ' ', '_'); // replace all ' ' to '_'
+        ROS_DEBUG_STREAM("module_name:" << module_name);
+        registerDynamicOption(nh, sensor, module_name);
+    }
+
+    for (NamedFilter nfilter : _filters)
+    {
+        std::string module_name = nfilter._name;
+        auto sensor = *(nfilter._filter);
+        ROS_DEBUG_STREAM("module_name:" << module_name);
+        registerDynamicOption(nh, sensor, module_name);
+    }
+    ROS_INFO("Done Setting Dynamic reconfig parameters.");
+}
+
+void BaseRealSenseNode::callback(const ddynamic_reconfigure::DDMap& map, int level, rs2::options sensor) {
+    rs2_option option = static_cast<rs2_option>(level);
+    double value = get(map, rs2_option_to_string(option)).toDouble();
+    ROS_DEBUG_STREAM("option: " << rs2_option_to_string(option) << ". value: " << value);
+    sensor.set_option(option, value);
 }
 
 rs2_stream BaseRealSenseNode::rs2_string_to_stream(std::string str)
@@ -182,6 +342,7 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("accel_fps", _fps[ACCEL], ACCEL_FPS);
     _pnh.param("enable_imu", _enable[GYRO], ENABLE_IMU);
     _pnh.param("enable_imu", _enable[ACCEL], ENABLE_IMU);
+    _pnh.param("unite_imu", _unite_imu, UNITE_IMU);
 
     _pnh.param("base_frame_id", _base_frame_id, DEFAULT_BASE_FRAME_ID);
     _pnh.param("depth_frame_id", _frame_id[DEPTH], DEFAULT_DEPTH_FRAME_ID);
@@ -197,13 +358,23 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("infra2_optical_frame_id", _optical_frame_id[INFRA2], DEFAULT_INFRA2_OPTICAL_FRAME_ID);
     _pnh.param("color_optical_frame_id", _optical_frame_id[COLOR], DEFAULT_COLOR_OPTICAL_FRAME_ID);
     _pnh.param("fisheye_optical_frame_id", _optical_frame_id[FISHEYE], DEFAULT_FISHEYE_OPTICAL_FRAME_ID);
-    _pnh.param("gyro_optical_frame_id", _optical_frame_id[GYRO], DEFAULT_GYRO_OPTICAL_FRAME_ID);
+    if (_unite_imu)
+    {
+        _pnh.param("imu_optical_frame_id", _optical_frame_id[GYRO], DEFAULT_IMU_OPTICAL_FRAME_ID);
+    }
+    else
+    {
+        _pnh.param("gyro_optical_frame_id", _optical_frame_id[GYRO], DEFAULT_GYRO_OPTICAL_FRAME_ID);
+    }
     _pnh.param("accel_optical_frame_id", _optical_frame_id[ACCEL], DEFAULT_ACCEL_OPTICAL_FRAME_ID);
 
     _pnh.param("aligned_depth_to_color_frame_id",   _depth_aligned_frame_id[COLOR],   DEFAULT_ALIGNED_DEPTH_TO_COLOR_FRAME_ID);
     _pnh.param("aligned_depth_to_infra1_frame_id",  _depth_aligned_frame_id[INFRA1],  DEFAULT_ALIGNED_DEPTH_TO_INFRA1_FRAME_ID);
     _pnh.param("aligned_depth_to_infra2_frame_id",  _depth_aligned_frame_id[INFRA2],  DEFAULT_ALIGNED_DEPTH_TO_INFRA2_FRAME_ID);
     _pnh.param("aligned_depth_to_fisheye_frame_id", _depth_aligned_frame_id[FISHEYE], DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID);
+    _pnh.param("clip_distance", _clipping_distance, static_cast<float>(-1.0));
+    _pnh.param("linear_accel_cov", _linear_accel_cov, static_cast<float>(0.01));
+    _pnh.param("hold_back_imu_for_frames", _hold_back_imu_for_frames, HOLD_BACK_IMU_FOR_FRAMES);
 }
 
 void BaseRealSenseNode::setupDevice()
@@ -251,10 +422,10 @@ void BaseRealSenseNode::setupDevice()
         ROS_INFO_STREAM("Align Depth: " << ((_align_depth)?"On":"Off"));
         ROS_INFO_STREAM("Sync Mode: " << ((_sync_frames)?"On":"Off"));
 
-        auto dev_sensors = _dev.query_sensors();
+        _dev_sensors = _dev.query_sensors();
 
         ROS_INFO_STREAM("Device Sensors: ");
-        for(auto&& elem : dev_sensors)
+        for(auto&& elem : _dev_sensors)
         {
             std::string module_name = elem.get_info(RS2_CAMERA_INFO_NAME);
             if ("Stereo Module" == module_name)
@@ -390,16 +561,28 @@ void BaseRealSenseNode::setupPublishers()
         _depth_to_other_extrinsics_publishers[INFRA2] = _node_handle.advertise<Extrinsics>("extrinsics/depth_to_infra2", 1, true);
     }
 
-    if (_enable[GYRO])
+    _synced_imu_publisher = std::make_shared<SyncedImuPublisher>();
+    if (_unite_imu && _enable[GYRO] && _enable[ACCEL])
     {
-        _imu_publishers[GYRO] = _node_handle.advertise<sensor_msgs::Imu>("gyro/sample", 100);
-        _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("gyro/imu_info", 1, true);
-    }
+        ROS_INFO("Start publisher IMU");
+        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node_handle.advertise<sensor_msgs::Imu>("imu", 1));
+        _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
 
-    if (_enable[ACCEL])
+        _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("imu_info", 1, true);
+    }
+    else
     {
-        _imu_publishers[ACCEL] = _node_handle.advertise<sensor_msgs::Imu>("accel/sample", 100);
-        _info_publisher[ACCEL] = _node_handle.advertise<IMUInfo>("accel/imu_info", 1, true);
+        if (_enable[GYRO])
+        {
+            _imu_publishers[GYRO] = _node_handle.advertise<sensor_msgs::Imu>("gyro/sample", 100);
+            _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("gyro/imu_info", 1, true);
+        }
+
+        if (_enable[ACCEL])
+        {
+            _imu_publishers[ACCEL] = _node_handle.advertise<sensor_msgs::Imu>("accel/sample", 100);
+            _info_publisher[ACCEL] = _node_handle.advertise<IMUInfo>("accel/imu_info", 1, true);
+        }
     }
 }
 
@@ -579,6 +762,31 @@ void BaseRealSenseNode::setupFilters()
     ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));
 }
 
+void BaseRealSenseNode::clip_depth(rs2::depth_frame& depth_frame, float depth_scale, float clipping_dist)
+{
+    uint16_t* p_depth_frame = reinterpret_cast<uint16_t*>(const_cast<void*>(depth_frame.get_data()));
+
+    int width = depth_frame.get_width();
+    int height = depth_frame.get_height();
+
+    #pragma omp parallel for schedule(dynamic) //Using OpenMP to try to parallelise the loop
+    for (int y = 0; y < height; y++)
+    {
+        auto depth_pixel_index = y * width;
+        for (int x = 0; x < width; x++, ++depth_pixel_index)
+        {
+            // Get the depth value of the current pixel
+            auto pixels_distance = depth_scale * p_depth_frame[depth_pixel_index];
+
+            // Check if the depth value is greater than the threashold
+            if (pixels_distance > clipping_dist)
+            {
+                p_depth_frame[depth_pixel_index] = -1; //Set to invalid (<=0) value.
+            }
+        }
+    }
+}
+
 void BaseRealSenseNode::setupStreams()
 {
 	ROS_INFO("setupStreams...");
@@ -596,7 +804,14 @@ void BaseRealSenseNode::setupStreams()
 
         auto frame_callback = [this](rs2::frame frame)
         {
+            _synced_imu_publisher->Pause();
             try{
+                static struct timeval tp;
+                // double frame_time = frame.get_timestamp();
+                gettimeofday(&tp, NULL);
+                double frame_time = tp.tv_sec + tp.tv_usec / 1e6;
+                
+
                 // We compute a ROS timestamp which is based on an initial ROS time at point of first frame,
                 // and the incremental timestamp from the camera.
                 // In sync mode the timestamp is based on ROS time
@@ -607,14 +822,23 @@ void BaseRealSenseNode::setupStreams()
 
                     _intialize_time_base = true;
                     _ros_time_base = ros::Time::now();
-                    _camera_time_base = frame.get_timestamp();
+                    _camera_time_base = frame_time;
                 }
 
                 ros::Time t;
                 if (_sync_frames)
-                    t = ros::Time::now();
+                {
+                    // t = ros::Time::now();
+                    // t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame_time - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
+                    t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame_time - /*ms*/ _camera_time_base));
+                    // double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base);
+                    // ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
+                }
                 else
-                    t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
+                {
+                    // t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame_time - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
+                    t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame_time - /*ms*/ _camera_time_base));
+                }
 
                 std::map<stream_index_pair, bool> is_frame_arrived(_is_frame_arrived);
                 if (frame.is<rs2::frameset>())
@@ -634,8 +858,17 @@ void BaseRealSenseNode::setupStreams()
                         updateIsFrameArrived(is_frame_arrived, stream_type, stream_index);
 
                         ROS_DEBUG("Frameset contain (%s, %d, %s %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                                  rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+                                  rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame_time, t.toNSec());
                     }
+                    // Clip depth_frame for max range:
+                    if (_clipping_distance > 0)
+                    {
+                        rs2::depth_frame depth_frame = frameset.get_depth_frame();
+                        if (depth_frame)
+                            this->clip_depth(depth_frame,_depth_scale_meters, _clipping_distance);
+                    }
+
+
                     ROS_DEBUG("num_filters: %d", static_cast<int>(_filters.size()));
                     for (std::vector<NamedFilter>::const_iterator filter_it = _filters.begin(); filter_it != _filters.end(); filter_it++)
                     {
@@ -653,7 +886,7 @@ void BaseRealSenseNode::setupStreams()
                         auto stream_unique_id = f.get_profile().unique_id();
 
                         ROS_DEBUG("Frameset contain (%s, %d, %s %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                                  rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+                                  rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame_time, t.toNSec());
                     }
                     ROS_DEBUG("END OF LIST");
                     ROS_DEBUG_STREAM("Remove streams with same type and index:");
@@ -663,9 +896,6 @@ void BaseRealSenseNode::setupStreams()
                     // use the same publisher.
                     // As a workaround we remove the earlier one, the original one, assuming that if colorizer filter is
                     // set it means that that's what the client wants.
-                    // However, that procedure also eliminates the pointcloud <DEPTH, 0, XYZ32F>, although it uses
-                    // another publisher.
-                    // That's why currently it can't send both pointcloud and colorized depth image.
                     //
                     bool points_in_set(false);
                     std::vector<rs2::frame> frames_to_publish;
@@ -706,7 +936,7 @@ void BaseRealSenseNode::setupStreams()
                         auto stream_format = f.get_profile().format();
 
                         ROS_DEBUG("Frameset contain (%s, %d, %s) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                                  rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+                                  rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), frame.get_frame_number(), frame_time, t.toNSec());
 
                         if (f.is<rs2::points>())
                         {
@@ -743,7 +973,7 @@ void BaseRealSenseNode::setupStreams()
                     auto stream_index = frame.get_profile().stream_index();
                     updateIsFrameArrived(is_frame_arrived, stream_type, stream_index);
                     ROS_DEBUG("Single video frame arrived (%s, %d). frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                              rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame.get_timestamp(), t.toNSec());
+                              rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame_time, t.toNSec());
 
                     stream_index_pair sip{stream_type,stream_index};
                     publishFrame(frame, t,
@@ -759,6 +989,7 @@ void BaseRealSenseNode::setupStreams()
             {
                 ROS_ERROR_STREAM("An error has occurred during frame callback: " << ex.what());
             }
+            _synced_imu_publisher->Resume();
         }; // frame_callback
 
         // Streaming IMAGES
@@ -813,11 +1044,22 @@ void BaseRealSenseNode::setupStreams()
                     auto profiles = sens.get_stream_profiles();
                     for (rs2::stream_profile& profile : profiles)
                     {
-                        if (profile.fps() == _fps[elem] &&
+                        if (profile.stream_type() == elem.first &&
+                            profile.fps() == _fps[elem] &&
                             profile.format() == _format[elem])
                         {
                             _enabled_profiles[elem].push_back(profile);
                             break;
+                        }
+                    }
+                    if (_enabled_profiles[elem].size() == 0)
+                    {
+                        ROS_WARN_STREAM("No mathcing profile found for " << _stream_name[elem] << " with fps=" << _fps[elem] << " and format=" << _format[elem]);
+                        ROS_WARN_STREAM("profiles found for " << _stream_name[elem] << ":");
+                        for (rs2::stream_profile& profile : profiles)
+                        {
+                            if (profile.stream_type() != elem.first) continue;
+                            ROS_WARN_STREAM("fps: " << profile.fps() << ". format: " << profile.format());
                         }
                     }
                 }
@@ -830,13 +1072,14 @@ void BaseRealSenseNode::setupStreams()
         if (gyro_profile != _enabled_profiles.end() &&
             accel_profile != _enabled_profiles.end())
         {
+            ROS_INFO("starting imu...");
             std::vector<rs2::stream_profile> profiles;
             profiles.insert(profiles.begin(), gyro_profile->second.begin(), gyro_profile->second.end());
             profiles.insert(profiles.begin(), accel_profile->second.begin(), accel_profile->second.end());
             auto& sens = _sensors[GYRO];
             sens.open(profiles);
 
-            sens.start([this](rs2::frame frame){
+            auto imu_callback = [this](rs2::frame frame){
                 auto stream = frame.get_profile().stream_type();
                 if (false == _intialize_time_base)
                     return;
@@ -850,7 +1093,8 @@ void BaseRealSenseNode::setupStreams()
                 if (0 != _info_publisher[stream_index].getNumSubscribers() ||
                     0 != _imu_publishers[stream_index].getNumSubscribers())
                 {
-                    double elapsed_camera_ms = (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000;
+                    // double elapsed_camera_ms = (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000;
+                    double elapsed_camera_ms = (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base);
                     ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
 
                     auto imu_msg = sensor_msgs::Imu();
@@ -861,18 +1105,18 @@ void BaseRealSenseNode::setupStreams()
                     imu_msg.orientation.w = 0.0;
                     imu_msg.orientation_covariance = { -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-                    auto axes = *(reinterpret_cast<const float3*>(frame.get_data()));
+                    auto axis = *(reinterpret_cast<const float3*>(frame.get_data()));
                     if (GYRO == stream_index)
                     {
-                        imu_msg.angular_velocity.x = axes.x;
-                        imu_msg.angular_velocity.y = axes.y;
-                        imu_msg.angular_velocity.z = axes.z;
+                        imu_msg.angular_velocity.x = axis.x;
+                        imu_msg.angular_velocity.y = axis.y;
+                        imu_msg.angular_velocity.z = axis.z;
                     }
                     else if (ACCEL == stream_index)
                     {
-                        imu_msg.linear_acceleration.x = axes.x;
-                        imu_msg.linear_acceleration.y = axes.y;
-                        imu_msg.linear_acceleration.z = axes.z;
+                        imu_msg.linear_acceleration.x = axis.x;
+                        imu_msg.linear_acceleration.y = axis.y;
+                        imu_msg.linear_acceleration.z = axis.z;
                     }
                     _seq[stream_index] += 1;
                     imu_msg.header.seq = _seq[stream_index];
@@ -880,20 +1124,121 @@ void BaseRealSenseNode::setupStreams()
                     _imu_publishers[stream_index].publish(imu_msg);
                     ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
                 }
-            });
+            };
 
-            if (_enable[GYRO])
+            auto imu_callback_sync = [this](rs2::frame frame){
+                static std::mutex m_mutex;
+                static const stream_index_pair stream_imu = GYRO;
+                static sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
+                static int seq = 0;
+                static struct timeval tp;
+                static bool init_gyro(false), init_accel(false);
+                static double accel_factor(0);
+                imu_msg.header.frame_id = _frame_id[stream_imu];
+                imu_msg.orientation.x = 0.0;
+                imu_msg.orientation.y = 0.0;
+                imu_msg.orientation.z = 0.0;
+                imu_msg.orientation.w = 0.0;
+
+                imu_msg.orientation_covariance = { -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+                imu_msg.linear_acceleration_covariance = { _linear_accel_cov, 0.0, 0.0, 0.0, _linear_accel_cov, 0.0, 0.0, 0.0, _linear_accel_cov};
+                imu_msg.angular_velocity_covariance = { 0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01};
+
+                m_mutex.lock();
+
+                while (true)
+                {
+                    auto stream = frame.get_profile().stream_type();
+                    auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
+                    // double frame_time = frame.get_timestamp();
+                    gettimeofday(&tp, NULL);
+                    double frame_time = tp.tv_sec + tp.tv_usec / 1e6;
+
+                    if (false == _intialize_time_base)
+                        break;
+                
+                    double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base);
+                    ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
+                    seq += 1;
+
+                    if (0 != _synced_imu_publisher->getNumSubscribers())
+                    {
+                        auto axis = *(reinterpret_cast<const float3*>(frame.get_data()));
+                        if (true)
+                        {
+                            // Convert from optical frame to frame:
+                            float3 temp;
+                            temp.x = axis.z;
+                            temp.y = -axis.x;
+                            temp.z = -axis.y;
+
+                            axis.x = temp.x;
+                            axis.y = temp.y;
+                            axis.z = temp.z;
+                            imu_msg.header.frame_id = _frame_id[stream_index];
+                        }
+                        if (GYRO == stream_index)
+                        {
+                            init_gyro = true;
+                            imu_msg.angular_velocity.x = axis.x;
+                            imu_msg.angular_velocity.y = axis.y;
+                            imu_msg.angular_velocity.z = axis.z;
+                        }
+                        else if (ACCEL == stream_index)
+                        {
+                            if (!init_accel)
+                            {
+                                // Init accel_factor:
+                                Eigen::Vector3d v(axis.x, axis.y, axis.z);
+                                accel_factor = 9.81 / v.norm();
+                                ROS_INFO_STREAM("accel_factor set to: " << accel_factor);
+                            }
+                            init_accel = true;
+                            if (true)
+                            {
+                                Eigen::Vector3d v(axis.x, axis.y, axis.z);
+                                v*=accel_factor;
+                                axis.x = v.x();
+                                axis.y = v.y();
+                                axis.z = v.z();
+                            }
+                            imu_msg.linear_acceleration.x = axis.x;
+                            imu_msg.linear_acceleration.y = axis.y;
+                            imu_msg.linear_acceleration.z = axis.z;
+                        }
+                        imu_msg.header.seq = seq;
+                        imu_msg.header.stamp = t;
+                        if (!(init_gyro && init_accel))
+                            break;
+                        _synced_imu_publisher->Publish(imu_msg);
+                        ROS_DEBUG("Publish united %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
+                    }
+                    break;
+                }
+                m_mutex.unlock();
+            };
+            if (_unite_imu)
             {
-                ROS_INFO_STREAM(_stream_name[GYRO] << " stream is enabled - " << "fps: " << _fps[GYRO]);
-                auto gyroInfo = getImuInfo(GYRO);
-                _info_publisher[GYRO].publish(gyroInfo);
+                ROS_INFO_STREAM("Gyro and accelometer are enabled and combined to IMU message at " << "fps: " << (_fps[GYRO] + _fps[ACCEL]));
+                sens.start(imu_callback_sync);
             }
-
-            if (_enable[ACCEL])
+            else
             {
-                ROS_INFO_STREAM(_stream_name[ACCEL] << " stream is enabled - " << "fps: " << _fps[ACCEL]);
-                auto accelInfo = getImuInfo(ACCEL);
-                _info_publisher[ACCEL].publish(accelInfo);
+                sens.start(imu_callback);
+
+                if (_enable[GYRO])
+                {
+                    ROS_INFO_STREAM(_stream_name[GYRO] << " stream is enabled - " << "fps: " << _fps[GYRO]);
+                    auto gyroInfo = getImuInfo(GYRO);
+                    _info_publisher[GYRO].publish(gyroInfo);
+                }
+
+                if (_enable[ACCEL])
+                {
+                    ROS_INFO_STREAM(_stream_name[ACCEL] << " stream is enabled - " << "fps: " << _fps[ACCEL]);
+                    auto accelInfo = getImuInfo(ACCEL);
+                    _info_publisher[ACCEL].publish(accelInfo);
+                }
             }
         }
 
@@ -1054,7 +1399,6 @@ void BaseRealSenseNode::publish_static_tf(const ros::Time& t,
 
 void BaseRealSenseNode::publishStaticTransforms()
 {
-    ROS_INFO("publishStaticTransforms...");
     // Publish static transforms
     tf::Quaternion quaternion_optical;
     quaternion_optical.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
@@ -1079,7 +1423,6 @@ void BaseRealSenseNode::publishStaticTransforms()
         ros::shutdown();
         exit(1);
     }
-
 
     if (_enable[COLOR])
     {
@@ -1168,6 +1511,43 @@ void BaseRealSenseNode::publishStaticTransforms()
             publish_static_tf(transform_ts_, zero_trans, q2, _depth_aligned_frame_id[FISHEYE], _optical_frame_id[FISHEYE]);
         }
     }
+    if (_enable[GYRO])
+    {
+        // Transform base to Gyro
+        // const auto& ex = getRsExtrinsics(Gyro, DEPTH);
+        // Currently, No extrinsics available:
+        const rs2_extrinsics ex = {{1, 0, 0, 0, 1, 0, 0, 0, 1}, {0,0,0}};
+        
+        auto Q = rotationMatrixToQuaternion(ex.rotation);
+        Q = quaternion_optical * Q * quaternion_optical.inverse();
+
+        float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
+        quaternion q1{Q.getX(), Q.getY(), Q.getZ(), Q.getW()};
+        publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _frame_id[GYRO]);
+
+        // Transform gyro frame to gyro optical frame
+        quaternion q2{quaternion_optical.getX(), quaternion_optical.getY(), quaternion_optical.getZ(), quaternion_optical.getW()};
+        publish_static_tf(transform_ts_, zero_trans, q2, _frame_id[GYRO], _optical_frame_id[GYRO]);
+    }
+    if (_enable[ACCEL] and !_unite_imu)
+    {
+        // Transform base to Accel
+        // const auto& ex = getRsExtrinsics(Accel, DEPTH);
+        // Currently, No extrinsics available:
+        const rs2_extrinsics ex = {{1, 0, 0, 0, 1, 0, 0, 0, 1}, {0,0,0}};
+        
+        auto Q = rotationMatrixToQuaternion(ex.rotation);
+        Q = quaternion_optical * Q * quaternion_optical.inverse();
+
+        float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
+        quaternion q1{Q.getX(), Q.getY(), Q.getZ(), Q.getW()};
+        publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _frame_id[ACCEL]);
+
+        // Transform gyro frame to gyro optical frame
+        quaternion q2{quaternion_optical.getX(), quaternion_optical.getY(), quaternion_optical.getZ(), quaternion_optical.getW()};
+        publish_static_tf(transform_ts_, zero_trans, q2, _frame_id[ACCEL], _optical_frame_id[ACCEL]);
+    }
+
 }
 
 rs2::frame BaseRealSenseNode::get_frame(const rs2::frameset& frameset, const rs2_stream stream, const int index)
@@ -1306,7 +1686,16 @@ IMUInfo BaseRealSenseNode::getImuInfo(const stream_index_pair& stream_index)
 {
     IMUInfo info{};
     auto sp = _enabled_profiles[stream_index].front().as<rs2::motion_stream_profile>();
-    auto imuIntrinsics = sp.get_motion_intrinsics();
+    rs2_motion_device_intrinsic imuIntrinsics;
+    try
+    {
+        imuIntrinsics = sp.get_motion_intrinsics();
+    }
+    catch(const runtime_error &ex)
+    {
+        ROS_DEBUG_STREAM("No Motion Intrinsics available.");
+        imuIntrinsics = {{{1,0,0,0},{0,1,0,0},{0,0,1,0}}, {0,0,0}, {0,0,0}};
+    }
     if (GYRO == stream_index)
     {
         info.header.frame_id = "imu_gyro";
@@ -1386,6 +1775,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
 
         image_publisher.first.publish(img);
         image_publisher.second->update();
+        // ROS_INFO_STREAM("fid: " << cam_info.header.seq << ", time: " << std::setprecision (20) << t.toSec());
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
     }
 }
@@ -1404,145 +1794,3 @@ bool BaseRealSenseNode::getEnabledProfile(const stream_index_pair& stream_index,
         return true;
     }
 
-
-BaseD400Node::BaseD400Node(ros::NodeHandle& nodeHandle,
-                           ros::NodeHandle& privateNodeHandle,
-                           rs2::device dev, const std::string& serial_no)
-    : BaseRealSenseNode(nodeHandle,
-                        privateNodeHandle,
-                        dev, serial_no)
-{}
-
-void BaseD400Node::callback(base_d400_paramsConfig &config, uint32_t level)
-{
-    ROS_DEBUG_STREAM("D400 - Level: " << level);
-
-    if (set_default_dynamic_reconfig_values == level)
-    {
-        for (int i = 1 ; i < base_depth_count ; ++i)
-        {
-            ROS_DEBUG_STREAM("base_depth_param = " << i);
-            try
-            {
-                setParam(config ,(base_depth_param)i);
-            }
-            catch(...)
-            {
-                ROS_ERROR_STREAM("Failed. Skip initialization of parameter " << (base_depth_param)i);
-            }
-        }
-    }
-    else
-    {
-        setParam(config, (base_depth_param)level);
-    }
-}
-
-void BaseD400Node::setOption(stream_index_pair sip, rs2_option opt, float val)
-{
-    _sensors[sip].set_option(opt, val);
-}
-
-void BaseD400Node::setParam(rs435_paramsConfig &config, base_depth_param param)
-{
-    base_d400_paramsConfig base_config;
-    base_config.base_depth_gain = config.rs435_depth_gain;
-    base_config.base_depth_enable_auto_exposure = config.rs435_depth_enable_auto_exposure;
-    base_config.base_depth_visual_preset = config.rs435_depth_visual_preset;
-    base_config.base_depth_frames_queue_size = config.rs435_depth_frames_queue_size;
-    base_config.base_depth_error_polling_enabled = config.rs435_depth_error_polling_enabled;
-    base_config.base_depth_output_trigger_enabled = config.rs435_depth_output_trigger_enabled;
-    base_config.base_depth_units = config.rs435_depth_units;
-    base_config.base_JSON_file_path = config.rs435_JSON_file_path;
-    base_config.base_sensors_enabled = config.rs435_sensors_enabled;
-    setParam(base_config, param);
-}
-
-void BaseD400Node::setParam(rs415_paramsConfig &config, base_depth_param param)
-{
-    base_d400_paramsConfig base_config;
-    base_config.base_depth_gain = config.rs415_depth_gain;
-    base_config.base_depth_enable_auto_exposure = config.rs415_depth_enable_auto_exposure;
-    base_config.base_depth_visual_preset = config.rs415_depth_visual_preset;
-    base_config.base_depth_frames_queue_size = config.rs415_depth_frames_queue_size;
-    base_config.base_depth_error_polling_enabled = config.rs415_depth_error_polling_enabled;
-    base_config.base_depth_output_trigger_enabled = config.rs415_depth_output_trigger_enabled;
-    base_config.base_depth_units = config.rs415_depth_units;
-    base_config.base_JSON_file_path = config.rs415_JSON_file_path;
-    base_config.base_sensors_enabled = config.rs415_sensors_enabled;
-    setParam(base_config, param);
-}
-
-void BaseD400Node::setParam(base_d400_paramsConfig &config, base_depth_param param)
-{
-    // W/O for zero param
-    if (0 == param)
-        return;
-
-    // Switch based on the level, defined in .py or .cfg file
-    switch (param) {
-    case base_depth_gain:
-        ROS_DEBUG_STREAM("base_depth_gain: " << config.base_depth_gain);
-        setOption(DEPTH, RS2_OPTION_GAIN, config.base_depth_gain);
-        break;
-    case base_depth_enable_auto_exposure:
-        ROS_DEBUG_STREAM("base_depth_enable_auto_exposure: " << config.base_depth_enable_auto_exposure);
-        setOption(DEPTH, RS2_OPTION_ENABLE_AUTO_EXPOSURE, config.base_depth_enable_auto_exposure);
-        break;
-    case base_depth_visual_preset:
-        ROS_DEBUG_STREAM("base_depth_visual_preset: " << config.base_depth_visual_preset);
-        setOption(DEPTH, RS2_OPTION_VISUAL_PRESET, config.base_depth_visual_preset);
-        break;
-    case base_depth_frames_queue_size:
-        ROS_DEBUG_STREAM("base_depth_frames_queue_size: " << config.base_depth_frames_queue_size);
-        setOption(DEPTH, RS2_OPTION_FRAMES_QUEUE_SIZE, config.base_depth_frames_queue_size);
-        break;
-    case base_depth_error_polling_enabled:
-        ROS_DEBUG_STREAM("base_depth_error_polling_enabled: " << config.base_depth_error_polling_enabled);
-        setOption(DEPTH, RS2_OPTION_ERROR_POLLING_ENABLED, config.base_depth_error_polling_enabled);
-        break;
-    case base_depth_output_trigger_enabled:
-        ROS_DEBUG_STREAM("base_depth_output_trigger_enabled: " << config.base_depth_output_trigger_enabled);
-        setOption(DEPTH, RS2_OPTION_OUTPUT_TRIGGER_ENABLED, config.base_depth_output_trigger_enabled);
-        break;
-    case base_depth_units:
-        break;
-    case base_sensors_enabled:
-    {
-        ROS_DEBUG_STREAM("base_sensors_enabled: " << config.base_sensors_enabled);
-        toggleSensors(config.base_sensors_enabled);
-        break;
-    }
-    case base_JSON_file_path:
-    {
-        ROS_DEBUG_STREAM("base_JSON_file_path: " << config.base_JSON_file_path);
-        auto adv_dev = _dev.as<rs400::advanced_mode>();
-        if (!adv_dev)
-        {
-            ROS_WARN_STREAM("Device doesn't support Advanced Mode!");
-            return;
-        }
-        if (!config.base_JSON_file_path.empty())
-        {
-            std::ifstream in(config.base_JSON_file_path);
-            if (!in.is_open())
-            {
-                ROS_WARN_STREAM("JSON file provided doesn't exist!");
-                return;
-            }
-
-            adv_dev.load_json(config.base_JSON_file_path);
-        }
-        break;
-    }
-    case base_depth_count:
-        break;
-    }
-}
-
-void BaseD400Node::registerDynamicReconfigCb()
-{
-    _server = std::make_shared<dynamic_reconfigure::Server<base_d400_paramsConfig>>();
-    _f = boost::bind(&BaseD400Node::callback, this, _1, _2);
-    _server->setCallback(_f);
-}
