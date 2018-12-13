@@ -806,11 +806,7 @@ void BaseRealSenseNode::setupStreams()
         {
             _synced_imu_publisher->Pause();
             try{
-                static struct timeval tp;
-                // double frame_time = frame.get_timestamp();
-                gettimeofday(&tp, NULL);
-                double frame_time = tp.tv_sec + tp.tv_usec / 1e6;
-                
+                double frame_time = frame.get_timestamp();
 
                 // We compute a ROS timestamp which is based on an initial ROS time at point of first frame,
                 // and the incremental timestamp from the camera.
@@ -828,16 +824,11 @@ void BaseRealSenseNode::setupStreams()
                 ros::Time t;
                 if (_sync_frames)
                 {
-                    // t = ros::Time::now();
-                    // t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame_time - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
-                    t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame_time - /*ms*/ _camera_time_base));
-                    // double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base);
-                    // ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
+                    t = ros::Time::now();
                 }
                 else
                 {
-                    // t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame_time - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
-                    t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame_time - /*ms*/ _camera_time_base));
+                    t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame_time - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
                 }
 
                 std::map<stream_index_pair, bool> is_frame_arrived(_is_frame_arrived);
@@ -1131,7 +1122,6 @@ void BaseRealSenseNode::setupStreams()
                 static const stream_index_pair stream_imu = GYRO;
                 static sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
                 static int seq = 0;
-                static struct timeval tp;
                 static bool init_gyro(false), init_accel(false);
                 static double accel_factor(0);
                 imu_msg.header.frame_id = _frame_id[stream_imu];
@@ -1150,14 +1140,12 @@ void BaseRealSenseNode::setupStreams()
                 {
                     auto stream = frame.get_profile().stream_type();
                     auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
-                    // double frame_time = frame.get_timestamp();
-                    gettimeofday(&tp, NULL);
-                    double frame_time = tp.tv_sec + tp.tv_usec / 1e6;
+                    double frame_time = frame.get_timestamp();
 
                     if (false == _intialize_time_base)
                         break;
                 
-                    double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base);
+                    double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
                     ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
                     seq += 1;
 
