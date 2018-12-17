@@ -257,6 +257,7 @@ void BaseRealSenseNode::registerDynamicReconfigCb(ros::NodeHandle& nh)
     for(rs2::sensor sensor : _dev_sensors)
     {
         std::string module_name = sensor.get_info(RS2_CAMERA_INFO_NAME);
+        std::replace( module_name.begin(), module_name.end(), '-', '_');
         std::replace( module_name.begin(), module_name.end(), ' ', '_'); // replace all ' ' to '_'
         ROS_DEBUG_STREAM("module_name:" << module_name);
         registerDynamicOption(nh, sensor, module_name);
