@@ -16,5 +16,5 @@
     <depend>roscpp</depend>
 
     <test_depend>rostest</test_depend>
-    <test_depend>gmock</test_depend>
+    <test_depend>google-mock</test_depend>
 </package>
