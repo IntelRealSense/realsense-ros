@@ -26,7 +26,6 @@
 #include <eigen3/Eigen/Geometry>
 #include <fstream>
 
-
 namespace realsense2_camera
 {
     const stream_index_pair COLOR{RS2_STREAM_COLOR, 0};
@@ -65,6 +64,7 @@ namespace realsense2_camera
         virtual ~RealSenseNodeFactory() {}
 
     private:
+        rs2::device getDevice(std::string& serial_no);
         virtual void onInit() override;
         void tryGetLogSeverity(rs2_log_severity& severity) const;
 
