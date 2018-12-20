@@ -74,17 +74,6 @@ rs2::device RealSenseNodeFactory::getDevice(std::string& serial_no)
 void RealSenseNodeFactory::onInit()
 {
 	try{
-		std::mutex mtx;
-		std::condition_variable cv;
-		rs2::device dev;
-		_ctx.set_devices_changed_callback([&dev, &cv](rs2::event_information& info)
-				{
-					if (info.was_removed(dev))
-					{
-						cv.notify_one();
-					}
-				});
-
 #ifdef BPDEBUG
 		std::cout << "Attach to Process: " << getpid() << std::endl;
 		std::cout << "Press <ENTER> key to continue." << std::endl;
@@ -111,14 +100,29 @@ void RealSenseNodeFactory::onInit()
 		}
 		else
 		{
-			ROS_INFO("Resetting device...");
-			dev = getDevice(serial_no);
-			dev.hardware_reset();
+			bool initial_reset;
+			privateNh.param("initial_reset", initial_reset, false);
+			if (initial_reset)
 			{
-				std::unique_lock<std::mutex> lk(mtx);
-				cv.wait(lk);
-			}
+				ROS_INFO("Resetting device...");
+				std::mutex mtx;
+				std::condition_variable cv;
+				rs2::device dev;
+				_ctx.set_devices_changed_callback([&dev, &cv](rs2::event_information& info)
+						{
+							if (info.was_removed(dev))
+							{
+								cv.notify_one();
+							}
+						});
 
+				dev = getDevice(serial_no);
+				dev.hardware_reset();
+				{
+					std::unique_lock<std::mutex> lk(mtx);
+					cv.wait(lk);
+				}
+			}
 			_device = getDevice(serial_no);
 
 			_ctx.set_devices_changed_callback([this](rs2::event_information& info)
