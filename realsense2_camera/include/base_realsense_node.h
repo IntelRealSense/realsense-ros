@@ -122,6 +122,7 @@ namespace realsense2_camera
         static std::string getNamespaceStr();
         void getParameters();
         void setupDevice();
+        void setupErrorCallback();
         void setupPublishers();
         void enable_devices();
         void setupFilters();
