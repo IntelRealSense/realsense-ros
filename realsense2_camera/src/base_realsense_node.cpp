@@ -160,10 +160,30 @@ void BaseRealSenseNode::toggleSensors(bool enabled)
     }
 }
 
+void BaseRealSenseNode::setupErrorCallback()
+{
+    for (auto&& s : _dev.query_sensors())
+    {
+        s.set_notifications_callback([&](const rs2::notification& n)
+        {
+            if (n.get_severity() >= RS2_LOG_SEVERITY_ERROR)
+            {
+                ROS_ERROR_STREAM("Hardware Notification:" << n.get_description() << "," << n.get_timestamp() << "," << n.get_severity() << "," << n.get_category());
+            }
+            if (n.get_description().find("RT IC2 Config error") != std::string::npos)
+            {
+                ROS_ERROR_STREAM("Hardware Reset is needed.");
+                // _dev.hardware_reset();
+            }
+        });
+    }
+}
+
 void BaseRealSenseNode::publishTopics()
 {
     getParameters();
     setupDevice();
+    setupErrorCallback();
     setupPublishers();
     setupStreams();
     setupFilters();
@@ -1208,7 +1228,7 @@ void BaseRealSenseNode::setupStreams()
             };
             if (_unite_imu)
             {
-                ROS_INFO_STREAM("Gyro and accelometer are enabled and combined to IMU message at " << "fps: " << (_fps[GYRO] + _fps[ACCEL]));
+                ROS_INFO_STREAM("Gyro and accelometer are enabled and combined to IMU message at " << (_fps[GYRO] + _fps[ACCEL]) << " fps: ");
                 sens.start(imu_callback_sync);
             }
             else
