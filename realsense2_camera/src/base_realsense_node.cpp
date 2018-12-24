@@ -1578,9 +1578,12 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
     {
         std::set<rs2_format> available_formats{ rs2_format::RS2_FORMAT_RGB8, rs2_format::RS2_FORMAT_Y8 };
         
-        texture_frame_itr = find_if(frameset.begin(), frameset.end(), [&texture_source_id, &available_formats] (rs2::frame f) 
-                                {return (rs2_stream(f.get_profile().stream_type()) == texture_source_id) &&
-                                            (available_formats.find(f.get_profile().format()) != available_formats.end()); });
+        for (texture_frame_itr = frameset.begin();  
+             texture_frame_itr != frameset.end() &&
+             ((*texture_frame_itr).get_profile().stream_type() != texture_source_id ||
+              available_formats.find((*texture_frame_itr).get_profile().format()) == available_formats.end()); 
+              ++texture_frame_itr);
+              
         if (texture_frame_itr == frameset.end())
         {
             std::string texture_source_name = pc_filter->_filter->get_option_value_description(rs2_option::RS2_OPTION_STREAM_FILTER, static_cast<float>(texture_source_id));

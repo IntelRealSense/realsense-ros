@@ -137,7 +137,6 @@ namespace realsense2_camera
                                const std::string& to);
         void publishStaticTransforms();
         void publishPointCloud(rs2::points f, const ros::Time& t, const rs2::frameset& frameset);
-        rs2::frame get_frame(const rs2::frameset& frameset, const rs2_stream stream, const int index = 0);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
         rs2_extrinsics getRsExtrinsics(const stream_index_pair& from_stream, const stream_index_pair& to_stream);
 
