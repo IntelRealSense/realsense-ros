@@ -855,7 +855,6 @@ double BaseRealSenseNode::FillImuData_LinearInterpolation(const stream_index_pai
     static CIMUHistory _imu_history(2);
     CIMUHistory::sensor_name this_sensor(static_cast<CIMUHistory::sensor_name>(ACCEL == stream_index));
     CIMUHistory::sensor_name that_sensor(static_cast<CIMUHistory::sensor_name>(!this_sensor));
-    ROS_INFO_STREAM("Add Data:" << this_sensor << ", " << std::setprecision(20) << imu_data.m_time );
     _imu_history.add_data(this_sensor, imu_data);
 
     if (!_imu_history.is_all_data(this_sensor) || !_imu_history.is_data(that_sensor) )
@@ -955,7 +954,6 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
             if (true)
             {
                 // Convert from optical frame to frame:
-                ROS_INFO_STREAM(rs2_stream_to_string(stream_index.first) << ":" << crnt_reading.x << "," << crnt_reading.y << "," << crnt_reading.z);
                 ConvertFromOpticalFrameToFrame(crnt_reading);
                 imu_msg.header.frame_id = _frame_id[stream_index];
             }
