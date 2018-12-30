@@ -172,7 +172,7 @@ void BaseRealSenseNode::setupErrorCallback()
             }
             if (n.get_description().find("RT IC2 Config error") != std::string::npos)
             {
-                ROS_ERROR_STREAM("Hardware Reset is needed.");
+                ROS_ERROR_STREAM("Hardware Reset is needed. use option: initial_reset:=true");
                 // _dev.hardware_reset();
             }
         });
@@ -1309,7 +1309,7 @@ void BaseRealSenseNode::setupStreams()
                             break;
                         }
                     }
-                    if (_enabled_profiles[elem].size() == 0)
+                    if (_enabled_profiles.find(elem) == _enabled_profiles.end())
                     {
                         ROS_WARN_STREAM("No mathcing profile found for " << _stream_name[elem] << " with fps=" << _fps[elem] << " and format=" << _format[elem]);
                         ROS_WARN_STREAM("profiles found for " << _stream_name[elem] << ":");
