@@ -65,14 +65,6 @@ include_directories(
     ${realsense_INCLUDE_DIR}
     )
 
-# Generate dynamic reconfigure options from .cfg files
-#generate_dynamic_reconfigure_options(
-#  cfg/base_d400_params.cfg
-#  cfg/sr300_params.cfg
-#  cfg/rs415_params.cfg
-#  cfg/rs435_params.cfg
-#)
-
 # RealSense ROS Node
 catkin_package(
     LIBRARIES ${PROJECT_NAME}

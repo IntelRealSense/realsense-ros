@@ -71,6 +71,7 @@
   <arg name="clip_distance"            default="-1"/>
   <arg name="linear_accel_cov"         default="0.01"/>
   <arg name="initial_reset"            default="false"/>
+  <arg name="unite_imu_method"         default="none"/> <!-- Options are: [none, copy, linear_interpolation] -->
 
 
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
@@ -137,6 +138,7 @@
     <param name="clip_distance"            type="double" value="$(arg clip_distance)"/>
     <param name="linear_accel_cov"         type="double" value="$(arg linear_accel_cov)"/>
     <param name="initial_reset"            type="bool"   value="$(arg initial_reset)"/>
+    <param name="unite_imu_method"         type="str"    value="$(arg unite_imu_method)"/>
     
   </node>
 </launch>

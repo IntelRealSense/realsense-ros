@@ -97,6 +97,9 @@ namespace realsense2_camera
         virtual void registerDynamicReconfigCb(ros::NodeHandle& nh) override;
         virtual ~BaseRealSenseNode() {}
 
+    public:
+        enum imu_sync_method{NONE, COPY, LINEAR_INTERPOLATION};
+
     protected:
 
         const uint32_t set_default_dynamic_reconfig_values = 0xffffffff;
@@ -105,18 +108,66 @@ namespace realsense2_camera
         std::map<stream_index_pair, rs2::sensor> _sensors;
         std::vector<std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure>> _ddynrec;
 
-        static void callback(const ddynamic_reconfigure::DDMap& map, int, rs2::options sensor);
-        void registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name);
-
     private:
-        struct float3
+        class float3
         {
-            float x, y, z;
+            public:
+                float x, y, z;
+
+            public:
+                float3& operator*=(const float& factor)
+                {
+                    x*=factor;
+                    y*=factor;
+                    z*=factor;
+                    return (*this);
+                }
+                float3& operator+=(const float3& other)
+                {
+                    x+=other.x;
+                    y+=other.y;
+                    z+=other.z;
+                    return (*this);
+                }
         };
 
         struct quaternion
         {
             double x, y, z, w;
+        };
+
+        class CIMUHistory
+        {
+            public:
+                enum sensor_name {mGYRO, mACCEL};
+                class imuData
+                {
+                    public:
+                        imuData(const imuData& other):
+                            imuData(other.m_reading, other.m_time)
+                            {};
+                        imuData(const float3 reading, double time):
+                            m_reading(reading),
+                            m_time(time)
+                            {};
+                        imuData operator*(const double factor);
+                        imuData operator+(const imuData& other);
+                    public:
+                        BaseRealSenseNode::float3 m_reading;
+                        double                    m_time;
+                };
+                
+            private:
+                size_t m_max_size;
+                std::map<sensor_name, std::list<imuData> > m_map;
+
+            public:
+                CIMUHistory(size_t size);
+                void add_data(sensor_name module, imuData data);
+                bool is_all_data(sensor_name);
+                bool is_data(sensor_name);
+                const std::list<imuData>& get_data(sensor_name module);
+                imuData last_data(sensor_name module);
         };
 
         static std::string getNamespaceStr();
@@ -157,6 +208,13 @@ namespace realsense2_camera
                                   rs2_stream stream_type, int stream_index);
 
         void publishAlignedDepthToOthers(rs2::frameset frames, const ros::Time& t);
+        static void callback(const ddynamic_reconfigure::DDMap& map, int, rs2::options sensor);
+        double FillImuData_Copy(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg);
+        double FillImuData_LinearInterpolation(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg);
+        static void ConvertFromOpticalFrameToFrame(float3& data);
+        void imu_callback(rs2::frame frame);
+        void imu_callback_sync(rs2::frame frame, imu_sync_method sync_method=imu_sync_method::COPY);
+        void registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name);
         rs2_stream rs2_string_to_stream(std::string str);
 
         std::string _json_file_path;
@@ -199,14 +257,12 @@ namespace realsense2_camera
         bool _align_depth;
         bool _sync_frames;
         bool _pointcloud;
-        bool _unite_imu;
+        imu_sync_method _imu_sync_method;
         std::string _filters_str;
         stream_index_pair _pointcloud_texture;
         PipelineSyncer _syncer;
         std::vector<NamedFilter> _filters;
         std::vector<rs2::sensor> _dev_sensors;
-        // Declare pointcloud object, for calculating pointclouds and texture mappings
-        // rs2::pointcloud _pc_filter;
 
         std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
         std::map<stream_index_pair, std::string> _depth_aligned_encoding;
@@ -220,6 +276,7 @@ namespace realsense2_camera
 
         std::map<stream_index_pair, bool> _is_frame_arrived;
         const std::string _namespace;
+
     };//end class
 
 }
