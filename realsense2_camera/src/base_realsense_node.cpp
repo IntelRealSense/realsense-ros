@@ -363,7 +363,14 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("accel_fps", _fps[ACCEL], ACCEL_FPS);
     _pnh.param("enable_imu", _enable[GYRO], ENABLE_IMU);
     _pnh.param("enable_imu", _enable[ACCEL], ENABLE_IMU);
-    _pnh.param("unite_imu", _unite_imu, UNITE_IMU);
+    std::string unite_imu_method_str("");
+    _pnh.param("unite_imu_method", unite_imu_method_str, DEFAULT_UNITE_IMU_METHOD);
+    if (unite_imu_method_str == "linear_interpolation")
+        _imu_sync_method = imu_sync_method::LINEAR_INTERPOLATION;
+    else if (unite_imu_method_str == "copy")
+        _imu_sync_method = imu_sync_method::COPY;
+    else
+        _imu_sync_method = imu_sync_method::NONE;
 
     _pnh.param("base_frame_id", _base_frame_id, DEFAULT_BASE_FRAME_ID);
     _pnh.param("depth_frame_id", _frame_id[DEPTH], DEFAULT_DEPTH_FRAME_ID);
@@ -379,7 +386,7 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("infra2_optical_frame_id", _optical_frame_id[INFRA2], DEFAULT_INFRA2_OPTICAL_FRAME_ID);
     _pnh.param("color_optical_frame_id", _optical_frame_id[COLOR], DEFAULT_COLOR_OPTICAL_FRAME_ID);
     _pnh.param("fisheye_optical_frame_id", _optical_frame_id[FISHEYE], DEFAULT_FISHEYE_OPTICAL_FRAME_ID);
-    if (_unite_imu)
+    if (_imu_sync_method > imu_sync_method::NONE)
     {
         _pnh.param("imu_optical_frame_id", _optical_frame_id[GYRO], DEFAULT_IMU_OPTICAL_FRAME_ID);
     }
@@ -583,7 +590,7 @@ void BaseRealSenseNode::setupPublishers()
     }
 
     _synced_imu_publisher = std::make_shared<SyncedImuPublisher>();
-    if (_unite_imu && _enable[GYRO] && _enable[ACCEL])
+    if (_imu_sync_method > imu_sync_method::NONE && _enable[GYRO] && _enable[ACCEL])
     {
         ROS_INFO("Start publisher IMU");
         _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node_handle.advertise<sensor_msgs::Imu>("imu", 1));
@@ -983,6 +990,7 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
             CIMUHistory::imuData imu_data(crnt_reading, elapsed_camera_ms);
             switch (sync_method)
             {
+                case NONE: //Cannot really be NONE. Just to avoid compilation warning.
                 case COPY:
                     elapsed_camera_ms = FillImuData_Copy(stream_index, imu_data, imu_msg);
                     break;
@@ -1341,12 +1349,21 @@ void BaseRealSenseNode::setupStreams()
             };
 
             auto imu_callback_sync_inner = [this](rs2::frame frame){
-                imu_callback_sync(frame, imu_sync_method::LINEAR_INTERPOLATION);
+                imu_callback_sync(frame, _imu_sync_method);
             };
 
-            if (_unite_imu)
+            if (_imu_sync_method > imu_sync_method::NONE)
             {
-                ROS_INFO_STREAM("Gyro and accelometer are enabled and combined to IMU message at " << (_fps[GYRO] + _fps[ACCEL]) << " fps: ");
+                std::string unite_method_str;
+                int expected_fps(_fps[GYRO] + _fps[ACCEL]);
+                unite_method_str = "COPY";
+                if (_imu_sync_method == imu_sync_method::LINEAR_INTERPOLATION)
+                {
+                    unite_method_str = "LINEAR_INTERPOLATION";
+                    expected_fps = 2 * std::min(_fps[GYRO], _fps[ACCEL]);
+                }
+                ROS_INFO_STREAM("Gyro and accelometer are enabled and combined to IMU message at " 
+                                 << expected_fps << " fps by method:" << unite_method_str);
                 sens.start(imu_callback_sync_inner);
             }
             else
@@ -1656,7 +1673,7 @@ void BaseRealSenseNode::publishStaticTransforms()
         quaternion q2{quaternion_optical.getX(), quaternion_optical.getY(), quaternion_optical.getZ(), quaternion_optical.getW()};
         publish_static_tf(transform_ts_, zero_trans, q2, _frame_id[GYRO], _optical_frame_id[GYRO]);
     }
-    if (_enable[ACCEL] and !_unite_imu)
+    if (_enable[ACCEL] and _imu_sync_method == imu_sync_method::NONE)
     {
         // Transform base to Accel
         // const auto& ex = getRsExtrinsics(Accel, DEPTH);

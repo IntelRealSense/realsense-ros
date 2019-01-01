@@ -68,7 +68,6 @@ namespace realsense2_camera
     const bool ENABLE_COLOR   = true;
     const bool ENABLE_FISHEYE = true;
     const bool ENABLE_IMU     = true;
-    const bool UNITE_IMU      = true;
     const bool HOLD_BACK_IMU_FOR_FRAMES = false;
 
 
@@ -94,6 +93,7 @@ namespace realsense2_camera
     const std::string DEFAULT_ALIGNED_DEPTH_TO_INFRA2_FRAME_ID = "camera_aligned_depth_to_infra2_frame";
     const std::string DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID = "camera_aligned_depth_to_fisheye_frame";
 
+    const std::string DEFAULT_UNITE_IMU_METHOD         = "";
     const std::string DEFAULT_FILTERS                  = "";
 
     using stream_index_pair = std::pair<rs2_stream, int>;

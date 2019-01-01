@@ -98,7 +98,7 @@ namespace realsense2_camera
         virtual ~BaseRealSenseNode() {}
 
     public:
-        enum imu_sync_method{COPY, LINEAR_INTERPOLATION};
+        enum imu_sync_method{NONE, COPY, LINEAR_INTERPOLATION};
 
     protected:
 
@@ -257,14 +257,12 @@ namespace realsense2_camera
         bool _align_depth;
         bool _sync_frames;
         bool _pointcloud;
-        bool _unite_imu;
+        imu_sync_method _imu_sync_method;
         std::string _filters_str;
         stream_index_pair _pointcloud_texture;
         PipelineSyncer _syncer;
         std::vector<NamedFilter> _filters;
         std::vector<rs2::sensor> _dev_sensors;
-        // Declare pointcloud object, for calculating pointclouds and texture mappings
-        // rs2::pointcloud _pc_filter;
 
         std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
         std::map<stream_index_pair, std::string> _depth_aligned_encoding;
