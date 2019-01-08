@@ -3,7 +3,7 @@ dist: xenial
 
   # - git clone -v --progress https://github.com/doronhi/realsense.git  # This is Done automatically by TravisCI
 before_install:
-  - ./.install_dependency.sh
+  - sudo ./.install_dependency.sh
   
 install:
   # install ROS:
