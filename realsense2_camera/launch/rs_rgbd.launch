@@ -79,6 +79,7 @@ Processing enabled by this node:
   <arg name="enable_pointcloud"   default="false"/>
   <arg name="enable_sync"         default="true"/>
   <arg name="align_depth"         default="true"/>
+  <arg name="publish_static_tf"   default="true"/>
 
   <!-- rgbd_launch specific arguments -->
 
@@ -120,6 +121,7 @@ Processing enabled by this node:
       <arg name="enable_pointcloud"        value="$(arg enable_pointcloud)"/>
       <arg name="enable_sync"              value="$(arg enable_sync)"/>
       <arg name="align_depth"              value="$(arg align_depth)"/>
+      <arg name="publish_static_tf"        value="$(arg publish_static_tf)"/>
 
       <arg name="fisheye_width"            value="$(arg fisheye_width)"/>
       <arg name="fisheye_height"           value="$(arg fisheye_height)"/>
