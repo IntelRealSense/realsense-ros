@@ -162,6 +162,8 @@ namespace realsense2_camera
                         const rs2_extrinsics& from_to_other,
                         std::vector<uint8_t>& out_vec);
 
+        void TemperatureUpdate(diagnostic_updater::DiagnosticStatusWrapper& stat);
+        
         std::string _json_file_path;
         std::string _serial_no;
         float _depth_scale_meters;
@@ -213,6 +215,10 @@ namespace realsense2_camera
 
         std::map<stream_index_pair, bool> _is_frame_arrived;
         const std::string _namespace;
+
+        diagnostic_updater::Updater temp_diagnostic_updater_;
+        ros::Timer  temp_update_timer_;
+        int temperature_;
     };//end class
 
     class BaseD400Node : public BaseRealSenseNode

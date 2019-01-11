@@ -234,6 +234,7 @@ void BaseRealSenseNode::setupDevice()
                 _sensors[DEPTH] = elem;
                 _sensors[INFRA1] = elem;
                 _sensors[INFRA2] = elem;
+
             }
             else if ("Coded-Light Depth Sensor" == module_name)
             {
@@ -262,6 +263,7 @@ void BaseRealSenseNode::setupDevice()
             ROS_INFO_STREAM(std::string(elem.get_info(RS2_CAMERA_INFO_NAME)) << " was found.");
         }
 
+
         // Update "enable" map
         std::vector<std::vector<stream_index_pair>> streams(IMAGE_STREAMS);
         streams.insert(streams.end(), HID_STREAMS.begin(), HID_STREAMS.end());
@@ -289,6 +291,27 @@ void BaseRealSenseNode::setupDevice()
     }
 }
 
+void BaseRealSenseNode::TemperatureUpdate(diagnostic_updater::DiagnosticStatusWrapper& stat)
+{
+ 
+    auto dbg = _dev.as<rs2::debug_protocol>();
+    std::vector<uint8_t> cmd = { 0x14, 0, 0xab, 0xcd, 0x2a, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+     
+    auto res = dbg.send_and_receive_raw_data(cmd);
+    temperature_ = res[4];
+    //std::cout <<"Projector Temperature:" << temperature_ << std::endl;
+    //ROS_INFO("Projector Temperature is %d", temperature_); 
+            
+    stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "OK");
+  
+    stat.add("Projector Temperature", temperature_);
+    if (temperature_ > 50) {
+        stat.mergeSummary(diagnostic_msgs::DiagnosticStatus::ERROR, "Temperature is Higher than 50 Degree Celsius");
+    }
+
+
+}
+
 void BaseRealSenseNode::setupPublishers()
 {
     ROS_INFO("setupPublishers...");
@@ -303,6 +326,11 @@ void BaseRealSenseNode::setupPublishers()
         }
     }
 
+    temp_diagnostic_updater_.setHardwareIDf("D435_temperature");
+    temp_diagnostic_updater_.add("Temperature", this, &BaseRealSenseNode::TemperatureUpdate);
+
+    temp_update_timer_ = _node_handle.createTimer(ros::Duration(0.1), boost::bind(&diagnostic_updater::Updater::update, &temp_diagnostic_updater_));
+
     for (auto& stream : image_stream_types)
     {
         if (_enable[stream])
@@ -314,6 +342,9 @@ void BaseRealSenseNode::setupPublishers()
 
             image_raw << _stream_name[stream] << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << _stream_name[stream] << "/camera_info";
+
+             
+           
 
             std::shared_ptr<FrequencyDiagnostics> frequency_diagnostics(new FrequencyDiagnostics(_fps[stream], _stream_name[stream], _serial_no));
             _image_publishers[stream] = {image_transport.advertise(image_raw.str(), 1), frequency_diagnostics};
