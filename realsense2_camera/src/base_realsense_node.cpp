@@ -299,9 +299,7 @@ void BaseRealSenseNode::TemperatureUpdate(diagnostic_updater::DiagnosticStatusWr
      
     auto res = dbg.send_and_receive_raw_data(cmd);
     temperature_ = res[4];
-    //std::cout <<"Projector Temperature:" << temperature_ << std::endl;
-    //ROS_INFO("Projector Temperature is %d", temperature_); 
-            
+                
     stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "OK");
   
     stat.add("Projector Temperature", temperature_);
