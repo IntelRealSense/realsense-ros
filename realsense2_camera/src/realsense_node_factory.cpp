@@ -7,6 +7,7 @@
 #include <map>
 #include <mutex>
 #include <condition_variable>
+#include <signal.h>
 
 using namespace realsense2_camera;
 
@@ -14,6 +15,8 @@ using namespace realsense2_camera;
 constexpr auto realsense_ros_camera_version = REALSENSE_ROS_EMBEDDED_VERSION_STR;
 
 PLUGINLIB_EXPORT_CLASS(realsense2_camera::RealSenseNodeFactory, nodelet::Nodelet)
+
+rs2::device _device;
 
 RealSenseNodeFactory::RealSenseNodeFactory()
 {
@@ -27,6 +30,18 @@ RealSenseNodeFactory::RealSenseNodeFactory()
 		ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
 
 	rs2::log_to_console(severity);
+}
+
+void RealSenseNodeFactory::signalHandler(int signum)
+{
+	ROS_INFO_STREAM(strsignal(signum) << " Signal is received! Terminating RealSense Node...");
+    for(rs2::sensor sensor : _device.query_sensors())
+	{
+		sensor.stop();
+		sensor.close();
+	}
+	ros::shutdown();
+	exit(signum);
 }
 
 rs2::device RealSenseNodeFactory::getDevice(std::string& serial_no)
@@ -95,7 +110,7 @@ void RealSenseNodeFactory::onInit()
 			cfg.enable_device_from_file(rosbag_filename.c_str(), false);
 			cfg.enable_all_streams();
 			pipe->start(cfg); //File will be opened in read mode at this point
-			auto _device = pipe->get_active_profile().get_device();
+			_device = pipe->get_active_profile().get_device();
 			_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(nh, privateNh, _device, serial_no));
 		}
 		else

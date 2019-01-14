@@ -166,11 +166,14 @@ void BaseRealSenseNode::setupErrorCallback()
     {
         s.set_notifications_callback([&](const rs2::notification& n)
         {
+            std::vector<std::string> error_strings({"RT IC2 Config error", 
+                                                    "Motion Module force pause"});
             if (n.get_severity() >= RS2_LOG_SEVERITY_ERROR)
             {
-                ROS_ERROR_STREAM("Hardware Notification:" << n.get_description() << "," << n.get_timestamp() << "," << n.get_severity() << "," << n.get_category());
+                ROS_WARN_STREAM("Hardware Notification:" << n.get_description() << "," << n.get_timestamp() << "," << n.get_severity() << "," << n.get_category());
             }
-            if (n.get_description().find("RT IC2 Config error") != std::string::npos)
+            if (error_strings.end() != find_if(error_strings.begin(), error_strings.end(), [&n] (std::string err) 
+                                        {return (n.get_description().find(err) != std::string::npos); }))
             {
                 ROS_ERROR_STREAM("Hardware Reset is needed. use option: initial_reset:=true");
                 // _dev.hardware_reset();
