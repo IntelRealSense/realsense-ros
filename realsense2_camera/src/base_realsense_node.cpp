@@ -1928,7 +1928,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
     {
         if (images[stream].size() != cv::Size(width, height))
         {
-            image.create(height, width, _image_format[stream]);
+            image.create(height, width, image.type());
         }
         image.data = (uint8_t*)f.get_data();
     }
