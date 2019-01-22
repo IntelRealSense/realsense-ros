@@ -63,7 +63,7 @@ aluminum peripherial evaluation case.
         <material name="aluminum"/>
       </visual>
       <collision>
-        <origin xyz="${-1.0 * d435_cam_depth_px} ${-1.0 * d435_cam_depth_py} 0.0" rpy="0 0 0"/>
+        <origin xyz="0 ${-d435_cam_depth_py} 0" rpy="0 0 0"/>
         <geometry>
         <box size="${d435_cam_depth} ${d435_cam_width} ${d435_cam_height}"/>
         </geometry>
