@@ -1912,8 +1912,8 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
                                      bool copy_data_from_frame)
 {
     ROS_DEBUG("publishFrame(...)");
-    auto width = 0;
-    auto height = 0;
+    unsigned int width = 0;
+    unsigned int height = 0;
     auto bpp = 1;
     if (f.is<rs2::video_frame>())
     {
@@ -1950,6 +1950,10 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
         img->header.seq = seq[stream];
 
         auto& cam_info = camera_info.at(stream);
+        if (cam_info.width != width)
+        {
+            updateStreamCalibData(f.get_profile().as<rs2::video_stream_profile>());
+        }
         cam_info.header.stamp = t;
         cam_info.header.seq = seq[stream];
         info_publisher.publish(cam_info);
