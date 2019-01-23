@@ -41,12 +41,19 @@ aluminum peripherial evaluation case.
     <joint name="camera_joint" type="fixed">
       <xacro:insert_block name="origin" />
       <parent link="${parent}"/>
+      <child link="camera_bottom_screw_frame" />
+    </joint>
+    <link name="camera_bottom_screw_frame"/>
+
+    <joint name="camera_link_joint" type="fixed">
+      <origin xyz="0 ${d435_cam_depth_py} ${d435_cam_depth_pz}" rpy="0 0 0"/>
+      <parent link="camera_bottom_screw_frame"/>
       <child link="camera_link" />
     </joint>
 
     <link name="camera_link">
       <visual>
-      <origin xyz="${d435_cam_mount_from_center_offset} 0.0 ${d435_cam_height/2}" rpy="${M_PI/2} 0 ${M_PI/2}"/>
+      <origin xyz="${d435_cam_mount_from_center_offset} ${-d435_cam_depth_py} 0" rpy="${M_PI/2} 0 ${M_PI/2}"/>
         <geometry>
           <!-- <box size="${d435_cam_width} ${d435_cam_height} ${d435_cam_depth}"/> -->
 	  <mesh filename="package://realsense2_camera/meshes/d435.dae" />
@@ -56,7 +63,7 @@ aluminum peripherial evaluation case.
         <material name="aluminum"/>
       </visual>
       <collision>
-        <origin xyz="0.0 0.0 ${d435_cam_height/2}" rpy="0 0 0"/>
+        <origin xyz="0 ${-d435_cam_depth_py} 0" rpy="0 0 0"/>
         <geometry>
         <box size="${d435_cam_depth} ${d435_cam_width} ${d435_cam_height}"/>
         </geometry>
@@ -71,7 +78,7 @@ aluminum peripherial evaluation case.
    
     <!-- camera depth joints and links -->
     <joint name="camera_depth_joint" type="fixed">
-      <origin xyz="${d435_cam_depth_px} ${d435_cam_depth_py} ${d435_cam_depth_pz}" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <parent link="camera_link"/>
       <child link="camera_depth_frame" />
     </joint>
