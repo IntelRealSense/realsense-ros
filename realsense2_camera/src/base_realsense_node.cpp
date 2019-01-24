@@ -574,9 +574,8 @@ void BaseRealSenseNode::setupStreams()
                 //ROS_INFO_STREAM("Time diff: " << (t - test_t).toSec());
 
                 // Taking just the ROS time leads to incorrect timestamps, especially at higher CPU loads.
-                // Taking the frame timestamp is better, however the time clock
-                // Even though the frame timestamp might not theoretically be correct here, it's a much better estimate than the ROS time 
-                // So always take the frame timestamp, even if frames are synced
+                // Taking the frame timestamp is better, however the time clock of the camera is running faster than real time.
+                // Therefore the system clock should be used to sync the camera images with other components.
                 t = ros::Time((double)(std::chrono::high_resolution_clock::now().time_since_epoch().count() * std::chrono::system_clock::period::num) / std::chrono::system_clock::period::den);
 				
                 std::map<stream_index_pair, bool> is_frame_arrived(_is_frame_arrived);
