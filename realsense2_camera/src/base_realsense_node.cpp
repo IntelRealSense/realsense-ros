@@ -563,13 +563,13 @@ void BaseRealSenseNode::setupStreams()
 
                 ros::Time t;
                 //ros::Time test_t;
-                if (_sync_frames)
-                {
-                    t = ros::Time::now();
-                //    test_t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
-                }
-                else
-                    t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
+//                if (_sync_frames)
+//                {
+//                    t = ros::Time::now();
+//                //    test_t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
+//                }
+//                else
+//                    t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
 
                 //ROS_INFO_STREAM("Time diff: " << (t - test_t).toSec());
 
