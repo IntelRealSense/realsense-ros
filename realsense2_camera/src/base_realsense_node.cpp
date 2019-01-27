@@ -1711,6 +1711,8 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
     std::vector<NamedFilter>::iterator pc_filter = find_if(_filters.begin(), _filters.end(), [] (NamedFilter s) { return s._name == "pointcloud"; } );
     rs2_stream texture_source_id = static_cast<rs2_stream>(pc_filter->_filter->get_option(rs2_option::RS2_OPTION_STREAM_FILTER));
     bool use_texture = texture_source_id != RS2_STREAM_ANY;
+    static int warn_count(0);
+    static const int DISPLAY_WARN_NUMBER(5);
     rs2::frameset::iterator texture_frame_itr = frameset.end();
     if (use_texture)
     {
@@ -1721,10 +1723,12 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
                                             (available_formats.find(f.get_profile().format()) != available_formats.end()); });
         if (texture_frame_itr == frameset.end())
         {
+            warn_count++;
             std::string texture_source_name = pc_filter->_filter->get_option_value_description(rs2_option::RS2_OPTION_STREAM_FILTER, static_cast<float>(texture_source_id));
-            ROS_WARN_STREAM("No stream match for pointcloud chosen texture " << texture_source_name);
+            ROS_WARN_STREAM_COND(warn_count == DISPLAY_WARN_NUMBER, "No stream match for pointcloud chosen texture " << texture_source_name);
             return;
         }
+        warn_count = 0;
     }
 
     int texture_width(0), texture_height(0);
