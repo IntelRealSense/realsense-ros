@@ -221,7 +221,8 @@ namespace realsense2_camera
         std::string _serial_no;
         float _depth_scale_meters;
         float _clipping_distance;
-        float _linear_accel_cov;
+        double _linear_accel_cov;
+        double _angular_velocity_cov;
         bool  _hold_back_imu_for_frames;
 
         std::map<stream_index_pair, rs2_intrinsics> _stream_intrinsics;
