@@ -106,6 +106,9 @@ def ImageColorTest_3epsilon(data, gt_data):
     gt_data['epsilon'] *= 3
     return ImageColorTest(data, gt_data)
 
+def NotImageColorTest(data, gt_data):
+    res = ImageColorTest(data, gt_data)
+    return (not res[0], res[1])
 
 def PointCloudTest(data, gt_data):
     msg = 'Expect image size %d(+-%d), %d. Got %d, %d.' % (gt_data['width'][0], gt_data['width'][1], gt_data['height'][0], data['width'][0], data['height'][0])
@@ -142,7 +145,7 @@ test_types = {'vis_avg': {'listener_theme': 'colorStream',
                             'test_func': ImageColorTest},
               'no_file': {'listener_theme': 'colorStream',
                           'data_func': lambda x: None,
-                          'test_func': lambda x, y: not ImageColorTest(x, y)},
+                          'test_func': NotImageColorTest},
               'pointscloud_avg': {'listener_theme': 'pointscloud',
                           'data_func': lambda x: {'width': [776534, 2300], 'height': [1], 'avg': [np.array([ 1.28251814, -0.15839984, 4.82235184, 65, 88, 95])], 'epsilon': [0.02, 2]},
                           'test_func': PointCloudTest},
@@ -189,7 +192,7 @@ def print_results(results):
     print '-'*total_width
     print ('{:<%ds}{:>%ds} : {:<%ds}' % (col_0_width, col_1_width, col_2_width)).format('test name', 'score', 'message')
     print '-'*(col_0_width-1) + ' '*2 + '-'*(col_1_width-1) + ' '*3 + '-'*(col_2_width-1)
-    print '\n'.join([('{:<%ds}{:>%ds} : {:<%ds}' % (col_0_width, col_1_width, col_2_width)).format(test[0], 'OK' if test[1][0] else 'FAILED', test[1][1]) for test in results])
+    print '\n'.join([('{:<%ds}{:>%ds} : {:<s}' % (col_0_width, col_1_width)).format(test[0], 'OK' if test[1][0] else 'FAILED', test[1][1]) for test in results])
     print
 
 
