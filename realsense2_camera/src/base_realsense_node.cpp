@@ -1392,41 +1392,6 @@ void BaseRealSenseNode::setupStreams()
             }
         }
 
-        if (_enable[DEPTH] &&
-            _enable[FISHEYE])
-        {
-            static const char* frame_id = "depth_to_fisheye_extrinsics";
-            auto ex = getRsExtrinsics(DEPTH, FISHEYE);
-            _depth_to_other_extrinsics[FISHEYE] = ex;
-            _depth_to_other_extrinsics_publishers[FISHEYE].publish(rsExtrinsicsToMsg(ex, frame_id));
-        }
-
-        if (_enable[DEPTH] &&
-            _enable[COLOR])
-        {
-            static const char* frame_id = "depth_to_color_extrinsics";
-            auto ex = getRsExtrinsics(DEPTH, COLOR);
-            _depth_to_other_extrinsics[COLOR] = ex;
-            _depth_to_other_extrinsics_publishers[COLOR].publish(rsExtrinsicsToMsg(ex, frame_id));
-        }
-
-        if (_enable[DEPTH] &&
-            _enable[INFRA1])
-        {
-            static const char* frame_id = "depth_to_infra1_extrinsics";
-            auto ex = getRsExtrinsics(DEPTH, INFRA1);
-            _depth_to_other_extrinsics[INFRA1] = ex;
-            _depth_to_other_extrinsics_publishers[INFRA1].publish(rsExtrinsicsToMsg(ex, frame_id));
-        }
-
-        if (_enable[DEPTH] &&
-            _enable[INFRA2])
-        {
-            static const char* frame_id = "depth_to_infra2_extrinsics";
-            auto ex = getRsExtrinsics(DEPTH, INFRA2);
-            _depth_to_other_extrinsics[INFRA2] = ex;
-            _depth_to_other_extrinsics_publishers[INFRA2].publish(rsExtrinsicsToMsg(ex, frame_id));
-        }
     }
     catch(const std::exception& ex)
     {
@@ -1467,15 +1432,6 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     _camera_info[stream_index].P.at(9) = 0;
     _camera_info[stream_index].P.at(10) = 1;
     _camera_info[stream_index].P.at(11) = 0;
-
-    rs2::stream_profile depth_profile;
-    if (!getEnabledProfile(DEPTH, depth_profile))
-    {
-        ROS_ERROR_STREAM("Given depth profile is not supported by current device!");
-        ros::shutdown();
-        exit(1);
-    }
-
 
     _camera_info[stream_index].distortion_model = "plumb_bob";
 
@@ -1560,24 +1516,20 @@ void BaseRealSenseNode::publishStaticTransforms()
     // Hence no additional transformation is done from base link to depth frame.
     // Transform base link to depth frame
     float3 zero_trans{0, 0, 0};
-    publish_static_tf(transform_ts_, zero_trans, quaternion{0, 0, 0, 1}, _base_frame_id, _frame_id[DEPTH]);
-
-    // Transform depth frame to depth optical frame
-    quaternion q{quaternion_optical.getX(), quaternion_optical.getY(), quaternion_optical.getZ(), quaternion_optical.getW()};
-    publish_static_tf(transform_ts_, zero_trans, q, _frame_id[DEPTH], _optical_frame_id[DEPTH]);
-
-    rs2::stream_profile depth_profile;
-    if (!getEnabledProfile(DEPTH, depth_profile))
+    if (_enable[DEPTH])
     {
-        ROS_ERROR_STREAM("Given depth profile is not supported by current device!");
-        ros::shutdown();
-        exit(1);
+        publish_static_tf(transform_ts_, zero_trans, quaternion{0, 0, 0, 1}, _base_frame_id, _frame_id[DEPTH]);
+
+        // Transform depth frame to depth optical frame
+        quaternion q{quaternion_optical.getX(), quaternion_optical.getY(), quaternion_optical.getZ(), quaternion_optical.getW()};
+        publish_static_tf(transform_ts_, zero_trans, q, _frame_id[DEPTH], _optical_frame_id[DEPTH]);
     }
 
+    rs2::stream_profile depth_profile = getAProfile(DEPTH);
     if (_enable[COLOR])
     {
         // Transform base to color
-        const auto& ex = getRsExtrinsics(COLOR, DEPTH);
+        const auto& ex = getAProfile(COLOR).get_extrinsics_to(depth_profile);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
         Q = quaternion_optical * Q * quaternion_optical.inverse();
 
@@ -1598,7 +1550,8 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[INFRA1])
     {
-        const auto& ex = getRsExtrinsics(INFRA1, DEPTH);
+        const auto& ex = getAProfile(INFRA1).get_extrinsics_to(depth_profile);
+
         auto Q = rotationMatrixToQuaternion(ex.rotation);
         Q = quaternion_optical * Q * quaternion_optical.inverse();
 
@@ -1620,7 +1573,7 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[INFRA2])
     {
-        const auto& ex = getRsExtrinsics(INFRA2, DEPTH);
+        const auto& ex = getAProfile(INFRA2).get_extrinsics_to(depth_profile);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
         Q = quaternion_optical * Q * quaternion_optical.inverse();
 
@@ -1642,7 +1595,7 @@ void BaseRealSenseNode::publishStaticTransforms()
 
     if (_enable[FISHEYE])
     {
-        const auto& ex = getRsExtrinsics(FISHEYE, DEPTH);
+        const auto& ex = getAProfile(FISHEYE).get_extrinsics_to(depth_profile);
         auto Q = rotationMatrixToQuaternion(ex.rotation);
         Q = quaternion_optical * Q * quaternion_optical.inverse();
 
@@ -1696,6 +1649,44 @@ void BaseRealSenseNode::publishStaticTransforms()
         // Transform gyro frame to gyro optical frame
         quaternion q2{quaternion_optical.getX(), quaternion_optical.getY(), quaternion_optical.getZ(), quaternion_optical.getW()};
         publish_static_tf(transform_ts_, zero_trans, q2, _frame_id[ACCEL], _optical_frame_id[ACCEL]);
+    }
+
+    // Publish Extinsics Topics:
+    if (_enable[DEPTH] &&
+        _enable[FISHEYE])
+    {
+        static const char* frame_id = "depth_to_fisheye_extrinsics";
+        const auto& ex = depth_profile.get_extrinsics_to(getAProfile(FISHEYE));
+
+        _depth_to_other_extrinsics[FISHEYE] = ex;
+        _depth_to_other_extrinsics_publishers[FISHEYE].publish(rsExtrinsicsToMsg(ex, frame_id));
+    }
+
+    if (_enable[DEPTH] &&
+        _enable[COLOR])
+    {
+        static const char* frame_id = "depth_to_color_extrinsics";
+        const auto& ex = depth_profile.get_extrinsics_to(getAProfile(COLOR));
+        _depth_to_other_extrinsics[COLOR] = ex;
+        _depth_to_other_extrinsics_publishers[COLOR].publish(rsExtrinsicsToMsg(ex, frame_id));
+    }
+
+    if (_enable[DEPTH] &&
+        _enable[INFRA1])
+    {
+        static const char* frame_id = "depth_to_infra1_extrinsics";
+        const auto& ex = depth_profile.get_extrinsics_to(getAProfile(INFRA1));
+        _depth_to_other_extrinsics[INFRA1] = ex;
+        _depth_to_other_extrinsics_publishers[INFRA1].publish(rsExtrinsicsToMsg(ex, frame_id));
+    }
+
+    if (_enable[DEPTH] &&
+        _enable[INFRA2])
+    {
+        static const char* frame_id = "depth_to_infra2_extrinsics";
+        const auto& ex = depth_profile.get_extrinsics_to(getAProfile(INFRA2));
+        _depth_to_other_extrinsics[INFRA2] = ex;
+        _depth_to_other_extrinsics_publishers[INFRA2].publish(rsExtrinsicsToMsg(ex, frame_id));
     }
 
 }
@@ -1859,11 +1850,13 @@ Extrinsics BaseRealSenseNode::rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics
     return extrinsicsMsg;
 }
 
-rs2_extrinsics BaseRealSenseNode::getRsExtrinsics(const stream_index_pair& from_stream, const stream_index_pair& to_stream)
+rs2::stream_profile BaseRealSenseNode::getAProfile(const stream_index_pair& stream)
 {
-    auto& from = _enabled_profiles[from_stream].front();
-    auto& to = _enabled_profiles[to_stream].front();
-    return from.get_extrinsics_to(to);
+    const std::vector<rs2::stream_profile> profiles = _sensors[stream].get_stream_profiles();
+    return *(std::find_if(profiles.begin(), profiles.end(),
+                                            [&stream] (const rs2::stream_profile& profile) { 
+                                                return ((profile.stream_type() == stream.first) && (profile.stream_index() == stream.second)); 
+                                            }));
 }
 
 IMUInfo BaseRealSenseNode::getImuInfo(const stream_index_pair& stream_index)
