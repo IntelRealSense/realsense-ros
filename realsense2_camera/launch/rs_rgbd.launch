@@ -79,6 +79,7 @@ Processing enabled by this node:
   <arg name="enable_pointcloud"   default="false"/>
   <arg name="enable_sync"         default="true"/>
   <arg name="align_depth"         default="true"/>
+  <arg name="filters"             default=""/>
 
   <!-- rgbd_launch specific arguments -->
 
@@ -149,6 +150,7 @@ Processing enabled by this node:
       <arg name="gyro_fps"                 value="$(arg gyro_fps)"/>
       <arg name="accel_fps"                value="$(arg accel_fps)"/>
       <arg name="enable_imu"               value="$(arg enable_imu)"/>
+      <arg name="filters"                  value="$(arg filters)"/>
     </include>
 
     <!-- RGB processing -->
