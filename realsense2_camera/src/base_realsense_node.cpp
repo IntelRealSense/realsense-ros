@@ -7,7 +7,11 @@
 using namespace realsense2_camera;
 using namespace ddynamic_reconfigure;
 
-#define STREAM_NAME(elem) (static_cast<std::ostringstream&&>(std::ostringstream() << _stream_name[elem.first] << ((elem.second>0) ? std::to_string(elem.second) : ""))).str()
+// stream_index_pair sip{stream_type, stream_index};
+#define STREAM_NAME(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << _stream_name[sip.first] << ((sip.second>0) ? std::to_string(sip.second) : ""))).str()
+#define FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_" << STREAM_NAME(sip) << "_frame")).str()
+#define OPTICAL_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_" << STREAM_NAME(sip) << "_optical_frame")).str()
+#define ALIGNED_DEPTH_TO_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_aligned_depth_to_" << STREAM_NAME(sip) << "_frame")).str()
 
 SyncedImuPublisher::SyncedImuPublisher(ros::Publisher imu_publisher, std::size_t waiting_list_size):
             _publisher(imu_publisher),
@@ -317,30 +321,21 @@ void BaseRealSenseNode::getParameters()
 
     _pnh.param("json_file_path", _json_file_path, std::string(""));
 
-    _pnh.param("depth_width", _width[DEPTH], DEPTH_WIDTH);
-    _pnh.param("depth_height", _height[DEPTH], DEPTH_HEIGHT);
-    _pnh.param("depth_fps", _fps[DEPTH], DEPTH_FPS);
-    _pnh.param("enable_depth", _enable[DEPTH], ENABLE_DEPTH);
+    for (auto& stream_vec : IMAGE_STREAMS)
+    {
+        for (auto& stream : stream_vec)
+        {
+            string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_width").str());
+            _pnh.param(param_name, _width[stream], IMAGE_WIDTH);
+            param_name = static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_height").str();
+            _pnh.param(param_name, _height[stream], IMAGE_HEIGHT);
+            param_name = static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_fps").str();
+            _pnh.param(param_name, _fps[stream], IMAGE_FPS);
+            param_name = static_cast<std::ostringstream&&>(std::ostringstream() << "enable_" << STREAM_NAME(stream)).str();
+            _pnh.param(param_name, _enable[stream], true);
+        }
+    }
 
-    _pnh.param("infra1_width", _width[INFRA1], INFRA1_WIDTH);
-    _pnh.param("infra1_height", _height[INFRA1], INFRA1_HEIGHT);
-    _pnh.param("infra1_fps", _fps[INFRA1], INFRA1_FPS);
-    _pnh.param("enable_infra1", _enable[INFRA1], ENABLE_INFRA1);
-
-    _pnh.param("infra2_width", _width[INFRA2], INFRA2_WIDTH);
-    _pnh.param("infra2_height", _height[INFRA2], INFRA2_HEIGHT);
-    _pnh.param("infra2_fps", _fps[INFRA2], INFRA2_FPS);
-    _pnh.param("enable_infra2", _enable[INFRA2], ENABLE_INFRA2);
-
-    _pnh.param("color_width", _width[COLOR], COLOR_WIDTH);
-    _pnh.param("color_height", _height[COLOR], COLOR_HEIGHT);
-    _pnh.param("color_fps", _fps[COLOR], COLOR_FPS);
-    _pnh.param("enable_color", _enable[COLOR], ENABLE_COLOR);
-
-    _pnh.param("fisheye_width", _width[FISHEYE], FISHEYE_WIDTH);
-    _pnh.param("fisheye_height", _height[FISHEYE], FISHEYE_HEIGHT);
-    _pnh.param("fisheye_fps", _fps[FISHEYE], FISHEYE_FPS);
-    _pnh.param("enable_fisheye", _enable[FISHEYE], ENABLE_FISHEYE);
 
     _pnh.param("gyro_fps", _fps[GYRO], GYRO_FPS);
     _pnh.param("accel_fps", _fps[ACCEL], ACCEL_FPS);
@@ -356,33 +351,34 @@ void BaseRealSenseNode::getParameters()
         _imu_sync_method = imu_sync_method::NONE;
 
     _pnh.param("base_frame_id", _base_frame_id, DEFAULT_BASE_FRAME_ID);
-    _pnh.param("depth_frame_id", _frame_id[DEPTH], DEFAULT_DEPTH_FRAME_ID);
-    _pnh.param("infra1_frame_id", _frame_id[INFRA1], DEFAULT_INFRA1_FRAME_ID);
-    _pnh.param("infra2_frame_id", _frame_id[INFRA2], DEFAULT_INFRA2_FRAME_ID);
-    _pnh.param("color_frame_id", _frame_id[COLOR], DEFAULT_COLOR_FRAME_ID);
-    _pnh.param("fisheye_frame_id", _frame_id[FISHEYE], DEFAULT_FISHEYE_FRAME_ID);
-    _pnh.param("imu_gyro_frame_id", _frame_id[GYRO], DEFAULT_IMU_FRAME_ID);
-    _pnh.param("imu_accel_frame_id", _frame_id[ACCEL], DEFAULT_IMU_FRAME_ID);
 
-    _pnh.param("depth_optical_frame_id", _optical_frame_id[DEPTH], DEFAULT_DEPTH_OPTICAL_FRAME_ID);
-    _pnh.param("infra1_optical_frame_id", _optical_frame_id[INFRA1], DEFAULT_INFRA1_OPTICAL_FRAME_ID);
-    _pnh.param("infra2_optical_frame_id", _optical_frame_id[INFRA2], DEFAULT_INFRA2_OPTICAL_FRAME_ID);
-    _pnh.param("color_optical_frame_id", _optical_frame_id[COLOR], DEFAULT_COLOR_OPTICAL_FRAME_ID);
-    _pnh.param("fisheye_optical_frame_id", _optical_frame_id[FISHEYE], DEFAULT_FISHEYE_OPTICAL_FRAME_ID);
+    std::vector<std::vector<stream_index_pair>> streams(IMAGE_STREAMS);
+    streams.insert(streams.end(), HID_STREAMS.begin(), HID_STREAMS.end());
+    for (auto& stream_vec : streams)
+    {
+        for (auto& stream : stream_vec)
+        {
+            string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_frame_id").str());
+            _pnh.param(param_name, _frame_id[stream], FRAME_ID(stream));
+            param_name = static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_optical_frame_id").str();
+            _pnh.param(param_name, _optical_frame_id[stream], OPTICAL_FRAME_ID(stream));
+        }
+    }
+
     if (_imu_sync_method > imu_sync_method::NONE)
     {
         _pnh.param("imu_optical_frame_id", _optical_frame_id[GYRO], DEFAULT_IMU_OPTICAL_FRAME_ID);
     }
-    else
-    {
-        _pnh.param("gyro_optical_frame_id", _optical_frame_id[GYRO], DEFAULT_GYRO_OPTICAL_FRAME_ID);
-    }
-    _pnh.param("accel_optical_frame_id", _optical_frame_id[ACCEL], DEFAULT_ACCEL_OPTICAL_FRAME_ID);
 
-    _pnh.param("aligned_depth_to_color_frame_id",   _depth_aligned_frame_id[COLOR],   DEFAULT_ALIGNED_DEPTH_TO_COLOR_FRAME_ID);
-    _pnh.param("aligned_depth_to_infra1_frame_id",  _depth_aligned_frame_id[INFRA1],  DEFAULT_ALIGNED_DEPTH_TO_INFRA1_FRAME_ID);
-    _pnh.param("aligned_depth_to_infra2_frame_id",  _depth_aligned_frame_id[INFRA2],  DEFAULT_ALIGNED_DEPTH_TO_INFRA2_FRAME_ID);
-    _pnh.param("aligned_depth_to_fisheye_frame_id", _depth_aligned_frame_id[FISHEYE], DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID);
+    for (auto& stream_vec : IMAGE_STREAMS)
+    {
+        for (auto& stream : stream_vec)
+        {
+            string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << "aligned_depth_to_" << STREAM_NAME(stream) << "_frame_id").str());
+            _pnh.param(param_name, _depth_aligned_frame_id[stream], ALIGNED_DEPTH_TO_FRAME_ID(stream));
+        }
+    }
+
     _pnh.param("clip_distance", _clipping_distance, static_cast<float>(-1.0));
     _pnh.param("linear_accel_cov", _linear_accel_cov, static_cast<double>(0.01));
     _pnh.param("angular_velocity_cov", _angular_velocity_cov, static_cast<double>(0.01));

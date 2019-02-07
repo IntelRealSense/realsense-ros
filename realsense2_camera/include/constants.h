@@ -30,34 +30,19 @@ namespace realsense2_camera
     const uint16_t RS430_MM_RGB_PID = 0x0b01; // AWGCT
     const uint16_t RS460_PID        = 0x0b03; // DS5U
     const uint16_t RS435_RGB_PID    = 0x0b07; // AWGC
-    const uint16_t RS435i_RGB_PID    = 0x0B3A; // AWGC_MM
+    const uint16_t RS435i_RGB_PID   = 0x0B3A; // AWGC_MM
     const uint16_t RS405_PID        = 0x0b0c; // DS5U
+    const uint16_t RS_T265_PID      = 0x0b37; // 
+    
 
     const bool ALIGN_DEPTH    = false;
     const bool POINTCLOUD     = false;
     const bool SYNC_FRAMES    = false;
 
-    const int DEPTH_WIDTH     = 640;
-    const int DEPTH_HEIGHT    = 480;
+    const int IMAGE_WIDTH     = 640;
+    const int IMAGE_HEIGHT    = 480;
+    const int IMAGE_FPS       = 30;
 
-    const int INFRA1_WIDTH    = 640;
-    const int INFRA1_HEIGHT   = 480;
-
-    const int INFRA2_WIDTH    = 640;
-    const int INFRA2_HEIGHT   = 480;
-
-    const int COLOR_WIDTH     = 640;
-    const int COLOR_HEIGHT    = 480;
-
-    const int FISHEYE_WIDTH   = 640;
-    const int FISHEYE_HEIGHT  = 480;
-
-
-    const int DEPTH_FPS       = 30;
-    const int INFRA1_FPS      = 30;
-    const int INFRA2_FPS      = 30;
-    const int COLOR_FPS       = 30;
-    const int FISHEYE_FPS     = 30;
     const int GYRO_FPS        = 400;
     const int ACCEL_FPS       = 250;
 
