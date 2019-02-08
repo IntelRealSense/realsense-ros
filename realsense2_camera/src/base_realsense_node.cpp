@@ -653,6 +653,19 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
             rs2::frameset processed = frames.apply_filter(align);
             rs2::depth_frame aligned_depth_frame = processed.get_depth_frame();
 
+            static const auto meter_to_mm = 0.001f;
+            int width = aligned_depth_frame.get_width();
+            int height = aligned_depth_frame.get_height();
+            uint16_t* p_depth_frame = reinterpret_cast<uint16_t*>(const_cast<void*>(aligned_depth_frame.get_data()));
+            for (int y=0; y<height; ++y)
+            {
+                for (int x=0; x<width; ++x)
+                {
+                    p_depth_frame[y*width+x] *= _depth_scale_meters / meter_to_mm;
+                }
+
+            }
+
             publishFrame(aligned_depth_frame, t, sip,
                          _depth_aligned_image,
                          _depth_aligned_info_publisher,
