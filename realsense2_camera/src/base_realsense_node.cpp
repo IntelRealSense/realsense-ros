@@ -110,7 +110,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _depth_aligned_encoding[RS2_STREAM_COLOR] = sensor_msgs::image_encodings::TYPE_16UC1;
 
     // Types for fisheye stream
-    _format[RS2_STREAM_FISHEYE] = RS2_FORMAT_RAW8;   // libRS type
+    _format[RS2_STREAM_FISHEYE] = RS2_FORMAT_Y8;   // libRS type
     _image_format[RS2_STREAM_FISHEYE] = CV_8UC1;    // CVBridge type
     _encoding[RS2_STREAM_FISHEYE] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
     _unit_step_size[RS2_STREAM_FISHEYE] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
@@ -325,13 +325,13 @@ void BaseRealSenseNode::getParameters()
     {
         for (auto& stream : stream_vec)
         {
-            string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_width").str());
+            string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << _stream_name[stream.first] << "_width").str());
             _pnh.param(param_name, _width[stream], IMAGE_WIDTH);
-            param_name = static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_height").str();
+            param_name = static_cast<std::ostringstream&&>(std::ostringstream() << _stream_name[stream.first] << "_height").str();
             _pnh.param(param_name, _height[stream], IMAGE_HEIGHT);
-            param_name = static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_fps").str();
+            param_name = static_cast<std::ostringstream&&>(std::ostringstream() << _stream_name[stream.first] << "_fps").str();
             _pnh.param(param_name, _fps[stream], IMAGE_FPS);
-            param_name = static_cast<std::ostringstream&&>(std::ostringstream() << "enable_" << STREAM_NAME(stream)).str();
+            param_name = static_cast<std::ostringstream&&>(std::ostringstream() << "enable_" << _stream_name[stream.first]).str();
             _pnh.param(param_name, _enable[stream], true);
         }
     }
@@ -464,6 +464,8 @@ void BaseRealSenseNode::setupDevice()
             {
                 _sensors[GYRO] = elem;
                 _sensors[ACCEL] = elem;
+                _sensors[FISHEYE1] = elem;
+                _sensors[FISHEYE2] = elem;
             }
             else
             {
@@ -642,12 +644,14 @@ void BaseRealSenseNode::enable_devices()
 				{
 					auto video_profile = profile.as<rs2::video_stream_profile>();
 					ROS_DEBUG_STREAM("Sensor profile: " <<
+                                     "stream_type: " << rs2_stream_to_string(elem.first) << "(" << elem.second << ")" <<
 									 "Format: " << video_profile.format() <<
 									 ", Width: " << video_profile.width() <<
 									 ", Height: " << video_profile.height() <<
 									 ", FPS: " << video_profile.fps());
 
-					if (video_profile.format() == _format[elem.first] &&
+                    rs2_format profile_format(video_profile.format() == RS2_FORMAT_RAW8 ? RS2_FORMAT_Y8 : video_profile.format());
+					if (profile_format == _format[elem.first] &&
 						(_width[elem] == 0 || video_profile.width() == _width[elem]) &&
 						(_height[elem] == 0 || video_profile.height() == _height[elem]) &&
 						(_fps[elem] == 0 || video_profile.fps() == _fps[elem]) &&
@@ -686,6 +690,46 @@ void BaseRealSenseNode::enable_devices()
 			_depth_aligned_image[profiles.first] = cv::Mat(_height[DEPTH], _width[DEPTH], _image_format[DEPTH.first], cv::Scalar(0, 0, 0));
 		}
 	}
+
+    // Streaming HID
+    for (const auto streams : HID_STREAMS)
+    {
+        for (auto& elem : streams)
+        {
+            if (_enable[elem])
+            {
+                auto& sens = _sensors[elem];
+                auto profiles = sens.get_stream_profiles();
+                ROS_DEBUG_STREAM("Available profiles:");
+                for (rs2::stream_profile& profile : profiles)
+                {
+                    ROS_DEBUG_STREAM("type:" << rs2_stream_to_string(profile.stream_type()) <<
+                                    " fps: " << profile.fps() << ". format: " << profile.format());
+                }
+                for (rs2::stream_profile& profile : profiles)
+                {
+                    if (profile.stream_type() == elem.first &&
+                        profile.fps() == _fps[elem] &&
+                        profile.format() == _format[elem.first])
+                    {
+                        _enabled_profiles[elem].push_back(profile);
+                        break;
+                    }
+                }
+                if (_enabled_profiles.find(elem) == _enabled_profiles.end())
+                {
+                    std::string stream_name(STREAM_NAME(elem));
+                    ROS_WARN_STREAM("No mathcing profile found for " << stream_name << " with fps=" << _fps[elem] << " and format=" << _format[elem.first]);
+                    ROS_WARN_STREAM("profiles found for " <<stream_name << ":");
+                    for (rs2::stream_profile& profile : profiles)
+                    {
+                        if (profile.stream_type() != elem.first) continue;
+                        ROS_WARN_STREAM("fps: " << profile.fps() << ". format: " << profile.format());
+                    }
+                }
+            }
+        }
+    }
 }
 
 void BaseRealSenseNode::setupFilters()
@@ -1057,8 +1101,11 @@ void BaseRealSenseNode::setupStreams()
         {
             for (auto& profile : profiles.second)
             {
-                auto video_profile = profile.as<rs2::video_stream_profile>();
-                updateStreamCalibData(video_profile);
+                if (profile.is<rs2::video_stream_profile>())
+                {
+                    auto video_profile = profile.as<rs2::video_stream_profile>();
+                    updateStreamCalibData(video_profile);
+                }
             }
         }
 
@@ -1237,16 +1284,21 @@ void BaseRealSenseNode::setupStreams()
         }; // frame_callback
 
         // Streaming IMAGES
+        // std:map<std::string, std::vector<rs2::stream_profile> > profiles;
         for (auto& streams : IMAGE_STREAMS)
         {
             std::vector<rs2::stream_profile> profiles;
             for (auto& elem : streams)
             {
+                // std::string module_name = _sensors[elem].get_info(RS2_CAMERA_INFO_NAME);
                 if (!_enabled_profiles[elem].empty())
                 {
+                    // profiles[module_name].insert(profiles.begin(),
+                    //                              _enabled_profiles[elem].begin(),
+                    //                              _enabled_profiles[elem].end());
                     profiles.insert(profiles.begin(),
-                                    _enabled_profiles[elem].begin(),
-                                    _enabled_profiles[elem].end());
+                                                 _enabled_profiles[elem].begin(),
+                                                 _enabled_profiles[elem].end());
                 }
             }
 
@@ -1275,40 +1327,6 @@ void BaseRealSenseNode::setupStreams()
         if (_sync_frames)
         {
             _syncer.start(frame_callback);
-        }
-
-        // Streaming HID
-        for (const auto streams : HID_STREAMS)
-        {
-            for (auto& elem : streams)
-            {
-                if (_enable[elem])
-                {
-                    auto& sens = _sensors[elem];
-                    auto profiles = sens.get_stream_profiles();
-                    for (rs2::stream_profile& profile : profiles)
-                    {
-                        if (profile.stream_type() == elem.first &&
-                            profile.fps() == _fps[elem] &&
-                            profile.format() == _format[elem.first])
-                        {
-                            _enabled_profiles[elem].push_back(profile);
-                            break;
-                        }
-                    }
-                    if (_enabled_profiles.find(elem) == _enabled_profiles.end())
-                    {
-                        std::string stream_name(STREAM_NAME(elem));
-                        ROS_WARN_STREAM("No mathcing profile found for " << stream_name << " with fps=" << _fps[elem] << " and format=" << _format[elem.first]);
-                        ROS_WARN_STREAM("profiles found for " <<stream_name << ":");
-                        for (rs2::stream_profile& profile : profiles)
-                        {
-                            if (profile.stream_type() != elem.first) continue;
-                            ROS_WARN_STREAM("fps: " << profile.fps() << ". format: " << profile.format());
-                        }
-                    }
-                }
-            }
         }
 
         auto gyro_profile = _enabled_profiles.find(GYRO);
