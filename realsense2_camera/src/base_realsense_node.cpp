@@ -23,11 +23,11 @@ void SyncedImuPublisher::Publish(sensor_msgs::Imu imu_msg)
     std::lock_guard<std::mutex> lock_guard(_mutex);
     if (_pause_mode)
     {
-        if (_pendeing_messages.size() >= _waiting_list_size)
+        if (_pending_messages.size() >= _waiting_list_size)
         {
-            throw std::runtime_error("SyncedImuPublisher inner list reached maximum size of " + std::to_string(_pendeing_messages.size()));
+            throw std::runtime_error("SyncedImuPublisher inner list reached maximum size of " + std::to_string(_pending_messages.size()));
         }
-        _pendeing_messages.push(imu_msg);
+        _pending_messages.push(imu_msg);
     }
     else
     {
@@ -53,13 +53,13 @@ void SyncedImuPublisher::Resume()
 
 void SyncedImuPublisher::PublishPendingMessages()
 {
-    // ROS_INFO_STREAM("publish imu: " << _pendeing_messages.size());
-    while (!_pendeing_messages.empty())
+    // ROS_INFO_STREAM("publish imu: " << _pending_messages.size());
+    while (!_pending_messages.empty())
     {
-        const sensor_msgs::Imu &imu_msg = _pendeing_messages.front();
+        const sensor_msgs::Imu &imu_msg = _pending_messages.front();
         _publisher.publish(imu_msg);
         // ROS_INFO_STREAM("iid2:" << imu_msg.header.seq << ", time: " << std::setprecision (20) << imu_msg.header.stamp.toSec());
-        _pendeing_messages.pop();
+        _pending_messages.pop();
     }
 }
 
