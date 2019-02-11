@@ -107,6 +107,7 @@ namespace realsense2_camera
         rs2::device _dev;
         ros::NodeHandle& _node_handle, _pnh;
         std::map<stream_index_pair, rs2::sensor> _sensors;
+        std::map<std::string, std::function<void(rs2::frame)>> _sensors_callback;
         std::vector<std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure>> _ddynrec;
 
     private:
@@ -214,6 +215,7 @@ namespace realsense2_camera
         static void ConvertFromOpticalFrameToFrame(float3& data);
         void imu_callback(rs2::frame frame);
         void imu_callback_sync(rs2::frame frame, imu_sync_method sync_method=imu_sync_method::COPY);
+        void frame_callback(rs2::frame frame);
         void registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name);
         rs2_stream rs2_string_to_stream(std::string str);
 
@@ -264,6 +266,7 @@ namespace realsense2_camera
         PipelineSyncer _syncer;
         std::vector<NamedFilter> _filters;
         std::vector<rs2::sensor> _dev_sensors;
+        std::map<rs2_stream, std::shared_ptr<rs2::align>> _align;
 
         std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
         std::map<rs2_stream, std::string> _depth_aligned_encoding;
