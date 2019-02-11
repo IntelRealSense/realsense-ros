@@ -4,13 +4,6 @@
   <arg name="tf_prefix"           default=""/>
   <arg name="json_file_path"      default=""/>
   <arg name="rosbag_filename"     default=""/>
-  <arg name="depth"               default="depth"/>
-  <arg name="infra1"              default="infra1"/>
-  <arg name="infra2"              default="infra2"/>
-  <arg name="rgb"                 default="color"/>
-  <arg name="fisheye"             default="fisheye"/>
-  <arg name="accel"               default="accel"/>
-  <arg name="gyro"                default="gyro"/>
 
   <arg name="fisheye_width"       default="640"/>
   <arg name="fisheye_height"      default="480"/>
@@ -40,6 +33,7 @@
   <arg name="gyro_fps"            default="400"/>
   <arg name="accel_fps"           default="250"/>
   <arg name="enable_imu"          default="true"/>
+  <arg name="enable_tm2"          default="false"/>
 
   <arg name="enable_pointcloud"   default="false"/>
   <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>  <!-- use RS2_STREAM_ANY to avoid using texture -->
@@ -114,6 +108,7 @@
     <param name="gyro_fps"                 type="int"  value="$(arg gyro_fps)"/>
     <param name="accel_fps"                type="int"  value="$(arg accel_fps)"/>
     <param name="enable_imu"               type="bool" value="$(arg enable_imu)"/>
+    <param name="enable_tm2"               type="bool" value="$(arg enable_tm2)"/>
 
     <param name="base_frame_id"            type="str"  value="$(arg base_frame_id)"/>
     <param name="depth_frame_id"           type="str"  value="$(arg depth_frame_id)"/>

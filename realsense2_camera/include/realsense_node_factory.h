@@ -33,12 +33,15 @@ namespace realsense2_camera
     const stream_index_pair INFRA1{RS2_STREAM_INFRARED, 1};
     const stream_index_pair INFRA2{RS2_STREAM_INFRARED, 2};
     const stream_index_pair FISHEYE{RS2_STREAM_FISHEYE, 0};
+    const stream_index_pair FISHEYE1{RS2_STREAM_FISHEYE, 1};
+    const stream_index_pair FISHEYE2{RS2_STREAM_FISHEYE, 2};
     const stream_index_pair GYRO{RS2_STREAM_GYRO, 0};
     const stream_index_pair ACCEL{RS2_STREAM_ACCEL, 0};
 
     const std::vector<std::vector<stream_index_pair>> IMAGE_STREAMS = {{{DEPTH, INFRA1, INFRA2},
                                                                         {COLOR},
-                                                                        {FISHEYE}}};
+                                                                        {FISHEYE},
+                                                                        {FISHEYE1, FISHEYE2}}};
 
     const std::vector<std::vector<stream_index_pair>> HID_STREAMS = {{GYRO, ACCEL}};
 
@@ -58,7 +61,8 @@ namespace realsense2_camera
 
     private:
         static void signalHandler(int signum);
-        rs2::device getDevice(std::string& serial_no);
+        rs2::device getDevice(std::string& serial_no, bool shutdown_on_failure=true);
+        void waitForDevice(rs2::device& dev);
         virtual void onInit() override;
         void tryGetLogSeverity(rs2_log_severity& severity) const;
 

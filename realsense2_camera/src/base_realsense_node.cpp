@@ -325,17 +325,16 @@ void BaseRealSenseNode::getParameters()
     {
         for (auto& stream : stream_vec)
         {
-            string param_name(STREAM_NAME(stream) + "_width");
+            string param_name(_stream_name[stream.first] + "_width");
             _pnh.param(param_name, _width[stream], IMAGE_WIDTH);
-            param_name = STREAM_NAME(stream) + "_height";
+            param_name = _stream_name[stream.first] + "_height";
             _pnh.param(param_name, _height[stream], IMAGE_HEIGHT);
-            param_name = STREAM_NAME(stream) + "_fps";
+            param_name = _stream_name[stream.first] + "_fps";
             _pnh.param(param_name, _fps[stream], IMAGE_FPS);
             param_name = "enable_" + STREAM_NAME(stream);
             _pnh.param(param_name, _enable[stream], true);
         }
     }
-
 
     _pnh.param("gyro_fps", _fps[GYRO], GYRO_FPS);
     _pnh.param("accel_fps", _fps[ACCEL], ACCEL_FPS);
@@ -497,7 +496,10 @@ void BaseRealSenseNode::setupDevice()
                 _sensors[ACCEL] = elem;
                 _sensors[FISHEYE1] = elem;
                 _sensors[FISHEYE2] = elem;
-                _sensors_callback[module_name] = imu_callback_function;
+                _sensors_callback[module_name] = [this, frame_callback_function, imu_callback_function](rs2::frame frame){
+                                                frame_callback_function(frame);
+                                                imu_callback_function(frame);
+                                                };
             }
             else
             {
@@ -1274,7 +1276,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                 publishAlignedDepthToOthers(frameset, t);
             }
         }
-        else
+        else if (frame.is<rs2::video_frame>())
         {
             auto stream_type = frame.get_profile().stream_type();
             auto stream_index = frame.get_profile().stream_index();
