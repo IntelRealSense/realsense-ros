@@ -13,12 +13,9 @@
   <arg name="depth_height"        default="480"/>
   <arg name="enable_depth"        default="true"/>
 
-  <arg name="infra1_width"        default="640"/>
-  <arg name="infra1_height"       default="480"/>
+  <arg name="infra_width"        default="640"/>
+  <arg name="infra_height"       default="480"/>
   <arg name="enable_infra1"       default="true"/>
-
-  <arg name="infra2_width"        default="640"/>
-  <arg name="infra2_height"       default="480"/>
   <arg name="enable_infra2"       default="true"/>
 
   <arg name="color_width"         default="640"/>
@@ -27,12 +24,12 @@
 
   <arg name="fisheye_fps"         default="30"/>
   <arg name="depth_fps"           default="30"/>
-  <arg name="infra1_fps"          default="30"/>
-  <arg name="infra2_fps"          default="30"/>
+  <arg name="infra_fps"           default="30"/>
   <arg name="color_fps"           default="30"/>
   <arg name="gyro_fps"            default="400"/>
   <arg name="accel_fps"           default="250"/>
-  <arg name="enable_imu"          default="true"/>
+  <arg name="enable_gyro"         default="true"/>
+  <arg name="enable_accel"        default="true"/>
   <arg name="enable_tm2"          default="false"/>
 
   <arg name="enable_pointcloud"   default="false"/>
@@ -92,22 +89,19 @@
     <param name="color_height"             type="int"  value="$(arg color_height)"/>
     <param name="enable_color"             type="bool" value="$(arg enable_color)"/>
 
-    <param name="infra1_width"             type="int"  value="$(arg infra1_width)"/>
-    <param name="infra1_height"            type="int"  value="$(arg infra1_height)"/>
+    <param name="infra_width"             type="int"  value="$(arg infra_width)"/>
+    <param name="infra_height"            type="int"  value="$(arg infra_height)"/>
     <param name="enable_infra1"            type="bool" value="$(arg enable_infra1)"/>
-
-    <param name="infra2_width"             type="int"  value="$(arg infra2_width)"/>
-    <param name="infra2_height"            type="int"  value="$(arg infra2_height)"/>
     <param name="enable_infra2"            type="bool" value="$(arg enable_infra2)"/>
 
     <param name="fisheye_fps"              type="int"  value="$(arg fisheye_fps)"/>
     <param name="depth_fps"                type="int"  value="$(arg depth_fps)"/>
-    <param name="infra1_fps"               type="int"  value="$(arg infra1_fps)"/>
-    <param name="infra2_fps"               type="int"  value="$(arg infra2_fps)"/>
+    <param name="infra_fps"               type="int"  value="$(arg infra_fps)"/>
     <param name="color_fps"                type="int"  value="$(arg color_fps)"/>
     <param name="gyro_fps"                 type="int"  value="$(arg gyro_fps)"/>
     <param name="accel_fps"                type="int"  value="$(arg accel_fps)"/>
-    <param name="enable_imu"               type="bool" value="$(arg enable_imu)"/>
+    <param name="enable_gyro"              type="bool" value="$(arg enable_gyro)"/>
+    <param name="enable_accel"             type="bool" value="$(arg enable_accel)"/>
     <param name="enable_tm2"               type="bool" value="$(arg enable_tm2)"/>
 
     <param name="base_frame_id"            type="str"  value="$(arg base_frame_id)"/>

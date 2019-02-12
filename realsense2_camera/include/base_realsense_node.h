@@ -9,6 +9,11 @@
 
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/update_functions.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/point_cloud2_iterator.h>
+#include <sensor_msgs/Imu.h>
+#include <nav_msgs/Odometry.h>
 
 #include <queue>
 #include <mutex>
@@ -215,6 +220,8 @@ namespace realsense2_camera
         static void ConvertFromOpticalFrameToFrame(float3& data);
         void imu_callback(rs2::frame frame);
         void imu_callback_sync(rs2::frame frame, imu_sync_method sync_method=imu_sync_method::COPY);
+        void pose_callback(rs2::frame frame);
+        void multiple_message_callback(rs2::frame frame, imu_sync_method sync_method);
         void frame_callback(rs2::frame frame);
         void registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name);
         rs2_stream rs2_string_to_stream(std::string str);
@@ -239,7 +246,6 @@ namespace realsense2_camera
         std::map<stream_index_pair, ros::Publisher> _imu_publishers;
         std::shared_ptr<SyncedImuPublisher> _synced_imu_publisher;
         std::map<rs2_stream, int> _image_format;
-        std::map<rs2_stream, rs2_format> _format;
         std::map<stream_index_pair, ros::Publisher> _info_publisher;
         std::map<stream_index_pair, cv::Mat> _image;
         std::map<rs2_stream, std::string> _encoding;

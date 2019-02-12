@@ -12,7 +12,8 @@
 
   <arg name="gyro_fps"            default="200"/>
   <arg name="accel_fps"           default="62"/>
-  <arg name="enable_imu"          default="true"/>
+  <arg name="enable_gyro"         default="true"/>
+  <arg name="enable_accel"        default="true"/>
   <arg name="enable_tm2"          default="true"/>
 
 
@@ -37,7 +38,8 @@
       <arg name="fisheye_fps"              value="$(arg fisheye_fps)"/>
       <arg name="gyro_fps"                 value="$(arg gyro_fps)"/>
       <arg name="accel_fps"                value="$(arg accel_fps)"/>
-      <arg name="enable_imu"               value="$(arg enable_imu)"/>
+      <arg name="enable_gyro"              value="$(arg enable_gyro)"/>
+      <arg name="enable_accel"             value="$(arg enable_accel)"/>
       <arg name="enable_tm2"               value="$(arg enable_tm2)"/>
 
       <arg name="linear_accel_cov"         value="$(arg linear_accel_cov)"/>

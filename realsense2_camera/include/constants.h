@@ -43,8 +43,7 @@ namespace realsense2_camera
     const int IMAGE_HEIGHT    = 480;
     const int IMAGE_FPS       = 30;
 
-    const int GYRO_FPS        = 400;
-    const int ACCEL_FPS       = 250;
+    const int IMU_FPS         = 0;
 
 
     const bool ENABLE_DEPTH   = true;
