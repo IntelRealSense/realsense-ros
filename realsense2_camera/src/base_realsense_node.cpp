@@ -3,6 +3,7 @@
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
 #include <mutex>
+#include <tf/transform_broadcaster.h>
 
 using namespace realsense2_camera;
 using namespace ddynamic_reconfigure;
@@ -343,6 +344,7 @@ void BaseRealSenseNode::getParameters()
         ROS_INFO_STREAM("_enable[" << _stream_name[stream.first] << "]:" << _enable[stream]);
     }
     _pnh.param("base_frame_id", _base_frame_id, DEFAULT_BASE_FRAME_ID);
+    _pnh.param("spatial_frame_id", _spatial_frame_id, DEFAULT_SPATIAL_FRAME_ID);
 
     std::vector<stream_index_pair> streams(IMAGE_STREAMS);
     streams.insert(streams.end(), HID_STREAMS.begin(), HID_STREAMS.end());
@@ -350,8 +352,10 @@ void BaseRealSenseNode::getParameters()
     {
         string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_frame_id").str());
         _pnh.param(param_name, _frame_id[stream], FRAME_ID(stream));
+        ROS_INFO_STREAM("frame_id: reading parameter:" << param_name << " : " << _frame_id[stream]);
         param_name = static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_optical_frame_id").str();
         _pnh.param(param_name, _optical_frame_id[stream], OPTICAL_FRAME_ID(stream));
+        ROS_INFO_STREAM("optical: reading parameter:" << param_name << " : " << _optical_frame_id[stream]);
     }
 
     std::string unite_imu_method_str("");
@@ -370,6 +374,7 @@ void BaseRealSenseNode::getParameters()
 
     for (auto& stream : IMAGE_STREAMS)
     {
+        if (stream == DEPTH) continue;
         string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << "aligned_depth_to_" << STREAM_NAME(stream) << "_frame_id").str());
         _pnh.param(param_name, _depth_aligned_frame_id[stream], ALIGNED_DEPTH_TO_FRAME_ID(stream));
     }
@@ -1128,7 +1133,8 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
         ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
 
-        double cov_value(pow(10, pose.tracker_confidence - 2.0));
+        double cov_pose(pow(10, pose.tracker_confidence - 2.0));
+        double cov_twist(pow(10, pose.tracker_confidence - 4.0));
 
         geometry_msgs::PoseStamped pose_msg;
         pose_msg.pose.position.x = -pose.translation.z;
@@ -1152,27 +1158,35 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         nav_msgs::Odometry odom_msg;
         _seq[stream_index] += 1;
 
-        odom_msg.header.frame_id = _optical_frame_id[stream_index];
+        odom_msg.header.frame_id = _spatial_frame_id;
         odom_msg.child_frame_id = _base_frame_id;
         odom_msg.header.stamp = t;
         odom_msg.header.seq = _seq[stream_index];
         odom_msg.pose.pose = pose_msg.pose;
-        odom_msg.pose.covariance = {cov_value, 0, 0, 0, 0, 0,
-                                    0, cov_value, 0, 0, 0, 0,
-                                    0, 0, cov_value, 0, 0, 0,
-                                    0, 0, 0, cov_value, 0, 0,
-                                    0, 0, 0, 0, cov_value, 0,
-                                    0, 0, 0, 0, 0, cov_value};
+        odom_msg.pose.covariance = {cov_pose, 0, 0, 0, 0, 0,
+                                    0, cov_pose, 0, 0, 0, 0,
+                                    0, 0, cov_pose, 0, 0, 0,
+                                    0, 0, 0, cov_pose, 0, 0,
+                                    0, 0, 0, 0, cov_pose, 0,
+                                    0, 0, 0, 0, 0, cov_pose};
         odom_msg.twist.twist.linear = v_msg.vector;
         odom_msg.twist.twist.angular = om_msg.vector;
-        odom_msg.twist.covariance ={cov_value, 0, 0, 0, 0, 0,
-                                    0, cov_value, 0, 0, 0, 0,
-                                    0, 0, cov_value, 0, 0, 0,
-                                    0, 0, 0, cov_value, 0, 0,
-                                    0, 0, 0, 0, cov_value, 0,
-                                    0, 0, 0, 0, 0, cov_value};
+        odom_msg.twist.covariance ={cov_twist, 0, 0, 0, 0, 0,
+                                    0, cov_twist, 0, 0, 0, 0,
+                                    0, 0, cov_twist, 0, 0, 0,
+                                    0, 0, 0, cov_twist, 0, 0,
+                                    0, 0, 0, 0, cov_twist, 0,
+                                    0, 0, 0, 0, 0, cov_twist};
         _imu_publishers[stream_index].publish(odom_msg);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
+
+        // publish static transform:
+        static tf::TransformBroadcaster br;
+        tf::Transform transform;
+        transform.setOrigin( tf::Vector3(pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z) );
+        tf::Quaternion q1(pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z, pose_msg.pose.orientation.w);
+        transform.setRotation(q1);
+        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), _spatial_frame_id, _base_frame_id));        
     }
 }
 
@@ -1572,13 +1586,12 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
 
     // Transform stream frame to stream optical frame
     quaternion q2{quaternion_optical.getX(), quaternion_optical.getY(), quaternion_optical.getZ(), quaternion_optical.getW()};
-    publish_static_tf(transform_ts_, zero_trans, q2, _frame_id[stream], _optical_frame_id[stream]);
-
     if (_align_depth && _depth_aligned_frame_id.find(stream) != _depth_aligned_frame_id.end())
     {
         publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _depth_aligned_frame_id[stream]);
         publish_static_tf(transform_ts_, zero_trans, q2, _depth_aligned_frame_id[stream], _optical_frame_id[stream]);
     }
+    publish_static_tf(transform_ts_, zero_trans, q2, _frame_id[stream], _optical_frame_id[stream]);
 }
 
 void BaseRealSenseNode::publishStaticTransforms()

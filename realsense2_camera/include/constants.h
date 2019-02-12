@@ -56,6 +56,7 @@ namespace realsense2_camera
 
 
     const std::string DEFAULT_BASE_FRAME_ID            = "camera_link";
+    const std::string DEFAULT_SPATIAL_FRAME_ID         = "spatial";
     const std::string DEFAULT_DEPTH_FRAME_ID           = "camera_depth_frame";
     const std::string DEFAULT_INFRA1_FRAME_ID          = "camera_infra1_frame";
     const std::string DEFAULT_INFRA2_FRAME_ID          = "camera_infra2_frame";

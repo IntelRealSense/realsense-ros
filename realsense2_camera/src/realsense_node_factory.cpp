@@ -174,8 +174,15 @@ void RealSenseNodeFactory::onInit()
 				ROS_INFO("Resetting device...");
 				rs2::device dev;
 				dev = getDevice(serial_no);
-				dev.hardware_reset();
-				waitForDevice(dev);
+				try
+				{
+					dev.hardware_reset();
+					waitForDevice(dev);
+				}
+				catch(const std::exception& ex)
+				{
+					ROS_WARN_STREAM("An exception has been thrown: " << ex.what());
+				}
 			}
 			_device = getDevice(serial_no);
 			if (!_device)

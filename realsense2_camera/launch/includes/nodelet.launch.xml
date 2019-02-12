@@ -5,8 +5,8 @@
   <arg name="json_file_path"      default=""/>
   <arg name="rosbag_filename"     default=""/>
 
-  <arg name="fisheye_width"       default="640"/>
-  <arg name="fisheye_height"      default="480"/>
+  <arg name="fisheye_width"       default="0"/>
+  <arg name="fisheye_height"      default="0"/>
   <arg name="enable_fisheye"      default="true"/>
 
   <arg name="depth_width"         default="640"/>
@@ -26,8 +26,8 @@
   <arg name="depth_fps"           default="30"/>
   <arg name="infra_fps"           default="30"/>
   <arg name="color_fps"           default="30"/>
-  <arg name="gyro_fps"            default="400"/>
-  <arg name="accel_fps"           default="250"/>
+  <arg name="gyro_fps"            default="0"/>
+  <arg name="accel_fps"           default="0"/>
   <arg name="enable_gyro"         default="true"/>
   <arg name="enable_accel"        default="true"/>
   <arg name="enable_tm2"          default="false"/>
@@ -39,24 +39,37 @@
   <arg name="enable_sync"         default="false"/>
   <arg name="align_depth"         default="false"/>
 
-  <arg name="base_frame_id"            default="$(arg tf_prefix)_link"/>
-  <arg name="depth_frame_id"           default="$(arg tf_prefix)_depth_frame"/>
-  <arg name="infra1_frame_id"          default="$(arg tf_prefix)_infra1_frame"/>
-  <arg name="infra2_frame_id"          default="$(arg tf_prefix)_infra2_frame"/>
-  <arg name="color_frame_id"           default="$(arg tf_prefix)_color_frame"/>
+  <arg name="base_frame_id"             default="$(arg tf_prefix)_link"/>
+  <arg name="depth_frame_id"            default="$(arg tf_prefix)_depth_frame"/>
+  <arg name="infra1_frame_id"           default="$(arg tf_prefix)_infra1_frame"/>
+  <arg name="infra2_frame_id"           default="$(arg tf_prefix)_infra2_frame"/>
+  <arg name="color_frame_id"            default="$(arg tf_prefix)_color_frame"/>
+  <arg name="fisheye_frame_id"          default="$(arg tf_prefix)_fisheye_frame"/>
+  <arg name="fisheye1_frame_id"         default="$(arg tf_prefix)_fisheye1_frame"/>
+  <arg name="fisheye2_frame_id"         default="$(arg tf_prefix)_fisheye2_frame"/>
+  <arg name="accel_frame_id"            default="$(arg tf_prefix)_accel_frame"/>
+  <arg name="gyro_frame_id"             default="$(arg tf_prefix)_gyro_frame"/>
+  <arg name="pose_frame_id"             default="$(arg tf_prefix)_pose_frame"/>
 
-  <arg name="depth_optical_frame_id"   default="$(arg tf_prefix)_depth_optical_frame"/>
-  <arg name="infra1_optical_frame_id"  default="$(arg tf_prefix)_infra1_optical_frame"/>
-  <arg name="infra2_optical_frame_id"  default="$(arg tf_prefix)_infra2_optical_frame"/>
-  <arg name="color_optical_frame_id"   default="$(arg tf_prefix)_color_optical_frame"/>
-  <arg name="fisheye_optical_frame_id" default="$(arg tf_prefix)_fisheye_optical_frame"/>
-  <arg name="accel_optical_frame_id"   default="$(arg tf_prefix)_accel_optical_frame"/>
-  <arg name="gyro_optical_frame_id"    default="$(arg tf_prefix)_gyro_optical_frame"/>
+  <arg name="depth_optical_frame_id"    default="$(arg tf_prefix)_depth_optical_frame"/>
+  <arg name="infra1_optical_frame_id"   default="$(arg tf_prefix)_infra1_optical_frame"/>
+  <arg name="infra2_optical_frame_id"   default="$(arg tf_prefix)_infra2_optical_frame"/>
+  <arg name="color_optical_frame_id"    default="$(arg tf_prefix)_color_optical_frame"/>
+  <arg name="fisheye_optical_frame_id"  default="$(arg tf_prefix)_fisheye_optical_frame"/>
+  <arg name="fisheye1_optical_frame_id" default="$(arg tf_prefix)_fisheye1_optical_frame"/>
+  <arg name="fisheye2_optical_frame_id" default="$(arg tf_prefix)_fisheye2_optical_frame"/>
+  <arg name="accel_optical_frame_id"    default="$(arg tf_prefix)_accel_optical_frame"/>
+  <arg name="gyro_optical_frame_id"     default="$(arg tf_prefix)_gyro_optical_frame"/>
+  <arg name="pose_optical_frame_id"     default="$(arg tf_prefix)_pose_optical_frame"/>
 
-  <arg name="aligned_depth_to_color_frame_id"   default="$(arg tf_prefix)_aligned_depth_to_color_frame"/>
-  <arg name="aligned_depth_to_infra1_frame_id" default="$(arg tf_prefix)_aligned_depth_to_infra1_frame"/>
+  <arg name="aligned_depth_to_color_frame_id"    default="$(arg tf_prefix)_aligned_depth_to_color_frame"/>
+  <arg name="aligned_depth_to_infra1_frame_id"   default="$(arg tf_prefix)_aligned_depth_to_infra1_frame"/>
   <arg name="aligned_depth_to_infra2_frame_id"   default="$(arg tf_prefix)_aligned_depth_to_infra2_frame"/>
-  <arg name="aligned_depth_to_fisheye_frame_id"    default="$(arg tf_prefix)_aligned_depth_to_fisheye_frame"/>
+  <arg name="aligned_depth_to_fisheye_frame_id"  default="$(arg tf_prefix)_aligned_depth_to_fisheye_frame"/>
+  <arg name="aligned_depth_to_fisheye1_frame_id" default="$(arg tf_prefix)_aligned_depth_to_fisheye1_frame"/>
+  <arg name="aligned_depth_to_fisheye2_frame_id" default="$(arg tf_prefix)_aligned_depth_to_fisheye2_frame"/>
+
+  <arg name="spatial_frame_id"        default="$(arg tf_prefix)_spatial"/>
 
   <arg name="filters"                  default=""/>
   <arg name="clip_distance"            default="-1"/>
@@ -109,19 +122,32 @@
     <param name="infra1_frame_id"          type="str"  value="$(arg infra1_frame_id)"/>
     <param name="infra2_frame_id"          type="str"  value="$(arg infra2_frame_id)"/>
     <param name="color_frame_id"           type="str"  value="$(arg color_frame_id)"/>
+    <param name="fisheye_frame_id"         type="str"  value="$(arg fisheye_frame_id)"/>
+    <param name="fisheye1_frame_id"        type="str"  value="$(arg fisheye1_frame_id)"/>
+    <param name="fisheye2_frame_id"        type="str"  value="$(arg fisheye2_frame_id)"/>
+    <param name="accel_frame_id"           type="str"  value="$(arg accel_frame_id)"/>
+    <param name="gyro_frame_id"            type="str"  value="$(arg gyro_frame_id)"/>
+    <param name="pose_frame_id"            type="str"  value="$(arg pose_frame_id)"/>
 
-    <param name="depth_optical_frame_id"   type="str"  value="$(arg depth_optical_frame_id)"/>
-    <param name="infra1_optical_frame_id"  type="str"  value="$(arg infra1_optical_frame_id)"/>
-    <param name="infra2_optical_frame_id"  type="str"  value="$(arg infra2_optical_frame_id)"/>
-    <param name="color_optical_frame_id"   type="str"  value="$(arg color_optical_frame_id)"/>
-    <param name="fisheye_optical_frame_id" type="str"  value="$(arg fisheye_optical_frame_id)"/>
-    <param name="accel_optical_frame_id"   type="str"  value="$(arg accel_optical_frame_id)"/>
-    <param name="gyro_optical_frame_id"    type="str"  value="$(arg gyro_optical_frame_id)"/>
+    <param name="depth_optical_frame_id"    type="str"  value="$(arg depth_optical_frame_id)"/>
+    <param name="infra1_optical_frame_id"   type="str"  value="$(arg infra1_optical_frame_id)"/>
+    <param name="infra2_optical_frame_id"   type="str"  value="$(arg infra2_optical_frame_id)"/>
+    <param name="color_optical_frame_id"    type="str"  value="$(arg color_optical_frame_id)"/>
+    <param name="fisheye_optical_frame_id"  type="str"  value="$(arg fisheye_optical_frame_id)"/>
+    <param name="fisheye1_optical_frame_id" type="str"  value="$(arg fisheye1_optical_frame_id)"/>
+    <param name="fisheye2_optical_frame_id" type="str"  value="$(arg fisheye2_optical_frame_id)"/>
+    <param name="accel_optical_frame_id"    type="str"  value="$(arg accel_optical_frame_id)"/>
+    <param name="gyro_optical_frame_id"     type="str"  value="$(arg gyro_optical_frame_id)"/>
+    <param name="pose_optical_frame_id"     type="str"  value="$(arg pose_optical_frame_id)"/>
 
-    <param name="aligned_depth_to_color_frame_id"   type="str"  value="$(arg aligned_depth_to_color_frame_id)"/>
-    <param name="aligned_depth_to_infra1_frame_id"  type="str"  value="$(arg aligned_depth_to_infra1_frame_id)"/>
-    <param name="aligned_depth_to_infra2_frame_id"  type="str"  value="$(arg aligned_depth_to_infra2_frame_id)"/>
-    <param name="aligned_depth_to_fisheye_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye_frame_id)"/>
+    <param name="aligned_depth_to_color_frame_id"    type="str"  value="$(arg aligned_depth_to_color_frame_id)"/>
+    <param name="aligned_depth_to_infra1_frame_id"   type="str"  value="$(arg aligned_depth_to_infra1_frame_id)"/>
+    <param name="aligned_depth_to_infra2_frame_id"   type="str"  value="$(arg aligned_depth_to_infra2_frame_id)"/>
+    <param name="aligned_depth_to_fisheye_frame_id"  type="str"  value="$(arg aligned_depth_to_fisheye_frame_id)"/>
+    <param name="aligned_depth_to_fisheye1_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye1_frame_id)"/>
+    <param name="aligned_depth_to_fisheye2_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye2_frame_id)"/>
+
+    <param name="spatial_frame_id"                   type="str"  value="$(arg spatial_frame_id)"/>
 
     <param name="filters"                  type="str"    value="$(arg filters)"/>
     <param name="clip_distance"            type="double" value="$(arg clip_distance)"/>

@@ -252,6 +252,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, std::vector<uint8_t>> _aligned_depth_images;
 
         std::string _base_frame_id;
+        std::string _spatial_frame_id;
         std::map<stream_index_pair, std::string> _frame_id;
         std::map<stream_index_pair, std::string> _optical_frame_id;
         std::map<stream_index_pair, int> _seq;

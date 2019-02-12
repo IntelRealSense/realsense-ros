@@ -1,0 +1,29 @@
+<launch>
+  <arg name="serial_no_camera1"    			default=""/> 			<!-- Note: Replace with actual serial number -->
+  <arg name="serial_no_camera2"    			default=""/> 			<!-- Note: Replace with actual serial number -->
+  <arg name="camera1"              			default="tm2"/>		<!-- Note: Replace with camera name -->
+  <arg name="camera2"              			default="d400"/>		<!-- Note: Replace with camera name -->
+  <arg name="tf_prefix_camera1"         default="$(arg camera1)"/>
+  <arg name="tf_prefix_camera2"         default="$(arg camera2)"/>
+  <arg name="initial_reset"             default="false"/>
+
+  <group ns="$(arg camera1)">
+    <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="serial_no"             value="$(arg serial_no_camera1)"/>
+      <arg name="tf_prefix"         		value="$(arg tf_prefix_camera1)"/>
+      <arg name="initial_reset"         value="$(arg initial_reset)"/>
+      <arg name="enable_tm2"            value="true"/>
+    </include>
+  </group>
+
+  <group ns="$(arg camera2)">
+    <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="serial_no"             value="$(arg serial_no_camera2)"/>
+      <arg name="tf_prefix"		          value="$(arg tf_prefix_camera2)"/>
+      <arg name="initial_reset"         value="$(arg initial_reset)"/>
+      <arg name="align_depth"           value="true"/>
+      <arg name="filters"               value="pointcloud"/>
+    </include>
+  </group>
+  <node pkg="tf" type="static_transform_publisher" name="tm2_to_d400" args="0 0 0 0 0 0 /$(arg tf_prefix_camera1)_link /$(arg tf_prefix_camera2)_link 100"/>
+</launch>
