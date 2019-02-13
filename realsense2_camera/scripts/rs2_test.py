@@ -147,7 +147,8 @@ test_types = {'vis_avg': {'listener_theme': 'colorStream',
                           'data_func': lambda x: None,
                           'test_func': NotImageColorTest},
               'pointscloud_avg': {'listener_theme': 'pointscloud',
-                          'data_func': lambda x: {'width': [776534, 2300], 'height': [1], 'avg': [np.array([ 1.28251814, -0.15839984, 4.82235184, 65, 88, 95])], 'epsilon': [0.02, 2]},
+                        #   'data_func': lambda x: {'width': [776534, 2300], 'height': [1], 'avg': [np.array([ 1.28251814, -0.15839984, 4.82235184, 65, 88, 95])], 'epsilon': [0.02, 2]},
+                          'data_func': lambda x: {'width': [776534, 2300], 'height': [1], 'avg': [np.array([ 1.28251814, -0.15839984, 4.82235184, 125, 116, 102])], 'epsilon': [0.02, 2]},
                           'test_func': PointCloudTest},
               'align_depth_ir1': {'listener_theme': 'alignedDepthInfra1',
                                   'data_func': ImageDepthGetData,
@@ -272,7 +273,7 @@ def main():
     results = run_tests(tests_to_run)
     print_results(results)
 
-    res = int(all([result[1] for result in results])) - 1
+    res = int(all([result[1][0] for result in results])) - 1
     print 'exit (%d)' % res
     exit(res)
 

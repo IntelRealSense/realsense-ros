@@ -321,27 +321,27 @@ void BaseRealSenseNode::getParameters()
     for (auto& stream : IMAGE_STREAMS)
     {
         string param_name(_stream_name[stream.first] + "_width");
-        ROS_INFO_STREAM("reading parameter:" << param_name);
+        ROS_DEBUG_STREAM("reading parameter:" << param_name);
         _pnh.param(param_name, _width[stream], IMAGE_WIDTH);
         param_name = _stream_name[stream.first] + "_height";
-        ROS_INFO_STREAM("reading parameter:" << param_name);
+        ROS_DEBUG_STREAM("reading parameter:" << param_name);
         _pnh.param(param_name, _height[stream], IMAGE_HEIGHT);
         param_name = _stream_name[stream.first] + "_fps";
-        ROS_INFO_STREAM("reading parameter:" << param_name);
+        ROS_DEBUG_STREAM("reading parameter:" << param_name);
         _pnh.param(param_name, _fps[stream], IMAGE_FPS);
         param_name = "enable_" + STREAM_NAME(stream);
-        ROS_INFO_STREAM("reading parameter:" << param_name);
+        ROS_DEBUG_STREAM("reading parameter:" << param_name);
         _pnh.param(param_name, _enable[stream], true);
     }
 
     for (auto& stream : HID_STREAMS)
     {
         string param_name(_stream_name[stream.first] + "_fps");
-        ROS_INFO_STREAM("reading parameter:" << param_name);
+        ROS_DEBUG_STREAM("reading parameter:" << param_name);
         _pnh.param(param_name, _fps[stream], IMU_FPS);
         param_name = "enable_" + STREAM_NAME(stream);
         _pnh.param(param_name, _enable[stream], ENABLE_IMU);
-        ROS_INFO_STREAM("_enable[" << _stream_name[stream.first] << "]:" << _enable[stream]);
+        ROS_DEBUG_STREAM("_enable[" << _stream_name[stream.first] << "]:" << _enable[stream]);
     }
     _pnh.param("base_frame_id", _base_frame_id, DEFAULT_BASE_FRAME_ID);
     _pnh.param("spatial_frame_id", _spatial_frame_id, DEFAULT_SPATIAL_FRAME_ID);
@@ -352,10 +352,10 @@ void BaseRealSenseNode::getParameters()
     {
         string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_frame_id").str());
         _pnh.param(param_name, _frame_id[stream], FRAME_ID(stream));
-        ROS_INFO_STREAM("frame_id: reading parameter:" << param_name << " : " << _frame_id[stream]);
+        ROS_DEBUG_STREAM("frame_id: reading parameter:" << param_name << " : " << _frame_id[stream]);
         param_name = static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_optical_frame_id").str();
         _pnh.param(param_name, _optical_frame_id[stream], OPTICAL_FRAME_ID(stream));
-        ROS_INFO_STREAM("optical: reading parameter:" << param_name << " : " << _optical_frame_id[stream]);
+        ROS_DEBUG_STREAM("optical: reading parameter:" << param_name << " : " << _optical_frame_id[stream]);
     }
 
     std::string unite_imu_method_str("");
@@ -653,7 +653,7 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
             }
             catch(const std::out_of_range& e)
             {
-                ROS_WARN_STREAM("Allocate align filter for:" << rs2_stream_to_string(sip.first) << sip.second);
+                ROS_DEBUG_STREAM("Allocate align filter for:" << rs2_stream_to_string(sip.first) << sip.second);
                 align = (_align[stream_type] = std::make_shared<rs2::align>(stream_type));
             }
             rs2::frameset processed = frames.apply_filter(*align);
