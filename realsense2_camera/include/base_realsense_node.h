@@ -79,7 +79,7 @@ namespace realsense2_camera
             std::mutex                    _mutex;
             ros::Publisher                _publisher;
             bool                          _pause_mode;
-            std::queue<sensor_msgs::Imu>  _pendeing_messages;
+            std::queue<sensor_msgs::Imu>  _pending_messages;
             std::size_t                     _waiting_list_size;
             bool                          _is_enabled;
     };
