@@ -12,12 +12,9 @@
   <arg name="depth_height"        default="480"/>
   <arg name="enable_depth"        default="true"/>
 
-  <arg name="infra1_width"        default="640"/>
-  <arg name="infra1_height"       default="480"/>
+  <arg name="infra_width"         default="640"/>
+  <arg name="infra_height"        default="480"/>
   <arg name="enable_infra1"       default="true"/>
-
-  <arg name="infra2_width"        default="640"/>
-  <arg name="infra2_height"       default="480"/>
   <arg name="enable_infra2"       default="true"/>
 
   <arg name="color_width"         default="640"/>
@@ -62,12 +59,9 @@
       <arg name="color_height"             value="$(arg color_height)"/>
       <arg name="enable_color"             value="$(arg enable_color)"/>
 
-      <arg name="infra1_width"             value="$(arg infra1_width)"/>
-      <arg name="infra1_height"            value="$(arg infra1_height)"/>
+      <arg name="infra_width"              value="$(arg infra_width)"/>
+      <arg name="infra_height"             value="$(arg infra_height)"/>
       <arg name="enable_infra1"            value="$(arg enable_infra1)"/>
-
-      <arg name="infra2_width"             value="$(arg infra2_width)"/>
-      <arg name="infra2_height"            value="$(arg infra2_height)"/>
       <arg name="enable_infra2"            value="$(arg enable_infra2)"/>
 
       <arg name="fisheye_fps"              value="$(arg fisheye_fps)"/>
