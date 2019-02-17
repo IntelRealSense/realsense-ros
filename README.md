@@ -120,7 +120,7 @@ The following command allow to change camera control values using [http://wiki.r
 ```bash
 rosrun rqt_reconfigure rqt_reconfigure
 ```
-<p align="center"><img src="https://user-images.githubusercontent.com/17433152/35397261-b4e846ac-01f7-11e8-8512-1e3671b4003b.png" /></p>
+<p align="center"><img src="https://user-images.githubusercontent.com/40540281/52912382-6b2d9a00-32b9-11e9-9da4-3156cb48660a.JPG" /></p>
 
 ### Work with multiple cameras
 Here is an example of how to start the camera node and streaming with two cameras using the [rs_multiple_devices.launch](./realsense2_camera/launch/rs_multiple_devices.launch).
