@@ -13,14 +13,10 @@
 #include <librealsense2/hpp/rs_processing.hpp>
 #include <librealsense2/rs_advanced_mode.hpp>
 #include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/CameraInfo.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/point_cloud2_iterator.h>
 #include <constants.h>
 #include <realsense2_camera/Extrinsics.h>
 #include <tf/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
-#include <sensor_msgs/Imu.h>
 #include <realsense2_camera/IMUInfo.h>
 #include <csignal>
 #include <eigen3/Eigen/Geometry>
@@ -33,14 +29,19 @@ namespace realsense2_camera
     const stream_index_pair INFRA1{RS2_STREAM_INFRARED, 1};
     const stream_index_pair INFRA2{RS2_STREAM_INFRARED, 2};
     const stream_index_pair FISHEYE{RS2_STREAM_FISHEYE, 0};
+    const stream_index_pair FISHEYE1{RS2_STREAM_FISHEYE, 1};
+    const stream_index_pair FISHEYE2{RS2_STREAM_FISHEYE, 2};
     const stream_index_pair GYRO{RS2_STREAM_GYRO, 0};
     const stream_index_pair ACCEL{RS2_STREAM_ACCEL, 0};
+    const stream_index_pair POSE{RS2_STREAM_POSE, 0};
+    
 
-    const std::vector<std::vector<stream_index_pair>> IMAGE_STREAMS = {{{DEPTH, INFRA1, INFRA2},
-                                                                        {COLOR},
-                                                                        {FISHEYE}}};
+    const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA1, INFRA2,
+                                                          COLOR,
+                                                          FISHEYE,
+                                                          FISHEYE1, FISHEYE2};
 
-    const std::vector<std::vector<stream_index_pair>> HID_STREAMS = {{GYRO, ACCEL}};
+    const std::vector<stream_index_pair> HID_STREAMS = {GYRO, ACCEL, POSE};
 
     class InterfaceRealSenseNode
     {
@@ -58,7 +59,8 @@ namespace realsense2_camera
 
     private:
         static void signalHandler(int signum);
-        rs2::device getDevice(std::string& serial_no);
+        rs2::device getDevice(std::string& serial_no, bool shutdown_on_failure=true);
+        void waitForDevice(rs2::device& dev);
         virtual void onInit() override;
         void tryGetLogSeverity(rs2_log_severity& severity) const;
 

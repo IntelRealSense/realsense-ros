@@ -1,0 +1,50 @@
+<launch>
+  <arg name="serial_no"           default=""/>
+  <arg name="json_file_path"      default=""/>
+  <arg name="camera"              default="camera"/>
+  <arg name="tf_prefix"           default="$(arg camera)"/>
+
+  <arg name="fisheye_width"       default="848"/> 
+  <arg name="fisheye_height"      default="800"/>
+  <arg name="enable_fisheye"      default="true"/>
+
+  <arg name="fisheye_fps"         default="30"/>
+
+  <arg name="gyro_fps"            default="200"/>
+  <arg name="accel_fps"           default="62"/>
+  <arg name="enable_gyro"         default="true"/>
+  <arg name="enable_accel"        default="true"/>
+  <arg name="enable_tm2"          default="true"/>
+
+
+  <arg name="enable_sync"           default="false"/>
+
+  <arg name="linear_accel_cov"      default="0.01"/>
+  <arg name="initial_reset"         default="false"/>
+  <arg name="unite_imu_method"      default=""/>
+  
+  <group ns="$(arg camera)">
+    <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="tf_prefix"                value="$(arg tf_prefix)"/>
+      <arg name="serial_no"                value="$(arg serial_no)"/>
+      <arg name="json_file_path"           value="$(arg json_file_path)"/>
+
+      <arg name="enable_sync"              value="$(arg enable_sync)"/>
+
+      <arg name="fisheye_width"            value="$(arg fisheye_width)"/>
+      <arg name="fisheye_height"           value="$(arg fisheye_height)"/>
+      <arg name="enable_fisheye"           value="$(arg enable_fisheye)"/>
+
+      <arg name="fisheye_fps"              value="$(arg fisheye_fps)"/>
+      <arg name="gyro_fps"                 value="$(arg gyro_fps)"/>
+      <arg name="accel_fps"                value="$(arg accel_fps)"/>
+      <arg name="enable_gyro"              value="$(arg enable_gyro)"/>
+      <arg name="enable_accel"             value="$(arg enable_accel)"/>
+      <arg name="enable_tm2"               value="$(arg enable_tm2)"/>
+
+      <arg name="linear_accel_cov"         value="$(arg linear_accel_cov)"/>
+      <arg name="initial_reset"            value="$(arg initial_reset)"/>
+      <arg name="unite_imu_method"         value="$(arg unite_imu_method)"/>
+    </include>
+  </group>
+</launch>

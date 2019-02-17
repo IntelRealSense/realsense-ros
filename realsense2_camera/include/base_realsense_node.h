@@ -9,9 +9,15 @@
 
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/update_functions.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/point_cloud2_iterator.h>
+#include <sensor_msgs/Imu.h>
+#include <nav_msgs/Odometry.h>
 
 #include <queue>
 #include <mutex>
+#include <atomic>
 
 namespace realsense2_camera
 {
@@ -106,6 +112,7 @@ namespace realsense2_camera
         rs2::device _dev;
         ros::NodeHandle& _node_handle, _pnh;
         std::map<stream_index_pair, rs2::sensor> _sensors;
+        std::map<std::string, std::function<void(rs2::frame)>> _sensors_callback;
         std::vector<std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure>> _ddynrec;
 
     private:
@@ -178,6 +185,7 @@ namespace realsense2_camera
         void enable_devices();
         void setupFilters();
         void setupStreams();
+        void setBaseTime(double frame_time, bool warn_no_metadata);
         void clip_depth(rs2::depth_frame& depth_frame, float depth_scale, float clipping_dist);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         tf::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
@@ -186,6 +194,7 @@ namespace realsense2_camera
                                const quaternion& q,
                                const std::string& from,
                                const std::string& to);
+        void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile);
         void publishStaticTransforms();
         void publishPointCloud(rs2::points f, const ros::Time& t, const rs2::frameset& frameset);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
@@ -200,12 +209,9 @@ namespace realsense2_camera
                           std::map<stream_index_pair, int>& seq,
                           std::map<stream_index_pair, sensor_msgs::CameraInfo>& camera_info,
                           const std::map<stream_index_pair, std::string>& optical_frame_id,
-                          const std::map<stream_index_pair, std::string>& encoding,
+                          const std::map<rs2_stream, std::string>& encoding,
                           bool copy_data_from_frame = true);
         bool getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile);
-
-        void updateIsFrameArrived(std::map<stream_index_pair, bool>& is_frame_arrived,
-                                  rs2_stream stream_type, int stream_index);
 
         void publishAlignedDepthToOthers(rs2::frameset frames, const ros::Time& t);
         static void callback(const ddynamic_reconfigure::DDMap& map, int, rs2::options sensor);
@@ -214,6 +220,9 @@ namespace realsense2_camera
         static void ConvertFromOpticalFrameToFrame(float3& data);
         void imu_callback(rs2::frame frame);
         void imu_callback_sync(rs2::frame frame, imu_sync_method sync_method=imu_sync_method::COPY);
+        void pose_callback(rs2::frame frame);
+        void multiple_message_callback(rs2::frame frame, imu_sync_method sync_method);
+        void frame_callback(rs2::frame frame);
         void registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name);
         rs2_stream rs2_string_to_stream(std::string str);
 
@@ -230,26 +239,26 @@ namespace realsense2_camera
         std::map<stream_index_pair, int> _height;
         std::map<stream_index_pair, int> _fps;
         std::map<stream_index_pair, bool> _enable;
-        std::map<stream_index_pair, std::string> _stream_name;
+        std::map<rs2_stream, std::string> _stream_name;
         tf2_ros::StaticTransformBroadcaster _static_tf_broadcaster;
 
         std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics> _image_publishers;
         std::map<stream_index_pair, ros::Publisher> _imu_publishers;
         std::shared_ptr<SyncedImuPublisher> _synced_imu_publisher;
-        std::map<stream_index_pair, int> _image_format;
-        std::map<stream_index_pair, rs2_format> _format;
+        std::map<rs2_stream, int> _image_format;
         std::map<stream_index_pair, ros::Publisher> _info_publisher;
         std::map<stream_index_pair, cv::Mat> _image;
-        std::map<stream_index_pair, std::string> _encoding;
+        std::map<rs2_stream, std::string> _encoding;
         std::map<stream_index_pair, std::vector<uint8_t>> _aligned_depth_images;
 
         std::string _base_frame_id;
+        std::string _spatial_frame_id;
         std::map<stream_index_pair, std::string> _frame_id;
         std::map<stream_index_pair, std::string> _optical_frame_id;
         std::map<stream_index_pair, int> _seq;
-        std::map<stream_index_pair, int> _unit_step_size;
+        std::map<rs2_stream, int> _unit_step_size;
         std::map<stream_index_pair, sensor_msgs::CameraInfo> _camera_info;
-        bool _intialize_time_base;
+        std::atomic_bool _is_initialized_time_base;
         double _camera_time_base;
         std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
 
@@ -264,9 +273,10 @@ namespace realsense2_camera
         PipelineSyncer _syncer;
         std::vector<NamedFilter> _filters;
         std::vector<rs2::sensor> _dev_sensors;
+        std::map<rs2_stream, std::shared_ptr<rs2::align>> _align;
 
         std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
-        std::map<stream_index_pair, std::string> _depth_aligned_encoding;
+        std::map<rs2_stream, std::string> _depth_aligned_encoding;
         std::map<stream_index_pair, sensor_msgs::CameraInfo> _depth_aligned_camera_info;
         std::map<stream_index_pair, int> _depth_aligned_seq;
         std::map<stream_index_pair, ros::Publisher> _depth_aligned_info_publisher;
@@ -275,7 +285,6 @@ namespace realsense2_camera
         std::map<stream_index_pair, ros::Publisher> _depth_to_other_extrinsics_publishers;
         std::map<stream_index_pair, rs2_extrinsics> _depth_to_other_extrinsics;
 
-        std::map<stream_index_pair, bool> _is_frame_arrived;
         const std::string _namespace;
 
     };//end class
