@@ -234,6 +234,18 @@ std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option optio
     return dict;
 }
 
+/**
+ * ROS Graph Resource names don't allow spaces and hyphens (see http://wiki.ros.org/Names),
+ * so we replace them here with underscores.
+ */
+std::string create_graph_resource_name(const std::string &original_name)
+{
+  std::string fixed_name = original_name;
+  std::replace(fixed_name.begin(), fixed_name.end(), '-', '_');
+  std::replace(fixed_name.begin(), fixed_name.end(), ' ', '_');
+  return fixed_name;
+}
+
 void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name)
 {
     ros::NodeHandle nh1(module_name);
@@ -241,13 +253,14 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
     for (auto i = 0; i < RS2_OPTION_COUNT; i++)
     {
         rs2_option option = static_cast<rs2_option>(i);
+        std::string option_name = create_graph_resource_name(rs2_option_to_string(option));
         if (!sensor.supports(option) || sensor.is_option_read_only(option))
         {
             continue;
         }
         if (is_checkbox(sensor, option))
         {
-            ddynrec->add(new DDBool(rs2_option_to_string(option), i, sensor.get_option_description(option), bool(sensor.get_option(option))));
+            ddynrec->add(new DDBool(option_name, i, sensor.get_option_description(option), bool(sensor.get_option(option))));
             continue;
         }
         std::map<std::string, int> enum_dict = get_enum_method(sensor, option);
@@ -256,17 +269,17 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
             rs2::option_range op_range = sensor.get_option_range(option);
             if (is_int_option(sensor, option))
             {
-                ddynrec->add(new DDInt(rs2_option_to_string(option), i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
+                ddynrec->add(new DDInt(option_name, i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
             }
             else
             {
-                ddynrec->add(new DDDouble(rs2_option_to_string(option), i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
+                ddynrec->add(new DDDouble(option_name, i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
             }
         }
         else
         {
-            ROS_DEBUG_STREAM("Add enum: " << rs2_option_to_string(option) << ". value=" << int(sensor.get_option(option)));
-            ddynrec->add(new DDEnum(rs2_option_to_string(option), i, sensor.get_option_description(option), int(sensor.get_option(option)), enum_dict));
+            ROS_DEBUG_STREAM("Add enum: " << option_name << ". value=" << int(sensor.get_option(option)));
+            ddynrec->add(new DDEnum(option_name, i, sensor.get_option_description(option), int(sensor.get_option(option)), enum_dict));
         }
     }
     ddynrec->start(boost::bind(callback, _1, _2, sensor));
@@ -279,9 +292,7 @@ void BaseRealSenseNode::registerDynamicReconfigCb(ros::NodeHandle& nh)
 
     for(rs2::sensor sensor : _dev_sensors)
     {
-        std::string module_name = sensor.get_info(RS2_CAMERA_INFO_NAME);
-        std::replace( module_name.begin(), module_name.end(), '-', '_');
-        std::replace( module_name.begin(), module_name.end(), ' ', '_'); // replace all ' ' to '_'
+        std::string module_name = create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
         ROS_DEBUG_STREAM("module_name:" << module_name);
         registerDynamicOption(nh, sensor, module_name);
     }
@@ -298,8 +309,9 @@ void BaseRealSenseNode::registerDynamicReconfigCb(ros::NodeHandle& nh)
 
 void BaseRealSenseNode::callback(const ddynamic_reconfigure::DDMap& map, int level, rs2::options sensor) {
     rs2_option option = static_cast<rs2_option>(level);
-    double value = get(map, rs2_option_to_string(option)).toDouble();
-    ROS_DEBUG_STREAM("option: " << rs2_option_to_string(option) << ". value: " << value);
+    std::string option_name = create_graph_resource_name(rs2_option_to_string(option));
+    double value = get(map, option_name.c_str()).toDouble();
+    ROS_DEBUG_STREAM("option: " << option_name << ". value: " << value);
     sensor.set_option(option, value);
 }
 
