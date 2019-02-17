@@ -1189,13 +1189,20 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         _imu_publishers[stream_index].publish(odom_msg);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
 
-        // publish static transform:
-        static tf::TransformBroadcaster br;
-        tf::Transform transform;
-        transform.setOrigin( tf::Vector3(pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z) );
-        tf::Quaternion q1(pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z, pose_msg.pose.orientation.w);
-        transform.setRotation(q1);
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), _spatial_frame_id, _base_frame_id));        
+        static tf2_ros::TransformBroadcaster br;
+        geometry_msgs::TransformStamped msg;
+        msg.header.stamp = t;
+        msg.header.frame_id = _spatial_frame_id;
+        msg.child_frame_id = _base_frame_id;
+        msg.transform.translation.x = pose_msg.pose.position.x;
+        msg.transform.translation.y = pose_msg.pose.position.y;
+        msg.transform.translation.z = pose_msg.pose.position.z;
+        msg.transform.rotation.x = pose_msg.pose.orientation.x;
+        msg.transform.rotation.y = pose_msg.pose.orientation.y;
+        msg.transform.rotation.z = pose_msg.pose.orientation.z;
+        msg.transform.rotation.w = pose_msg.pose.orientation.w;
+
+        br.sendTransform(msg);
     }
 }
 
