@@ -8,7 +8,11 @@ import numpy as np
 import tf
 import itertools
 import subprocess
+import rospy
+import time
 
+global tf_timeout
+tf_timeout = 5
 
 def ImageGetData(rec_filename, topic):
     bag = rosbag.Bag(rec_filename)
@@ -198,11 +202,19 @@ def print_results(results):
 
 
 def get_tf(tf_listener, from_id, to_id):
-    import rospy
+    global tf_timeout
     try:
-        return tf_listener.lookupTransform(from_id, to_id, rospy.Time())
+        start_time = time.time()
+        # print 'Waiting for transform: %s -> %s for %.2f(sec)' % (from_id, to_id, tf_timeout)
+        tf_listener.waitForTransform(from_id, to_id, rospy.Time(), rospy.Duration(tf_timeout))
+        res = tf_listener.lookupTransform(from_id, to_id, rospy.Time())
     except Exception as e:
-        return None
+        res = None
+    finally:
+        waited_for = time.time() - start_time
+        tf_timeout = max(0.0, tf_timeout - waited_for)
+        return res
+
 
 def run_tests(tests):
     msg_params = {'timeout_secs': 5}
@@ -212,16 +224,21 @@ def run_tests(tests):
         rec_tests = [test for test in tests if test['params_str'] == params_str]
         themes = [test_types[test['type']]['listener_theme'] for test in rec_tests]
         msg_retriever = CWaitForMessage(msg_params)
-        print 'Starting ROS'
+        print '*'*30
+        print 'Running the following tests: %s' % ('\n' + '\n'.join([test['name'] for test in rec_tests]))
+        print 
+        print '*'*8 + ' Starting ROS ' + '*'*8
+        print '*'*30
         p_wrapper = subprocess.Popen(['roslaunch', 'realsense2_camera', 'rs_from_file.launch'] + params_str.split(' '), stdout=None, stderr=None)
         listener_res = msg_retriever.wait_for_messages(themes)
-        frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame', 'camera_fisheye_frame']
-
-        tf_listener = tf.TransformListener()
-        import time
-        time.sleep(2)
-        listener_res['static_tf'] = dict([(xx, get_tf(tf_listener, xx[0], xx[1])) for xx in itertools.combinations(frame_ids, 2)])
-        print 'Killing ROS'
+        if 'static_tf' in [test['type'] for test in rec_tests]:
+            print 'Gathering static transforms'
+            frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame', 'camera_fisheye_frame', 'camera_pose']
+            tf_listener = tf.TransformListener()
+            listener_res['static_tf'] = dict([(xx, get_tf(tf_listener, xx[0], xx[1])) for xx in itertools.combinations(frame_ids, 2)])
+        print '*'*30
+        print '*'*8 + ' Killing ROS ' + '*'*9
+        print '*'*30
         p_wrapper.terminate()
         p_wrapper.wait()
         print 'DONE'
@@ -237,8 +254,7 @@ def run_tests(tests):
     return results
 
 def main():
-    all_tests = [{'name': 'vis_avg_1', 'type': 'no_file', 'params': {'rosbag_filename': '/home/non_existent_file.txt'}},
-                 # {'name': 'vis_avg_2', 'type': 'vis_avg', 'params': {'rosbag_filename': '/home/doronhi/Downloads/checkerboard_30cm.bag'}},
+    all_tests = [{'name': 'non_existent_file', 'type': 'no_file', 'params': {'rosbag_filename': '/home/non_existent_file.txt'}},
                  {'name': 'vis_avg_2', 'type': 'vis_avg', 'params': {'rosbag_filename': './records/outdoors.bag'}},
                  {'name': 'depth_avg_1', 'type': 'depth_avg', 'params': {'rosbag_filename': './records/outdoors.bag'}},
                  {'name': 'depth_w_cloud_1', 'type': 'depth_avg', 'params': {'rosbag_filename': './records/outdoors.bag', 'enable_pointcloud': 'true'}},
