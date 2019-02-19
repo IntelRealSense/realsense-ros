@@ -81,10 +81,10 @@ The topics are of the form: ```/camera/aligned_depth_to_color/image_raw``` etc.
  - ```colorizer```: will color the depth image. On the depth topic an RGB image will be published, instead of the 16bit depth values .
  - ```pointcloud```: will add a pointcloud topic `/camera/depth/color/points`. The texture of the pointcloud can be modified in rqt_reconfigure (see below) or using the parameters: `pointcloud_texture_stream` and `pointcloud_texture_index`. Run rqt_reconfigure to see available values for these parameters.
  - The following filters have detailed descriptions in : https://github.com/IntelRealSense/librealsense/blob/master/doc/post-processing-filters.md
-   - ```disparity```
-   - ```spatial```
-   - ```temporal```
-   - ```decimation```
+   - ```disparity``` - convert depth to disparity before applying other filters and back.
+   - ```spatial``` - filter the depth image spatially.
+   - ```temporal``` - filter the depth image temporally.
+   - ```decimation``` - reduces depth scene complexity.
 - **enable_sync**: gathers closest frames of different sensors, infra red, color and depth, to be sent with the same timetag. This happens automatically when such filters as pointcloud are enabled.
 - ***<stream_type>*_width**, ***<stream_type>*_height**, ***<stream_type>*_fps**: <stream_type> can be any of *infra, color, fisheye, depth, gyro, accel, pose*. Sets the required format of the device. If the specified combination of parameters is not available by the device, the stream will not be published. Setting a value to 0, will choose the first format in the inner list. (i.e. consistent between runs but not defined). Note: for gyro accel and pose, only _fps option is meaningful.
 - **enable_*<stream_name>***: Choose whether to enable a specified stream or not. Default is true. <stream_name> can be any of *infra1, infra2, color, depth, fisheye, fisheye1, fisheye2, gyro, accel, pose*.
@@ -146,21 +146,6 @@ roslaunch realsense2_camera rs_camera.launch camera:=cam_2 serial_no:=<serial nu
 ...
 
 ```
-### Enabling post processing filters.
-realsense2_camera includes some built in post processing filters:<br>
-colorizer - creates an RGB image instead of depth image. Used to visualize the depth image.<br>
-spatial - filter the depth image spatially.<br>
-temporal - filter the depth image temporally.<br>
-pointcloud - it is now possible to enable point cloud with the same command as any other post processing filter.<br>
-
-The colorizer filter replaces the image in the topic: /<camera>/depth/image_rect_raw.
-The spatial and temporal filters affect the depth image and all that is derived from it, i.e. pointcloud and colorizer.
-
-to activate the filters, use the argument "filters" and deperate them with a comma:
-```bash
-roslaunch realsense2_camera rs_camera.launch filters:=temporal,spatial,pointcloud
-```
-
 ## Using T265 ##
 When using T265 Tracking Module you should specify it with a parameter `enable_t265` as is set in the following launch file:
 ```bash
