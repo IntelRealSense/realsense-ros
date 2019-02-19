@@ -13,7 +13,9 @@
     <author email="theNODO55@gmail.com">Noam Dori</author>
 
     <buildtool_depend>catkin</buildtool_depend>
+    <depend>std_msgs</depend>
     <depend>roscpp</depend>
+    <depend>dynamic_reconfigure</depend>
 
     <test_depend>rostest</test_depend>
     <test_depend>google-mock</test_depend>
