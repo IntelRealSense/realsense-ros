@@ -138,16 +138,16 @@ void RealSenseNodeFactory::onInit()
 		}
 		else
 		{
-			bool enable_tm2;
-			privateNh.param("enable_tm2", enable_tm2, false);
-			if (enable_tm2)
+			bool enable_t265;
+			privateNh.param("enable_t265", enable_t265, false);
+			if (enable_t265)
 			{
 				// Currentlty need to wait before start quering device.
  				_ctx.query_devices();
 				const double wait_time(10);
 				// std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 				time_t start_time = time(NULL);
-				ROS_INFO_STREAM("Waiting for up to " << wait_time << "(sec) for TM2 Device to load.");
+				ROS_INFO_STREAM("Waiting for up to " << wait_time << "(sec) for T265 Device to load.");
 				int ms(200);
 				rs2::device dev;
 				while (difftime(time(NULL), start_time) < wait_time)
@@ -161,11 +161,11 @@ void RealSenseNodeFactory::onInit()
 				}
 				if (!dev)
 				{
-					ROS_ERROR("Timeout while waiting for TM2 device. Terminating RealSense Node...");
+					ROS_ERROR("Timeout while waiting for T265 device. Terminating RealSense Node...");
 					ros::shutdown();
 					exit(1);
 				}
-				ROS_INFO_STREAM("TM2 device found after " << difftime(time(NULL), start_time) << "(sec)");
+				ROS_INFO_STREAM("T265 device found after " << difftime(time(NULL), start_time) << "(sec)");
 			}
 			bool initial_reset;
 			privateNh.param("initial_reset", initial_reset, false);
