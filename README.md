@@ -67,13 +67,13 @@ After running the above command with D435i attached, the following list of topic
 - /camera/accel/sample
 
 The "/camera" prefix is the default and can be changed. Check the rs_multiple_devices.launch file for an example.
-If using D435 or D415, the gyro and accel topics wont be available. Likewise, other topics will be available when using TM265 (see below).
+If using D435 or D415, the gyro and accel topics wont be available. Likewise, other topics will be available when using T265 (see below).
 
 ### Launch parameters
 The following parameters are available by the wrapper:
 - **serial_no**: will attach to the device with the given serial number. Default, attach to available RealSense device in random.
 - **rosbag_filename**: Will publish topics from rosbag file.
-- enable_tm2: if set to true Will wait on start until the TM265 device is ready.
+- enable_t265: if set to true Will wait on start until the T265 device is ready.
 - **initial_reset**: On occasions the device was not closed properly and due to firmware issues needs to reset. If set to true, the device will reset prior to usage.
 - **align_depth**: If set to true, will publish additional topics with the all the images aligned to the depth image.</br>
 The topics are of the form: ```/camera/aligned_depth_to_color/image_raw``` etc.
@@ -81,10 +81,10 @@ The topics are of the form: ```/camera/aligned_depth_to_color/image_raw``` etc.
  - ```colorizer```: will color the depth image. On the depth topic an RGB image will be published, instead of the 16bit depth values .
  - ```pointcloud```: will add a pointcloud topic `/camera/depth/color/points`. The texture of the pointcloud can be modified in rqt_reconfigure (see below) or using the parameters: `pointcloud_texture_stream` and `pointcloud_texture_index`. Run rqt_reconfigure to see available values for these parameters.
  - The following filters have detailed descriptions in : https://github.com/IntelRealSense/librealsense/blob/master/doc/post-processing-filters.md
-   - ```disparity```
-   - ```spatial```
-   - ```temporal```
-   - ```decimation```
+   - ```disparity``` - convert depth to disparity before applying other filters and back.
+   - ```spatial``` - filter the depth image spatially.
+   - ```temporal``` - filter the depth image temporally.
+   - ```decimation``` - reduces depth scene complexity.
 - **enable_sync**: gathers closest frames of different sensors, infra red, color and depth, to be sent with the same timetag. This happens automatically when such filters as pointcloud are enabled.
 - ***<stream_type>*_width**, ***<stream_type>*_height**, ***<stream_type>*_fps**: <stream_type> can be any of *infra, color, fisheye, depth, gyro, accel, pose*. Sets the required format of the device. If the specified combination of parameters is not available by the device, the stream will not be published. Setting a value to 0, will choose the first format in the inner list. (i.e. consistent between runs but not defined). Note: for gyro accel and pose, only _fps option is meaningful.
 - **enable_*<stream_name>***: Choose whether to enable a specified stream or not. Default is true. <stream_name> can be any of *infra1, infra2, color, depth, fisheye, fisheye1, fisheye2, gyro, accel, pose*.
@@ -92,12 +92,12 @@ The topics are of the form: ```/camera/aligned_depth_to_color/image_raw``` etc.
 - **base_frame_id**: defines the frame_id all static transformations refers to.
 - **spatial_frame_id**: defines the frame_id that `pose` topic refers to.
 - **All the rest of the frame_ids can be found in the template launch file: [nodelet.launch.xml](./realsense2_camera/launch/includes/nodelet.launch.xml)**
-- **unite_imu_method**: The D435i and TM265 cameras have built in IMU components which produce 2 unrelated streams: *gyro* - which shows angular velocity and *accel* which shows linear acceleration. Each with it's own frequency. By default, 2 corresponding topics are available, each with only the relevant fields of the message sensor_msgs::Imu are filled out.
+- **unite_imu_method**: The D435i and T265 cameras have built in IMU components which produce 2 unrelated streams: *gyro* - which shows angular velocity and *accel* which shows linear acceleration. Each with it's own frequency. By default, 2 corresponding topics are available, each with only the relevant fields of the message sensor_msgs::Imu are filled out.
 Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default *gyro* and *accel* topics. Under the new topic, all the fields in the Imu message are filled out.
  - linear_interpolation: Each message contains the last original value of item A interpolated with the previous value of item A, combined with the last original value of item B on last item B's timestamp. (items A and B are accel and gyro but without specific)
  - copy: For each new message, accel or gyro, the relevant fields and timestamp are filled out while the others maintain the previous data.
 - **clip_distance**: remove from the depth image all values above a given value (meters). Disable by giving negative value (default)
-- **linear_accel_cov**, **angular_velocity_cov**: sets the variance given to the Imu readings. For the TM265, these values are being modified by the inner confidence value.
+- **linear_accel_cov**, **angular_velocity_cov**: sets the variance given to the Imu readings. For the T265, these values are being modified by the inner confidence value.
 - **hold_back_imu_for_frames**: Images processing takes time. Therefor there is a time gap between the moment the image arrives at the wrapper and the moment the image is published to the ROS environment. During this time, Imu messages keep on arriving and a situation is created where an image with earlier timestamp is published after Imu message with later timestamp. If that is a problem, setting *hold_back_imu_for_frames* to *true* will hold the Imu messages back while processing the images and then publish them all in a burst, thus keeping the order of publication as the order of arrival. Note that in either case, the timestamp in each message's header reflects the time of it's origin.
 
 ### RGBD Point Cloud
@@ -146,27 +146,12 @@ roslaunch realsense2_camera rs_camera.launch camera:=cam_2 serial_no:=<serial nu
 ...
 
 ```
-### Enabling post processing filters.
-realsense2_camera includes some built in post processing filters:<br>
-colorizer - creates an RGB image instead of depth image. Used to visualize the depth image.<br>
-spatial - filter the depth image spatially.<br>
-temporal - filter the depth image temporally.<br>
-pointcloud - it is now possible to enable point cloud with the same command as any other post processing filter.<br>
-
-The colorizer filter replaces the image in the topic: /<camera>/depth/image_rect_raw.
-The spatial and temporal filters affect the depth image and all that is derived from it, i.e. pointcloud and colorizer.
-
-to activate the filters, use the argument "filters" and deperate them with a comma:
+## Using T265 ##
+When using T265 Tracking Module you should specify it with a parameter `enable_t265` as is set in the following launch file:
 ```bash
-roslaunch realsense2_camera rs_camera.launch filters:=temporal,spatial,pointcloud
+roslaunch realsense2_camera rs_t265.launch
 ```
-
-## Using TM265 ##
-When using TM265 Tracking Module you should specify it with a parameter `enable_tm2` as is set in the following launch file:
-```bash
-roslaunch realsense2_camera rs_tm260.launch
-```
-The TM265 sets its usb unique ID during initialization and without this parameter it wont be found.
+The T265 sets its usb unique ID during initialization and without this parameter it wont be found.
 Once running it will publish, among others, the following topics:
 - /camera/odom/sample
 - /camera/accel/sample
