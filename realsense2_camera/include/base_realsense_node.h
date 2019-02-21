@@ -14,6 +14,7 @@
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseStamped.h>
 
 #include <queue>
 #include <mutex>
@@ -244,6 +245,7 @@ namespace realsense2_camera
 
         std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics> _image_publishers;
         std::map<stream_index_pair, ros::Publisher> _imu_publishers;
+        ros::Publisher _odom_publisher;
         std::shared_ptr<SyncedImuPublisher> _synced_imu_publisher;
         std::map<rs2_stream, int> _image_format;
         std::map<stream_index_pair, ros::Publisher> _info_publisher;

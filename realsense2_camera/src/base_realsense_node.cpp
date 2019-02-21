@@ -622,7 +622,8 @@ void BaseRealSenseNode::setupPublishers()
     }
     if (_enable[POSE])
     {
-        _imu_publishers[POSE] = _node_handle.advertise<nav_msgs::Odometry>("odom/sample", 1);
+        _imu_publishers[POSE] = _node_handle.advertise<geometry_msgs::PoseStamped>("pose/sample", 1);
+        _odom_publisher = _node_handle.advertise<nav_msgs::Odometry>("odom/sample", 1);
     }
 
 
@@ -1165,6 +1166,7 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         pose_msg.pose.orientation.y = -pose.rotation.x;
         pose_msg.pose.orientation.z = pose.rotation.y;
         pose_msg.pose.orientation.w = pose.rotation.w;
+        _imu_publishers[stream_index].publish(pose_msg);
 
         geometry_msgs::Vector3Stamped v_msg;
         v_msg.vector.x = -pose.velocity.z;
@@ -1198,7 +1200,7 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
                                     0, 0, 0, cov_twist, 0, 0,
                                     0, 0, 0, 0, cov_twist, 0,
                                     0, 0, 0, 0, 0, cov_twist};
-        _imu_publishers[stream_index].publish(odom_msg);
+        _odom_publisher.publish(odom_msg);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
 
         static tf2_ros::TransformBroadcaster br;
