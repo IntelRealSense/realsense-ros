@@ -1,8 +1,10 @@
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #pragma ide diagnostic ignored "modernize-loop-convert"
 #pragma ide diagnostic ignored "modernize-use-auto"
+#endif
 //
 // Created by Noam Dori on 20/06/18.
 //
@@ -145,4 +147,6 @@ namespace ddynamic_reconfigure {
         return ret.str();
     }
 }
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif

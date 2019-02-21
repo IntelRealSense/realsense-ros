@@ -49,8 +49,10 @@ namespace ddynamic_reconfigure {
         DDEnum(const string &name, unsigned int level, const string &description,
                 const string& def, const map<string,int> &dictionary);
 
+        #ifdef __clang__
         #pragma clang diagnostic push
         #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+        #endif
         /**
          * @brief creates a new int-enum param
          * @param name the name of the parameter
@@ -78,7 +80,9 @@ namespace ddynamic_reconfigure {
          */
         DDEnum(const string &name, unsigned int level, const string &description,
                const string& def, const pair<map<string,pair<int,string> >,string>  &dictionary);
+        #ifdef __clang__
         #pragma clang diagnostic pop
+        #endif
 
     protected:
         /** 
