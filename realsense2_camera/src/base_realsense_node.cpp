@@ -1155,10 +1155,14 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         rs2_pose pose = frame.as<rs2::pose_frame>().get_pose_data();
         double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
         ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
+        _seq[stream_index] += 1;
         double cov_pose(_linear_accel_cov * pow(10, 3-pose.tracker_confidence));
         double cov_twist(_angular_velocity_cov * pow(10, 1-pose.tracker_confidence));
 
         geometry_msgs::PoseStamped pose_msg;
+        pose_msg.header.frame_id = _spatial_frame_id;
+        pose_msg.header.stamp = t;
+        pose_msg.header.seq = _seq[stream_index];
         pose_msg.pose.position.x = -pose.translation.z;
         pose_msg.pose.position.y = -pose.translation.x;
         pose_msg.pose.position.z = pose.translation.y;
@@ -1179,8 +1183,6 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         om_msg.vector.z = pose.angular_velocity.y;
 
         nav_msgs::Odometry odom_msg;
-        _seq[stream_index] += 1;
-
         odom_msg.header.frame_id = _spatial_frame_id;
         odom_msg.child_frame_id = _base_frame_id;
         odom_msg.header.stamp = t;
