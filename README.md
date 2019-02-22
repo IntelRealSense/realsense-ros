@@ -174,6 +174,11 @@ Once running it will publish, among others, the following topics:
 - /camera/fisheye1/image_raw
 - /camera/fisheye2/image_raw
 
+The pose (estimate) can be visualized in RViz by starting up the camera with
+```bash
+roslaunch realsense2_camera demo_t265.launch
+```
+
 
 ## Packages using RealSense ROS Camera
 | Title | Links |
