@@ -57,12 +57,11 @@ rs2::device RealSenseNodeFactory::getDevice(bool shutdown_on_failure)
 	auto list = _ctx.query_devices();
 	if (0 == list.size())
 	{
-		ROS_ERROR("No RealSense devices were found!");
+		ROS_WARN("No RealSense devices were found!");
 	}
 	else
 	{
 		bool found = false;
-
 		for (auto&& dev : list)
 		{
 			auto sn = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
@@ -75,37 +74,40 @@ rs2::device RealSenseNodeFactory::getDevice(bool shutdown_on_failure)
 				break;
 			}
 		}
-
 		if (!found)
 		{
 			ROS_ERROR_STREAM("The requested device with serial number " << _serial_no << " is NOT found!");
 		}
 	}
+
+	bool remove_tm2_handle(retDev && RS_T265_PID != std::stoi(retDev.get_info(RS2_CAMERA_INFO_PRODUCT_ID), 0, 16));
+	if (remove_tm2_handle)
+	{
+		_ctx.unload_tracking_module();
+	}
+
 	if (!retDev && shutdown_on_failure)
 	{
 		ROS_ERROR("Terminating RealSense Node...");
 		ros::shutdown();
 		exit(1);
 	}
-	return retDev;
-}
-
-void RealSenseNodeFactory::waitForDevice(rs2::device& dev)
-{
-	std::mutex mtx;
-	std::condition_variable cv;
-	_ctx.set_devices_changed_callback([&dev, &cv](rs2::event_information& info)
-			{
-				if (info.was_removed(dev))
-				{
-					cv.notify_one();
-				}
-			});
-
+	if (retDev && _initial_reset)
 	{
-		std::unique_lock<std::mutex> lk(mtx);
-		cv.wait(lk);
+		_initial_reset = false;
+		try
+		{
+			ROS_INFO("Resetting device...");
+			retDev.hardware_reset();
+			retDev = rs2::device();
+			
+		}
+		catch(const std::exception& ex)
+		{
+			ROS_WARN_STREAM("An exception has been thrown: " << ex.what());
+		}
 	}
+	return retDev;
 }
 
 void RealSenseNodeFactory::change_device_callback(rs2::event_information& info)
@@ -139,7 +141,6 @@ void RealSenseNodeFactory::onInit()
 		std::cout << "Press <ENTER> key to continue." << std::endl;
 		std::cin.get();
 #endif
-
 		ros::NodeHandle nh = getNodeHandle();
 		auto privateNh = getPrivateNodeHandle();
 		privateNh.param("serial_no", _serial_no, std::string(""));
@@ -163,30 +164,13 @@ void RealSenseNodeFactory::onInit()
 		{
 			std::function<void(rs2::event_information&)> change_device_callback_function = [this](rs2::event_information& info){change_device_callback(info);};
 			_ctx.set_devices_changed_callback(change_device_callback_function);
-			// bool initial_reset;
-			// privateNh.param("initial_reset", initial_reset, false);
-			// if (initial_reset)
-			// {
-			// 	ROS_INFO("Resetting device...");
-			// 	rs2::device dev;
-			// 	dev = getDevice();
-			// 	try
-			// 	{
-			// 		dev.hardware_reset();
-			// 		waitForDevice(dev);
-			// 	}
-			// 	catch(const std::exception& ex)
-			// 	{
-			// 		ROS_WARN_STREAM("An exception has been thrown: " << ex.what());
-			// 	}
-			// }
-
+			privateNh.param("initial_reset", _initial_reset, false);
 			_device = getDevice();
-			if (_device)
-			{
-				StartDevice();
-			}
+		}
 
+		if (_device)
+		{
+			StartDevice();
 		}
 	}
 	catch(const std::exception& ex)
@@ -206,11 +190,8 @@ void RealSenseNodeFactory::StartDevice()
 	ros::NodeHandle nh = getNodeHandle();
 	ros::NodeHandle privateNh = getPrivateNodeHandle();
 	// TODO
-	auto pid_str = _device.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
-	uint16_t pid;
-	std::stringstream ss;
-	ss << std::hex << pid_str;
-	ss >> pid;
+	std::string pid_str(_device.get_info(RS2_CAMERA_INFO_PRODUCT_ID));
+	uint16_t pid = std::stoi(pid_str, 0, 16);
 	switch(pid)
 	{
 	case SR300_PID:
