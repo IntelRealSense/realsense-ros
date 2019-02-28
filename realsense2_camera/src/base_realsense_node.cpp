@@ -280,6 +280,10 @@ void BaseRealSenseNode::setupDevice()
 void BaseRealSenseNode::setupPublishers()
 {
     ROS_INFO("setupPublishers...");
+    
+    // Diagnostics publisher
+    _statusPublisher = _node_handle.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 1);
+    
     image_transport::ImageTransport image_transport(_node_handle);
 
     std::vector<stream_index_pair> image_stream_types;
@@ -530,6 +534,29 @@ void BaseRealSenseNode::enable_devices()
 	}
 }
 
+void BaseRealSenseNode::publishStatus(bool cam_is_ok)
+{
+    diagnostic_msgs::DiagnosticStatus cameraStatus;
+    cameraStatus.name = "realsense_camera";
+    cameraStatus.hardware_id = _serial_no;
+
+    if (cam_is_ok)
+    {
+        cameraStatus.level = diagnostic_msgs::DiagnosticStatus::OK;
+        cameraStatus.message = "OK";
+    }
+    else
+    {
+        cameraStatus.level = diagnostic_msgs::DiagnosticStatus::ERROR;
+        cameraStatus.message = "ERROR";
+    }
+
+    diagnostic_msgs::DiagnosticArray diagnostics_msg;
+    diagnostics_msg.header.stamp = ros::Time::now();
+    diagnostics_msg.status.push_back(cameraStatus);
+    _statusPublisher.publish(diagnostics_msg);
+}
+
 void BaseRealSenseNode::setupStreams()
 {
 	ROS_INFO("setupStreams...");
@@ -638,6 +665,9 @@ void BaseRealSenseNode::setupStreams()
                                  _camera_info, _optical_frame_id,
                                  _encoding);
                 }
+                
+                // Publish status over diagnostics topic
+                publishStatus(_pointcloud);
 
                 if(_pointcloud && (0 != _pointcloud_publisher.getNumSubscribers()))
                 {
