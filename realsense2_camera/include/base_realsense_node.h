@@ -177,6 +177,19 @@ namespace realsense2_camera
                 imuData last_data(sensor_name module);
         };
 
+        struct TimestampCorrection
+        {
+            public:
+                TimestampCorrection() : _is_initialized(false) {}
+                void update(double system_time_sec, const rs2::frame& frame);
+                double correct(double frame_time_sec) const;
+            private:
+                std::atomic<bool> _is_initialized;
+                int _frame_unique_id = -1;
+                double _last_frame_time_sec = 0;
+                double _clock_offset_sec = 0;
+        };
+
         static std::string getNamespaceStr();
         void getParameters();
         void setupDevice();
@@ -185,7 +198,6 @@ namespace realsense2_camera
         void enable_devices();
         void setupFilters();
         void setupStreams();
-        void setBaseTime(double frame_time, bool warn_no_metadata);
         void clip_depth(rs2::depth_frame& depth_frame, float depth_scale, float clipping_dist);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         tf::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
@@ -258,12 +270,9 @@ namespace realsense2_camera
         std::map<stream_index_pair, int> _seq;
         std::map<rs2_stream, int> _unit_step_size;
         std::map<stream_index_pair, sensor_msgs::CameraInfo> _camera_info;
-        std::atomic_bool _is_initialized_time_base;
-        double _camera_time_base;
         std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
 
         ros::Publisher _pointcloud_publisher;
-        ros::Time _ros_time_base;
         bool _align_depth;
         bool _sync_frames;
         bool _pointcloud;
@@ -274,6 +283,7 @@ namespace realsense2_camera
         std::vector<NamedFilter> _filters;
         std::vector<rs2::sensor> _dev_sensors;
         std::map<rs2_stream, std::shared_ptr<rs2::align>> _align;
+        TimestampCorrection _timestamp_correction;
 
         std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
         std::map<rs2_stream, std::string> _depth_aligned_encoding;
