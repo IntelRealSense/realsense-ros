@@ -73,7 +73,6 @@ If using D435 or D415, the gyro and accel topics wont be available. Likewise, ot
 The following parameters are available by the wrapper:
 - **serial_no**: will attach to the device with the given serial number. Default, attach to available RealSense device in random.
 - **rosbag_filename**: Will publish topics from rosbag file.
-- enable_t265: if set to true Will wait on start until the T265 device is ready.
 - **initial_reset**: On occasions the device was not closed properly and due to firmware issues needs to reset. If set to true, the device will reset prior to usage.
 - **align_depth**: If set to true, will publish additional topics with the all the images aligned to the depth image.</br>
 The topics are of the form: ```/camera/aligned_depth_to_color/image_raw``` etc.
@@ -147,11 +146,7 @@ roslaunch realsense2_camera rs_camera.launch camera:=cam_2 serial_no:=<serial nu
 
 ```
 ## Using T265 ##
-When using T265 Tracking Module you should specify it with a parameter `enable_t265` as is set in the following launch file:
-```bash
-roslaunch realsense2_camera rs_t265.launch
-```
-The T265 sets its usb unique ID during initialization and without this parameter it wont be found.
+The T265 sets its usb unique ID during initialization and therefor takes a second or so to be found.
 Once running it will publish, among others, the following topics:
 - /camera/odom/sample
 - /camera/accel/sample
