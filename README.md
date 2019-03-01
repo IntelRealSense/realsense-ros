@@ -159,6 +159,7 @@ Once running it will publish, among others, the following topics:
 - /camera/fisheye1/image_raw
 - /camera/fisheye2/image_raw
 
+Disclaimer: In the case of wheeled robots, best performance can be achieved by fusing wheel odometry. The relevant APIs are added to librealsense and ROS/realsense in upcoming releases. Currently, the API is available in the [underlying device driver](https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/libtm/include/TrackingDevice.h#L508-L515).
 
 ## Packages using RealSense ROS Camera
 | Title | Links |
