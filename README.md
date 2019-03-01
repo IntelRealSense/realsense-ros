@@ -147,18 +147,22 @@ roslaunch realsense2_camera rs_camera.launch camera:=cam_2 serial_no:=<serial nu
 
 ```
 ## Using T265 ##
-When using T265 Tracking Module you should specify it with a parameter `enable_t265` as is set in the following launch file:
+
+**Important Notice:** For wheeled robots, odometer input is a requirement for robust and accurate tracking. The relevant APIs will be added to librealsense and ROS/realsense in upcoming releases. Currently, the API is available in the [underlying device driver](https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/libtm/include/TrackingDevice.h#L508-L515).
+
+To use the T265 Tracking Module you should enable it using the parameter `enable_t265`. An example can be found in the [rs_t265.launch](https://github.com/intel-ros/realsense/blob/development/realsense2_camera/launch/rs_t265.launch):
+
 ```bash
 roslaunch realsense2_camera rs_t265.launch
 ```
-The T265 sets its usb unique ID during initialization and without this parameter it wont be found.
+
+The T265 sets its usb unique ID during initialization and without this parameter it won't be found.
 Once running it will publish, among others, the following topics:
 - /camera/odom/sample
 - /camera/accel/sample
 - /camera/gyro/sample
 - /camera/fisheye1/image_raw
 - /camera/fisheye2/image_raw
-
 
 ## Packages using RealSense ROS Camera
 | Title | Links |
