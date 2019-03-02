@@ -1158,23 +1158,23 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         double cov_twist(_angular_velocity_cov * pow(10, 1-pose.tracker_confidence));
 
         geometry_msgs::PoseStamped pose_msg;
-        pose_msg.pose.position.x = -pose.translation.z;
-        pose_msg.pose.position.y = -pose.translation.x;
-        pose_msg.pose.position.z = pose.translation.y;
-        pose_msg.pose.orientation.x = -pose.rotation.z;
-        pose_msg.pose.orientation.y = -pose.rotation.x;
-        pose_msg.pose.orientation.z = pose.rotation.y;
+        pose_msg.pose.position.x = pose.translation.x;
+        pose_msg.pose.position.y = pose.translation.y;
+        pose_msg.pose.position.z = pose.translation.z;
+        pose_msg.pose.orientation.x = pose.rotation.x;
+        pose_msg.pose.orientation.y = pose.rotation.y;
+        pose_msg.pose.orientation.z = pose.rotation.z;
         pose_msg.pose.orientation.w = pose.rotation.w;
 
         geometry_msgs::Vector3Stamped v_msg;
-        v_msg.vector.x = -pose.velocity.z;
-        v_msg.vector.y = -pose.velocity.x;
-        v_msg.vector.z = pose.velocity.y;
+        v_msg.vector.x = pose.velocity.x;
+        v_msg.vector.y = pose.velocity.y;
+        v_msg.vector.z = pose.velocity.z;
 
         geometry_msgs::Vector3Stamped om_msg;
-        om_msg.vector.x = -pose.angular_velocity.z;
-        om_msg.vector.y = -pose.angular_velocity.x;
-        om_msg.vector.z = pose.angular_velocity.y;
+        om_msg.vector.x = pose.angular_velocity.x;
+        om_msg.vector.y = pose.angular_velocity.y;
+        om_msg.vector.z = pose.angular_velocity.z;
 
         nav_msgs::Odometry odom_msg;
         _seq[stream_index] += 1;

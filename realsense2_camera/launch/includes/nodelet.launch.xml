@@ -70,6 +70,7 @@
   <arg name="aligned_depth_to_fisheye2_frame_id" default="$(arg tf_prefix)_aligned_depth_to_fisheye2_frame"/>
 
   <arg name="spatial_frame_id"        default="$(arg tf_prefix)_spatial"/>
+  <node pkg="tf" type="static_transform_publisher" name="spatial_frame_broadcaster" args="0 0 0 0 0 1.570796327 map $(arg spatial_frame_id) 100" />
 
   <arg name="filters"                  default=""/>
   <arg name="clip_distance"            default="-1"/>
