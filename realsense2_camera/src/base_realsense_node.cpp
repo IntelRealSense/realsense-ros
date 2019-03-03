@@ -397,6 +397,7 @@ void BaseRealSenseNode::getParameters()
     for (auto& stream : IMAGE_STREAMS)
     {
         if (stream == DEPTH) continue;
+        if (stream.second > 1) continue;
         string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << "aligned_depth_to_" << STREAM_NAME(stream) << "_frame_id").str());
         _pnh.param(param_name, _depth_aligned_frame_id[stream], ALIGNED_DEPTH_TO_FRAME_ID(stream));
     }
@@ -578,7 +579,7 @@ void BaseRealSenseNode::setupPublishers()
             _image_publishers[stream] = {image_transport.advertise(image_raw.str(), 1), frequency_diagnostics};
             _info_publisher[stream] = _node_handle.advertise<sensor_msgs::CameraInfo>(camera_info.str(), 1);
 
-            if (_align_depth && (stream != DEPTH))
+            if (_align_depth && (stream != DEPTH) && stream.second < 2)
             {
                 std::stringstream aligned_image_raw, aligned_camera_info;
                 aligned_image_raw << "aligned_depth_to_" << stream_name << "/image_raw";
@@ -662,6 +663,10 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
             continue;
 
         auto stream_index = frame.get_profile().stream_index();
+        if (stream_index > 1)
+        {
+            continue;
+        }
         stream_index_pair sip{stream_type, stream_index};
         auto& info_publisher = _depth_aligned_info_publisher.at(sip);
         auto& image_publisher = _depth_aligned_image_publishers.at(sip);
