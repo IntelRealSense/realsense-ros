@@ -11,7 +11,6 @@
   <arg name="color_height"              default="480"/>
   <arg name="depth_width"               default="640"/>
   <arg name="depth_height"              default="480"/>
-  <arg name="filters"                   default=""/>
   <arg name="clip_distance"             default="-2"/>
 
   <group ns="$(arg camera1)">
@@ -35,7 +34,6 @@
       <arg name="color_height"          value="$(arg color_height)"/>
       <arg name="depth_width"           value="$(arg depth_width)"/>
       <arg name="depth_height"          value="$(arg depth_height)"/>
-      <arg name="filters"               value="$(arg filters)"/>
       <arg name="clip_distance"         value="$(arg clip_distance)"/>
     </include>
   </group>

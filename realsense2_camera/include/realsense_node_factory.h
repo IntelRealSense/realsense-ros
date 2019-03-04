@@ -62,7 +62,7 @@ namespace realsense2_camera
         static void closeDevice();
         void StartDevice();
         void change_device_callback(rs2::event_information& info);
-        rs2::device getDevice(bool shutdown_on_failure=false);
+        rs2::device getDevice();
         virtual void onInit() override;
         void tryGetLogSeverity(rs2_log_severity& severity) const;
 

@@ -51,7 +51,7 @@ void RealSenseNodeFactory::signalHandler(int signum)
 	exit(signum);
 }
 
-rs2::device RealSenseNodeFactory::getDevice(bool shutdown_on_failure)
+rs2::device RealSenseNodeFactory::getDevice()
 {
 	rs2::device retDev;
 	auto list = _ctx.query_devices();
@@ -86,12 +86,6 @@ rs2::device RealSenseNodeFactory::getDevice(bool shutdown_on_failure)
 		_ctx.unload_tracking_module();
 	}
 
-	if (!retDev && shutdown_on_failure)
-	{
-		ROS_ERROR("Terminating RealSense Node...");
-		ros::shutdown();
-		exit(1);
-	}
 	if (retDev && _initial_reset)
 	{
 		_initial_reset = false;
