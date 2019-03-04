@@ -10,6 +10,7 @@ import itertools
 import subprocess
 import rospy
 import time
+import rosservice
 
 global tf_timeout
 tf_timeout = 5
@@ -226,22 +227,42 @@ def run_tests(tests):
         msg_retriever = CWaitForMessage(msg_params)
         print '*'*30
         print 'Running the following tests: %s' % ('\n' + '\n'.join([test['name'] for test in rec_tests]))
-        print 
-        print '*'*8 + ' Starting ROS ' + '*'*8
         print '*'*30
-        p_wrapper = subprocess.Popen(['roslaunch', 'realsense2_camera', 'rs_from_file.launch'] + params_str.split(' '), stdout=None, stderr=None)
-        listener_res = msg_retriever.wait_for_messages(themes)
-        if 'static_tf' in [test['type'] for test in rec_tests]:
-            print 'Gathering static transforms'
-            frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame', 'camera_fisheye_frame', 'camera_pose']
-            tf_listener = tf.TransformListener()
-            listener_res['static_tf'] = dict([(xx, get_tf(tf_listener, xx[0], xx[1])) for xx in itertools.combinations(frame_ids, 2)])
+        num_of_startups = 5
+        is_node_up = False
+        for run_no in range(num_of_startups):
+            print 
+            print '*'*8 + ' Starting ROS ' + '*'*8
+            print 'running node (%d/%d)' % (run_no, num_of_startups)
+            p_wrapper = subprocess.Popen(['roslaunch', 'realsense2_camera', 'rs_from_file.launch'] + params_str.split(' '), stdout=None, stderr=None)
+            time.sleep(2)
+            service_list = rosservice.get_service_list()
+            is_node_up = len([service for service in service_list if 'realsense2_camera/' in service]) > 0
+            if is_node_up:
+                print 'Node is UP'
+                break
+            print 'Node is NOT UP'
+            print '*'*8 + ' Killing ROS ' + '*'*9
+            p_wrapper.terminate()
+            p_wrapper.wait()
+            print 'DONE'
+
+        if is_node_up:
+            listener_res = msg_retriever.wait_for_messages(themes)
+            if 'static_tf' in [test['type'] for test in rec_tests]:
+                print 'Gathering static transforms'
+                frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame', 'camera_fisheye_frame', 'camera_pose']
+                tf_listener = tf.TransformListener()
+                listener_res['static_tf'] = dict([(xx, get_tf(tf_listener, xx[0], xx[1])) for xx in itertools.combinations(frame_ids, 2)])
+            print '*'*8 + ' Killing ROS ' + '*'*9
+            p_wrapper.terminate()
+            p_wrapper.wait()
+        else:
+            listener_res = dict([[theme_name, {}] for theme_name in themes])
+
         print '*'*30
-        print '*'*8 + ' Killing ROS ' + '*'*9
+        print 'DONE run'
         print '*'*30
-        p_wrapper.terminate()
-        p_wrapper.wait()
-        print 'DONE'
 
         for test in rec_tests:
             try:
