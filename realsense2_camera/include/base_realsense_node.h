@@ -11,6 +11,7 @@
 
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/update_functions.h>
+#include <diagnostic_msgs/DiagnosticArray.h>
 
 
 namespace realsense2_camera
@@ -96,6 +97,7 @@ namespace realsense2_camera
         void setupPublishers();
         void enable_devices();
         void setupStreams();
+        void publishStatus(bool cam_is_ok);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         tf::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
         void publish_static_tf(const ros::Time& t,
@@ -164,6 +166,7 @@ namespace realsense2_camera
         double _camera_time_base;
         std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
 
+        ros::Publisher _statusPublisher;
         ros::Publisher _pointcloud_publisher;
         ros::Time _ros_time_base;
         bool _align_depth;
