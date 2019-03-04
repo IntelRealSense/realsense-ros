@@ -59,12 +59,16 @@ namespace realsense2_camera
 
     private:
         static void signalHandler(int signum);
-        rs2::device getDevice(std::string& serial_no, bool shutdown_on_failure=true);
-        void waitForDevice(rs2::device& dev);
+        static void closeDevice();
+        void StartDevice();
+        void change_device_callback(rs2::event_information& info);
+        rs2::device getDevice();
         virtual void onInit() override;
         void tryGetLogSeverity(rs2_log_severity& severity) const;
 
         std::unique_ptr<InterfaceRealSenseNode> _realSenseNode;
         rs2::context _ctx;
+        std::string _serial_no;
+        bool _initial_reset;
     };
 }//end namespace

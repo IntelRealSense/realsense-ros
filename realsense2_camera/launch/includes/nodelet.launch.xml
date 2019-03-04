@@ -30,7 +30,6 @@
   <arg name="accel_fps"           default="0"/>
   <arg name="enable_gyro"         default="true"/>
   <arg name="enable_accel"        default="true"/>
-  <arg name="enable_t265"          default="false"/>
 
   <arg name="enable_pointcloud"   default="false"/>
   <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>  <!-- use RS2_STREAM_ANY to avoid using texture -->
@@ -115,7 +114,6 @@
     <param name="accel_fps"                type="int"  value="$(arg accel_fps)"/>
     <param name="enable_gyro"              type="bool" value="$(arg enable_gyro)"/>
     <param name="enable_accel"             type="bool" value="$(arg enable_accel)"/>
-    <param name="enable_t265"               type="bool" value="$(arg enable_t265)"/>
 
     <param name="base_frame_id"            type="str"  value="$(arg base_frame_id)"/>
     <param name="depth_frame_id"           type="str"  value="$(arg depth_frame_id)"/>

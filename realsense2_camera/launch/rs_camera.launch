@@ -29,7 +29,6 @@
   <arg name="accel_fps"           default="250"/>
   <arg name="enable_gyro"         default="true"/>
   <arg name="enable_accel"        default="true"/>
-  <arg name="enable_t265"          default="false"/>
 
   <arg name="enable_pointcloud"         default="false"/>
   <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>
@@ -81,7 +80,6 @@
       <arg name="accel_fps"                value="$(arg accel_fps)"/>
       <arg name="enable_gyro"              value="$(arg enable_gyro)"/>
       <arg name="enable_accel"             value="$(arg enable_accel)"/>
-      <arg name="enable_t265"               value="$(arg enable_t265)"/>
 
       <arg name="filters"                  value="$(arg filters)"/>
       <arg name="clip_distance"            value="$(arg clip_distance)"/>
