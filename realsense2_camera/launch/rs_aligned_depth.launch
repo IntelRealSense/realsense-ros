@@ -23,8 +23,7 @@
 
   <arg name="fisheye_fps"         default="30"/>
   <arg name="depth_fps"           default="30"/>
-  <arg name="infra1_fps"          default="30"/>
-  <arg name="infra2_fps"          default="30"/>
+  <arg name="infra_fps"           default="30"/>
   <arg name="color_fps"           default="30"/>
   <arg name="gyro_fps"            default="400"/>
   <arg name="accel_fps"           default="250"/>
@@ -66,8 +65,7 @@
 
       <arg name="fisheye_fps"              value="$(arg fisheye_fps)"/>
       <arg name="depth_fps"                value="$(arg depth_fps)"/>
-      <arg name="infra1_fps"               value="$(arg infra1_fps)"/>
-      <arg name="infra2_fps"               value="$(arg infra2_fps)"/>
+      <arg name="infra_fps"                value="$(arg infra_fps)"/>
       <arg name="color_fps"                value="$(arg color_fps)"/>
       <arg name="gyro_fps"                 value="$(arg gyro_fps)"/>
       <arg name="accel_fps"                value="$(arg accel_fps)"/>
