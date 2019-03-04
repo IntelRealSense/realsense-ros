@@ -867,7 +867,9 @@ void BaseRealSenseNode::clip_depth(rs2::depth_frame& depth_frame, float depth_sc
     int width = depth_frame.get_width();
     int height = depth_frame.get_height();
 
+    #ifdef _OPENMP
     #pragma omp parallel for schedule(dynamic) //Using OpenMP to try to parallelise the loop
+    #endif
     for (int y = 0; y < height; y++)
     {
         auto depth_pixel_index = y * width;
