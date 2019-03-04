@@ -115,6 +115,7 @@ void RealSenseNodeFactory::change_device_callback(rs2::event_information& info)
 	if (info.was_removed(_device))
 	{
 		ROS_ERROR("The device has been disconnected!");
+		_realSenseNode.reset(nullptr);
 		_device = rs2::device();
 	}
 	if (!_device)
