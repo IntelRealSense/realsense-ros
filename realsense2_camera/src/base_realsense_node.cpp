@@ -95,7 +95,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
 
     // Infrared stream
     _image_format[RS2_STREAM_INFRARED] = CV_8UC1;    // CVBridge type
-    _encoding[RS2_STREAM_INFRARED] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
+    _encoding[RS2_STREAM_INFRARED] = sensor_msgs::image_encodings::MONO8; // ROS message type
     _unit_step_size[RS2_STREAM_INFRARED] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
     _stream_name[RS2_STREAM_INFRARED] = "infra";
     _depth_aligned_encoding[RS2_STREAM_INFRARED] = sensor_msgs::image_encodings::TYPE_16UC1;
@@ -109,7 +109,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
 
     // Types for fisheye stream
     _image_format[RS2_STREAM_FISHEYE] = CV_8UC1;    // CVBridge type
-    _encoding[RS2_STREAM_FISHEYE] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
+    _encoding[RS2_STREAM_FISHEYE] = sensor_msgs::image_encodings::MONO8; // ROS message type
     _unit_step_size[RS2_STREAM_FISHEYE] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
     _stream_name[RS2_STREAM_FISHEYE] = "fisheye";
     _depth_aligned_encoding[RS2_STREAM_FISHEYE] = sensor_msgs::image_encodings::TYPE_16UC1;
