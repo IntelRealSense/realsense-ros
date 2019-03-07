@@ -70,7 +70,7 @@
   <arg name="aligned_depth_to_fisheye1_frame_id" default="$(arg tf_prefix)_aligned_depth_to_fisheye1_frame"/>
   <arg name="aligned_depth_to_fisheye2_frame_id" default="$(arg tf_prefix)_aligned_depth_to_fisheye2_frame"/>
 
-  <arg name="spatial_frame_id"        default="$(arg tf_prefix)_spatial"/>
+  <arg name="odom_frame_id"            default="$(arg tf_prefix)_odom_frame"/>
 
   <arg name="filters"                  default=""/>
   <arg name="clip_distance"            default="-1"/>
@@ -149,7 +149,7 @@
     <param name="aligned_depth_to_fisheye1_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye1_frame_id)"/>
     <param name="aligned_depth_to_fisheye2_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye2_frame_id)"/>
 
-    <param name="spatial_frame_id"                   type="str"  value="$(arg spatial_frame_id)"/>
+    <param name="odom_frame_id"            type="str"  value="$(arg odom_frame_id)"/>
 
     <param name="filters"                  type="str"    value="$(arg filters)"/>
     <param name="clip_distance"            type="double" value="$(arg clip_distance)"/>
