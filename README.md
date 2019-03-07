@@ -89,7 +89,7 @@ The topics are of the form: ```/camera/aligned_depth_to_color/image_raw``` etc.
 - **enable_*<stream_name>***: Choose whether to enable a specified stream or not. Default is true. <stream_name> can be any of *infra1, infra2, color, depth, fisheye, fisheye1, fisheye2, gyro, accel, pose*.
 - **tf_prefix**: By default all frame's ids have the same prefix - `camera_`. This allows changing it per camera.
 - **base_frame_id**: defines the frame_id all static transformations refers to.
-- **spatial_frame_id**: defines the frame_id that `pose` topic refers to.
+- **odom_frame_id**: defines the origin coordinate system in ROS convention (X-Forward, Y-Left, Z-Up). pose topic defines the pose relative to that system.
 - **All the rest of the frame_ids can be found in the template launch file: [nodelet.launch.xml](./realsense2_camera/launch/includes/nodelet.launch.xml)**
 - **unite_imu_method**: The D435i and T265 cameras have built in IMU components which produce 2 unrelated streams: *gyro* - which shows angular velocity and *accel* which shows linear acceleration. Each with it's own frequency. By default, 2 corresponding topics are available, each with only the relevant fields of the message sensor_msgs::Imu are filled out.
 Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default *gyro* and *accel* topics. Under the new topic, all the fields in the Imu message are filled out.

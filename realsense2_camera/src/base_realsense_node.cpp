@@ -80,9 +80,9 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
                                      ros::NodeHandle& privateNodeHandle,
                                      rs2::device dev,
                                      const std::string& serial_no) :
-    _dev(dev),  _node_handle(nodeHandle),
+    _base_frame_id(""), _dev(dev),  _node_handle(nodeHandle),
     _pnh(privateNodeHandle), _json_file_path(""),
-    _serial_no(serial_no), _base_frame_id(""),
+    _serial_no(serial_no),
     _is_initialized_time_base(false),
     _namespace(getNamespaceStr())
 {
@@ -367,7 +367,7 @@ void BaseRealSenseNode::getParameters()
         ROS_DEBUG_STREAM("_enable[" << _stream_name[stream.first] << "]:" << _enable[stream]);
     }
     _pnh.param("base_frame_id", _base_frame_id, DEFAULT_BASE_FRAME_ID);
-    _pnh.param("spatial_frame_id", _spatial_frame_id, DEFAULT_SPATIAL_FRAME_ID);
+    _pnh.param("odom_frame_id", _odom_frame_id, DEFAULT_ODOM_FRAME_ID);
 
     std::vector<stream_index_pair> streams(IMAGE_STREAMS);
     streams.insert(streams.end(), HID_STREAMS.begin(), HID_STREAMS.end());
@@ -1157,22 +1157,38 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
                 frame.get_profile().stream_index(),
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
     const auto& stream_index(POSE);
+    rs2_pose pose = frame.as<rs2::pose_frame>().get_pose_data();
+    double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
+    ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
+
+    geometry_msgs::PoseStamped pose_msg;
+    pose_msg.pose.position.x = -pose.translation.z;
+    pose_msg.pose.position.y = -pose.translation.x;
+    pose_msg.pose.position.z = pose.translation.y;
+    pose_msg.pose.orientation.x = -pose.rotation.z;
+    pose_msg.pose.orientation.y = -pose.rotation.x;
+    pose_msg.pose.orientation.z = pose.rotation.y;
+    pose_msg.pose.orientation.w = pose.rotation.w;
+
+    static tf2_ros::TransformBroadcaster br;
+    geometry_msgs::TransformStamped msg;
+    msg.header.stamp = t;
+    msg.header.frame_id = _odom_frame_id;
+    msg.child_frame_id = _frame_id[POSE];
+    msg.transform.translation.x = pose_msg.pose.position.x;
+    msg.transform.translation.y = pose_msg.pose.position.y;
+    msg.transform.translation.z = pose_msg.pose.position.z;
+    msg.transform.rotation.x = pose_msg.pose.orientation.x;
+    msg.transform.rotation.y = pose_msg.pose.orientation.y;
+    msg.transform.rotation.z = pose_msg.pose.orientation.z;
+    msg.transform.rotation.w = pose_msg.pose.orientation.w;
+
+    br.sendTransform(msg);
+
     if (0 != _imu_publishers[stream_index].getNumSubscribers())
     {
-        rs2_pose pose = frame.as<rs2::pose_frame>().get_pose_data();
-        double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
-        ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
         double cov_pose(_linear_accel_cov * pow(10, 3-pose.tracker_confidence));
         double cov_twist(_angular_velocity_cov * pow(10, 1-pose.tracker_confidence));
-
-        geometry_msgs::PoseStamped pose_msg;
-        pose_msg.pose.position.x = -pose.translation.z;
-        pose_msg.pose.position.y = -pose.translation.x;
-        pose_msg.pose.position.z = pose.translation.y;
-        pose_msg.pose.orientation.x = -pose.rotation.z;
-        pose_msg.pose.orientation.y = -pose.rotation.x;
-        pose_msg.pose.orientation.z = pose.rotation.y;
-        pose_msg.pose.orientation.w = pose.rotation.w;
 
         geometry_msgs::Vector3Stamped v_msg;
         v_msg.vector.x = -pose.velocity.z;
@@ -1187,8 +1203,8 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         nav_msgs::Odometry odom_msg;
         _seq[stream_index] += 1;
 
-        odom_msg.header.frame_id = _spatial_frame_id;
-        odom_msg.child_frame_id = _base_frame_id;
+        odom_msg.header.frame_id = _odom_frame_id;
+        odom_msg.child_frame_id = _frame_id[POSE];
         odom_msg.header.stamp = t;
         odom_msg.header.seq = _seq[stream_index];
         odom_msg.pose.pose = pose_msg.pose;
@@ -1208,21 +1224,6 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
                                     0, 0, 0, 0, 0, cov_twist};
         _imu_publishers[stream_index].publish(odom_msg);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
-
-        static tf2_ros::TransformBroadcaster br;
-        geometry_msgs::TransformStamped msg;
-        msg.header.stamp = t;
-        msg.header.frame_id = _spatial_frame_id;
-        msg.child_frame_id = _base_frame_id;
-        msg.transform.translation.x = pose_msg.pose.position.x;
-        msg.transform.translation.y = pose_msg.pose.position.y;
-        msg.transform.translation.z = pose_msg.pose.position.z;
-        msg.transform.rotation.x = pose_msg.pose.orientation.x;
-        msg.transform.rotation.y = pose_msg.pose.orientation.y;
-        msg.transform.rotation.z = pose_msg.pose.orientation.z;
-        msg.transform.rotation.w = pose_msg.pose.orientation.w;
-
-        br.sendTransform(msg);
     }
 }
 
@@ -1568,7 +1569,7 @@ tf::Quaternion BaseRealSenseNode::rotationMatrixToQuaternion(const float rotatio
 
 void BaseRealSenseNode::publish_static_tf(const ros::Time& t,
                                           const float3& trans,
-                                          const quaternion& q,
+                                          const tf::Quaternion& q,
                                           const std::string& from,
                                           const std::string& to)
 {
@@ -1579,10 +1580,10 @@ void BaseRealSenseNode::publish_static_tf(const ros::Time& t,
     msg.transform.translation.x = trans.z;
     msg.transform.translation.y = -trans.x;
     msg.transform.translation.z = -trans.y;
-    msg.transform.rotation.x = q.x;
-    msg.transform.rotation.y = q.y;
-    msg.transform.rotation.z = q.z;
-    msg.transform.rotation.w = q.w;
+    msg.transform.rotation.x = q.getX();
+    msg.transform.rotation.y = q.getY();
+    msg.transform.rotation.z = q.getZ();
+    msg.transform.rotation.w = q.getW();
     _static_tf_broadcaster.sendTransform(msg);
 }
 
@@ -1617,17 +1618,16 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
     Q = quaternion_optical * Q * quaternion_optical.inverse();
 
     float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
-    quaternion q1{Q.getX(), Q.getY(), Q.getZ(), Q.getW()};
-    publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _frame_id[stream]);
+    publish_static_tf(transform_ts_, trans, Q, _base_frame_id, _frame_id[stream]);
 
     // Transform stream frame to stream optical frame
-    quaternion q2{quaternion_optical.getX(), quaternion_optical.getY(), quaternion_optical.getZ(), quaternion_optical.getW()};
+    publish_static_tf(transform_ts_, zero_trans, quaternion_optical, _frame_id[stream], _optical_frame_id[stream]);
+
     if (_align_depth && _depth_aligned_frame_id.find(stream) != _depth_aligned_frame_id.end())
     {
-        publish_static_tf(transform_ts_, trans, q1, _base_frame_id, _depth_aligned_frame_id[stream]);
-        publish_static_tf(transform_ts_, zero_trans, q2, _depth_aligned_frame_id[stream], _optical_frame_id[stream]);
+        publish_static_tf(transform_ts_, trans, Q, _base_frame_id, _depth_aligned_frame_id[stream]);
+        publish_static_tf(transform_ts_, zero_trans, quaternion_optical, _depth_aligned_frame_id[stream], _optical_frame_id[stream]);
     }
-    publish_static_tf(transform_ts_, zero_trans, q2, _frame_id[stream], _optical_frame_id[stream]);
 }
 
 void BaseRealSenseNode::publishStaticTransforms()

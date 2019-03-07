@@ -8,13 +8,15 @@
   <arg name="fisheye_width"       default="0"/>
   <arg name="fisheye_height"      default="0"/>
   <arg name="enable_fisheye"      default="true"/>
+  <arg name="enable_fisheye1"     default="true"/>
+  <arg name="enable_fisheye2"     default="true"/>
 
   <arg name="depth_width"         default="640"/>
   <arg name="depth_height"        default="480"/>
   <arg name="enable_depth"        default="true"/>
 
-  <arg name="infra_width"        default="640"/>
-  <arg name="infra_height"       default="480"/>
+  <arg name="infra_width"         default="640"/>
+  <arg name="infra_height"        default="480"/>
   <arg name="enable_infra1"       default="true"/>
   <arg name="enable_infra2"       default="true"/>
 
@@ -68,7 +70,7 @@
   <arg name="aligned_depth_to_fisheye1_frame_id" default="$(arg tf_prefix)_aligned_depth_to_fisheye1_frame"/>
   <arg name="aligned_depth_to_fisheye2_frame_id" default="$(arg tf_prefix)_aligned_depth_to_fisheye2_frame"/>
 
-  <arg name="spatial_frame_id"        default="$(arg tf_prefix)_spatial"/>
+  <arg name="odom_frame_id"            default="$(arg tf_prefix)_odom_frame"/>
 
   <arg name="filters"                  default=""/>
   <arg name="clip_distance"            default="-1"/>
@@ -92,6 +94,8 @@
     <param name="fisheye_width"            type="int"  value="$(arg fisheye_width)"/>
     <param name="fisheye_height"           type="int"  value="$(arg fisheye_height)"/>
     <param name="enable_fisheye"           type="bool" value="$(arg enable_fisheye)"/>
+    <param name="enable_fisheye1"          type="bool" value="$(arg enable_fisheye1)"/>
+    <param name="enable_fisheye2"          type="bool" value="$(arg enable_fisheye2)"/>
 
     <param name="depth_width"              type="int"  value="$(arg depth_width)"/>
     <param name="depth_height"             type="int"  value="$(arg depth_height)"/>
@@ -145,7 +149,7 @@
     <param name="aligned_depth_to_fisheye1_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye1_frame_id)"/>
     <param name="aligned_depth_to_fisheye2_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye2_frame_id)"/>
 
-    <param name="spatial_frame_id"                   type="str"  value="$(arg spatial_frame_id)"/>
+    <param name="odom_frame_id"            type="str"  value="$(arg odom_frame_id)"/>
 
     <param name="filters"                  type="str"    value="$(arg filters)"/>
     <param name="clip_distance"            type="double" value="$(arg clip_distance)"/>

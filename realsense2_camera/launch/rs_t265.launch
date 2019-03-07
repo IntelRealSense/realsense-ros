@@ -12,7 +12,8 @@ https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/lib
 
   <arg name="fisheye_width"       default="848"/> 
   <arg name="fisheye_height"      default="800"/>
-  <arg name="enable_fisheye"      default="true"/>
+  <arg name="enable_fisheye1"     default="true"/>
+  <arg name="enable_fisheye2"     default="true"/>
 
   <arg name="fisheye_fps"         default="30"/>
 
@@ -37,7 +38,8 @@ https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/lib
 
       <arg name="fisheye_width"            value="$(arg fisheye_width)"/>
       <arg name="fisheye_height"           value="$(arg fisheye_height)"/>
-      <arg name="enable_fisheye"           value="$(arg enable_fisheye)"/>
+      <arg name="enable_fisheye1"          value="$(arg enable_fisheye1)"/>
+      <arg name="enable_fisheye2"          value="$(arg enable_fisheye2)"/>
 
       <arg name="fisheye_fps"              value="$(arg fisheye_fps)"/>
       <arg name="gyro_fps"                 value="$(arg gyro_fps)"/>
