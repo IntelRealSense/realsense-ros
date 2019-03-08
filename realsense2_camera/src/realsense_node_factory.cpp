@@ -105,6 +105,7 @@ void RealSenseNodeFactory::onInit()
 			usleep(hardware_reset_time * 1000000);
 			rs2::device_hub hub(_ctx);
 			_device = hub.wait_for_device();
+			auto serial_no = _device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
 
 			_ctx.set_devices_changed_callback([this](rs2::event_information& info)
 			{
