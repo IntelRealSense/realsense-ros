@@ -1,6 +1,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #pragma ide diagnostic ignored "OCDFAInspection"
+#include <boost/format.hpp>
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <gtest/gtest.h>
 #include <dynamic_reconfigure/Reconfigure.h>
@@ -287,7 +288,9 @@ namespace ddynamic_reconfigure {
         ASSERT_EQ(1, at(map,"int_param")->getValue().toInt());
         ASSERT_EQ(0.6, at(map,"double_param")->getValue().toDouble());
         ASSERT_EQ("Goodbye Home", at(map,"str_param")->getValue().toString());
-        ASSERT_EQ(false, at(map,"bool_param")->getValue().toBool());
+        // GCC thinks GTEST is trying to convert a bool to a pointer if ASSERT_EQ
+        // is used here. Use ASSERT_TRUE instead to avoid the warning.
+        ASSERT_TRUE(false == at(map,"bool_param")->getValue().toBool());
         ASSERT_EQ(3, at(map,"enum_param")->getValue().toInt());
     }
 
@@ -394,7 +397,7 @@ namespace ddynamic_reconfigure {
         for (int i = 1; i < top; i++) {
             next = (unsigned int) random();
             or_sum |= next;
-            dd.add(new DDInt((format("param_%d") % i).str(), next,"level_param", 0));
+            dd.add(new DDInt((boost::format("param_%d") % i).str(), next,"level_param", 0));
         }
         dd.start(callback);
 
@@ -404,7 +407,7 @@ namespace ddynamic_reconfigure {
         dynamic_reconfigure::Reconfigure srv;
         dynamic_reconfigure::IntParameter int_param;
         for (int i = 1; i < top; i++) {
-            int_param.name = (format("param_%d") % i).str();
+            int_param.name = (boost::format("param_%d") % i).str();
             int_param.value = 1;
             srv.request.config.ints.push_back(int_param);
         }
