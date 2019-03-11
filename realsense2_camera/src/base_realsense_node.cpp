@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <cctype>
 #include <mutex>
-#include <tf/transform_broadcaster.h>
-#include <thread>
 
 using namespace realsense2_camera;
 using namespace ddynamic_reconfigure;
@@ -128,6 +126,10 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
 
 BaseRealSenseNode::~BaseRealSenseNode()
 {
+    // Kill dynamic transform thread
+    if (_publish_tf && _tf_publish_rate > 0)
+        _tf_t->join();
+
     _is_running = false;
     _cv.notify_one();
     if (_monitoring_t && _monitoring_t->joinable())
@@ -191,6 +193,15 @@ void BaseRealSenseNode::publishTopics()
     SetBaseStream();
     registerAutoExposureROIOptions(_node_handle);
     publishStaticTransforms();
+    if (_publish_tf)
+    {
+        // Static transform for non-positive values
+        if (_tf_publish_rate > 0)
+            _tf_t = std::shared_ptr<std::thread>(new std::thread(boost::bind(&BaseRealSenseNode::publishDynamicTransforms, this)));
+        else
+            _static_tf_broadcaster.sendTransform(_static_tf_msgs);
+    }
+
     publishIntrinsics();
     startMonitoring();
     ROS_INFO_STREAM("RealSense Node Is Up!");
@@ -530,6 +541,9 @@ void BaseRealSenseNode::getParameters()
 
     _pnh.param("filters", _filters_str, DEFAULT_FILTERS);
     _pointcloud |= (_filters_str.find("pointcloud") != std::string::npos);
+
+    _pnh.param("publish_tf", _publish_tf, PUBLISH_TF);
+    _pnh.param("tf_publish_rate", _tf_publish_rate, TF_PUBLISH_RATE);
 
     _pnh.param("enable_sync", _sync_frames, SYNC_FRAMES);
     if (_pointcloud || _align_depth || _filters_str.size() > 0)
@@ -1814,7 +1828,7 @@ void BaseRealSenseNode::publish_static_tf(const ros::Time& t,
     msg.transform.rotation.y = q.getY();
     msg.transform.rotation.z = q.getZ();
     msg.transform.rotation.w = q.getW();
-    _static_tf_broadcaster.sendTransform(msg);
+    _static_tf_msgs.push_back(msg);
 }
 
 void BaseRealSenseNode::calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile)
@@ -1880,13 +1894,17 @@ void BaseRealSenseNode::SetBaseStream()
 
 void BaseRealSenseNode::publishStaticTransforms()
 {
-    // Publish static transforms
     rs2::stream_profile base_profile = getAProfile(_base_stream);
-    for (std::pair<stream_index_pair, bool> ienable : _enable)
+
+    // Publish static transforms
+    if (_publish_tf)
     {
-        if (ienable.second)
+        for (std::pair<stream_index_pair, bool> ienable : _enable)
         {
-            calcAndPublishStaticTransform(ienable.first, base_profile);
+            if (ienable.second)
+            {
+                calcAndPublishStaticTransform(ienable.first, base_profile);
+            }
         }
     }
 
@@ -1928,6 +1946,26 @@ void BaseRealSenseNode::publishStaticTransforms()
         _depth_to_other_extrinsics_publishers[INFRA2].publish(rsExtrinsicsToMsg(ex, frame_id));
     }
 
+}
+
+void BaseRealSenseNode::publishDynamicTransforms()
+{
+    // Publish transforms for the cameras
+    ROS_WARN("Publishing dynamic camera transforms (/tf) at %.f Hz", _tf_publish_rate);
+
+    ros::Rate loop_rate(_tf_publish_rate);
+
+    while (ros::ok())
+    {
+        // Update the time stamp for publication
+        ros::Time t = ros::Time::now();
+        for(auto& msg : _static_tf_msgs)
+            msg.header.stamp = t;
+
+        _dynamic_tf_broadcaster.sendTransform(_static_tf_msgs);
+
+        loop_rate.sleep();
+    }
 }
 
 void BaseRealSenseNode::publishIntrinsics()
