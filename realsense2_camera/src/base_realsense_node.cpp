@@ -217,14 +217,22 @@ std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option optio
 }
 
 /**
+ * Same as ros::names::isValidCharInName, but re-implemented here because it's not exposed.
+ */
+bool isValidCharInName(char c)
+{
+    return std::isalnum(c) || c == '/' || c == '_';
+}
+
+/**
  * ROS Graph Resource names don't allow spaces and hyphens (see http://wiki.ros.org/Names),
  * so we replace them here with underscores.
  */
 std::string create_graph_resource_name(const std::string &original_name)
 {
   std::string fixed_name = original_name;
-  std::replace(fixed_name.begin(), fixed_name.end(), '-', '_');
-  std::replace(fixed_name.begin(), fixed_name.end(), ' ', '_');
+  std::replace_if(fixed_name.begin(), fixed_name.end(), [](const char c) { return !isValidCharInName(c); },
+                  '_');
   return fixed_name;
 }
 
