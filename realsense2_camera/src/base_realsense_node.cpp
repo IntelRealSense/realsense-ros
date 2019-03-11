@@ -2,6 +2,7 @@
 #include "assert.h"
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
+#include <cctype>
 #include <mutex>
 #include <tf/transform_broadcaster.h>
 
@@ -231,6 +232,8 @@ bool isValidCharInName(char c)
 std::string create_graph_resource_name(const std::string &original_name)
 {
   std::string fixed_name = original_name;
+  std::transform(fixed_name.begin(), fixed_name.end(), fixed_name.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
   std::replace_if(fixed_name.begin(), fixed_name.end(), [](const char c) { return !isValidCharInName(c); },
                   '_');
   return fixed_name;
