@@ -217,6 +217,23 @@ std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option optio
     return dict;
 }
 
+namespace realsense2_camera
+{
+
+template <typename K, typename V>
+std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m)
+{
+    os << '{';
+    for (const auto& kv : m)
+    {
+        os << " {" << kv.first << ": " << kv.second << '}';
+    }
+    os << " }";
+    return os;
+}
+
+}
+
 /**
  * Same as ros::names::isValidCharInName, but re-implemented here because it's not exposed.
  */
@@ -261,7 +278,7 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
             ddynrec->add(new DDBool(option_name, i, sensor.get_option_description(option), option_value));
             continue;
         }
-        std::map<std::string, int> enum_dict = get_enum_method(sensor, option);
+        const auto enum_dict = get_enum_method(sensor, option);
         if (enum_dict.empty())
         {
             rs2::option_range op_range = sensor.get_option_range(option);
@@ -310,27 +327,19 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
             auto option_value = int(sensor_option_value);
             if (nh1.param(option_name, option_value, option_value))
             {
-                if (option_value > (int)enum_dict.size())
+                if (std::find_if(enum_dict.cbegin(), enum_dict.cend(),
+                                 [&option_value](const std::pair<std::string, int>& kv) {
+                                     return kv.second == option_value;
+                                 }) == enum_dict.cend())
                 {
-                  ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option << " > "
-                                            << enum_dict.size() << ". Using current sensor value "
-                                            << sensor_option_value << " instead.");
-                  option_value = sensor_option_value;
+                    ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option_value
+                                              << " that is not in the enum " << enum_dict
+                                              << ". Using current sensor value " << sensor_option_value << " instead.");
+                    option_value = sensor_option_value;
                 }
                 else
                 {
                     sensor.set_option(option, option_value);
-                }
-            }
-            if (option_value > (int)enum_dict.size())
-            {
-                ROS_WARN_STREAM("Option " << option_name <<
-                                " has a value: " << option_value <<
-                                " which is beyond it's scope: " << enum_dict.size());
-                ROS_DEBUG_STREAM("Add enum: " << option_name << ". value=" << option_value);
-                for (auto item: enum_dict)
-                {
-                    ROS_INFO_STREAM("Add item: " << item.first << ":" << item.second); // << ":" << sensor.get_option_description(static_cast<rs2_option>(item.second)));
                 }
             }
             ddynrec->add(new DDEnum(option_name, i, sensor.get_option_description(option), option_value, enum_dict));
