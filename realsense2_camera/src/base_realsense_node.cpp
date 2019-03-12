@@ -209,9 +209,12 @@ std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option optio
     if (is_enum_option(sensor, option))
     {
         rs2::option_range op_range = sensor.get_option_range(option);
-        for (auto val = op_range.min; val <= op_range.max; val += op_range.step)
+        const auto op_range_min = int(op_range.min);
+        const auto op_range_max = int(op_range.max);
+        const auto op_range_step = int(op_range.step);
+        for (auto val = op_range_min; val <= op_range_max; val += op_range_step)
         {
-            dict[sensor.get_option_value_description(option, val)] = int(val);
+            dict[sensor.get_option_value_description(option, val)] = val;
         }
     }
     return dict;
