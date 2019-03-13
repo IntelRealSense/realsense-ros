@@ -15,6 +15,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>image_transport</depend>
   <depend>cv_bridge</depend>
+  <depend>nav_msgs</depend>
   <depend>nodelet</depend>  
   <depend>genmsg</depend>
   <depend>roscpp</depend>
