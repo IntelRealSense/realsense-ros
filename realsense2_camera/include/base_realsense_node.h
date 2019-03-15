@@ -42,8 +42,9 @@ namespace realsense2_camera
 
       void update()
       {
-        frequency_status_.tick();
-        diagnostic_updater_.update();
+        // Disable frequency diagnostics updater. Diagnostics is now published in publishStatus time callback 
+        // frequency_status_.tick();
+        // diagnostic_updater_.update();
       }
 
       double expected_frequency_;
