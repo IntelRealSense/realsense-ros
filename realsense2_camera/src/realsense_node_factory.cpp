@@ -98,13 +98,21 @@ void RealSenseNodeFactory::onInit()
 			*/
 			
 			// HACK: Do a hardware reset of the camera and wait for a fixed time
-			_device = _ctx.query_devices().front(); // Reset the first device
+			auto devices = _ctx.query_devices();
+			if (devices.size() < 1)
+			{
+				ROS_ERROR("No realsense devices found. Is camera connected?");
+				ros::shutdown();
+				exit(1);
+			}
+			_device = devices.front(); // Get the first device
 			int hardware_reset_time = 9; // Testing showed that 8 seconds was too short. Exact time unkown, 9 sec seems to work.
 			ROS_INFO("Device is being hardware reset for %d seconds", hardware_reset_time);
 			_device.hardware_reset();
 			usleep(hardware_reset_time * 1000000);
 			rs2::device_hub hub(_ctx);
 			_device = hub.wait_for_device();
+			auto serial_no = _device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
 
 			_ctx.set_devices_changed_callback([this](rs2::event_information& info)
 			{

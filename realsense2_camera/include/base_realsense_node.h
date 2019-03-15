@@ -42,8 +42,9 @@ namespace realsense2_camera
 
       void update()
       {
-        frequency_status_.tick();
-        diagnostic_updater_.update();
+        // Disable frequency diagnostics updater. Diagnostics is now published in publishStatus time callback 
+        // frequency_status_.tick();
+        // diagnostic_updater_.update();
       }
 
       double expected_frequency_;
@@ -74,10 +75,11 @@ namespace realsense2_camera
         virtual ~BaseRealSenseNode() {}
 
     protected:
-
         const uint32_t set_default_dynamic_reconfig_values = 0xffffffff;
         rs2::device _dev;
+        rs2::context _ctx;
         ros::NodeHandle& _node_handle, _pnh;
+        ros::Timer _timer;
         std::map<stream_index_pair, rs2::sensor> _sensors;
 
     private:
@@ -97,7 +99,7 @@ namespace realsense2_camera
         void setupPublishers();
         void enable_devices();
         void setupStreams();
-        void publishStatus(bool cam_is_ok);
+        void publishStatus(const ros::TimerEvent& event);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         tf::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
         void publish_static_tf(const ros::Time& t,
@@ -138,6 +140,8 @@ namespace realsense2_camera
         std::string _json_file_path;
         std::string _serial_no;
         float _depth_scale_meters;
+        ros::Time _last_time_cam_was_ok;
+        float _cam_ok_timeout;
 
         std::map<stream_index_pair, rs2_intrinsics> _stream_intrinsics;
         std::map<stream_index_pair, int> _width;

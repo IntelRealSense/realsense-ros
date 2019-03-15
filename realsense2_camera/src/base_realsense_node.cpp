@@ -79,6 +79,11 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _encoding[ACCEL] = sensor_msgs::image_encodings::TYPE_8UC1; // ROS message type
     _unit_step_size[ACCEL] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
     _stream_name[ACCEL] = "accel";
+
+    // Set up timed callback for diagnotics
+    _last_time_cam_was_ok = ros::Time::now();
+    _cam_ok_timeout = 1.0;
+    _timer = _node_handle.createTimer(ros::Duration(1.0), &BaseRealSenseNode::publishStatus, this);
 }
 
 void BaseRealSenseNode::publishTopics()
@@ -534,21 +539,32 @@ void BaseRealSenseNode::enable_devices()
 	}
 }
 
-void BaseRealSenseNode::publishStatus(bool cam_is_ok)
+void BaseRealSenseNode::publishStatus(const ros::TimerEvent& event)
 {
     diagnostic_msgs::DiagnosticStatus cameraStatus;
     cameraStatus.name = "realsense_camera";
     cameraStatus.hardware_id = _serial_no;
+    auto dev = _ctx.query_devices();
 
-    if (cam_is_ok)
+    bool cam_is_ok = (ros::Time::now() - _last_time_cam_was_ok).toSec() < _cam_ok_timeout;
+
+    if (dev.size() > 0)
     {
-        cameraStatus.level = diagnostic_msgs::DiagnosticStatus::OK;
-        cameraStatus.message = "OK";
+        if (cam_is_ok)
+        {
+            cameraStatus.level = diagnostic_msgs::DiagnosticStatus::OK;
+            cameraStatus.message = "OK";
+        }
+        else
+        {
+            cameraStatus.level = diagnostic_msgs::DiagnosticStatus::ERROR;
+            cameraStatus.message = "ERROR";
+        }
     }
     else
     {
-        cameraStatus.level = diagnostic_msgs::DiagnosticStatus::ERROR;
-        cameraStatus.message = "ERROR";
+        cameraStatus.level = diagnostic_msgs::DiagnosticStatus::STALE;
+        cameraStatus.message = "Camera disconnected";
     }
 
     diagnostic_msgs::DiagnosticArray diagnostics_msg;
@@ -666,8 +682,8 @@ void BaseRealSenseNode::setupStreams()
                                  _encoding);
                 }
                 
-                // Publish status over diagnostics topic
-                publishStatus(_pointcloud);
+                // If pointcloud exists, the camera is ok
+                if (_pointcloud) _last_time_cam_was_ok = ros::Time::now();
 
                 if(_pointcloud && (0 != _pointcloud_publisher.getNumSubscribers()))
                 {
