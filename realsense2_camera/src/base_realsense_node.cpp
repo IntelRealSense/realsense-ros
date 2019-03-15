@@ -558,7 +558,7 @@ void BaseRealSenseNode::publishStatus(const ros::TimerEvent& event)
         else
         {
             cameraStatus.level = diagnostic_msgs::DiagnosticStatus::ERROR;
-            cameraStatus.message = "ERROR";
+            cameraStatus.message = "Camera connected, but no frames arriving";
         }
     }
     else
