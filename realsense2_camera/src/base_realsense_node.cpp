@@ -701,19 +701,6 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
             rs2::frameset processed = frames.apply_filter(*align);
             rs2::depth_frame aligned_depth_frame = processed.get_depth_frame();
 
-            static const auto meter_to_mm = 0.001f;
-            int width = aligned_depth_frame.get_width();
-            int height = aligned_depth_frame.get_height();
-            uint16_t* p_depth_frame = reinterpret_cast<uint16_t*>(const_cast<void*>(aligned_depth_frame.get_data()));
-            for (int y=0; y<height; ++y)
-            {
-                for (int x=0; x<width; ++x)
-                {
-                    p_depth_frame[y*width+x] *= _depth_scale_meters / meter_to_mm;
-                }
-
-            }
-
             publishFrame(aligned_depth_frame, t, sip,
                          _depth_aligned_image,
                          _depth_aligned_info_publisher,
@@ -888,7 +875,7 @@ void BaseRealSenseNode::setupFilters()
     ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));
 }
 
-void BaseRealSenseNode::fix_depth_scale(rs2::depth_frame& depth_frame)
+void BaseRealSenseNode::fix_depth_scale(rs2::depth_frame depth_frame)
 {
     uint16_t* p_depth_frame = reinterpret_cast<uint16_t*>(const_cast<void*>(depth_frame.get_data()));
 
@@ -912,7 +899,7 @@ void BaseRealSenseNode::fix_depth_scale(rs2::depth_frame& depth_frame)
     }
 }
 
-void BaseRealSenseNode::clip_depth(rs2::depth_frame& depth_frame, float clipping_dist)
+void BaseRealSenseNode::clip_depth(rs2::depth_frame depth_frame, float clipping_dist)
 {
     uint16_t* p_depth_frame = reinterpret_cast<uint16_t*>(const_cast<void*>(depth_frame.get_data()));
 
@@ -1436,6 +1423,14 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                         rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame_time, t.toNSec());
 
             stream_index_pair sip{stream_type,stream_index};
+            if (frame.is<rs2::depth_frame>())
+            {
+                fix_depth_scale(frame);
+                if (_clipping_distance > 0)
+                {
+                    this->clip_depth(frame, _clipping_distance);
+                }
+            }
             publishFrame(frame, t,
                             sip,
                             _image,
