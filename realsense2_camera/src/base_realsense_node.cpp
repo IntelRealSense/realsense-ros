@@ -255,7 +255,21 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
             }
             else
             {
-                ddynrec->add(new DDDouble(option_name, i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
+                if (i == RS2_OPTION_DEPTH_UNITS)
+                {
+                    if (ROS_DEPTH_SCALE >= op_range.min && ROS_DEPTH_SCALE <= op_range.max)
+                    {
+                        sensor.set_option(option, ROS_DEPTH_SCALE);
+                        op_range.min = ROS_DEPTH_SCALE;
+                        op_range.max = ROS_DEPTH_SCALE;
+
+                        _depth_scale_meters = ROS_DEPTH_SCALE;
+                    }
+                }
+                else
+                {
+                    ddynrec->add(new DDDouble(option_name, i, sensor.get_option_description(option), sensor.get_option(option), op_range.min, op_range.max));
+                }
             }
         }
         else
@@ -874,9 +888,13 @@ void BaseRealSenseNode::setupFilters()
     ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));
 }
 
-void BaseRealSenseNode::clip_depth(rs2::depth_frame& depth_frame, float depth_scale, float clipping_dist)
+void BaseRealSenseNode::fix_depth_scale(rs2::depth_frame& depth_frame)
 {
     uint16_t* p_depth_frame = reinterpret_cast<uint16_t*>(const_cast<void*>(depth_frame.get_data()));
+
+    static const auto meter_to_mm = 0.001f;
+    if (abs(_depth_scale_meters - meter_to_mm) < 1e-6)
+        return;
 
     int width = depth_frame.get_width();
     int height = depth_frame.get_height();
@@ -889,13 +907,31 @@ void BaseRealSenseNode::clip_depth(rs2::depth_frame& depth_frame, float depth_sc
         auto depth_pixel_index = y * width;
         for (int x = 0; x < width; x++, ++depth_pixel_index)
         {
-            // Get the depth value of the current pixel
-            auto pixels_distance = depth_scale * p_depth_frame[depth_pixel_index];
+            p_depth_frame[depth_pixel_index] *= _depth_scale_meters / meter_to_mm;
+        }
+    }
+}
 
+void BaseRealSenseNode::clip_depth(rs2::depth_frame& depth_frame, float clipping_dist)
+{
+    uint16_t* p_depth_frame = reinterpret_cast<uint16_t*>(const_cast<void*>(depth_frame.get_data()));
+
+    int width = depth_frame.get_width();
+    int height = depth_frame.get_height();
+
+    #ifdef _OPENMP
+    #pragma omp parallel for schedule(dynamic) //Using OpenMP to try to parallelise the loop
+    #endif
+    uint16_t clipping_value = static_cast<uint16_t>(clipping_dist / _depth_scale_meters);
+    for (int y = 0; y < height; y++)
+    {
+        auto depth_pixel_index = y * width;
+        for (int x = 0; x < width; x++, ++depth_pixel_index)
+        {
             // Check if the depth value is greater than the threashold
-            if (pixels_distance > clipping_dist)
+            if (p_depth_frame[depth_pixel_index] > clipping_value)
             {
-                p_depth_frame[depth_pixel_index] = -1; //Set to invalid (<=0) value.
+                p_depth_frame[depth_pixel_index] = 0; //Set to invalid (<=0) value.
             }
         }
     }
@@ -1270,7 +1306,6 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
         {
             ROS_DEBUG("Frameset arrived.");
             bool is_depth_arrived = false;
-            rs2::frame depth_frame;
             auto frameset = frame.as<rs2::frameset>();
             ROS_DEBUG("List of frameset before applying filters: size: %d", static_cast<int>(frameset.size()));
             for (auto it = frameset.begin(); it != frameset.end(); ++it)
@@ -1285,11 +1320,14 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                             rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame_time, t.toNSec());
             }
             // Clip depth_frame for max range:
-            if (_clipping_distance > 0)
+            rs2::depth_frame depth_frame = frameset.get_depth_frame();
+            if (depth_frame)
             {
-                rs2::depth_frame depth_frame = frameset.get_depth_frame();
-                if (depth_frame)
-                    this->clip_depth(depth_frame,_depth_scale_meters, _clipping_distance);
+                fix_depth_scale(depth_frame);
+                if (_clipping_distance > 0)
+                {
+                    this->clip_depth(depth_frame, _clipping_distance);
+                }
             }
 
 
@@ -1347,7 +1385,6 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                 }
                 if (_align_depth && stream_type == RS2_STREAM_DEPTH && stream_format == RS2_FORMAT_Z16)
                 {
-                    depth_frame = f;
                     is_depth_arrived = true;
                 }
             }

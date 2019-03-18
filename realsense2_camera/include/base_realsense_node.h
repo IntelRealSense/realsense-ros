@@ -190,7 +190,8 @@ namespace realsense2_camera
         void setupFilters();
         void setupStreams();
         void setBaseTime(double frame_time, bool warn_no_metadata);
-        void clip_depth(rs2::depth_frame& depth_frame, float depth_scale, float clipping_dist);
+        void fix_depth_scale(rs2::depth_frame& depth_frame);
+        void clip_depth(rs2::depth_frame& depth_frame, float clipping_dist);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         void publishStaticTransforms();
         void publishPointCloud(rs2::points f, const ros::Time& t, const rs2::frameset& frameset);
