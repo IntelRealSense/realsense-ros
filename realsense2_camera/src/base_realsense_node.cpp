@@ -875,7 +875,7 @@ void BaseRealSenseNode::setupFilters()
     ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));
 }
 
-void BaseRealSenseNode::fix_depth_scale(rs2::depth_frame& depth_frame)
+void BaseRealSenseNode::fix_depth_scale(rs2::depth_frame depth_frame)
 {
     uint16_t* p_depth_frame = reinterpret_cast<uint16_t*>(const_cast<void*>(depth_frame.get_data()));
 
@@ -899,7 +899,7 @@ void BaseRealSenseNode::fix_depth_scale(rs2::depth_frame& depth_frame)
     }
 }
 
-void BaseRealSenseNode::clip_depth(rs2::depth_frame& depth_frame, float clipping_dist)
+void BaseRealSenseNode::clip_depth(rs2::depth_frame depth_frame, float clipping_dist)
 {
     uint16_t* p_depth_frame = reinterpret_cast<uint16_t*>(const_cast<void*>(depth_frame.get_data()));
 
@@ -1423,6 +1423,14 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                         rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame_time, t.toNSec());
 
             stream_index_pair sip{stream_type,stream_index};
+            if (frame.is<rs2::depth_frame>())
+            {
+                fix_depth_scale(frame);
+                if (_clipping_distance > 0)
+                {
+                    this->clip_depth(frame, _clipping_distance);
+                }
+            }
             publishFrame(frame, t,
                             sip,
                             _image,

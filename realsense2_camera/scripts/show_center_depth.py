@@ -6,6 +6,7 @@ import os
 
 class ImageListener:
     def __init__(self, topic):
+        self.topic = topic
         self.bridge = CvBridge()
         self.sub = rospy.Subscriber(topic, msg_Image, self.imageDepthCallback)
 
@@ -13,7 +14,7 @@ class ImageListener:
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
             pix = (data.width/2, data.height/2)
-            sys.stdout.write('Depth at center(%d, %d): %f\r' % (pix[0], pix[1], cv_image[pix[1], pix[0]]))
+            sys.stdout.write('%s: Depth at center(%d, %d): %f(mm)\r' % (self.topic, pix[0], pix[1], cv_image[pix[1], pix[0]]))
             sys.stdout.flush()
         except CvBridgeError as e:
             print(e)
