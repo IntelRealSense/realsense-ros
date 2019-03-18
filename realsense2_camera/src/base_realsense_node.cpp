@@ -319,10 +319,6 @@ void BaseRealSenseNode::callback(const ddynamic_reconfigure::DDMap& map, int lev
     double value = get(map, option_name.c_str()).toDouble();
     ROS_DEBUG_STREAM("option: " << option_name << ". value: " << value);
     sensor.set_option(option, value);
-    // if (option == RS2_OPTION_DEPTH_UNITS)
-    // {
-    //     _depth_scale_meters = ROS_DEPTH_SCALE;
-    // }
 }
 
 rs2_stream BaseRealSenseNode::rs2_string_to_stream(std::string str)
