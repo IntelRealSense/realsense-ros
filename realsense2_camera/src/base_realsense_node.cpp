@@ -1584,9 +1584,10 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     _camera_info[stream_index].R.at(7) = 0.0;
     _camera_info[stream_index].R.at(8) = 1.0;
 
+    _camera_info[stream_index].D.resize(5);
     for (int i = 0; i < 5; i++)
     {
-        _camera_info[stream_index].D.push_back(intrinsic.coeffs[i]);
+        _camera_info[stream_index].D.at(i) = intrinsic.coeffs[i];
     }
 
     if (stream_index == DEPTH && _enable[DEPTH] && _enable[COLOR])
