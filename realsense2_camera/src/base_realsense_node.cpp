@@ -1223,18 +1223,27 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
 
     if (0 != _imu_publishers[stream_index].getNumSubscribers())
     {
-        double cov_pose(_linear_accel_cov * pow(10, 3-pose.tracker_confidence));
-        double cov_twist(_angular_velocity_cov * pow(10, 1-pose.tracker_confidence));
+        double cov_pose(_linear_accel_cov * pow(10, 3-(int)pose.tracker_confidence));
+        double cov_twist(_angular_velocity_cov * pow(10, 1-(int)pose.tracker_confidence));
 
         geometry_msgs::Vector3Stamped v_msg;
         v_msg.vector.x = -pose.velocity.z;
         v_msg.vector.y = -pose.velocity.x;
         v_msg.vector.z = pose.velocity.y;
-
+	tf::Vector3 tfv;
+	tf::vector3MsgToTF(v_msg.vector,tfv);
+	tf::Quaternion q(-msg.transform.rotation.x,-msg.transform.rotation.y,-msg.transform.rotation.z,msg.transform.rotation.w);
+	tfv=tf::quatRotate(q,tfv);
+	tf::vector3TFToMsg(tfv,v_msg.vector);
+	
         geometry_msgs::Vector3Stamped om_msg;
         om_msg.vector.x = -pose.angular_velocity.z;
         om_msg.vector.y = -pose.angular_velocity.x;
         om_msg.vector.z = pose.angular_velocity.y;
+	tf::vector3MsgToTF(om_msg.vector,tfv);
+	tfv=tf::quatRotate(q,tfv);
+	tf::vector3TFToMsg(tfv,om_msg.vector);
+	
 
         nav_msgs::Odometry odom_msg;
         _seq[stream_index] += 1;
@@ -1247,14 +1256,14 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         odom_msg.pose.covariance = {cov_pose, 0, 0, 0, 0, 0,
                                     0, cov_pose, 0, 0, 0, 0,
                                     0, 0, cov_pose, 0, 0, 0,
-                                    0, 0, 0, cov_pose, 0, 0,
-                                    0, 0, 0, 0, cov_pose, 0,
-                                    0, 0, 0, 0, 0, cov_pose};
+                                    0, 0, 0, cov_twist, 0, 0,
+                                    0, 0, 0, 0, cov_twist, 0,
+                                    0, 0, 0, 0, 0, cov_twist};
         odom_msg.twist.twist.linear = v_msg.vector;
         odom_msg.twist.twist.angular = om_msg.vector;
-        odom_msg.twist.covariance ={cov_twist, 0, 0, 0, 0, 0,
-                                    0, cov_twist, 0, 0, 0, 0,
-                                    0, 0, cov_twist, 0, 0, 0,
+        odom_msg.twist.covariance ={cov_pose, 0, 0, 0, 0, 0,
+                                    0, cov_pose, 0, 0, 0, 0,
+                                    0, 0, cov_pose, 0, 0, 0,
                                     0, 0, 0, cov_twist, 0, 0,
                                     0, 0, 0, 0, cov_twist, 0,
                                     0, 0, 0, 0, 0, cov_twist};
