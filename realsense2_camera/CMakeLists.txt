@@ -7,6 +7,7 @@ option(SET_USER_BREAK_AT_STARTUP "Set user wait point in startup (for debug)" OF
 
 find_package(catkin REQUIRED COMPONENTS
     message_generation
+    nav_msgs
     roscpp
     sensor_msgs
     std_msgs
@@ -73,6 +74,7 @@ catkin_package(
     cv_bridge
     image_transport
     ddynamic_reconfigure
+    nav_msgs
     )
 
 add_library(${PROJECT_NAME}
