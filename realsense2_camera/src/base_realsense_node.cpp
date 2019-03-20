@@ -80,8 +80,8 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
                                      ros::NodeHandle& privateNodeHandle,
                                      rs2::device dev,
                                      const std::string& serial_no) :
-    _base_frame_id(""), _dev(dev),  _node_handle(nodeHandle),
-    _pnh(privateNodeHandle), _json_file_path(""),
+    _base_frame_id(""),  _node_handle(nodeHandle),
+    _pnh(privateNodeHandle), _dev(dev), _json_file_path(""),
     _serial_no(serial_no),
     _is_initialized_time_base(false),
     _namespace(getNamespaceStr())
@@ -1230,19 +1230,19 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         v_msg.vector.x = -pose.velocity.z;
         v_msg.vector.y = -pose.velocity.x;
         v_msg.vector.z = pose.velocity.y;
-	tf::Vector3 tfv;
-	tf::vector3MsgToTF(v_msg.vector,tfv);
-	tf::Quaternion q(-msg.transform.rotation.x,-msg.transform.rotation.y,-msg.transform.rotation.z,msg.transform.rotation.w);
-	tfv=tf::quatRotate(q,tfv);
-	tf::vector3TFToMsg(tfv,v_msg.vector);
+        tf::Vector3 tfv;
+        tf::vector3MsgToTF(v_msg.vector,tfv);
+        tf::Quaternion q(-msg.transform.rotation.x,-msg.transform.rotation.y,-msg.transform.rotation.z,msg.transform.rotation.w);
+        tfv=tf::quatRotate(q,tfv);
+        tf::vector3TFToMsg(tfv,v_msg.vector);
 	
         geometry_msgs::Vector3Stamped om_msg;
         om_msg.vector.x = -pose.angular_velocity.z;
         om_msg.vector.y = -pose.angular_velocity.x;
         om_msg.vector.z = pose.angular_velocity.y;
-	tf::vector3MsgToTF(om_msg.vector,tfv);
-	tfv=tf::quatRotate(q,tfv);
-	tf::vector3TFToMsg(tfv,om_msg.vector);
+        tf::vector3MsgToTF(om_msg.vector,tfv);
+        tfv=tf::quatRotate(q,tfv);
+        tf::vector3TFToMsg(tfv,om_msg.vector);
 	
 
         nav_msgs::Odometry odom_msg;
