@@ -5,7 +5,6 @@
 
 #include "../include/realsense_node_factory.h"
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
-#include <ddynamic_reconfigure/param/dd_all_params.h>
 
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/update_functions.h>
@@ -212,7 +211,6 @@ namespace realsense2_camera
         bool getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile);
 
         void publishAlignedDepthToOthers(rs2::frameset frames, const ros::Time& t);
-        static void callback(const ddynamic_reconfigure::DDMap& map, int, rs2::options sensor);
         double FillImuData_Copy(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg);
         double FillImuData_LinearInterpolation(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg);
         static void ConvertFromOpticalFrameToFrame(float3& data);
