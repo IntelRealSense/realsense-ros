@@ -8,22 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
     )
 
-# Install launch files
-install(DIRECTORY launch/
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-    )
-
-# Install rviz files
-install(DIRECTORY rviz/
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rviz
-    )
-
-# Install urdf files
-install(DIRECTORY urdf/
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/urdf
-    )
-
-# Install mesh files
-install(DIRECTORY meshes/
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/meshes
-    )
+# Install files
+install(DIRECTORY launch meshes rviz urdf
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
