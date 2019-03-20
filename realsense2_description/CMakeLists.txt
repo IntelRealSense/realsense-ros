@@ -4,10 +4,9 @@ project(realsense2_description)
 find_package(catkin REQUIRED COMPONENTS
     )
 
-# RealSense ROS Node
+# RealSense description
 catkin_package(
     )
-
 
 # Install launch files
 install(DIRECTORY launch/
