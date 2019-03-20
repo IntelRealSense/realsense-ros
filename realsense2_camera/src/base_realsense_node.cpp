@@ -278,7 +278,10 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
             {
                 sensor.set_option(option, option_value);
             }
-            ddynrec->add(new DDBool(option_name, i, sensor.get_option_description(option), option_value));
+            ddynrec->registerVariable<bool>(
+              option_name, option_value,
+              [option, sensor](bool new_value) { sensor.set_option(option, new_value); },
+              sensor.get_option_description(option));
             continue;
         }
         const auto enum_dict = get_enum_method(sensor, option);
@@ -303,7 +306,10 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
             }
             if (is_int_option(sensor, option))
             {
-                ddynrec->add(new DDInt(option_name, i, sensor.get_option_description(option), option_value, op_range.min, op_range.max));
+              ddynrec->registerVariable<int>(
+                  option_name, int(option_value),
+                  [option, sensor](int new_value) { sensor.set_option(option, new_value); },
+                  sensor.get_option_description(option), int(op_range.min), int(op_range.max));
             }
             else
             {
@@ -320,7 +326,10 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
                 }
                 else
                 {
-                    ddynrec->add(new DDDouble(option_name, i, sensor.get_option_description(option), option_value, op_range.min, op_range.max));
+                  ddynrec->registerVariable<double>(
+                      option_name, option_value,
+                      [option, sensor](double new_value) { sensor.set_option(option, new_value); },
+                      sensor.get_option_description(option), double(op_range.min), double(op_range.max));
                 }
             }
         }
@@ -345,10 +354,13 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
                     sensor.set_option(option, option_value);
                 }
             }
-            ddynrec->add(new DDEnum(option_name, i, sensor.get_option_description(option), option_value, enum_dict));
+            ddynrec->registerEnumVariable<int>(
+                option_name, option_value,
+                [option, sensor](int new_value) { sensor.set_option(option, new_value); },
+                sensor.get_option_description(option), enum_dict);
         }
     }
-    ddynrec->start(boost::bind(callback, _1, _2, sensor));
+    ddynrec->publishServicesTopics();
     _ddynrec.push_back(ddynrec);
 }
 
@@ -371,14 +383,6 @@ void BaseRealSenseNode::registerDynamicReconfigCb(ros::NodeHandle& nh)
         registerDynamicOption(nh, sensor, module_name);
     }
     ROS_INFO("Done Setting Dynamic reconfig parameters.");
-}
-
-void BaseRealSenseNode::callback(const ddynamic_reconfigure::DDMap& map, int level, rs2::options sensor) {
-    rs2_option option = static_cast<rs2_option>(level);
-    std::string option_name = create_graph_resource_name(rs2_option_to_string(option));
-    double value = get(map, option_name.c_str()).toDouble();
-    ROS_DEBUG_STREAM("option: " << option_name << ". value: " << value);
-    sensor.set_option(option, value);
 }
 
 rs2_stream BaseRealSenseNode::rs2_string_to_stream(std::string str)
@@ -417,7 +421,7 @@ void BaseRealSenseNode::getParameters()
 
     for (auto& stream : IMAGE_STREAMS)
     {
-        string param_name(_stream_name[stream.first] + "_width");
+        std::string param_name(_stream_name[stream.first] + "_width");
         ROS_DEBUG_STREAM("reading parameter:" << param_name);
         _pnh.param(param_name, _width[stream], IMAGE_WIDTH);
         param_name = _stream_name[stream.first] + "_height";
@@ -433,7 +437,7 @@ void BaseRealSenseNode::getParameters()
 
     for (auto& stream : HID_STREAMS)
     {
-        string param_name(_stream_name[stream.first] + "_fps");
+        std::string param_name(_stream_name[stream.first] + "_fps");
         ROS_DEBUG_STREAM("reading parameter:" << param_name);
         _pnh.param(param_name, _fps[stream], IMU_FPS);
         param_name = "enable_" + STREAM_NAME(stream);
@@ -447,7 +451,7 @@ void BaseRealSenseNode::getParameters()
     streams.insert(streams.end(), HID_STREAMS.begin(), HID_STREAMS.end());
     for (auto& stream : streams)
     {
-        string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_frame_id").str());
+        std::string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_frame_id").str());
         _pnh.param(param_name, _frame_id[stream], FRAME_ID(stream));
         ROS_DEBUG_STREAM("frame_id: reading parameter:" << param_name << " : " << _frame_id[stream]);
         param_name = static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_optical_frame_id").str();
@@ -473,7 +477,7 @@ void BaseRealSenseNode::getParameters()
     {
         if (stream == DEPTH) continue;
         if (stream.second > 1) continue;
-        string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << "aligned_depth_to_" << STREAM_NAME(stream) << "_frame_id").str());
+        std::string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << "aligned_depth_to_" << STREAM_NAME(stream) << "_frame_id").str());
         _pnh.param(param_name, _depth_aligned_frame_id[stream], ALIGNED_DEPTH_TO_FRAME_ID(stream));
     }
 
@@ -1988,7 +1992,7 @@ IMUInfo BaseRealSenseNode::getImuInfo(const stream_index_pair& stream_index)
     {
         imuIntrinsics = sp.get_motion_intrinsics();
     }
-    catch(const runtime_error &ex)
+    catch(const std::runtime_error &ex)
     {
         ROS_DEBUG_STREAM("No Motion Intrinsics available.");
         imuIntrinsics = {{{1,0,0,0},{0,1,0,0},{0,0,1,0}}, {0,0,0}, {0,0,0}};
