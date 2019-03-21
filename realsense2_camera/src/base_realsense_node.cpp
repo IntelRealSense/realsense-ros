@@ -962,6 +962,7 @@ void BaseRealSenseNode::fix_depth_scale(rs2::depth_frame depth_frame)
 void BaseRealSenseNode::clip_depth(rs2::depth_frame depth_frame, float clipping_dist)
 {
     uint16_t* p_depth_frame = reinterpret_cast<uint16_t*>(const_cast<void*>(depth_frame.get_data()));
+    uint16_t clipping_value = static_cast<uint16_t>(clipping_dist / _depth_scale_meters);
 
     int width = depth_frame.get_width();
     int height = depth_frame.get_height();
@@ -969,7 +970,6 @@ void BaseRealSenseNode::clip_depth(rs2::depth_frame depth_frame, float clipping_
     #ifdef _OPENMP
     #pragma omp parallel for schedule(dynamic) //Using OpenMP to try to parallelise the loop
     #endif
-    uint16_t clipping_value = static_cast<uint16_t>(clipping_dist / _depth_scale_meters);
     for (int y = 0; y < height; y++)
     {
         auto depth_pixel_index = y * width;
