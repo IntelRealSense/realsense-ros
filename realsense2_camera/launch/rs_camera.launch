@@ -42,7 +42,7 @@
   <arg name="linear_accel_cov"      default="0.01"/>
   <arg name="initial_reset"         default="false"/>
   <arg name="unite_imu_method"      default=""/>
-  <arg name="topic_odom_in"         default="$(arg tf_prefix)/odom_in"/>
+  <arg name="topic_odom_in"         default="odom_in"/>
   <arg name="calib_odom_file"       default=""/>
   
   <group ns="$(arg camera)">
