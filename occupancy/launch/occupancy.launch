@@ -1,0 +1,10 @@
+<launch>
+  <param name="resolution" value="0.1"/>
+  <param name="HeightOfInterestMin" value="-0.05"/>
+  <param name="HeightOfInterestMax" value="0.05"/>
+  <param name="DepthOfInterestMin" value="0.2"/>
+  <param name="DepthOfInterestMax" value="4.0"/>
+
+  <node name="occupancy_node" pkg="occupancy" type="occupancy_node" output="screen">
+  </node>
+</launch>
