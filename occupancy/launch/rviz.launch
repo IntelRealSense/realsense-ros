@@ -1,0 +1,4 @@
+<launch>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find occupancy)/rviz/pointcloud_w_occupancy.rviz">
+  </node>
+</launch>
