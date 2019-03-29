@@ -261,7 +261,7 @@ std::string create_graph_resource_name(const std::string &original_name)
 
 void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name)
 {
-    ros::NodeHandle nh1(module_name);
+    ros::NodeHandle nh1(nh, module_name);
     std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec = std::make_shared<ddynamic_reconfigure::DDynamicReconfigure>(nh1);
     for (auto i = 0; i < RS2_OPTION_COUNT; i++)
     {
