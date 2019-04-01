@@ -481,6 +481,7 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("linear_accel_cov", _linear_accel_cov, static_cast<double>(0.01));
     _pnh.param("angular_velocity_cov", _angular_velocity_cov, static_cast<double>(0.01));
     _pnh.param("hold_back_imu_for_frames", _hold_back_imu_for_frames, HOLD_BACK_IMU_FOR_FRAMES);
+    _pnh.param("publish_odom_tf", _publish_odom_tf, PUBLISH_ODOM_TF);
 }
 
 void BaseRealSenseNode::setupDevice()
@@ -555,7 +556,6 @@ void BaseRealSenseNode::setupDevice()
             imu_callback_function = [this](rs2::frame frame){imu_callback_sync(frame, _imu_sync_method);};
         }
         std::function<void(rs2::frame)> multiple_message_callback_function = [this](rs2::frame frame){multiple_message_callback(frame, _imu_sync_method);};
-        std::function<void(rs2::frame)> pose_callback_function = [this](rs2::frame frame){pose_callback(frame);};
 
         ROS_INFO_STREAM("Device Sensors: ");
         for(auto&& elem : _dev_sensors)
@@ -1279,7 +1279,7 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
     msg.transform.rotation.z = pose_msg.pose.orientation.z;
     msg.transform.rotation.w = pose_msg.pose.orientation.w;
 
-    br.sendTransform(msg);
+    if (_publish_odom_tf) br.sendTransform(msg);
 
     if (0 != _imu_publishers[stream_index].getNumSubscribers())
     {

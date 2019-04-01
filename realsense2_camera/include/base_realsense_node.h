@@ -265,6 +265,7 @@ namespace realsense2_camera
         ros::Time _ros_time_base;
         bool _sync_frames;
         bool _pointcloud;
+        bool _publish_odom_tf;
         imu_sync_method _imu_sync_method;
         std::string _filters_str;
         stream_index_pair _pointcloud_texture;
