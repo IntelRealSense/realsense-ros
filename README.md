@@ -148,6 +148,14 @@ roslaunch realsense2_camera rs_camera.launch camera:=cam_2 serial_no:=<serial nu
 ## Using T265 ##
 **Important Notice:** For wheeled robots, odometer input is a requirement for robust and accurate tracking. The relevant APIs will be added to librealsense and ROS/realsense in upcoming releases. Currently, the API is available in the [underlying device driver](https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/libtm/include/TrackingDevice.h#L508-L515).
 
+### Start the camera node
+To start the camera node in ROS:
+
+```bash
+roslaunch realsense2_camera rs_t265.launch
+```
+
+This will stream all camera sensors and publish on the appropriate ROS topics.
 
 The T265 sets its usb unique ID during initialization and without this parameter it wont be found.
 Once running it will publish, among others, the following topics:
@@ -156,6 +164,11 @@ Once running it will publish, among others, the following topics:
 - /camera/gyro/sample
 - /camera/fisheye1/image_raw
 - /camera/fisheye2/image_raw
+
+To visualize the pose output and frames in RViz, start:
+```bash
+roslaunch realsense2_camera demo_t265.launch
+```
 
 ## Packages using RealSense ROS Camera
 | Title | Links |
