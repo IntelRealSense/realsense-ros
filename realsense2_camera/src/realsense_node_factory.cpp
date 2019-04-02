@@ -158,8 +158,6 @@ void RealSenseNodeFactory::onInit()
 		}
 		else
 		{
-			std::function<void(rs2::event_information&)> change_device_callback_function = [this](rs2::event_information& info){change_device_callback(info);};
-			_ctx.set_devices_changed_callback(change_device_callback_function);
 			privateNh.param("initial_reset", _initial_reset, false);
 			_device = getDevice();
 		}
@@ -167,6 +165,11 @@ void RealSenseNodeFactory::onInit()
 		if (_device)
 		{
 			StartDevice();
+		}
+		if (rosbag_filename.empty())
+		{
+			std::function<void(rs2::event_information&)> change_device_callback_function = [this](rs2::event_information& info){change_device_callback(info);};
+			_ctx.set_devices_changed_callback(change_device_callback_function);
 		}
 	}
 	catch(const std::exception& ex)

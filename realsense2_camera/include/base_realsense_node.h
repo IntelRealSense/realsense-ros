@@ -189,7 +189,9 @@ namespace realsense2_camera
         void enable_devices();
         void setupFilters();
         void setupStreams();
-        void setBaseTime(double frame_time, bool warn_no_metadata);
+        double timestampFromFrame(const rs2::frame &frame);
+	double elapsedTimeFromFrame(const rs2::frame &frame);
+	double frameTime(const rs2::frame &frame);
         void fix_depth_scale(rs2::depth_frame depth_frame);
         void clip_depth(rs2::depth_frame depth_frame, float clipping_dist);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
@@ -257,12 +259,14 @@ namespace realsense2_camera
         std::map<stream_index_pair, int> _seq;
         std::map<rs2_stream, int> _unit_step_size;
         std::map<stream_index_pair, sensor_msgs::CameraInfo> _camera_info;
-        std::atomic_bool _is_initialized_time_base;
-        double _camera_time_base;
+        double _timestampDiff;
+        double _timestampStart;
+        enum TimestampSouce {TIMESTAMP_SOURCE_NONE,TIMESTAMP_SOURCE_METADATA,TIMESTAMP_SOURCE_TIMESTAMP};
+        TimestampSouce _timestampSource;
+        bool _skipTimestampCorrection;
         std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
 
         ros::Publisher _pointcloud_publisher;
-        ros::Time _ros_time_base;
         bool _sync_frames;
         bool _pointcloud;
         imu_sync_method _imu_sync_method;
