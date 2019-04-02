@@ -891,6 +891,11 @@ void BaseRealSenseNode::setupFilters()
             ROS_INFO("Add Filter: temporal");
             _filters.push_back(NamedFilter("temporal", std::make_shared<rs2::temporal_filter>()));
         }
+        else if ((*s_iter) == "hole_filling")
+        {
+            ROS_INFO("Add Filter: hole_filling");
+            _filters.push_back(NamedFilter("hole_filling", std::make_shared<rs2::hole_filling_filter>()));
+        }
         else if ((*s_iter) == "decimation")
         {
             ROS_INFO("Add Filter: decimation");
