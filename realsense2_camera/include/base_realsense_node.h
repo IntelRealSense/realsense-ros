@@ -191,7 +191,7 @@ namespace realsense2_camera
         void setupFilters();
         void setupStreams();
         void setBaseTime(double frame_time, bool warn_no_metadata);
-        void fix_depth_scale(rs2::depth_frame depth_frame);
+        cv::Mat& fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image);
         void clip_depth(rs2::depth_frame depth_frame, float clipping_dist);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         void publishStaticTransforms();
@@ -252,7 +252,6 @@ namespace realsense2_camera
         std::map<stream_index_pair, ros::Publisher> _info_publisher;
         std::map<stream_index_pair, cv::Mat> _image;
         std::map<rs2_stream, std::string> _encoding;
-        std::map<stream_index_pair, std::vector<uint8_t>> _aligned_depth_images;
 
         std::map<stream_index_pair, int> _seq;
         std::map<rs2_stream, int> _unit_step_size;
@@ -275,6 +274,7 @@ namespace realsense2_camera
         std::map<rs2_stream, std::shared_ptr<rs2::align>> _align;
 
         std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
+        std::map<stream_index_pair, cv::Mat> _depth_scaled_image;
         std::map<rs2_stream, std::string> _depth_aligned_encoding;
         std::map<stream_index_pair, sensor_msgs::CameraInfo> _depth_aligned_camera_info;
         std::map<stream_index_pair, int> _depth_aligned_seq;
