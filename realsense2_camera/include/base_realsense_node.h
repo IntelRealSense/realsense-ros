@@ -107,15 +107,6 @@ namespace realsense2_camera
         enum imu_sync_method{NONE, COPY, LINEAR_INTERPOLATION};
 
     protected:
-
-        const uint32_t set_default_dynamic_reconfig_values = 0xffffffff;
-        rs2::device _dev;
-        ros::NodeHandle& _node_handle, _pnh;
-        std::map<stream_index_pair, rs2::sensor> _sensors;
-        std::map<std::string, std::function<void(rs2::frame)>> _sensors_callback;
-        std::vector<std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure>> _ddynrec;
-
-    private:
         class float3
         {
             public:
@@ -138,11 +129,25 @@ namespace realsense2_camera
                 }
         };
 
-        struct quaternion
-        {
-            double x, y, z, w;
-        };
+        std::string _base_frame_id;
+        std::string _odom_frame_id;
+        std::map<stream_index_pair, std::string> _frame_id;
+        std::map<stream_index_pair, std::string> _optical_frame_id;
+        std::map<stream_index_pair, std::string> _depth_aligned_frame_id;
+        ros::NodeHandle& _node_handle, _pnh;
+        bool _align_depth;
 
+        virtual void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile);
+        rs2::stream_profile getAProfile(const stream_index_pair& stream);
+        tf::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
+        void publish_static_tf(const ros::Time& t,
+                               const float3& trans,
+                               const tf::Quaternion& q,
+                               const std::string& from,
+                               const std::string& to);
+
+
+    private:
         class CIMUHistory
         {
             public:
@@ -198,19 +203,13 @@ namespace realsense2_camera
         void enable_devices();
         void setupFilters();
         void setupStreams();
-        void clip_depth(rs2::depth_frame& depth_frame, float depth_scale, float clipping_dist);
+        void setBaseTime(double frame_time, bool warn_no_metadata);
+        void fix_depth_scale(rs2::depth_frame depth_frame);
+        void clip_depth(rs2::depth_frame depth_frame, float clipping_dist);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
-        tf::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
-        void publish_static_tf(const ros::Time& t,
-                               const float3& trans,
-                               const quaternion& q,
-                               const std::string& from,
-                               const std::string& to);
-        void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile);
         void publishStaticTransforms();
         void publishPointCloud(rs2::points f, const ros::Time& t, const rs2::frameset& frameset);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
-        rs2::stream_profile getAProfile(const stream_index_pair& stream);
 
         IMUInfo getImuInfo(const stream_index_pair& stream_index);
         void publishFrame(rs2::frame f, const ros::Time& t,
@@ -238,6 +237,11 @@ namespace realsense2_camera
         void registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name);
         rs2_stream rs2_string_to_stream(std::string str);
 
+        rs2::device _dev;
+        std::map<stream_index_pair, rs2::sensor> _sensors;
+        std::map<std::string, std::function<void(rs2::frame)>> _sensors_callback;
+        std::vector<std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure>> _ddynrec;
+
         std::string _json_file_path;
         std::string _serial_no;
         float _depth_scale_meters;
@@ -263,19 +267,15 @@ namespace realsense2_camera
         std::map<rs2_stream, std::string> _encoding;
         std::map<stream_index_pair, std::vector<uint8_t>> _aligned_depth_images;
 
-        std::string _base_frame_id;
-        std::string _spatial_frame_id;
-        std::map<stream_index_pair, std::string> _frame_id;
-        std::map<stream_index_pair, std::string> _optical_frame_id;
         std::map<stream_index_pair, int> _seq;
         std::map<rs2_stream, int> _unit_step_size;
         std::map<stream_index_pair, sensor_msgs::CameraInfo> _camera_info;
         std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
 
         ros::Publisher _pointcloud_publisher;
-        bool _align_depth;
         bool _sync_frames;
         bool _pointcloud;
+        bool _publish_odom_tf;
         imu_sync_method _imu_sync_method;
         std::string _filters_str;
         stream_index_pair _pointcloud_texture;
@@ -291,7 +291,6 @@ namespace realsense2_camera
         std::map<stream_index_pair, int> _depth_aligned_seq;
         std::map<stream_index_pair, ros::Publisher> _depth_aligned_info_publisher;
         std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics> _depth_aligned_image_publishers;
-        std::map<stream_index_pair, std::string> _depth_aligned_frame_id;
         std::map<stream_index_pair, ros::Publisher> _depth_to_other_extrinsics_publishers;
         std::map<stream_index_pair, rs2_extrinsics> _depth_to_other_extrinsics;
 

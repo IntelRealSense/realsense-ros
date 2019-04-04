@@ -7,7 +7,7 @@
 
 #define REALSENSE_ROS_MAJOR_VERSION    2
 #define REALSENSE_ROS_MINOR_VERSION    2
-#define REALSENSE_ROS_PATCH_VERSION    0
+#define REALSENSE_ROS_PATCH_VERSION    3
 
 #define STRINGIFY(arg) #arg
 #define VAR_ARG_STRING(arg) STRINGIFY(arg)
@@ -53,10 +53,11 @@ namespace realsense2_camera
     const bool ENABLE_FISHEYE = true;
     const bool ENABLE_IMU     = true;
     const bool HOLD_BACK_IMU_FOR_FRAMES = false;
+    const bool PUBLISH_ODOM_TF = true;
 
 
     const std::string DEFAULT_BASE_FRAME_ID            = "camera_link";
-    const std::string DEFAULT_SPATIAL_FRAME_ID         = "spatial";
+    const std::string DEFAULT_ODOM_FRAME_ID            = "odom_frame";
     const std::string DEFAULT_DEPTH_FRAME_ID           = "camera_depth_frame";
     const std::string DEFAULT_INFRA1_FRAME_ID          = "camera_infra1_frame";
     const std::string DEFAULT_INFRA2_FRAME_ID          = "camera_infra2_frame";
@@ -80,6 +81,8 @@ namespace realsense2_camera
 
     const std::string DEFAULT_UNITE_IMU_METHOD         = "";
     const std::string DEFAULT_FILTERS                  = "";
+    const std::string DEFAULT_TOPIC_ODOM_IN            = "";
 
+    const float ROS_DEPTH_SCALE = 0.001;
     using stream_index_pair = std::pair<rs2_stream, int>;
 }  // namespace realsense2_camera

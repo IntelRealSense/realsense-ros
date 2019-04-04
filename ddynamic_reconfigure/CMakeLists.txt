@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ddynamic_reconfigure)
 
-find_package(catkin REQUIRED COMPONENTS roscpp message_generation)
+find_package(catkin REQUIRED COMPONENTS dynamic_reconfigure roscpp message_generation std_msgs)
 
 set(CMAKE_CXX_STANDARD 98)
 
@@ -16,7 +16,7 @@ generate_messages(DEPENDENCIES std_msgs)
 ## Catkin ##
 ############
 
-catkin_package(INCLUDE_DIRS include LIBRARIES ${PROJECT_NAME} CATKIN_DEPENDS)
+catkin_package(INCLUDE_DIRS include LIBRARIES ${PROJECT_NAME} CATKIN_DEPENDS dynamic_reconfigure message_runtime std_msgs)
 
 #############
 ## Library ##
