@@ -25,6 +25,9 @@
   <depend>tf</depend>
   <depend>ddynamic_reconfigure</depend>
   <depend>diagnostic_updater</depend>
+  
+  <exec_depend>rgbd_launch</exec_depend>
+  
   <export>
     <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>
