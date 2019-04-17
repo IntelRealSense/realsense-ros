@@ -699,7 +699,7 @@ void BaseRealSenseNode::setupPublishers()
     if (_enable[POSE])
     {
         _imu_publishers[POSE] = _node_handle.advertise<nav_msgs::Odometry>("odom/sample", 1);
-        _info_publisher[POSE] = _node_handle.advertise<std_msgs::String>("odom/confidence", 1);
+        _info_publisher[POSE] = _node_handle.advertise<Confidence>("odom/confidence", 1);
     }
 
 
@@ -1354,9 +1354,10 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
                                     0, 0, 0, 0, 0, 0};
         _imu_publishers[stream_index].publish(odom_msg);
 
-        std_msgs::String confidence_msg;
+        Confidence confidence_msg;
         std::string confidence2str[] = {"Failed", "Low", "Medium", "High"};
-        confidence_msg.data = confidence2str[pose.tracker_confidence];
+        confidence_msg.header = odom_msg.header;
+        confidence_msg.confidence.data = confidence2str[pose.tracker_confidence];
         _info_publisher[stream_index].publish(confidence_msg);
 
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));

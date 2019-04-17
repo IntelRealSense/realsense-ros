@@ -18,6 +18,7 @@
 #include <tf/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <realsense2_camera/IMUInfo.h>
+#include <realsense2_camera/Confidence.h>
 #include <csignal>
 #include <eigen3/Eigen/Geometry>
 #include <fstream>
