@@ -1473,10 +1473,10 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
 
     if (0 != _imu_publishers[stream_index].getNumSubscribers())
     {
-        double cov_pose(_linear_accel_cov * pow(10, 3-(int)pose.tracker_confidence));
-        double cov_twist(_angular_velocity_cov * pow(10, 1-(int)pose.tracker_confidence));
+        // double cov_pose(_linear_accel_cov * pow(10, 3-(int)pose.tracker_confidence)); // TODO: publish confidence
 
         geometry_msgs::Vector3Stamped v_msg;
+        // rotate from T265 body ("VR") to T265 ROS body frame
         v_msg.vector.x = -pose.velocity.z;
         v_msg.vector.y = -pose.velocity.x;
         v_msg.vector.z = pose.velocity.y;
@@ -1487,6 +1487,7 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         tf::vector3TFToMsg(tfv,v_msg.vector);
 	
         geometry_msgs::Vector3Stamped om_msg;
+        // rotate from T265 body ("VR") to T265 ROS body frame
         om_msg.vector.x = -pose.angular_velocity.z;
         om_msg.vector.y = -pose.angular_velocity.x;
         om_msg.vector.z = pose.angular_velocity.y;
@@ -1503,20 +1504,20 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         odom_msg.header.stamp = t;
         odom_msg.header.seq = _seq[stream_index];
         odom_msg.pose.pose = pose_msg.pose;
-        odom_msg.pose.covariance = {cov_pose, 0, 0, 0, 0, 0,
-                                    0, cov_pose, 0, 0, 0, 0,
-                                    0, 0, cov_pose, 0, 0, 0,
-                                    0, 0, 0, cov_twist, 0, 0,
-                                    0, 0, 0, 0, cov_twist, 0,
-                                    0, 0, 0, 0, 0, cov_twist};
+        odom_msg.pose.covariance = {-1, 0, 0, 0, 0, 0,  // invalid
+                                    0, 0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0, 0};
         odom_msg.twist.twist.linear = v_msg.vector;
         odom_msg.twist.twist.angular = om_msg.vector;
-        odom_msg.twist.covariance ={cov_pose, 0, 0, 0, 0, 0,
-                                    0, cov_pose, 0, 0, 0, 0,
-                                    0, 0, cov_pose, 0, 0, 0,
-                                    0, 0, 0, cov_twist, 0, 0,
-                                    0, 0, 0, 0, cov_twist, 0,
-                                    0, 0, 0, 0, 0, cov_twist};
+        odom_msg.twist.covariance ={-1, 0, 0, 0, 0, 0,  // invalid
+                                    0, 0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0, 0};
         _imu_publishers[stream_index].publish(odom_msg);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
     }
