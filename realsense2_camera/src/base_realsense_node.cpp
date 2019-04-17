@@ -699,6 +699,7 @@ void BaseRealSenseNode::setupPublishers()
     if (_enable[POSE])
     {
         _imu_publishers[POSE] = _node_handle.advertise<nav_msgs::Odometry>("odom/sample", 1);
+        _info_publisher[POSE] = _node_handle.advertise<std_msgs::String>("odom/confidence", 1);
     }
 
 
@@ -1305,10 +1306,9 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
 
     if (_publish_odom_tf) br.sendTransform(msg);
 
-    if (0 != _imu_publishers[stream_index].getNumSubscribers())
+    if (0 != _info_publisher[stream_index].getNumSubscribers() ||
+        0 != _imu_publishers[stream_index].getNumSubscribers())
     {
-        // double cov_pose(_linear_accel_cov * pow(10, 3-(int)pose.tracker_confidence)); // TODO: publish confidence
-
         geometry_msgs::Vector3Stamped v_msg;
         // rotate from T265 body ("VR") to T265 ROS body frame
         v_msg.vector.x = -pose.velocity.z;
@@ -1353,6 +1353,12 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
                                     0, 0, 0, 0, 0, 0,
                                     0, 0, 0, 0, 0, 0};
         _imu_publishers[stream_index].publish(odom_msg);
+
+        std_msgs::String confidence_msg;
+        std::string confidence2str[] = {"Failed", "Low", "Medium", "High"};
+        confidence_msg.data = confidence2str[pose.tracker_confidence];
+        _info_publisher[stream_index].publish(confidence_msg);
+
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
     }
 }
