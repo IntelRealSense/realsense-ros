@@ -899,17 +899,17 @@ void BaseRealSenseNode::setupPublishers()
     {
         if (_enable[GYRO])
         {
-            _imu_publishers[GYRO] = _node_handle.advertise<sensor_msgs::Imu>("gyro/sample", 100);
+            _imu_publishers[GYRO] = _node_handle.advertise<sensor_msgs::Imu>("gyro/sample", 1);
         }
 
         if (_enable[ACCEL])
         {
-            _imu_publishers[ACCEL] = _node_handle.advertise<sensor_msgs::Imu>("accel/sample", 100);
+            _imu_publishers[ACCEL] = _node_handle.advertise<sensor_msgs::Imu>("accel/sample", 1);
         }
     }
     if (_enable[POSE])
     {
-        _imu_publishers[POSE] = _node_handle.advertise<nav_msgs::Odometry>("odom/sample", 100);
+        _imu_publishers[POSE] = _node_handle.advertise<nav_msgs::Odometry>("odom/sample", 1);
     }
 
 
