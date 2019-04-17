@@ -16,6 +16,7 @@
 #include <tf/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <condition_variable>
+#include <std_msgs/String.h>
 
 #include <queue>
 #include <mutex>
