@@ -872,6 +872,7 @@ void BaseRealSenseNode::setupFilters()
     boost::split(filters_str, _filters_str, [](char c){return c == ',';});
     bool use_disparity_filter(false);
     bool use_colorizer_filter(false);
+    bool use_decimation_filter(false);
     for (std::vector<std::string>::const_iterator s_iter=filters_str.begin(); s_iter!=filters_str.end(); s_iter++)
     {
         if ((*s_iter) == "colorizer")
@@ -899,8 +900,7 @@ void BaseRealSenseNode::setupFilters()
         }
         else if ((*s_iter) == "decimation")
         {
-            ROS_INFO("Add Filter: decimation");
-            _filters.push_back(NamedFilter("decimation", std::make_shared<rs2::decimation_filter>()));
+            use_decimation_filter = true;
         }
         else if ((*s_iter) == "pointcloud")
         {
@@ -918,6 +918,11 @@ void BaseRealSenseNode::setupFilters()
         _filters.insert(_filters.begin(), NamedFilter("disparity_start", std::make_shared<rs2::disparity_transform>()));
         _filters.push_back(NamedFilter("disparity_end", std::make_shared<rs2::disparity_transform>(false)));
         ROS_INFO("Done Add Filter: disparity");
+    }
+    if (use_decimation_filter)
+    {
+      ROS_INFO("Add Filter: decimation");
+      _filters.insert(_filters.begin(),NamedFilter("decimation", std::make_shared<rs2::decimation_filter>()));
     }
     if (use_colorizer_filter)
     {
