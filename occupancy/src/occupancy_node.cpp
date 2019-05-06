@@ -8,6 +8,7 @@
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/Image.h"
 #include "sensor_msgs/CameraInfo.h"
+#include <tf/transform_listener.h>
 #include "nav_msgs/OccupancyGrid.h"
 
 #include "SP_MapManager.h"
@@ -74,10 +75,32 @@ int main(int argc, char **argv)
     intrinsics.principalPointCoordV = msg_cameraInfo->K[5];
 
     // depth optical frame w.r.t. T265 IMU: assumes "stacked" configuration with cameras mounted on top of each other
+    tf::TransformListener echoListener;
+
+    std::string source_frameid = "camera_accel_optical_frame";
+    std::string target_frameid = "camera_fisheye1_optical_frame";  // TODO: change to depth optical frame
+
+    echoListener.waitForTransform(source_frameid, target_frameid, ros::Time(), ros::Duration(1.0));
+
+    tf::StampedTransform echo_transform;
+    echoListener.lookupTransform(source_frameid, target_frameid, ros::Time(), echo_transform);
+
     H_T265imu_depthOptical.pose = PoseMatrix4f::Identity;
-    H_T265imu_depthOptical.pose.m_data[0] = -1;
-    H_T265imu_depthOptical.pose.m_data[5] = -1;
-    
+
+    H_T265imu_depthOptical.pose.m_data[0] = echo_transform.getBasis()[0].m_floats[0];
+    H_T265imu_depthOptical.pose.m_data[1] = echo_transform.getBasis()[0].m_floats[1];
+    H_T265imu_depthOptical.pose.m_data[2] = echo_transform.getBasis()[0].m_floats[2];
+    H_T265imu_depthOptical.pose.m_data[3] = echo_transform.getOrigin().getX();
+
+    H_T265imu_depthOptical.pose.m_data[4] = echo_transform.getBasis()[1].m_floats[0];
+    H_T265imu_depthOptical.pose.m_data[5] = echo_transform.getBasis()[1].m_floats[1];
+    H_T265imu_depthOptical.pose.m_data[6] = echo_transform.getBasis()[1].m_floats[2];
+    H_T265imu_depthOptical.pose.m_data[7] = echo_transform.getOrigin().getY();
+
+    H_T265imu_depthOptical.pose.m_data[8] = echo_transform.getBasis()[2].m_floats[0];
+    H_T265imu_depthOptical.pose.m_data[9] = echo_transform.getBasis()[2].m_floats[1];
+    H_T265imu_depthOptical.pose.m_data[10] = echo_transform.getBasis()[2].m_floats[2];
+    H_T265imu_depthOptical.pose.m_data[11] = echo_transform.getOrigin().getZ();
 
     ros::Publisher pub = n.advertise<nav_msgs::OccupancyGrid>("occupancy", 1);  // http://docs.ros.org/jade/api/nav_msgs/html/msg/OccupancyGrid.html
     nav_msgs::OccupancyGrid msg;
