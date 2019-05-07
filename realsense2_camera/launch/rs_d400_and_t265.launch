@@ -18,7 +18,7 @@
   <group ns="$(arg camera1)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="serial_no"             value="$(arg serial_no_camera1)"/>
-      <arg name="tf_prefix"         		value="$(arg tf_prefix_camera1)"/>
+      <arg name="tf_prefix"             value="$(arg tf_prefix_camera1)"/>
       <arg name="initial_reset"         value="$(arg initial_reset)"/>
       <arg name="enable_fisheye1"       value="$(arg enable_fisheye)"/>
       <arg name="enable_fisheye2"       value="$(arg enable_fisheye)"/>
@@ -30,7 +30,7 @@
   <group ns="$(arg camera2)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="serial_no"             value="$(arg serial_no_camera2)"/>
-      <arg name="tf_prefix"		          value="$(arg tf_prefix_camera2)"/>
+      <arg name="tf_prefix"             value="$(arg tf_prefix_camera2)"/>
       <arg name="initial_reset"         value="$(arg initial_reset)"/>
       <arg name="align_depth"           value="true"/>
       <arg name="filters"               value="pointcloud"/>
@@ -41,5 +41,7 @@
       <arg name="clip_distance"         value="$(arg clip_distance)"/>
     </include>
   </group>
-  <node pkg="tf" type="static_transform_publisher" name="t265_to_d400" args="0 0 0 0 0 0 /$(arg tf_prefix_camera1)_link /$(arg tf_prefix_camera2)_link 100"/>
+
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find realsense2_camera)/urdf/mount_t265_d435.urdf.xacro' tf_prefix_camera1:=$(arg tf_prefix_camera1) tf_prefix_camera2:=$(arg tf_prefix_camera2)" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
 </launch>

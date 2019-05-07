@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<robot name="origins">
+  <link name="$(arg tf_prefix_camera1)_pose_frame"/>
+  <link name="$(arg tf_prefix_camera2)_link"/>
+
+  <joint name="$(arg tf_prefix_camera1)_to_$(arg tf_prefix_camera2)" type="fixed">
+    <parent link="$(arg tf_prefix_camera1)_pose_frame"/>
+    <child link="$(arg tf_prefix_camera2)_link"/>
+    <origin xyz="0.009 0.021 0.027" rpy="0.000 -0.018 0.005"/>
+  </joint>
+</robot>
