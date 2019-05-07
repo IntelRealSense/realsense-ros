@@ -103,18 +103,18 @@ void T265RealsenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
         Q = Q.inverse();
         quaternion_optical = quaternion_optical.inverse();
 
-        publish_static_tf(transform_ts_, trans, Q, _frame_id[stream], _base_frame_id);
+        publish_static_tf(transform_ts_, trans, Q.normalize(), _frame_id[stream], _base_frame_id);
     }
     else
     {
-        publish_static_tf(transform_ts_, trans, Q, _base_frame_id, _frame_id[stream]);
-        publish_static_tf(transform_ts_, zero_trans, quaternion_optical, _frame_id[stream], _optical_frame_id[stream]);
+        publish_static_tf(transform_ts_, trans, Q.normalize(), _base_frame_id, _frame_id[stream]);
+        publish_static_tf(transform_ts_, zero_trans, quaternion_optical.normalize(), _frame_id[stream], _optical_frame_id[stream]);
 
         // Add align_depth_to if exist:
         if (_align_depth && _depth_aligned_frame_id.find(stream) != _depth_aligned_frame_id.end())
         {
-            publish_static_tf(transform_ts_, trans, Q, _base_frame_id, _depth_aligned_frame_id[stream]);
-            publish_static_tf(transform_ts_, zero_trans, quaternion_optical, _depth_aligned_frame_id[stream], _optical_frame_id[stream]);
+            publish_static_tf(transform_ts_, trans, Q.normalize(), _base_frame_id, _depth_aligned_frame_id[stream]);
+            publish_static_tf(transform_ts_, zero_trans, quaternion_optical.normalize(), _depth_aligned_frame_id[stream], _optical_frame_id[stream]);
         }
     }
 }
