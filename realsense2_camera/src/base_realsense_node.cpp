@@ -477,6 +477,7 @@ void BaseRealSenseNode::getParameters()
         _pnh.param(param_name, _depth_aligned_frame_id[stream], ALIGNED_DEPTH_TO_FRAME_ID(stream));
     }
 
+    _pnh.param("allow_no_texture_points", _allow_no_texture_points, ALLOW_NO_TEXTURE_POINTS);
     _pnh.param("clip_distance", _clipping_distance, static_cast<float>(-1.0));
     _pnh.param("linear_accel_cov", _linear_accel_cov, static_cast<double>(0.01));
     _pnh.param("angular_velocity_cov", _angular_velocity_cov, static_cast<double>(0.01));
@@ -1854,27 +1855,16 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
 
     const rs2::vertex* vertex = pc.get_vertices();
     const rs2::texture_coordinate* color_point = pc.get_texture_coordinates();
-    int num_valid_points(0);
-    if (use_texture)
+    std::list<unsigned int> valid_indices;
+    for (size_t point_idx=0; point_idx < pc.size(); point_idx++, vertex++, color_point++)
     {
-        for (size_t point_idx=0; point_idx < pc.size(); point_idx++, color_point++)
+        if (static_cast<float>(vertex->z) > 0)
         {
             float i = static_cast<float>(color_point->u);
             float j = static_cast<float>(color_point->v);
-
-            if (i >= 0.f && i <= 1.f && j >= 0.f && j <= 1.f)
+            if (_allow_no_texture_points || (i >= 0.f && i <= 1.f && j >= 0.f && j <= 1.f))
             {
-                num_valid_points++;
-            }
-        }
-    }
-    else
-    {
-        for (size_t point_idx=0; point_idx < pc.size(); point_idx++, vertex++)
-        {
-            if (static_cast<float>(vertex->z) > 0)
-            {
-                num_valid_points++;
+                valid_indices.push_back(point_idx);
             }
         }
     }
@@ -1882,7 +1872,7 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
     sensor_msgs::PointCloud2 msg_pointcloud;
     msg_pointcloud.header.stamp = t;
     msg_pointcloud.header.frame_id = _optical_frame_id[DEPTH];
-    msg_pointcloud.width = num_valid_points;
+    msg_pointcloud.width = valid_indices.size();
     msg_pointcloud.height = 1;
     msg_pointcloud.is_dense = true;
 
@@ -1920,27 +1910,28 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
         color_point = pc.get_texture_coordinates();
 
         float color_pixel[2];
-        for (size_t point_idx=0; point_idx < pc.size(); vertex++, point_idx++, color_point++)
+        unsigned int prev_idx(0);
+        for (auto idx=valid_indices.begin(); idx != valid_indices.end(); idx++)
         {
-            float i = static_cast<float>(color_point->u);
-            float j = static_cast<float>(color_point->v);
-            if (i >= 0.f && i <= 1.f && j >= 0.f && j <= 1.f)
-            {
-                *iter_x = vertex->x;
-                *iter_y = vertex->y;
-                *iter_z = vertex->z;
+            unsigned int idx_jump(*idx-prev_idx);
+            prev_idx = *idx;
+            vertex+=idx_jump;
+            color_point+=idx_jump;
 
-                color_pixel[0] = i * texture_width;
-                color_pixel[1] = j * texture_height;
+            *iter_x = vertex->x;
+            *iter_y = vertex->y;
+            *iter_z = vertex->z;
 
-                int pixx = static_cast<int>(color_pixel[0]);
-                int pixy = static_cast<int>(color_pixel[1]);
-                int offset = (pixy * texture_width + pixx) * num_colors;
-                reverse_memcpy(&(*iter_color), color_data+offset, num_colors);  // PointCloud2 order of rgb is bgr.
+            color_pixel[0] = static_cast<float>(color_point->u) * texture_width;
+            color_pixel[1] = static_cast<float>(color_point->v) * texture_height;
 
-                ++iter_x; ++iter_y; ++iter_z;
-                ++iter_color;
-            }
+            int pixx = static_cast<int>(color_pixel[0]);
+            int pixy = static_cast<int>(color_pixel[1]);
+            int offset = (pixy * texture_width + pixx) * num_colors;
+            reverse_memcpy(&(*iter_color), color_data+offset, num_colors);  // PointCloud2 order of rgb is bgr.
+
+            ++iter_x; ++iter_y; ++iter_z;
+            ++iter_color;
         }
     }
     else
@@ -1948,16 +1939,18 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
         sensor_msgs::PointCloud2Iterator<float>iter_x(msg_pointcloud, "x");
         sensor_msgs::PointCloud2Iterator<float>iter_y(msg_pointcloud, "y");
         sensor_msgs::PointCloud2Iterator<float>iter_z(msg_pointcloud, "z");
-        for (size_t point_idx=0; point_idx < pc.size(); vertex++, point_idx++)
+        unsigned int prev_idx(0);
+        for (auto idx=valid_indices.begin(); idx != valid_indices.end(); idx++)
         {
-            if (static_cast<float>(vertex->z) > 0)
-            {
-                *iter_x = vertex->x;
-                *iter_y = vertex->y;
-                *iter_z = vertex->z;
+            unsigned int idx_jump(*idx-prev_idx);
+            prev_idx = *idx;
+            vertex+=idx_jump;
 
-                ++iter_x; ++iter_y; ++iter_z;
-            }
+            *iter_x = vertex->x;
+            *iter_y = vertex->y;
+            *iter_z = vertex->z;
+
+            ++iter_x; ++iter_y; ++iter_z;
         }
     }
     _pointcloud_publisher.publish(msg_pointcloud);
