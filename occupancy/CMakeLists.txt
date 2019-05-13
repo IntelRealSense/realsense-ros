@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     std_msgs
+    tf
 )
 
 catkin_package()

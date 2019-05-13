@@ -18,7 +18,7 @@ using namespace ScenePerception;
 
 std::unique_ptr<ScenePerception::SP_MapManager> mapManager;
 PoseMatrix4f gH_T265ref_refROS;
-PoseMatrix4f gH_T265ref_imu;
+PoseMatrix4f gH_T265ref_T265bodyROS;
 std::mutex pose_mutex;
 unsigned int framesSinceLastPublished;
 
@@ -32,22 +32,16 @@ void poseCallback(const nav_msgs::Odometry::ConstPtr& msg)
   position[1] = msg->pose.pose.position.y;
   position[2] = msg->pose.pose.position.z;
   H_refROS_T265bodyROS.SetTranslation(position);
-
-  PoseMatrix4f H_T265bodyROS_imu = PoseMatrix4f::Zero;  // IMU w.r.t. T265 (ROS) body frame
-  H_T265bodyROS_imu.m_data[2] = 1.0f;
-  H_T265bodyROS_imu.m_data[4] = 1.0f;
-  H_T265bodyROS_imu.m_data[9] = 1.0f;
   
   std::lock_guard<std::mutex> guard(pose_mutex);
-  gH_T265ref_imu = gH_T265ref_refROS * H_refROS_T265bodyROS * H_T265bodyROS_imu;
+  gH_T265ref_T265bodyROS = gH_T265ref_refROS * H_refROS_T265bodyROS;
 }
 
 void depthCallback(const sensor_msgs::Image::ConstPtr& msg)
 {
   std::lock_guard<std::mutex> guard(pose_mutex);
-  PoseMatrix4f H_T265ref_imu = gH_T265ref_imu;
   framesSinceLastPublished++;
-  mapManager->TestAndPushFrame((const unsigned short *)&(msg->data[0]), H_T265ref_imu);
+  mapManager->TestAndPushFrame((const unsigned short *)&(msg->data[0]), gH_T265ref_T265bodyROS);
 }
 
 int main(int argc, char **argv)
@@ -64,7 +58,7 @@ int main(int argc, char **argv)
         
     // get depth camera calibration 
     SP_CameraIntrinsics intrinsics;
-    SP_CameraExtrinsics H_T265imu_depthOptical;
+    SP_CameraExtrinsics H_T265bodyROS_depthOptical;
 
     boost::shared_ptr<sensor_msgs::CameraInfo const> msg_cameraInfo = ros::topic::waitForMessage<sensor_msgs::CameraInfo>("d400/depth/camera_info", n);  // TODO: make topic name configureable
     intrinsics.imageWidth = msg_cameraInfo->width;
@@ -77,30 +71,33 @@ int main(int argc, char **argv)
     // depth optical frame w.r.t. T265 IMU: assumes "stacked" configuration with cameras mounted on top of each other
     tf::TransformListener echoListener;
 
-    std::string source_frameid = "camera_accel_optical_frame";
-    std::string target_frameid = "camera_fisheye1_optical_frame";  // TODO: change to depth optical frame
+    std::string source_frameid = "t265_pose_frame";   // TODO: make topic name configureable
+    std::string target_frameid = "d400_depth_optical_frame";
 
     echoListener.waitForTransform(source_frameid, target_frameid, ros::Time(), ros::Duration(1.0));
 
     tf::StampedTransform echo_transform;
     echoListener.lookupTransform(source_frameid, target_frameid, ros::Time(), echo_transform);
 
-    H_T265imu_depthOptical.pose = PoseMatrix4f::Identity;
+    H_T265bodyROS_depthOptical.pose = PoseMatrix4f::Identity;
 
-    H_T265imu_depthOptical.pose.m_data[0] = echo_transform.getBasis()[0].m_floats[0];
-    H_T265imu_depthOptical.pose.m_data[1] = echo_transform.getBasis()[0].m_floats[1];
-    H_T265imu_depthOptical.pose.m_data[2] = echo_transform.getBasis()[0].m_floats[2];
-    H_T265imu_depthOptical.pose.m_data[3] = echo_transform.getOrigin().getX();
+    H_T265bodyROS_depthOptical.pose.m_data[0] = echo_transform.getBasis()[0].m_floats[0];
+    H_T265bodyROS_depthOptical.pose.m_data[1] = echo_transform.getBasis()[0].m_floats[1];
+    H_T265bodyROS_depthOptical.pose.m_data[2] = echo_transform.getBasis()[0].m_floats[2];
+    H_T265bodyROS_depthOptical.pose.m_data[3] = echo_transform.getOrigin().getX();
 
-    H_T265imu_depthOptical.pose.m_data[4] = echo_transform.getBasis()[1].m_floats[0];
-    H_T265imu_depthOptical.pose.m_data[5] = echo_transform.getBasis()[1].m_floats[1];
-    H_T265imu_depthOptical.pose.m_data[6] = echo_transform.getBasis()[1].m_floats[2];
-    H_T265imu_depthOptical.pose.m_data[7] = echo_transform.getOrigin().getY();
+    H_T265bodyROS_depthOptical.pose.m_data[4] = echo_transform.getBasis()[1].m_floats[0];
+    H_T265bodyROS_depthOptical.pose.m_data[5] = echo_transform.getBasis()[1].m_floats[1];
+    H_T265bodyROS_depthOptical.pose.m_data[6] = echo_transform.getBasis()[1].m_floats[2];
+    H_T265bodyROS_depthOptical.pose.m_data[7] = echo_transform.getOrigin().getY();
 
-    H_T265imu_depthOptical.pose.m_data[8] = echo_transform.getBasis()[2].m_floats[0];
-    H_T265imu_depthOptical.pose.m_data[9] = echo_transform.getBasis()[2].m_floats[1];
-    H_T265imu_depthOptical.pose.m_data[10] = echo_transform.getBasis()[2].m_floats[2];
-    H_T265imu_depthOptical.pose.m_data[11] = echo_transform.getOrigin().getZ();
+    H_T265bodyROS_depthOptical.pose.m_data[8] = echo_transform.getBasis()[2].m_floats[0];
+    H_T265bodyROS_depthOptical.pose.m_data[9] = echo_transform.getBasis()[2].m_floats[1];
+    H_T265bodyROS_depthOptical.pose.m_data[10] = echo_transform.getBasis()[2].m_floats[2];
+    H_T265bodyROS_depthOptical.pose.m_data[11] = echo_transform.getOrigin().getZ();
+
+    // TODO: refactor
+
 
     ros::Publisher pub = n.advertise<nav_msgs::OccupancyGrid>("occupancy", 1);  // http://docs.ros.org/jade/api/nav_msgs/html/msg/OccupancyGrid.html
     nav_msgs::OccupancyGrid msg;
@@ -124,7 +121,7 @@ int main(int argc, char **argv)
     // create the map manager
 	mapManager.reset(new ScenePerception::SP_MapManager);
 	mapManager->reset();
-    mapManager->configure(intrinsics, H_T265imu_depthOptical.pose);
+    mapManager->configure(intrinsics, H_T265bodyROS_depthOptical.pose);
 	mapManager->setMapHeightOfInterest(heightOfInterst.x, heightOfInterst.y);
 	mapManager->setDepthOfInterest(depthOfInterst.x, depthOfInterst.y);
 	mapManager->setMapResolution(msg.info.resolution);
