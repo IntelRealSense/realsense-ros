@@ -24,24 +24,24 @@ unsigned int framesSinceLastPublished;
 
 void poseCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
-  Quaternion q(msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z, msg->pose.pose.orientation.w);
-  PoseMatrix4f H_refROS_T265bodyROS;  // T265 body frame w.r.t. reference frame (in ROS)
-  H_refROS_T265bodyROS.rotationFromQuaternion(q);
-  float position[3];
-  position[0] = msg->pose.pose.position.x;
-  position[1] = msg->pose.pose.position.y;
-  position[2] = msg->pose.pose.position.z;
-  H_refROS_T265bodyROS.SetTranslation(position);
-  
-  std::lock_guard<std::mutex> guard(pose_mutex);
-  gH_T265ref_T265bodyROS = gH_T265ref_refROS * H_refROS_T265bodyROS;
+    Quaternion q(msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z, msg->pose.pose.orientation.w);
+    PoseMatrix4f H_refROS_T265bodyROS;  // T265 body frame w.r.t. reference frame (in ROS)
+    H_refROS_T265bodyROS.rotationFromQuaternion(q);
+    float position[3];
+    position[0] = msg->pose.pose.position.x;
+    position[1] = msg->pose.pose.position.y;
+    position[2] = msg->pose.pose.position.z;
+    H_refROS_T265bodyROS.SetTranslation(position);
+
+    std::lock_guard<std::mutex> guard(pose_mutex);
+    gH_T265ref_T265bodyROS = gH_T265ref_refROS * H_refROS_T265bodyROS;
 }
 
 void depthCallback(const sensor_msgs::Image::ConstPtr& msg)
 {
-  std::lock_guard<std::mutex> guard(pose_mutex);
-  framesSinceLastPublished++;
-  mapManager->TestAndPushFrame((const unsigned short *)&(msg->data[0]), gH_T265ref_T265bodyROS);
+    std::lock_guard<std::mutex> guard(pose_mutex);
+    framesSinceLastPublished++;
+    mapManager->TestAndPushFrame((const unsigned short *)&(msg->data[0]), gH_T265ref_T265bodyROS);
 }
 
 int main(int argc, char **argv)
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     intrinsics.principalPointCoordU = msg_cameraInfo->K[2];
     intrinsics.principalPointCoordV = msg_cameraInfo->K[5];
 
-    // depth optical frame w.r.t. T265 IMU: assumes "stacked" configuration with cameras mounted on top of each other
+    // depth optical frame w.r.t. T265 body frame (ROS)
     tf::TransformListener echoListener;
 
     std::string source_frameid = "t265_pose_frame";   // TODO: make topic name configureable
@@ -95,8 +95,6 @@ int main(int argc, char **argv)
     H_T265bodyROS_depthOptical.pose.m_data[9] = echo_transform.getBasis()[2].m_floats[1];
     H_T265bodyROS_depthOptical.pose.m_data[10] = echo_transform.getBasis()[2].m_floats[2];
     H_T265bodyROS_depthOptical.pose.m_data[11] = echo_transform.getOrigin().getZ();
-
-    // TODO: refactor
 
 
     ros::Publisher pub = n.advertise<nav_msgs::OccupancyGrid>("occupancy", 1);  // http://docs.ros.org/jade/api/nav_msgs/html/msg/OccupancyGrid.html
