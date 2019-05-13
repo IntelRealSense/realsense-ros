@@ -7,6 +7,7 @@
 #include "ros/ros.h"
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/Image.h"
+#include "sensor_msgs/CameraInfo.h"
 #include "nav_msgs/OccupancyGrid.h"
 
 #include "SP_MapManager.h"
@@ -15,7 +16,7 @@ using namespace std;
 using namespace ScenePerception;
 
 std::unique_ptr<ScenePerception::SP_MapManager> mapManager;
-PoseMatrix4f  gH_T265ref_refROS;
+PoseMatrix4f gH_T265ref_refROS;
 PoseMatrix4f gH_T265ref_imu;
 std::mutex pose_mutex;
 unsigned int framesSinceLastPublished;
@@ -51,7 +52,7 @@ void depthCallback(const sensor_msgs::Image::ConstPtr& msg)
 int main(int argc, char **argv)
 {
     // initialize coord. frames
-    // ROS reference frame w.r.t. T265 reference frame (see data sheet)
+    // ROS reference frame w.r.t. T265 reference frame (see data sheet), same as used for mapping
     gH_T265ref_refROS = PoseMatrix4f::Zero;
     gH_T265ref_refROS.m_data[1] = -1.0f;
     gH_T265ref_refROS.m_data[6] = -1.0f;
@@ -64,13 +65,13 @@ int main(int argc, char **argv)
     SP_CameraIntrinsics intrinsics;
     SP_CameraExtrinsics H_T265imu_depthOptical;
 
-    // hard-coded (default), ToDo: read from ROS
-    intrinsics.imageWidth = 640;
-    intrinsics.imageHeight = 480;
-    intrinsics.focalLengthHorizontal = 632.831420898438;
-    intrinsics.focalLengthVertical = 632.831420898438;
-    intrinsics.principalPointCoordU = 314.722412109375;
-    intrinsics.principalPointCoordV = 242.948120117188;
+    boost::shared_ptr<sensor_msgs::CameraInfo const> msg_cameraInfo = ros::topic::waitForMessage<sensor_msgs::CameraInfo>("d400/depth/camera_info", n);  // TODO: make topic name configureable
+    intrinsics.imageWidth = msg_cameraInfo->width;
+    intrinsics.imageHeight = msg_cameraInfo->height;
+    intrinsics.focalLengthHorizontal = msg_cameraInfo->K[0];
+    intrinsics.focalLengthVertical = msg_cameraInfo->K[4];
+    intrinsics.principalPointCoordU = msg_cameraInfo->K[2];
+    intrinsics.principalPointCoordV = msg_cameraInfo->K[5];
 
     // depth optical frame w.r.t. T265 IMU: assumes "stacked" configuration with cameras mounted on top of each other
     H_T265imu_depthOptical.pose = PoseMatrix4f::Identity;
