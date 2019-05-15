@@ -29,3 +29,6 @@ run:
 source devel/setup.bash
 roslaunch occupancy occupancy_live_rviz.launch
 ```
+
+### Expected output (RViz)
+![occupancy_6](https://user-images.githubusercontent.com/28366639/57812351-a5280400-7721-11e9-908e-ac2639b0c8d6.gif)
