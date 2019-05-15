@@ -32,3 +32,10 @@ roslaunch occupancy occupancy_live_rviz.launch
 
 ### Expected output (RViz)
 ![occupancy_6](https://user-images.githubusercontent.com/28366639/57812351-a5280400-7721-11e9-908e-ac2639b0c8d6.gif)
+
+## Appendix
+### Mechanical mount T265 + D435
+![mount_Screenshot from 2019-05-15 15-00-17](https://user-images.githubusercontent.com/28366639/57812608-66467e00-7722-11e9-903e-19ecd0a9f2b6.png)
+https://github.com/IntelRealSense/realsense-ros/blob/occupancy-mapping/realsense2_camera/meshes/mount_t265_d435.stl
+
+Corresponding extrinsics: https://github.com/IntelRealSense/realsense-ros/blob/occupancy-mapping/realsense2_camera/urdf/mount_t265_d435.urdf.xacro
