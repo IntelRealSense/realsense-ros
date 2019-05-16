@@ -20,6 +20,7 @@ constexpr auto realsense_ros_camera_version = REALSENSE_ROS_EMBEDDED_VERSION_STR
 PLUGINLIB_EXPORT_CLASS(realsense2_camera::RealSenseNodeFactory, nodelet::Nodelet)
 
 rs2::device _device;
+std::mutex _device_mutex;
 
 RealSenseNodeFactory::RealSenseNodeFactory()
 {
@@ -107,6 +108,7 @@ rs2::device RealSenseNodeFactory::getDevice()
 
 void RealSenseNodeFactory::change_device_callback(rs2::event_information& info)
 {
+	std::lock_guard<std::mutex> guard(_device_mutex);
 	if (info.was_removed(_device))
 	{
 		ROS_ERROR("The device has been disconnected!");
@@ -140,6 +142,8 @@ void RealSenseNodeFactory::onInit()
 		ros::NodeHandle nh = getNodeHandle();
 		auto privateNh = getPrivateNodeHandle();
 		privateNh.param("serial_no", _serial_no, std::string(""));
+
+		std::lock_guard<std::mutex> guard(_device_mutex);
 
 		std::string rosbag_filename("");
 		privateNh.param("rosbag_filename", rosbag_filename, std::string(""));

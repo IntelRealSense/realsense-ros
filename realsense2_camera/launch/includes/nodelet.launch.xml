@@ -71,7 +71,9 @@
   <arg name="aligned_depth_to_fisheye2_frame_id" default="$(arg tf_prefix)_aligned_depth_to_fisheye2_frame"/>
 
   <arg name="odom_frame_id"            default="$(arg tf_prefix)_odom_frame"/>
-
+  <arg name="topic_odom_in"            default="$(arg tf_prefix)/odom_in"/>
+  <arg name="calib_odom_file"          default=""/>
+  <arg name="publish_odom_tf"          default="true"/>
   <arg name="filters"                  default=""/>
   <arg name="clip_distance"            default="-1"/>
   <arg name="linear_accel_cov"         default="0.01"/>
@@ -150,7 +152,9 @@
     <param name="aligned_depth_to_fisheye2_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye2_frame_id)"/>
 
     <param name="odom_frame_id"            type="str"  value="$(arg odom_frame_id)"/>
-
+    <param name="topic_odom_in"            type="str"  value="$(arg topic_odom_in)"/>
+    <param name="calib_odom_file"          type="str"    value="$(arg calib_odom_file)"/>
+    <param name="publish_odom_tf"          type="bool" value="$(arg publish_odom_tf)"/>
     <param name="filters"                  type="str"    value="$(arg filters)"/>
     <param name="clip_distance"            type="double" value="$(arg clip_distance)"/>
     <param name="linear_accel_cov"         type="double" value="$(arg linear_accel_cov)"/>

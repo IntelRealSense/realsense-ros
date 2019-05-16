@@ -134,6 +134,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, std::string> _frame_id;
         std::map<stream_index_pair, std::string> _optical_frame_id;
         std::map<stream_index_pair, std::string> _depth_aligned_frame_id;
+        ros::NodeHandle& _node_handle, _pnh;
         bool _align_depth;
 
         virtual void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile);
@@ -226,7 +227,6 @@ namespace realsense2_camera
         rs2_stream rs2_string_to_stream(std::string str);
 
         rs2::device _dev;
-        ros::NodeHandle& _node_handle, _pnh;
         std::map<stream_index_pair, rs2::sensor> _sensors;
         std::map<std::string, std::function<void(rs2::frame)>> _sensors_callback;
         std::vector<std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure>> _ddynrec;
@@ -254,7 +254,6 @@ namespace realsense2_camera
         std::map<stream_index_pair, ros::Publisher> _info_publisher;
         std::map<stream_index_pair, cv::Mat> _image;
         std::map<rs2_stream, std::string> _encoding;
-        std::map<stream_index_pair, std::vector<uint8_t>> _aligned_depth_images;
 
         std::map<stream_index_pair, int> _seq;
         std::map<rs2_stream, int> _unit_step_size;
@@ -269,6 +268,7 @@ namespace realsense2_camera
         ros::Publisher _pointcloud_publisher;
         bool _sync_frames;
         bool _pointcloud;
+        bool _publish_odom_tf;
         imu_sync_method _imu_sync_method;
         std::string _filters_str;
         stream_index_pair _pointcloud_texture;
@@ -278,6 +278,7 @@ namespace realsense2_camera
         std::map<rs2_stream, std::shared_ptr<rs2::align>> _align;
 
         std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
+        std::map<stream_index_pair, cv::Mat> _depth_scaled_image;
         std::map<rs2_stream, std::string> _depth_aligned_encoding;
         std::map<stream_index_pair, sensor_msgs::CameraInfo> _depth_aligned_camera_info;
         std::map<stream_index_pair, int> _depth_aligned_seq;

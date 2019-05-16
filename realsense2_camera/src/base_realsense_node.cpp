@@ -81,8 +81,8 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
                                      ros::NodeHandle& privateNodeHandle,
                                      rs2::device dev,
                                      const std::string& serial_no) :
-    _base_frame_id(""), _dev(dev),  _node_handle(nodeHandle),
-    _pnh(privateNodeHandle), _json_file_path(""),
+    _base_frame_id(""),  _node_handle(nodeHandle),
+    _pnh(privateNodeHandle), _dev(dev), _json_file_path(""),
     _serial_no(serial_no),
     _timestampDiff(-1e+200),
     _timestampStart(-1),
@@ -483,6 +483,7 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("linear_accel_cov", _linear_accel_cov, static_cast<double>(0.01));
     _pnh.param("angular_velocity_cov", _angular_velocity_cov, static_cast<double>(0.01));
     _pnh.param("hold_back_imu_for_frames", _hold_back_imu_for_frames, HOLD_BACK_IMU_FOR_FRAMES);
+    _pnh.param("publish_odom_tf", _publish_odom_tf, PUBLISH_ODOM_TF);
 }
 
 void BaseRealSenseNode::setupDevice()
@@ -557,7 +558,6 @@ void BaseRealSenseNode::setupDevice()
             imu_callback_function = [this](rs2::frame frame){imu_callback_sync(frame, _imu_sync_method);};
         }
         std::function<void(rs2::frame)> multiple_message_callback_function = [this](rs2::frame frame){multiple_message_callback(frame, _imu_sync_method);};
-        std::function<void(rs2::frame)> pose_callback_function = [this](rs2::frame frame){pose_callback(frame);};
 
         ROS_INFO_STREAM("Device Sensors: ");
         for(auto&& elem : _dev_sensors)
@@ -826,6 +826,7 @@ void BaseRealSenseNode::enable_devices()
 		for (auto& profiles : _enabled_profiles)
 		{
 			_depth_aligned_image[profiles.first] = cv::Mat(_height[DEPTH], _width[DEPTH], _image_format[DEPTH.first], cv::Scalar(0, 0, 0));
+			_depth_scaled_image[profiles.first] = cv::Mat(_height[DEPTH], _width[DEPTH], _image_format[DEPTH.first], cv::Scalar(0, 0, 0));
 		}
 	}
 
@@ -893,6 +894,11 @@ void BaseRealSenseNode::setupFilters()
             ROS_INFO("Add Filter: temporal");
             _filters.push_back(NamedFilter("temporal", std::make_shared<rs2::temporal_filter>()));
         }
+        else if ((*s_iter) == "hole_filling")
+        {
+            ROS_INFO("Add Filter: hole_filling");
+            _filters.push_back(NamedFilter("hole_filling", std::make_shared<rs2::hole_filling_filter>()));
+        }
         else if ((*s_iter) == "decimation")
         {
             ROS_INFO("Add Filter: decimation");
@@ -937,28 +943,46 @@ void BaseRealSenseNode::setupFilters()
     ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));
 }
 
-void BaseRealSenseNode::fix_depth_scale(rs2::depth_frame depth_frame)
-{
-    uint16_t* p_depth_frame = reinterpret_cast<uint16_t*>(const_cast<void*>(depth_frame.get_data()));
 
+
+cv::Mat& BaseRealSenseNode::fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image)
+{
     static const auto meter_to_mm = 0.001f;
     if (abs(_depth_scale_meters - meter_to_mm) < 1e-6)
-        return;
-
-    int width = depth_frame.get_width();
-    int height = depth_frame.get_height();
-
-    #ifdef _OPENMP
-    #pragma omp parallel for schedule(dynamic) //Using OpenMP to try to parallelise the loop
-    #endif
-    for (int y = 0; y < height; y++)
     {
-        auto depth_pixel_index = y * width;
-        for (int x = 0; x < width; x++, ++depth_pixel_index)
+        to_image = from_image;
+        return to_image;
+    }
+
+    if (to_image.size() != from_image.size())
+    {
+        to_image.create(from_image.rows, from_image.cols, from_image.type());
+    }
+
+    CV_Assert(from_image.depth() == _image_format[RS2_STREAM_DEPTH]);
+
+    int nRows = from_image.rows;
+    int nCols = from_image.cols;
+
+    if (from_image.isContinuous())
+    {
+        nCols *= nRows;
+        nRows = 1;
+    }
+
+    int i,j;
+    const uint16_t* p_from;
+    uint16_t* p_to;
+    for( i = 0; i < nRows; ++i)
+    {
+        p_from = from_image.ptr<uint16_t>(i);
+        p_to = to_image.ptr<uint16_t>(i);
+        for ( j = 0; j < nCols; ++j)
         {
-            p_depth_frame[depth_pixel_index] *= _depth_scale_meters / meter_to_mm;
+            p_to[j] = p_from[j] * _depth_scale_meters / meter_to_mm;
         }
     }
+    return to_image;
 }
 
 void BaseRealSenseNode::clip_depth(rs2::depth_frame depth_frame, float clipping_dist)
@@ -1331,7 +1355,7 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
     msg.transform.rotation.z = pose_msg.pose.orientation.z;
     msg.transform.rotation.w = pose_msg.pose.orientation.w;
 
-    br.sendTransform(msg);
+    if (_publish_odom_tf) br.sendTransform(msg);
 
     if (0 != _imu_publishers[stream_index].getNumSubscribers())
     {
@@ -1342,19 +1366,19 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         v_msg.vector.x = -pose.velocity.z;
         v_msg.vector.y = -pose.velocity.x;
         v_msg.vector.z = pose.velocity.y;
-	tf::Vector3 tfv;
-	tf::vector3MsgToTF(v_msg.vector,tfv);
-	tf::Quaternion q(-msg.transform.rotation.x,-msg.transform.rotation.y,-msg.transform.rotation.z,msg.transform.rotation.w);
-	tfv=tf::quatRotate(q,tfv);
-	tf::vector3TFToMsg(tfv,v_msg.vector);
+        tf::Vector3 tfv;
+        tf::vector3MsgToTF(v_msg.vector,tfv);
+        tf::Quaternion q(-msg.transform.rotation.x,-msg.transform.rotation.y,-msg.transform.rotation.z,msg.transform.rotation.w);
+        tfv=tf::quatRotate(q,tfv);
+        tf::vector3TFToMsg(tfv,v_msg.vector);
 	
         geometry_msgs::Vector3Stamped om_msg;
         om_msg.vector.x = -pose.angular_velocity.z;
         om_msg.vector.y = -pose.angular_velocity.x;
         om_msg.vector.z = pose.angular_velocity.y;
-	tf::vector3MsgToTF(om_msg.vector,tfv);
-	tfv=tf::quatRotate(q,tfv);
-	tf::vector3TFToMsg(tfv,om_msg.vector);
+        tf::vector3MsgToTF(om_msg.vector,tfv);
+        tfv=tf::quatRotate(q,tfv);
+        tf::vector3TFToMsg(tfv,om_msg.vector);
 	
 
         nav_msgs::Odometry odom_msg;
@@ -1418,15 +1442,10 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             }
             // Clip depth_frame for max range:
             rs2::depth_frame depth_frame = frameset.get_depth_frame();
-            if (depth_frame)
+            if (depth_frame && _clipping_distance > 0)
             {
-                fix_depth_scale(depth_frame);
-                if (_clipping_distance > 0)
-                {
-                    this->clip_depth(depth_frame, _clipping_distance);
-                }
+                clip_depth(depth_frame, _clipping_distance);
             }
-
 
             ROS_DEBUG("num_filters: %d", static_cast<int>(_filters.size()));
             for (std::vector<NamedFilter>::const_iterator filter_it = _filters.begin(); filter_it != _filters.end(); filter_it++)
@@ -1505,10 +1524,6 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                     }
                     continue;
                 }
-                else
-                {
-                    ROS_DEBUG("Not points");
-                }
                 stream_index_pair sip{stream_type,stream_index};
                 publishFrame(f, t,
                                 sip,
@@ -1535,10 +1550,9 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             stream_index_pair sip{stream_type,stream_index};
             if (frame.is<rs2::depth_frame>())
             {
-                fix_depth_scale(frame);
                 if (_clipping_distance > 0)
                 {
-                    this->clip_depth(frame, _clipping_distance);
+                    clip_depth(frame, _clipping_distance);
                 }
             }
             publishFrame(frame, t,
@@ -2084,6 +2098,10 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
             image.create(height, width, image.type());
         }
         image.data = (uint8_t*)f.get_data();
+    }
+    if (f.is<rs2::depth_frame>())
+    {
+        image = fix_depth_scale(image, _depth_scaled_image[stream]);
     }
 
     ++(seq[stream]);
