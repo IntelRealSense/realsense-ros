@@ -193,7 +193,7 @@ namespace realsense2_camera
         double timestampFromFrame(const rs2::frame &frame);
 	double elapsedTimeFromFrame(const rs2::frame &frame);
 	double frameTime(const rs2::frame &frame);
-        void fix_depth_scale(rs2::depth_frame depth_frame);
+        cv::Mat& fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image);
         void clip_depth(rs2::depth_frame depth_frame, float clipping_dist);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         void publishStaticTransforms();
