@@ -1762,7 +1762,7 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
 void BaseRealSenseNode::publishStaticTransforms()
 {
     // Publish static transforms
-    const std::vector<stream_index_pair> base_stream_priority = {DEPTH, GYRO};
+    const std::vector<stream_index_pair> base_stream_priority = {DEPTH, POSE};
 
     std::vector<stream_index_pair>::const_iterator base_stream(base_stream_priority.begin());
     while( (_sensors.find(*base_stream) == _sensors.end()) && (base_stream != base_stream_priority.end()))
