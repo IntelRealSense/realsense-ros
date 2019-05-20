@@ -21,6 +21,7 @@
 #include <csignal>
 #include <eigen3/Eigen/Geometry>
 #include <fstream>
+#include <thread>
 
 namespace realsense2_camera
 {
@@ -62,7 +63,7 @@ namespace realsense2_camera
         static void closeDevice();
         void StartDevice();
         void change_device_callback(rs2::event_information& info);
-        rs2::device getDevice();
+        void getDevice(rs2::device_list list);
         virtual void onInit() override;
         void tryGetLogSeverity(rs2_log_severity& severity) const;
 
@@ -70,5 +71,7 @@ namespace realsense2_camera
         rs2::context _ctx;
         std::string _serial_no;
         bool _initial_reset;
+        std::thread _query_thread;
+
     };
 }//end namespace

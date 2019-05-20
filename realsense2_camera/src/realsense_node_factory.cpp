@@ -53,49 +53,51 @@ void RealSenseNodeFactory::signalHandler(int signum)
 	exit(signum);
 }
 
-rs2::device RealSenseNodeFactory::getDevice()
+void RealSenseNodeFactory::getDevice(rs2::device_list list)
 {
-	rs2::device retDev;
-	auto list = _ctx.query_devices();
-	if (0 == list.size())
+	if (!_device)
 	{
-		ROS_WARN("No RealSense devices were found!");
-	}
-	else
-	{
-		bool found = false;
-		for (auto&& dev : list)
+		if (0 == list.size())
 		{
-			auto sn = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
-			ROS_DEBUG_STREAM("Device with serial number " << sn << " was found.");
-			if (_serial_no.empty() || sn == _serial_no)
-			{
-				retDev = dev;
-				_serial_no = sn;
-				found = true;
-				break;
-			}
+			ROS_WARN("No RealSense devices were found!");
 		}
-		if (!found)
+		else
 		{
-			ROS_ERROR_STREAM("The requested device with serial number " << _serial_no << " is NOT found!");
+			bool found = false;
+			for (auto&& dev : list)
+			{
+				auto sn = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+				ROS_DEBUG_STREAM("Device with serial number " << sn << " was found.");
+				if (_serial_no.empty() || sn == _serial_no)
+				{
+					_device = dev;
+					_serial_no = sn;
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+			{
+				// T265 could be caught by another node.
+				ROS_ERROR_STREAM("The requested device with serial number " << _serial_no << " is NOT found. Will Try again.");
+			}
 		}
 	}
 
-	bool remove_tm2_handle(retDev && RS_T265_PID != std::stoi(retDev.get_info(RS2_CAMERA_INFO_PRODUCT_ID), 0, 16));
+	bool remove_tm2_handle(_device && RS_T265_PID != std::stoi(_device.get_info(RS2_CAMERA_INFO_PRODUCT_ID), 0, 16));
 	if (remove_tm2_handle)
 	{
 		_ctx.unload_tracking_module();
 	}
 
-	if (retDev && _initial_reset)
+	if (_device && _initial_reset)
 	{
 		_initial_reset = false;
 		try
 		{
 			ROS_INFO("Resetting device...");
-			retDev.hardware_reset();
-			retDev = rs2::device();
+			_device.hardware_reset();
+			_device = rs2::device();
 			
 		}
 		catch(const std::exception& ex)
@@ -103,12 +105,10 @@ rs2::device RealSenseNodeFactory::getDevice()
 			ROS_WARN_STREAM("An exception has been thrown: " << ex.what());
 		}
 	}
-	return retDev;
 }
 
 void RealSenseNodeFactory::change_device_callback(rs2::event_information& info)
 {
-	std::lock_guard<std::mutex> guard(_device_mutex);
 	if (info.was_removed(_device))
 	{
 		ROS_ERROR("The device has been disconnected!");
@@ -121,7 +121,7 @@ void RealSenseNodeFactory::change_device_callback(rs2::event_information& info)
 		if (new_devices.size() > 0)
 		{
 			ROS_INFO("Checking new devices...");
-			_device = getDevice();
+			getDevice(new_devices);
 			if (_device)
 			{
 				StartDevice();
@@ -143,8 +143,6 @@ void RealSenseNodeFactory::onInit()
 		auto privateNh = getPrivateNodeHandle();
 		privateNh.param("serial_no", _serial_no, std::string(""));
 
-		std::lock_guard<std::mutex> guard(_device_mutex);
-
 		std::string rosbag_filename("");
 		privateNh.param("rosbag_filename", rosbag_filename, std::string(""));
 		if (!rosbag_filename.empty())
@@ -159,18 +157,34 @@ void RealSenseNodeFactory::onInit()
 			_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(nh, privateNh, _device, _serial_no));
 			_realSenseNode->publishTopics();
 			_realSenseNode->registerDynamicReconfigCb(nh);
+			if (_device)
+			{
+				StartDevice();
+			}
 		}
 		else
 		{
-			std::function<void(rs2::event_information&)> change_device_callback_function = [this](rs2::event_information& info){change_device_callback(info);};
-			_ctx.set_devices_changed_callback(change_device_callback_function);
 			privateNh.param("initial_reset", _initial_reset, false);
-			_device = getDevice();
-		}
 
-		if (_device)
-		{
-			StartDevice();
+			_query_thread = std::thread([=]()
+						{
+							std::chrono::milliseconds timespan(6000);
+							while (!_device)
+							{
+								// _ctx.init_tracking_module(); // Unavailable function.
+								getDevice(_ctx.query_devices());
+								if (_device)
+								{
+									std::function<void(rs2::event_information&)> change_device_callback_function = [this](rs2::event_information& info){change_device_callback(info);};
+									_ctx.set_devices_changed_callback(change_device_callback_function);
+									StartDevice();
+								}
+								else
+								{
+									std::this_thread::sleep_for(timespan);
+								}
+							}
+						});
 		}
 	}
 	catch(const std::exception& ex)
