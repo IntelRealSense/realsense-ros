@@ -8,6 +8,7 @@
 
 using namespace realsense2_camera;
 using namespace ddynamic_reconfigure;
+using namespace std;
 
 // stream_index_pair sip{stream_type, stream_index};
 #define STREAM_NAME(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << _stream_name[sip.first] << ((sip.second>0) ? std::to_string(sip.second) : ""))).str()
@@ -278,7 +279,8 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
             {
                 sensor.set_option(option, option_value);
             }
-            ddynrec->add(new DDBool(option_name, i, sensor.get_option_description(option), option_value));
+            ddynrec->registerVariable<bool>(option_name, option_value, boost::bind(callback, _1, option_name, i, sensor),
+                                            std::string(sensor.get_option_description(option)));
             continue;
         }
         const auto enum_dict = get_enum_method(sensor, option);
@@ -303,7 +305,8 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
             }
             if (is_int_option(sensor, option))
             {
-                ddynrec->add(new DDInt(option_name, i, sensor.get_option_description(option), option_value, op_range.min, op_range.max));
+                ddynrec->registerVariable<int>(option_name, static_cast<int>(option_value), boost::bind(callback, _1, option_name, i, sensor),
+                                               std::string(sensor.get_option_description(option)), static_cast<int>(op_range.min), static_cast<int>(op_range.max));
             }
             else
             {
@@ -320,7 +323,8 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
                 }
                 else
                 {
-                    ddynrec->add(new DDDouble(option_name, i, sensor.get_option_description(option), option_value, op_range.min, op_range.max));
+                  ddynrec->registerVariable<double>(option_name, static_cast<double>(option_value), boost::bind(callback, _1, option_name, i, sensor),
+                                                    std::string(sensor.get_option_description(option)), static_cast<double>(op_range.min), static_cast<double>(op_range.max));
                 }
             }
         }
@@ -345,10 +349,11 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
                     sensor.set_option(option, option_value);
                 }
             }
-            ddynrec->add(new DDEnum(option_name, i, sensor.get_option_description(option), option_value, enum_dict));
+            ddynrec->registerEnumVariable<int>(option_name, static_cast<int>(option_value), boost::bind(callback, _1, option_name, i, sensor),
+                                               std::string(sensor.get_option_description(option)), enum_dict);
         }
     }
-    ddynrec->start(boost::bind(callback, _1, _2, sensor));
+    ddynrec->publishServicesTopics();
     _ddynrec.push_back(ddynrec);
 }
 
@@ -373,11 +378,9 @@ void BaseRealSenseNode::registerDynamicReconfigCb(ros::NodeHandle& nh)
     ROS_INFO("Done Setting Dynamic reconfig parameters.");
 }
 
-void BaseRealSenseNode::callback(const ddynamic_reconfigure::DDMap& map, int level, rs2::options sensor) {
-    rs2_option option = static_cast<rs2_option>(level);
-    std::string option_name = create_graph_resource_name(rs2_option_to_string(option));
-    double value = get(map, option_name.c_str()).toDouble();
-    ROS_DEBUG_STREAM("option: " << option_name << ". value: " << value);
+void BaseRealSenseNode::callback(float value, const std::string name, int id, rs2::options sensor) {
+    ROS_DEBUG_STREAM("option: " << name << ". value: " << value);
+    rs2_option option = static_cast<rs2_option>(id);
     sensor.set_option(option, value);
 }
 
