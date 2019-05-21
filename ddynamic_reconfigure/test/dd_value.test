@@ -1,3 +1,0 @@
-<launch>
-    <test test-name="dd_int_test" pkg="ddynamic_reconfigure" type="dd_enum-test" />
-</launch>
