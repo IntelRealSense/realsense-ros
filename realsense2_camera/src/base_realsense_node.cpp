@@ -16,7 +16,7 @@ using namespace ddynamic_reconfigure;
 #define ALIGNED_DEPTH_TO_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_aligned_depth_to_" << STREAM_NAME(sip) << "_frame")).str()
 
 SyncedImuPublisher::SyncedImuPublisher(ros::Publisher imu_publisher, std::size_t waiting_list_size):
-            _publisher(imu_publisher),
+            _publisher(imu_publisher), _pause_mode(false),
             _waiting_list_size(waiting_list_size)
             {}
 
@@ -1104,18 +1104,6 @@ double BaseRealSenseNode::FillImuData_Copy(const stream_index_pair stream_index,
     return imu_data.m_time;
 }
 
-void BaseRealSenseNode::ConvertFromOpticalFrameToFrame(float3& data)
-{
-    float3 temp;
-    temp.x = data.z;
-    temp.y = -data.x;
-    temp.z = -data.y;
-
-    data.x = temp.x;
-    data.y = temp.y;
-    data.z = temp.z;
-}
-
 void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync_method)
 {
     static std::mutex m_mutex;
@@ -1124,7 +1112,7 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
     static int seq = 0;
     static bool init_gyro(false), init_accel(false);
     static double accel_factor(0);
-    imu_msg.header.frame_id = _frame_id[stream_imu];
+    imu_msg.header.frame_id = _optical_frame_id[stream_imu];
     imu_msg.orientation.x = 0.0;
     imu_msg.orientation.y = 0.0;
     imu_msg.orientation.z = 0.0;
@@ -1154,12 +1142,6 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
         if (0 != _synced_imu_publisher->getNumSubscribers())
         {
             auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
-            if (true)
-            {
-                // Convert from optical frame to frame:
-                ConvertFromOpticalFrameToFrame(crnt_reading);
-                imu_msg.header.frame_id = _frame_id[stream_index];
-            }
             if (GYRO == stream_index)
             {
                 init_gyro = true;
@@ -1242,7 +1224,6 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         imu_msg.angular_velocity_covariance = { _angular_velocity_cov, 0.0, 0.0, 0.0, _angular_velocity_cov, 0.0, 0.0, 0.0, _angular_velocity_cov};
 
         auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
-        ConvertFromOpticalFrameToFrame(crnt_reading);
         if (GYRO == stream_index)
         {
             imu_msg.angular_velocity.x = crnt_reading.x;
