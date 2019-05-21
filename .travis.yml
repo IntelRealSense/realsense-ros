@@ -43,7 +43,7 @@ install:
     
   # Run test:
 script:
-  - python src/realsense/realsense2_camera/scripts/rs2_test.py --all
+  - python src/realsense/scripts/rs2_test.py --all
   
  
 before_cache:
