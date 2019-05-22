@@ -18,6 +18,8 @@ limitations under the License.
 A launch file, derived from rgbd_launch and customized for Realsense ROS driver,
 to publish XYZRGB point cloud like an OpenNI camera.
 
+NOTICE: To use this launch file you must first install ros package rgbd_launch.
+
 To launch Realsense with software registeration (ROS Image Pipeline and rgbd_launch):
     $ roslaunch realsense2_camera rs_rgbd.launch
 Processing enabled by ROS driver:
