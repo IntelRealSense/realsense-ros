@@ -23,6 +23,7 @@ install:
   - sudo apt-get install ros-kinetic-image-transport
   - sudo apt-get install ros-kinetic-tf -y
   - sudo apt-get install ros-kinetic-diagnostic-updater -y
+  - sudo apt-get install ros-kinetic-ddynamic-reconfigure -y
   - source ~/.bashrc
   - mkdir -p ~/catkin_ws/src/realsense
 
