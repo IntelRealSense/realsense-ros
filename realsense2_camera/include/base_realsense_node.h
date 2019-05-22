@@ -233,6 +233,8 @@ namespace realsense2_camera
         std::string _serial_no;
         float _depth_scale_meters;
         float _clipping_distance;
+        bool _allow_no_texture_points;
+
         double _linear_accel_cov;
         double _angular_velocity_cov;
         bool  _hold_back_imu_for_frames;
