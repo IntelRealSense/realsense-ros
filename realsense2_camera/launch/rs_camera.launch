@@ -34,17 +34,18 @@
   <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>
   <arg name="pointcloud_texture_index"  default="0"/>
 
-  <arg name="enable_sync"           default="false"/>
-  <arg name="align_depth"           default="false"/>
+  <arg name="enable_sync"               default="false"/>
+  <arg name="align_depth"               default="false"/>
 
-  <arg name="filters"               default=""/>
-  <arg name="clip_distance"         default="-2"/>
-  <arg name="linear_accel_cov"      default="0.01"/>
-  <arg name="initial_reset"         default="false"/>
-  <arg name="unite_imu_method"      default=""/>
-  <arg name="topic_odom_in"         default="odom_in"/>
-  <arg name="calib_odom_file"       default=""/>
-  <arg name="publish_odom_tf"       default="true"/>
+  <arg name="filters"                   default=""/>
+  <arg name="clip_distance"             default="-2"/>
+  <arg name="linear_accel_cov"          default="0.01"/>
+  <arg name="initial_reset"             default="false"/>
+  <arg name="unite_imu_method"          default=""/>
+  <arg name="topic_odom_in"             default="odom_in"/>
+  <arg name="calib_odom_file"           default=""/>
+  <arg name="publish_odom_tf"           default="true"/>
+  <arg name="allow_no_texture_points"   default="false"/>
 
   
   <group ns="$(arg camera)">
@@ -93,6 +94,7 @@
       <arg name="topic_odom_in"            value="$(arg topic_odom_in)"/>
       <arg name="calib_odom_file"          value="$(arg calib_odom_file)"/>
       <arg name="publish_odom_tf"          value="$(arg publish_odom_tf)"/>
+      <arg name="allow_no_texture_points"  value="$(arg allow_no_texture_points)"/>
     </include>
   </group>
 </launch>

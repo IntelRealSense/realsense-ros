@@ -1917,13 +1917,17 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
             *iter_y = vertex->y;
             *iter_z = vertex->z;
 
-            color_pixel[0] = static_cast<float>(color_point->u) * texture_width;
-            color_pixel[1] = static_cast<float>(color_point->v) * texture_height;
-
-            int pixx = static_cast<int>(color_pixel[0]);
-            int pixy = static_cast<int>(color_pixel[1]);
-            int offset = (pixy * texture_width + pixx) * num_colors;
-            reverse_memcpy(&(*iter_color), color_data+offset, num_colors);  // PointCloud2 order of rgb is bgr.
+            float i(color_point->u);
+            float j(color_point->v);
+            if (i >= 0.f && i <= 1.f && j >= 0.f && j <= 1.f)
+            {
+                color_pixel[0] = i * texture_width;
+                color_pixel[1] = j * texture_height;
+                int pixx = static_cast<int>(color_pixel[0]);
+                int pixy = static_cast<int>(color_pixel[1]);
+                int offset = (pixy * texture_width + pixx) * num_colors;
+                reverse_memcpy(&(*iter_color), color_data+offset, num_colors);  // PointCloud2 order of rgb is bgr.
+            }
 
             ++iter_x; ++iter_y; ++iter_z;
             ++iter_color;
