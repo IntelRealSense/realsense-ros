@@ -19,15 +19,11 @@ constexpr auto realsense_ros_camera_version = REALSENSE_ROS_EMBEDDED_VERSION_STR
 
 PLUGINLIB_EXPORT_CLASS(realsense2_camera::RealSenseNodeFactory, nodelet::Nodelet)
 
-rs2::device _device;
-std::mutex _device_mutex;
-
 RealSenseNodeFactory::RealSenseNodeFactory()
 {
 	ROS_INFO("RealSense ROS v%s", REALSENSE_ROS_VERSION_STR);
 	ROS_INFO("Running with LibRealSense v%s", RS2_API_VERSION_STR);
 
-	signal(SIGINT, signalHandler);
 	auto severity = rs2_log_severity::RS2_LOG_SEVERITY_WARN;
 	tryGetLogSeverity(severity);
 	if (rs2_log_severity::RS2_LOG_SEVERITY_DEBUG == severity)
@@ -45,12 +41,9 @@ void RealSenseNodeFactory::closeDevice()
 	}
 }
 
-void RealSenseNodeFactory::signalHandler(int signum)
+RealSenseNodeFactory::~RealSenseNodeFactory()
 {
-	ROS_INFO_STREAM(strsignal(signum) << " Signal is received! Terminating RealSense Node...");
 	closeDevice();
-	ros::shutdown();
-	exit(signum);
 }
 
 void RealSenseNodeFactory::getDevice(rs2::device_list list)

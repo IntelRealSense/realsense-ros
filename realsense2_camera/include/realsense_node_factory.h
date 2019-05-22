@@ -56,17 +56,17 @@ namespace realsense2_camera
     {
     public:
         RealSenseNodeFactory();
-        virtual ~RealSenseNodeFactory() {}
+        virtual ~RealSenseNodeFactory();
 
     private:
-        static void signalHandler(int signum);
-        static void closeDevice();
+        void closeDevice();
         void StartDevice();
         void change_device_callback(rs2::event_information& info);
         void getDevice(rs2::device_list list);
         virtual void onInit() override;
         void tryGetLogSeverity(rs2_log_severity& severity) const;
 
+        rs2::device _device;
         std::unique_ptr<InterfaceRealSenseNode> _realSenseNode;
         rs2::context _ctx;
         std::string _serial_no;
