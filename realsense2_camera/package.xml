@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>realsense2_camera</name>
-  <version>2.2.3</version>
-  <description>RealSense Camera package allowing access to Intel 3D D400 cameras</description>
+  <version>2.2.4</version>
+  <description>RealSense Camera package allowing access to Intel T265 Tracking module and SR300 and D400 3D cameras</description>
   <maintainer email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</maintainer>
   <maintainer email="doron.hirshberg@intel.com">Doron Hirshberg</maintainer>
   <license>Apache 2.0</license>
