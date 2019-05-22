@@ -72,7 +72,7 @@ void T265RealsenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
 {
     // Transform base to stream
     tf::Quaternion quaternion_optical;
-    quaternion_optical.setRPY(M_PI / 2, 0.0, -M_PI / 2);
+    quaternion_optical.setRPY(M_PI / 2, 0.0, -M_PI / 2);    //Pose To ROS
     float3 zero_trans{0, 0, 0};
 
     ros::Time transform_ts_ = ros::Time::now();
@@ -101,8 +101,6 @@ void T265RealsenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
     if (stream == POSE)
     {
         Q = Q.inverse();
-        quaternion_optical = quaternion_optical.inverse();
-
         publish_static_tf(transform_ts_, trans, Q, _frame_id[stream], _base_frame_id);
     }
     else

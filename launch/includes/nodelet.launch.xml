@@ -61,6 +61,7 @@
   <arg name="fisheye2_optical_frame_id" default="$(arg tf_prefix)_fisheye2_optical_frame"/>
   <arg name="accel_optical_frame_id"    default="$(arg tf_prefix)_accel_optical_frame"/>
   <arg name="gyro_optical_frame_id"     default="$(arg tf_prefix)_gyro_optical_frame"/>
+  <arg name="imu_optical_frame_id"      default="$(arg tf_prefix)_imu_optical_frame"/>
   <arg name="pose_optical_frame_id"     default="$(arg tf_prefix)_pose_optical_frame"/>
 
   <arg name="aligned_depth_to_color_frame_id"    default="$(arg tf_prefix)_aligned_depth_to_color_frame"/>
@@ -142,6 +143,7 @@
     <param name="fisheye2_optical_frame_id" type="str"  value="$(arg fisheye2_optical_frame_id)"/>
     <param name="accel_optical_frame_id"    type="str"  value="$(arg accel_optical_frame_id)"/>
     <param name="gyro_optical_frame_id"     type="str"  value="$(arg gyro_optical_frame_id)"/>
+    <param name="imu_optical_frame_id"      type="str"  value="$(arg imu_optical_frame_id)"/>
     <param name="pose_optical_frame_id"     type="str"  value="$(arg pose_optical_frame_id)"/>
 
     <param name="aligned_depth_to_color_frame_id"    type="str"  value="$(arg aligned_depth_to_color_frame_id)"/>

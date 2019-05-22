@@ -17,7 +17,7 @@ using namespace std;
 #define ALIGNED_DEPTH_TO_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_aligned_depth_to_" << STREAM_NAME(sip) << "_frame")).str()
 
 SyncedImuPublisher::SyncedImuPublisher(ros::Publisher imu_publisher, std::size_t waiting_list_size):
-            _publisher(imu_publisher),
+            _publisher(imu_publisher), _pause_mode(false),
             _waiting_list_size(waiting_list_size)
             {}
 
@@ -480,6 +480,7 @@ void BaseRealSenseNode::getParameters()
         _pnh.param(param_name, _depth_aligned_frame_id[stream], ALIGNED_DEPTH_TO_FRAME_ID(stream));
     }
 
+    _pnh.param("allow_no_texture_points", _allow_no_texture_points, ALLOW_NO_TEXTURE_POINTS);
     _pnh.param("clip_distance", _clipping_distance, static_cast<float>(-1.0));
     _pnh.param("linear_accel_cov", _linear_accel_cov, static_cast<double>(0.01));
     _pnh.param("angular_velocity_cov", _angular_velocity_cov, static_cast<double>(0.01));
@@ -875,6 +876,7 @@ void BaseRealSenseNode::setupFilters()
     boost::split(filters_str, _filters_str, [](char c){return c == ',';});
     bool use_disparity_filter(false);
     bool use_colorizer_filter(false);
+    bool use_decimation_filter(false);
     for (std::vector<std::string>::const_iterator s_iter=filters_str.begin(); s_iter!=filters_str.end(); s_iter++)
     {
         if ((*s_iter) == "colorizer")
@@ -902,8 +904,7 @@ void BaseRealSenseNode::setupFilters()
         }
         else if ((*s_iter) == "decimation")
         {
-            ROS_INFO("Add Filter: decimation");
-            _filters.push_back(NamedFilter("decimation", std::make_shared<rs2::decimation_filter>()));
+            use_decimation_filter = true;
         }
         else if ((*s_iter) == "pointcloud")
         {
@@ -921,6 +922,11 @@ void BaseRealSenseNode::setupFilters()
         _filters.insert(_filters.begin(), NamedFilter("disparity_start", std::make_shared<rs2::disparity_transform>()));
         _filters.push_back(NamedFilter("disparity_end", std::make_shared<rs2::disparity_transform>(false)));
         ROS_INFO("Done Add Filter: disparity");
+    }
+    if (use_decimation_filter)
+    {
+      ROS_INFO("Add Filter: decimation");
+      _filters.insert(_filters.begin(),NamedFilter("decimation", std::make_shared<rs2::decimation_filter>()));
     }
     if (use_colorizer_filter)
     {
@@ -1107,18 +1113,6 @@ double BaseRealSenseNode::FillImuData_Copy(const stream_index_pair stream_index,
     return imu_data.m_time;
 }
 
-void BaseRealSenseNode::ConvertFromOpticalFrameToFrame(float3& data)
-{
-    float3 temp;
-    temp.x = data.z;
-    temp.y = -data.x;
-    temp.z = -data.y;
-
-    data.x = temp.x;
-    data.y = temp.y;
-    data.z = temp.z;
-}
-
 void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync_method)
 {
     static std::mutex m_mutex;
@@ -1127,7 +1121,7 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
     static int seq = 0;
     static bool init_gyro(false), init_accel(false);
     static double accel_factor(0);
-    imu_msg.header.frame_id = _frame_id[stream_imu];
+    imu_msg.header.frame_id = _optical_frame_id[stream_imu];
     imu_msg.orientation.x = 0.0;
     imu_msg.orientation.y = 0.0;
     imu_msg.orientation.z = 0.0;
@@ -1157,12 +1151,6 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
         if (0 != _synced_imu_publisher->getNumSubscribers())
         {
             auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
-            if (true)
-            {
-                // Convert from optical frame to frame:
-                ConvertFromOpticalFrameToFrame(crnt_reading);
-                imu_msg.header.frame_id = _frame_id[stream_index];
-            }
             if (GYRO == stream_index)
             {
                 init_gyro = true;
@@ -1235,7 +1223,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
 
         auto imu_msg = sensor_msgs::Imu();
-        imu_msg.header.frame_id = _optical_frame_id[stream_index];
+        imu_msg.header.frame_id = _frame_id[stream_index];
         imu_msg.orientation.x = 0.0;
         imu_msg.orientation.y = 0.0;
         imu_msg.orientation.z = 0.0;
@@ -1245,7 +1233,6 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         imu_msg.angular_velocity_covariance = { _angular_velocity_cov, 0.0, 0.0, 0.0, _angular_velocity_cov, 0.0, 0.0, 0.0, _angular_velocity_cov};
 
         auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
-        ConvertFromOpticalFrameToFrame(crnt_reading);
         if (GYRO == stream_index)
         {
             imu_msg.angular_velocity.x = crnt_reading.x;
@@ -1765,7 +1752,7 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
 void BaseRealSenseNode::publishStaticTransforms()
 {
     // Publish static transforms
-    const std::vector<stream_index_pair> base_stream_priority = {DEPTH, GYRO};
+    const std::vector<stream_index_pair> base_stream_priority = {DEPTH, POSE};
 
     std::vector<stream_index_pair>::const_iterator base_stream(base_stream_priority.begin());
     while( (_sensors.find(*base_stream) == _sensors.end()) && (base_stream != base_stream_priority.end()))
@@ -1866,27 +1853,16 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
 
     const rs2::vertex* vertex = pc.get_vertices();
     const rs2::texture_coordinate* color_point = pc.get_texture_coordinates();
-    int num_valid_points(0);
-    if (use_texture)
+    std::list<unsigned int> valid_indices;
+    for (size_t point_idx=0; point_idx < pc.size(); point_idx++, vertex++, color_point++)
     {
-        for (size_t point_idx=0; point_idx < pc.size(); point_idx++, color_point++)
+        if (static_cast<float>(vertex->z) > 0)
         {
             float i = static_cast<float>(color_point->u);
             float j = static_cast<float>(color_point->v);
-
-            if (i >= 0.f && i <= 1.f && j >= 0.f && j <= 1.f)
+            if (_allow_no_texture_points || (i >= 0.f && i <= 1.f && j >= 0.f && j <= 1.f))
             {
-                num_valid_points++;
-            }
-        }
-    }
-    else
-    {
-        for (size_t point_idx=0; point_idx < pc.size(); point_idx++, vertex++)
-        {
-            if (static_cast<float>(vertex->z) > 0)
-            {
-                num_valid_points++;
+                valid_indices.push_back(point_idx);
             }
         }
     }
@@ -1894,7 +1870,7 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
     sensor_msgs::PointCloud2 msg_pointcloud;
     msg_pointcloud.header.stamp = t;
     msg_pointcloud.header.frame_id = _optical_frame_id[DEPTH];
-    msg_pointcloud.width = num_valid_points;
+    msg_pointcloud.width = valid_indices.size();
     msg_pointcloud.height = 1;
     msg_pointcloud.is_dense = true;
 
@@ -1932,27 +1908,28 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
         color_point = pc.get_texture_coordinates();
 
         float color_pixel[2];
-        for (size_t point_idx=0; point_idx < pc.size(); vertex++, point_idx++, color_point++)
+        unsigned int prev_idx(0);
+        for (auto idx=valid_indices.begin(); idx != valid_indices.end(); idx++)
         {
-            float i = static_cast<float>(color_point->u);
-            float j = static_cast<float>(color_point->v);
-            if (i >= 0.f && i <= 1.f && j >= 0.f && j <= 1.f)
-            {
-                *iter_x = vertex->x;
-                *iter_y = vertex->y;
-                *iter_z = vertex->z;
+            unsigned int idx_jump(*idx-prev_idx);
+            prev_idx = *idx;
+            vertex+=idx_jump;
+            color_point+=idx_jump;
 
-                color_pixel[0] = i * texture_width;
-                color_pixel[1] = j * texture_height;
+            *iter_x = vertex->x;
+            *iter_y = vertex->y;
+            *iter_z = vertex->z;
 
-                int pixx = static_cast<int>(color_pixel[0]);
-                int pixy = static_cast<int>(color_pixel[1]);
-                int offset = (pixy * texture_width + pixx) * num_colors;
-                reverse_memcpy(&(*iter_color), color_data+offset, num_colors);  // PointCloud2 order of rgb is bgr.
+            color_pixel[0] = static_cast<float>(color_point->u) * texture_width;
+            color_pixel[1] = static_cast<float>(color_point->v) * texture_height;
 
-                ++iter_x; ++iter_y; ++iter_z;
-                ++iter_color;
-            }
+            int pixx = static_cast<int>(color_pixel[0]);
+            int pixy = static_cast<int>(color_pixel[1]);
+            int offset = (pixy * texture_width + pixx) * num_colors;
+            reverse_memcpy(&(*iter_color), color_data+offset, num_colors);  // PointCloud2 order of rgb is bgr.
+
+            ++iter_x; ++iter_y; ++iter_z;
+            ++iter_color;
         }
     }
     else
@@ -1960,16 +1937,18 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
         sensor_msgs::PointCloud2Iterator<float>iter_x(msg_pointcloud, "x");
         sensor_msgs::PointCloud2Iterator<float>iter_y(msg_pointcloud, "y");
         sensor_msgs::PointCloud2Iterator<float>iter_z(msg_pointcloud, "z");
-        for (size_t point_idx=0; point_idx < pc.size(); vertex++, point_idx++)
+        unsigned int prev_idx(0);
+        for (auto idx=valid_indices.begin(); idx != valid_indices.end(); idx++)
         {
-            if (static_cast<float>(vertex->z) > 0)
-            {
-                *iter_x = vertex->x;
-                *iter_y = vertex->y;
-                *iter_z = vertex->z;
+            unsigned int idx_jump(*idx-prev_idx);
+            prev_idx = *idx;
+            vertex+=idx_jump;
 
-                ++iter_x; ++iter_y; ++iter_z;
-            }
+            *iter_x = vertex->x;
+            *iter_y = vertex->y;
+            *iter_z = vertex->z;
+
+            ++iter_x; ++iter_y; ++iter_z;
         }
     }
     _pointcloud_publisher.publish(msg_pointcloud);
