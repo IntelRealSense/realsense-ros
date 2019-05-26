@@ -1220,7 +1220,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
 
         auto imu_msg = sensor_msgs::Imu();
-        imu_msg.header.frame_id = _frame_id[stream_index];
+        imu_msg.header.frame_id = _optical_frame_id[stream_index];
         imu_msg.orientation.x = 0.0;
         imu_msg.orientation.y = 0.0;
         imu_msg.orientation.z = 0.0;
