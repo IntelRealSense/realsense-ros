@@ -26,8 +26,8 @@
   <arg name="depth_fps"           default="0"/>
   <arg name="infra_fps"          default="0"/>
   <arg name="color_fps"           default="0"/>
-  <arg name="gyro_fps"            default="400"/>
-  <arg name="accel_fps"           default="250"/>
+  <arg name="gyro_fps"            default="0"/>
+  <arg name="accel_fps"           default="0"/>
   <arg name="enable_gyro"         default="true"/>
   <arg name="enable_accel"        default="true"/>
 

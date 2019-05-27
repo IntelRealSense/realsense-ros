@@ -15,6 +15,57 @@ import rosservice
 global tf_timeout
 tf_timeout = 5
 
+def ImuGetData(rec_filename, topic):
+    bag = rosbag.Bag(rec_filename)
+    res = dict()
+    res['value'] = None
+    res['max_diff'] = [0,0,0]
+    for topic, msg, t in bag.read_messages(topics=topic):
+        value = np.array([msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z])
+        if res['value'] is None:
+            res['value'] = value
+        else:
+            diff = abs(value - res['value'])
+            res['max_diff'] = [max(diff[x], res['max_diff'][x]) for x in range(len(diff))]
+    res['max_diff'] = np.array(res['max_diff'])
+    return res
+
+def AccelGetData(rec_filename):
+    return ImuGetData(rec_filename, '/device_0/sensor_2/Accel_0/imu/data')
+
+def AccelGetDataDeviceStandStraight(rec_filename):
+    gt_data = AccelGetData(rec_filename)
+    gt_data['ros_value'] = np.array([0.63839424, 0.05380408, 9.85343552])
+    gt_data['ros_max_diff'] = np.array([1.97013582e-02, 4.65862500e-09, 2.06165277e-02])
+    return gt_data
+
+def ImuTest(data, gt_data):
+    # check that all data['num_channels'] are the same as gt_data['num_channels'] and that avg value of all
+    # images are within epsilon of gt_data['avg']
+    try:
+        v_data = np.array([data['value'][0].x, data['value'][0].y, data['value'][0].z])
+        v_gt_data = gt_data['value']
+        diff = v_data - v_gt_data
+        max_diff = abs(diff).max()
+        msg = 'original accel: Expect max diff of %.3f. Got %.3f.' % (gt_data['max_diff'].max(), max_diff)
+        print msg
+        if max_diff > gt_data['max_diff'].max():
+            return False, msg
+
+        v_data = data['ros_value'][0]
+        v_gt_data = gt_data['ros_value']
+        diff = v_data - v_gt_data
+        max_diff = abs(diff).max()
+        msg = 'rotated to ROS: Expect max diff of %.3f. Got %.3f.' % (gt_data['ros_max_diff'].max(), max_diff)
+        print msg
+        if max_diff > gt_data['ros_max_diff'].max():
+            return False, msg
+    except Exception as e:
+        msg = '%s' % e
+        print 'Test Failed: %s' % msg
+        return False, msg
+    return True, ''
+
 def ImageGetData(rec_filename, topic):
     bag = rosbag.Bag(rec_filename)
     bridge = CvBridge()
@@ -74,7 +125,7 @@ def ImageColorTest(data, gt_data):
     # images are within epsilon of gt_data['avg']
     try:
         channels = list(set(data['num_channels']))
-        msg = 'Expect %d channels. Got %d channels.' % (channels[0], gt_data['num_channels'])
+        msg = 'Expect %d channels. Got %d channels.' % (gt_data['num_channels'], channels[0])
         print msg
         if len(channels) > 1 or channels[0] != gt_data['num_channels']:
             return False, msg
@@ -176,6 +227,9 @@ test_types = {'vis_avg': {'listener_theme': 'colorStream',
                                                           ('camera_infra1_frame', 'camera_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702])}
                                                             ,
                                   'test_func': staticTFTest},
+              'accel_up':   {'listener_theme': 'accelStream',
+                                  'data_func': AccelGetDataDeviceStandStraight,
+                                  'test_func': ImuTest},
               }
 
 
@@ -234,7 +288,9 @@ def run_tests(tests):
             print 
             print '*'*8 + ' Starting ROS ' + '*'*8
             print 'running node (%d/%d)' % (run_no, num_of_startups)
-            p_wrapper = subprocess.Popen(['roslaunch', 'realsense2_camera', 'rs_from_file.launch'] + params_str.split(' '), stdout=None, stderr=None)
+            cmd_params = ['roslaunch', 'realsense2_camera', 'rs_from_file.launch'] + params_str.split(' ')
+            print 'running command: ' + ' '.join(cmd_params)
+            p_wrapper = subprocess.Popen(cmd_params, stdout=None, stderr=None)
             time.sleep(2)
             service_list = rosservice.get_service_list()
             is_node_up = len([service for service in service_list if 'realsense2_camera/' in service]) > 0
@@ -286,6 +342,7 @@ def main():
                  {'name': 'depth_avg_decimation_1', 'type': 'depth_avg_decimation', 'params': {'rosbag_filename': './records/outdoors.bag', 'filters': 'decimation'}},
                  {'name': 'align_depth_ir1_decimation_1', 'type': 'align_depth_ir1_decimation', 'params': {'rosbag_filename': './records/outdoors.bag', 'filters': 'decimation', 'align_depth': 'true'}},
                  {'name': 'static_tf_1', 'type': 'static_tf', 'params': {'rosbag_filename': './records/outdoors.bag'}},
+                 {'name': 'accel_up_1', 'type': 'accel_up', 'params': {'rosbag_filename': './records/20190527_D435i.bag'}},
                  ]
 
     # Normalize parameters:
