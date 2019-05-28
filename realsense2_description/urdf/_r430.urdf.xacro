@@ -4,37 +4,38 @@
 License: Apache 2.0. See LICENSE file in root directory.
 Copyright(c) 2017 Intel Corporation. All Rights Reserved
 
-This is the URDF model for the Intel RealSense 410 camera, in it's
-aluminum peripherial evalution case.
+This is the URDF model for the Intel RealSense 430 camera, in it's
+aluminum peripherial evaluation case.
 -->
 
-<robot name="sensor_r410" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="sensor_r430" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:property name="M_PI" value="3.1415926535897931" />
 
   <!-- The following values are approximate, and the camera node
    publishing TF values with actual calibrated camera extrinsic values -->
-  <xacro:property name="r410_cam_depth_to_left_ir_offset" value="-0.0275"/>
-  <xacro:property name="r410_cam_depth_to_right_ir_offset" value="0.0275"/>
+  <xacro:property name="r430_cam_depth_to_left_ir_offset" value="-0.025"/>
+  <xacro:property name="r430_cam_depth_to_right_ir_offset" value="0.025"/>
+  <xacro:property name="r430_cam_depth_to_fisheye_offset" value="0.042"/>
 
   <!-- The following values model the aluminum peripherial case for the
-    R410 camera, with the camera joint represented by the actual 
+    R430 camera, with the camera joint represented by the actual 
     peripherial camera tripod mount -->
-  <xacro:property name="r410_cam_width" value="0.099"/>
-  <xacro:property name="r410_cam_height" value="0.035"/>
-  <xacro:property name="r410_cam_depth" value="0.0185"/>
-  <xacro:property name="r410_cam_mount_from_center_offset" value=".0375"/>
+  <xacro:property name="r430_cam_width" value="0.105"/>
+  <xacro:property name="r430_cam_height" value="0.039"/>
+  <xacro:property name="r430_cam_depth" value="0.019"/>
+  <xacro:property name="r430_cam_mount_from_center_offset" value=".0275"/>
 
-  <!-- The following offset is relative the the physical R410 camera peripherial
+  <!-- The following offset is relative the the physical R430 camera peripherial
     camera tripod mount -->
-  <xacro:property name="r410_cam_depth_px" value="0.00"/>
-  <xacro:property name="r410_cam_depth_py" value="-0.0425"/>
-  <xacro:property name="r410_cam_depth_pz" value="0.026"/>
+  <xacro:property name="r430_cam_depth_px" value="0.00"/>
+  <xacro:property name="r430_cam_depth_py" value="-0.035"/>
+  <xacro:property name="r430_cam_depth_pz" value="0.028"/>
 
   <material name="aluminum">
     <color rgba="0.5 0.5 0.5 1"/>
   </material>
 
-  <xacro:macro name="sensor_r410" params="parent *origin">
+  <xacro:macro name="sensor_r430" params="parent *origin">
 
     <!-- camera body, with origin at bottom screw mount -->
     <joint name="camera_joint" type="fixed">
@@ -45,17 +46,17 @@ aluminum peripherial evalution case.
 
     <link name="camera_link">
       <visual>
-      <origin xyz="0 ${-r410_cam_mount_from_center_offset} ${r410_cam_height/2}" rpy="${M_PI/2} 0 ${M_PI/2}"/>
+      <origin xyz="0 ${-r430_cam_mount_from_center_offset} ${r430_cam_height/2}" rpy="${M_PI/2} 0 ${M_PI/2}"/>
         <geometry>
-          <box size="${r410_cam_width} ${r410_cam_height} ${r410_cam_depth}"/>
-          <!--<mesh filename="package://realsense2_camera/meshes/r410/r410.dae" />-->
+          <box size="${r430_cam_width} ${r430_cam_height} ${r430_cam_depth}" />
+          <!--<mesh filename="package://realsense2_description/meshes/r430/r430.dae" />-->
         </geometry>
         <material name="aluminum"/>
       </visual>
       <collision>
-        <origin xyz="0.0 0.0 ${r410_cam_height/2}" rpy="0 0 0"/>
+        <origin xyz="0.0 0.0 ${r430_cam_height/2}" rpy="0 0 0"/>
         <geometry>
-        <box size="${r410_cam_depth} ${r410_cam_width} ${r410_cam_height}"/>
+        <box size="${r430_cam_depth} ${r430_cam_width} ${r430_cam_height}"/>
         </geometry>
       </collision>
       <inertial>
@@ -68,7 +69,7 @@ aluminum peripherial evalution case.
    
     <!-- camera depth joints and links -->
     <joint name="camera_depth_joint" type="fixed">
-      <origin xyz="${r410_cam_depth_px} ${r410_cam_depth_py} ${r410_cam_depth_pz}" rpy="0 0 0"/>
+      <origin xyz="${r430_cam_depth_px} ${r430_cam_depth_py} ${r430_cam_depth_pz}" rpy="0 0 0"/>
       <parent link="camera_link"/>
       <child link="camera_depth_frame" />
     </joint>
@@ -83,7 +84,7 @@ aluminum peripherial evalution case.
       
     <!-- camera left IR joints and links -->
     <joint name="camera_left_ir_joint" type="fixed">
-      <origin xyz="0 ${r410_cam_depth_to_left_ir_offset} 0" rpy="0 0 0" />
+      <origin xyz="0 ${r430_cam_depth_to_left_ir_offset} 0" rpy="0 0 0" />
       <parent link="camera_depth_frame" />
       <child link="camera_left_ir_frame" />
     </joint>
@@ -98,7 +99,7 @@ aluminum peripherial evalution case.
 
     <!-- camera right IR joints and links -->
     <joint name="camera_right_ir_joint" type="fixed">
-      <origin xyz="0 ${r410_cam_depth_to_right_ir_offset} 0" rpy="0 0 0" />
+      <origin xyz="0 ${r430_cam_depth_to_right_ir_offset} 0" rpy="0 0 0" />
       <parent link="camera_depth_frame" />
       <child link="camera_right_ir_frame" />
     </joint>
@@ -110,5 +111,20 @@ aluminum peripherial evalution case.
       <child link="camera_right_ir_optical_frame" />
     </joint>
     <link name="camera_right_ir_optical_frame"/>
+
+    <!-- camera fisheye joints and links -->
+    <joint name="camera_fisheye_joint" type="fixed">
+      <origin xyz="0 ${r430_cam_depth_to_fisheye_offset} 0" rpy="0 0 0" />
+      <parent link="camera_depth_frame" />
+      <child link="camera_fisheye_frame" />
+    </joint>
+    <link name="camera_fisheye_frame"/>
+
+    <joint name="camera_fisheye_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+      <parent link="camera_fisheye_frame" />
+      <child link="camera_fisheye_optical_frame" />
+    </joint>
+    <link name="camera_fisheye_optical_frame"/>
   </xacro:macro>
 </robot>

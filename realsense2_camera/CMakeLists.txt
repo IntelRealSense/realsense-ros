@@ -127,12 +127,3 @@ install(FILES nodelet_plugins.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
 
-# Install urdf files
-install(DIRECTORY urdf/
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/urdf
-    )
-
-# Install mesh files
-install(DIRECTORY meshes/
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/meshes
-    )
