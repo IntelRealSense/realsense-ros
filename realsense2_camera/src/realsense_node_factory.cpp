@@ -185,12 +185,12 @@ void RealSenseNodeFactory::onInit()
 	catch(const std::exception& ex)
 	{
 		ROS_ERROR_STREAM("An exception has been thrown: " << ex.what());
-		throw;
+		exit(1);
 	}
 	catch(...)
 	{
 		ROS_ERROR_STREAM("Unknown exception has occured!");
-		throw;
+		exit(1);
 	}
 }
 
