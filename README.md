@@ -1,5 +1,5 @@
 # ROS Wrapper for Intel&reg; RealSense&trade; Devices
-These are packages for using Intel RealSense cameras (D400 series and the SR300) with ROS.
+These are packages for using Intel RealSense cameras (D400 series SR300 camera and T265 Tracking Module) with ROS.
 
 ## Installation Instructions
 
@@ -182,6 +182,13 @@ The wrapper publishes static transformations(TFs). The Frame Ids are divided int
 - ROS convention frames: follow the format of <tf_prefix>_<_stream>"_frame" for example: camera_depth_frame, camera_infra1_frame, etc.
 - Original frame coordinate system: with the suffix of <_optical_frame>. For example: camera_infra1_optical_frame. Check the device documentation for specific coordinate system for each stream.
 - base_link: For example: camera_link. A reference frame for the device. In D400 series and SR300 it is the depth frame. In T265, the pose frame.
+
+
+### realsense2_description package:
+For viewing included models, a separate package is included. For example:
+```bash
+roslaunch realsense2_description view_d415_model.launch
+```
 
 ## Packages using RealSense ROS Camera
 | Title | Links |
