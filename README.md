@@ -179,8 +179,8 @@ roslaunch realsense2_camera demo_t265.launch
 
 ### About Frame ID
 The wrapper publishes static transformations(TFs). The Frame Ids are divided into 3 groups:
-- ROS convention frames: follow the format of <tf_prefix>_<_stream>"_frame" for example: camera_depth_frame, camera_infra1_frame, etc.
-- Original frame coordinate system: with the suffix of <_optical_frame>. For example: camera_infra1_optical_frame. Check the device documentation for specific coordinate system for each stream.
+- ROS convention frames: follow the format of <tf_prefix>\_<\_stream>"\_frame" for example: camera_depth_frame, camera_infra1_frame, etc.
+- Original frame coordinate system: with the suffix of <\_optical_frame>. For example: camera_infra1_optical_frame. Check the device documentation for specific coordinate system for each stream.
 - base_link: For example: camera_link. A reference frame for the device. In D400 series and SR300 it is the depth frame. In T265, the pose frame.
 
 
@@ -188,6 +188,18 @@ The wrapper publishes static transformations(TFs). The Frame Ids are divided int
 For viewing included models, a separate package is included. For example:
 ```bash
 roslaunch realsense2_description view_d415_model.launch
+```
+
+### Unit tests:
+Unit-tests are based on bag files saved on S3 server. These can be downloaded using the following commands:
+```bash
+cd catkin_ws
+wget "http://realsense-hw-public.s3.amazonaws.com/rs-tests/TestData/outdoors.bag" -P "records/"
+wget "http://realsense-hw-public.s3-eu-west-1.amazonaws.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag" -P "records/"
+```
+Then, unit-tests can be run using the following command:
+```bash
+python src/realsense/realsense2_camera/scripts/rs2_test.py --all
 ```
 
 ## Packages using RealSense ROS Camera

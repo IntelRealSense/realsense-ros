@@ -243,16 +243,18 @@ def run_test(test, listener_res):
 
 def print_results(results):
     title = 'TEST RESULTS'
-    headers = ['test name', 'score', 'message']
-    col_0_width = max([len(headers[0])] + [len(test[0]) for test in results]) + 1
-    col_1_width = max([len(headers[1]), len('OK'), len('FAILED')]) + 1
-    col_2_width = max([len(headers[2])] + [len(test[1][1]) for test in results]) + 1
-    total_width = col_0_width + col_1_width
+    headers = ['index', 'test name', 'score', 'message']
+    col_0_width = len(headers[0]) + 1
+    col_1_width = max([len(headers[1])] + [len(test[0]) for test in results]) + 1
+    col_2_width = max([len(headers[2]), len('OK'), len('FAILED')]) + 1
+    col_3_width = max([len(headers[3])] + [len(test[1][1]) for test in results]) + 1
+    total_width = col_0_width + col_1_width + col_2_width + col_3_width
+    print
     print ('{:^%ds}'%total_width).format(title)
     print '-'*total_width
-    print ('{:<%ds}{:>%ds} : {:<%ds}' % (col_0_width, col_1_width, col_2_width)).format('test name', 'score', 'message')
-    print '-'*(col_0_width-1) + ' '*2 + '-'*(col_1_width-1) + ' '*3 + '-'*(col_2_width-1)
-    print '\n'.join([('{:<%ds}{:>%ds} : {:<s}' % (col_0_width, col_1_width)).format(test[0], 'OK' if test[1][0] else 'FAILED', test[1][1]) for test in results])
+    print ('{:<%ds}{:<%ds}{:>%ds} : {:<%ds}' % (col_0_width, col_1_width, col_2_width, col_3_width)).format(*headers)
+    print '-'*(col_0_width-1) + ' '*1 + '-'*(col_1_width-1) + ' '*2 + '-'*(col_2_width-1) + ' '*3 + '-'*(col_3_width-1)
+    print '\n'.join([('{:<%dd}{:<%ds}{:>%ds} : {:<s}' % (col_0_width, col_1_width, col_2_width)).format(idx, test[0], 'OK' if test[1][0] else 'FAILED', test[1][1]) for idx, test in enumerate(results)])
     print
 
 
@@ -342,7 +344,7 @@ def main():
                  {'name': 'depth_avg_decimation_1', 'type': 'depth_avg_decimation', 'params': {'rosbag_filename': './records/outdoors.bag', 'filters': 'decimation'}},
                  {'name': 'align_depth_ir1_decimation_1', 'type': 'align_depth_ir1_decimation', 'params': {'rosbag_filename': './records/outdoors.bag', 'filters': 'decimation', 'align_depth': 'true'}},
                  {'name': 'static_tf_1', 'type': 'static_tf', 'params': {'rosbag_filename': './records/outdoors.bag'}},
-                 {'name': 'accel_up_1', 'type': 'accel_up', 'params': {'rosbag_filename': './records/20190527_D435i.bag'}},
+                 {'name': 'accel_up_1', 'type': 'accel_up', 'params': {'rosbag_filename': './records/D435i_Depth_and_IMU_Stands_still.bag'}},
                  ]
 
     # Normalize parameters:
