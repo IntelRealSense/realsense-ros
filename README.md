@@ -23,6 +23,7 @@ mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws/src/
 ```
 - Clone the latest Intel&reg; RealSense&trade; ROS from [here](https://github.com/intel-ros/realsense/releases) into 'catkin_ws/src/'
+- Make sure that the ros package *ddynamic_reconfigure* is installed. If *ddynamic_reconfigure* cannot be installed using APT, you may clone it into your workspace 'catkin_ws/src/' from [here](https://github.com/pal-robotics/ddynamic_reconfigure/tree/kinetic-devel) (Version 0.2.0)
 
 ```bash
 catkin_init_workspace
