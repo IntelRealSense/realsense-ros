@@ -16,6 +16,9 @@ global tf_timeout
 tf_timeout = 5
 
 def ImuGetData(rec_filename, topic):
+    # res['value'] = first value of topic.
+    # res['max_diff'] = max difference between returned value and all other values of topic in recording.
+
     bag = rosbag.Bag(rec_filename)
     res = dict()
     res['value'] = None
@@ -40,8 +43,8 @@ def AccelGetDataDeviceStandStraight(rec_filename):
     return gt_data
 
 def ImuTest(data, gt_data):
-    # check that all data['num_channels'] are the same as gt_data['num_channels'] and that avg value of all
-    # images are within epsilon of gt_data['avg']
+    # check that the imu data received is the same as in the recording. 
+    # check that in the rotated imu received the g-accelartation is pointing up according to ROS standards.
     try:
         v_data = np.array([data['value'][0].x, data['value'][0].y, data['value'][0].z])
         v_gt_data = gt_data['value']
