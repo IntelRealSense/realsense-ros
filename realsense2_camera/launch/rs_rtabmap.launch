@@ -1,0 +1,37 @@
+<launch>
+    <!-- 
+          NOTICE: Installation of rtabmap is required for using this launch file:
+                  For installation type:
+                        apt-get install ros-kinetic-rtabmap-ros
+    -->
+    <arg name="serial_no_camera1"    			default=""/> 			<!-- Note: Replace with actual serial number -->
+    <arg name="serial_no_camera2"    			default=""/> 			<!-- Note: Replace with actual serial number -->
+    <arg name="camera1"              			default="t265"/>		<!-- Note: Replace with camera name -->
+    <arg name="camera2"              			default="d400"/>		<!-- Note: Replace with camera name -->
+    <arg name="clip_distance"             default="-2"/>
+    <arg name="use_rviz"                  default="true"/>
+    <arg name="use_rtabmapviz"            default="false"/>
+    
+
+    <include file="$(find realsense2_camera)/launch/rs_d400_and_t265.launch">
+            <arg name="serial_no_camera1"               value="$(arg serial_no_camera1)"/>
+            <arg name="serial_no_camera2"               value="$(arg serial_no_camera2)"/>
+            <arg name="camera1"                         value="$(arg camera1)"/>
+            <arg name="camera2"                         value="$(arg camera2)"/>
+            <arg name="clip_distance"                   value="$(arg clip_distance)"/>
+            
+    </include>
+
+    <include file="$(find rtabmap_ros)/launch/rtabmap.launch">
+            <arg name="rtabmap_args"       value="--delete_db_on_start"/>
+            <arg name="depth_topic"        value="/$(arg camera2)/aligned_depth_to_color/image_raw"/>
+            <arg name="frame_id"           value="$(arg camera2)_link"/>
+            <arg name="visual_odometry"    value="false"/>
+            <arg name="odom_topic"         value="/$(arg camera1)/odom/sample"/>
+            <arg name="rgb_topic"          value="/$(arg camera2)/color/image_raw"/>
+            <arg name="camera_info_topic"  value="/$(arg camera2)/color/camera_info"/>
+            <arg name="queue_size"         value="200"/>
+            <arg name="rviz"               value="$(arg use_rviz)"/>
+            <arg name="rtabmapviz"         value="$(arg use_rtabmapviz)"/>
+    </include>
+</launch>
