@@ -13,6 +13,7 @@
   <author email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</author>
   <author email="doron.hirshberg@intel.com">Doron Hirshberg</author>
   <buildtool_depend>catkin</buildtool_depend>
+  <depend>eigen</depend>
   <depend>image_transport</depend>
   <depend>cv_bridge</depend>
   <depend>nav_msgs</depend>
