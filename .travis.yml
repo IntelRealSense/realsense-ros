@@ -19,11 +19,6 @@ install:
   - sudo rosdep init
   - rosdep update
   - echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
-  - sudo apt-get install ros-kinetic-cv-bridge -y
-  - sudo apt-get install ros-kinetic-image-transport
-  - sudo apt-get install ros-kinetic-tf -y
-  - sudo apt-get install ros-kinetic-diagnostic-updater -y
-  - sudo apt-get install ros-kinetic-ddynamic-reconfigure -y
   - source ~/.bashrc
   - mkdir -p ~/catkin_ws/src/realsense
 
@@ -32,6 +27,7 @@ install:
   - cd ~/catkin_ws/src/
   - catkin_init_workspace
   - cd ..
+  - rosdep install --from-paths src -i -r -n -y
   - catkin_make clean
   - catkin_make -DCATKIN_ENABLE_TESTING=False -DCMAKE_BUILD_TYPE=Release
   - catkin_make install
