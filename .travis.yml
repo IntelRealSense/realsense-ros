@@ -20,6 +20,9 @@ install:
   - rosdep update
   - echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
   - source ~/.bashrc
+
+script:
+  # Run test:
   - mkdir -p ~/catkin_ws/src/realsense
 
   # install realsense2-camera
@@ -39,11 +42,8 @@ install:
   - wget $bag_filename -P "records/"
   - bag_filename="http://realsense-hw-public.s3-eu-west-1.amazonaws.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
   - wget $bag_filename -P "records/"
-  
-  # Run test:
-script:
-  - python src/realsense/realsense2_camera/scripts/rs2_test.py --all
 
+  - python src/realsense/realsense2_camera/scripts/rs2_test.py --all
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
