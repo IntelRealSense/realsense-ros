@@ -684,8 +684,6 @@ void BaseRealSenseNode::setupPublishers()
         ROS_INFO("Start publisher IMU");
         _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node_handle.advertise<sensor_msgs::Imu>("imu", 1));
         _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
-
-        _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("imu_info", 1, true);
     }
     else
     {
@@ -1217,8 +1215,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
 
     auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
-    if (0 != _info_publisher[stream_index].getNumSubscribers() ||
-        0 != _imu_publishers[stream_index].getNumSubscribers())
+    if (0 != _imu_publishers[stream_index].getNumSubscribers())
     {
         double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
         ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
@@ -1251,6 +1248,13 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         imu_msg.header.stamp = t;
         _imu_publishers[stream_index].publish(imu_msg);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
+    }
+    if (0 != _info_publisher[stream_index].getNumSubscribers())
+    {
+        IMUInfo info_msg = getImuInfo(stream_index);
+        info_msg.header.frame_id = _optical_frame_id[stream_index];
+        _info_publisher[stream_index].publish(info_msg);
+        ROS_DEBUG("Publish info for %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
     }
 }
 
@@ -1996,14 +2000,6 @@ IMUInfo BaseRealSenseNode::getImuInfo(const stream_index_pair& stream_index)
     {
         ROS_DEBUG_STREAM("No Motion Intrinsics available.");
         imuIntrinsics = {{{1,0,0,0},{0,1,0,0},{0,0,1,0}}, {0,0,0}, {0,0,0}};
-    }
-    if (GYRO == stream_index)
-    {
-        info.header.frame_id = "imu_gyro";
-    }
-    else if (ACCEL == stream_index)
-    {
-        info.header.frame_id = "imu_accel";
     }
 
     auto index = 0;
