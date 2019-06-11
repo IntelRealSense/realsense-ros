@@ -60,10 +60,11 @@ generate_messages(
     std_msgs
     )
 
+set(CMAKE_NO_SYSTEM_FROM_IMPORTED true)
 include_directories(
     include
+    ${realsense2_INCLUDE_DIR}
     ${catkin_INCLUDE_DIRS}
-    ${realsense_INCLUDE_DIR}
     )
 
 # RealSense ROS Node
@@ -90,9 +91,8 @@ add_library(${PROJECT_NAME}
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
-
 target_include_directories(${PROJECT_NAME}
-  PRIVATE ${realsense_INCLUDE_DIR})
+  PRIVATE ${realsense2_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME}
     ${realsense2_LIBRARY}
