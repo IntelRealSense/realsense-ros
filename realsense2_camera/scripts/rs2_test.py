@@ -39,7 +39,7 @@ def AccelGetData(rec_filename):
 def AccelGetDataDeviceStandStraight(rec_filename):
     gt_data = AccelGetData(rec_filename)
     gt_data['ros_value'] = np.array([0.63839424, 0.05380408, 9.85343552])
-    gt_data['ros_max_diff'] = np.array([1.97013582e-02, 4.65862500e-09, 2.06165277e-02])
+    gt_data['ros_max_diff'] = np.array([1.97013582e-02, 4.65862500e-09, 4.06165277e-02])
     return gt_data
 
 def ImuTest(data, gt_data):
