@@ -1,4 +1,5 @@
 <launch>
+  <arg name="external_manager"    default="false"/>
   <arg name="manager"             default="realsense2_camera_manager"/>
   <arg name="serial_no"           default=""/>
   <arg name="tf_prefix"           default=""/>
@@ -83,7 +84,7 @@
   <arg name="allow_no_texture_points"  default="false"/>
 
 
-  <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
+  <node unless="$(arg external_manager)" pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
   <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)">
     <param name="serial_no"                type="str"  value="$(arg serial_no)"/>
     <param name="json_file_path"           type="str"  value="$(arg json_file_path)"/>
