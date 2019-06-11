@@ -170,8 +170,8 @@ void BaseRealSenseNode::publishTopics()
     getParameters();
     setupDevice();
     setupErrorCallback();
-    setupPublishers();
     setupStreams();
+    setupPublishers();
     setupFilters();
     publishStaticTransforms();
     ROS_INFO_STREAM("RealSense Node Is Up!");
