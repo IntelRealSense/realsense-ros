@@ -170,8 +170,9 @@ void BaseRealSenseNode::publishTopics()
     getParameters();
     setupDevice();
     setupErrorCallback();
-    setupStreams();
+    enable_devices();
     setupPublishers();
+    setupStreams();
     setupFilters();
     publishStaticTransforms();
     ROS_INFO_STREAM("RealSense Node Is Up!");
@@ -866,6 +867,7 @@ void BaseRealSenseNode::enable_devices()
                     if (profile.stream_type() != elem.first) continue;
                     ROS_WARN_STREAM("fps: " << profile.fps() << ". format: " << profile.format());
                 }
+                _enable[elem] = false;
             }
         }
     }
@@ -1550,7 +1552,6 @@ void BaseRealSenseNode::setBaseTime(double frame_time, bool warn_no_metadata)
 void BaseRealSenseNode::setupStreams()
 {
 	ROS_INFO("setupStreams...");
-	enable_devices();
     try{
 		// Publish image stream info
         for (auto& profiles : _enabled_profiles)
