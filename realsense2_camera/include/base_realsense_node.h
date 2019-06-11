@@ -13,6 +13,7 @@
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
+#include <realsense2_camera/IMUInfo.h>
 
 #include <queue>
 #include <mutex>
@@ -197,7 +198,7 @@ namespace realsense2_camera
         void publishPointCloud(rs2::points f, const ros::Time& t, const rs2::frameset& frameset);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
 
-        IMUInfo getImuInfo(const stream_index_pair& stream_index);
+        IMUInfoResponse getImuInfo(const stream_index_pair& stream_index);
         void publishFrame(rs2::frame f, const ros::Time& t,
                           const stream_index_pair& stream,
                           std::map<stream_index_pair, cv::Mat>& images,
@@ -220,6 +221,10 @@ namespace realsense2_camera
         void frame_callback(rs2::frame frame);
         void registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name);
         rs2_stream rs2_string_to_stream(std::string str);
+        bool service_accel_info(realsense2_camera::IMUInfoRequest &req,
+                                realsense2_camera::IMUInfoResponse &res);
+        bool service_gyro_info(realsense2_camera::IMUInfoRequest &req,
+                                realsense2_camera::IMUInfoResponse &res);
 
         rs2::device _dev;
         std::map<stream_index_pair, rs2::sensor> _sensors;
@@ -249,6 +254,7 @@ namespace realsense2_camera
         std::shared_ptr<SyncedImuPublisher> _synced_imu_publisher;
         std::map<rs2_stream, int> _image_format;
         std::map<stream_index_pair, ros::Publisher> _info_publisher;
+        std::map<stream_index_pair, ros::ServiceServer > _info_service;
         std::map<stream_index_pair, cv::Mat> _image;
         std::map<rs2_stream, std::string> _encoding;
 

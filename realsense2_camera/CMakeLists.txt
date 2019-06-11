@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
     tf
     ddynamic_reconfigure
     diagnostic_updater
+    std_srvs
     )
 
 if(BUILD_WITH_OPENMP)
@@ -50,9 +51,13 @@ set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -D_FORTIFY_SOURCE=2 -fstack-protecto
 
 add_message_files(
     FILES
-    IMUInfo.msg
     Extrinsics.msg
     )
+
+add_service_files(
+    FILES
+    IMUInfo.srv
+)
 
 generate_messages(
     DEPENDENCIES
