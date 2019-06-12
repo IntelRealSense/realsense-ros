@@ -23,6 +23,12 @@ mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws/src/
 ```
 - Clone the latest Intel&reg; RealSense&trade; ROS from [here](https://github.com/intel-ros/realsense/releases) into 'catkin_ws/src/'
+```bashrc
+git clone https://github.com/IntelRealSense/realsense-ros.git
+cd realsense-ros/
+git checkout `git tag | sort -V | grep -P "^\d+\.\d+\.\d+" | tail -1`
+cd ..
+```
 - Make sure all dependent packages are installed. You can check .travis.yml file for reference.
 - Specifically, make sure that the ros package *ddynamic_reconfigure* is installed. If *ddynamic_reconfigure* cannot be installed using APT, you may clone it into your workspace 'catkin_ws/src/' from [here](https://github.com/pal-robotics/ddynamic_reconfigure/tree/kinetic-devel) (Version 0.2.0)
 
@@ -98,8 +104,8 @@ The topics are of the form: ```/camera/aligned_depth_to_color/image_raw``` etc.
 - **All the rest of the frame_ids can be found in the template launch file: [nodelet.launch.xml](./realsense2_camera/launch/includes/nodelet.launch.xml)**
 - **unite_imu_method**: The D435i and T265 cameras have built in IMU components which produce 2 unrelated streams: *gyro* - which shows angular velocity and *accel* which shows linear acceleration. Each with it's own frequency. By default, 2 corresponding topics are available, each with only the relevant fields of the message sensor_msgs::Imu are filled out.
 Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default *gyro* and *accel* topics. Under the new topic, all the fields in the Imu message are filled out.
- - linear_interpolation: Each message contains the last original value of item A interpolated with the previous value of item A, combined with the last original value of item B on last item B's timestamp. Items A and B are accel and gyro interchangeably, according to which type recently arrived from the sensor. The idea is to give the most recent information, united and without repetitions.
- - copy: For each new message, accel or gyro, the relevant fields and timestamp are filled out while the others maintain the previous data.
+ - **linear_interpolation**: Each message contains the last original value of item A interpolated with the previous value of item A, combined with the last original value of item B on last item B's timestamp. Items A and B are accel and gyro interchangeably, according to which type recently arrived from the sensor. The idea is to give the most recent information, united and without repetitions.
+ - **copy**: For each new message, accel or gyro, the relevant fields and timestamp are filled out while the others maintain the previous data.
 - **clip_distance**: remove from the depth image all values above a given value (meters). Disable by giving negative value (default)
 - **linear_accel_cov**, **angular_velocity_cov**: sets the variance given to the Imu readings. For the T265, these values are being modified by the inner confidence value.
 - **hold_back_imu_for_frames**: Images processing takes time. Therefor there is a time gap between the moment the image arrives at the wrapper and the moment the image is published to the ROS environment. During this time, Imu messages keep on arriving and a situation is created where an image with earlier timestamp is published after Imu message with later timestamp. If that is a problem, setting *hold_back_imu_for_frames* to *true* will hold the Imu messages back while processing the images and then publish them all in a burst, thus keeping the order of publication as the order of arrival. Note that in either case, the timestamp in each message's header reflects the time of it's origin.
