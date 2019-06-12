@@ -194,6 +194,7 @@ namespace realsense2_camera
         void clip_depth(rs2::depth_frame depth_frame, float clipping_dist);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         void publishStaticTransforms();
+        void publishIntrinsics();
         void publishPointCloud(rs2::points f, const ros::Time& t, const rs2::frameset& frameset);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
 

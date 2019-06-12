@@ -174,6 +174,7 @@ void BaseRealSenseNode::publishTopics()
     setupStreams();
     setupFilters();
     publishStaticTransforms();
+    publishIntrinsics();
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
@@ -690,13 +691,11 @@ void BaseRealSenseNode::setupPublishers()
         if (_enable[GYRO])
         {
             _imu_publishers[GYRO] = _node_handle.advertise<sensor_msgs::Imu>("gyro/sample", 100);
-            _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("gyro/imu_info", 1, true);
         }
 
         if (_enable[ACCEL])
         {
             _imu_publishers[ACCEL] = _node_handle.advertise<sensor_msgs::Imu>("accel/sample", 100);
-            _info_publisher[ACCEL] = _node_handle.advertise<IMUInfo>("accel/imu_info", 1, true);
         }
     }
     if (_enable[POSE])
@@ -1248,13 +1247,6 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         imu_msg.header.stamp = t;
         _imu_publishers[stream_index].publish(imu_msg);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
-    }
-    if (0 != _info_publisher[stream_index].getNumSubscribers())
-    {
-        IMUInfo info_msg = getImuInfo(stream_index);
-        info_msg.header.frame_id = _optical_frame_id[stream_index];
-        _info_publisher[stream_index].publish(info_msg);
-        ROS_DEBUG("Publish info for %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
     }
 }
 
@@ -1819,6 +1811,23 @@ void BaseRealSenseNode::publishStaticTransforms()
 
 }
 
+void BaseRealSenseNode::publishIntrinsics()
+{
+    if (_enable[GYRO])
+    {
+        _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("gyro/imu_info", 1, true);
+        IMUInfo info_msg = getImuInfo(GYRO);
+        _info_publisher[GYRO].publish(info_msg);
+    }
+
+    if (_enable[ACCEL])
+    {
+        _info_publisher[ACCEL] = _node_handle.advertise<IMUInfo>("accel/imu_info", 1, true);
+        IMUInfo info_msg = getImuInfo(ACCEL);
+        _info_publisher[ACCEL].publish(info_msg);
+    }
+}
+
 void reverse_memcpy(unsigned char* dst, const unsigned char* src, size_t n)
 {
     size_t i;
@@ -2003,6 +2012,7 @@ IMUInfo BaseRealSenseNode::getImuInfo(const stream_index_pair& stream_index)
     }
 
     auto index = 0;
+    info.frame_id = _optical_frame_id[stream_index];
     for (int i = 0; i < 3; ++i)
     {
         for (int j = 0; j < 4; ++j)
