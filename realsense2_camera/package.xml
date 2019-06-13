@@ -12,20 +12,30 @@
 
   <author email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</author>
   <author email="doron.hirshberg@intel.com">Doron Hirshberg</author>
+  
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>image_transport</depend>
+  
   <depend>cv_bridge</depend>
-  <depend>nav_msgs</depend>
-  <depend>nodelet</depend>  
+  <depend>diagnostic_updater</depend>
+  <depend>ddynamic_reconfigure</depend>
   <depend>genmsg</depend>
+  <depend>image_transport</depend>
+  <depend>nav_msgs</depend>
+  <depend>nodelet</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
-  <depend>message_runtime</depend>
   <depend>tf</depend>
-  <depend>ddynamic_reconfigure</depend>
-  <depend>diagnostic_updater</depend>
-  <depend>librealsense2</depend>
+  
+  <build_depend>librealsense2-dbg</build_depend>
+  <build_depend>librealsense2-dev</build_depend>
+  <build_depend>message_generation</build_depend>
+
+  <exec_depend>librealsense2-dkms</exec_depend>
+  <exec_depend>librealsense2</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>rgbd_launch</exec_depend>  
+  
   <export>
     <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>
