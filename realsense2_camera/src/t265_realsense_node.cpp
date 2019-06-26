@@ -59,12 +59,12 @@ void T265RealsenseNode::setupSubscribers()
 
 void T265RealsenseNode::odom_in_callback(const nav_msgs::Odometry::ConstPtr& msg)
 {
-    ROS_INFO("Got in_odom message");
+    ROS_DEBUG("Got in_odom message");
     rs2_vector velocity {-(float)(msg->twist.twist.linear.y),
                           (float)(msg->twist.twist.linear.z),
                          -(float)(msg->twist.twist.linear.x)};
 
-    ROS_INFO_STREAM("Add odom: " << velocity.x << ", " << velocity.y << ", " << velocity.z);
+    ROS_DEBUG_STREAM("Add odom: " << velocity.x << ", " << velocity.y << ", " << velocity.z);
     _wo_snr.send_wheel_odometry(0, 0, velocity);
 }
 
