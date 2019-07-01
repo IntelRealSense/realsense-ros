@@ -137,6 +137,8 @@ rosrun rqt_reconfigure rqt_reconfigure
 <p align="center"><img src="https://user-images.githubusercontent.com/40540281/55330573-065d8600-549a-11e9-996a-5d193cbd9a93.PNG" /></p>
 
 ### Work with multiple cameras
+**Important Notice:** Launching multiple T265 cameras is currently not supported. This will be addressed in a later version. 
+
 Here is an example of how to start the camera node and streaming with two cameras using the [rs_multiple_devices.launch](./realsense2_camera/launch/rs_multiple_devices.launch).
 ```bash
 roslaunch realsense2_camera rs_multiple_devices.launch serial_no_camera1:=<serial number of the first camera> serial_no_camera2:=<serial number of the second camera>
@@ -219,6 +221,7 @@ python src/realsense/realsense2_camera/scripts/rs2_test.py --all
 * This ROS node does not currently support [ROS Lunar Loggerhead](http://wiki.ros.org/lunar).
 * This ROS node does not currently work with [ROS 2](https://github.com/ros2/ros2/wiki).
 * This ROS node currently does not provide the unit-tests which ensure the proper operation of the camera.  Future versions of the node will provide ROS compatible unit-tests.
+* This ROS node currently does not support running multiple T265 cameras at once. This will be addressed in a future update. 
 
 ## License
 Copyright 2018 Intel Corporation
