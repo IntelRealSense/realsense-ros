@@ -175,6 +175,7 @@ void BaseRealSenseNode::publishTopics()
     setupStreams();
     setupFilters();
     publishStaticTransforms();
+    publishIntrinsics();
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
@@ -685,21 +686,17 @@ void BaseRealSenseNode::setupPublishers()
         ROS_INFO("Start publisher IMU");
         _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node_handle.advertise<sensor_msgs::Imu>("imu", 1));
         _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
-
-        _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("imu_info", 1, true);
     }
     else
     {
         if (_enable[GYRO])
         {
             _imu_publishers[GYRO] = _node_handle.advertise<sensor_msgs::Imu>("gyro/sample", 100);
-            _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("gyro/imu_info", 1, true);
         }
 
         if (_enable[ACCEL])
         {
             _imu_publishers[ACCEL] = _node_handle.advertise<sensor_msgs::Imu>("accel/sample", 100);
-            _info_publisher[ACCEL] = _node_handle.advertise<IMUInfo>("accel/imu_info", 1, true);
         }
     }
     if (_enable[POSE])
@@ -1219,8 +1216,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
 
     auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
-    if (0 != _info_publisher[stream_index].getNumSubscribers() ||
-        0 != _imu_publishers[stream_index].getNumSubscribers())
+    if (0 != _imu_publishers[stream_index].getNumSubscribers())
     {
         double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
         ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
@@ -1816,6 +1812,23 @@ void BaseRealSenseNode::publishStaticTransforms()
 
 }
 
+void BaseRealSenseNode::publishIntrinsics()
+{
+    if (_enable[GYRO])
+    {
+        _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("gyro/imu_info", 1, true);
+        IMUInfo info_msg = getImuInfo(GYRO);
+        _info_publisher[GYRO].publish(info_msg);
+    }
+
+    if (_enable[ACCEL])
+    {
+        _info_publisher[ACCEL] = _node_handle.advertise<IMUInfo>("accel/imu_info", 1, true);
+        IMUInfo info_msg = getImuInfo(ACCEL);
+        _info_publisher[ACCEL].publish(info_msg);
+    }
+}
+
 void reverse_memcpy(unsigned char* dst, const unsigned char* src, size_t n)
 {
     size_t i;
@@ -1998,16 +2011,9 @@ IMUInfo BaseRealSenseNode::getImuInfo(const stream_index_pair& stream_index)
         ROS_DEBUG_STREAM("No Motion Intrinsics available.");
         imuIntrinsics = {{{1,0,0,0},{0,1,0,0},{0,0,1,0}}, {0,0,0}, {0,0,0}};
     }
-    if (GYRO == stream_index)
-    {
-        info.header.frame_id = "imu_gyro";
-    }
-    else if (ACCEL == stream_index)
-    {
-        info.header.frame_id = "imu_accel";
-    }
 
     auto index = 0;
+    info.frame_id = _optical_frame_id[stream_index];
     for (int i = 0; i < 3; ++i)
     {
         for (int j = 0; j < 4; ++j)
