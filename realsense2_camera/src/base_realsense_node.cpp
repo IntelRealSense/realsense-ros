@@ -169,6 +169,7 @@ void BaseRealSenseNode::publishTopics()
 {
     getParameters();
     setupDevice();
+    registerDynamicReconfigCb(_node_handle);
     setupErrorCallback();
     enable_devices();
     setupPublishers();
@@ -296,7 +297,7 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
             {
                 if (option_value < op_range.min || op_range.max < option_value)
                 {
-                    ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option
+                    ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option_value
                             << " outside the range [" << op_range.min << ", " << op_range.max
                             << "]. Using current sensor value " << sensor_option_value << " instead.");
                     option_value = sensor_option_value;

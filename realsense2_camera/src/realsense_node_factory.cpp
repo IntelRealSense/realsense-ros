@@ -229,7 +229,6 @@ void RealSenseNodeFactory::StartDevice()
 	}
 	assert(_realSenseNode);
 	_realSenseNode->publishTopics();
-	_realSenseNode->registerDynamicReconfigCb(nh);
 }
 
 void RealSenseNodeFactory::tryGetLogSeverity(rs2_log_severity& severity) const
