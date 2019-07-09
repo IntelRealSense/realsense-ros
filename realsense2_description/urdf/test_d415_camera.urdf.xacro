@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<robot name="realsense2_camera" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="$(find realsense2_description)/urdf/_d415.urdf.xacro" />
+
+  <link name="base_link" />
+  <sensor_d415 parent="base_link">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </sensor_d415>
+</robot>

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>realsense2_camera</name>
-  <version>2.1.1</version>
-  <description>RealSense Camera package allowing access to Intel 3D D400 cameras</description>
+  <version>2.2.6</version>
+  <description>RealSense Camera package allowing access to Intel T265 Tracking module and SR300 and D400 3D cameras</description>
   <maintainer email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</maintainer>
   <maintainer email="doron.hirshberg@intel.com">Doron Hirshberg</maintainer>
   <license>Apache 2.0</license>
@@ -13,28 +13,19 @@
   <author email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</author>
   <author email="doron.hirshberg@intel.com">Doron Hirshberg</author>
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>message_generation</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>genmsg</build_depend>
-  <build_depend>nodelet</build_depend>
-  <build_depend>cv_bridge</build_depend>
-  <build_depend>image_transport</build_depend>
-  <build_depend>tf</build_depend>
-  <build_depend>ddynamic_reconfigure</build_depend>
-  <build_depend>diagnostic_updater</build_depend>
-  <run_depend>image_transport</run_depend>
-  <run_depend>cv_bridge</run_depend>
-  <run_depend>nodelet</run_depend>  
-  <run_depend>genmsg</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>message_runtime</run_depend>
-  <run_depend>tf</run_depend>
-  <run_depend>ddynamic_reconfigure</run_depend>
-  <run_depend>diagnostic_updater</run_depend>
+  <depend>image_transport</depend>
+  <depend>cv_bridge</depend>
+  <depend>nav_msgs</depend>
+  <depend>nodelet</depend>  
+  <depend>genmsg</depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>message_runtime</depend>
+  <depend>tf</depend>
+  <depend>ddynamic_reconfigure</depend>
+  <depend>diagnostic_updater</depend>
+  <depend>librealsense2</depend>
   <export>
     <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>

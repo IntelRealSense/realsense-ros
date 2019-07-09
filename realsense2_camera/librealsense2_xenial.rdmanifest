@@ -1,0 +1,37 @@
+uri: 'https://raw.githubusercontent.com/magazino/pylon_camera/indigo-devel/rosdep/empty.tar'
+check-presence-script: |
+  #!/bin/bash
+
+  if [ $(dpkg-query -W -f='${Status}' librealsense2-dkms 2>/dev/null | grep -c "ok installed") -eq 0 ];
+  then
+    exit 1
+  else
+    exit 0
+  fi
+
+
+install-script: |
+  #!/bin/bash
+
+  # Install
+  if [[ "$EUID" -ne 0 ]]; then
+    # Install add-apt-repository
+    sudo apt-get install -y software-properties-common
+    # Register the server's public key
+    sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE
+    # Add the server to the list of repositories
+    sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main" -u
+    # Install the libraries
+    sudo apt-get install -y librealsense2-dkms librealsense2-dev
+  else
+    # Install add-apt-repository
+    apt-get install -y software-properties-common
+    # Register the server's public key
+    apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE
+    # Add the server to the list of repositories
+    add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main" -u
+    # Install the libraries
+    apt-get install -y librealsense2-dkms librealsense2-dev
+  fi
+
+  exit $?

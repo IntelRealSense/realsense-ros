@@ -4,11 +4,13 @@ import rospy
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
 import sensor_msgs.point_cloud2 as pc2
+from sensor_msgs.msg import Imu as msg_Imu
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 import inspect
 import ctypes
 import struct
+import tf
 
 
 def pc2_to_xyzrgb(point):
@@ -37,15 +39,43 @@ class CWaitForMessage:
         self.time = params.get('time', None)
         self.node_name = params.get('node_name', 'rs2_listener')
         self.bridge = CvBridge()
+        self.listener = None
 
         self.themes = {'depthStream': {'topic': '/camera/depth/image_rect_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
                        'colorStream': {'topic': '/camera/color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
                        'pointscloud': {'topic': '/camera/depth/color/points', 'callback': self.pointscloudCallback, 'msg_type': msg_PointCloud2},
                        'alignedDepthInfra1': {'topic': '/camera/aligned_depth_to_infra1/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
                        'alignedDepthColor': {'topic': '/camera/aligned_depth_to_color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
+                       'static_tf': {'topic': '/camera/color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
+                       'accelStream': {'topic': '/camera/accel/sample', 'callback': self.imuCallback, 'msg_type': msg_Imu},
                        }
 
         self.func_data = dict()
+
+    def imuCallback(self, theme_name):
+        def _imuCallback(data):
+            if self.listener is None:
+                self.listener = tf.TransformListener()
+            self.prev_time = time.time()
+            self.func_data[theme_name].setdefault('value', [])
+            self.func_data[theme_name].setdefault('ros_value', [])
+            try:
+                frame_id = data.header.frame_id
+                value = data.linear_acceleration
+
+                (trans,rot) = self.listener.lookupTransform('/camera_link', frame_id, rospy.Time(0))
+                quat = tf.transformations.quaternion_matrix(rot)
+                point = np.matrix([value.x, value.y, value.z, 1], dtype='float32')
+                point.resize((4, 1))
+                rotated = quat*point
+                rotated.resize(1,4)
+                rotated = np.array(rotated)[0][:3]
+            except Exception as e:
+                print(e)
+                return
+            self.func_data[theme_name]['value'].append(value)
+            self.func_data[theme_name]['ros_value'].append(rotated)
+        return _imuCallback            
 
     def imageColorCallback(self, theme_name):
         def _imageColorCallback(data):
@@ -91,9 +121,6 @@ class CWaitForMessage:
 
             if self.func_data[theme_name]['frame_counter'] == 1:
                 # Known issue - 1st pointcloud published has invalid texture. Skip 1st frame.
-                return
-
-            if len(self.func_data[theme_name]['width']) > 0:
                 return
 
             try:
