@@ -492,6 +492,12 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("publish_odom_tf", _publish_odom_tf, PUBLISH_ODOM_TF);
 }
 
+void BaseRealSenseNode::getSerial(std_srvs::Trigger::Request &req,
+                                  std_srvs::Trigger::Response &res)
+{
+    ROS_INFO("getSerial...");
+}
+
 void BaseRealSenseNode::setupDevice()
 {
     ROS_INFO("setupDevice...");
@@ -679,6 +685,8 @@ void BaseRealSenseNode::setupPublishers()
                 _pointcloud_publisher = _node_handle.advertise<sensor_msgs::PointCloud2>("depth/color/points", 1);
             }
         }
+
+        ros::ServiceServer get_serial_service = _node_handle.advertiseService("get_serial", &BaseRealSenseNode::getSerial, &this);
     }
 
     _synced_imu_publisher = std::make_shared<SyncedImuPublisher>();
