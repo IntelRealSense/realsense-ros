@@ -688,8 +688,6 @@ void BaseRealSenseNode::setupPublishers()
                 _pointcloud_publisher = _node_handle.advertise<sensor_msgs::PointCloud2>("depth/color/points", 1);
             }
         }
-
-        ros::ServiceServer get_serial_service = _node_handle.advertiseService("get_serial", &BaseRealSenseNode::getSerial, this);
     }
 
     _synced_imu_publisher = std::make_shared<SyncedImuPublisher>();
@@ -740,6 +738,8 @@ void BaseRealSenseNode::setupPublishers()
     {
         _depth_to_other_extrinsics_publishers[INFRA2] = _node_handle.advertise<Extrinsics>("extrinsics/depth_to_infra2", 1, true);
     }
+
+    _get_serial_service = _node_handle.advertiseService("get_serial", &BaseRealSenseNode::getSerial, this);
 }
 
 void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const ros::Time& t)
