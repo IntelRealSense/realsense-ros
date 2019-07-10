@@ -186,7 +186,7 @@ namespace realsense2_camera
 
         static std::string getNamespaceStr();
         void getParameters();
-        void getSerial(std_srvs::Trigger::Request &req,
+        bool getSerial(std_srvs::Trigger::Request &req,
                        std_srvs::Trigger::Response &res);
         void setupDevice();
         void setupErrorCallback();
