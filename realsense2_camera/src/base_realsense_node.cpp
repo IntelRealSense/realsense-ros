@@ -954,8 +954,8 @@ void BaseRealSenseNode::setupFilters()
 
 cv::Mat& BaseRealSenseNode::fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image)
 {
-    static const auto meter_to_mm = 0.001f;
-    if (abs(_depth_scale_meters - meter_to_mm) < 1e-6)
+    static const float meter_to_mm = 0.001f;
+    if (fabs(_depth_scale_meters - meter_to_mm) < 1e-6)
     {
         to_image = from_image;
         return to_image;
