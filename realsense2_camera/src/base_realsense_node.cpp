@@ -495,7 +495,7 @@ void BaseRealSenseNode::getParameters()
 bool BaseRealSenseNode::getSerial(std_srvs::Trigger::Request &req,
                                   std_srvs::Trigger::Response &res)
 {
-    ROS_INFO("getSerial...");
+    ROS_INFO("getSerial... %s", _serial_no);
     res.message = _serial_no;
     res.success = true;
     return true;
