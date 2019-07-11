@@ -77,7 +77,17 @@ After running the above command with D435i attached, the following list of topic
 The "/camera" prefix is the default and can be changed. Check the rs_multiple_devices.launch file for an example.
 If using D435 or D415, the gyro and accel topics wont be available. Likewise, other topics will be available when using T265 (see below).
 
-### Launch parameters
+### Advertised Services
+The camera node advertises a service to query the device serial number:
+- /camera/get_serial
+
+The service is of type [`std_srvs/Trigger`](http://docs.ros.org/melodic/api/std_srvs/html/srv/Trigger.html) and returns the serial number in the response `message` field. To call the service via the command line:
+```bash
+rosservice call /camera/get_serial
+```
+
+
+### Launch Parameters
 The following parameters are available by the wrapper:
 - **serial_no**: will attach to the device with the given serial number. Default, attach to available RealSense device in random.
 - **rosbag_filename**: Will publish topics from rosbag file.
