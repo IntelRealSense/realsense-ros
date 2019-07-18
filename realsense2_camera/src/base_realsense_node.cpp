@@ -169,12 +169,12 @@ void BaseRealSenseNode::publishTopics()
 {
     getParameters();
     setupDevice();
+    setupFilters();
     registerDynamicReconfigCb(_node_handle);
     setupErrorCallback();
     enable_devices();
     setupPublishers();
     setupStreams();
-    setupFilters();
     publishStaticTransforms();
     publishIntrinsics();
     ROS_INFO_STREAM("RealSense Node Is Up!");
@@ -1773,7 +1773,7 @@ void BaseRealSenseNode::publishStaticTransforms()
         }
     }
 
-    // Publish Extinsics Topics:
+    // Publish Extrinsics Topics:
     if (_enable[DEPTH] &&
         _enable[FISHEYE])
     {
