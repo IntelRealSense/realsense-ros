@@ -73,6 +73,7 @@ After running the above command with D435i attached, the following list of topic
 - /camera/gyro/sample
 - /camera/accel/imu_info
 - /camera/accel/sample
+- /diagnostics
 
 The "/camera" prefix is the default and can be changed. Check the rs_multiple_devices.launch file for an example.
 If using D435 or D415, the gyro and accel topics wont be available. Likewise, other topics will be available when using T265 (see below).

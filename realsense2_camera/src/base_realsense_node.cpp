@@ -121,6 +121,8 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _stream_name[RS2_STREAM_ACCEL] = "accel";
 
     _stream_name[RS2_STREAM_POSE] = "pose";
+
+    _monitor_options = {RS2_OPTION_ASIC_TEMPERATURE, RS2_OPTION_PROJECTOR_TEMPERATURE};
 }
 
 void BaseRealSenseNode::toggleSensors(bool enabled)
@@ -175,8 +177,10 @@ void BaseRealSenseNode::publishTopics()
     enable_devices();
     setupPublishers();
     setupStreams();
+    SetBaseStream();
     publishStaticTransforms();
     publishIntrinsics();
+    startMonitoring();
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
@@ -1748,9 +1752,8 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
     }
 }
 
-void BaseRealSenseNode::publishStaticTransforms()
+void BaseRealSenseNode::SetBaseStream()
 {
-    // Publish static transforms
     const std::vector<stream_index_pair> base_stream_priority = {DEPTH, POSE};
 
     std::vector<stream_index_pair>::const_iterator base_stream(base_stream_priority.begin());
@@ -1764,7 +1767,13 @@ void BaseRealSenseNode::publishStaticTransforms()
     }
     ROS_INFO_STREAM("SELECTED BASE:" << base_stream->first << ", " << base_stream->second);
 
-    rs2::stream_profile base_profile = getAProfile(*base_stream);
+    _base_stream = *base_stream;
+}
+
+void BaseRealSenseNode::publishStaticTransforms()
+{
+    // Publish static transforms
+    rs2::stream_profile base_profile = getAProfile(_base_stream);
     for (std::pair<stream_index_pair, bool> ienable : _enable)
     {
         if (ienable.second)
@@ -2111,3 +2120,45 @@ bool BaseRealSenseNode::getEnabledProfile(const stream_index_pair& stream_index,
         return true;
     }
 
+void BaseRealSenseNode::startMonitoring()
+{
+    for (rs2_option option : _monitor_options)
+    {
+        _temperature_nodes.push_back({option, std::make_shared<TemperatureDiagnostics>(rs2_option_to_string(option), _serial_no )});
+    }
+
+    int time_interval(1000);
+    std::thread t([=]() {
+        while(true) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(time_interval));
+            publish_temperature();
+        }
+    });
+    t.detach();    
+}
+
+void BaseRealSenseNode::publish_temperature()
+{
+    rs2::options sensor(_sensors[_base_stream]);
+    for (OptionTemperatureDiag option_diag : _temperature_nodes)
+    {
+        rs2_option option(option_diag.first);
+        if (sensor.supports(option))
+        {
+            auto option_value = sensor.get_option(option);
+            option_diag.second->update(option_value);
+        }
+    }
+}
+
+TemperatureDiagnostics::TemperatureDiagnostics(std::string name, std::string serial_no)
+    {
+        _updater.add(name, this, &TemperatureDiagnostics::diagnostics);
+        _updater.setHardwareID(serial_no);
+    }
+
+void TemperatureDiagnostics::diagnostics(diagnostic_updater::DiagnosticStatusWrapper& status)
+{
+        status.summary(0, "OK");
+        status.add("Index", _crnt_temp);
+}

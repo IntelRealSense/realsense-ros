@@ -46,6 +46,24 @@ namespace realsense2_camera
     };
     typedef std::pair<image_transport::Publisher, std::shared_ptr<FrequencyDiagnostics>> ImagePublisherWithFrequencyDiagnostics;
 
+    class TemperatureDiagnostics
+    {
+        public:
+            TemperatureDiagnostics(std::string name, std::string serial_no);
+            void diagnostics(diagnostic_updater::DiagnosticStatusWrapper& status);
+
+            void update(double crnt_temperaure)
+            {
+                _crnt_temp = crnt_temperaure;
+                _updater.update();
+            }
+
+        private:
+            double _crnt_temp;
+            diagnostic_updater::Updater _updater;
+
+    };
+
     class NamedFilter
     {
         public:
@@ -137,6 +155,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, std::string> _depth_aligned_frame_id;
         ros::NodeHandle& _node_handle, _pnh;
         bool _align_depth;
+        std::vector<rs2_option> _monitor_options;
 
         virtual void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile);
         rs2::stream_profile getAProfile(const stream_index_pair& stream);
@@ -195,6 +214,7 @@ namespace realsense2_camera
         cv::Mat& fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image);
         void clip_depth(rs2::depth_frame depth_frame, float clipping_dist);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
+        void SetBaseStream();
         void publishStaticTransforms();
         void publishIntrinsics();
         void publishPointCloud(rs2::points f, const ros::Time& t, const rs2::frameset& frameset);
@@ -223,6 +243,8 @@ namespace realsense2_camera
         void frame_callback(rs2::frame frame);
         void registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name);
         rs2_stream rs2_string_to_stream(std::string str);
+        void startMonitoring();
+        void publish_temperature();
 
         rs2::device _dev;
         std::map<stream_index_pair, rs2::sensor> _sensors;
@@ -285,6 +307,9 @@ namespace realsense2_camera
         std::map<stream_index_pair, ros::Publisher> _depth_to_other_extrinsics_publishers;
         std::map<stream_index_pair, rs2_extrinsics> _depth_to_other_extrinsics;
 
+        typedef std::pair<rs2_option, std::shared_ptr<TemperatureDiagnostics>> OptionTemperatureDiag;
+        std::vector< OptionTemperatureDiag > _temperature_nodes;
+        stream_index_pair _base_stream;
         const std::string _namespace;
 
     };//end class
