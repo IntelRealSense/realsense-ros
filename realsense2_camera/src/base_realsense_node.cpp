@@ -5,6 +5,7 @@
 #include <cctype>
 #include <mutex>
 #include <tf/transform_broadcaster.h>
+#include <thread>
 
 using namespace realsense2_camera;
 using namespace ddynamic_reconfigure;
@@ -175,9 +176,31 @@ void BaseRealSenseNode::publishTopics()
     enable_devices();
     setupPublishers();
     setupStreams();
+    registerAutoExposureROIOptions(_node_handle);
     publishStaticTransforms();
     publishIntrinsics();
     ROS_INFO_STREAM("RealSense Node Is Up!");
+}
+
+void BaseRealSenseNode::runFirstFrameInitialization(rs2_stream stream_type)
+{
+    if (_is_first_frame[stream_type])
+    {
+        ROS_DEBUG_STREAM("runFirstFrameInitialization: " << _video_functions_stack.size() << ", " << rs2_stream_to_string(stream_type));
+        _is_first_frame[stream_type] = false;
+        if (!_video_functions_stack[stream_type].empty())
+        {
+            std::thread t = std::thread([=]()
+            {
+                while (!_video_functions_stack[stream_type].empty())
+                {
+                    _video_functions_stack[stream_type].back()();
+                    _video_functions_stack[stream_type].pop_back();
+                }
+            });
+            t.detach();
+        }
+    }
 }
 
 bool is_checkbox(rs2::options sensor, rs2_option option)
@@ -260,6 +283,84 @@ std::string create_graph_resource_name(const std::string &original_name)
   std::replace_if(fixed_name.begin(), fixed_name.end(), [](const char c) { return !isValidCharInName(c); },
                   '_');
   return fixed_name;
+}
+
+void BaseRealSenseNode::set_auto_exposure_roi(const std::string option_name, rs2::sensor sensor, int new_value)
+{
+    rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
+    if (option_name == "left")
+        auto_exposure_roi.min_x = new_value;
+    else if (option_name == "right")
+        auto_exposure_roi.max_x = new_value;
+    else if (option_name == "top")
+        auto_exposure_roi.min_y = new_value;
+    else if (option_name == "bottom")
+        auto_exposure_roi.max_y = new_value;
+    else
+    {
+        ROS_WARN_STREAM("Invalid option_name: " << option_name << " while setting auto exposure ROI.");
+        return;
+    }
+    set_sensor_auto_exposure_roi(sensor);
+}
+
+void BaseRealSenseNode::set_sensor_auto_exposure_roi(rs2::sensor sensor)
+{
+    const rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
+    try
+    {
+        sensor.as<rs2::roi_sensor>().set_region_of_interest(auto_exposure_roi);
+    }
+    catch(const std::runtime_error& e)
+    {
+        ROS_ERROR_STREAM(e.what());
+    }
+}
+
+void BaseRealSenseNode::readAndSetDynamicParam(ros::NodeHandle& nh1, std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec, 
+                                               const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, 
+                                               int* option_value)
+{
+    nh1.param(option_name, *option_value, *option_value); //param (const std::string &param_name, T &param_val, const T &default_val) const
+    if (*option_value < min_val) *option_value = min_val;
+    if (*option_value > max_val) *option_value = max_val;
+    
+    ddynrec->registerVariable<int>(
+        option_name, *option_value, [this, sensor, option_name](int new_value){set_auto_exposure_roi(option_name, sensor, new_value);},
+        "auto-exposure " + option_name + " coordinate", min_val, max_val);
+}
+
+void BaseRealSenseNode::registerAutoExposureROIOptions(ros::NodeHandle& nh)
+{
+    for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
+    {
+        rs2::sensor sensor = _sensors[profile.first];
+        std::string module_base_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
+        if (sensor.is<rs2::roi_sensor>() && _auto_exposure_roi.find(module_base_name) == _auto_exposure_roi.end())
+        {
+            int max_x(_width[profile.first]-1);
+            int max_y(_height[profile.first]-1);
+
+            std::string module_name = create_graph_resource_name(module_base_name) +"/auto_exposure_roi";
+            ros::NodeHandle nh1(nh, module_name);
+            std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec = std::make_shared<ddynamic_reconfigure::DDynamicReconfigure>(nh1);
+
+            _auto_exposure_roi[module_base_name] = {0, 0, max_x, max_y};
+            rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[module_base_name]);
+            readAndSetDynamicParam(nh1, ddynrec, "left", 0, max_x, sensor, &(auto_exposure_roi.min_x));
+            readAndSetDynamicParam(nh1, ddynrec, "right", 0, max_x, sensor, &(auto_exposure_roi.max_x));
+            readAndSetDynamicParam(nh1, ddynrec, "top", 0, max_y, sensor, &(auto_exposure_roi.min_y));
+            readAndSetDynamicParam(nh1, ddynrec, "bottom", 0, max_y, sensor, &(auto_exposure_roi.max_y));
+
+            ddynrec->publishServicesTopics();
+            _ddynrec.push_back(ddynrec);
+
+            // Initiate the call to set_sensor_auto_exposure_roi, after the first frame arrive.
+            rs2_stream stream_type = profile.first.first;
+            _video_functions_stack[stream_type].push_back([this, sensor](){set_sensor_auto_exposure_roi(sensor);});
+            _is_first_frame[stream_type] = true;
+        }
+    }
 }
 
 void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name)
@@ -1388,6 +1489,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
 
                 ROS_DEBUG("Frameset contain (%s, %d, %s %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
                             rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame_time, t.toNSec());
+                runFirstFrameInitialization(stream_type);
             }
             // Clip depth_frame for max range:
             rs2::depth_frame depth_frame = frameset.get_depth_frame();
@@ -1495,6 +1597,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             auto stream_index = frame.get_profile().stream_index();
             ROS_DEBUG("Single video frame arrived (%s, %d). frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
                         rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame_time, t.toNSec());
+            runFirstFrameInitialization(stream_type);
 
             stream_index_pair sip{stream_type,stream_index};
             if (frame.is<rs2::depth_frame>())
@@ -1580,11 +1683,6 @@ void BaseRealSenseNode::setupStreams()
         for (const std::pair<std::string, std::vector<rs2::stream_profile> >& sensor_profile : profiles)
         {
             std::string module_name = sensor_profile.first;
-            // for (const rs2::stream_profile& profile : sensor_profile.second)
-            // {
-            //     ROS_WARN_STREAM("type:" << rs2_stream_to_string(profile.stream_type()) <<
-            //                     " fps: " << profile.fps() << ". format: " << profile.format());
-            // }
             rs2::sensor sensor = active_sensors[module_name];
             sensor.open(sensor_profile.second);
             sensor.start(_sensors_callback[module_name]);
@@ -2110,4 +2208,3 @@ bool BaseRealSenseNode::getEnabledProfile(const stream_index_pair& stream_index,
         profile =  *it;
         return true;
     }
-

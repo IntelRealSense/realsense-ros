@@ -197,6 +197,7 @@ namespace realsense2_camera
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         void publishStaticTransforms();
         void publishIntrinsics();
+        void runFirstFrameInitialization(rs2_stream stream_type);
         void publishPointCloud(rs2::points f, const ros::Time& t, const rs2::frameset& frameset);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
 
@@ -222,6 +223,10 @@ namespace realsense2_camera
         void multiple_message_callback(rs2::frame frame, imu_sync_method sync_method);
         void frame_callback(rs2::frame frame);
         void registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name);
+        void readAndSetDynamicParam(ros::NodeHandle& nh1, std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec, const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, int* option_value);
+        void registerAutoExposureROIOptions(ros::NodeHandle& nh);
+        void set_auto_exposure_roi(const std::string option_name, rs2::sensor sensor, int new_value);
+        void set_sensor_auto_exposure_roi(rs2::sensor sensor);
         rs2_stream rs2_string_to_stream(std::string str);
 
         rs2::device _dev;
@@ -284,6 +289,9 @@ namespace realsense2_camera
         std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics> _depth_aligned_image_publishers;
         std::map<stream_index_pair, ros::Publisher> _depth_to_other_extrinsics_publishers;
         std::map<stream_index_pair, rs2_extrinsics> _depth_to_other_extrinsics;
+        std::map<std::string, rs2::region_of_interest> _auto_exposure_roi;
+        std::map<rs2_stream, bool> _is_first_frame;
+        std::map<rs2_stream, std::vector<std::function<void()> > > _video_functions_stack;
 
         const std::string _namespace;
 
