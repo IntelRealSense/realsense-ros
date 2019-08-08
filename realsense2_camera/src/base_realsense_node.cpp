@@ -2225,7 +2225,7 @@ void BaseRealSenseNode::startMonitoring()
         _temperature_nodes.push_back({option, std::make_shared<TemperatureDiagnostics>(rs2_option_to_string(option), _serial_no )});
     }
 
-    int time_interval(1000);
+    int time_interval(10000);
     std::thread t([=]() {
         while(true) {
             std::this_thread::sleep_for(std::chrono::milliseconds(time_interval));
