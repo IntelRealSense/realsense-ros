@@ -82,7 +82,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
                                      ros::NodeHandle& privateNodeHandle,
                                      rs2::device dev,
                                      const std::string& serial_no) :
-    _base_frame_id(""),  _node_handle(nodeHandle),
+    _is_running(true), _base_frame_id(""),  _node_handle(nodeHandle),
     _pnh(privateNodeHandle), _dev(dev), _json_file_path(""),
     _serial_no(serial_no),
     _is_initialized_time_base(false),
@@ -124,6 +124,16 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _stream_name[RS2_STREAM_POSE] = "pose";
 
     _monitor_options = {RS2_OPTION_ASIC_TEMPERATURE, RS2_OPTION_PROJECTOR_TEMPERATURE};
+}
+
+BaseRealSenseNode::~BaseRealSenseNode()
+{
+    _is_running = false;
+    _cv.notify_one();
+    if (_monitoring_t && _monitoring_t->joinable())
+    {
+        _monitoring_t->join();
+    }
 }
 
 void BaseRealSenseNode::toggleSensors(bool enabled)
@@ -2226,13 +2236,18 @@ void BaseRealSenseNode::startMonitoring()
     }
 
     int time_interval(10000);
-    std::thread t([=]() {
-        while(true) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(time_interval));
-            publish_temperature();
+    std::function<void()> func = [this, time_interval](){
+        std::mutex mu;
+        std::unique_lock<std::mutex> lock(mu);
+        while(_is_running) {
+            _cv.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return !_is_running;});
+            if (_is_running)
+            {
+                publish_temperature();
+            }
         }
-    });
-    t.detach();    
+    };
+    _monitoring_t = std::make_shared<std::thread>(func);
 }
 
 void BaseRealSenseNode::publish_temperature()
@@ -2243,8 +2258,15 @@ void BaseRealSenseNode::publish_temperature()
         rs2_option option(option_diag.first);
         if (sensor.supports(option))
         {
-            auto option_value = sensor.get_option(option);
-            option_diag.second->update(option_value);
+            try
+            {
+                auto option_value = sensor.get_option(option);
+                option_diag.second->update(option_value);
+            }
+            catch(const std::exception& e)
+            {
+                ROS_DEBUG_STREAM("Failed checking for temperature." << std::endl << e.what());
+            }
         }
     }
 }
