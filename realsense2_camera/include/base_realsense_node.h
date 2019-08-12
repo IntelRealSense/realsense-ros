@@ -15,6 +15,7 @@
 #include <nav_msgs/Odometry.h>
 #include <tf/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
+#include <condition_variable>
 
 #include <queue>
 #include <mutex>
@@ -120,7 +121,7 @@ namespace realsense2_camera
         void toggleSensors(bool enabled);
         virtual void publishTopics() override;
         virtual void registerDynamicReconfigCb(ros::NodeHandle& nh) override;
-        virtual ~BaseRealSenseNode() {}
+        virtual ~BaseRealSenseNode();
 
     public:
         enum imu_sync_method{NONE, COPY, LINEAR_INTERPOLATION};
@@ -148,6 +149,7 @@ namespace realsense2_camera
                 }
         };
 
+        bool _is_running;
         std::string _base_frame_id;
         std::string _odom_frame_id;
         std::map<stream_index_pair, std::string> _frame_id;
@@ -317,6 +319,9 @@ namespace realsense2_camera
 
         typedef std::pair<rs2_option, std::shared_ptr<TemperatureDiagnostics>> OptionTemperatureDiag;
         std::vector< OptionTemperatureDiag > _temperature_nodes;
+        std::shared_ptr<std::thread> _monitoring_t;
+        mutable std::condition_variable _cv;
+
         stream_index_pair _base_stream;
         const std::string _namespace;
 
