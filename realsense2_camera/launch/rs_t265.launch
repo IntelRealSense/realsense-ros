@@ -27,6 +27,8 @@ https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/lib
   <arg name="linear_accel_cov"      default="0.01"/>
   <arg name="initial_reset"         default="false"/>
   <arg name="unite_imu_method"      default=""/>
+
+  <arg name="publish_odom_tf"     default="true"/>
   
   <group ns="$(arg camera)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
@@ -50,6 +52,8 @@ https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/lib
       <arg name="linear_accel_cov"         value="$(arg linear_accel_cov)"/>
       <arg name="initial_reset"            value="$(arg initial_reset)"/>
       <arg name="unite_imu_method"         value="$(arg unite_imu_method)"/>
+
+      <arg name="publish_odom_tf"          value="$(arg publish_odom_tf)"/>
     </include>
   </group>
 </launch>
