@@ -73,6 +73,9 @@
   <arg name="aligned_depth_to_fisheye1_frame_id" default="$(arg tf_prefix)_aligned_depth_to_fisheye1_frame"/>
   <arg name="aligned_depth_to_fisheye2_frame_id" default="$(arg tf_prefix)_aligned_depth_to_fisheye2_frame"/>
 
+  <arg name="publish_tf"               default="true"/>
+  <arg name="tf_publish_rate"          default="0"/> <!-- 0 - static transform -->
+
   <arg name="odom_frame_id"            default="$(arg tf_prefix)_odom_frame"/>
   <arg name="topic_odom_in"            default="$(arg tf_prefix)/odom_in"/>
   <arg name="calib_odom_file"          default=""/>
@@ -155,6 +158,9 @@
     <param name="aligned_depth_to_fisheye_frame_id"  type="str"  value="$(arg aligned_depth_to_fisheye_frame_id)"/>
     <param name="aligned_depth_to_fisheye1_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye1_frame_id)"/>
     <param name="aligned_depth_to_fisheye2_frame_id" type="str"  value="$(arg aligned_depth_to_fisheye2_frame_id)"/>
+
+    <param name="publish_tf"               type="bool"   value="$(arg publish_tf)"/>
+    <param name="tf_publish_rate"          type="double" value="$(arg tf_publish_rate)"/>
 
     <param name="odom_frame_id"            type="str"  value="$(arg odom_frame_id)"/>
     <param name="topic_odom_in"            type="str"  value="$(arg topic_odom_in)"/>

@@ -41,6 +41,9 @@ namespace realsense2_camera
     const bool ALLOW_NO_TEXTURE_POINTS = false;
     const bool SYNC_FRAMES    = false;
 
+    const bool PUBLISH_TF        = true;
+    const double TF_PUBLISH_RATE = 0; // Static transform
+
     const int IMAGE_WIDTH     = 640;
     const int IMAGE_HEIGHT    = 480;
     const int IMAGE_FPS       = 30;
