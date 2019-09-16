@@ -13,5 +13,6 @@
   <author email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</author>
   <author email="doron.hirshberg@intel.com">Doron Hirshberg</author>
   <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>xacro</exec_depend>
 
 </package>
