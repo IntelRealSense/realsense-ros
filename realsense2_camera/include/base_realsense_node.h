@@ -274,6 +274,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, int> _width;
         std::map<stream_index_pair, int> _height;
         std::map<stream_index_pair, int> _fps;
+        std::map<rs2_stream, int>        _format;
         std::map<stream_index_pair, bool> _enable;
         std::map<rs2_stream, std::string> _stream_name;
         bool _publish_tf;
