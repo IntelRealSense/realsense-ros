@@ -193,15 +193,6 @@ void BaseRealSenseNode::publishTopics()
     SetBaseStream();
     registerAutoExposureROIOptions(_node_handle);
     publishStaticTransforms();
-    if (_publish_tf)
-    {
-        // Static transform for non-positive values
-        if (_tf_publish_rate > 0)
-            _tf_t = std::shared_ptr<std::thread>(new std::thread(boost::bind(&BaseRealSenseNode::publishDynamicTransforms, this)));
-        else
-            _static_tf_broadcaster.sendTransform(_static_tf_msgs);
-    }
-
     publishIntrinsics();
     startMonitoring();
     ROS_INFO_STREAM("RealSense Node Is Up!");
@@ -1906,6 +1897,11 @@ void BaseRealSenseNode::publishStaticTransforms()
                 calcAndPublishStaticTransform(ienable.first, base_profile);
             }
         }
+        // Static transform for non-positive values
+        if (_tf_publish_rate > 0)
+            _tf_t = std::shared_ptr<std::thread>(new std::thread(boost::bind(&BaseRealSenseNode::publishDynamicTransforms, this)));
+        else
+            _static_tf_broadcaster.sendTransform(_static_tf_msgs);
     }
 
     // Publish Extrinsics Topics:
@@ -1951,7 +1947,7 @@ void BaseRealSenseNode::publishStaticTransforms()
 void BaseRealSenseNode::publishDynamicTransforms()
 {
     // Publish transforms for the cameras
-    ROS_WARN("Publishing dynamic camera transforms (/tf) at %.f Hz", _tf_publish_rate);
+    ROS_WARN("Publishing dynamic camera transforms (/tf) at %g Hz", _tf_publish_rate);
 
     ros::Rate loop_rate(_tf_publish_rate);
 
