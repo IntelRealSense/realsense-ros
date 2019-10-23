@@ -12,6 +12,8 @@
 #include <thread>
 #include <sys/time.h>
 
+#include <boost/algorithm/string.hpp>
+
 using namespace realsense2_camera;
 
 #define REALSENSE_ROS_EMBEDDED_VERSION_STR (VAR_ARG_STRING(VERSION: REALSENSE_ROS_MAJOR_VERSION.REALSENSE_ROS_MINOR_VERSION.REALSENSE_ROS_PATCH_VERSION))
@@ -57,22 +59,55 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 		else
 		{
 			bool found = false;
+      ROS_INFO_STREAM(" ");
 			for (auto&& dev : list)
 			{
 				auto sn = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
-				ROS_DEBUG_STREAM("Device with serial number " << sn << " was found.");
-				if (_serial_no.empty() || sn == _serial_no)
+        auto pn = dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
+        auto name = dev.get_info(RS2_CAMERA_INFO_NAME);
+        ROS_INFO_STREAM("Device with physical ID " << pn << " was found.");
+        std::string port_id;
+        std::vector<std::string> results;
+        ROS_INFO_STREAM("Device with name " << name << " was found.");
+        if(strcmp(name,"Intel RealSense T265") == 0)
+        {
+          ROS_DEBUG_STREAM("T265 was found!");
+          boost::split(results, pn, [](char c){return c == ' ';});
+          std::string bus_line = results[2];
+          std::string port_line = results[3];
+          boost::split(results, bus_line, [](char c){return c == '_';});
+          std::string bus_no = results[1];
+          boost::split(results, port_line, [](char c){return c == '_';});
+          std::string port_no = results[1];
+          port_id = bus_no +"-"+ port_no;
+        }
+        else// if(strcmp(name, "Intel RealSense D435") == 0)
+        {
+          //ROS_DEBUG_STREAM("D345 was found!");
+          boost::split(results, pn, [](char c){return c == ':';});
+          std::string bus_line = results[3];
+          boost::split(results, bus_line, [](char c){return c == '/';});
+          std::string port_line = results[results.size()-1];
+          boost::replace_all(port_line,".","-");
+          port_id = port_line;
+        }
+        ROS_INFO_STREAM("Device with port number " << port_id << " was found.");
+
+
+        ROS_INFO_STREAM("Device with serial number " << sn << " was found."<<std::endl);
+        if ((_serial_no.empty() || sn == _serial_no) && (_port_no.empty() || port_id == _port_no))
 				{
 					_device = dev;
 					_serial_no = sn;
 					found = true;
 					break;
-				}
+        }
 			}
 			if (!found)
 			{
 				// T265 could be caught by another node.
 				ROS_ERROR_STREAM("The requested device with serial number " << _serial_no << " is NOT found. Will Try again.");
+        ROS_ERROR_STREAM("The requested device with port number " << _port_no << " is NOT found. Will Try again.");
 			}
 		}
 	}
@@ -135,6 +170,7 @@ void RealSenseNodeFactory::onInit()
 		ros::NodeHandle nh = getNodeHandle();
 		auto privateNh = getPrivateNodeHandle();
 		privateNh.param("serial_no", _serial_no, std::string(""));
+    privateNh.param("port_no", _port_no, std::string(""));
 
 		std::string rosbag_filename("");
 		privateNh.param("rosbag_filename", rosbag_filename, std::string(""));
