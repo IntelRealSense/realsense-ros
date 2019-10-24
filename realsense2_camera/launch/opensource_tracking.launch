@@ -8,7 +8,7 @@
     </include>
     
     <node pkg="imu_filter_madgwick" type="imu_filter_node" name="ImuFilter">
-        <param name="_use_ma" type="bool" value="false" />
+        <param name="use_mag" type="bool" value="false" />
         <param name="_publish_tf" type="bool" value="false" />
         <param name="_world_frame" type="string" value="enu" />
         <remap from="/imu/data_raw" to="/camera/imu"/>
