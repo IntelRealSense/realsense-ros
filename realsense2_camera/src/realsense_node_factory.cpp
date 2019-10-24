@@ -11,8 +11,7 @@
 #include <signal.h>
 #include <thread>
 #include <sys/time.h>
-
-#include <boost/algorithm/string.hpp>
+#include <regex>
 
 using namespace realsense2_camera;
 
@@ -59,55 +58,83 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 		else
 		{
 			bool found = false;
-      ROS_INFO_STREAM(" ");
+      		ROS_INFO_STREAM(" ");
 			for (auto&& dev : list)
 			{
 				auto sn = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
-        auto pn = dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
-        auto name = dev.get_info(RS2_CAMERA_INFO_NAME);
-        ROS_INFO_STREAM("Device with physical ID " << pn << " was found.");
-        std::string port_id;
-        std::vector<std::string> results;
-        ROS_INFO_STREAM("Device with name " << name << " was found.");
-        if(strcmp(name,"Intel RealSense T265") == 0)
-        {
-          ROS_DEBUG_STREAM("T265 was found!");
-          boost::split(results, pn, [](char c){return c == ' ';});
-          std::string bus_line = results[2];
-          std::string port_line = results[3];
-          boost::split(results, bus_line, [](char c){return c == '_';});
-          std::string bus_no = results[1];
-          boost::split(results, port_line, [](char c){return c == '_';});
-          std::string port_no = results[1];
-          port_id = bus_no +"-"+ port_no;
-        }
-        else// if(strcmp(name, "Intel RealSense D435") == 0)
-        {
-          //ROS_DEBUG_STREAM("D345 was found!");
-          boost::split(results, pn, [](char c){return c == ':';});
-          std::string bus_line = results[3];
-          boost::split(results, bus_line, [](char c){return c == '/';});
-          std::string port_line = results[results.size()-1];
-          boost::replace_all(port_line,".","-");
-          port_id = port_line;
-        }
-        ROS_INFO_STREAM("Device with port number " << port_id << " was found.");
+				std::string pn = dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
+				const char* name = dev.get_info(RS2_CAMERA_INFO_NAME);
+				ROS_INFO_STREAM("Device with physical ID " << pn << " was found.");
+				std::string port_id;
+				std::vector<std::string> results;
+				ROS_INFO_STREAM("Device with name " << name << " was found.");
+				std::regex self_regex;
+				if(strcmp(name,"Intel RealSense T265") == 0)
+				{
+					self_regex = std::regex(".*?bus_([0-9]+) port_([0-9]+).*", std::regex_constants::ECMAScript);
+				}
+				else// if(strcmp(name, "Intel RealSense D435") == 0)
+				{
+					self_regex = std::regex("[^ ]*?usb[0-9]+/([0-9.-]+)/[^ ]*", std::regex_constants::ECMAScript);
+				}
+				std::smatch base_match;
+				bool found_usb_desc = std::regex_match(pn, base_match, self_regex);
+				found_usb_desc = false;
+				if (found_usb_desc)
+				{
+					std::ssub_match base_sub_match = base_match[1];
+					port_id = base_sub_match.str();
+					for (unsigned int mi = 2; mi < base_match.size(); mi++)
+					{
+						std::ssub_match base_sub_match = base_match[mi];
+						port_id += "-" + base_sub_match.str();
+					}
+					ROS_INFO_STREAM("Device with port number " << port_id << " was found.");
+				}
+				else
+				{
+					std::stringstream msg;
+					msg << "Error extracting usb port from device with physical ID: " << pn << std::endl << "Please report on github issue at https://github.com/IntelRealSense/realsense-ros";
+					if (_port_no.empty())
+					{
+						ROS_WARN_STREAM(msg.str());
+					}
+					else
+					{
+						ROS_ERROR_STREAM(msg.str());
+						ROS_ERROR_STREAM("Please use serial number instead of usb port.");
+					}
+				}
 
-
-        ROS_INFO_STREAM("Device with serial number " << sn << " was found."<<std::endl);
-        if ((_serial_no.empty() || sn == _serial_no) && (_port_no.empty() || port_id == _port_no))
+				ROS_INFO_STREAM("Device with serial number " << sn << " was found."<<std::endl);
+				if ((_serial_no.empty() || sn == _serial_no) && (_port_no.empty() || port_id == _port_no))
 				{
 					_device = dev;
 					_serial_no = sn;
 					found = true;
 					break;
-        }
+				}
 			}
 			if (!found)
 			{
 				// T265 could be caught by another node.
-				ROS_ERROR_STREAM("The requested device with serial number " << _serial_no << " is NOT found. Will Try again.");
-        ROS_ERROR_STREAM("The requested device with port number " << _port_no << " is NOT found. Will Try again.");
+				std::string msg ("The requested device with ");
+				bool add_and(false);
+				if (!_serial_no.empty())
+				{
+					msg += "serial number " + _serial_no;
+					add_and = true;
+				}
+				if (!_port_no.empty())
+				{
+					if (add_and)
+					{
+						msg += " and ";
+					}
+					msg += "port number " + _port_no;
+				}
+				msg += " is NOT found. Will Try again.";
+				ROS_ERROR_STREAM(msg);
 			}
 		}
 	}
