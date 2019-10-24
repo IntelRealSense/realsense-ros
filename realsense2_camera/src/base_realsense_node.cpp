@@ -649,6 +649,10 @@ void BaseRealSenseNode::setupDevice()
 
         ROS_INFO_STREAM("Device Serial No: " << _serial_no);
 
+        auto camera_id = _dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
+
+        ROS_INFO_STREAM("Device physical port: " << camera_id);
+
         auto fw_ver = _dev.get_info(RS2_CAMERA_INFO_FIRMWARE_VERSION);
         ROS_INFO_STREAM("Device FW version: " << fw_ver);
 
