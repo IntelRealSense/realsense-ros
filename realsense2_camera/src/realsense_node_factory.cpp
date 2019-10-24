@@ -95,7 +95,7 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 				{
 					std::stringstream msg;
 					msg << "Error extracting usb port from device with physical ID: " << pn << std::endl << "Please report on github issue at https://github.com/IntelRealSense/realsense-ros";
-					if (_port_no.empty())
+					if (_usb_port_id.empty())
 					{
 						ROS_WARN_STREAM(msg.str());
 					}
@@ -112,7 +112,7 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 					found_device_type = std::regex_search(name, base_match, device_type_regex);
 				}
 
-				if ((_serial_no.empty() || sn == _serial_no) && (_port_no.empty() || port_id == _port_no) && found_device_type)
+				if ((_serial_no.empty() || sn == _serial_no) && (_usb_port_id.empty() || port_id == _usb_port_id) && found_device_type)
 				{
 					_device = dev;
 					_serial_no = sn;
@@ -130,13 +130,13 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 					msg += "serial number " + _serial_no;
 					add_and = true;
 				}
-				if (!_port_no.empty())
+				if (!_usb_port_id.empty())
 				{
 					if (add_and)
 					{
 						msg += " and ";
 					}
-					msg += "port number " + _port_no;
+					msg += "usb port id " + _usb_port_id;
 					add_and = true;
 				}
 				if (!_device_type.empty())
@@ -211,7 +211,7 @@ void RealSenseNodeFactory::onInit()
 		ros::NodeHandle nh = getNodeHandle();
 		auto privateNh = getPrivateNodeHandle();
 		privateNh.param("serial_no", _serial_no, std::string(""));
-    	privateNh.param("port_no", _port_no, std::string(""));
+    	privateNh.param("usb_port_id", _usb_port_id, std::string(""));
     	privateNh.param("device_type", _device_type, std::string(""));
 
 		std::string rosbag_filename("");
