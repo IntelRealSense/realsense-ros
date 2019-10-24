@@ -83,7 +83,7 @@ If using D435 or D415, the gyro and accel topics wont be available. Likewise, ot
 ### Launch parameters
 The following parameters are available by the wrapper:
 - **serial_no**: will attach to the device with the given serial number (*serial_no*) number. Default, attach to available RealSense device in random.
-- **port_no**: will attach to the device with the given USB port (*port_no*). i.e 4-1, 4-2 etc. Default, ignore USB port when choosing a device.
+- **usb_port_id**: will attach to the device with the given USB port (*usb_port_id*). i.e 4-1, 4-2 etc. Default, ignore USB port when choosing a device.
 - **device_type**: will attach to a device whose name includes the given *device_type* regular expression pattern. Default, ignore device type. For example, device_type:=d435 will match d435 and d435i. device_type=d435(?!i) will match d435 but not d435i.
 
 - **rosbag_filename**: Will publish topics from rosbag file.
