@@ -1,8 +1,10 @@
 <launch>
-  <arg name="serial_no_camera1"    			default=""/> 			<!-- Note: Replace with actual serial number -->
-  <arg name="serial_no_camera2"    			default=""/> 			<!-- Note: Replace with actual serial number -->
-  <arg name="camera1"              			default="t265"/>		<!-- Note: Replace with camera name -->
-  <arg name="camera2"              			default="d400"/>		<!-- Note: Replace with camera name -->
+  <arg name="device_type_camera1"    		default="t265"/>
+  <arg name="device_type_camera2"    		default="d4.5"/>		<!-- Note: using regular expression. match D435, D435i, D415... -->
+  <arg name="serial_no_camera1"    			default=""/>
+  <arg name="serial_no_camera2"    			default=""/>
+  <arg name="camera1"              			default="t265"/>
+  <arg name="camera2"              			default="d400"/>
   <arg name="tf_prefix_camera1"         default="$(arg camera1)"/>
   <arg name="tf_prefix_camera2"         default="$(arg camera2)"/>
   <arg name="initial_reset"             default="false"/>
@@ -17,6 +19,7 @@
 
   <group ns="$(arg camera1)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="device_type"           value="$(arg device_type_camera1)"/>
       <arg name="serial_no"             value="$(arg serial_no_camera1)"/>
       <arg name="tf_prefix"         		value="$(arg tf_prefix_camera1)"/>
       <arg name="initial_reset"         value="$(arg initial_reset)"/>
@@ -29,6 +32,7 @@
 
   <group ns="$(arg camera2)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="device_type"           value="$(arg device_type_camera2)"/>
       <arg name="serial_no"             value="$(arg serial_no_camera2)"/>
       <arg name="tf_prefix"		          value="$(arg tf_prefix_camera2)"/>
       <arg name="initial_reset"         value="$(arg initial_reset)"/>

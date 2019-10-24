@@ -2,7 +2,8 @@
   <arg name="external_manager"    default="false"/>
   <arg name="manager"             default="realsense2_camera_manager"/>
   <arg name="serial_no"           default=""/>
-  <arg name="port_no"           default=""/>
+  <arg name="port_no"             default=""/>
+  <arg name="device_type"         default=""/>
   <arg name="tf_prefix"           default=""/>
   <arg name="json_file_path"      default=""/>
   <arg name="rosbag_filename"     default=""/>
@@ -93,6 +94,7 @@
   <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)" required="$(arg required)">
     <param name="serial_no"                type="str"  value="$(arg serial_no)"/>
     <param name="port_no"                  type="str"  value="$(arg port_no)"/>
+    <param name="device_type"              type="str"  value="$(arg device_type)"/>
     <param name="json_file_path"           type="str"  value="$(arg json_file_path)"/>
     <param name="rosbag_filename"          type="str"  value="$(arg rosbag_filename)"/>
 

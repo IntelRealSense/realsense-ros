@@ -69,6 +69,7 @@ namespace realsense2_camera
         rs2::context _ctx;
         std::string _serial_no;
         std::string _port_no;
+        std::string _device_type;
         bool _initial_reset;
         std::thread _query_thread;
 
