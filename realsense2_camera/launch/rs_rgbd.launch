@@ -48,7 +48,7 @@ Processing enabled by this node:
   <!-- Camera device specific arguments -->
 
   <arg name="serial_no"           default=""/>
-  <arg name="port_no"             default=""/>
+  <arg name="usb_port_id"         default=""/>
   <arg name="device_type"         default=""/>
   <arg name="json_file_path"      default=""/>
 
@@ -119,7 +119,7 @@ Processing enabled by this node:
       <arg name="manager"                  value="$(arg manager)"/>
       <arg name="tf_prefix"                value="$(arg tf_prefix)"/>
       <arg name="serial_no"                value="$(arg serial_no)"/>
-      <arg name="port_no"                  value="$(arg port_no)"/>
+      <arg name="usb_port_id"              value="$(arg usb_port_id)"/>
       <arg name="device_type"              value="$(arg device_type)"/>
       <arg name="json_file_path"           value="$(arg json_file_path)"/>
 

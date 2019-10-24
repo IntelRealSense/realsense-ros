@@ -6,7 +6,7 @@ https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/lib
 -->
 <launch>
   <arg name="serial_no"           default=""/>
-  <arg name="port_no"             default=""/>
+  <arg name="usb_port_id"         default=""/>
   <arg name="json_file_path"      default=""/>
   <arg name="camera"              default="camera"/>
   <arg name="tf_prefix"           default="$(arg camera)"/>
@@ -35,7 +35,7 @@ https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/lib
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="tf_prefix"                value="$(arg tf_prefix)"/>
       <arg name="serial_no"                value="$(arg serial_no)"/>
-      <arg name="port_no"                  value="$(arg port_no)"/>
+      <arg name="usb_port_id"              value="$(arg usb_port_id)"/>
       <arg name="json_file_path"           value="$(arg json_file_path)"/>
 
       <arg name="enable_sync"              value="$(arg enable_sync)"/>
