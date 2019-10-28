@@ -226,6 +226,7 @@ void RealSenseNodeFactory::onInit()
 				cfg.enable_all_streams();
 				pipe->start(cfg); //File will be opened in read mode at this point
 				_device = pipe->get_active_profile().get_device();
+				_serial_no = _device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
 				_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(nh, privateNh, _device, _serial_no));
 			}
 			if (_device)
