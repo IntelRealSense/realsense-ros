@@ -76,7 +76,7 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 				}
 				else// if(strcmp(name, "Intel RealSense D435") == 0)
 				{
-					self_regex = std::regex("[^ ]*?usb[0-9]+/([0-9.-]+)/[^ ]*", std::regex_constants::ECMAScript);
+					self_regex = std::regex("[^ ]+/usb[0-9]+[0-9./-]*/([0-9.-]+):[^ ]*", std::regex_constants::ECMAScript);
 				}
 				std::smatch base_match;
 				bool found_usb_desc = std::regex_match(pn, base_match, self_regex);
