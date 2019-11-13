@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+
+<!--
+License: Apache 2.0. See LICENSE file in root directory.
+Copyright(c) 2017 PAL Robotics, S.L. All Rights Reserved
+
+This is the Gazebo URDF model for the Intel RealSense T265 camera
+-->
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="gazebo_t265" params="camera_name fisheye1_reference_link fisheye2_reference_link topics_ns fisheye1_optical_frame fisheye2_optical_frame" >
+
+    <!-- Load parameters to model's main link-->
+    <gazebo reference="${fisheye1_reference_link}">
+      <self_collide>0</self_collide>
+      <enable_wind>0</enable_wind>
+      <kinematic>0</kinematic>
+      <gravity>1</gravity>
+      <!--<mu>1</mu>-->
+      <mu2>1</mu2>
+      <fdir1>0 0 0</fdir1>
+      <!--<slip1>0</slip1>
+      <slip2>0</slip2>-->
+      <kp>1e+13</kp>
+      <kd>1</kd>
+      <!--<max_vel>0.01</max_vel>
+      <min_depth>0</min_depth>-->
+      <sensor name="${camera_name}fisheye1" type="wideanglecamera">
+        <origin xyz="0 0 0" rpy="0 ${M_PI/2} 0" />
+        <update_rate>30</update_rate>
+        <camera>
+          <horizontal_fov>1.95</horizontal_fov>
+          <image>
+            <width>848</width>
+            <height>800</height>
+          </image>
+          <clip>
+            <near>0.2</near>
+            <far>100</far>
+          </clip>
+         <lens>
+            <!-- type element is mandatory -->
+            <type>orthographic</type>
+            <!-- if it is set to `true` your horizontal FOV will remain as defined -->
+            <!-- othervise it depends on lens type and custom function, if there is one -->
+            <scale_to_hfov>true</scale_to_hfov>
+            <!-- clip everything that is outside of this angle -->
+            <!-- eye balled value for these cameras-->
+            <cutoff_angle>2.20</cutoff_angle>
+            <!-- resolution of the cubemap texture, the highter it is - the sharper is your image -->
+            <env_texture_size>1024</env_texture_size>
+          </lens>
+          <!--<distortion>-->
+            <!--<k1>-0.00040996368625201285</k1>-->
+            <!--<k2>0.03653175011277199</k2>-->
+            <!--<k3>0.0</k3>-->
+            <!--<p1>-0.034823670983314514</p1>-->
+            <!--<p2>0.0052825710736215115</p2>-->
+            <!--<center>0.5 0.5</center>-->
+          <!--</distortion>-->
+        </camera>
+        <plugin name="${camera_name}fisheye1" filename="libgazebo_ros_camera.so">
+          <alwaysOn>true</alwaysOn>
+          <updateRate>30.0</updateRate>
+          <cameraName>${topics_ns}/fisheye1</cameraName>
+          <imageTopicName>image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>${fisheye1_optical_frame}</frameName>
+          <hackBaseline>0.07</hackBaseline>
+          <distortionK1>-0.00040996368625201285</distortionK1>
+          <distortionK2>0.03653175011277199</distortionK2>
+          <distortionK3>0.0</distortionK3>
+          <distortionP1>-0.034823670983314514</distortionP1>
+          <distortionP2>0.0052825710736215115</distortionP2>
+          <Cx>416.22</Cx>
+          <Cy>402.1</Cy>
+          <CxPrime>416.22</CxPrime>
+        </plugin>
+      </sensor>
+    </gazebo>
+    <gazebo reference="${fisheye2_reference_link}">
+      <self_collide>0</self_collide>
+      <enable_wind>0</enable_wind>
+      <kinematic>0</kinematic>
+      <gravity>1</gravity>
+      <!--<mu>1</mu>-->
+      <mu2>1</mu2>
+      <fdir1>0 0 0</fdir1>
+      <!--<slip1>0</slip1>
+      <slip2>0</slip2>-->
+      <kp>1e+13</kp>
+      <kd>1</kd>
+      <!--<max_vel>0.01</max_vel>
+      <min_depth>0</min_depth>-->
+      <sensor name="${camera_name}fisheye2" type="wideanglecamera">
+        <origin xyz="0 0 0" rpy="0 ${M_PI/2} 0" />
+        <update_rate>30</update_rate>
+        <camera>
+          <horizontal_fov>2.84</horizontal_fov>
+          <image>
+            <width>848</width>
+            <height>800</height>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>100</far>
+          </clip>
+         <lens>
+            <!-- type element is mandatory -->
+            <type>orthographic</type>
+            <!-- if it is set to `true` your horizontal FOV will remain as defined -->
+            <!-- othervise it depends on lens type and custom function, if there is one -->
+            <scale_to_hfov>true</scale_to_hfov>
+            <!-- clip everything that is outside of this angle -->
+            <!-- eye balled value for these cameras-->
+            <cutoff_angle>2.20</cutoff_angle>
+            <!-- resolution of the cubemap texture, the highter it is - the sharper is your image -->
+            <env_texture_size>1024</env_texture_size>
+          </lens>
+          <!--<distortion>-->
+            <!--<k1>-0.00040996368625201285</k1>-->
+            <!--<k2>0.03653175011277199</k2>-->
+            <!--<k3>0.0</k3>-->
+            <!--<p1>-0.034823670983314514</p1>-->
+            <!--<p2>0.0052825710736215115</p2>-->
+            <!--<center>0.5 0.5</center>-->
+          <!--</distortion>-->
+        </camera>
+        <always_on>1</always_on>
+        <plugin name="${camera_name}fisheye2" filename="libgazebo_ros_camera.so">
+          <alwaysOn>true</alwaysOn>
+          <updateRate>30.0</updateRate>
+          <cameraName>${topics_ns}/fisheye2</cameraName>
+          <imageTopicName>image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>${fisheye2_optical_frame}</frameName>
+          <hackBaseline>0.07</hackBaseline>
+          <distortionK1>-0.00040996368625201285</distortionK1>
+          <distortionK2>0.03653175011277199</distortionK2>
+          <distortionK3>0.0</distortionK3>
+          <distortionP1>-0.034823670983314514</distortionP1>
+          <distortionP2>0.0052825710736215115</distortionP2>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+</robot>
