@@ -12,20 +12,37 @@
 
   <author email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</author>
   <author email="doron.hirshberg@intel.com">Doron Hirshberg</author>
+
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>image_transport</depend>
-  <depend>cv_bridge</depend>
-  <depend>nav_msgs</depend>
-  <depend>nodelet</depend>  
-  <depend>genmsg</depend>
-  <depend>roscpp</depend>
-  <depend>sensor_msgs</depend>
-  <depend>std_msgs</depend>
-  <depend>message_runtime</depend>
-  <depend>tf</depend>
-  <depend>ddynamic_reconfigure</depend>
-  <depend>diagnostic_updater</depend>
-  <depend>librealsense2</depend>
+  <build_depend>image_transport</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>nodelet</build_depend>  
+  <build_depend>genmsg</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>ddynamic_reconfigure</build_depend>
+  <build_depend>diagnostic_updater</build_depend>
+  <build_depend>librealsense2-dev</build_depend>
+  <build_export_depend>librealsense2-dev</build_export_depend>
+
+  <exec_depend>image_transport</exec_depend>
+  <exec_depend>cv_bridge</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>nodelet</exec_depend>  
+  <exec_depend>genmsg</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>tf</exec_depend>
+  <exec_depend>ddynamic_reconfigure</exec_depend>
+  <exec_depend>diagnostic_updater</exec_depend>  
+  <exec_depend>librealsense2</exec_depend>
+  <exec_depend>librealsense2-dkms</exec_depend>
+
   <export>
     <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>
