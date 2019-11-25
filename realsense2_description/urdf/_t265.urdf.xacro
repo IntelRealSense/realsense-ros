@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+
+<!--
+License: Apache 2.0. See LICENSE file in root directory.
+Copyright(c) 2017 Intel Corporation. All Rights Reserved
+
+This is the URDF model for the Intel RealSense T265 camera, in it's
+aluminum peripherial evaluation case.
+-->
+
+<robot name="sensor_t265" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!--File includes-->
+  <xacro:include filename="$(find realsense2_description)/urdf/_t265.gazebo.xacro"/>
+
+  <xacro:macro name="sensor_t265" params="parent name:=camera topics_ns:=camera *origin">
+    <xacro:property name="M_PI" value="3.1415926535897931" />
+
+    <!-- The following values are approximate, and the camera node
+     publishing TF values with actual calibrated camera extrinsic values -->
+    <xacro:property name="fisheye1_offset_x" value="-0.0411"/>
+    <xacro:property name="fisheye1_offset_y" value="0.0"/>
+    <xacro:property name="fisheye1_offset_z" value="0.0"/>
+
+    <xacro:property name="fisheye2_offset_x" value="0.0229"/>
+    <xacro:property name="fisheye2_offset_y" value="0.0"/>
+    <xacro:property name="fisheye2_offset_z" value="0.0"/>
+
+    <material name="${name}_aluminum">
+      <color rgba="0.5 0.5 0.5 1"/>
+    </material>
+
+    <!-- camera body, with origin at camera_link -->
+    <joint name="${name}_pose_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}"/>
+      <child link="${name}_link" />
+    </joint>
+
+    <link name="${name}_link">
+      <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+            <mesh filename="package://realsense2_description/meshes/t265.stl" />
+        </geometry>
+        <material name="${name}_aluminum"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://realsense2_description/meshes/t265.stl" />
+        </geometry>
+      </collision>
+      <inertial>
+        <!-- The following are not reliable values, and should not be used for modeling -->
+        <mass value="0.068024" />
+        <origin xyz="0 0 0" />
+        <inertia ixx="0.0000039782" ixy="0.0" ixz="0.000000034641" iyy="0.000065045" iyz="0.0" izz="0.000067499" />
+      </inertial>
+    </link>
+
+    <joint name="${name}_fisheye1_rgb_joint" type="fixed">
+      <origin xyz="${fisheye1_offset_x} ${fisheye1_offset_y} ${fisheye1_offset_z}" rpy="0 ${M_PI/2} ${M_PI/2}"/>
+      <parent link="${name}_link"/>
+      <child link="${name}_fisheye1_rgb_frame" />
+    </joint>
+    <link name="${name}_fisheye1_rgb_frame"/>
+
+    <joint name="${name}_fisheye2_rgb_joint" type="fixed">
+      <origin xyz="${fisheye2_offset_x} ${fisheye2_offset_y} ${fisheye2_offset_z}" rpy="0 ${M_PI/2} ${M_PI/2}"/>
+      <parent link="${name}_link"/>
+      <child link="${name}_fisheye2_rgb_frame" />
+    </joint>
+    <link name="${name}_fisheye2_rgb_frame"/>
+
+    <joint name="${name}_fisheye1_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="-${M_PI/2} 0 -${M_PI/2}"/>
+      <parent link="${name}_fisheye1_rgb_frame"/>
+      <child link="${name}_fisheye1_optical_frame" />
+    </joint>
+    <link name="${name}_fisheye1_optical_frame"/>
+
+    <joint name="${name}_fisheye2_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="-${M_PI/2} 0 -${M_PI/2}"/>
+      <parent link="${name}_fisheye2_rgb_frame"/>
+      <child link="${name}_fisheye2_optical_frame" />
+    </joint>
+    <link name="${name}_fisheye2_optical_frame"/>
+
+
+    <!-- camera depth joints and links -->
+    <joint name="${name}_gyro_optical_joint" type="fixed">
+      <origin xyz="-0.0311 0 0.00655" rpy="0 ${M_PI} 0"/>
+      <parent link="${name}_link"/>
+      <child link="${name}_gyro_optical_frame" />
+    </joint>
+    <link name="${name}_gyro_optical_frame"/>
+
+
+    <joint name="${name}_accel_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="${name}_gyro_optical_frame"/>
+      <child link="${name}_accel_optical_frame" />
+    </joint>
+    <link name="${name}_accel_optical_frame"/>
+
+    <!-- Realsense Gazebo Plugin -->
+    <xacro:gazebo_t265 camera_name="${name}" fisheye1_reference_link="${name}_fisheye1_rgb_frame" fisheye2_reference_link="${name}_fisheye2_rgb_frame" topics_ns="${topics_ns}" fisheye1_optical_frame="${name}_fisheye1_optical_frame" fisheye2_optical_frame="${name}_fisheye2_optical_frame"/>
+
+  </xacro:macro>
+
+</robot>
