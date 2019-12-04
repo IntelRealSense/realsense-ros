@@ -3,7 +3,6 @@ import time
 import rospy
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
-from theora_image_transport.msg import Packet as msg_theora
 import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import Imu as msg_Imu
 import numpy as np
@@ -12,6 +11,10 @@ import inspect
 import ctypes
 import struct
 import tf
+try:
+    from theora_image_transport.msg import Packet as msg_theora
+except Exception
+    pass
 
 
 def pc2_to_xyzrgb(point):
@@ -231,7 +234,11 @@ def main():
     elif 'imu' in wanted_topic:
         msg_type = msg_Imu
     elif 'theora' in wanted_topic:
-        msg_type = msg_theora
+        try:
+            msg_type = msg_theora
+        except NameError as e:
+            print ('theora_image_transport is not installed. \nType "sudo apt-get install ros-kinetic-theora-image-transport" to enable registering on messages of type theora.')
+            raise
     else:
         msg_type = msg_Image
 
