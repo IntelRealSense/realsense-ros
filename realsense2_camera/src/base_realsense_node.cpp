@@ -1223,21 +1223,24 @@ double BaseRealSenseNode::FillImuData_LinearInterpolation(const stream_index_pai
     return that_last_data.m_time;
 }
 
-
 double BaseRealSenseNode::FillImuData_Copy(const stream_index_pair stream_index, const BaseRealSenseNode::CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg)
 {
-    if (GYRO == stream_index)
+    static CIMUHistory::imuData _accel_data({0,0,0}, -1.0);
+    if (ACCEL == stream_index)
     {
-        imu_msg.angular_velocity.x = imu_data.m_reading.x;
-        imu_msg.angular_velocity.y = imu_data.m_reading.y;
-        imu_msg.angular_velocity.z = imu_data.m_reading.z;
+        _accel_data = imu_data;
+        return -1;
     }
-    else if (ACCEL == stream_index)
-    {
-        imu_msg.linear_acceleration.x = imu_data.m_reading.x;
-        imu_msg.linear_acceleration.y = imu_data.m_reading.y;
-        imu_msg.linear_acceleration.z = imu_data.m_reading.z;
-    }
+    if (_accel_data.m_time < 0)
+        return -1;
+        
+    imu_msg.angular_velocity.x = imu_data.m_reading.x;
+    imu_msg.angular_velocity.y = imu_data.m_reading.y;
+    imu_msg.angular_velocity.z = imu_data.m_reading.z;
+
+    imu_msg.linear_acceleration.x = _accel_data.m_reading.x;
+    imu_msg.linear_acceleration.y = _accel_data.m_reading.y;
+    imu_msg.linear_acceleration.z = _accel_data.m_reading.z;
     return imu_data.m_time;
 }
 

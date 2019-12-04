@@ -3,6 +3,7 @@ import time
 import rospy
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
+from theora_image_transport.msg import Packet as msg_theora
 import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import Imu as msg_Imu
 import numpy as np
@@ -40,6 +41,8 @@ class CWaitForMessage:
         self.node_name = params.get('node_name', 'rs2_listener')
         self.bridge = CvBridge()
         self.listener = None
+        self.prev_msg_time = 0
+        
 
         self.themes = {'depthStream': {'topic': '/camera/depth/image_rect_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
                        'colorStream': {'topic': '/camera/color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
@@ -134,13 +137,13 @@ class CWaitForMessage:
             self.func_data[theme_name]['height'].append(data.height)
         return _pointscloudCallback
 
-    def wait_for_message(self, params):
+    def wait_for_message(self, params, msg_type=msg_Image):
         topic = params['topic']
         print 'connect to ROS with name: %s' % self.node_name
         rospy.init_node(self.node_name, anonymous=True)
 
         rospy.loginfo('Subscribing on topic: %s' % topic)
-        self.sub = rospy.Subscriber(topic, msg_Image, self.callback)
+        self.sub = rospy.Subscriber(topic, msg_type, self.callback)
 
         self.prev_time = time.time()
         break_timeout = False
@@ -180,7 +183,18 @@ class CWaitForMessage:
         return self.func_data
 
     def callback(self, data):
-        rospy.loginfo('Got message. Seq %d, secs: %d, nsecs: %d' % (data.header.seq, data.header.stamp.secs, data.header.stamp.nsecs))
+        msg_time = data.header.stamp.secs + 1e-9 * data.header.stamp.nsecs
+        #rospy.loginfo('Got message. Seq %d, secs: %d, nsecs: %d' % (data.header.seq, data.header.stamp.secs, data.header.stamp.nsecs))
+        #rospy.loginfo('Got message. Seq %d, secs: %f' % (data.header.seq, msg_time))
+        # print data
+
+        if (self.prev_msg_time > msg_time):
+            rospy.loginfo('Out of order: %.9f > %.9f' % (self.prev_msg_time, msg_time))
+            # if type(data) == msg_Imu:
+            #     print self.prev_msg_data
+            #     print data
+        self.prev_msg_time = msg_time
+        self.prev_msg_data = data
 
         self.prev_time = time.time()
         if any([self.seq > 0 and data.header.seq >= self.seq,
@@ -212,6 +226,15 @@ def main():
 
     wanted_topic = sys.argv[1]
     msg_params = {}
+    if 'points' in wanted_topic:
+        msg_type = msg_PointCloud2
+    elif 'imu' in wanted_topic:
+        msg_type = msg_Imu
+    elif 'theora' in wanted_topic:
+        msg_type = msg_theora
+    else:
+        msg_type = msg_Image
+
     for idx in range(2, len(sys.argv)):
         if sys.argv[idx] == '-s':
             msg_params['seq'] = int(sys.argv[idx + 1])
@@ -223,7 +246,7 @@ def main():
     msg_retriever = CWaitForMessage(msg_params)
     if '/' in wanted_topic:
         msg_params = {'topic': wanted_topic}
-        res = msg_retriever.wait_for_message(msg_params)
+        res = msg_retriever.wait_for_message(msg_params, msg_type)
         rospy.loginfo('Got message: %s' % res.header)
     else:
         themes = [wanted_topic]
