@@ -13,7 +13,7 @@ import struct
 import tf
 try:
     from theora_image_transport.msg import Packet as msg_theora
-except Exception
+except Exception:
     pass
 
 
