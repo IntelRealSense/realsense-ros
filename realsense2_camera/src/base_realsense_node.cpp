@@ -1313,14 +1313,8 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
 
         auto imu_msg = sensor_msgs::Imu();
+        ImuMessage_AddDefaultValues(imu_msg);
         imu_msg.header.frame_id = _optical_frame_id[stream_index];
-        imu_msg.orientation.x = 0.0;
-        imu_msg.orientation.y = 0.0;
-        imu_msg.orientation.z = 0.0;
-        imu_msg.orientation.w = 0.0;
-        imu_msg.orientation_covariance = { -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-        imu_msg.linear_acceleration_covariance = { _linear_accel_cov, 0.0, 0.0, 0.0, _linear_accel_cov, 0.0, 0.0, 0.0, _linear_accel_cov};
-        imu_msg.angular_velocity_covariance = { _angular_velocity_cov, 0.0, 0.0, 0.0, _angular_velocity_cov, 0.0, 0.0, 0.0, _angular_velocity_cov};
 
         auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
         if (GYRO == stream_index)
