@@ -171,38 +171,19 @@ namespace realsense2_camera
 
 
     private:
-        class CIMUHistory
+        class CimuData
         {
             public:
-                enum sensor_name {mGYRO, mACCEL};
-                class imuData
-                {
-                    public:
-                        imuData(const imuData& other):
-                            imuData(other.m_reading, other.m_time)
-                            {};
-                        imuData(const float3 reading, double time):
-                            m_reading(reading),
-                            m_time(time)
-                            {};
-                        imuData operator*(const double factor);
-                        imuData operator+(const imuData& other);
-                    public:
-                        BaseRealSenseNode::float3 m_reading;
-                        double                    m_time;
-                };
-                
-            private:
-                size_t m_max_size;
-                std::map<sensor_name, std::list<imuData> > m_map;
-
+                CimuData() : m_time(-1) {};
+                CimuData(const stream_index_pair type, Eigen::Vector3d data, double time):
+                    m_type(type),
+                    m_data(data),
+                    m_time(time){};
+                bool is_set() {return m_time > 0;};
             public:
-                CIMUHistory(size_t size);
-                void add_data(sensor_name module, imuData data);
-                bool is_all_data(sensor_name);
-                bool is_data(sensor_name);
-                const std::list<imuData>& get_data(sensor_name module);
-                imuData last_data(sensor_name module);
+                stream_index_pair m_type;
+                Eigen::Vector3d m_data;
+                double          m_time;
         };
 
         static std::string getNamespaceStr();
@@ -239,8 +220,11 @@ namespace realsense2_camera
         bool getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile);
 
         void publishAlignedDepthToOthers(rs2::frameset frames, const ros::Time& t);
-        double FillImuData_Copy(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg);
-        double FillImuData_LinearInterpolation(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg);
+        sensor_msgs::Imu CreateUnitedMessage(const CimuData accel_data, const CimuData gyro_data);
+
+        void FillImuData_Copy(const CimuData imu_data, std::deque<sensor_msgs::Imu>& imu_msgs);
+        void ImuMessage_AddDefaultValues(sensor_msgs::Imu& imu_msg);
+        void FillImuData_LinearInterpolation(const CimuData imu_data, std::deque<sensor_msgs::Imu>& imu_msgs);
         void imu_callback(rs2::frame frame);
         void imu_callback_sync(rs2::frame frame, imu_sync_method sync_method=imu_sync_method::COPY);
         void pose_callback(rs2::frame frame);
