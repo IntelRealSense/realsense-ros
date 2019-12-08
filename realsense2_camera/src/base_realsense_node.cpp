@@ -1244,74 +1244,49 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
 {
     static std::mutex m_mutex;
     static int seq = 0;
-    static bool init_accel(false);
-    static double accel_factor(0);
 
     m_mutex.lock();
 
-    while (true)
+    auto stream = frame.get_profile().stream_type();
+    auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
+    double frame_time = frame.get_timestamp();
+
+    bool placeholder_false(false);
+    if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
     {
-        auto stream = frame.get_profile().stream_type();
-        auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
-        double frame_time = frame.get_timestamp();
+        setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
+    }
 
-        bool placeholder_false(false);
-        if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
+    seq += 1;
+    double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
+
+    if (0 != _synced_imu_publisher->getNumSubscribers())
+    {
+        auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
+        Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
+        CimuData imu_data(stream_index, v, elapsed_camera_ms);
+        std::deque<sensor_msgs::Imu> imu_msgs;
+        switch (sync_method)
         {
-            setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
+            case NONE: //Cannot really be NONE. Just to avoid compilation warning.
+            case COPY:
+                FillImuData_Copy(imu_data, imu_msgs);
+                break;
+            case LINEAR_INTERPOLATION:
+                FillImuData_LinearInterpolation(imu_data, imu_msgs);
+                break;
         }
-
-        seq += 1;
-        double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
-
-        if (0 != _synced_imu_publisher->getNumSubscribers())
+        while (imu_msgs.size())
         {
-            auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
-            if (ACCEL == stream_index)
-            {
-                if (!init_accel)
-                {
-                    // Init accel_factor:
-                    Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
-                    accel_factor = 9.81 / v.norm();
-                    ROS_INFO_STREAM("accel_factor set to: " << accel_factor);
-                }
-                init_accel = true;
-                if (true)
-                {
-                    Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
-                    v*=accel_factor;
-                    crnt_reading.x = v.x();
-                    crnt_reading.y = v.y();
-                    crnt_reading.z = v.z();
-                }
-            }
-            Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
-            CimuData imu_data(stream_index, v, elapsed_camera_ms);
-            std::deque<sensor_msgs::Imu> imu_msgs;
-            switch (sync_method)
-            {
-                case NONE: //Cannot really be NONE. Just to avoid compilation warning.
-                case COPY:
-                    FillImuData_Copy(imu_data, imu_msgs);
-                    break;
-                case LINEAR_INTERPOLATION:
-                    FillImuData_LinearInterpolation(imu_data, imu_msgs);
-                    break;
-            }
-            while (imu_msgs.size())
-            {
-                sensor_msgs::Imu imu_msg = imu_msgs.front();
-                ros::Time t(_ros_time_base.toSec() + imu_msg.header.stamp.toSec());
-                imu_msg.header.seq = seq;
-                imu_msg.header.stamp = t;
-                ImuMessage_AddDefaultValues(imu_msg);
-                _synced_imu_publisher->Publish(imu_msg);
-                ROS_DEBUG("Publish united %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
-                imu_msgs.pop_front();
-            }
+            sensor_msgs::Imu imu_msg = imu_msgs.front();
+            ros::Time t(_ros_time_base.toSec() + imu_msg.header.stamp.toSec());
+            imu_msg.header.seq = seq;
+            imu_msg.header.stamp = t;
+            ImuMessage_AddDefaultValues(imu_msg);
+            _synced_imu_publisher->Publish(imu_msg);
+            ROS_DEBUG("Publish united %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
+            imu_msgs.pop_front();
         }
-        break;
     }
     m_mutex.unlock();
 };
