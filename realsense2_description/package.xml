@@ -14,5 +14,5 @@
   <author email="doron.hirshberg@intel.com">Doron Hirshberg</author>
   <buildtool_depend>catkin</buildtool_depend>
   <exec_depend>xacro</exec_depend>
-
+  <test_depend>rosunit</test_depend>
 </package>
