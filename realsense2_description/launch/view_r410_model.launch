@@ -1,5 +1,5 @@
 <launch>
-    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find realsense2_description)/urdf/test_r410_camera.urdf.xacro'" />
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find realsense2_description)/urdf/test_r410_camera.urdf.xacro' use_nominal_extrinsics:=true" />
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
 
     <arg name="gui" default="True" />
