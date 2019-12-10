@@ -11,6 +11,10 @@ import inspect
 import ctypes
 import struct
 import tf
+try:
+    from theora_image_transport.msg import Packet as msg_theora
+except Exception:
+    pass
 
 
 def pc2_to_xyzrgb(point):
@@ -40,6 +44,9 @@ class CWaitForMessage:
         self.node_name = params.get('node_name', 'rs2_listener')
         self.bridge = CvBridge()
         self.listener = None
+        self.prev_msg_time = 0
+        self.fout = None
+        
 
         self.themes = {'depthStream': {'topic': '/camera/depth/image_rect_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
                        'colorStream': {'topic': '/camera/color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
@@ -134,13 +141,24 @@ class CWaitForMessage:
             self.func_data[theme_name]['height'].append(data.height)
         return _pointscloudCallback
 
-    def wait_for_message(self, params):
+    def wait_for_message(self, params, msg_type=msg_Image):
         topic = params['topic']
         print 'connect to ROS with name: %s' % self.node_name
         rospy.init_node(self.node_name, anonymous=True)
 
+        out_filename = params.get('filename', None)
+        if (out_filename):
+            self.fout = open(out_filename, 'w')
+            if msg_type is msg_Imu:
+                col_w = 20
+                print 'Writing to file: %s' % out_filename
+                columns = ['frame_number', 'frame_time(sec)', 'accel.x', 'accel.y', 'accel.z', 'gyro.x', 'gyro.y', 'gyro.z']
+                line = ('{:<%d}'*len(columns) % (col_w, col_w, col_w, col_w, col_w, col_w, col_w, col_w)).format(*columns) + '\n'
+                sys.stdout.write(line)
+                self.fout.write(line)
+
         rospy.loginfo('Subscribing on topic: %s' % topic)
-        self.sub = rospy.Subscriber(topic, msg_Image, self.callback)
+        self.sub = rospy.Subscriber(topic, msg_type, self.callback)
 
         self.prev_time = time.time()
         break_timeout = False
@@ -180,7 +198,22 @@ class CWaitForMessage:
         return self.func_data
 
     def callback(self, data):
-        rospy.loginfo('Got message. Seq %d, secs: %d, nsecs: %d' % (data.header.seq, data.header.stamp.secs, data.header.stamp.nsecs))
+        msg_time = data.header.stamp.secs + 1e-9 * data.header.stamp.nsecs
+
+        if (self.prev_msg_time > msg_time):
+            rospy.loginfo('Out of order: %.9f > %.9f' % (self.prev_msg_time, msg_time))
+        if type(data) == msg_Imu:
+            col_w = 20
+            frame_number = data.header.seq
+            accel = data.linear_acceleration
+            gyro = data.angular_velocity
+            line = ('\n{:<%d}{:<%d.6f}{:<%d.4f}{:<%d.4f}{:<%d.4f}{:<%d.4f}{:<%d.4f}{:<%d.4f}' % (col_w, col_w, col_w, col_w, col_w, col_w, col_w, col_w)).format(frame_number, msg_time, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z)
+            sys.stdout.write(line)
+            if self.fout:
+                self.fout.write(line)
+
+        self.prev_msg_time = msg_time
+        self.prev_msg_data = data
 
         self.prev_time = time.time()
         if any([self.seq > 0 and data.header.seq >= self.seq,
@@ -205,6 +238,7 @@ def main():
         print '-s <sequential number>'
         print '--time <secs.nsecs>'
         print '--timeout <secs>'
+        print '--filename <filename> : write output to file'
         exit(-1)
 
     # wanted_topic = '/device_0/sensor_0/Depth_0/image/data'
@@ -212,6 +246,19 @@ def main():
 
     wanted_topic = sys.argv[1]
     msg_params = {}
+    if 'points' in wanted_topic:
+        msg_type = msg_PointCloud2
+    elif ('imu' in wanted_topic) or ('gyro' in wanted_topic) or ('accel' in wanted_topic):
+        msg_type = msg_Imu
+    elif 'theora' in wanted_topic:
+        try:
+            msg_type = msg_theora
+        except NameError as e:
+            print ('theora_image_transport is not installed. \nType "sudo apt-get install ros-kinetic-theora-image-transport" to enable registering on messages of type theora.')
+            raise
+    else:
+        msg_type = msg_Image
+
     for idx in range(2, len(sys.argv)):
         if sys.argv[idx] == '-s':
             msg_params['seq'] = int(sys.argv[idx + 1])
@@ -219,11 +266,13 @@ def main():
             msg_params['time'] = dict(zip(['secs', 'nsecs'], [int(part) for part in sys.argv[idx + 1].split('.')]))
         if sys.argv[idx] == '--timeout':
             msg_params['timeout_secs'] = int(sys.argv[idx + 1])
+        if sys.argv[idx] == '--filename':
+            msg_params['filename'] = sys.argv[idx+1]
 
     msg_retriever = CWaitForMessage(msg_params)
     if '/' in wanted_topic:
-        msg_params = {'topic': wanted_topic}
-        res = msg_retriever.wait_for_message(msg_params)
+        msg_params.setdefault('topic', wanted_topic)
+        res = msg_retriever.wait_for_message(msg_params, msg_type)
         rospy.loginfo('Got message: %s' % res.header)
     else:
         themes = [wanted_topic]

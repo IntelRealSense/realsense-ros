@@ -4,8 +4,10 @@
                   For installation type:
                         apt-get install ros-kinetic-rtabmap-ros
     -->
-    <arg name="serial_no_camera1"    			default=""/> 			<!-- Note: Replace with actual serial number -->
-    <arg name="serial_no_camera2"    			default=""/> 			<!-- Note: Replace with actual serial number -->
+    <arg name="device_type_camera1"    		default="t265"/>
+    <arg name="device_type_camera2"    		default="d4.5"/>	<!-- Note: using regular expression. match D435, D435i, D415... -->
+    <arg name="serial_no_camera1"    			default=""/>
+    <arg name="serial_no_camera2"    			default=""/>
     <arg name="camera1"              			default="t265"/>		<!-- Note: Replace with camera name -->
     <arg name="camera2"              			default="d400"/>		<!-- Note: Replace with camera name -->
     <arg name="clip_distance"             default="-2"/>
@@ -14,6 +16,8 @@
     
 
     <include file="$(find realsense2_camera)/launch/rs_d400_and_t265.launch">
+            <arg name="device_type_camera1"             value="$(arg device_type_camera1)"/>
+            <arg name="device_type_camera2"             value="$(arg device_type_camera2)"/>
             <arg name="serial_no_camera1"               value="$(arg serial_no_camera1)"/>
             <arg name="serial_no_camera2"               value="$(arg serial_no_camera2)"/>
             <arg name="camera1"                         value="$(arg camera1)"/>

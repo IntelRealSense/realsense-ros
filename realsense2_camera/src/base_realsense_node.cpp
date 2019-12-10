@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <cctype>
 #include <mutex>
-#include <tf/transform_broadcaster.h>
-#include <thread>
 
 using namespace realsense2_camera;
 using namespace ddynamic_reconfigure;
@@ -96,6 +94,8 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _depth_aligned_encoding[RS2_STREAM_DEPTH] = sensor_msgs::image_encodings::TYPE_16UC1;
 
     // Infrared stream
+    _format[RS2_STREAM_INFRARED] = RS2_FORMAT_Y8;
+
     _image_format[RS2_STREAM_INFRARED] = CV_8UC1;    // CVBridge type
     _encoding[RS2_STREAM_INFRARED] = sensor_msgs::image_encodings::MONO8; // ROS message type
     _unit_step_size[RS2_STREAM_INFRARED] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
@@ -128,6 +128,10 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
 
 BaseRealSenseNode::~BaseRealSenseNode()
 {
+    // Kill dynamic transform thread
+    if (_publish_tf && _tf_publish_rate > 0)
+        _tf_t->join();
+
     _is_running = false;
     _cv.notify_one();
     if (_monitoring_t && _monitoring_t->joinable())
@@ -531,6 +535,9 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("filters", _filters_str, DEFAULT_FILTERS);
     _pointcloud |= (_filters_str.find("pointcloud") != std::string::npos);
 
+    _pnh.param("publish_tf", _publish_tf, PUBLISH_TF);
+    _pnh.param("tf_publish_rate", _tf_publish_rate, TF_PUBLISH_RATE);
+
     _pnh.param("enable_sync", _sync_frames, SYNC_FRAMES);
     if (_pointcloud || _align_depth || _filters_str.size() > 0)
         _sync_frames = true;
@@ -641,6 +648,10 @@ void BaseRealSenseNode::setupDevice()
         ROS_INFO_STREAM("Device Name: " << camera_name);
 
         ROS_INFO_STREAM("Device Serial No: " << _serial_no);
+
+        auto camera_id = _dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
+
+        ROS_INFO_STREAM("Device physical port: " << camera_id);
 
         auto fw_ver = _dev.get_info(RS2_CAMERA_INFO_FIRMWARE_VERSION);
         ROS_INFO_STREAM("Device FW version: " << fw_ver);
@@ -800,7 +811,7 @@ void BaseRealSenseNode::setupPublishers()
     if (_imu_sync_method > imu_sync_method::NONE && _enable[GYRO] && _enable[ACCEL])
     {
         ROS_INFO("Start publisher IMU");
-        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node_handle.advertise<sensor_msgs::Imu>("imu", 1));
+        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node_handle.advertise<sensor_msgs::Imu>("imu", 5));
         _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
     }
     else
@@ -912,6 +923,7 @@ void BaseRealSenseNode::enable_devices()
                     (_width[elem] == 0 || video_profile.width() == _width[elem]) &&
                     (_height[elem] == 0 || video_profile.height() == _height[elem]) &&
                     (_fps[elem] == 0 || video_profile.fps() == _fps[elem]) &&
+                    (_format.find(elem.first) == _format.end() || video_profile.format() == _format[elem.first] ) &&
                     video_profile.stream_index() == elem.second)
                 {
                     _width[elem] = video_profile.width();
@@ -922,7 +934,7 @@ void BaseRealSenseNode::enable_devices()
 
                     _image[elem] = cv::Mat(_height[elem], _width[elem], _image_format[elem.first], cv::Scalar(0, 0, 0));
 
-                    ROS_INFO_STREAM(STREAM_NAME(elem) << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem]);
+                    ROS_INFO_STREAM(STREAM_NAME(elem) << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem] << ", " << "Format: " << video_profile.format());
                     break;
                 }
             }
@@ -1133,111 +1145,91 @@ void BaseRealSenseNode::clip_depth(rs2::depth_frame depth_frame, float clipping_
     }
 }
 
-BaseRealSenseNode::CIMUHistory::CIMUHistory(size_t size)
+sensor_msgs::Imu BaseRealSenseNode::CreateUnitedMessage(const CimuData accel_data, const CimuData gyro_data)
 {
-    m_max_size = size;
-}
-void BaseRealSenseNode::CIMUHistory::add_data(sensor_name module, BaseRealSenseNode::CIMUHistory::imuData data)
-{
-    m_map[module].push_front(data);
-    if (m_map[module].size() > m_max_size)
-        m_map[module].pop_back();
-}
-bool BaseRealSenseNode::CIMUHistory::is_all_data(sensor_name module)
-{
-    return m_map[module].size() == m_max_size;
-}
-bool BaseRealSenseNode::CIMUHistory::is_data(sensor_name module)
-{
-    return m_map[module].size() > 0;
-}
-const std::list<BaseRealSenseNode::CIMUHistory::imuData>& BaseRealSenseNode::CIMUHistory::get_data(sensor_name module)
-{
-    return m_map[module];
-}
-BaseRealSenseNode::CIMUHistory::imuData BaseRealSenseNode::CIMUHistory::last_data(sensor_name module)
-{
-    return m_map[module].front();
-}
-BaseRealSenseNode::CIMUHistory::imuData BaseRealSenseNode::CIMUHistory::imuData::operator*(const double factor)
-{
-    BaseRealSenseNode::CIMUHistory::imuData new_data(*this);
-    new_data.m_reading *= factor;
-    new_data.m_time *= factor;
-    return new_data;
+    sensor_msgs::Imu imu_msg;
+    ros::Time t(gyro_data.m_time);
+    imu_msg.header.seq = 0;
+    imu_msg.header.stamp = t;
+
+    imu_msg.angular_velocity.x = gyro_data.m_data.x();
+    imu_msg.angular_velocity.y = gyro_data.m_data.y();
+    imu_msg.angular_velocity.z = gyro_data.m_data.z();
+
+    imu_msg.linear_acceleration.x = accel_data.m_data.x();
+    imu_msg.linear_acceleration.y = accel_data.m_data.y();
+    imu_msg.linear_acceleration.z = accel_data.m_data.z();
+    return imu_msg;
 }
 
-BaseRealSenseNode::CIMUHistory::imuData BaseRealSenseNode::CIMUHistory::imuData::operator+(const BaseRealSenseNode::CIMUHistory::imuData& other)
-{
-    BaseRealSenseNode::CIMUHistory::imuData new_data(*this);
-    new_data.m_reading += other.m_reading;
-    new_data.m_time += other.m_time;
-    return new_data;
+template <typename T> T lerp(const T &a, const T &b, const double t) {
+  return a * (1.0 - t) + b * t;
 }
 
-double BaseRealSenseNode::FillImuData_LinearInterpolation(const stream_index_pair stream_index, const BaseRealSenseNode::CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg)
+void BaseRealSenseNode::FillImuData_LinearInterpolation(const CimuData imu_data, std::deque<sensor_msgs::Imu>& imu_msgs)
 {
-    static CIMUHistory _imu_history(2);
-    CIMUHistory::sensor_name this_sensor(static_cast<CIMUHistory::sensor_name>(ACCEL == stream_index));
-    CIMUHistory::sensor_name that_sensor(static_cast<CIMUHistory::sensor_name>(!this_sensor));
-    _imu_history.add_data(this_sensor, imu_data);
+    static std::deque<CimuData> _imu_history;
+    _imu_history.push_back(imu_data);
+    stream_index_pair type(imu_data.m_type);
+    imu_msgs.clear();
 
-    if (!_imu_history.is_all_data(this_sensor) || !_imu_history.is_data(that_sensor) )
-        return -1;
-    const std::list<CIMUHistory::imuData> this_data = _imu_history.get_data(this_sensor);
-    CIMUHistory::imuData that_last_data = _imu_history.last_data(that_sensor);
-    std::list<CIMUHistory::imuData>::const_iterator this_data_iter = this_data.begin();
-    CIMUHistory::imuData this_last_data(*this_data_iter);
-    this_data_iter++;
-    CIMUHistory::imuData this_prev_data(*this_data_iter);
-    if (this_prev_data.m_time > that_last_data.m_time)
-        return -1;  // "that" data was already sent.
-    double factor( (that_last_data.m_time - this_prev_data.m_time) / (this_last_data.m_time - this_prev_data.m_time) );
-    CIMUHistory::imuData interp_data = this_prev_data*(1-factor) + this_last_data*factor;
+    if ((type != ACCEL) || _imu_history.size() < 3)
+        return;
+    
+    std::deque<CimuData> gyros_data;
+    CimuData accel0, accel1, crnt_imu;
 
-    CIMUHistory::imuData accel_data = that_last_data;
-    CIMUHistory::imuData gyro_data = interp_data;
-    if (this_sensor == CIMUHistory::sensor_name::mACCEL)
+    while (_imu_history.size()) 
     {
-        std::swap(accel_data, gyro_data);
-    }
-    imu_msg.angular_velocity.x = gyro_data.m_reading.x;
-    imu_msg.angular_velocity.y = gyro_data.m_reading.y;
-    imu_msg.angular_velocity.z = gyro_data.m_reading.z;
+        crnt_imu = _imu_history.front();
+        _imu_history.pop_front();
+        if (!accel0.is_set() && crnt_imu.m_type == ACCEL) 
+        {
+            accel0 = crnt_imu;
+        } 
+        else if (accel0.is_set() && crnt_imu.m_type == ACCEL) 
+        {
+            accel1 = crnt_imu;
+            const double dt = accel1.m_time - accel0.m_time;
 
-    imu_msg.linear_acceleration.x = accel_data.m_reading.x;
-    imu_msg.linear_acceleration.y = accel_data.m_reading.y;
-    imu_msg.linear_acceleration.z = accel_data.m_reading.z;
-    return that_last_data.m_time;
+            while (gyros_data.size())
+            {
+                CimuData crnt_gyro = gyros_data.front();
+                gyros_data.pop_front();
+                const double alpha = (crnt_gyro.m_time - accel0.m_time) / dt;
+                CimuData crnt_accel(ACCEL, lerp(accel0.m_data, accel1.m_data, alpha), crnt_gyro.m_time);
+                imu_msgs.push_back(CreateUnitedMessage(crnt_accel, crnt_gyro));
+            }
+            accel0 = accel1;
+        } 
+        else if (accel0.is_set() && crnt_imu.m_time >= accel0.m_time && crnt_imu.m_type == GYRO)
+        {
+            gyros_data.push_back(crnt_imu);
+        }
+    }
+    _imu_history.push_back(crnt_imu);
+    return;
 }
 
-
-double BaseRealSenseNode::FillImuData_Copy(const stream_index_pair stream_index, const BaseRealSenseNode::CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg)
+void BaseRealSenseNode::FillImuData_Copy(const CimuData imu_data, std::deque<sensor_msgs::Imu>& imu_msgs)
 {
-    if (GYRO == stream_index)
+    stream_index_pair type(imu_data.m_type);
+
+    static CimuData _accel_data(ACCEL, {0,0,0}, -1.0);
+    if (ACCEL == type)
     {
-        imu_msg.angular_velocity.x = imu_data.m_reading.x;
-        imu_msg.angular_velocity.y = imu_data.m_reading.y;
-        imu_msg.angular_velocity.z = imu_data.m_reading.z;
+        _accel_data = imu_data;
+        return;
     }
-    else if (ACCEL == stream_index)
-    {
-        imu_msg.linear_acceleration.x = imu_data.m_reading.x;
-        imu_msg.linear_acceleration.y = imu_data.m_reading.y;
-        imu_msg.linear_acceleration.z = imu_data.m_reading.z;
-    }
-    return imu_data.m_time;
+    if (_accel_data.m_time < 0)
+        return;
+
+    imu_msgs.push_back(CreateUnitedMessage(_accel_data, imu_data));
 }
 
-void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync_method)
+void BaseRealSenseNode::ImuMessage_AddDefaultValues(sensor_msgs::Imu& imu_msg)
 {
-    static std::mutex m_mutex;
-    static const stream_index_pair stream_imu = GYRO;
-    static sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
-    static int seq = 0;
-    static bool init_gyro(false), init_accel(false);
-    static double accel_factor(0);
-    imu_msg.header.frame_id = _optical_frame_id[stream_imu];
+    imu_msg.header.frame_id = _optical_frame_id[GYRO];
     imu_msg.orientation.x = 0.0;
     imu_msg.orientation.y = 0.0;
     imu_msg.orientation.z = 0.0;
@@ -1246,72 +1238,55 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
     imu_msg.orientation_covariance = { -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     imu_msg.linear_acceleration_covariance = { _linear_accel_cov, 0.0, 0.0, 0.0, _linear_accel_cov, 0.0, 0.0, 0.0, _linear_accel_cov};
     imu_msg.angular_velocity_covariance = { _angular_velocity_cov, 0.0, 0.0, 0.0, _angular_velocity_cov, 0.0, 0.0, 0.0, _angular_velocity_cov};
+}
+
+void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync_method)
+{
+    static std::mutex m_mutex;
+    static int seq = 0;
 
     m_mutex.lock();
 
-    while (true)
+    auto stream = frame.get_profile().stream_type();
+    auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
+    double frame_time = frame.get_timestamp();
+
+    bool placeholder_false(false);
+    if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
     {
-        auto stream = frame.get_profile().stream_type();
-        auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
-        double frame_time = frame.get_timestamp();
+        setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
+    }
 
-        bool placeholder_false(false);
-        if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
+    seq += 1;
+    double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
+
+    if (0 != _synced_imu_publisher->getNumSubscribers())
+    {
+        auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
+        Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
+        CimuData imu_data(stream_index, v, elapsed_camera_ms);
+        std::deque<sensor_msgs::Imu> imu_msgs;
+        switch (sync_method)
         {
-            setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
-        }
-
-        seq += 1;
-        double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
-
-        if (0 != _synced_imu_publisher->getNumSubscribers())
-        {
-            auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
-            if (GYRO == stream_index)
-            {
-                init_gyro = true;
-            }
-            if (ACCEL == stream_index)
-            {
-                if (!init_accel)
-                {
-                    // Init accel_factor:
-                    Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
-                    accel_factor = 9.81 / v.norm();
-                    ROS_INFO_STREAM("accel_factor set to: " << accel_factor);
-                }
-                init_accel = true;
-                if (true)
-                {
-                    Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
-                    v*=accel_factor;
-                    crnt_reading.x = v.x();
-                    crnt_reading.y = v.y();
-                    crnt_reading.z = v.z();
-                }
-            }
-            CIMUHistory::imuData imu_data(crnt_reading, elapsed_camera_ms);
-            switch (sync_method)
-            {
-                case NONE: //Cannot really be NONE. Just to avoid compilation warning.
-                case COPY:
-                    elapsed_camera_ms = FillImuData_Copy(stream_index, imu_data, imu_msg);
-                    break;
-                case LINEAR_INTERPOLATION:
-                    elapsed_camera_ms = FillImuData_LinearInterpolation(stream_index, imu_data, imu_msg);
-                    break;
-            }
-            if (elapsed_camera_ms < 0)
+            case NONE: //Cannot really be NONE. Just to avoid compilation warning.
+            case COPY:
+                FillImuData_Copy(imu_data, imu_msgs);
                 break;
-            ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
+            case LINEAR_INTERPOLATION:
+                FillImuData_LinearInterpolation(imu_data, imu_msgs);
+                break;
+        }
+        while (imu_msgs.size())
+        {
+            sensor_msgs::Imu imu_msg = imu_msgs.front();
+            ros::Time t(_ros_time_base.toSec() + imu_msg.header.stamp.toSec());
             imu_msg.header.seq = seq;
             imu_msg.header.stamp = t;
-            if (!(init_gyro && init_accel))
-                break;
+            ImuMessage_AddDefaultValues(imu_msg);
             _synced_imu_publisher->Publish(imu_msg);
             ROS_DEBUG("Publish united %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
+            imu_msgs.pop_front();
         }
-        break;
     }
     m_mutex.unlock();
 };
@@ -1338,14 +1313,8 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
 
         auto imu_msg = sensor_msgs::Imu();
+        ImuMessage_AddDefaultValues(imu_msg);
         imu_msg.header.frame_id = _optical_frame_id[stream_index];
-        imu_msg.orientation.x = 0.0;
-        imu_msg.orientation.y = 0.0;
-        imu_msg.orientation.z = 0.0;
-        imu_msg.orientation.w = 0.0;
-        imu_msg.orientation_covariance = { -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-        imu_msg.linear_acceleration_covariance = { _linear_accel_cov, 0.0, 0.0, 0.0, _linear_accel_cov, 0.0, 0.0, 0.0, _linear_accel_cov};
-        imu_msg.angular_velocity_covariance = { _angular_velocity_cov, 0.0, 0.0, 0.0, _angular_velocity_cov, 0.0, 0.0, 0.0, _angular_velocity_cov};
 
         auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
         if (GYRO == stream_index)
@@ -1814,7 +1783,7 @@ void BaseRealSenseNode::publish_static_tf(const ros::Time& t,
     msg.transform.rotation.y = q.getY();
     msg.transform.rotation.z = q.getZ();
     msg.transform.rotation.w = q.getW();
-    _static_tf_broadcaster.sendTransform(msg);
+    _static_tf_msgs.push_back(msg);
 }
 
 void BaseRealSenseNode::calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile)
@@ -1880,14 +1849,23 @@ void BaseRealSenseNode::SetBaseStream()
 
 void BaseRealSenseNode::publishStaticTransforms()
 {
-    // Publish static transforms
     rs2::stream_profile base_profile = getAProfile(_base_stream);
-    for (std::pair<stream_index_pair, bool> ienable : _enable)
+
+    // Publish static transforms
+    if (_publish_tf)
     {
-        if (ienable.second)
+        for (std::pair<stream_index_pair, bool> ienable : _enable)
         {
-            calcAndPublishStaticTransform(ienable.first, base_profile);
+            if (ienable.second)
+            {
+                calcAndPublishStaticTransform(ienable.first, base_profile);
+            }
         }
+        // Static transform for non-positive values
+        if (_tf_publish_rate > 0)
+            _tf_t = std::shared_ptr<std::thread>(new std::thread(boost::bind(&BaseRealSenseNode::publishDynamicTransforms, this)));
+        else
+            _static_tf_broadcaster.sendTransform(_static_tf_msgs);
     }
 
     // Publish Extrinsics Topics:
@@ -1928,6 +1906,26 @@ void BaseRealSenseNode::publishStaticTransforms()
         _depth_to_other_extrinsics_publishers[INFRA2].publish(rsExtrinsicsToMsg(ex, frame_id));
     }
 
+}
+
+void BaseRealSenseNode::publishDynamicTransforms()
+{
+    // Publish transforms for the cameras
+    ROS_WARN("Publishing dynamic camera transforms (/tf) at %g Hz", _tf_publish_rate);
+
+    ros::Rate loop_rate(_tf_publish_rate);
+
+    while (ros::ok())
+    {
+        // Update the time stamp for publication
+        ros::Time t = ros::Time::now();
+        for(auto& msg : _static_tf_msgs)
+            msg.header.stamp = t;
+
+        _dynamic_tf_broadcaster.sendTransform(_static_tf_msgs);
+
+        loop_rate.sleep();
+    }
 }
 
 void BaseRealSenseNode::publishIntrinsics()
@@ -2030,7 +2028,7 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
             default:
                 throw std::runtime_error("Unhandled texture format passed in pointcloud " + std::to_string(texture_frame.get_profile().format()));
         }
-        msg_pointcloud.point_step = addPointField(msg_pointcloud, format_str.c_str(), 1, sensor_msgs::PointField::UINT32, msg_pointcloud.point_step);
+        msg_pointcloud.point_step = addPointField(msg_pointcloud, format_str.c_str(), 1, sensor_msgs::PointField::FLOAT32, msg_pointcloud.point_step);
         msg_pointcloud.row_step = msg_pointcloud.width * msg_pointcloud.point_step;
         msg_pointcloud.data.resize(msg_pointcloud.height * msg_pointcloud.row_step);
 

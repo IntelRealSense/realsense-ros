@@ -9,12 +9,16 @@ aluminum peripherial evaluation case.
 -->
 
 <robot name="sensor_r430" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Includes -->
+  <xacro:include filename="$(find realsense2_description)/urdf/_materials.urdf.xacro" />
+
+  <xacro:macro name="sensor_r430" params="parent *origin name:=camera use_nominal_extrinsics:=false">
   <xacro:property name="M_PI" value="3.1415926535897931" />
 
   <!-- The following values are approximate, and the camera node
    publishing TF values with actual calibrated camera extrinsic values -->
-  <xacro:property name="r430_cam_depth_to_left_ir_offset" value="-0.025"/>
-  <xacro:property name="r430_cam_depth_to_right_ir_offset" value="0.025"/>
+  <xacro:property name="r430_cam_depth_to_infra1_offset" value="-0.025"/>
+  <xacro:property name="r430_cam_depth_to_infra2_offset" value="0.025"/>
   <xacro:property name="r430_cam_depth_to_fisheye_offset" value="0.042"/>
 
   <!-- The following values model the aluminum peripherial case for the
@@ -31,24 +35,18 @@ aluminum peripherial evaluation case.
   <xacro:property name="r430_cam_depth_py" value="-0.035"/>
   <xacro:property name="r430_cam_depth_pz" value="0.028"/>
 
-  <material name="aluminum">
-    <color rgba="0.5 0.5 0.5 1"/>
-  </material>
-
-  <xacro:macro name="sensor_r430" params="parent *origin">
-
     <!-- camera body, with origin at bottom screw mount -->
-    <joint name="camera_joint" type="fixed">
+    <joint name="${name}_joint" type="fixed">
       <xacro:insert_block name="origin" />
       <parent link="${parent}"/>
-      <child link="camera_link" />
+      <child link="${name}_link" />
     </joint>
 
-    <link name="camera_link">
+    <link name="${name}_link">
       <visual>
       <origin xyz="0 ${-r430_cam_mount_from_center_offset} ${r430_cam_height/2}" rpy="${M_PI/2} 0 ${M_PI/2}"/>
         <geometry>
-          <box size="${r430_cam_width} ${r430_cam_height} ${r430_cam_depth}" />
+          <box size="${r430_cam_width} ${r430_cam_height} ${r430_cam_depth}"/>
           <!--<mesh filename="package://realsense2_description/meshes/r430/r430.dae" />-->
         </geometry>
         <material name="aluminum"/>
@@ -66,65 +64,68 @@ aluminum peripherial evaluation case.
         <inertia ixx="0.003881243" ixy="0.0" ixz="0.0" iyy="0.000498940" iyz="0.0" izz="0.003879257" />
       </inertial>
     </link>
-   
-    <!-- camera depth joints and links -->
-    <joint name="camera_depth_joint" type="fixed">
-      <origin xyz="${r430_cam_depth_px} ${r430_cam_depth_py} ${r430_cam_depth_pz}" rpy="0 0 0"/>
-      <parent link="camera_link"/>
-      <child link="camera_depth_frame" />
-    </joint>
-    <link name="camera_depth_frame"/>
 
-    <joint name="camera_depth_optical_joint" type="fixed">
-      <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
-      <parent link="camera_depth_frame" />
-      <child link="camera_depth_optical_frame" />
-    </joint>
-    <link name="camera_depth_optical_frame"/>
-      
-    <!-- camera left IR joints and links -->
-    <joint name="camera_left_ir_joint" type="fixed">
-      <origin xyz="0 ${r430_cam_depth_to_left_ir_offset} 0" rpy="0 0 0" />
-      <parent link="camera_depth_frame" />
-      <child link="camera_left_ir_frame" />
-    </joint>
-    <link name="camera_left_ir_frame"/>
+    <!-- Use the nominal extrinsics between camera frames if the calibrated extrinsics aren't being published. e.g. running the device in simulation  -->
+    <xacro:if value="$(arg use_nominal_extrinsics)">
+      <!-- camera depth joints and links -->
+      <joint name="${name}_depth_joint" type="fixed">
+        <origin xyz="${r430_cam_depth_px} ${r430_cam_depth_py} ${r430_cam_depth_pz}" rpy="0 0 0"/>
+        <parent link="${name}_link"/>
+        <child link="${name}_depth_frame" />
+      </joint>
+      <link name="${name}_depth_frame"/>
 
-    <joint name="camera_left_ir_optical_joint" type="fixed">
-      <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
-      <parent link="camera_left_ir_frame" />
-      <child link="camera_left_ir_optical_frame" />
-    </joint>
-    <link name="camera_left_ir_optical_frame"/>
+      <joint name="${name}_depth_optical_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+        <parent link="${name}_depth_frame" />
+        <child link="${name}_depth_optical_frame" />
+      </joint>
+      <link name="${name}_depth_optical_frame"/>
 
-    <!-- camera right IR joints and links -->
-    <joint name="camera_right_ir_joint" type="fixed">
-      <origin xyz="0 ${r430_cam_depth_to_right_ir_offset} 0" rpy="0 0 0" />
-      <parent link="camera_depth_frame" />
-      <child link="camera_right_ir_frame" />
-    </joint>
-    <link name="camera_right_ir_frame"/>
+      <!-- camera left IR joints and links -->
+      <joint name="${name}_infra1_joint" type="fixed">
+        <origin xyz="0 ${r430_cam_depth_to_infra1_offset} 0" rpy="0 0 0" />
+        <parent link="${name}_depth_frame" />
+        <child link="${name}_infra1_frame" />
+      </joint>
+      <link name="${name}_infra1_frame"/>
 
-    <joint name="camera_right_ir_optical_joint" type="fixed">
-      <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
-      <parent link="camera_right_ir_frame" />
-      <child link="camera_right_ir_optical_frame" />
-    </joint>
-    <link name="camera_right_ir_optical_frame"/>
+      <joint name="${name}_infra1_optical_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+        <parent link="${name}_infra1_frame" />
+        <child link="${name}_infra1_optical_frame" />
+      </joint>
+      <link name="${name}_infra1_optical_frame"/>
 
-    <!-- camera fisheye joints and links -->
-    <joint name="camera_fisheye_joint" type="fixed">
-      <origin xyz="0 ${r430_cam_depth_to_fisheye_offset} 0" rpy="0 0 0" />
-      <parent link="camera_depth_frame" />
-      <child link="camera_fisheye_frame" />
-    </joint>
-    <link name="camera_fisheye_frame"/>
+      <!-- camera right IR joints and links -->
+      <joint name="${name}_infra2_joint" type="fixed">
+        <origin xyz="0 ${r430_cam_depth_to_infra2_offset} 0" rpy="0 0 0" />
+        <parent link="${name}_depth_frame" />
+        <child link="${name}_infra2_frame" />
+      </joint>
+      <link name="${name}_infra2_frame"/>
 
-    <joint name="camera_fisheye_optical_joint" type="fixed">
-      <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
-      <parent link="camera_fisheye_frame" />
-      <child link="camera_fisheye_optical_frame" />
-    </joint>
-    <link name="camera_fisheye_optical_frame"/>
+      <joint name="${name}_infra2_optical_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+        <parent link="${name}_infra2_frame" />
+        <child link="${name}_infra2_optical_frame" />
+      </joint>
+      <link name="${name}_infra2_optical_frame"/>
+
+      <!-- camera fisheye joints and links -->
+      <joint name="${name}_fisheye_joint" type="fixed">
+        <origin xyz="0 ${r430_cam_depth_to_fisheye_offset} 0" rpy="0 0 0" />
+        <parent link="${name}_depth_frame" />
+        <child link="${name}_fisheye_frame" />
+      </joint>
+      <link name="${name}_fisheye_frame"/>
+
+      <joint name="${name}_fisheye_optical_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
+        <parent link="${name}_fisheye_frame" />
+        <child link="${name}_fisheye_optical_frame" />
+      </joint>
+      <link name="${name}_fisheye_optical_frame"/>
+    </xacro:if>
   </xacro:macro>
 </robot>

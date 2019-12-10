@@ -1,7 +1,5 @@
 <launch>
   <arg name="serial_no"           default=""/>
-  <arg name="usb_port_id"         default=""/>
-  <arg name="device_type"         default=""/>
   <arg name="json_file_path"      default=""/>
   <arg name="camera"              default="camera"/>
   <arg name="tf_prefix"           default="$(arg camera)"/>
@@ -41,10 +39,7 @@
   <arg name="enable_sync"               default="false"/>
   <arg name="align_depth"               default="false"/>
 
-  <arg name="publish_tf"                default="true"/>
-  <arg name="tf_publish_rate"           default="0"/>
-
-  <arg name="filters"                   default=""/>
+  <arg name="filters"                   default="pointcloud"/>
   <arg name="clip_distance"             default="-2"/>
   <arg name="linear_accel_cov"          default="0.01"/>
   <arg name="initial_reset"             default="false"/>
@@ -60,8 +55,6 @@
       <arg name="external_manager"         value="$(arg external_manager)"/>
       <arg name="manager"                  value="$(arg manager)"/>
       <arg name="serial_no"                value="$(arg serial_no)"/>
-      <arg name="usb_port_id"              value="$(arg usb_port_id)"/>
-      <arg name="device_type"              value="$(arg device_type)"/>
       <arg name="json_file_path"           value="$(arg json_file_path)"/>
 
       <arg name="enable_pointcloud"        value="$(arg enable_pointcloud)"/>
@@ -96,9 +89,6 @@
       <arg name="enable_gyro"              value="$(arg enable_gyro)"/>
       <arg name="enable_accel"             value="$(arg enable_accel)"/>
 
-      <arg name="publish_tf"               value="$(arg publish_tf)"/>
-      <arg name="tf_publish_rate"          value="$(arg tf_publish_rate)"/>
-
       <arg name="filters"                  value="$(arg filters)"/>
       <arg name="clip_distance"            value="$(arg clip_distance)"/>
       <arg name="linear_accel_cov"         value="$(arg linear_accel_cov)"/>
@@ -110,4 +100,10 @@
       <arg name="allow_no_texture_points"  value="$(arg allow_no_texture_points)"/>
     </include>
   </group>
+
+  <!-- Loads the camera model -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find realsense2_description)/urdf/test_d435_camera.urdf.xacro' use_nominal_extrinsics:=false"/>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find realsense2_description)/rviz/urdf.rviz" required="true"/>
 </launch>
