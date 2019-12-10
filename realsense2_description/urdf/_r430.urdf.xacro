@@ -9,6 +9,9 @@ aluminum peripherial evaluation case.
 -->
 
 <robot name="sensor_r430" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Includes -->
+  <xacro:include filename="$(find realsense2_description)/urdf/_materials.urdf.xacro" />
+
   <xacro:property name="M_PI" value="3.1415926535897931" />
 
   <!-- The following values are approximate, and the camera node
@@ -31,11 +34,8 @@ aluminum peripherial evaluation case.
   <xacro:property name="r430_cam_depth_py" value="-0.035"/>
   <xacro:property name="r430_cam_depth_pz" value="0.028"/>
 
-  <xacro:macro name="sensor_r430" params="name:=camera parent *origin">
+  <xacro:macro name="sensor_r430" params="parent *origin name:=camera">
 
-    <material name="${name}_aluminum">
-      <color rgba="0.5 0.5 0.5 1"/>
-    </material>
     <!-- camera body, with origin at bottom screw mount -->
     <joint name="${name}_joint" type="fixed">
       <xacro:insert_block name="origin" />
