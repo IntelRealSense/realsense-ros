@@ -156,6 +156,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, std::string> _frame_id;
         std::map<stream_index_pair, std::string> _optical_frame_id;
         std::map<stream_index_pair, std::string> _depth_aligned_frame_id;
+        std::vector<std::string> _reset_on_error_strings;
         ros::NodeHandle& _node_handle, _pnh;
         bool _align_depth;
         std::vector<rs2_option> _monitor_options;
@@ -320,4 +321,3 @@ namespace realsense2_camera
     };//end class
 
 }
-

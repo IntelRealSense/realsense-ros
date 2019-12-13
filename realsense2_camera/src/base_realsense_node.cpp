@@ -165,14 +165,11 @@ void BaseRealSenseNode::setupErrorCallback()
     {
         s.set_notifications_callback([&](const rs2::notification& n)
         {
-            std::vector<std::string> error_strings({"RT IC2 Config error", 
-                                                    "Motion Module force pause",
-                                                    "stream start failure"});
             if (n.get_severity() >= RS2_LOG_SEVERITY_ERROR)
             {
                 ROS_WARN_STREAM("Hardware Notification:" << n.get_description() << "," << n.get_timestamp() << "," << n.get_severity() << "," << n.get_category());
             }
-            if (error_strings.end() != find_if(error_strings.begin(), error_strings.end(), [&n] (std::string err) 
+            if (_reset_on_error_strings.end() != find_if(_reset_on_error_strings.begin(), _reset_on_error_strings.end(), [&n] (std::string err)
                                         {return (n.get_description().find(err) != std::string::npos); }))
             {
                 ROS_ERROR_STREAM("Hardware Reset is needed. use option: initial_reset:=true");
@@ -612,6 +609,10 @@ void BaseRealSenseNode::getParameters()
     _pnh.param("angular_velocity_cov", _angular_velocity_cov, static_cast<double>(0.01));
     _pnh.param("hold_back_imu_for_frames", _hold_back_imu_for_frames, HOLD_BACK_IMU_FOR_FRAMES);
     _pnh.param("publish_odom_tf", _publish_odom_tf, PUBLISH_ODOM_TF);
+
+    _pnh.param("reset_on_error", _reset_on_error_strings, {"RT IC2 Config error",
+                                                           "Motion Module force pause",
+                                                           "stream start failure"});
 }
 
 void BaseRealSenseNode::setupDevice()
