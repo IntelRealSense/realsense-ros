@@ -692,46 +692,39 @@ void BaseRealSenseNode::setupDevice()
         std::function<void(rs2::frame)> multiple_message_callback_function = [this](rs2::frame frame){multiple_message_callback(frame, _imu_sync_method);};
 
         ROS_INFO_STREAM("Device Sensors: ");
-        for(auto&& elem : _dev_sensors)
+        for(auto&& sensor : _dev_sensors)
         {
-            std::string module_name = elem.get_info(RS2_CAMERA_INFO_NAME);
-
-            if ("Stereo Module" == module_name)
+            std::string module_name = sensor.get_info(RS2_CAMERA_INFO_NAME);
+            if (sensor.is<rs2::depth_sensor>())
             {
-                _sensors[DEPTH] = elem;
-                _sensors[INFRA1] = elem;
-                _sensors[INFRA2] = elem;
+                _sensors[DEPTH] = sensor;
+                _sensors[INFRA1] = sensor;
+                _sensors[INFRA2] = sensor;
                 _sensors_callback[module_name] = frame_callback_function;
             }
-            else if ("Coded-Light Depth Sensor" == module_name)
+            else if (sensor.is<rs2::color_sensor>())
             {
-                _sensors[DEPTH] = elem;
-                _sensors[INFRA1] = elem;
+                _sensors[COLOR] = sensor;
                 _sensors_callback[module_name] = frame_callback_function;
             }
-            else if ("RGB Camera" == module_name)
+            else if (sensor.is<rs2::fisheye_sensor>())
             {
-                _sensors[COLOR] = elem;
+                _sensors[FISHEYE] = sensor;
                 _sensors_callback[module_name] = frame_callback_function;
             }
-            else if ("Wide FOV Camera" == module_name)
+            else if (sensor.is<rs2::motion_sensor>())
             {
-                _sensors[FISHEYE] = elem;
-                _sensors_callback[module_name] = frame_callback_function;
-            }
-            else if ("Motion Module" == module_name)
-            {
-                _sensors[GYRO] = elem;
-                _sensors[ACCEL] = elem;
+                _sensors[GYRO] = sensor;
+                _sensors[ACCEL] = sensor;
                 _sensors_callback[module_name] = imu_callback_function;
             }
-            else if ("Tracking Module" == module_name)
+            else if (sensor.is<rs2::pose_sensor>())
             {
-                _sensors[GYRO] = elem;
-                _sensors[ACCEL] = elem;
-                _sensors[POSE] = elem;
-                _sensors[FISHEYE1] = elem;
-                _sensors[FISHEYE2] = elem;
+                _sensors[GYRO] = sensor;
+                _sensors[ACCEL] = sensor;
+                _sensors[POSE] = sensor;
+                _sensors[FISHEYE1] = sensor;
+                _sensors[FISHEYE2] = sensor;
                 _sensors_callback[module_name] = multiple_message_callback_function;
             }
             else
@@ -740,7 +733,7 @@ void BaseRealSenseNode::setupDevice()
                 ros::shutdown();
                 exit(1);
             }
-            ROS_INFO_STREAM(std::string(elem.get_info(RS2_CAMERA_INFO_NAME)) << " was found.");
+            ROS_INFO_STREAM(std::string(sensor.get_info(RS2_CAMERA_INFO_NAME)) << " was found.");
         }
 
         // Update "enable" map
