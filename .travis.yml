@@ -19,12 +19,9 @@ install:
   - sudo rosdep init
   - rosdep update
   - echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
-  - sudo apt-get install ros-kinetic-cv-bridge -y
-  - sudo apt-get install ros-kinetic-image-transport
-  - sudo apt-get install ros-kinetic-tf -y
-  - sudo apt-get install ros-kinetic-diagnostic-updater -y
-  - sudo apt-get install ros-kinetic-ddynamic-reconfigure -y
   - source ~/.bashrc
+
+script:
   - mkdir -p ~/catkin_ws/src/realsense
 
   # install realsense2-camera
@@ -32,20 +29,20 @@ install:
   - cd ~/catkin_ws/src/
   - catkin_init_workspace
   - cd ..
+  - rosdep install --from-paths src --ignore-src -y
   - catkin_make clean
   - catkin_make -DCATKIN_ENABLE_TESTING=False -DCMAKE_BUILD_TYPE=Release
   - catkin_make install
   - echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
   - source ~/.bashrc
 
-    # download data:
+  # download data:
   - bag_filename="http://realsense-hw-public.s3.amazonaws.com/rs-tests/TestData/outdoors_1color.bag";
   - wget $bag_filename -P "records/"
   - bag_filename="http://realsense-hw-public.s3-eu-west-1.amazonaws.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
   - wget $bag_filename -P "records/"
-  
+
   # Run test:
-script:
   - python src/realsense/realsense2_camera/scripts/rs2_test.py --all
 
 
