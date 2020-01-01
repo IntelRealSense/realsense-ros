@@ -129,7 +129,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
 BaseRealSenseNode::~BaseRealSenseNode()
 {
     // Kill dynamic transform thread
-    if (_publish_tf && _tf_publish_rate > 0)
+    if (_tf_t)
         _tf_t->join();
 
     _is_running = false;
