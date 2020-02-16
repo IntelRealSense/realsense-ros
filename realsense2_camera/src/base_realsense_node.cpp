@@ -165,7 +165,8 @@ void BaseRealSenseNode::setupErrorCallback()
     {
         s.set_notifications_callback([&](const rs2::notification& n)
         {
-            std::vector<std::string> error_strings({"RT IC2 Config error", 
+            std::vector<std::string> error_strings({"Left IC2 Config error",
+                                                    "RT IC2 Config error", 
                                                     "Motion Module force pause",
                                                     "stream start failure"});
             if (n.get_severity() >= RS2_LOG_SEVERITY_ERROR)
