@@ -47,6 +47,28 @@ RealSenseNodeFactory::~RealSenseNodeFactory()
 	closeDevice();
 }
 
+std::string RealSenseNodeFactory::parse_usb_port(std::string line)
+{
+    std::string port_id;
+    std::regex self_regex("(?:[^ ]+/usb[0-9]+[0-9./-]*/){0,1}([0-9.-]+)(:){0,1}[^ ]*", std::regex_constants::ECMAScript);
+    std::smatch base_match;
+    bool found = std::regex_match(line, base_match, self_regex);
+    if (found)
+    {
+        port_id = base_match[1].str();
+        if (base_match[2].str().size() == 0)    //This is libuvc string. Remove counter is exists.
+        {
+            std::regex end_regex = std::regex(".+(-[0-9]+$)", std::regex_constants::ECMAScript);
+            bool found_end = std::regex_match(port_id, base_match, end_regex);
+            if (found_end)
+            {
+                port_id = port_id.substr(0, port_id.size() - base_match[1].str().size());
+            }
+        }
+    }
+    return port_id;
+}
+
 void RealSenseNodeFactory::getDevice(rs2::device_list list)
 {
 	if (!_device)
@@ -66,32 +88,10 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 				std::string pn = dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
 				std::string name = dev.get_info(RS2_CAMERA_INFO_NAME);
 				ROS_INFO_STREAM("Device with physical ID " << pn << " was found.");
-				std::string port_id;
 				std::vector<std::string> results;
 				ROS_INFO_STREAM("Device with name " << name << " was found.");
-				std::regex self_regex;
-				if(name == std::string("Intel RealSense T265"))
-				{
-					self_regex = std::regex(".*?bus_([0-9]+) port_([0-9]+).*", std::regex_constants::ECMAScript);
-				}
-				else// if(strcmp(name, "Intel RealSense D435") == 0)
-				{
-					self_regex = std::regex("[^ ]+/usb[0-9]+[0-9./-]*/([0-9.-]+):[^ ]*", std::regex_constants::ECMAScript);
-				}
-				std::smatch base_match;
-				bool found_usb_desc = std::regex_match(pn, base_match, self_regex);
-				if (found_usb_desc)
-				{
-					std::ssub_match base_sub_match = base_match[1];
-					port_id = base_sub_match.str();
-					for (unsigned int mi = 2; mi < base_match.size(); mi++)
-					{
-						std::ssub_match base_sub_match = base_match[mi];
-						port_id += "-" + base_sub_match.str();
-					}
-					ROS_INFO_STREAM("Device with port number " << port_id << " was found.");
-				}
-				else
+				std::string port_id = parse_usb_port(pn);
+				if (port_id.empty())
 				{
 					std::stringstream msg;
 					msg << "Error extracting usb port from device with physical ID: " << pn << std::endl << "Please report on github issue at https://github.com/IntelRealSense/realsense-ros";
@@ -105,11 +105,16 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 						ROS_ERROR_STREAM("Please use serial number instead of usb port.");
 					}
 				}
+				else
+				{
+					ROS_INFO_STREAM("Device with port number " << port_id << " was found.");					
+				}
 				bool found_device_type(true);
 				if (!_device_type.empty())
 				{
+					std::smatch match_results;
 					std::regex device_type_regex(_device_type.c_str(), std::regex::icase);
-					found_device_type = std::regex_search(name, base_match, device_type_regex);
+					found_device_type = std::regex_search(name, match_results, device_type_regex);
 				}
 
 				if ((_serial_no.empty() || sn == _serial_no) && (_usb_port_id.empty() || port_id == _usb_port_id) && found_device_type)
