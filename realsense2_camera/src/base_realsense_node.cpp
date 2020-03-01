@@ -166,8 +166,8 @@ void BaseRealSenseNode::setupErrorCallback()
         s.set_notifications_callback([&](const rs2::notification& n)
         {
             std::vector<std::string> error_strings({"Left IC2 Config error",
-                                                    "RT IC2 Config error", 
-                                                    "stream start failure"});
+                                                    "RT IC2 Config error"
+                                                    });
             if (n.get_severity() >= RS2_LOG_SEVERITY_ERROR)
             {
                 ROS_WARN_STREAM("Hardware Notification:" << n.get_description() << "," << n.get_timestamp() << "," << n.get_severity() << "," << n.get_category());
@@ -175,7 +175,7 @@ void BaseRealSenseNode::setupErrorCallback()
             if (error_strings.end() != find_if(error_strings.begin(), error_strings.end(), [&n] (std::string err) 
                                         {return (n.get_description().find(err) != std::string::npos); }))
             {
-                ROS_ERROR_STREAM("Hardware Reset is needed. use option: initial_reset:=true");
+                ROS_ERROR_STREAM("Performing Hardware Reset.");
                 _dev.hardware_reset();
             }
         });
