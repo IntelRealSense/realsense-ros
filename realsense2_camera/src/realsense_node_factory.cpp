@@ -33,18 +33,12 @@ RealSenseNodeFactory::RealSenseNodeFactory()
 	rs2::log_to_console(severity);
 }
 
-void RealSenseNodeFactory::closeDevice()
-{
-    for(rs2::sensor sensor : _device.query_sensors())
-	{
-		sensor.stop();
-		sensor.close();
-	}
-}
-
 RealSenseNodeFactory::~RealSenseNodeFactory()
 {
-	closeDevice();
+	if (_query_thread.joinable())
+	{
+		_query_thread.join();
+	}
 }
 
 void RealSenseNodeFactory::getDevice(rs2::device_list list)
@@ -243,7 +237,6 @@ void RealSenseNodeFactory::onInit()
 							std::chrono::milliseconds timespan(6000);
 							while (!_device)
 							{
-								// _ctx.init_tracking_module(); // Unavailable function.
 								getDevice(_ctx.query_devices());
 								if (_device)
 								{
