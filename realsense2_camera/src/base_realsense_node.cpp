@@ -1985,7 +1985,8 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
 
     const rs2::vertex* vertex = pc.get_vertices();
     const rs2::texture_coordinate* color_point = pc.get_texture_coordinates();
-    std::list<unsigned int> valid_indices;
+
+    _valid_pc_indices.clear();
     for (size_t point_idx=0; point_idx < pc.size(); point_idx++, vertex++, color_point++)
     {
         if (static_cast<float>(vertex->z) > 0)
@@ -1994,19 +1995,18 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
             float j = static_cast<float>(color_point->v);
             if (_allow_no_texture_points || (i >= 0.f && i <= 1.f && j >= 0.f && j <= 1.f))
             {
-                valid_indices.push_back(point_idx);
+                _valid_pc_indices.push_back(point_idx);
             }
         }
     }
 
-    sensor_msgs::PointCloud2 msg_pointcloud;
-    msg_pointcloud.header.stamp = t;
-    msg_pointcloud.header.frame_id = _optical_frame_id[DEPTH];
-    msg_pointcloud.width = valid_indices.size();
-    msg_pointcloud.height = 1;
-    msg_pointcloud.is_dense = true;
+    _msg_pointcloud.header.stamp = t;
+    _msg_pointcloud.header.frame_id = _optical_frame_id[DEPTH];
+    _msg_pointcloud.width = _valid_pc_indices.size();
+    _msg_pointcloud.height = 1;
+    _msg_pointcloud.is_dense = true;
 
-    sensor_msgs::PointCloud2Modifier modifier(msg_pointcloud);
+    sensor_msgs::PointCloud2Modifier modifier(_msg_pointcloud);
     modifier.setPointCloud2FieldsByString(1, "xyz");    
 
     vertex = pc.get_vertices();
@@ -2029,19 +2029,19 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
             default:
                 throw std::runtime_error("Unhandled texture format passed in pointcloud " + std::to_string(texture_frame.get_profile().format()));
         }
-        msg_pointcloud.point_step = addPointField(msg_pointcloud, format_str.c_str(), 1, sensor_msgs::PointField::FLOAT32, msg_pointcloud.point_step);
-        msg_pointcloud.row_step = msg_pointcloud.width * msg_pointcloud.point_step;
-        msg_pointcloud.data.resize(msg_pointcloud.height * msg_pointcloud.row_step);
+        _msg_pointcloud.point_step = addPointField(_msg_pointcloud, format_str.c_str(), 1, sensor_msgs::PointField::FLOAT32, _msg_pointcloud.point_step);
+        _msg_pointcloud.row_step = _msg_pointcloud.width * _msg_pointcloud.point_step;
+        _msg_pointcloud.data.resize(_msg_pointcloud.height * _msg_pointcloud.row_step);
 
-        sensor_msgs::PointCloud2Iterator<float>iter_x(msg_pointcloud, "x");
-        sensor_msgs::PointCloud2Iterator<float>iter_y(msg_pointcloud, "y");
-        sensor_msgs::PointCloud2Iterator<float>iter_z(msg_pointcloud, "z");
-        sensor_msgs::PointCloud2Iterator<uint8_t>iter_color(msg_pointcloud, format_str);
+        sensor_msgs::PointCloud2Iterator<float>iter_x(_msg_pointcloud, "x");
+        sensor_msgs::PointCloud2Iterator<float>iter_y(_msg_pointcloud, "y");
+        sensor_msgs::PointCloud2Iterator<float>iter_z(_msg_pointcloud, "z");
+        sensor_msgs::PointCloud2Iterator<uint8_t>iter_color(_msg_pointcloud, format_str);
         color_point = pc.get_texture_coordinates();
 
         float color_pixel[2];
         unsigned int prev_idx(0);
-        for (auto idx=valid_indices.begin(); idx != valid_indices.end(); idx++)
+        for (auto idx=_valid_pc_indices.begin(); idx != _valid_pc_indices.end(); idx++)
         {
             unsigned int idx_jump(*idx-prev_idx);
             prev_idx = *idx;
@@ -2070,11 +2070,11 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
     }
     else
     {
-        sensor_msgs::PointCloud2Iterator<float>iter_x(msg_pointcloud, "x");
-        sensor_msgs::PointCloud2Iterator<float>iter_y(msg_pointcloud, "y");
-        sensor_msgs::PointCloud2Iterator<float>iter_z(msg_pointcloud, "z");
+        sensor_msgs::PointCloud2Iterator<float>iter_x(_msg_pointcloud, "x");
+        sensor_msgs::PointCloud2Iterator<float>iter_y(_msg_pointcloud, "y");
+        sensor_msgs::PointCloud2Iterator<float>iter_z(_msg_pointcloud, "z");
         unsigned int prev_idx(0);
-        for (auto idx=valid_indices.begin(); idx != valid_indices.end(); idx++)
+        for (auto idx=_valid_pc_indices.begin(); idx != _valid_pc_indices.end(); idx++)
         {
             unsigned int idx_jump(*idx-prev_idx);
             prev_idx = *idx;
@@ -2087,7 +2087,7 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
             ++iter_x; ++iter_y; ++iter_z;
         }
     }
-    _pointcloud_publisher.publish(msg_pointcloud);
+    _pointcloud_publisher.publish(_msg_pointcloud);
 }
 
 
