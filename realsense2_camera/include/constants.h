@@ -34,6 +34,7 @@ namespace realsense2_camera
     const uint16_t RS435i_RGB_PID   = 0x0B3A; // AWGC_MM
     const uint16_t RS405_PID        = 0x0b0c; // DS5U
     const uint16_t RS_T265_PID      = 0x0b37; // 
+    const uint16_t RS_L515_PID      = 0x0B3D; // 
     
 
     const bool ALIGN_DEPTH    = false;
