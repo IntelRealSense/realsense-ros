@@ -73,6 +73,7 @@ namespace realsense2_camera
         std::string _device_type;
         bool _initial_reset;
         std::thread _query_thread;
+        bool _is_alive;
 
     };
 }//end namespace
