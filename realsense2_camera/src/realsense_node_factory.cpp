@@ -20,7 +20,8 @@ constexpr auto realsense_ros_camera_version = REALSENSE_ROS_EMBEDDED_VERSION_STR
 
 PLUGINLIB_EXPORT_CLASS(realsense2_camera::RealSenseNodeFactory, nodelet::Nodelet)
 
-RealSenseNodeFactory::RealSenseNodeFactory()
+RealSenseNodeFactory::RealSenseNodeFactory():
+	_is_alive(true)
 {
 	ROS_INFO("RealSense ROS v%s", REALSENSE_ROS_VERSION_STR);
 	ROS_INFO("Running with LibRealSense v%s", RS2_API_VERSION_STR);
@@ -35,6 +36,7 @@ RealSenseNodeFactory::RealSenseNodeFactory()
 
 RealSenseNodeFactory::~RealSenseNodeFactory()
 {
+	_is_alive = false;
 	if (_query_thread.joinable())
 	{
 		_query_thread.join();
@@ -75,8 +77,18 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 		{
 			bool found = false;
       		ROS_INFO_STREAM(" ");
-			for (auto&& dev : list)
+			for (size_t count = 0; count < list.size(); count++)
 			{
+				rs2::device dev;
+				try
+				{
+					dev = list[count];
+				}
+				catch(const std::exception& ex)
+				{
+					ROS_WARN_STREAM("Device " << count+1 << "/" << list.size() << " failed with exception: " << ex.what());
+					continue;
+				}
 				auto sn = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
 				ROS_INFO_STREAM("Device with serial number " << sn << " was found."<<std::endl);
 				std::string pn = dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
@@ -239,7 +251,7 @@ void RealSenseNodeFactory::onInit()
 			_query_thread = std::thread([=]()
 						{
 							std::chrono::milliseconds timespan(6000);
-							while (!_device)
+							while (_is_alive && !_device)
 							{
 								getDevice(_ctx.query_devices());
 								if (_device)
