@@ -1,0 +1,126 @@
+
+<!--This is what I did.....
+I custom made this launch file to launch exactly what we need from both the T265 and D435
+(copied most of rs_t265.launch code and some of rs_camera.launch code)
+I set the pointcloud_texture_stream to RS2_STREAM_ANY (set it in the nodelet.launch.xml)to get rid of a 
+warning that would appear everytime we drop a frame
+I also turned off the infra1 and infra2 (set them to flase in the nodelet.launch.xml)
+to save on resources on the board and get rid of a possible out of resources error that would pop up
+(infra is still taken and calculated by D435 but infra data speciifcally is not given to the computer
+thus saving our computer resources)
+-->
+
+
+
+
+
+<launch>
+
+    <!--arguments for D435-->
+    <arg name="device_type_camera2"    		    default="d435"/>
+    <arg name="serial_no_camera2"    			default=""/>
+    <arg name="camera2"              			default="d435"/>
+    <arg name="tf_prefix_camera2"               default="$(arg camera2)"/>
+    <arg name="initial_reset"                   default="false"/>
+    <arg name="color_width"                     default="640"/>
+    <arg name="color_height"                    default="480"/>
+    <arg name="depth_width"                     default="640"/>
+    <arg name="depth_height"                    default="480"/>
+    <arg name="clip_distance"                   default="-2"/>
+    <!--arguments for T265-->
+    <arg name="serial_no"           default=""/>
+    <arg name="usb_port_id"         default=""/>
+    <arg name="device_type"         default="t265"/>
+    <arg name="json_file_path"      default=""/>
+    <arg name="camera1"              default="T265"/>
+    <arg name="tf_prefix"           default="$(arg camera1)"/>
+
+    <arg name="fisheye_width"       default="848"/> 
+    <arg name="fisheye_height"      default="800"/>
+    <arg name="enable_fisheye1"     default="true"/>
+    <arg name="enable_fisheye2"     default="true"/>
+
+    <arg name="fisheye_fps"         default="30"/>
+
+    <arg name="gyro_fps"            default="200"/>
+    <arg name="accel_fps"           default="62"/>
+    <arg name="enable_gyro"         default="true"/>
+    <arg name="enable_accel"        default="true"/>
+
+    <arg name="enable_sync"           default="false"/>
+
+    <arg name="linear_accel_cov"      default="0.01"/>
+    <arg name="unite_imu_method"      default=""/>
+
+    <arg name="publish_odom_tf"     default="true"/>
+
+    <!--arguments for using rviz vs. rtabmapviz-->
+    <arg name="use_rviz"                  default="true"/>
+    <arg name="use_rtabmapviz"            default="false"/>
+
+    <!-- turns this off and magically makes rtab map work-->
+    <rosparam>
+                /t265/tracking_module/enable_relocalization: false
+    </rosparam>
+
+<!--launch for D435-->
+  <group ns="$(arg camera2)">
+    <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="device_type"           value="$(arg device_type_camera2)"/>
+      <arg name="serial_no"             value="$(arg serial_no_camera2)"/>
+      <arg name="tf_prefix"		          value="$(arg tf_prefix_camera2)"/>
+      <arg name="initial_reset"         value="$(arg initial_reset)"/>
+      <arg name="align_depth"           value="true"/>
+      <arg name="filters"               value="pointcloud"/>
+      <arg name="color_width"           value="$(arg color_width)"/>
+      <arg name="color_height"          value="$(arg color_height)"/>
+      <arg name="depth_width"           value="$(arg depth_width)"/>
+      <arg name="depth_height"          value="$(arg depth_height)"/>
+      <arg name="clip_distance"         value="$(arg clip_distance)"/>
+    </include>
+  </group>
+<!--launch for T265-->
+  <group ns="$(arg camera1)">
+    <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="tf_prefix"                value="$(arg tf_prefix)"/>
+      <arg name="serial_no"                value="$(arg serial_no)"/>
+      <arg name="usb_port_id"              value="$(arg usb_port_id)"/>
+      <arg name="device_type"              value="$(arg device_type)"/>
+      <arg name="json_file_path"           value="$(arg json_file_path)"/>
+
+      <arg name="enable_sync"              value="$(arg enable_sync)"/>
+
+      <arg name="fisheye_width"            value="$(arg fisheye_width)"/>
+      <arg name="fisheye_height"           value="$(arg fisheye_height)"/>
+      <arg name="enable_fisheye1"          value="$(arg enable_fisheye1)"/>
+      <arg name="enable_fisheye2"          value="$(arg enable_fisheye2)"/>
+
+      <arg name="fisheye_fps"              value="$(arg fisheye_fps)"/>
+      <arg name="gyro_fps"                 value="$(arg gyro_fps)"/>
+      <arg name="accel_fps"                value="$(arg accel_fps)"/>
+      <arg name="enable_gyro"              value="$(arg enable_gyro)"/>
+      <arg name="enable_accel"             value="$(arg enable_accel)"/>
+
+      <arg name="linear_accel_cov"         value="$(arg linear_accel_cov)"/>
+      <arg name="initial_reset"            value="$(arg initial_reset)"/>
+      <arg name="unite_imu_method"         value="$(arg unite_imu_method)"/>
+
+      <arg name="publish_odom_tf"          value="$(arg publish_odom_tf)"/>
+    </include>
+  </group>
+<!--node that allows us to display both on RVIZ-->
+  <node pkg="tf" type="static_transform_publisher" name="t265_to_d435" args="0 0 0 0 0 0 /$(arg tf_prefix)_link /$(arg tf_prefix_camera2)_link 100"/>
+  <!--this will now launch rtabmap along with the intel devices-->
+  <include file="$(find rtabmap_ros)/launch/rtabmap.launch">
+            <arg name="rtabmap_args"       value="--delete_db_on_start"/>
+            <arg name="depth_topic"        value="/$(arg camera2)/aligned_depth_to_color/image_raw"/>
+            <arg name="frame_id"           value="$(arg camera2)_link"/>
+            <arg name="visual_odometry"    value="false"/>
+            <arg name="odom_topic"         value="/$(arg camera1)/odom/sample"/>
+            <arg name="rgb_topic"          value="/$(arg camera2)/color/image_raw"/>
+            <arg name="camera_info_topic"  value="/$(arg camera2)/color/camera_info"/>
+            <arg name="queue_size"         value="200"/>
+            <arg name="rviz"               value="$(arg use_rviz)"/>
+            <arg name="rtabmapviz"         value="$(arg use_rtabmapviz)"/>
+    </include>
+</launch>
