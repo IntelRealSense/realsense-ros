@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <!--
 License: Apache 2.0. See LICENSE file in root directory.
 Copyright(c) 2020 Intel Corporation. All Rights Reserved
@@ -6,8 +7,6 @@ This is the URDF model for the Intel RealSense 435i camera, in it's
 aluminum peripherial evaluation case.
 -->
 
-
-<?xml version="1.0"?>
 <robot name="sensor_d435i" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:include filename="$(find realsense2_description)/urdf/_d435.urdf.xacro"/>
   <xacro:include filename="$(find realsense2_description)/urdf/_d435i_imu_modules.urdf.xacro"/>
