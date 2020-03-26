@@ -229,11 +229,14 @@ void RealSenseNodeFactory::onInit()
 		privateNh.param("rosbag_filename", rosbag_filename, std::string(""));
 		if (!rosbag_filename.empty())
 		{
+			bool rosbag_enable_loop = false;
+			privateNh.param("rosbag_enable_loop", rosbag_enable_loop, false);
+			ROS_INFO_STREAM("Loop playback: " << ((rosbag_enable_loop)?"On":"Off"));
 			{
 				ROS_INFO_STREAM("publish topics from rosbag file: " << rosbag_filename.c_str());
 				auto pipe = std::make_shared<rs2::pipeline>();
 				rs2::config cfg;
-				cfg.enable_device_from_file(rosbag_filename.c_str(), false);
+				cfg.enable_device_from_file(rosbag_filename.c_str(), rosbag_enable_loop);
 				cfg.enable_all_streams();
 				pipe->start(cfg); //File will be opened in read mode at this point
 				_device = pipe->get_active_profile().get_device();

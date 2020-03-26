@@ -104,6 +104,7 @@ The following parameters are available by the wrapper:
 - **device_type**: will attach to a device whose name includes the given *device_type* regular expression pattern. Default, ignore device type. For example, device_type:=d435 will match d435 and d435i. device_type=d435(?!i) will match d435 but not d435i.
 
 - **rosbag_filename**: Will publish topics from rosbag file.
+- **rosbag_enable_loop**: Will repeat playback of the rosbag file.
 - **initial_reset**: On occasions the device was not closed properly and due to firmware issues needs to reset. If set to true, the device will reset prior to usage.
 - **align_depth**: If set to true, will publish additional topics with the all the images aligned to the depth image.</br>
 The topics are of the form: ```/camera/aligned_depth_to_color/image_raw``` etc.

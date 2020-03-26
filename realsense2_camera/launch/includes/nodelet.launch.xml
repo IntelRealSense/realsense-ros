@@ -7,6 +7,7 @@
   <arg name="tf_prefix"           default=""/>
   <arg name="json_file_path"      default=""/>
   <arg name="rosbag_filename"     default=""/>
+  <arg name="rosbag_enable_loop"  default="false"/>
   <arg name="required"            default="false"/>
 
   <arg name="fisheye_width"       default="0"/>
@@ -97,6 +98,7 @@
     <param name="device_type"              type="str"  value="$(arg device_type)"/>
     <param name="json_file_path"           type="str"  value="$(arg json_file_path)"/>
     <param name="rosbag_filename"          type="str"  value="$(arg rosbag_filename)"/>
+    <param name="rosbag_enable_loop"       type="bool"  value="$(arg rosbag_enable_loop)"/>
 
     <param name="enable_pointcloud"        type="bool" value="$(arg enable_pointcloud)"/>
     <param name="pointcloud_texture_stream" type="str" value="$(arg pointcloud_texture_stream)"/>

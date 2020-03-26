@@ -4,6 +4,7 @@
   <arg name="camera"            default="camera"/>
   <arg name="tf_prefix"           default="$(arg camera)"/>
   <arg name="rosbag_filename"   default=""/>
+  <arg name="rosbag_enable_loop"   default="false"/>
 
   <arg name="fisheye_width"       default="0"/>
   <arg name="fisheye_height"      default="0"/>
@@ -44,6 +45,7 @@
       <arg name="serial_no"                value="$(arg serial_no)"/>
       <arg name="json_file_path"           value="$(arg json_file_path)"/>
       <arg name="rosbag_filename"           value="$(arg rosbag_filename)"/>
+      <arg name="rosbag_enable_loop"       value="$(arg rosbag_enable_loop)"/>
 
       <arg name="enable_pointcloud"        value="$(arg enable_pointcloud)"/>
       <arg name="enable_sync"              value="$(arg enable_sync)"/>
