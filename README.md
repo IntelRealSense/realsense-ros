@@ -5,15 +5,23 @@ LibRealSense supported version: v2.33.1 (see [realsense2_camera release notes](h
 
 ## Installation Instructions
 
+### Ubuntu
 The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but apply to ROS Melodic on **Ubuntu 18.04** as well, by replacing kinetic with melodic wherever is needed.
 
-   ### Step 1: Install the ROS distribution
+   #### Step 1: Install the ROS distribution
    - #### Install [ROS Kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu), on Ubuntu 16.04 or [ROS Melodic](http://wiki.ros.org/melodic/Installation/Ubuntu) on Ubuntu 18.04.
+
+### Windows
+   #### Step 1: Install the ROS distribution
+   - #### Install [ROS Melodic or later on Windows 10](https://wiki.ros.org/Installation/Windows)
 
 
 ### There are 2 sources to install realsense2_camera from:
 
 * ### Method 1: The ROS distribution:
+
+  *Ubuntu*
+
     realsense2_camera is available as a debian package of ROS distribution. It can be installed by typing:
     
     `sudo apt-get install ros-kinetic-realsense2-camera`
@@ -24,23 +32,44 @@ The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but 
     * The version of librealsense2 is almost always behind the one availeable in RealSense&trade; official repository.
     * librealsense2 is not built to use native v4l2 driver but the less stable RS-USB protocol. That is because the last is more general and operational on a larger variety of platforms.
 
+  *Windows*
+
+    **Chocolatey distribution Coming soon**
+
 * ### Method 2: The RealSense&trade; distribution:
 
-   #### This option is demonstrated in the [.travis.yml](https://github.com/intel-ros/realsense/blob/development/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
 
-   ### Step 1: Install the latest Intel&reg; RealSense&trade; SDK 2.0
-   - #### Install from [Debian Package](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages) - In that case treat yourself as a developer. Make sure you follow the instructions to also install librealsense2-dev and librealsense-dkms packages.
+   ### Step 1: 
+
+    *Ubuntu*
+     > This option is demonstrated in the [.travis.yml](https://github.com/intel-ros/realsense/blob/development/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
+
+    * Install the latest Intel&reg; RealSense&trade; SDK 2.0
+    * Install from [Debian Package](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages)
+      - In that case treat yourself as a developer. Make sure you follow the instructions to also install librealsense2-dev and librealsense-dkms packages.
+
+    *Windows* 
+    Install using vcpkg
+
+        `vcpkg install realsense2:x64-windows` 
 
    #### OR
-   - #### Build from sources by downloading the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/tag/v2.33.1) and follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md)
+   - #### Build from sources by downloading the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/tag/v2.33.1). For Ubuntu, follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md)
 
 
    ### Step 2: Install Intel&reg; RealSense&trade; ROS from Sources
    - Create a [catkin](http://wiki.ros.org/catkin#Installing_catkin) workspace
+   *Ubuntu*
    ```bash
    mkdir -p ~/catkin_ws/src
    cd ~/catkin_ws/src/
    ```
+   *Windows*
+   ```batch
+   mkdir c:\catkin_wssrc
+   cd c:\catkin_ws\src
+   ```
+
    - Clone the latest Intel&reg; RealSense&trade; ROS from [here](https://github.com/intel-ros/realsense/releases) into 'catkin_ws/src/'
    ```bashrc
    git clone https://github.com/IntelRealSense/realsense-ros.git
@@ -49,7 +78,8 @@ The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but 
    cd ..
    ```
    - Make sure all dependent packages are installed. You can check .travis.yml file for reference.
-   - Specifically, make sure that the ros package *ddynamic_reconfigure* is installed. If *ddynamic_reconfigure* cannot be installed using APT, you may clone it into your workspace 'catkin_ws/src/' from [here](https://github.com/pal-robotics/ddynamic_reconfigure/tree/kinetic-devel) (Version 0.2.2)
+   - Specifically, make sure that the ros package *ddynamic_reconfigure* is installed. If *ddynamic_reconfigure* cannot be installed using APT or if you are using *Windows* you may clone it into your workspace 'catkin_ws/src/' from [here](https://github.com/pal-robotics/ddynamic_reconfigure/tree/kinetic-devel) (Version 0.2.2)
+
 
    ```bash
   catkin_init_workspace
@@ -57,8 +87,17 @@ The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but 
   catkin_make clean
   catkin_make -DCATKIN_ENABLE_TESTING=False -DCMAKE_BUILD_TYPE=Release
   catkin_make install
+  ```
+
+  *Ubuntu*
+  ```bash
   echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
   source ~/.bashrc
+  ```
+
+  *Windows*
+  ```batch
+  devel\setup.bat
   ```
 
 ## Usage Instructions
