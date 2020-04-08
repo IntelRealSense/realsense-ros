@@ -27,6 +27,7 @@
   <depend>ddynamic_reconfigure</depend>
   <depend>diagnostic_updater</depend>
   <depend>librealsense2</depend>
+  <depend>rgbd_launch</depend>
   <export>
     <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>
