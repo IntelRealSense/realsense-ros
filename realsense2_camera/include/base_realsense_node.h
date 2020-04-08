@@ -320,6 +320,9 @@ namespace realsense2_camera
         sensor_msgs::PointCloud2 _msg_pointcloud;
         std::vector< unsigned int > _valid_pc_indices;
 
+        int _frame_callback_counter;
+        int _frame_callback_prescaler;
+
     };//end class
 
 }

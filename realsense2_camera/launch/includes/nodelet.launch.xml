@@ -28,6 +28,7 @@
   <arg name="color_height"        default="480"/>
   <arg name="enable_color"        default="true"/>
 
+  <arg name="fps_prescaler"        default="3"/>
   <arg name="fisheye_fps"         default="30"/>
   <arg name="depth_fps"           default="30"/>
   <arg name="infra_fps"           default="30"/>
@@ -123,6 +124,7 @@
     <param name="enable_infra1"            type="bool" value="$(arg enable_infra1)"/>
     <param name="enable_infra2"            type="bool" value="$(arg enable_infra2)"/>
 
+    <param name="fps_prescaler"            type="int"  value="$(arg fps_prescaler)"/>
     <param name="fisheye_fps"              type="int"  value="$(arg fisheye_fps)"/>
     <param name="depth_fps"                type="int"  value="$(arg depth_fps)"/>
     <param name="infra_fps"               type="int"  value="$(arg infra_fps)"/>
