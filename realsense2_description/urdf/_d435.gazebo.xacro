@@ -47,7 +47,7 @@ This is the Gazebo URDF model for the Intel RealSense D435 camera
         </camera>
         <always_on>1</always_on>
         <update_rate>30</update_rate>
-        <visualize>1</visualize>
+        <visualize>0</visualize>
       </sensor>
       <sensor name="${camera_name}ired1" type="camera">
         <camera name="${camera_name}">
