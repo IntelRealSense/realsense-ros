@@ -2090,7 +2090,8 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
             ++iter_x; ++iter_y; ++iter_z;
         }
     }
-    _pointcloud_publisher.publish(_msg_pointcloud);
+    sensor_msgs::PointCloud2Ptr msg_pointcloudPtr = boost::make_shared<sensor_msgs::PointCloud2>(_msg_pointcloud); //UFR change- define ptr to pointcloud msg
+    _pointcloud_publisher.publish(msg_pointcloudPtr);
 }
 
 
