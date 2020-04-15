@@ -28,7 +28,7 @@
   <arg name="color_height"        default="480"/>
   <arg name="enable_color"        default="true"/>
 
-  <arg name="fps_prescaler"       default="3"/>
+  <arg name="fps_prescaler"       default="0"/>
   <arg name="fisheye_fps"         default="30"/>
   <arg name="depth_fps"           default="30"/>
   <arg name="infra_fps"           default="30"/>
@@ -42,7 +42,7 @@
   <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>  <!-- use RS2_STREAM_ANY to avoid using texture -->
   <arg name="pointcloud_texture_index"  default="0"/>
 
-  <arg name="enable_sync"         default="true"/>
+  <arg name="enable_sync"         default="false"/>
   <arg name="align_depth"         default="false"/>
 
   <arg name="base_frame_id"             default="$(arg tf_prefix)_link"/>

@@ -1,0 +1,53 @@
+<launch>
+  <arg name="serial_no"           default=""/>
+  <arg name="camera"              default="camera"/>
+  <arg name="tf_prefix"           default="$(arg camera)"/>
+  <arg name="external_manager"    default="false"/>
+  <arg name="manager"             default="realsense2_camera_manager"/>
+
+  <arg name="fps"                 default ="6"/>
+  <arg name="fps_prescaler"       default ="2"/>
+
+  <arg name="depth_width"         default="848"/>
+  <arg name="depth_height"        default="480"/>
+
+  <arg name="infra_width"        default="848"/>
+  <arg name="infra_height"       default="480"/>
+
+  <arg name="color_width"         default="640"/>
+  <arg name="color_height"        default="480"/>
+
+  <arg name="depth_fps"           default="$(arg fps)"/>
+  <arg name="infra_fps"           default="$(arg fps)"/>
+  <arg name="color_fps"           default="$(arg fps)"/>
+
+
+<include file="$(find realsense2_camera)/launch/rs_camera.launch">
+  <arg name="serial_no"           default="$(arg serial_no)"/>
+  <arg name="camera"              default="$(arg camera)"/>
+  <arg name="tf_prefix"           default="$(arg tf_prefix)"/>
+  <arg name="external_manager"    default="$(arg external_manager)"/>
+  <arg name="manager"             default="$(arg manager)"/>
+
+  <arg name="fps_prescaler"       default ="$(arg fps_prescaler)"/>
+
+
+  <arg name="depth_width"         default="$(arg depth_width)"/>
+  <arg name="depth_height"        default="$(arg depth_height)"/>
+
+  <arg name="infra_width"         default="$(arg infra_width)"/>
+  <arg name="infra_height"        default="$(arg infra_height)"/>
+
+  <arg name="color_width"         default="$(arg color_width)"/>
+  <arg name="color_height"        default="$(arg color_height)"/>
+
+  <arg name="depth_fps"           default="$(arg depth_fps)"/>
+  <arg name="infra_fps"           default="$(arg infra_fps)"/>
+  <arg name="color_fps"           default="$(arg color_fps)"/>
+
+</include>
+
+<!-- Set default params -->
+<param name="/$(arg tf_prefix)/stereo_module/visual_preset"        value="3" />
+
+</launch>
