@@ -42,7 +42,7 @@
   <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>  <!-- use RS2_STREAM_ANY to avoid using texture -->
   <arg name="pointcloud_texture_index"  default="0"/>
 
-  <arg name="enable_sync"         default="false"/>
+  <arg name="enable_sync"         default="true"/>
   <arg name="align_depth"         default="false"/>
 
   <arg name="base_frame_id"             default="$(arg tf_prefix)_link"/>
