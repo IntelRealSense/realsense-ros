@@ -4,17 +4,18 @@
 License: Apache 2.0. See LICENSE file in root directory.
 Copyright(c) 2017 Intel Corporation. All Rights Reserved
 
-This is the URDF model for the Intel RealSense 430 camera, in it's
+This is the URDF model for the Intel RealSense 430 camera, in its
 aluminum peripherial evaluation case.
 -->
 
 <robot name="sensor_d435" xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- Includes -->
   <xacro:include filename="$(find realsense2_description)/urdf/_materials.urdf.xacro" />
-  
+  <xacro:include filename="$(find realsense2_description)/urdf/_usb_plug.urdf.xacro" />
+
   <xacro:macro name="sensor_d435" params="parent *origin name:=camera use_nominal_extrinsics:=false">
     <xacro:property name="M_PI" value="3.1415926535897931" />
-  
+
     <!-- The following values are approximate, and the camera node
      publishing TF values with actual calibrated camera extrinsic values -->
     <xacro:property name="d435_cam_depth_to_infra1_offset" value="0.0"/>
@@ -132,6 +133,12 @@ aluminum peripherial evaluation case.
         <child link="${name}_color_optical_frame" />
       </joint>
       <link name="${name}_color_optical_frame"/>
+    </xacro:if>
+
+    <xacro:if value="$(arg add_plug)">
+      <xacro:usb_plug parent="${name}_link">
+        <origin xyz="${d435_cam_mount_from_center_offset - 0.02095} ${-d435_cam_depth_py - 0.0353} 0" rpy="0 0 0"/>
+      </xacro:usb_plug>
     </xacro:if>
   </xacro:macro>
 </robot>
