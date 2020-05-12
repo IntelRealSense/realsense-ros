@@ -118,6 +118,7 @@ target_link_libraries(${PROJECT_NAME}
     )
 
 if(WIN32)
+set_target_properties(${realsense2_LIBRARY} PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE)
 target_link_libraries(${PROJECT_NAME}
     realsense2::realsense2 
     realsense2::realsense-file
