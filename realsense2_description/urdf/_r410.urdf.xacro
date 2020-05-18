@@ -11,7 +11,7 @@ aluminum peripherial evaluation case.
 <robot name="sensor_r410" xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- Includes -->
   <xacro:include filename="$(find realsense2_description)/urdf/_materials.urdf.xacro" />
-  
+
   <xacro:macro name="sensor_r410" params="parent *origin  name:=camera  use_nominal_extrinsics:=false">
     <xacro:property name="M_PI" value="3.1415926535897931" />
 
@@ -21,7 +21,7 @@ aluminum peripherial evaluation case.
     <xacro:property name="r410_cam_depth_to_infra2_offset" value="0.0275"/>
 
     <!-- The following values model the aluminum peripherial case for the
-      R410 camera, with the camera joint represented by the actual 
+      R410 camera, with the camera joint represented by the actual
       peripherial camera tripod mount -->
     <xacro:property name="r410_cam_width" value="0.099"/>
     <xacro:property name="r410_cam_height" value="0.035"/>
@@ -63,9 +63,9 @@ aluminum peripherial evaluation case.
         <inertia ixx="0.003881243" ixy="0.0" ixz="0.0" iyy="0.000498940" iyz="0.0" izz="0.003879257" />
       </inertial>
     </link>
-   
+
     <!-- Use the nominal extrinsics between camera frames if the calibrated extrinsics aren't being published. e.g. running the device in simulation  -->
-    <xacro:if value="$(arg use_nominal_extrinsics)">
+    <xacro:if value="${use_nominal_extrinsics}">
       <!-- camera depth joints and links -->
       <joint name="${name}_depth_joint" type="fixed">
         <origin xyz="${r410_cam_depth_px} ${r410_cam_depth_py} ${r410_cam_depth_pz}" rpy="0 0 0"/>

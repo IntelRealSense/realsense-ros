@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <robot name="realsense2_camera" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:include filename="../urdf/_r430.urdf.xacro" />
-  
-  <xacro:arg name="use_nominal_extrinsics" default="True" />
+
+  <xacro:arg name="use_nominal_extrinsics" default="true" />
   <link name="base_link" />
-  <sensor_r430 parent="base_link" name="camera_bottom">
+  <sensor_r430 parent="base_link" name="camera_bottom" use_nominal_extrinsics="${arg use_nominal_extrinsics}">
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </sensor_r430>
-  <sensor_r430 parent="base_link" name="camera_top">
+  <sensor_r430 parent="base_link" name="camera_top" use_nominal_extrinsics="${arg use_nominal_extrinsics}">
     <origin xyz="0 0 0.2" rpy="0 0 0"/>
   </sensor_r430>
 </robot>

@@ -4,19 +4,19 @@
   <xacro:include filename="../urdf/_d435.urdf.xacro" />
   <xacro:include filename="../urdf/_r410.urdf.xacro" />
   <xacro:include filename="../urdf/_r430.urdf.xacro" />
-  
-  <xacro:arg name="use_nominal_extrinsics" default="True" />
+
+  <xacro:arg name="use_nominal_extrinsics" default="true" />
   <link name="base_link" />
-  <sensor_d415 parent="base_link" name="d415">
+  <sensor_d415 parent="base_link" name="d415" use_nominal_extrinsics="${arg use_nominal_extrinsics}">
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </sensor_d415>
-  <sensor_d435 parent="base_link" name="d435">
+  <sensor_d435 parent="base_link" name="d435" use_nominal_extrinsics="${arg use_nominal_extrinsics}">
     <origin xyz="0 0 0.1" rpy="0 0 0"/>
   </sensor_d435>
-  <sensor_r410 parent="base_link" name="r410">
+  <sensor_r410 parent="base_link" name="r410" use_nominal_extrinsics="${arg use_nominal_extrinsics}">
     <origin xyz="0 0 0.2" rpy="0 0 0"/>
   </sensor_r410>
-  <sensor_r430 parent="base_link" name="r430">
+  <sensor_r430 parent="base_link" name="r430" use_nominal_extrinsics="${arg use_nominal_extrinsics}">
     <origin xyz="0 0 0.3" rpy="0 0 0"/>
   </sensor_r430>
 </robot>
