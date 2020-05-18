@@ -138,6 +138,18 @@ BaseRealSenseNode::~BaseRealSenseNode()
     {
         _monitoring_t->join();
     }
+
+    std::set<std::string> module_names;
+    for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
+    {
+        std::string module_name = _sensors[profile.first].get_info(RS2_CAMERA_INFO_NAME);
+        std::pair< std::set<std::string>::iterator, bool> res = module_names.insert(module_name);
+        if (res.second)
+        {
+            _sensors[profile.first].stop();
+            _sensors[profile.first].close();
+        }
+    }
 }
 
 void BaseRealSenseNode::toggleSensors(bool enabled)
