@@ -16,7 +16,14 @@ The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but 
 * ### Method 1: The ROS distribution:
     realsense2_camera is available as a debian package of ROS distribution. It can be installed by typing:
     
-    `sudo apt-get install ros-kinetic-realsense2-camera`
+    ```
+    export ROS_VER=kinetic 
+    ```
+    or
+    ```
+    export ROS_VER=melodic 
+    ```
+    sudo apt-get install ros-$ROS_VER-realsense2-camera`
 
     This will install both realsense2_camera and its dependents, including librealsense2 library.
 
