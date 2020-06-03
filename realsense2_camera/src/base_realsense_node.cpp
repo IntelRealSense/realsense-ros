@@ -1708,9 +1708,9 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     _camera_info[stream_index].P.at(11) = 0;
 
     if (intrinsic.model == RS2_DISTORTION_KANNALA_BRANDT4) {
-      _camera_info[stream_index].distortion_model = "equidistant";
+        _camera_info[stream_index].distortion_model = "equidistant";
     } else {
-      _camera_info[stream_index].distortion_model = "plumb_bob";
+        _camera_info[stream_index].distortion_model = "plumb_bob";
     }
 
     // set R (rotation matrix) values to identity matrix
