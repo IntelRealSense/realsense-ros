@@ -65,7 +65,7 @@ aluminum peripherial evaluation case.
     </link>
    
     <!-- Use the nominal extrinsics between camera frames if the calibrated extrinsics aren't being published. e.g. running the device in simulation  -->
-    <xacro:if value="$(arg use_nominal_extrinsics)">
+    <xacro:if value="${use_nominal_extrinsics}">
       <!-- camera depth joints and links -->
       <joint name="${name}_depth_joint" type="fixed">
         <origin xyz="${r410_cam_depth_px} ${r410_cam_depth_py} ${r410_cam_depth_pz}" rpy="0 0 0"/>
