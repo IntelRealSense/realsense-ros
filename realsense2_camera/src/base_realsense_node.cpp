@@ -242,14 +242,18 @@ bool is_checkbox(rs2::options sensor, rs2_option option)
 
 bool is_enum_option(rs2::options sensor, rs2_option option)
 {
+    static const int MAX_ENUM_OPTION_VALUES(100);
+    static const float EPSILON(0.05);
+    
     rs2::option_range op_range = sensor.get_option_range(option);
-    if (op_range.step < 0.001f) return false;
+    if (abs((op_range.step - 1)) > EPSILON || (op_range.max > MAX_ENUM_OPTION_VALUES)) return false;
     for (auto i = op_range.min; i <= op_range.max; i += op_range.step)
     {
         if (sensor.get_option_value_description(option, i) == nullptr)
-            return false;
+            continue;
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool is_int_option(rs2::options sensor, rs2_option option)
@@ -269,6 +273,8 @@ std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option optio
         const auto op_range_step = int(op_range.step);
         for (auto val = op_range_min; val <= op_range_max; val += op_range_step)
         {
+            if (sensor.get_option_value_description(option, val) == nullptr)
+                continue;
             dict[sensor.get_option_value_description(option, val)] = val;
         }
     }
