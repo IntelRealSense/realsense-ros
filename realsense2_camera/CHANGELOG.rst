@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.14 (2020-06-18)
+-------------------
 * Fix compatibility with Librealsense2 Version 2.35.2.
 * Fix support for L515.
 * Fix urdf issues.

@@ -2,8 +2,8 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.14 (2020-06-18)
+-------------------
 * fix urdf issues (arg use_nominal_extrinsics).
 * Add noetic support: 
   - urdf files.
