@@ -30,12 +30,9 @@ The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but 
     Notice:
     * The version of librealsense2 is almost always behind the one availeable in RealSense&trade; official repository.
     * librealsense2 is not built to use native v4l2 driver but the less stable RS-USB protocol. That is because the last is more general and operational on a larger variety of platforms.
+    * realsense2_description is available as a separate debian package of ROS distribution. It includes the 3D-models of the devices and is necessary for running launch files that include these models (i.e. rs_d435_camera_with_model.launch). It can be installed by typing:
+    `sudo apt-get install ros-$ROS_VER-realsense2-description`
 
-    realsense2_description is available as a debian package of ROS distribution. It is necessary for running some of the RealSense&trade; d400 series. It can be installed by typing:
-
-    `sudo apt-get install ros-kinetic-realsense2-description`
-
-    This will install both realsense2_description and its dependents
 
 * ### Method 2: The RealSense&trade; distribution:
 
