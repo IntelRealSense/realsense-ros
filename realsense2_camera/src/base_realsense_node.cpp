@@ -705,37 +705,34 @@ void BaseRealSenseNode::setupDevice()
         ROS_INFO_STREAM("Device Sensors: ");
         for(auto&& sensor : _dev_sensors)
         {
+            for (auto& profile : sensor.get_stream_profiles())
+            {
+                auto video_profile = profile.as<rs2::video_stream_profile>();
+                stream_index_pair sip(video_profile.stream_type(), video_profile.stream_index());
+                if (_sensors.find( sip ) != _sensors.end())
+                    continue;
+                _sensors[sip] = sensor;
+            }
+
             std::string module_name = sensor.get_info(RS2_CAMERA_INFO_NAME);
             if (sensor.is<rs2::depth_sensor>())
             {
-                _sensors[DEPTH] = sensor;
-                _sensors[INFRA1] = sensor;
-                _sensors[INFRA2] = sensor;
                 _sensors_callback[module_name] = frame_callback_function;
             }
             else if (sensor.is<rs2::color_sensor>())
             {
-                _sensors[COLOR] = sensor;
                 _sensors_callback[module_name] = frame_callback_function;
             }
             else if (sensor.is<rs2::fisheye_sensor>())
             {
-                _sensors[FISHEYE] = sensor;
                 _sensors_callback[module_name] = frame_callback_function;
             }
             else if (sensor.is<rs2::motion_sensor>())
             {
-                _sensors[GYRO] = sensor;
-                _sensors[ACCEL] = sensor;
                 _sensors_callback[module_name] = imu_callback_function;
             }
             else if (sensor.is<rs2::pose_sensor>())
             {
-                _sensors[GYRO] = sensor;
-                _sensors[ACCEL] = sensor;
-                _sensors[POSE] = sensor;
-                _sensors[FISHEYE1] = sensor;
-                _sensors[FISHEYE2] = sensor;
                 _sensors_callback[module_name] = multiple_message_callback_function;
             }
             else
@@ -1813,7 +1810,7 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
     {
         if (!strcmp(e.what(), "Requested extrinsics are not available!"))
         {
-            ROS_WARN_STREAM(e.what() << " : using unity as default.");
+            ROS_WARN_STREAM("(" << rs2_stream_to_string(stream.first) << ", " << stream.second << ") -> (" << rs2_stream_to_string(base_profile.stream_type()) << ", " << base_profile.stream_index() << "): " << e.what() << " : using unity as default.");
             ex = rs2_extrinsics({{1, 0, 0, 0, 1, 0, 0, 0, 1}, {0,0,0}});
         }
         else
