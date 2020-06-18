@@ -25,6 +25,7 @@ namespace realsense2_camera
 {
     const stream_index_pair COLOR{RS2_STREAM_COLOR, 0};
     const stream_index_pair DEPTH{RS2_STREAM_DEPTH, 0};
+    const stream_index_pair INFRA0{RS2_STREAM_INFRARED, 0};
     const stream_index_pair INFRA1{RS2_STREAM_INFRARED, 1};
     const stream_index_pair INFRA2{RS2_STREAM_INFRARED, 2};
     const stream_index_pair FISHEYE{RS2_STREAM_FISHEYE, 0};
@@ -35,7 +36,7 @@ namespace realsense2_camera
     const stream_index_pair POSE{RS2_STREAM_POSE, 0};
     
 
-    const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA1, INFRA2,
+    const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA0, INFRA1, INFRA2,
                                                           COLOR,
                                                           FISHEYE,
                                                           FISHEYE1, FISHEYE2};
