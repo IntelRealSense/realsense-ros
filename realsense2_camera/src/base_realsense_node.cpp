@@ -5,6 +5,8 @@
 #include <cctype>
 #include <mutex>
 
+#include "realsense_self_calibration.h"
+
 using namespace realsense2_camera;
 using namespace ddynamic_reconfigure;
 
@@ -202,6 +204,7 @@ void BaseRealSenseNode::publishTopics()
     setupErrorCallback();
     enable_devices();
     setupPublishers();
+    setupServices();
     setupStreams();
     SetBaseStream();
     registerAutoExposureROIOptions(_node_handle);
@@ -859,6 +862,11 @@ void BaseRealSenseNode::setupPublishers()
     {
         _depth_to_other_extrinsics_publishers[INFRA2] = _node_handle.advertise<Extrinsics>("extrinsics/depth_to_infra2", 1, true);
     }
+}
+
+void BaseRealSenseNode::setupServices()
+{
+    _self_calibration_server = _node_handle.advertiseService("self_calibrate", &BaseRealSenseNode::self_calibration_callback, this);
 }
 
 void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const ros::Time& t)
@@ -1609,6 +1617,12 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
     }
     _synced_imu_publisher->Resume();
 }; // frame_callback
+
+bool BaseRealSenseNode::self_calibration_callback(std_srvs::Trigger::Request& request, std_srvs::Trigger::Response& response)
+{
+    run_self_calibration(_dev);
+    return true;
+}
 
 void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_method sync_method)
 {

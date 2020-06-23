@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp
     sensor_msgs
     std_msgs
+    std_srvs
     nodelet
     cv_bridge
     image_transport
@@ -75,7 +76,7 @@ include_directories(
 # RealSense ROS Node
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs
+    CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs std_srvs
     nodelet
     cv_bridge
     image_transport
@@ -91,6 +92,7 @@ add_library(${PROJECT_NAME}
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
     src/t265_realsense_node.cpp
+    src/realsense_self_calibration.cpp
     )
 
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)

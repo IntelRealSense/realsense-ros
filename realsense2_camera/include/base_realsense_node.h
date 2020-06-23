@@ -4,22 +4,23 @@
 #pragma once
 
 #include "../include/realsense_node_factory.h"
-#include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 
+#include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <diagnostic_updater/update_functions.h>
+#include <nav_msgs/Odometry.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <sensor_msgs/Imu.h>
-#include <nav_msgs/Odometry.h>
+#include <std_srvs/Trigger.h>
 #include <tf/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
-#include <condition_variable>
 
-#include <queue>
-#include <mutex>
 #include <atomic>
+#include <condition_variable>
+#include <mutex>
+#include <queue>
 #include <thread>
 
 namespace realsense2_camera
@@ -191,6 +192,7 @@ namespace realsense2_camera
         void setupDevice();
         void setupErrorCallback();
         void setupPublishers();
+        void setupServices();
         void enable_devices();
         void setupFilters();
         void setupStreams();
@@ -230,6 +232,7 @@ namespace realsense2_camera
         void pose_callback(rs2::frame frame);
         void multiple_message_callback(rs2::frame frame, imu_sync_method sync_method);
         void frame_callback(rs2::frame frame);
+        bool self_calibration_callback(std_srvs::Trigger::Request& request, std_srvs::Trigger::Response& response);
         void registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name);
         void readAndSetDynamicParam(ros::NodeHandle& nh1, std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec, const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, int* option_value);
         void registerAutoExposureROIOptions(ros::NodeHandle& nh);
@@ -284,6 +287,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
 
         ros::Publisher _pointcloud_publisher;
+        ros::ServiceServer _self_calibration_server;
         ros::Time _ros_time_base;
         bool _sync_frames;
         bool _pointcloud;
