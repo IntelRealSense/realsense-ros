@@ -305,6 +305,7 @@ void RealSenseNodeFactory::StartDevice()
 	case RS435_RGB_PID:
 	case RS435i_RGB_PID:
 	case RS_USB2_PID:
+	case RS_L515_PID_PRE_PRQ:
 	case RS_L515_PID:
 		_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(nh, privateNh, _device, _serial_no));
 		break;
