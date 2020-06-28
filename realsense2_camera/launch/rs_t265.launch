@@ -14,8 +14,8 @@ https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/lib
 
   <arg name="fisheye_width"       default="848"/> 
   <arg name="fisheye_height"      default="800"/>
-  <arg name="enable_fisheye1"     default="true"/>
-  <arg name="enable_fisheye2"     default="true"/>
+  <arg name="enable_fisheye1"     default="false"/>
+  <arg name="enable_fisheye2"     default="false"/>
 
   <arg name="fisheye_fps"         default="30"/>
 
