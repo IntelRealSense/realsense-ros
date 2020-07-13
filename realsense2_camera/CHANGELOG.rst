@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.15 (2020-07-13)
+-------------------
 * Check runtime version of librealsense2 vs. compiled version and issue a warning is mismatch occurs.
 * Support both L515 and L515 pre-prq versions.
 * set infra, fisheye, IMU and pose streams to be false by default.
