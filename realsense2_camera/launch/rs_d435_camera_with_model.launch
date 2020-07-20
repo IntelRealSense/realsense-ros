@@ -8,7 +8,7 @@
 
   <arg name="fisheye_width"       default="640"/>
   <arg name="fisheye_height"      default="480"/>
-  <arg name="enable_fisheye"      default="true"/>
+  <arg name="enable_fisheye"      default="false"/>
 
   <arg name="depth_width"         default="640"/>
   <arg name="depth_height"        default="480"/>
@@ -104,6 +104,6 @@
   <!-- Loads the camera model -->
   <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find realsense2_description)/urdf/test_d435_camera.urdf.xacro' use_nominal_extrinsics:=false"/>
 
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find realsense2_description)/rviz/urdf.rviz" required="true"/>
 </launch>

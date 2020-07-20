@@ -20,11 +20,31 @@ constexpr auto realsense_ros_camera_version = REALSENSE_ROS_EMBEDDED_VERSION_STR
 
 PLUGINLIB_EXPORT_CLASS(realsense2_camera::RealSenseNodeFactory, nodelet::Nodelet)
 
+std::string api_version_to_string(int version)
+{
+	std::ostringstream ss;
+	if (version / 10000 == 0)
+		ss << version;
+	else
+		ss << (version / 10000) << "." << (version % 10000) / 100 << "." << (version % 100);
+	return ss.str();
+}
+
 RealSenseNodeFactory::RealSenseNodeFactory():
 	_is_alive(true)
 {
+	rs2_error* e = nullptr;
+	std::string running_librealsense_version(api_version_to_string(rs2_get_api_version(&e)));
 	ROS_INFO("RealSense ROS v%s", REALSENSE_ROS_VERSION_STR);
-	ROS_INFO("Running with LibRealSense v%s", RS2_API_VERSION_STR);
+	ROS_INFO("Built with LibRealSense v%s", RS2_API_VERSION_STR);
+	ROS_INFO_STREAM("Running with LibRealSense v" << running_librealsense_version);
+	if (RS2_API_VERSION_STR != running_librealsense_version)
+	{
+		ROS_WARN("***************************************************");
+		ROS_WARN("** running with a different librealsense version **");
+		ROS_WARN("** than the one the wrapper was compiled with!   **");
+		ROS_WARN("***************************************************");
+	}
 
 	auto severity = rs2_log_severity::RS2_LOG_SEVERITY_WARN;
 	tryGetLogSeverity(severity);
@@ -305,6 +325,7 @@ void RealSenseNodeFactory::StartDevice()
 	case RS435_RGB_PID:
 	case RS435i_RGB_PID:
 	case RS_USB2_PID:
+	case RS_L515_PID_PRE_PRQ:
 	case RS_L515_PID:
 		_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(nh, privateNh, _device, _serial_no));
 		break;

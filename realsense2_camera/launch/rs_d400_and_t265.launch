@@ -27,6 +27,7 @@
       <arg name="enable_fisheye2"       value="$(arg enable_fisheye)"/>
       <arg name="topic_odom_in"         value="$(arg topic_odom_in)"/>
       <arg name="calib_odom_file"       value="$(arg calib_odom_file)"/>
+      <arg name="enable_pose"           value="true"/>
     </include>
   </group>
 
