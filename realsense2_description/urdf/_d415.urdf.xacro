@@ -3,15 +3,16 @@
 License: Apache 2.0. See LICENSE file in root directory.
 Copyright(c) 2017 Intel Corporation. All Rights Reserved
 
-This is the URDF model for the Intel RealSense 415 camera, in it's
+This is the URDF model for the Intel RealSense 415 camera, in its
 aluminum peripherial evaluation case.
 -->
 
 <robot name="sensor_d415" xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- Includes -->
   <xacro:include filename="$(find realsense2_description)/urdf/_materials.urdf.xacro" />
-  
-  <xacro:macro name="sensor_d415" params="parent *origin  name:=camera  use_nominal_extrinsics:=false">
+  <xacro:include filename="$(find realsense2_description)/urdf/_usb_plug.urdf.xacro" />
+
+  <xacro:macro name="sensor_d415" params="parent *origin  name:=camera  use_nominal_extrinsics:=false  add_plug:=false">
     <xacro:property name="M_PI" value="3.1415926535897931" />
 
     <!-- The following values are approximate, and the camera node
@@ -133,6 +134,12 @@ aluminum peripherial evaluation case.
         <child link="${name}_color_optical_frame" />
       </joint>
       <link name="${name}_color_optical_frame"/>
+    </xacro:if>
+
+    <xacro:if value="$(arg add_plug)">
+      <xacro:usb_plug parent="${name}_link">
+        <origin xyz="${d415_cam_mount_from_center_offset - 0.01587} ${-d415_cam_depth_py - 0.0358} 0" rpy="0 0 0"/>
+      </xacro:usb_plug>
     </xacro:if>
   </xacro:macro>
 </robot>

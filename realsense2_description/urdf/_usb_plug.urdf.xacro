@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!--
+License: Apache 2.0. See LICENSE file in root directory.
+Copyright(c) 2017 Intel Corporation. All Rights Reserved
+
+This is the URDF model for the Intel RealSense 415 camera, in it's
+aluminum peripherial evaluation case.
+-->
+
+<robot name="usb_plug" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="usb_plug" params="parent *origin name:=usb_plug">
+    <xacro:property name="M_PI" value="3.1415926535897931" />
+
+    <joint name="${name}_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}" />
+      <child link="${name}_link" />
+    </joint>
+
+    <link name="${name}_link">
+      <visual>
+        <!-- 0.044850 0.008000 0.018500 -->
+        <origin xyz="0. -0.022425 0." rpy="0 0 ${M_PI/2}"/>
+        <geometry>
+          <!--box size="0.044850 0.008 0.0185" /-->
+          <mesh filename="package://realsense2_description/meshes/plug.stl" />
+        </geometry>
+        <material name="plastic"/>
+      </visual>
+      <collision>
+        <origin xyz="0. -0.022425 0." rpy="0 0 ${M_PI/2}"/>
+        <geometry>
+          <!--box size="0.044850 0.008 0.0185" /-->
+          <mesh filename="package://realsense2_description/meshes/plug_collision.stl" />
+        </geometry>
+      </collision>
+    </link>
+  </xacro:macro>
+</robot>
