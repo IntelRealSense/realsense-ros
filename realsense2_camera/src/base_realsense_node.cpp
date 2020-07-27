@@ -382,7 +382,9 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
         if (is_checkbox(sensor, option))
         {
             auto option_value = bool(sensor.get_option(option));
-            if (nh1.param(option_name, option_value, option_value))
+	    nh1.param(option_name, option_value, option_value);
+	    auto t_value=option_value;
+	    if(nh1.getParam(option_name, t_value))
             {
                 sensor.set_option(option, option_value);
             }
@@ -398,7 +400,9 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
             rs2::option_range op_range = sensor.get_option_range(option);
             const auto sensor_option_value = sensor.get_option(option);
             auto option_value = sensor_option_value;
-            if (nh1.param(option_name, option_value, option_value))
+	    nh1.param(option_name, option_value, option_value);
+	    auto t_value=option_value;
+	    if(nh1.getParam(option_name, t_value))
             {
                 if (option_value < op_range.min || op_range.max < option_value)
                 {
@@ -445,7 +449,9 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
         {
             const auto sensor_option_value = sensor.get_option(option);
             auto option_value = int(sensor_option_value);
-            if (nh1.param(option_name, option_value, option_value))
+             nh1.param(option_name, option_value, option_value);
+	    auto t_value=option_value;
+	    if(nh1.getParam(option_name, t_value))
             {
                 if (std::find_if(enum_dict.cbegin(), enum_dict.cend(),
                                  [&option_value](const std::pair<std::string, int>& kv) {
