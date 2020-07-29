@@ -1,75 +1,77 @@
 # ROS Wrapper for Intel&reg; RealSense&trade; Devices
-These are packages for using Intel RealSense cameras (D400 series SR300 camera and T265 Tracking Module) with ROS.
+These are packages for using Intel RealSense cameras (D400 series SR300 camera and T265 Tracking Module) with ROS2.
 
-LibRealSense supported version: v2.35.2 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
+LibRealSense supported version: v2.36.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
+
+# NOTICE:
+The building of this version is still underway. 
+It is based on the the ROS1 version.
+As a wrapper for a different environment it bears no restrictions where interface to clients is concerned.
+Therefor, any comments as to incorrect or prefered topic names, parameters, usage or missed conventions are now very much welcome.
 
 ## Installation Instructions
-
-The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but apply to ROS Melodic on **Ubuntu 18.04** as well, by replacing kinetic with melodic wherever is needed.
+This version supports ROS2 eloquent on Ubuntu 18.04.
 
    ### Step 1: Install the ROS distribution
-   - #### Install [ROS Kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu), on Ubuntu 16.04 or [ROS Melodic](http://wiki.ros.org/melodic/Installation/Ubuntu) on Ubuntu 18.04.
+   - #### Install [ROS2 Eloquent](https://index.ros.org/doc/ros2/Installation/Eloquent/Linux-Install-Debians/), on Ubuntu 18.04.
+
+   ```bash
+  ROS_DISTRO=eloquent
+  sudo apt update && sudo apt install curl gnupg2 lsb-release
+  curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+  sudo sh -c 'echo "deb [arch=$(dpkg --print-architecture)] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
+  sudo apt update
+  sudo apt install ros-$ROS_DISTRO-ros-base
+
+  #Environment setup
+  echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc
+  source ~/.bashrc
+
+  sudo apt install python3-colcon-common-extensions -y
+
+  #Install argcomplete (optional)
+  sudo apt install python3-argcomplete
+   ```
 
 
-### There are 2 sources to install realsense2_camera from:
-
-* ### Method 1: The ROS distribution:
-    realsense2_camera is available as a debian package of ROS distribution. It can be installed by typing:
-    
-    ```
-    export ROS_VER=kinetic 
-    ```
-    or
-    ```
-    export ROS_VER=melodic 
-    ```
-    sudo apt-get install ros-$ROS_VER-realsense2-camera`
-
-    This will install both realsense2_camera and its dependents, including librealsense2 library.
-
-    Notice:
-    * The version of librealsense2 is almost always behind the one availeable in RealSense&trade; official repository.
-    * librealsense2 is not built to use native v4l2 driver but the less stable RS-USB protocol. That is because the last is more general and operational on a larger variety of platforms.
-    * realsense2_description is available as a separate debian package of ROS distribution. It includes the 3D-models of the devices and is necessary for running launch files that include these models (i.e. rs_d435_camera_with_model.launch). It can be installed by typing:
-    `sudo apt-get install ros-$ROS_VER-realsense2-description`
-
-
-* ### Method 2: The RealSense&trade; distribution:
-
-   #### This option is demonstrated in the [.travis.yml](https://github.com/intel-ros/realsense/blob/development/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
-
-   ### Step 1: Install the latest Intel&reg; RealSense&trade; SDK 2.0
+  ### Step 2: Install librealsense2:
+   ### Install the latest Intel&reg; RealSense&trade; SDK 2.0
    - #### Install from [Debian Package](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages) - In that case treat yourself as a developer. Make sure you follow the instructions to also install librealsense2-dev and librealsense-dkms packages.
 
    #### OR
-   - #### Build from sources by downloading the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/tag/v2.35.2) and follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md)
+   - #### Build from sources by downloading the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/tag/v2.37.0) and follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md)
 
 
-   ### Step 2: Install Intel&reg; RealSense&trade; ROS from Sources
-   - Create a [catkin](http://wiki.ros.org/catkin#Installing_catkin) workspace
+   ### Step 3: Install Intel&reg; RealSense&trade; ROS from Sources
+   - Create a ROS2 workspace
    ```bash
-   mkdir -p ~/catkin_ws/src
-   cd ~/catkin_ws/src/
+   mkdir -p ~/ros2_ws/src
+   cd ~/ros2_ws/src/
    ```
    - Clone the latest Intel&reg; RealSense&trade; ROS from [here](https://github.com/intel-ros/realsense/releases) into 'catkin_ws/src/'
    ```bashrc
-   git clone https://github.com/IntelRealSense/realsense-ros.git
-   cd realsense-ros/
-   git checkout `git tag | sort -V | grep -P "^\d+\.\d+\.\d+" | tail -1`
-   cd ..
+   git clone https://github.com/IntelRealSense/realsense-ros.git -b eloquent
+   cd ~/ros2_ws
    ```
-   - Make sure all dependent packages are installed. You can check .travis.yml file for reference.
-   - Specifically, make sure that the ros package *ddynamic_reconfigure* is installed. If *ddynamic_reconfigure* cannot be installed using APT, you may clone it into your workspace 'catkin_ws/src/' from [here](https://github.com/pal-robotics/ddynamic_reconfigure/tree/kinetic-devel) (Version 0.2.2)
 
+  ### Step 4: Install dependencies:
    ```bash
-  catkin_init_workspace
-  cd ..
-  catkin_make clean
-  catkin_make -DCATKIN_ENABLE_TESTING=False -DCMAKE_BUILD_TYPE=Release
-  catkin_make install
-  echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
-  source ~/.bashrc
+  sudo apt-get install python-rosdep -y
+  sudo rosdep init
+  rosdep update
+  rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y
   ```
+
+  ### Step 5: Build:
+  ```bash
+  colcon build
+  ```
+
+  ### Step 6: Source (on each new terminal):
+  ```bash
+  . install/local_setup.bash
+  ```
+
 
 ## Usage Instructions
 
@@ -77,10 +79,11 @@ The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but 
 To start the camera node in ROS:
 
 ```bash
-roslaunch realsense2_camera rs_camera.launch
+  ros2 launch realsense2_camera rs.launch.py 
 ```
 
 This will stream all camera sensors and publish on the appropriate ROS topics.
+
 
 Other stream resolutions and frame rates can optionally be provided as parameters to the 'rs_camera.launch' file.
 
