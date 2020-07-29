@@ -1,12 +1,14 @@
 #include "../include/base_realsense_node.h"
 #include "assert.h"
 #include <boost/algorithm/string.hpp>
+#include <boost/bind.hpp>
 #include <algorithm>
 #include <cctype>
 #include <mutex>
+#include <geometry_msgs/msg/vector3_stamped.hpp>
+#include <rclcpp/clock.hpp>
 
 using namespace realsense2_camera;
-using namespace ddynamic_reconfigure;
 
 // stream_index_pair sip{stream_type, stream_index};
 #define STREAM_NAME(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << _stream_name[sip.first] << ((sip.second>0) ? std::to_string(sip.second) : ""))).str()
@@ -14,7 +16,9 @@ using namespace ddynamic_reconfigure;
 #define OPTICAL_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_" << STREAM_NAME(sip) << "_optical_frame")).str()
 #define ALIGNED_DEPTH_TO_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_aligned_depth_to_" << STREAM_NAME(sip) << "_frame")).str()
 
-SyncedImuPublisher::SyncedImuPublisher(ros::Publisher imu_publisher, std::size_t waiting_list_size):
+
+SyncedImuPublisher::SyncedImuPublisher(rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher, 
+                                       std::size_t waiting_list_size):
             _publisher(imu_publisher), _pause_mode(false),
             _waiting_list_size(waiting_list_size)
             {}
@@ -24,7 +28,7 @@ SyncedImuPublisher::~SyncedImuPublisher()
     PublishPendingMessages();
 }
 
-void SyncedImuPublisher::Publish(sensor_msgs::Imu imu_msg)
+void SyncedImuPublisher::Publish(sensor_msgs::msg::Imu imu_msg)
 {
     std::lock_guard<std::mutex> lock_guard(_mutex);
     if (_pause_mode)
@@ -37,8 +41,7 @@ void SyncedImuPublisher::Publish(sensor_msgs::Imu imu_msg)
     }
     else
     {
-        _publisher.publish(imu_msg);
-        // ROS_INFO_STREAM("iid1:" << imu_msg.header.seq << ", time: " << std::setprecision (20) << imu_msg.header.stamp.toSec());
+        _publisher->publish(imu_msg);
     }
     return;
 }
@@ -59,32 +62,36 @@ void SyncedImuPublisher::Resume()
 
 void SyncedImuPublisher::PublishPendingMessages()
 {
-    // ROS_INFO_STREAM("publish imu: " << _pending_messages.size());
     while (!_pending_messages.empty())
     {
-        const sensor_msgs::Imu &imu_msg = _pending_messages.front();
-        _publisher.publish(imu_msg);
-        // ROS_INFO_STREAM("iid2:" << imu_msg.header.seq << ", time: " << std::setprecision (20) << imu_msg.header.stamp.toSec());
+        const sensor_msgs::msg::Imu &imu_msg = _pending_messages.front();
+        _publisher->publish(imu_msg);
         _pending_messages.pop();
     }
 }
-
-std::string BaseRealSenseNode::getNamespaceStr()
-{
-    auto ns = ros::this_node::getNamespace();
-    ns.erase(std::remove(ns.begin(), ns.end(), '/'), ns.end());
-    return ns;
+size_t SyncedImuPublisher::getNumSubscribers()
+{ 
+    if (!_publisher) return 0;
+    return _publisher->get_subscription_count();
 }
 
-BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
-                                     ros::NodeHandle& privateNodeHandle,
-                                     rs2::device dev,
-                                     const std::string& serial_no) :
-    _is_running(true), _base_frame_id(""),  _node_handle(nodeHandle),
-    _pnh(privateNodeHandle), _dev(dev), _json_file_path(""),
+BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node::SharedPtr node,
+                                    rs2::device dev, const std::string& serial_no,
+                                    std::shared_ptr<diagnostic_updater::Updater> diagnostic_updater) :
+    _ros_clock(RCL_ROS_TIME),
+    _is_running(true), _base_frame_id(""),
+    _print0("print0"),
+    _node(node),
+    _print1("print1"),
+    _logger(rclcpp::get_logger("RealSenseCameraNode")),
+    _print2("print2"),
+    _rs_diagnostic_updater(diagnostic_updater, serial_no),
+    _print3("print3"),
+    _dev(dev),
+    _json_file_path(""),
     _serial_no(serial_no),
-    _is_initialized_time_base(false),
-    _namespace(getNamespaceStr())
+    _static_tf_broadcaster(*node),
+    _is_initialized_time_base(false)
 {
     // Types for depth stream
     _image_format[RS2_STREAM_DEPTH] = CV_16UC1;    // CVBridge type
@@ -124,6 +131,8 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _stream_name[RS2_STREAM_POSE] = "pose";
 
     _monitor_options = {RS2_OPTION_ASIC_TEMPERATURE, RS2_OPTION_PROJECTOR_TEMPERATURE};
+
+    publishTopics();
 }
 
 BaseRealSenseNode::~BaseRealSenseNode()
@@ -151,6 +160,7 @@ BaseRealSenseNode::~BaseRealSenseNode()
         }
     }
 }
+#ifdef false
 
 void BaseRealSenseNode::toggleSensors(bool enabled)
 {
@@ -170,6 +180,8 @@ void BaseRealSenseNode::toggleSensors(bool enabled)
         }
     }
 }
+
+#endif //false
 
 void BaseRealSenseNode::setupErrorCallback()
 {
@@ -198,13 +210,13 @@ void BaseRealSenseNode::publishTopics()
     getParameters();
     setupDevice();
     setupFilters();
-    registerDynamicReconfigCb(_node_handle);
+    // registerDynamicReconfigCb(_node_handle);
     setupErrorCallback();
     enable_devices();
     setupPublishers();
     setupStreams();
     SetBaseStream();
-    registerAutoExposureROIOptions(_node_handle);
+//    registerAutoExposureROIOptions(_node_handle);
     publishStaticTransforms();
     publishIntrinsics();
     startMonitoring();
@@ -231,7 +243,7 @@ void BaseRealSenseNode::runFirstFrameInitialization(rs2_stream stream_type)
         }
     }
 }
-
+#ifdef false
 bool is_checkbox(rs2::options sensor, rs2_option option)
 {
     rs2::option_range op_range = sensor.get_option_range(option);
@@ -523,6 +535,7 @@ void BaseRealSenseNode::registerDynamicReconfigCb(ros::NodeHandle& nh)
     }
     ROS_INFO("Done Setting Dynamic reconfig parameters.");
 }
+#endif //false
 
 rs2_stream BaseRealSenseNode::rs2_string_to_stream(std::string str)
 {
@@ -540,69 +553,80 @@ rs2_stream BaseRealSenseNode::rs2_string_to_stream(std::string str)
 void BaseRealSenseNode::getParameters()
 {
     ROS_INFO("getParameters...");
+    // rcl_interfaces::msg::ListParametersResult parameter_list = _node->list_parameters({}, 10);
+    // for (auto & name : parameter_list.names) {
+    //     std::cout << "Parameter name: " << name << std::endl;
+    // }
 
-    _pnh.param("align_depth", _align_depth, ALIGN_DEPTH);
-    _pnh.param("enable_pointcloud", _pointcloud, POINTCLOUD);
+    // _node->get_parameter_or("align_depth", _align_depth, ALIGN_DEPTH);
+    // rcl_interfaces::msg::IntegerRange range;
+    // range.from_value = 0;
+    // range.to_value = 1;
+    // rcl_interfaces::msg::ParameterDescriptor align_depth_descriptor;
+    // align_depth_descriptor.description = "produce aligned to color depth image";
+    // align_depth_descriptor.integer_range.push_back(range);
+    // _node->declare_parameter("align_depth", rclcpp::ParameterValue(ALIGN_DEPTH), align_depth_descriptor);
+    _node->get_parameter_or("align_depth", _align_depth, ALIGN_DEPTH);
     std::string pc_texture_stream("");
     int pc_texture_idx;
-    _pnh.param("pointcloud_texture_stream", pc_texture_stream, std::string("RS2_STREAM_COLOR"));
-    _pnh.param("pointcloud_texture_index", pc_texture_idx, 0);
+    _node->get_parameter_or("pointcloud_texture_stream", pc_texture_stream, std::string("RS2_STREAM_COLOR"));
+    _node->get_parameter_or("pointcloud_texture_index", pc_texture_idx, 0);
     _pointcloud_texture = stream_index_pair{rs2_string_to_stream(pc_texture_stream), pc_texture_idx};
 
-    _pnh.param("filters", _filters_str, DEFAULT_FILTERS);
+    _node->get_parameter_or("filters", _filters_str, DEFAULT_FILTERS);
     _pointcloud |= (_filters_str.find("pointcloud") != std::string::npos);
 
-    _pnh.param("publish_tf", _publish_tf, PUBLISH_TF);
-    _pnh.param("tf_publish_rate", _tf_publish_rate, TF_PUBLISH_RATE);
+    _node->get_parameter_or("publish_tf", _publish_tf, PUBLISH_TF);
+    _node->get_parameter_or("tf_publish_rate", _tf_publish_rate, TF_PUBLISH_RATE);
 
-    _pnh.param("enable_sync", _sync_frames, SYNC_FRAMES);
+    _node->get_parameter_or("enable_sync", _sync_frames, SYNC_FRAMES);
     if (_pointcloud || _align_depth || _filters_str.size() > 0)
         _sync_frames = true;
 
-    _pnh.param("json_file_path", _json_file_path, std::string(""));
+    _node->get_parameter_or("json_file_path", _json_file_path, std::string(""));
 
     for (auto& stream : IMAGE_STREAMS)
     {
         std::string param_name(_stream_name[stream.first] + "_width");
         ROS_DEBUG_STREAM("reading parameter:" << param_name);
-        _pnh.param(param_name, _width[stream], IMAGE_WIDTH);
+        _node->get_parameter_or(param_name, _width[stream], IMAGE_WIDTH);
         param_name = _stream_name[stream.first] + "_height";
         ROS_DEBUG_STREAM("reading parameter:" << param_name);
-        _pnh.param(param_name, _height[stream], IMAGE_HEIGHT);
+        _node->get_parameter_or(param_name, _height[stream], IMAGE_HEIGHT);
         param_name = _stream_name[stream.first] + "_fps";
         ROS_DEBUG_STREAM("reading parameter:" << param_name);
-        _pnh.param(param_name, _fps[stream], IMAGE_FPS);
+        _node->get_parameter_or(param_name, _fps[stream], IMAGE_FPS);
         param_name = "enable_" + STREAM_NAME(stream);
         ROS_DEBUG_STREAM("reading parameter:" << param_name);
-        _pnh.param(param_name, _enable[stream], true);
+        _node->get_parameter_or(param_name, _enable[stream], true);
     }
 
     for (auto& stream : HID_STREAMS)
     {
         std::string param_name(_stream_name[stream.first] + "_fps");
         ROS_DEBUG_STREAM("reading parameter:" << param_name);
-        _pnh.param(param_name, _fps[stream], IMU_FPS);
+        _node->get_parameter_or(param_name, _fps[stream], IMU_FPS);
         param_name = "enable_" + STREAM_NAME(stream);
-        _pnh.param(param_name, _enable[stream], ENABLE_IMU);
+        _node->get_parameter_or(param_name, _enable[stream], ENABLE_IMU);
         ROS_DEBUG_STREAM("_enable[" << _stream_name[stream.first] << "]:" << _enable[stream]);
     }
-    _pnh.param("base_frame_id", _base_frame_id, DEFAULT_BASE_FRAME_ID);
-    _pnh.param("odom_frame_id", _odom_frame_id, DEFAULT_ODOM_FRAME_ID);
+    _node->get_parameter_or("base_frame_id", _base_frame_id, DEFAULT_BASE_FRAME_ID);
+    _node->get_parameter_or("odom_frame_id", _odom_frame_id, DEFAULT_ODOM_FRAME_ID);
 
     std::vector<stream_index_pair> streams(IMAGE_STREAMS);
     streams.insert(streams.end(), HID_STREAMS.begin(), HID_STREAMS.end());
     for (auto& stream : streams)
     {
         std::string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_frame_id").str());
-        _pnh.param(param_name, _frame_id[stream], FRAME_ID(stream));
+        _node->get_parameter_or(param_name, _frame_id[stream], FRAME_ID(stream));
         ROS_DEBUG_STREAM("frame_id: reading parameter:" << param_name << " : " << _frame_id[stream]);
         param_name = static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_optical_frame_id").str();
-        _pnh.param(param_name, _optical_frame_id[stream], OPTICAL_FRAME_ID(stream));
+        _node->get_parameter_or(param_name, _optical_frame_id[stream], OPTICAL_FRAME_ID(stream));
         ROS_DEBUG_STREAM("optical: reading parameter:" << param_name << " : " << _optical_frame_id[stream]);
     }
 
     std::string unite_imu_method_str("");
-    _pnh.param("unite_imu_method", unite_imu_method_str, DEFAULT_UNITE_IMU_METHOD);
+    _node->get_parameter_or("unite_imu_method", unite_imu_method_str, DEFAULT_UNITE_IMU_METHOD);
     if (unite_imu_method_str == "linear_interpolation")
         _imu_sync_method = imu_sync_method::LINEAR_INTERPOLATION;
     else if (unite_imu_method_str == "copy")
@@ -612,7 +636,7 @@ void BaseRealSenseNode::getParameters()
 
     if (_imu_sync_method > imu_sync_method::NONE)
     {
-        _pnh.param("imu_optical_frame_id", _optical_frame_id[GYRO], DEFAULT_IMU_OPTICAL_FRAME_ID);
+        _node->get_parameter_or("imu_optical_frame_id", _optical_frame_id[GYRO], DEFAULT_IMU_OPTICAL_FRAME_ID);
     }
 
     for (auto& stream : IMAGE_STREAMS)
@@ -620,15 +644,15 @@ void BaseRealSenseNode::getParameters()
         if (stream == DEPTH) continue;
         if (stream.second > 1) continue;
         std::string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << "aligned_depth_to_" << STREAM_NAME(stream) << "_frame_id").str());
-        _pnh.param(param_name, _depth_aligned_frame_id[stream], ALIGNED_DEPTH_TO_FRAME_ID(stream));
+        _node->get_parameter_or(param_name, _depth_aligned_frame_id[stream], ALIGNED_DEPTH_TO_FRAME_ID(stream));
     }
 
-    _pnh.param("allow_no_texture_points", _allow_no_texture_points, ALLOW_NO_TEXTURE_POINTS);
-    _pnh.param("clip_distance", _clipping_distance, static_cast<float>(-1.0));
-    _pnh.param("linear_accel_cov", _linear_accel_cov, static_cast<double>(0.01));
-    _pnh.param("angular_velocity_cov", _angular_velocity_cov, static_cast<double>(0.01));
-    _pnh.param("hold_back_imu_for_frames", _hold_back_imu_for_frames, HOLD_BACK_IMU_FOR_FRAMES);
-    _pnh.param("publish_odom_tf", _publish_odom_tf, PUBLISH_ODOM_TF);
+    _node->get_parameter_or("allow_no_texture_points", _allow_no_texture_points, ALLOW_NO_TEXTURE_POINTS);
+    _node->get_parameter_or("clip_distance", _clipping_distance, static_cast<float>(-1.0));
+    _node->get_parameter_or("linear_accel_cov", _linear_accel_cov, static_cast<double>(0.01));
+    _node->get_parameter_or("angular_velocity_cov", _angular_velocity_cov, static_cast<double>(0.01));
+    _node->get_parameter_or("hold_back_imu_for_frames", _hold_back_imu_for_frames, HOLD_BACK_IMU_FOR_FRAMES);
+    _node->get_parameter_or("publish_odom_tf", _publish_odom_tf, PUBLISH_ODOM_TF);
 }
 
 void BaseRealSenseNode::setupDevice()
@@ -658,8 +682,6 @@ void BaseRealSenseNode::setupDevice()
         }
         else
             ROS_INFO("JSON file is not provided");
-
-        ROS_INFO_STREAM("ROS Node Namespace: " << _namespace);
 
         auto camera_name = _dev.get_info(RS2_CAMERA_INFO_NAME);
         ROS_INFO_STREAM("Device Name: " << camera_name);
@@ -744,8 +766,7 @@ void BaseRealSenseNode::setupDevice()
             else
             {
                 ROS_ERROR_STREAM("Module Name \"" << module_name << "\" isn't supported by LibRealSense! Terminating RealSense Node...");
-                ros::shutdown();
-                exit(1);
+                throw("Error: Module not supported");
             }
             ROS_INFO_STREAM(std::string(sensor.get_info(RS2_CAMERA_INFO_NAME)) << " was found.");
         }
@@ -773,11 +794,23 @@ void BaseRealSenseNode::setupDevice()
     }
 }
 
+static const rmw_qos_profile_t rmw_qos_profile_latched =
+{
+    RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+    1,
+    RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+    RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+    RMW_QOS_DEADLINE_DEFAULT,
+    RMW_QOS_LIFESPAN_DEFAULT,
+    RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+    RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+    false
+};
+static const rclcpp::QoS qos_profile_latched(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_latched));
+
 void BaseRealSenseNode::setupPublishers()
 {
     ROS_INFO("setupPublishers...");
-    image_transport::ImageTransport image_transport(_node_handle);
-
     for (auto& stream : IMAGE_STREAMS)
     {
         if (_enable[stream])
@@ -791,9 +824,10 @@ void BaseRealSenseNode::setupPublishers()
             image_raw << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << stream_name << "/camera_info";
 
-            std::shared_ptr<FrequencyDiagnostics> frequency_diagnostics(new FrequencyDiagnostics(_fps[stream], stream_name, _serial_no));
-            _image_publishers[stream] = {image_transport.advertise(image_raw.str(), 1), frequency_diagnostics};
-            _info_publisher[stream] = _node_handle.advertise<sensor_msgs::CameraInfo>(camera_info.str(), 1);
+            _rs_diagnostic_updater.Add(stream_name, diagnostic_updater::FrequencyStatusParam(&_fps[stream], &_fps[stream]));
+            
+            _image_publishers[stream] = {image_transport::create_publisher(_node.get(), image_raw.str(), rmw_qos_profile_sensor_data), stream_name};
+            _info_publisher[stream] = _node->create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);
 
             if (_align_depth && (stream != DEPTH) && stream.second < 2)
             {
@@ -802,14 +836,14 @@ void BaseRealSenseNode::setupPublishers()
                 aligned_camera_info << "aligned_depth_to_" << stream_name << "/camera_info";
 
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
-                std::shared_ptr<FrequencyDiagnostics> frequency_diagnostics(new FrequencyDiagnostics(_fps[stream], aligned_stream_name, _serial_no));
-                _depth_aligned_image_publishers[stream] = {image_transport.advertise(aligned_image_raw.str(), 1), frequency_diagnostics};
-                _depth_aligned_info_publisher[stream] = _node_handle.advertise<sensor_msgs::CameraInfo>(aligned_camera_info.str(), 1);
+                _rs_diagnostic_updater.Add(aligned_stream_name, diagnostic_updater::FrequencyStatusParam(&_fps[stream], &_fps[stream]));
+                _depth_aligned_image_publishers[stream] = {image_transport::create_publisher(_node.get(), aligned_image_raw.str(), rmw_qos_profile_sensor_data), aligned_stream_name};
+                _depth_aligned_info_publisher[stream] = _node->create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(), 1);
             }
 
             if (stream == DEPTH && _pointcloud)
             {
-                _pointcloud_publisher = _node_handle.advertise<sensor_msgs::PointCloud2>("depth/color/points", 1);
+                _pointcloud_publisher = _node->create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 1);
             }
         }
     }
@@ -818,53 +852,52 @@ void BaseRealSenseNode::setupPublishers()
     if (_imu_sync_method > imu_sync_method::NONE && _enable[GYRO] && _enable[ACCEL])
     {
         ROS_INFO("Start publisher IMU");
-        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node_handle.advertise<sensor_msgs::Imu>("imu", 5));
+        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node->create_publisher<sensor_msgs::msg::Imu>("imu", 5));
         _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
     }
     else
     {
         if (_enable[GYRO])
         {
-            _imu_publishers[GYRO] = _node_handle.advertise<sensor_msgs::Imu>("gyro/sample", 100);
+            _imu_publishers[GYRO] = _node->create_publisher<sensor_msgs::msg::Imu>("gyro/sample", 100);
         }
 
         if (_enable[ACCEL])
         {
-            _imu_publishers[ACCEL] = _node_handle.advertise<sensor_msgs::Imu>("accel/sample", 100);
+            _imu_publishers[ACCEL] = _node->create_publisher<sensor_msgs::msg::Imu>("accel/sample", 100);
         }
     }
     if (_enable[POSE])
     {
-        _imu_publishers[POSE] = _node_handle.advertise<nav_msgs::Odometry>("odom/sample", 100);
+        _odom_publisher = _node->create_publisher<nav_msgs::msg::Odometry>("odom/sample", 100);
     }
-
 
     if (_enable[FISHEYE] &&
         _enable[DEPTH])
     {
-        _depth_to_other_extrinsics_publishers[FISHEYE] = _node_handle.advertise<Extrinsics>("extrinsics/depth_to_fisheye", 1, true);
+        _depth_to_other_extrinsics_publishers[FISHEYE] = _node->create_publisher<Extrinsics>("extrinsics/depth_to_fisheye", qos_profile_latched);
     }
 
     if (_enable[COLOR] &&
         _enable[DEPTH])
     {
-        _depth_to_other_extrinsics_publishers[COLOR] = _node_handle.advertise<Extrinsics>("extrinsics/depth_to_color", 1, true);
+        _depth_to_other_extrinsics_publishers[COLOR] = _node->create_publisher<Extrinsics>("extrinsics/depth_to_color", qos_profile_latched);
     }
 
     if (_enable[INFRA1] &&
         _enable[DEPTH])
     {
-        _depth_to_other_extrinsics_publishers[INFRA1] = _node_handle.advertise<Extrinsics>("extrinsics/depth_to_infra1", 1, true);
+        _depth_to_other_extrinsics_publishers[INFRA1] = _node->create_publisher<Extrinsics>("extrinsics/depth_to_infra1", qos_profile_latched);
     }
 
     if (_enable[INFRA2] &&
         _enable[DEPTH])
     {
-        _depth_to_other_extrinsics_publishers[INFRA2] = _node_handle.advertise<Extrinsics>("extrinsics/depth_to_infra2", 1, true);
+        _depth_to_other_extrinsics_publishers[INFRA2] = _node->create_publisher<Extrinsics>("extrinsics/depth_to_infra2", qos_profile_latched);
     }
 }
 
-void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const ros::Time& t)
+void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const rclcpp::Time& t)
 {
     for (auto it = frames.begin(); it != frames.end(); ++it)
     {
@@ -883,7 +916,7 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
         auto& info_publisher = _depth_aligned_info_publisher.at(sip);
         auto& image_publisher = _depth_aligned_image_publishers.at(sip);
 
-        if(0 != info_publisher.getNumSubscribers() ||
+        if(0 != info_publisher->get_subscription_count() ||
            0 != image_publisher.first.getNumSubscribers())
         {
             std::shared_ptr<rs2::align> align;
@@ -1152,11 +1185,10 @@ void BaseRealSenseNode::clip_depth(rs2::depth_frame depth_frame, float clipping_
     }
 }
 
-sensor_msgs::Imu BaseRealSenseNode::CreateUnitedMessage(const CimuData accel_data, const CimuData gyro_data)
+sensor_msgs::msg::Imu BaseRealSenseNode::CreateUnitedMessage(const CimuData accel_data, const CimuData gyro_data)
 {
-    sensor_msgs::Imu imu_msg;
-    ros::Time t(gyro_data.m_time);
-    imu_msg.header.seq = 0;
+    sensor_msgs::msg::Imu imu_msg;
+    rclcpp::Time t(gyro_data.m_time_ns);  //rclcpp::Time(uint64_t nanoseconds)
     imu_msg.header.stamp = t;
 
     imu_msg.angular_velocity.x = gyro_data.m_data.x();
@@ -1173,7 +1205,7 @@ template <typename T> T lerp(const T &a, const T &b, const double t) {
   return a * (1.0 - t) + b * t;
 }
 
-void BaseRealSenseNode::FillImuData_LinearInterpolation(const CimuData imu_data, std::deque<sensor_msgs::Imu>& imu_msgs)
+void BaseRealSenseNode::FillImuData_LinearInterpolation(const CimuData imu_data, std::deque<sensor_msgs::msg::Imu>& imu_msgs)
 {
     static std::deque<CimuData> _imu_history;
     _imu_history.push_back(imu_data);
@@ -1197,19 +1229,19 @@ void BaseRealSenseNode::FillImuData_LinearInterpolation(const CimuData imu_data,
         else if (accel0.is_set() && crnt_imu.m_type == ACCEL) 
         {
             accel1 = crnt_imu;
-            const double dt = accel1.m_time - accel0.m_time;
+            const double dt = accel1.m_time_ns - accel0.m_time_ns;
 
             while (gyros_data.size())
             {
                 CimuData crnt_gyro = gyros_data.front();
                 gyros_data.pop_front();
-                const double alpha = (crnt_gyro.m_time - accel0.m_time) / dt;
-                CimuData crnt_accel(ACCEL, lerp(accel0.m_data, accel1.m_data, alpha), crnt_gyro.m_time);
+                const double alpha = (crnt_gyro.m_time_ns - accel0.m_time_ns) / dt;
+                CimuData crnt_accel(ACCEL, lerp(accel0.m_data, accel1.m_data, alpha), crnt_gyro.m_time_ns);
                 imu_msgs.push_back(CreateUnitedMessage(crnt_accel, crnt_gyro));
             }
             accel0 = accel1;
         } 
-        else if (accel0.is_set() && crnt_imu.m_time >= accel0.m_time && crnt_imu.m_type == GYRO)
+        else if (accel0.is_set() && crnt_imu.m_time_ns >= accel0.m_time_ns && crnt_imu.m_type == GYRO)
         {
             gyros_data.push_back(crnt_imu);
         }
@@ -1218,7 +1250,7 @@ void BaseRealSenseNode::FillImuData_LinearInterpolation(const CimuData imu_data,
     return;
 }
 
-void BaseRealSenseNode::FillImuData_Copy(const CimuData imu_data, std::deque<sensor_msgs::Imu>& imu_msgs)
+void BaseRealSenseNode::FillImuData_Copy(const CimuData imu_data, std::deque<sensor_msgs::msg::Imu>& imu_msgs)
 {
     stream_index_pair type(imu_data.m_type);
 
@@ -1228,13 +1260,13 @@ void BaseRealSenseNode::FillImuData_Copy(const CimuData imu_data, std::deque<sen
         _accel_data = imu_data;
         return;
     }
-    if (_accel_data.m_time < 0)
+    if (!_accel_data.is_set())
         return;
 
     imu_msgs.push_back(CreateUnitedMessage(_accel_data, imu_data));
 }
 
-void BaseRealSenseNode::ImuMessage_AddDefaultValues(sensor_msgs::Imu& imu_msg)
+void BaseRealSenseNode::ImuMessage_AddDefaultValues(sensor_msgs::msg::Imu& imu_msg)
 {
     imu_msg.header.frame_id = _optical_frame_id[GYRO];
     imu_msg.orientation.x = 0.0;
@@ -1265,14 +1297,14 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
     }
 
     seq += 1;
-    double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
+    double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1000.0;
 
     if (0 != _synced_imu_publisher->getNumSubscribers())
     {
         auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
         Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
-        CimuData imu_data(stream_index, v, elapsed_camera_ms);
-        std::deque<sensor_msgs::Imu> imu_msgs;
+        CimuData imu_data(stream_index, v, elapsed_camera_ns);
+        std::deque<sensor_msgs::msg::Imu> imu_msgs;
         switch (sync_method)
         {
             case NONE: //Cannot really be NONE. Just to avoid compilation warning.
@@ -1285,9 +1317,8 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
         }
         while (imu_msgs.size())
         {
-            sensor_msgs::Imu imu_msg = imu_msgs.front();
-            ros::Time t(_ros_time_base.toSec() + imu_msg.header.stamp.toSec());
-            imu_msg.header.seq = seq;
+            sensor_msgs::msg::Imu imu_msg = imu_msgs.front();
+            rclcpp::Time t(_ros_time_base + rclcpp::Duration(imu_msg.header.stamp.sec, imu_msg.header.stamp.nanosec));
             imu_msg.header.stamp = t;
             ImuMessage_AddDefaultValues(imu_msg);
             _synced_imu_publisher->Publish(imu_msg);
@@ -1296,7 +1327,7 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
         }
     }
     m_mutex.unlock();
-};
+}
 
 void BaseRealSenseNode::imu_callback(rs2::frame frame)
 {
@@ -1314,12 +1345,12 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
 
     auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
-    if (0 != _imu_publishers[stream_index].getNumSubscribers())
+    if (0 != _imu_publishers[stream_index]->get_subscription_count())
     {
-        double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
-        ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
+        double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1000.0;
+        rclcpp::Time t(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
 
-        auto imu_msg = sensor_msgs::Imu();
+        auto imu_msg = sensor_msgs::msg::Imu();
         ImuMessage_AddDefaultValues(imu_msg);
         imu_msg.header.frame_id = _optical_frame_id[stream_index];
 
@@ -1337,9 +1368,8 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
             imu_msg.linear_acceleration.z = crnt_reading.z;
         }
         _seq[stream_index] += 1;
-        imu_msg.header.seq = _seq[stream_index];
         imu_msg.header.stamp = t;
-        _imu_publishers[stream_index].publish(imu_msg);
+        _imu_publishers[stream_index]->publish(imu_msg);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
     }
 }
@@ -1359,10 +1389,10 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
     const auto& stream_index(POSE);
     rs2_pose pose = frame.as<rs2::pose_frame>().get_pose_data();
-    double elapsed_camera_ms = (/*ms*/ frame_time - /*ms*/ _camera_time_base) / 1000.0;
-    ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
+    double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1000.0;
+    rclcpp::Time t(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
 
-    geometry_msgs::PoseStamped pose_msg;
+    geometry_msgs::msg::PoseStamped pose_msg;
     pose_msg.pose.position.x = -pose.translation.z;
     pose_msg.pose.position.y = -pose.translation.x;
     pose_msg.pose.position.z = pose.translation.y;
@@ -1371,8 +1401,8 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
     pose_msg.pose.orientation.z = pose.rotation.y;
     pose_msg.pose.orientation.w = pose.rotation.w;
 
-    static tf2_ros::TransformBroadcaster br;
-    geometry_msgs::TransformStamped msg;
+    static tf2_ros::TransformBroadcaster br(_node);
+    geometry_msgs::msg::TransformStamped msg;
     msg.header.stamp = t;
     msg.header.frame_id = _odom_frame_id;
     msg.child_frame_id = _frame_id[POSE];
@@ -1386,37 +1416,44 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
 
     if (_publish_odom_tf) br.sendTransform(msg);
 
-    if (0 != _imu_publishers[stream_index].getNumSubscribers())
+    if (0 != _odom_publisher->get_subscription_count())
     {
         double cov_pose(_linear_accel_cov * pow(10, 3-(int)pose.tracker_confidence));
         double cov_twist(_angular_velocity_cov * pow(10, 1-(int)pose.tracker_confidence));
 
-        geometry_msgs::Vector3Stamped v_msg;
-        v_msg.vector.x = -pose.velocity.z;
-        v_msg.vector.y = -pose.velocity.x;
-        v_msg.vector.z = pose.velocity.y;
-        tf::Vector3 tfv;
-        tf::vector3MsgToTF(v_msg.vector,tfv);
-        tf::Quaternion q(-msg.transform.rotation.x,-msg.transform.rotation.y,-msg.transform.rotation.z,msg.transform.rotation.w);
-        tfv=tf::quatRotate(q,tfv);
-        tf::vector3TFToMsg(tfv,v_msg.vector);
+        geometry_msgs::msg::Vector3Stamped v_msg;
+        // v_msg.vector.x = -pose.velocity.z;
+        // v_msg.vector.y = -pose.velocity.x;
+        // v_msg.vector.z = pose.velocity.y;
+        tf2::Vector3 tfv(-pose.velocity.z, -pose.velocity.x, pose.velocity.y);
+        // tf2::vector3MsgToTF(v_msg.vector,tfv);
+        tf2::Quaternion q(-msg.transform.rotation.x,-msg.transform.rotation.y,-msg.transform.rotation.z,msg.transform.rotation.w);
+        tfv=tf2::quatRotate(q,tfv);
+        // tf2::vector3TFToMsg(tfv,v_msg.vector);
+        // v_msg.vector = tfv;
+        v_msg.vector.x = tfv.x();
+        v_msg.vector.y = tfv.y();
+        v_msg.vector.z = tfv.z();
 	
-        geometry_msgs::Vector3Stamped om_msg;
-        om_msg.vector.x = -pose.angular_velocity.z;
-        om_msg.vector.y = -pose.angular_velocity.x;
-        om_msg.vector.z = pose.angular_velocity.y;
-        tf::vector3MsgToTF(om_msg.vector,tfv);
-        tfv=tf::quatRotate(q,tfv);
-        tf::vector3TFToMsg(tfv,om_msg.vector);
-	
+        // geometry_msgs::msg::Vector3Stamped om_msg;
+        // om_msg.vector.x = -pose.angular_velocity.z;
+        // om_msg.vector.y = -pose.angular_velocity.x;
+        // om_msg.vector.z = pose.angular_velocity.y;
+        tfv = tf2::Vector3(-pose.angular_velocity.z, -pose.angular_velocity.x, pose.angular_velocity.y);
+        // tf2::vector3MsgToTF(om_msg.vector,tfv);
+        tfv=tf2::quatRotate(q,tfv);
+        // tf2::vector3TFToMsg(tfv,om_msg.vector);
+        geometry_msgs::msg::Vector3Stamped om_msg;
+        om_msg.vector.x = tfv.x();
+        om_msg.vector.y = tfv.y();
+        om_msg.vector.z = tfv.z();	
 
-        nav_msgs::Odometry odom_msg;
+        nav_msgs::msg::Odometry odom_msg;
         _seq[stream_index] += 1;
 
         odom_msg.header.frame_id = _odom_frame_id;
         odom_msg.child_frame_id = _frame_id[POSE];
         odom_msg.header.stamp = t;
-        odom_msg.header.seq = _seq[stream_index];
         odom_msg.pose.pose = pose_msg.pose;
         odom_msg.pose.covariance = {cov_pose, 0, 0, 0, 0, 0,
                                     0, cov_pose, 0, 0, 0, 0,
@@ -1432,7 +1469,7 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
                                     0, 0, 0, cov_twist, 0, 0,
                                     0, 0, 0, 0, cov_twist, 0,
                                     0, 0, 0, 0, 0, cov_twist};
-        _imu_publishers[stream_index].publish(odom_msg);
+        _odom_publisher->publish(odom_msg);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
     }
 }
@@ -1453,14 +1490,15 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
         }
 
-        ros::Time t;
+        rclcpp::Time t;
         if (_sync_frames)
         {
-            t = ros::Time::now();
+            t = _ros_clock.now();
         }
         else
         {
-            t = ros::Time(_ros_time_base.toSec()+ (/*ms*/ frame_time - /*ms*/ _camera_time_base) / /*ms to seconds*/ 1000);
+            double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1000.0;
+            t = rclcpp::Time(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
         }
 
         if (frame.is<rs2::frameset>())
@@ -1478,7 +1516,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                 auto stream_unique_id = f.get_profile().unique_id();
 
                 ROS_DEBUG("Frameset contain (%s, %d, %s %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                            rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame_time, t.toNSec());
+                            rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame_time, t.nanoseconds());
                 runFirstFrameInitialization(stream_type);
             }
             // Clip depth_frame for max range:
@@ -1505,7 +1543,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                 auto stream_unique_id = f.get_profile().unique_id();
 
                 ROS_DEBUG("Frameset contain (%s, %d, %s %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                            rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame_time, t.toNSec());
+                            rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame_time, t.nanoseconds());
             }
             ROS_DEBUG("END OF LIST");
             ROS_DEBUG_STREAM("Remove streams with same type and index:");
@@ -1554,11 +1592,11 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                 auto stream_format = f.get_profile().format();
 
                 ROS_DEBUG("Frameset contain (%s, %d, %s) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                            rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), frame.get_frame_number(), frame_time, t.toNSec());
+                            rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), frame.get_frame_number(), frame_time, t.nanoseconds());
 
                 if (f.is<rs2::points>())
                 {
-                    if (0 != _pointcloud_publisher.getNumSubscribers())
+                    if (0 != _pointcloud_publisher->get_subscription_count())
                     {
                         ROS_DEBUG("Publish pointscloud");
                         publishPointCloud(f.as<rs2::points>(), t, frameset);
@@ -1586,7 +1624,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             auto stream_type = frame.get_profile().stream_type();
             auto stream_index = frame.get_profile().stream_index();
             ROS_DEBUG("Single video frame arrived (%s, %d). frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                        rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame_time, t.toNSec());
+                        rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame_time, t.nanoseconds());
             runFirstFrameInitialization(stream_type);
 
             stream_index_pair sip{stream_type,stream_index};
@@ -1611,7 +1649,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
         ROS_ERROR_STREAM("An error has occurred during frame callback: " << ex.what());
     }
     _synced_imu_publisher->Resume();
-}; // frame_callback
+} // frame_callback
 
 void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_method sync_method)
 {
@@ -1635,7 +1673,7 @@ void BaseRealSenseNode::setBaseTime(double frame_time, bool warn_no_metadata)
 {
     ROS_WARN_COND(warn_no_metadata, "Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)");
 
-    _ros_time_base = ros::Time::now();
+    _ros_time_base = _ros_clock.now();
     _camera_time_base = frame_time;
 }
 
@@ -1703,24 +1741,24 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     _camera_info[stream_index].height = intrinsic.height;
     _camera_info[stream_index].header.frame_id = _optical_frame_id[stream_index];
 
-    _camera_info[stream_index].K.at(0) = intrinsic.fx;
-    _camera_info[stream_index].K.at(2) = intrinsic.ppx;
-    _camera_info[stream_index].K.at(4) = intrinsic.fy;
-    _camera_info[stream_index].K.at(5) = intrinsic.ppy;
-    _camera_info[stream_index].K.at(8) = 1;
+    _camera_info[stream_index].k.at(0) = intrinsic.fx;
+    _camera_info[stream_index].k.at(2) = intrinsic.ppx;
+    _camera_info[stream_index].k.at(4) = intrinsic.fy;
+    _camera_info[stream_index].k.at(5) = intrinsic.ppy;
+    _camera_info[stream_index].k.at(8) = 1;
 
-    _camera_info[stream_index].P.at(0) = _camera_info[stream_index].K.at(0);
-    _camera_info[stream_index].P.at(1) = 0;
-    _camera_info[stream_index].P.at(2) = _camera_info[stream_index].K.at(2);
-    _camera_info[stream_index].P.at(3) = 0;
-    _camera_info[stream_index].P.at(4) = 0;
-    _camera_info[stream_index].P.at(5) = _camera_info[stream_index].K.at(4);
-    _camera_info[stream_index].P.at(6) = _camera_info[stream_index].K.at(5);
-    _camera_info[stream_index].P.at(7) = 0;
-    _camera_info[stream_index].P.at(8) = 0;
-    _camera_info[stream_index].P.at(9) = 0;
-    _camera_info[stream_index].P.at(10) = 1;
-    _camera_info[stream_index].P.at(11) = 0;
+    _camera_info[stream_index].p.at(0) = _camera_info[stream_index].k.at(0);
+    _camera_info[stream_index].p.at(1) = 0;
+    _camera_info[stream_index].p.at(2) = _camera_info[stream_index].k.at(2);
+    _camera_info[stream_index].p.at(3) = 0;
+    _camera_info[stream_index].p.at(4) = 0;
+    _camera_info[stream_index].p.at(5) = _camera_info[stream_index].k.at(4);
+    _camera_info[stream_index].p.at(6) = _camera_info[stream_index].k.at(5);
+    _camera_info[stream_index].p.at(7) = 0;
+    _camera_info[stream_index].p.at(8) = 0;
+    _camera_info[stream_index].p.at(9) = 0;
+    _camera_info[stream_index].p.at(10) = 1;
+    _camera_info[stream_index].p.at(11) = 0;
 
     if (intrinsic.model == RS2_DISTORTION_KANNALA_BRANDT4)
     {
@@ -1730,26 +1768,26 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     }
 
     // set R (rotation matrix) values to identity matrix
-    _camera_info[stream_index].R.at(0) = 1.0;
-    _camera_info[stream_index].R.at(1) = 0.0;
-    _camera_info[stream_index].R.at(2) = 0.0;
-    _camera_info[stream_index].R.at(3) = 0.0;
-    _camera_info[stream_index].R.at(4) = 1.0;
-    _camera_info[stream_index].R.at(5) = 0.0;
-    _camera_info[stream_index].R.at(6) = 0.0;
-    _camera_info[stream_index].R.at(7) = 0.0;
-    _camera_info[stream_index].R.at(8) = 1.0;
+    _camera_info[stream_index].r.at(0) = 1.0;
+    _camera_info[stream_index].r.at(1) = 0.0;
+    _camera_info[stream_index].r.at(2) = 0.0;
+    _camera_info[stream_index].r.at(3) = 0.0;
+    _camera_info[stream_index].r.at(4) = 1.0;
+    _camera_info[stream_index].r.at(5) = 0.0;
+    _camera_info[stream_index].r.at(6) = 0.0;
+    _camera_info[stream_index].r.at(7) = 0.0;
+    _camera_info[stream_index].r.at(8) = 1.0;
 
-    _camera_info[stream_index].D.resize(5);
+    _camera_info[stream_index].d.resize(5);
     for (int i = 0; i < 5; i++)
     {
-        _camera_info[stream_index].D.at(i) = intrinsic.coeffs[i];
+        _camera_info[stream_index].d.at(i) = intrinsic.coeffs[i];
     }
 
     if (stream_index == DEPTH && _enable[DEPTH] && _enable[COLOR])
     {
-        _camera_info[stream_index].P.at(3) = 0;     // Tx
-        _camera_info[stream_index].P.at(7) = 0;     // Ty
+        _camera_info[stream_index].p.at(3) = 0;     // Tx
+        _camera_info[stream_index].p.at(7) = 0;     // Ty
     }
 
     if (_align_depth)
@@ -1766,7 +1804,7 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     }
 }
 
-tf::Quaternion BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[9]) const
+tf2::Quaternion BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[9]) const
 {
     Eigen::Matrix3f m;
     // We need to be careful about the order, as RS2 rotation matrix is
@@ -1775,16 +1813,16 @@ tf::Quaternion BaseRealSenseNode::rotationMatrixToQuaternion(const float rotatio
          rotation[1], rotation[4], rotation[7],
          rotation[2], rotation[5], rotation[8];
     Eigen::Quaternionf q(m);
-    return tf::Quaternion(q.x(), q.y(), q.z(), q.w());
+    return tf2::Quaternion(q.x(), q.y(), q.z(), q.w());
 }
 
-void BaseRealSenseNode::publish_static_tf(const ros::Time& t,
+void BaseRealSenseNode::publish_static_tf(const rclcpp::Time& t,
                                           const float3& trans,
-                                          const tf::Quaternion& q,
+                                          const tf2::Quaternion& q,
                                           const std::string& from,
                                           const std::string& to)
 {
-    geometry_msgs::TransformStamped msg;
+    geometry_msgs::msg::TransformStamped msg;
     msg.header.stamp = t;
     msg.header.frame_id = from;
     msg.child_frame_id = to;
@@ -1801,11 +1839,11 @@ void BaseRealSenseNode::publish_static_tf(const ros::Time& t,
 void BaseRealSenseNode::calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile)
 {
     // Transform base to stream
-    tf::Quaternion quaternion_optical;
+    tf2::Quaternion quaternion_optical;
     quaternion_optical.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
     float3 zero_trans{0, 0, 0};
 
-    ros::Time transform_ts_ = ros::Time::now();
+    rclcpp::Time transform_ts_ = _ros_clock.now();
 
     rs2_extrinsics ex;
     try
@@ -1862,7 +1900,6 @@ void BaseRealSenseNode::SetBaseStream()
 void BaseRealSenseNode::publishStaticTransforms()
 {
     rs2::stream_profile base_profile = getAProfile(_base_stream);
-
     // Publish static transforms
     if (_publish_tf)
     {
@@ -1888,7 +1925,7 @@ void BaseRealSenseNode::publishStaticTransforms()
         const auto& ex = base_profile.get_extrinsics_to(getAProfile(FISHEYE));
 
         _depth_to_other_extrinsics[FISHEYE] = ex;
-        _depth_to_other_extrinsics_publishers[FISHEYE].publish(rsExtrinsicsToMsg(ex, frame_id));
+        _depth_to_other_extrinsics_publishers[FISHEYE]->publish(rsExtrinsicsToMsg(ex, frame_id));
     }
 
     if (_enable[DEPTH] &&
@@ -1897,7 +1934,7 @@ void BaseRealSenseNode::publishStaticTransforms()
         static const char* frame_id = "depth_to_color_extrinsics";
         const auto& ex = base_profile.get_extrinsics_to(getAProfile(COLOR));
         _depth_to_other_extrinsics[COLOR] = ex;
-        _depth_to_other_extrinsics_publishers[COLOR].publish(rsExtrinsicsToMsg(ex, frame_id));
+        _depth_to_other_extrinsics_publishers[COLOR]->publish(rsExtrinsicsToMsg(ex, frame_id));
     }
 
     if (_enable[DEPTH] &&
@@ -1906,7 +1943,7 @@ void BaseRealSenseNode::publishStaticTransforms()
         static const char* frame_id = "depth_to_infra1_extrinsics";
         const auto& ex = base_profile.get_extrinsics_to(getAProfile(INFRA1));
         _depth_to_other_extrinsics[INFRA1] = ex;
-        _depth_to_other_extrinsics_publishers[INFRA1].publish(rsExtrinsicsToMsg(ex, frame_id));
+        _depth_to_other_extrinsics_publishers[INFRA1]->publish(rsExtrinsicsToMsg(ex, frame_id));
     }
 
     if (_enable[DEPTH] &&
@@ -1915,7 +1952,7 @@ void BaseRealSenseNode::publishStaticTransforms()
         static const char* frame_id = "depth_to_infra2_extrinsics";
         const auto& ex = base_profile.get_extrinsics_to(getAProfile(INFRA2));
         _depth_to_other_extrinsics[INFRA2] = ex;
-        _depth_to_other_extrinsics_publishers[INFRA2].publish(rsExtrinsicsToMsg(ex, frame_id));
+        _depth_to_other_extrinsics_publishers[INFRA2]->publish(rsExtrinsicsToMsg(ex, frame_id));
     }
 
 }
@@ -1925,16 +1962,16 @@ void BaseRealSenseNode::publishDynamicTransforms()
     // Publish transforms for the cameras
     ROS_WARN("Publishing dynamic camera transforms (/tf) at %g Hz", _tf_publish_rate);
 
-    ros::Rate loop_rate(_tf_publish_rate);
+    rclcpp::Rate loop_rate(_tf_publish_rate);
 
-    while (ros::ok())
+    while (rclcpp::ok())
     {
         // Update the time stamp for publication
-        ros::Time t = ros::Time::now();
+        rclcpp::Time t = _ros_clock.now();        
         for(auto& msg : _static_tf_msgs)
             msg.header.stamp = t;
 
-        _dynamic_tf_broadcaster.sendTransform(_static_tf_msgs);
+        _dynamic_tf_broadcaster->sendTransform(_static_tf_msgs);
 
         loop_rate.sleep();
     }
@@ -1944,16 +1981,16 @@ void BaseRealSenseNode::publishIntrinsics()
 {
     if (_enable[GYRO])
     {
-        _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("gyro/imu_info", 1, true);
+        _imu_info_publisher[GYRO] = _node->create_publisher<IMUInfo>("gyro/imu_info", 1);
         IMUInfo info_msg = getImuInfo(GYRO);
-        _info_publisher[GYRO].publish(info_msg);
+        _imu_info_publisher[GYRO]->publish(info_msg);
     }
 
     if (_enable[ACCEL])
     {
-        _info_publisher[ACCEL] = _node_handle.advertise<IMUInfo>("accel/imu_info", 1, true);
+        _imu_info_publisher[ACCEL] = _node->create_publisher<IMUInfo>("accel/imu_info", 1);
         IMUInfo info_msg = getImuInfo(ACCEL);
-        _info_publisher[ACCEL].publish(info_msg);
+        _imu_info_publisher[ACCEL]->publish(info_msg);
     }
 }
 
@@ -1966,7 +2003,7 @@ void reverse_memcpy(unsigned char* dst, const unsigned char* src, size_t n)
 
 }
 
-void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, const rs2::frameset& frameset)
+void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset)
 {
     std::vector<NamedFilter>::iterator pc_filter = find_if(_filters.begin(), _filters.end(), [] (NamedFilter s) { return s._name == "pointcloud"; } );
     rs2_stream texture_source_id = static_cast<rs2_stream>(pc_filter->_filter->get_option(rs2_option::RS2_OPTION_STREAM_FILTER));
@@ -2040,7 +2077,7 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
             default:
                 throw std::runtime_error("Unhandled texture format passed in pointcloud " + std::to_string(texture_frame.get_profile().format()));
         }
-        _msg_pointcloud.point_step = addPointField(_msg_pointcloud, format_str.c_str(), 1, sensor_msgs::PointField::FLOAT32, _msg_pointcloud.point_step);
+        _msg_pointcloud.point_step = addPointField(_msg_pointcloud, format_str.c_str(), 1, sensor_msgs::msg::PointField::FLOAT32, _msg_pointcloud.point_step);
         _msg_pointcloud.row_step = _msg_pointcloud.width * _msg_pointcloud.point_step;
         _msg_pointcloud.data.resize(_msg_pointcloud.height * _msg_pointcloud.row_step);
 
@@ -2098,7 +2135,7 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const ros::Time& t, co
             ++iter_x; ++iter_y; ++iter_z;
         }
     }
-    _pointcloud_publisher.publish(_msg_pointcloud);
+    _pointcloud_publisher->publish(_msg_pointcloud);
 }
 
 
@@ -2141,7 +2178,7 @@ IMUInfo BaseRealSenseNode::getImuInfo(const stream_index_pair& stream_index)
     }
 
     auto index = 0;
-    info.frame_id = _optical_frame_id[stream_index];
+    info.header.frame_id = _optical_frame_id[stream_index];
     for (int i = 0; i < 3; ++i)
     {
         for (int j = 0; j < 4; ++j)
@@ -2155,16 +2192,15 @@ IMUInfo BaseRealSenseNode::getImuInfo(const stream_index_pair& stream_index)
     return info;
 }
 
-void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
+void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
                                      const stream_index_pair& stream,
                                      std::map<stream_index_pair, cv::Mat>& images,
-                                     const std::map<stream_index_pair, ros::Publisher>& info_publishers,
+                                     const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
                                      const std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics>& image_publishers,
                                      std::map<stream_index_pair, int>& seq,
-                                     std::map<stream_index_pair, sensor_msgs::CameraInfo>& camera_info,
+                                     std::map<stream_index_pair, sensor_msgs::msg::CameraInfo>& camera_info,
                                      const std::map<stream_index_pair, std::string>& optical_frame_id,
-                                     const std::map<rs2_stream, std::string>& encoding,
-                                     bool copy_data_from_frame)
+                                     const std::map<rs2_stream, std::string>& encoding)
 {
     ROS_DEBUG("publishFrame(...)");
     unsigned int width = 0;
@@ -2179,14 +2215,12 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
     }
     auto& image = images[stream];
 
-    if (copy_data_from_frame)
+    if (image.size() != cv::Size(width, height))
     {
-        if (images[stream].size() != cv::Size(width, height))
-        {
-            image.create(height, width, image.type());
-        }
-        image.data = (uint8_t*)f.get_data();
+        image.create(height, width, image.type());
     }
+    image.data = (uint8_t*)f.get_data();
+
     if (f.is<rs2::depth_frame>())
     {
         image = fix_depth_scale(image, _depth_scaled_image[stream]);
@@ -2195,18 +2229,17 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
     ++(seq[stream]);
     auto& info_publisher = info_publishers.at(stream);
     auto& image_publisher = image_publishers.at(stream);
-    if(0 != info_publisher.getNumSubscribers() ||
+    if(0 != info_publisher->get_subscription_count() ||
        0 != image_publisher.first.getNumSubscribers())
     {
-        sensor_msgs::ImagePtr img;
-        img = cv_bridge::CvImage(std_msgs::Header(), encoding.at(stream.first), image).toImageMsg();
+        sensor_msgs::msg::Image::SharedPtr img;
+        img = cv_bridge::CvImage(std_msgs::msg::Header(), encoding.at(stream.first), image).toImageMsg();
         img->width = width;
         img->height = height;
         img->is_bigendian = false;
         img->step = width * bpp;
         img->header.frame_id = optical_frame_id.at(stream);
         img->header.stamp = t;
-        img->header.seq = seq[stream];
 
         auto& cam_info = camera_info.at(stream);
         if (cam_info.width != width)
@@ -2214,12 +2247,10 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
             updateStreamCalibData(f.get_profile().as<rs2::video_stream_profile>());
         }
         cam_info.header.stamp = t;
-        cam_info.header.seq = seq[stream];
-        info_publisher.publish(cam_info);
+        info_publisher->publish(cam_info);
 
         image_publisher.first.publish(img);
-        image_publisher.second->update();
-        // ROS_INFO_STREAM("fid: " << cam_info.header.seq << ", time: " << std::setprecision (20) << t.toSec());
+        _rs_diagnostic_updater.Tick(image_publisher.second);
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
     }
 }
@@ -2240,11 +2271,6 @@ bool BaseRealSenseNode::getEnabledProfile(const stream_index_pair& stream_index,
 
 void BaseRealSenseNode::startMonitoring()
 {
-    for (rs2_option option : _monitor_options)
-    {
-        _temperature_nodes.push_back({option, std::make_shared<TemperatureDiagnostics>(rs2_option_to_string(option), _serial_no )});
-    }
-
     int time_interval(10000);
     std::function<void()> func = [this, time_interval](){
         std::mutex mu;
@@ -2263,32 +2289,20 @@ void BaseRealSenseNode::startMonitoring()
 void BaseRealSenseNode::publish_temperature()
 {
     rs2::options sensor(_sensors[_base_stream]);
-    for (OptionTemperatureDiag option_diag : _temperature_nodes)
+    for (rs2_option option : _monitor_options)
     {
-        rs2_option option(option_diag.first);
         if (sensor.supports(option))
         {
+            std::string name(rs2_option_to_string(option));
             try
             {
                 auto option_value = sensor.get_option(option);
-                option_diag.second->update(option_value);
+                _rs_diagnostic_updater.update_temperatue(name, option_value);
             }
             catch(const std::exception& e)
             {
-                ROS_DEBUG_STREAM("Failed checking for temperature." << std::endl << e.what());
+                ROS_DEBUG_STREAM("Failed checking for temperature - " << name << std::endl << e.what());
             }
         }
     }
-}
-
-TemperatureDiagnostics::TemperatureDiagnostics(std::string name, std::string serial_no)
-    {
-        _updater.add(name, this, &TemperatureDiagnostics::diagnostics);
-        _updater.setHardwareID(serial_no);
-    }
-
-void TemperatureDiagnostics::diagnostics(diagnostic_updater::DiagnosticStatusWrapper& status)
-{
-        status.summary(0, "OK");
-        status.add("Index", _crnt_temp);
 }

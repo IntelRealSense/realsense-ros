@@ -3,7 +3,7 @@
 
 #include "../include/realsense_node_factory.h"
 #include "../include/base_realsense_node.h"
-#include "../include/t265_realsense_node.h"
+// #include "../include/t265_realsense_node.h"
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -18,18 +18,18 @@ using namespace realsense2_camera;
 #define REALSENSE_ROS_EMBEDDED_VERSION_STR (VAR_ARG_STRING(VERSION: REALSENSE_ROS_MAJOR_VERSION.REALSENSE_ROS_MINOR_VERSION.REALSENSE_ROS_PATCH_VERSION))
 constexpr auto realsense_ros_camera_version = REALSENSE_ROS_EMBEDDED_VERSION_STR;
 
-PLUGINLIB_EXPORT_CLASS(realsense2_camera::RealSenseNodeFactory, nodelet::Nodelet)
-
-RealSenseNodeFactory::RealSenseNodeFactory():
-	_is_alive(true)
+RealSenseNodeFactory::RealSenseNodeFactory(rclcpp::Node::SharedPtr node):
+	_node(node),
+	_is_alive(true),
+	_logger(rclcpp::get_logger("RealSenseCameraNode"))
 {
-	ROS_INFO("RealSense ROS v%s", REALSENSE_ROS_VERSION_STR);
+	RCLCPP_INFO(_logger, "RealSense ROS v%s", REALSENSE_ROS_VERSION_STR);
 	ROS_INFO("Running with LibRealSense v%s", RS2_API_VERSION_STR);
 
 	auto severity = rs2_log_severity::RS2_LOG_SEVERITY_WARN;
 	tryGetLogSeverity(severity);
 	if (rs2_log_severity::RS2_LOG_SEVERITY_DEBUG == severity)
-		ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
+		console_bridge::setLogLevel(console_bridge::CONSOLE_BRIDGE_LOG_DEBUG);
 
 	rs2::log_to_console(severity);
 }
@@ -76,7 +76,6 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 		else
 		{
 			bool found = false;
-      		ROS_INFO_STREAM(" ");
 			for (size_t count = 0; count < list.size(); count++)
 			{
 				rs2::device dev;
@@ -133,7 +132,6 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 			}
 			if (!found)
 			{
-				// T265 could be caught by another node.
 				std::string msg ("The requested device with ");
 				bool add_and(false);
 				if (!_serial_no.empty())
@@ -219,14 +217,12 @@ void RealSenseNodeFactory::onInit()
 		std::cout << "Press <ENTER> key to continue." << std::endl;
 		std::cin.get();
 #endif
-		ros::NodeHandle nh = getNodeHandle();
-		auto privateNh = getPrivateNodeHandle();
-		privateNh.param("serial_no", _serial_no, std::string(""));
-    	privateNh.param("usb_port_id", _usb_port_id, std::string(""));
-    	privateNh.param("device_type", _device_type, std::string(""));
+	    _node->get_parameter_or("serial_no", _serial_no, std::string(""));
+	    _node->get_parameter_or("usb_port_id", _usb_port_id, std::string(""));
+	    _node->get_parameter_or("device_type", _device_type, std::string(""));
 
 		std::string rosbag_filename("");
-		privateNh.param("rosbag_filename", rosbag_filename, std::string(""));
+	    _node->get_parameter("rosbag_filename", rosbag_filename);
 		if (!rosbag_filename.empty())
 		{
 			{
@@ -246,7 +242,7 @@ void RealSenseNodeFactory::onInit()
 		}
 		else
 		{
-			privateNh.param("initial_reset", _initial_reset, false);
+		    _node->get_parameter_or("initial_reset", _initial_reset, false);
 
 			_query_thread = std::thread([=]()
 						{
@@ -283,11 +279,14 @@ void RealSenseNodeFactory::onInit()
 void RealSenseNodeFactory::StartDevice()
 {
 	if (_realSenseNode) _realSenseNode.reset();
-	ros::NodeHandle nh = getNodeHandle();
-	ros::NodeHandle privateNh = getPrivateNodeHandle();
-	// TODO
 	std::string pid_str(_device.get_info(RS2_CAMERA_INFO_PRODUCT_ID));
 	uint16_t pid = std::stoi(pid_str, 0, 16);
+	if (!_diagnostic_updater)
+	{
+		ROS_DEBUG("diagnostic_updater::Updater");
+		_diagnostic_updater = std::make_shared<diagnostic_updater::Updater>(_node);
+		_diagnostic_updater->setHardwareID(_serial_no);
+	}
 	switch(pid)
 	{
 	case SR300_PID:
@@ -307,18 +306,17 @@ void RealSenseNodeFactory::StartDevice()
 	case RS_USB2_PID:
 	case RS_L515_PID_PRE_PRQ:
 	case RS_L515_PID:
-		_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(nh, privateNh, _device, _serial_no));
+		_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(_node, _device, _serial_no, _diagnostic_updater));
 		break;
-	case RS_T265_PID:
-		_realSenseNode = std::unique_ptr<T265RealsenseNode>(new T265RealsenseNode(nh, privateNh, _device, _serial_no));
-		break;
+	// case RS_T265_PID:
+	// 	_realSenseNode = std::unique_ptr<T265RealsenseNode>(new T265RealsenseNode(nh, privateNh, _device, _serial_no));
+	// 	break;
 	default:
 		ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);
-		ros::shutdown();
+		rclcpp::shutdown();
 		exit(1);
 	}
 	assert(_realSenseNode);
-	_realSenseNode->publishTopics();
 }
 
 void RealSenseNodeFactory::tryGetLogSeverity(rs2_log_severity& severity) const

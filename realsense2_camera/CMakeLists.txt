@@ -1,23 +1,69 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(realsense2_camera)
-add_compile_options(-std=c++11)
 
+# ROS2 Flags
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 option(BUILD_WITH_OPENMP "Use OpenMP" OFF)
 option(SET_USER_BREAK_AT_STARTUP "Set user wait point in startup (for debug)" OFF)
 
-find_package(catkin REQUIRED COMPONENTS
-    message_generation
-    nav_msgs
-    roscpp
-    sensor_msgs
-    std_msgs
-    nodelet
-    cv_bridge
-    image_transport
-    tf
-    ddynamic_reconfigure
-    diagnostic_updater
-    )
+# Compiler Defense Flags
+if(UNIX OR APPLE)
+  # Linker flags.
+  if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+    # GCC specific flags. ICC is compatible with them.
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -z noexecstack -z relro -z now")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -z noexecstack -z relro -z now")
+  elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    # In Clang, -z flags are not compatible, they need to be passed to linker via -Wl.
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now")
+  endif()
+
+  # Compiler flags.
+  if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    # GCC specific flags.
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.9 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 4.9)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE -fstack-protector-strong")
+    else()
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE -fstack-protector")
+    endif()
+  elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    # Clang is compatbile with some of the flags.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE -fstack-protector")
+  elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+    # Same as above, with exception that ICC compilation crashes with -fPIE option, even
+    # though it uses -pie linker option that require -fPIE during compilation. Checksec
+    # shows that it generates correct PIE anyway if only -pie is provided.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector")
+  endif()
+
+  # Generic flags.
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fno-operator-names -Wformat -Wformat-security -Wall")
+  # Dot not forward c++ flag to GPU beucause it is not supported
+  set( CUDA_PROPAGATE_HOST_FLAGS OFF )
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_FORTIFY_SOURCE=2")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
+endif()
+find_package(ament_cmake REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(image_transport REQUIRED)
+#find_package(librealsense2 REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(realsense_camera_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(diagnostic_updater REQUIRED)
 
 if(BUILD_WITH_OPENMP)
     find_package(OpenMP)
@@ -51,84 +97,87 @@ else()
     message(STATUS "Create Debug Build.")
 endif()
 
-set(CMAKE_CXX_FLAGS "-fPIE -fPIC -std=c++11 -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat -Wformat-security -Wall ${CMAKE_CXX_FLAGS}")
 
-add_message_files(
-    FILES
-    IMUInfo.msg
-    Extrinsics.msg
-    )
-
-generate_messages(
-    DEPENDENCIES
-    sensor_msgs
-    std_msgs
-    )
-
-set(CMAKE_NO_SYSTEM_FROM_IMPORTED true)
+#set(CMAKE_NO_SYSTEM_FROM_IMPORTED true)
 include_directories(
     include
     ${realsense2_INCLUDE_DIR}
-    ${catkin_INCLUDE_DIRS}
     )
 
-# RealSense ROS Node
-catkin_package(
-    LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS message_runtime roscpp sensor_msgs std_msgs
-    nodelet
-    cv_bridge
-    image_transport
-    ddynamic_reconfigure
-    nav_msgs
-    )
 
-add_library(${PROJECT_NAME}
+add_executable(${PROJECT_NAME}
     include/constants.h
     include/realsense_node_factory.h
     include/base_realsense_node.h
-    include/t265_realsense_node.h
+#    include/t265_realsense_node.h
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
-    src/t265_realsense_node.cpp
+#    src/t265_realsense_node.cpp
+    src/realsense_camera_node.cpp
     )
 
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-
-target_include_directories(${PROJECT_NAME}
-  PRIVATE ${realsense2_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME}
     ${realsense2_LIBRARY}
-    ${catkin_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT}
     )
 
-# Install nodelet library
+ament_target_dependencies(${PROJECT_NAME}
+  cv_bridge
+  image_transport
+  realsense2
+  rclcpp
+  realsense_camera_msgs
+  std_msgs
+  sensor_msgs
+  diagnostic_msgs
+  nav_msgs
+  tf2
+  tf2_ros
+)
+# Install binaries
 install(TARGETS ${PROJECT_NAME}
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-    )
+  RUNTIME DESTINATION bin
+)
+
+install(TARGETS ${PROJECT_NAME}
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 # Install header files
-install(DIRECTORY include/
-    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-    )
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
 
-# Install launch files
-install(DIRECTORY launch/
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-    )
+# Install launch files.
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}/
+)
 
-# Install rviz files
-install(DIRECTORY rviz/
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rviz
-    )
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  find_package(OpenCV REQUIRED)
 
-# Install xml files
-install(FILES nodelet_plugins.xml
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-    )
+  ament_lint_auto_find_test_dependencies()
 
+  set(REALSENSE_DEVICE_PLUGIN FALSE)
+  if(${REALSENSE_DEVICE_PLUGIN})
+    ament_add_gtest(test_api test/test_api.cpp)
+  endif()
+  if(TARGET test_api)
+    target_include_directories(test_api PUBLIC
+      ${${PROJECT_NAME}_INCLUDE_DIRS}
+    )
+  ament_target_dependencies(test_api
+    OpenCV
+    rclcpp
+    sensor_msgs
+    diagnostic_msgs
+    nav_msgs
+    tf2
+    tf2_ros)
+  endif()
+endif()
+
+ament_package()

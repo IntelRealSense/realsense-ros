@@ -12,22 +12,26 @@
 
   <author email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</author>
   <author email="doron.hirshberg@intel.com">Doron Hirshberg</author>
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>eigen</depend>
-  <depend>image_transport</depend>
+  <depend>builtin_interfaces</depend>
   <depend>cv_bridge</depend>
-  <depend>nav_msgs</depend>
-  <depend>nodelet</depend>  
-  <depend>genmsg</depend>
-  <depend>roscpp</depend>
+  <depend>image_transport</depend>
+  <depend>rclcpp</depend>
+  <depend>realsense_camera_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
   <depend>std_msgs</depend>
-  <depend>message_runtime</depend>
-  <depend>tf</depend>
-  <depend>ddynamic_reconfigure</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
   <depend>diagnostic_updater</depend>
-  <depend>librealsense2</depend>
+
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>libopencv-dev</test_depend>
+
   <export>
-    <nodelet plugin="${prefix}/nodelet_plugins.xml" />
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

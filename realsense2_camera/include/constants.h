@@ -48,9 +48,9 @@ namespace realsense2_camera
 
     const int IMAGE_WIDTH     = 640;
     const int IMAGE_HEIGHT    = 480;
-    const int IMAGE_FPS       = 30;
+    const double IMAGE_FPS    = 30;
 
-    const int IMU_FPS         = 0;
+    const double IMU_FPS      = 0;
 
 
     const bool ENABLE_DEPTH   = true;
