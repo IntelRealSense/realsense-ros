@@ -83,6 +83,9 @@ Processing enabled by this node:
   <arg name="align_depth"         default="true"/>
   <arg name="filters"             default=""/>
 
+  <arg name="publish_tf"          default="true"/>
+  <arg name="tf_publish_rate"     default="0"/> <!-- 0 - static transform -->
+
   <!-- rgbd_launch specific arguments -->
 
   <!-- Arguments for remapping all device namespaces -->
@@ -153,6 +156,9 @@ Processing enabled by this node:
       <arg name="enable_gyro"              value="$(arg enable_gyro)"/>
       <arg name="enable_accel"             value="$(arg enable_accel)"/>
       <arg name="filters"                  value="$(arg filters)"/>
+
+      <arg name="publish_tf"               value="$(arg publish_tf)"/>
+      <arg name="tf_publish_rate"          value="$(arg tf_publish_rate)"/>
     </include>
 
     <!-- RGB processing -->
