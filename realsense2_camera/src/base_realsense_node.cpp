@@ -154,21 +154,45 @@ BaseRealSenseNode::~BaseRealSenseNode()
 
 void BaseRealSenseNode::toggleSensors(bool enabled)
 {
-    for (auto it=_sensors.begin(); it != _sensors.end(); it++)
+  if(enabled)
+  {
+    std::map<std::string, std::vector<rs2::stream_profile> > profiles;
+    std::map<std::string, rs2::sensor> active_sensors;
+    for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
     {
-        auto& sens = _sensors[it->first];
-        try
+        std::string module_name = _sensors[profile.first].get_info(RS2_CAMERA_INFO_NAME);
+        ROS_INFO_STREAM("insert " << rs2_stream_to_string(profile.second.begin()->stream_type())
+          << " to " << module_name);
+        profiles[module_name].insert(profiles[module_name].begin(),
+                                        profile.second.begin(),
+                                        profile.second.end());
+        active_sensors[module_name] = _sensors[profile.first];
+    }
+
+    for (const std::pair<std::string, std::vector<rs2::stream_profile> >& sensor_profile : profiles)
+    {
+        std::string module_name = sensor_profile.first;
+        rs2::sensor sensor = active_sensors[module_name];
+        sensor.start(_sensors_callback[module_name]);
+        if (sensor.is<rs2::depth_sensor>())
         {
-            if (enabled)
-                sens.start(_syncer);
-            else
-                sens.stop();
-        }
-        catch(const rs2::wrong_api_call_sequence_error& ex)
-        {
-            ROS_DEBUG_STREAM("toggleSensors: " << ex.what());
+            _depth_scale_meters = sensor.as<rs2::depth_sensor>().get_depth_scale();
         }
     }
+  }
+  else
+  {
+    std::set<std::string> module_names;
+    for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
+    {
+        std::string module_name = _sensors[profile.first].get_info(RS2_CAMERA_INFO_NAME);
+        std::pair< std::set<std::string>::iterator, bool> res = module_names.insert(module_name);
+        if (res.second)
+        {
+            _sensors[profile.first].stop();
+        }
+    }
+  }
 }
 
 void BaseRealSenseNode::setupErrorCallback()
