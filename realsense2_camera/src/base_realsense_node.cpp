@@ -406,98 +406,110 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
     {
         rs2_option option = static_cast<rs2_option>(i);
         const std::string option_name(create_graph_resource_name(rs2_option_to_string(option)));
-        if (!sensor.supports(option) || sensor.is_option_read_only(option))
+        try
         {
-            continue;
-        }
-        if (is_checkbox(sensor, option))
-        {
-            auto option_value = bool(sensor.get_option(option));
-            if (nh1.param(option_name, option_value, option_value))
+            if (!sensor.supports(option) || sensor.is_option_read_only(option))
             {
-                sensor.set_option(option, option_value);
+                continue;
             }
-            ddynrec->registerVariable<bool>(
-              option_name, option_value,
-              [option, sensor](bool new_value) { sensor.set_option(option, new_value); },
-              sensor.get_option_description(option));
-            continue;
-        }
-        const auto enum_dict = get_enum_method(sensor, option);
-        if (enum_dict.empty())
-        {
-            rs2::option_range op_range = sensor.get_option_range(option);
-            const auto sensor_option_value = sensor.get_option(option);
-            auto option_value = sensor_option_value;
-            if (nh1.param(option_name, option_value, option_value))
+            if (is_checkbox(sensor, option))
             {
-                if (option_value < op_range.min || op_range.max < option_value)
-                {
-                    ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option_value
-                            << " outside the range [" << op_range.min << ", " << op_range.max
-                            << "]. Using current sensor value " << sensor_option_value << " instead.");
-                    option_value = sensor_option_value;
-                }
-                else
+                auto option_value = bool(sensor.get_option(option));
+                if (nh1.param(option_name, option_value, option_value))
                 {
                     sensor.set_option(option, option_value);
                 }
+                ddynrec->registerVariable<bool>(
+                option_name, option_value,
+                [option, sensor](bool new_value) { sensor.set_option(option, new_value); },
+                sensor.get_option_description(option));
+                continue;
             }
-            if (is_int_option(sensor, option))
+            const auto enum_dict = get_enum_method(sensor, option);
+            if (enum_dict.empty())
             {
-              ddynrec->registerVariable<int>(
-                  option_name, int(option_value),
-                  [option, sensor](int new_value) { sensor.set_option(option, new_value); },
-                  sensor.get_option_description(option), int(op_range.min), int(op_range.max));
+                rs2::option_range op_range = sensor.get_option_range(option);
+                const auto sensor_option_value = sensor.get_option(option);
+                auto option_value = sensor_option_value;
+                if (nh1.param(option_name, option_value, option_value))
+                {
+                    if (option_value < op_range.min || op_range.max < option_value)
+                    {
+                        ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option_value
+                                << " outside the range [" << op_range.min << ", " << op_range.max
+                                << "]. Using current sensor value " << sensor_option_value << " instead.");
+                        option_value = sensor_option_value;
+                    }
+                    else
+                    {
+                        sensor.set_option(option, option_value);
+                    }
+                }
+                if (is_int_option(sensor, option))
+                {
+                ddynrec->registerVariable<int>(
+                    option_name, int(option_value),
+                    [option, sensor](int new_value) { sensor.set_option(option, new_value); },
+                    sensor.get_option_description(option), int(op_range.min), int(op_range.max));
+                }
+                else
+                {
+                    if (i == RS2_OPTION_DEPTH_UNITS)
+                    {
+                        if (ROS_DEPTH_SCALE >= op_range.min && ROS_DEPTH_SCALE <= op_range.max)
+                        {
+                            sensor.set_option(option, ROS_DEPTH_SCALE);
+                            op_range.min = ROS_DEPTH_SCALE;
+                            op_range.max = ROS_DEPTH_SCALE;
+
+                            _depth_scale_meters = ROS_DEPTH_SCALE;
+                        }
+                    }
+                    else
+                    {
+                    ddynrec->registerVariable<double>(
+                        option_name, option_value,
+                        [option, sensor](double new_value) { sensor.set_option(option, new_value); },
+                        sensor.get_option_description(option), double(op_range.min), double(op_range.max));
+                    }
+                }
             }
             else
             {
-                if (i == RS2_OPTION_DEPTH_UNITS)
+                const auto sensor_option_value = sensor.get_option(option);
+                auto option_value = int(sensor_option_value);
+                if (nh1.param(option_name, option_value, option_value))
                 {
-                    if (ROS_DEPTH_SCALE >= op_range.min && ROS_DEPTH_SCALE <= op_range.max)
+                    if (std::find_if(enum_dict.cbegin(), enum_dict.cend(),
+                                    [&option_value](const std::pair<std::string, int>& kv) {
+                                        return kv.second == option_value;
+                                    }) == enum_dict.cend())
                     {
-                        sensor.set_option(option, ROS_DEPTH_SCALE);
-                        op_range.min = ROS_DEPTH_SCALE;
-                        op_range.max = ROS_DEPTH_SCALE;
-
-                        _depth_scale_meters = ROS_DEPTH_SCALE;
+                        ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option_value
+                                                << " that is not in the enum " << enum_dict
+                                                << ". Using current sensor value " << sensor_option_value << " instead.");
+                        option_value = sensor_option_value;
+                    }
+                    else
+                    {
+                        sensor.set_option(option, option_value);
                     }
                 }
-                else
-                {
-                  ddynrec->registerVariable<double>(
-                      option_name, option_value,
-                      [option, sensor](double new_value) { sensor.set_option(option, new_value); },
-                      sensor.get_option_description(option), double(op_range.min), double(op_range.max));
-                }
+                ddynrec->registerEnumVariable<int>(
+                    option_name, option_value,
+                    [option, sensor](int new_value) { sensor.set_option(option, new_value); },
+                    sensor.get_option_description(option), enum_dict);
             }
         }
-        else
+        catch(const rs2::backend_error& e)
         {
-            const auto sensor_option_value = sensor.get_option(option);
-            auto option_value = int(sensor_option_value);
-            if (nh1.param(option_name, option_value, option_value))
-            {
-                if (std::find_if(enum_dict.cbegin(), enum_dict.cend(),
-                                 [&option_value](const std::pair<std::string, int>& kv) {
-                                     return kv.second == option_value;
-                                 }) == enum_dict.cend())
-                {
-                    ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option_value
-                                              << " that is not in the enum " << enum_dict
-                                              << ". Using current sensor value " << sensor_option_value << " instead.");
-                    option_value = sensor_option_value;
-                }
-                else
-                {
-                    sensor.set_option(option, option_value);
-                }
-            }
-            ddynrec->registerEnumVariable<int>(
-                option_name, option_value,
-                [option, sensor](int new_value) { sensor.set_option(option, new_value); },
-                sensor.get_option_description(option), enum_dict);
+            ROS_WARN_STREAM("Failed to set option: " << option_name << ": " << e.what());
         }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+        
     }
     ddynrec->publishServicesTopics();
     _ddynrec.push_back(ddynrec);
