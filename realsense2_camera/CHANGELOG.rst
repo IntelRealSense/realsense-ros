@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.16 (2020-08-06)
+-------------------
 * Add PID to support D455.
 * Improve instability of dynamic reconfigurable options.
 * rs_camera.lauch: add "enable_infra" for L515 support.
