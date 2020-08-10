@@ -1,4 +1,4 @@
-# ROS Wrapper for Intel&reg; RealSense&trade; Devices
+# ROS2 Wrapper for Intel&reg; RealSense&trade; Devices
 These are packages for using Intel RealSense cameras (D400 series SR300 camera and T265 Tracking Module) with ROS2.
 
 LibRealSense supported version: v2.36.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
@@ -12,7 +12,7 @@ Therefor, any comments as to incorrect or prefered topic names, parameters, usag
 ## Installation Instructions
 This version supports ROS2 eloquent on Ubuntu 18.04.
 
-   ### Step 1: Install the ROS distribution
+   ### Step 1: Install the ROS2 distribution
    - #### Install [ROS2 Eloquent](https://index.ros.org/doc/ros2/Installation/Eloquent/Linux-Install-Debians/), on Ubuntu 18.04.
 
    ```bash
@@ -42,13 +42,13 @@ This version supports ROS2 eloquent on Ubuntu 18.04.
    - #### Build from sources by downloading the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/tag/v2.37.0) and follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md)
 
 
-   ### Step 3: Install Intel&reg; RealSense&trade; ROS from Sources
+   ### Step 3: Install Intel&reg; RealSense&trade; ROS2 wrapper from Sources
    - Create a ROS2 workspace
    ```bash
    mkdir -p ~/ros2_ws/src
    cd ~/ros2_ws/src/
    ```
-   - Clone the latest Intel&reg; RealSense&trade; ROS from [here](https://github.com/intel-ros/realsense/releases) into 'catkin_ws/src/'
+   - Clone the latest Eloquent Intel&reg; RealSense&trade;  wrapper from [here](https://github.com/IntelRealSense/realsense-ros.git) into '~/ros2_ws/src/'
    ```bashrc
    git clone https://github.com/IntelRealSense/realsense-ros.git -b eloquent
    cd ~/ros2_ws
@@ -79,17 +79,21 @@ This version supports ROS2 eloquent on Ubuntu 18.04.
 To start the camera node in ROS:
 
 ```bash
-  ros2 launch realsense2_camera rs.launch.py 
+  ros2 run realsense2_node realsense2_node 
+```
+or, with parameters, for example - pointcloud enabled:
+```bash
+ros2 run realsense2_node realsense2_node --ros-args -p filters:=pointcloud
 ```
 
 This will stream all camera sensors and publish on the appropriate ROS topics.
 
 ## Known Issues
-* Modify parameters on command line.
 * Reconfigure parameters on runtime is missing.
 * Topic names miss node namespace.
 * No support for T265.
 * Missing descriptive files (realsense2_description package).
+* ROS2 optimizations
 
 ## License
 Copyright 2018 Intel Corporation
