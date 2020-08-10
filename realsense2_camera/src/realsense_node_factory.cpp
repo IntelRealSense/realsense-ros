@@ -249,7 +249,6 @@ void RealSenseNodeFactory::init()
 		std::cin.get();
 #endif
 		_serial_no = declare_parameter("serial_no", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
-		ROS_INFO_STREAM("_serial_no: " << _serial_no);
 		_usb_port_id = declare_parameter("usb_port_id", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
 		_device_type = declare_parameter("device_type", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
 
