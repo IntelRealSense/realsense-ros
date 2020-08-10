@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
 project(realsense2_camera)
 
-# ROS2 Flags
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
+
+# Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
@@ -50,20 +55,18 @@ if(UNIX OR APPLE)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_FORTIFY_SOURCE=2")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
 endif()
-find_package(ament_cmake REQUIRED)
-find_package(builtin_interfaces REQUIRED)
-find_package(cv_bridge REQUIRED)
-find_package(image_transport REQUIRED)
-#find_package(librealsense2 REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(realsense_camera_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(diagnostic_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(diagnostic_updater REQUIRED)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+if (${uppercase_CMAKE_BUILD_TYPE} STREQUAL "RELEASE")
+    message(STATUS "Create Release Build.")
+    set(CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}")
+else()
+    message(STATUS "Create Debug Build.")
+endif()
 
 if(BUILD_WITH_OPENMP)
     find_package(OpenMP)
@@ -80,23 +83,27 @@ if(SET_USER_BREAK_AT_STARTUP)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBPDEBUG")
 endif()
 
+
+find_package(ament_cmake REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(image_transport REQUIRED)
+#find_package(librealsense2 REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(realsense_camera_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(diagnostic_updater REQUIRED)
+
 find_package(realsense2 2.35.2)
 if(NOT realsense2_FOUND)
     message(FATAL_ERROR "\n\n Intel RealSense SDK 2.0 is missing, please install it from https://github.com/IntelRealSense/librealsense/releases\n\n")
 endif()
-
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-endif()
-
-string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
-if (${uppercase_CMAKE_BUILD_TYPE} STREQUAL "RELEASE")
-    message(STATUS "Create Release Build.")
-    set(CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}")
-else()
-    message(STATUS "Create Debug Build.")
-endif()
-
 
 #set(CMAKE_NO_SYSTEM_FROM_IMPORTED true)
 include_directories(
@@ -104,8 +111,9 @@ include_directories(
     ${realsense2_INCLUDE_DIR}
     )
 
+set(node_plugins "")
 
-add_executable(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
     include/constants.h
     include/realsense_node_factory.h
     include/base_realsense_node.h
@@ -113,7 +121,6 @@ add_executable(${PROJECT_NAME}
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
 #    src/t265_realsense_node.cpp
-    src/realsense_camera_node.cpp
     )
 
 
@@ -126,6 +133,7 @@ ament_target_dependencies(${PROJECT_NAME}
   image_transport
   realsense2
   rclcpp
+  rclcpp_components
   realsense_camera_msgs
   std_msgs
   sensor_msgs
@@ -134,26 +142,26 @@ ament_target_dependencies(${PROJECT_NAME}
   tf2
   tf2_ros
 )
+
+rclcpp_components_register_nodes(${PROJECT_NAME} "realsense2_camera::RealSenseNodeFactory")
+set(node_plugins "${node_plugins}realsense2_camera::RealSenseNodeFactory;$<TARGET_FILE:${PROJECT_NAME}>\n")
+
 # Install binaries
 install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
 
-install(TARGETS ${PROJECT_NAME}
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-# Install header files
 install(
   DIRECTORY include/
   DESTINATION include
 )
 
-# Install launch files.
-install(DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME}/
-)
+# Install launch files
+install(DIRECTORY launch/
+    DESTINATION launch
+    )
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -179,5 +187,8 @@ if(BUILD_TESTING)
     tf2_ros)
   endif()
 endif()
+
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
 
 ament_package()

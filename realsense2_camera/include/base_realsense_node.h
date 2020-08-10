@@ -5,17 +5,21 @@
 #ifndef ___BASE_REALSENSE_NODE_HEADER___
 #define ___BASE_REALSENSE_NODE_HEADER___
 
-#include "../include/realsense_node_factory.h"
-// #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
+#include <librealsense2/rs.hpp>
+#include <librealsense2/rsutil.h>
+#include "constants.h"
+#include <cv_bridge/cv_bridge.h>
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <diagnostic_updater/update_functions.hpp>
 #include <diagnostic_updater/publisher.hpp>
-// #include <sensor_msgs/CameraInfo.h>
-// #include <sensor_msgs/PointCloud2.h>
-// #include <sensor_msgs/point_cloud2_iterator.h>
-// #include <sensor_msgs/Imu.h>
 // #include <nav_msgs/Odometry.h>
+#include <image_transport/image_transport.h>
+#include "realsense_camera_msgs/msg/imu_info.hpp"
+#include "realsense_camera_msgs/msg/extrinsics.hpp"
+#include <librealsense2/hpp/rs_processing.hpp>
+#include <librealsense2/rs_advanced_mode.hpp>
+
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
@@ -25,10 +29,10 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+#include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
-// #include <tf/transform_broadcaster.h>
-// #include <tf2_ros/static_transform_broadcaster.h>
+#include <eigen3/Eigen/Geometry>
 #include <condition_variable>
 
 #include <queue>
@@ -41,15 +45,28 @@ using realsense_camera_msgs::msg::IMUInfo;
 
 namespace realsense2_camera
 {
-    class Print
-    {
-        public:
+    typedef std::pair<rs2_stream, int> stream_index_pair;
 
-        Print(std::string msg)
-        {
-            std::cout << msg << std::endl;
-        }
-    };
+    const stream_index_pair COLOR{RS2_STREAM_COLOR, 0};
+    const stream_index_pair DEPTH{RS2_STREAM_DEPTH, 0};
+    const stream_index_pair INFRA0{RS2_STREAM_INFRARED, 0};
+    const stream_index_pair INFRA1{RS2_STREAM_INFRARED, 1};
+    const stream_index_pair INFRA2{RS2_STREAM_INFRARED, 2};
+    const stream_index_pair FISHEYE{RS2_STREAM_FISHEYE, 0};
+    const stream_index_pair FISHEYE1{RS2_STREAM_FISHEYE, 1};
+    const stream_index_pair FISHEYE2{RS2_STREAM_FISHEYE, 2};
+    const stream_index_pair GYRO{RS2_STREAM_GYRO, 0};
+    const stream_index_pair ACCEL{RS2_STREAM_ACCEL, 0};
+    const stream_index_pair POSE{RS2_STREAM_POSE, 0};
+    
+
+    const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA0, INFRA1, INFRA2,
+                                                          COLOR,
+                                                          FISHEYE,
+                                                          FISHEYE1, FISHEYE2};
+
+    const std::vector<stream_index_pair> HID_STREAMS = {GYRO, ACCEL, POSE};
+
 
     class Diagnostics
     {
@@ -67,7 +84,6 @@ namespace realsense2_camera
                     status.add(entry.first, entry.second);
                 }
                 status.summary(0, "OK");
-                // status.add("Index", _crnt_temp);
             }
             void Add(const std::string& name, 
                 const diagnostic_updater::FrequencyStatusParam& param)
@@ -139,10 +155,10 @@ namespace realsense2_camera
             bool                                                _is_enabled;
     };
 
-    class BaseRealSenseNode : public InterfaceRealSenseNode
+    class BaseRealSenseNode
     {
     public:
-        BaseRealSenseNode(rclcpp::Node::SharedPtr node,
+        BaseRealSenseNode(rclcpp::Node& node,
                           rs2::device dev, const std::string& serial_no,
                           std::shared_ptr<diagnostic_updater::Updater> diagnostic_updater);
         ~BaseRealSenseNode();
@@ -180,15 +196,11 @@ namespace realsense2_camera
         std::map<stream_index_pair, std::string> _frame_id;
         std::map<stream_index_pair, std::string> _optical_frame_id;
         std::map<stream_index_pair, std::string> _depth_aligned_frame_id;
-        Print _print0;     
-        rclcpp::Node::SharedPtr _node;
-        Print _print1;
+        rclcpp::Node& _node;
         bool _align_depth;
         std::vector<rs2_option> _monitor_options;
         rclcpp::Logger _logger;
-        Print _print2;
         Diagnostics _rs_diagnostic_updater;
-        Print _print3;
 
         virtual void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile);
         void publishTopics();
@@ -259,7 +271,8 @@ namespace realsense2_camera
         void pose_callback(rs2::frame frame);
         void multiple_message_callback(rs2::frame frame, imu_sync_method sync_method);
         void frame_callback(rs2::frame frame);
-        // void registerDynamicOption(ros::NodeHandle& nh, rs2::options sensor, std::string& module_name);
+        void registerDynamicOption(rs2::options sensor, std::string& module_name);
+        void registerDynamicReconfigCb();
         // void readAndSetDynamicParam(ros::NodeHandle& nh1, std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec, const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, int* option_value);
         // void registerAutoExposureROIOptions(ros::NodeHandle& nh);
         void set_auto_exposure_roi(const std::string option_name, rs2::sensor sensor, int new_value);
@@ -271,7 +284,6 @@ namespace realsense2_camera
         rs2::device _dev;
         std::map<stream_index_pair, rs2::sensor> _sensors;
         std::map<std::string, std::function<void(rs2::frame)>> _sensors_callback;
-        // std::vector<std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure>> _ddynrec;
 
         std::string _json_file_path;
         std::string _serial_no;
@@ -298,7 +310,6 @@ namespace realsense2_camera
         std::shared_ptr<std::thread> _tf_t;
 
         std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics> _image_publishers;
-        // std::map<stream_index_pair, image_transport::Publisher> _image_publishers_base;
         
         std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr> _imu_publishers;
         std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> _odom_publisher;
@@ -342,8 +353,6 @@ namespace realsense2_camera
         std::map<rs2_stream, bool> _is_first_frame;
         std::map<rs2_stream, std::vector<std::function<void()> > > _video_functions_stack;
 
-        // typedef std::pair<rs2_option, std::shared_ptr<TemperatureDiagnostics>> OptionTemperatureDiag;
-        // std::vector< OptionTemperatureDiag > _temperature_nodes;
         std::shared_ptr<std::thread> _monitoring_t;
         mutable std::condition_variable _cv;
 

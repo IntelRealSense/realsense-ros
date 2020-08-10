@@ -14,6 +14,19 @@
 /* Return version in "X.Y.Z" format */
 #define REALSENSE_ROS_VERSION_STR (VAR_ARG_STRING(REALSENSE_ROS_MAJOR_VERSION.REALSENSE_ROS_MINOR_VERSION.REALSENSE_ROS_PATCH_VERSION))
 
+#define ROS_DEBUG(...) RCLCPP_DEBUG(_logger, __VA_ARGS__)
+#define ROS_INFO(...) RCLCPP_INFO(_logger, __VA_ARGS__)
+#define ROS_WARN(...) RCLCPP_WARN(_logger, __VA_ARGS__)
+#define ROS_ERROR(...) RCLCPP_ERROR(_logger, __VA_ARGS__)
+#define ROS_DEBUG_STREAM(msg) RCLCPP_DEBUG_STREAM(_logger, msg)
+#define ROS_INFO_STREAM(msg) RCLCPP_INFO_STREAM(_logger, msg)
+#define ROS_WARN_STREAM(msg) RCLCPP_WARN_STREAM(_logger, msg)
+#define ROS_ERROR_STREAM(msg) RCLCPP_ERROR_STREAM(_logger, msg)
+#define ROS_FATAL_STREAM(msg) RCLCPP_FATAL_STREAM(_logger, msg)
+
+#define ROS_WARN_COND(cond, ...) RCLCPP_WARN_EXPRESSION(_logger, cond, __VA_ARGS__)
+#define ROS_WARN_STREAM_COND(cond, msg) RCLCPP_WARN_STREAM_EXPRESSION(_logger, cond, msg)
+
 namespace realsense2_camera
 {
     const uint16_t SR300_PID        = 0x0aa5; // SR300
@@ -32,7 +45,10 @@ namespace realsense2_camera
     const uint16_t RS460_PID        = 0x0b03; // DS5U
     const uint16_t RS435_RGB_PID    = 0x0b07; // AWGC
     const uint16_t RS435i_RGB_PID   = 0x0B3A; // AWGC_MM
+    const uint16_t RS465_PID        = 0x0b4d; // D465
+    const uint16_t RS416_RGB_PID    = 0x0B52; // F416 RGB
     const uint16_t RS405_PID        = 0x0b0c; // DS5U
+    const uint16_t RS455_PID        = 0x0B5C; // D455
     const uint16_t RS_T265_PID      = 0x0b37; // 
     const uint16_t RS_L515_PID_PRE_PRQ = 0x0B3D; // 
     const uint16_t RS_L515_PID      = 0x0B64; // 
@@ -91,5 +107,4 @@ namespace realsense2_camera
     const std::string DEFAULT_TOPIC_ODOM_IN            = "";
 
     const float ROS_DEPTH_SCALE = 0.001;
-    using stream_index_pair = std::pair<rs2_stream, int>;
 }  // namespace realsense2_camera
