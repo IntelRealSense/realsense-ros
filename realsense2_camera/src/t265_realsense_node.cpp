@@ -24,7 +24,7 @@ void T265RealsenseNode::initializeOdometryInput()
         return;
     }
     std::ifstream calibrationFile(calib_odom_file);
-    if (not calibrationFile)
+    if (!calibrationFile)
     {
         ROS_FATAL_STREAM("calibration_odometry file not found. calib_odom_file = " << calib_odom_file);
         throw std::runtime_error("calibration_odometry file not found" );
@@ -49,7 +49,7 @@ void T265RealsenseNode::publishTopics()
 
 void T265RealsenseNode::setupSubscribers()
 {
-    if (not _use_odom_in) return;
+    if (!_use_odom_in) return;
 
     std::string topic_odom_in;
     _pnh.param("topic_odom_in", topic_odom_in, DEFAULT_TOPIC_ODOM_IN);
