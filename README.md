@@ -32,6 +32,8 @@ The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but 
     export ROS_VER=melodic 
     ```
     
+    Then install the ros packages using the environment variables created above:
+    
     ```sudo apt-get install ros-$ROS_VER-realsense2-camera```
 
     This will install both realsense2_camera and its dependents, including librealsense2 library.
