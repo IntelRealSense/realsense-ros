@@ -2,6 +2,11 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix for ROS on Windows
+* Contributors: Lou Amadio, doronhi
+
 2.2.16 (2020-08-06)
 -------------------
 * Add PID to support D455.
