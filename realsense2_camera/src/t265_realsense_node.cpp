@@ -69,9 +69,11 @@ void T265RealsenseNode::odom_in_callback(const nav_msgs::Odometry::ConstPtr& msg
     _wo_snr.send_wheel_odometry(0, 0, velocity);
 }
 
-void T265RealsenseNode::calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile)
+void T265RealsenseNode::calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile)
 {
     // Transform base to stream
+    stream_index_pair sip(profile.stream_type(), profile.stream_index());
+
     tf::Quaternion quaternion_optical;
     quaternion_optical.setRPY(M_PI / 2, 0.0, -M_PI / 2);    //Pose To ROS
     float3 zero_trans{0, 0, 0};
@@ -81,7 +83,7 @@ void T265RealsenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
     rs2_extrinsics ex;
     try
     {
-        ex = getAProfile(stream).get_extrinsics_to(base_profile);
+        ex = profile.get_extrinsics_to(base_profile);
     }
     catch (std::exception& e)
     {
@@ -99,21 +101,22 @@ void T265RealsenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
     auto Q = rotationMatrixToQuaternion(ex.rotation);
     Q = quaternion_optical * Q * quaternion_optical.inverse();
     float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
-    if (stream == POSE)
-    {
-        Q = Q.inverse();
-        publish_static_tf(transform_ts_, trans, Q, _frame_id[stream], _base_frame_id);
-    }
-    else
-    {
-        publish_static_tf(transform_ts_, trans, Q, _base_frame_id, _frame_id[stream]);
-        publish_static_tf(transform_ts_, zero_trans, quaternion_optical, _frame_id[stream], _optical_frame_id[stream]);
+    // TODO: Fix static transform publication:
+    // if (stream == POSE)
+    // {
+    //     Q = Q.inverse();
+    //     publish_static_tf(transform_ts_, trans, Q, _frame_id[stream], _base_frame_id);
+    // }
+    // else
+    // {
+    //     publish_static_tf(transform_ts_, trans, Q, _base_frame_id, _frame_id[stream]);
+    //     publish_static_tf(transform_ts_, zero_trans, quaternion_optical, _frame_id[stream], _optical_frame_id[stream]);
 
-        // Add align_depth_to if exist:
-        if (_align_depth && _depth_aligned_frame_id.find(stream) != _depth_aligned_frame_id.end())
-        {
-            publish_static_tf(transform_ts_, trans, Q, _base_frame_id, _depth_aligned_frame_id[stream]);
-            publish_static_tf(transform_ts_, zero_trans, quaternion_optical, _depth_aligned_frame_id[stream], _optical_frame_id[stream]);
-        }
-    }
+    //     // Add align_depth_to if exist:
+    //     if (_align_depth && _depth_aligned_frame_id.find(stream) != _depth_aligned_frame_id.end())
+    //     {
+    //         publish_static_tf(transform_ts_, trans, Q, _base_frame_id, _depth_aligned_frame_id[stream]);
+    //         publish_static_tf(transform_ts_, zero_trans, quaternion_optical, _depth_aligned_frame_id[stream], _optical_frame_id[stream]);
+    //     }
+    // }
 }

@@ -23,6 +23,7 @@
 #define ROS_WARN_STREAM(msg) RCLCPP_WARN_STREAM(_logger, msg)
 #define ROS_ERROR_STREAM(msg) RCLCPP_ERROR_STREAM(_logger, msg)
 #define ROS_FATAL_STREAM(msg) RCLCPP_FATAL_STREAM(_logger, msg)
+#define ROS_INFO_STREAM_ONCE(msg) RCLCPP_INFO_STREAM_ONCE(_logger, msg)
 
 #define ROS_WARN_COND(cond, ...) RCLCPP_WARN_EXPRESSION(_logger, cond, __VA_ARGS__)
 #define ROS_WARN_STREAM_COND(cond, msg) RCLCPP_WARN_STREAM_EXPRESSION(_logger, cond, msg)
@@ -79,28 +80,8 @@ namespace realsense2_camera
     const bool PUBLISH_ODOM_TF = true;
 
 
-    const std::string DEFAULT_BASE_FRAME_ID            = "camera_link";
     const std::string DEFAULT_ODOM_FRAME_ID            = "odom_frame";
-    const std::string DEFAULT_DEPTH_FRAME_ID           = "camera_depth_frame";
-    const std::string DEFAULT_INFRA1_FRAME_ID          = "camera_infra1_frame";
-    const std::string DEFAULT_INFRA2_FRAME_ID          = "camera_infra2_frame";
-    const std::string DEFAULT_COLOR_FRAME_ID           = "camera_color_frame";
-    const std::string DEFAULT_FISHEYE_FRAME_ID         = "camera_fisheye_frame";
-    const std::string DEFAULT_IMU_FRAME_ID             = "camera_imu_frame";
-
-    const std::string DEFAULT_DEPTH_OPTICAL_FRAME_ID   = "camera_depth_optical_frame";
-    const std::string DEFAULT_INFRA1_OPTICAL_FRAME_ID  = "camera_infra1_optical_frame";
-    const std::string DEFAULT_INFRA2_OPTICAL_FRAME_ID  = "camera_infra2_optical_frame";
-    const std::string DEFAULT_COLOR_OPTICAL_FRAME_ID   = "camera_color_optical_frame";
-    const std::string DEFAULT_FISHEYE_OPTICAL_FRAME_ID = "camera_fisheye_optical_frame";
-    const std::string DEFAULT_ACCEL_OPTICAL_FRAME_ID   = "camera_accel_optical_frame";
-    const std::string DEFAULT_GYRO_OPTICAL_FRAME_ID    = "camera_gyro_optical_frame";
     const std::string DEFAULT_IMU_OPTICAL_FRAME_ID     = "camera_imu_optical_frame";
-
-    const std::string DEFAULT_ALIGNED_DEPTH_TO_COLOR_FRAME_ID = "camera_aligned_depth_to_color_frame";
-    const std::string DEFAULT_ALIGNED_DEPTH_TO_INFRA1_FRAME_ID = "camera_aligned_depth_to_infra1_frame";
-    const std::string DEFAULT_ALIGNED_DEPTH_TO_INFRA2_FRAME_ID = "camera_aligned_depth_to_infra2_frame";
-    const std::string DEFAULT_ALIGNED_DEPTH_TO_FISHEYE_FRAME_ID = "camera_aligned_depth_to_fisheye_frame";
 
     const std::string DEFAULT_UNITE_IMU_METHOD         = "";
     const std::string DEFAULT_FILTERS                  = "";
