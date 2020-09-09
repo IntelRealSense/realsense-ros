@@ -4,9 +4,9 @@
 using namespace realsense2_camera;
 using namespace rs2;
 
-VideoSensor::VideoSensor(rclcpp::Node& node, rs2::sensor sensor,
+VideoSensor::VideoSensor(rs2::sensor sensor, rclcpp::Node& node,
                          std::function<void(rs2::frame)> frame_callback): 
-    RosSensor(node, sensor, frame_callback) 
+    RosSensor(sensor, node, frame_callback) 
 {
     _allowed_formats[RS2_STREAM_INFRARED] = RS2_FORMAT_Y8;
 }

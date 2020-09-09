@@ -11,13 +11,12 @@ namespace realsense2_camera
 {
     typedef std::pair<rs2_stream, int> stream_index_pair;
 
-    class RosSensor
+    class RosSensor : public rs2::sensor
     {
         public:
-            RosSensor(rclcpp::Node& node, 
-                      rs2::sensor sensor,
-                      std::function<void(rs2::frame)> frame_callback):
-                _sensor(sensor),
+            RosSensor(rs2::sensor sensor,
+                      rclcpp::Node& node, 
+                      std::function<void(rs2::frame)> frame_callback): rs2::sensor(sensor),
                 _node(node),
                 _logger(rclcpp::get_logger("RealSenseCameraNode")),
                 _frame_callback(frame_callback)
@@ -27,7 +26,6 @@ namespace realsense2_camera
             virtual void getUpdatedProfileParameters(const rs2::stream_profile& profile) = 0;
             virtual bool isWantedProfile(const rs2::stream_profile& profile) = 0;
             
-            const rs2::sensor& getSensor() const {return _sensor;};
             ////////////////////////////////////////////////////////////
             // updateProfiles():
             // return: a vector of profiles matching the updated parameters of an empty one if active profiles matches parameters.
@@ -58,7 +56,7 @@ namespace realsense2_camera
     class VideoSensor : public RosSensor
     {
         public:
-            VideoSensor(rclcpp::Node& node, rs2::sensor sensor,
+            VideoSensor(rs2::sensor sensor, rclcpp::Node& node,
                         std::function<void(rs2::frame)> frame_callback);
             void getUpdatedSensorParameters() override;
             void getUpdatedProfileParameters(const rs2::stream_profile& profile) override;        
@@ -73,7 +71,7 @@ namespace realsense2_camera
     class ImuSensor : public RosSensor
     {
         public:
-            ImuSensor(rclcpp::Node& node, rs2::sensor sensor,
+            ImuSensor(rs2::sensor sensor, rclcpp::Node& node,
                       std::function<void(rs2::frame)> frame_callback);
             void getUpdatedSensorParameters() override;
             void getUpdatedProfileParameters(const rs2::stream_profile& profile) override;        
@@ -87,7 +85,7 @@ namespace realsense2_camera
     // class PoseSensor : public RosSensor
     // {
     //     public:
-    //         PoseSensor(rclcpp::Node& node, rs2::sensor sensor,
+    //         PoseSensor(rs2::sensor sensor, rclcpp::Node& node,
     //                   std::function<void(rs2::frame)> frame_callback): RosSensor(node, sensor, frame_callback) 
     //         {
     //             _stream_name[RS2_STREAM_POSE] = "pose";

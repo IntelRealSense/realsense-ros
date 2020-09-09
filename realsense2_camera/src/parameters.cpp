@@ -316,11 +316,12 @@ void BaseRealSenseNode::registerDynamicOption(rs2::options sensor, std::string& 
     // _ddynrec.push_back(ddynrec);
 }
 
-void BaseRealSenseNode::registerDynamicReconfigCb()
+void BaseRealSenseNode::registerDynamicParameters()
 {
-    ROS_INFO("Setting Dynamic reconfig parameters.");
+    ROS_INFO("Setting Dynamic parameters.");
 
     for(rs2::sensor sensor : _dev_sensors)
+    // for(auto&& sensor : _available_ros_sensors)
     {
         std::string module_name = create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
         ROS_DEBUG_STREAM("module_name:" << module_name);

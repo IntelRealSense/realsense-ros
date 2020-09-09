@@ -4,9 +4,9 @@
 using namespace realsense2_camera;
 using namespace rs2;
 
-ImuSensor::ImuSensor(rclcpp::Node& node, rs2::sensor sensor,
+ImuSensor::ImuSensor(rs2::sensor sensor, rclcpp::Node& node,
                      std::function<void(rs2::frame)> frame_callback): 
-    RosSensor(node, sensor, frame_callback) 
+    RosSensor(sensor, node, frame_callback) 
 {
 }
 
