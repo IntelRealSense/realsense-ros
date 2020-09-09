@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.17 (2020-09-09)
+-------------------
 * Fix for ROS on Windows
 * Contributors: Lou Amadio, doronhi
 
