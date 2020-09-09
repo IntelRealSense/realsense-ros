@@ -21,6 +21,7 @@
 #include <eigen3/Eigen/Geometry>
 #include <fstream>
 #include <thread>
+#include <std_srvs/Empty.h>
 
 namespace realsense2_camera
 {
@@ -35,7 +36,6 @@ namespace realsense2_camera
     const stream_index_pair GYRO{RS2_STREAM_GYRO, 0};
     const stream_index_pair ACCEL{RS2_STREAM_ACCEL, 0};
     const stream_index_pair POSE{RS2_STREAM_POSE, 0};
-    
 
     const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA0, INFRA1, INFRA2,
                                                           COLOR,
@@ -58,19 +58,25 @@ namespace realsense2_camera
     public:
         RealSenseNodeFactory();
         virtual ~RealSenseNodeFactory();
-
     private:
         void closeDevice();
         void StartDevice();
         void change_device_callback(rs2::event_information& info);
         void getDevice(rs2::device_list list);
         virtual void onInit() override;
+        void initialize(const ros::WallTimerEvent &ignored);
         void tryGetLogSeverity(rs2_log_severity& severity) const;
+        bool shutdown();
+        bool reset();
+        bool handleShutdown(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+        bool handleReset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+        void dataMonitor(const ros::TimerEvent &e);
         static std::string parse_usb_port(std::string line);
         bool toggle_sensor_callback(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
 
         rs2::device _device;
-        std::unique_ptr<InterfaceRealSenseNode> _realSenseNode;
+
+        std::shared_ptr<InterfaceRealSenseNode> _realSenseNode;
         rs2::context _ctx;
         std::string _serial_no;
         std::string _usb_port_id;
@@ -79,6 +85,15 @@ namespace realsense2_camera
         std::thread _query_thread;
         bool _is_alive;
         ros::ServiceServer toggle_sensor_srv;
+        bool _initialized;
+        double _data_timeout;
 
+        enum TimeoutAction { TIMEOUT_WARN, TIMEOUT_RESET, TIMEOUT_SHUTDOWN };
+        TimeoutAction _timeout_action;
+
+        ros::WallTimer _init_timer;
+        ros::Timer _data_monitor_timer;
+        ros::ServiceServer _shutdown_srv;
+        ros::ServiceServer _reset_srv;
     };
 }//end namespace

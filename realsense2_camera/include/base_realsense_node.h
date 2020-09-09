@@ -20,7 +20,9 @@
 #include <queue>
 #include <mutex>
 #include <atomic>
+#include <string>
 #include <thread>
+#include <vector>
 
 namespace realsense2_camera
 {
@@ -128,6 +130,8 @@ namespace realsense2_camera
         virtual void registerDynamicReconfigCb(ros::NodeHandle& nh) override;
         virtual ~BaseRealSenseNode();
 
+        bool checkTopics(const ros::Time& timeout, std::vector<std::string>& stale_topics);
+
     public:
         enum imu_sync_method{NONE, COPY, LINEAR_INTERPOLATION};
 
@@ -221,7 +225,8 @@ namespace realsense2_camera
                           std::map<stream_index_pair, sensor_msgs::CameraInfo>& camera_info,
                           const std::map<stream_index_pair, std::string>& optical_frame_id,
                           const std::map<rs2_stream, std::string>& encoding,
-                          bool copy_data_from_frame = true);
+                          bool copy_data_from_frame = true,
+                          bool aligned = false);
         bool getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile);
 
         void publishAlignedDepthToOthers(rs2::frameset frames, const ros::Time& t);

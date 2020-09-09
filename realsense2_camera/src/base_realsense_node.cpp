@@ -143,18 +143,19 @@ BaseRealSenseNode::~BaseRealSenseNode()
     std::set<std::string> module_names;
     for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
     {
-        std::string module_name = _sensors[profile.first].get_info(RS2_CAMERA_INFO_NAME);
-        std::pair< std::set<std::string>::iterator, bool> res = module_names.insert(module_name);
-        if (res.second)
+        try
         {
-            try
+            std::string module_name = _sensors[profile.first].get_info(RS2_CAMERA_INFO_NAME);
+            std::pair< std::set<std::string>::iterator, bool> res = module_names.insert(module_name);
+            if (res.second)
             {
                 _sensors[profile.first].stop();
                 _sensors[profile.first].close();
             }
-            catch(const rs2::wrong_api_call_sequence_error& e)
-            {
-            }
+        }
+        catch (const rs2::error& e)
+        {
+            ROS_ERROR_STREAM("Exception: " << e.what());
         }
     }
 }
@@ -869,6 +870,9 @@ void BaseRealSenseNode::setupPublishers()
             _image_publishers[stream] = {image_transport.advertise(image_raw.str(), 1), frequency_diagnostics};
             _info_publisher[stream] = _node_handle.advertise<sensor_msgs::CameraInfo>(camera_info.str(), 1);
 
+            addMonitoredTopic(stream, TOPIC_IMAGE, image_raw.str());
+            addMonitoredTopic(stream, TOPIC_INFO, camera_info.str());
+
             if (_align_depth && (stream != DEPTH) && stream.second < 2)
             {
                 std::stringstream aligned_image_raw, aligned_camera_info;
@@ -879,11 +883,15 @@ void BaseRealSenseNode::setupPublishers()
                 std::shared_ptr<FrequencyDiagnostics> frequency_diagnostics(new FrequencyDiagnostics(_fps[stream], aligned_stream_name, _serial_no));
                 _depth_aligned_image_publishers[stream] = {image_transport.advertise(aligned_image_raw.str(), 1), frequency_diagnostics};
                 _depth_aligned_info_publisher[stream] = _node_handle.advertise<sensor_msgs::CameraInfo>(aligned_camera_info.str(), 1);
+
+            addMonitoredTopic(stream, TOPIC_ALIGNED_IMAGE, aligned_image_raw.str());
+            addMonitoredTopic(stream, TOPIC_ALIGNED_INFO, aligned_camera_info.str());
             }
 
             if (stream == DEPTH && _pointcloud)
             {
                 _pointcloud_publisher = _node_handle.advertise<sensor_msgs::PointCloud2>("depth/color/points", 1);
+                addMonitoredTopic(stream, TOPIC_POINTS, "depth/color/points");
             }
         }
     }
@@ -894,22 +902,34 @@ void BaseRealSenseNode::setupPublishers()
         ROS_INFO("Start publisher IMU");
         _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node_handle.advertise<sensor_msgs::Imu>("imu", 5));
         _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
+
+        _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("imu_info", 1, true);
+
+        addMonitoredTopic(GYRO, TOPIC_IMU, "imu");
+        addMonitoredTopic(GYRO, TOPIC_INFO, "imu_info");
     }
     else
     {
         if (_enable[GYRO])
         {
             _imu_publishers[GYRO] = _node_handle.advertise<sensor_msgs::Imu>("gyro/sample", 100);
+            _info_publisher[GYRO] = _node_handle.advertise<IMUInfo>("gyro/imu_info", 1, true);
+            addMonitoredTopic(GYRO, TOPIC_IMU, "gyro/sample");
+            addMonitoredTopic(GYRO, TOPIC_INFO, "gyro/imu_info");
         }
 
         if (_enable[ACCEL])
         {
             _imu_publishers[ACCEL] = _node_handle.advertise<sensor_msgs::Imu>("accel/sample", 100);
+            _info_publisher[ACCEL] = _node_handle.advertise<IMUInfo>("accel/imu_info", 1, true);
+            addMonitoredTopic(GYRO, TOPIC_IMU, "accel/sample");
+            addMonitoredTopic(GYRO, TOPIC_INFO, "accel/imu_info");
         }
     }
     if (_enable[POSE])
     {
         _imu_publishers[POSE] = _node_handle.advertise<nav_msgs::Odometry>("odom/sample", 100);
+        addMonitoredTopic(POSE, TOPIC_ODOM, "odom/sample");
     }
 
 
@@ -936,6 +956,47 @@ void BaseRealSenseNode::setupPublishers()
     {
         _depth_to_other_extrinsics_publishers[INFRA2] = _node_handle.advertise<Extrinsics>("extrinsics/depth_to_infra2", 1, true);
     }
+}
+
+void BaseRealSenseNode::addMonitoredTopic(const stream_index_pair& stream, Topic topic, const std::string& name)
+{
+    const std::lock_guard<std::mutex> lock(_topic_monitor_mutex);
+    TopicInfo info;
+    info.name = name;
+    info.resolved_name = _node_handle.resolveName(name);
+    info.last_published = ros::TIME_MIN;
+    _topics[stream][topic] = info;
+}
+
+void BaseRealSenseNode::updateMonitoredTopic(const stream_index_pair& stream, Topic topic)
+{
+    const std::lock_guard<std::mutex> lock(_topic_monitor_mutex);
+    _topics[stream][topic].last_published = ros::Time::now();
+}
+
+void BaseRealSenseNode::clearMonitoredTopic(const stream_index_pair& stream, Topic topic)
+{
+    const std::lock_guard<std::mutex> lock(_topic_monitor_mutex);
+    _topics[stream][topic].last_published = ros::TIME_MIN;
+}
+
+bool BaseRealSenseNode::checkTopics(const ros::Time& timeout, std::vector<std::string>& stale_topics)
+{
+    bool ok = true;
+    const std::lock_guard<std::mutex> lock(_topic_monitor_mutex);
+    for (const auto& stream: _topics)
+    {
+        for (const auto& topic: stream.second)
+        {
+            if (topic.second.last_published != ros::TIME_MIN && topic.second.last_published < timeout)
+            {
+                ok = false;
+                stale_topics.push_back(topic.second.name + ": " + topic.second.resolved_name);
+            }
+        }
+    }
+
+    return ok;
 }
 
 void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const ros::Time& t)
@@ -986,7 +1047,13 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
                          _depth_aligned_info_publisher,
                          _depth_aligned_image_publishers, _depth_aligned_seq,
                          _depth_aligned_camera_info, _optical_frame_id,
-                         _depth_aligned_encoding);
+                         _depth_aligned_encoding,
+                         true, true);
+        }
+        else
+        {
+            clearMonitoredTopic(sip, TOPIC_ALIGNED_INFO);
+            clearMonitoredTopic(sip, TOPIC_ALIGNED_IMAGE);
         }
     }
 }
@@ -1379,6 +1446,11 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
             ROS_DEBUG("Publish united %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
             imu_msgs.pop_front();
         }
+        else
+        {
+            clearMonitoredTopic(stream_index, TOPIC_IMU);
+        }
+        break;
     }
     m_mutex.unlock();
 };
@@ -1425,7 +1497,12 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         imu_msg.header.seq = _seq[stream_index];
         imu_msg.header.stamp = t;
         _imu_publishers[stream_index].publish(imu_msg);
+        updateMonitoredTopic(stream_index, TOPIC_IMU);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
+    }
+    else
+    {
+        clearMonitoredTopic(stream_index, TOPIC_IMU);
     }
 }
 
@@ -1518,7 +1595,12 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
                                     0, 0, 0, 0, cov_twist, 0,
                                     0, 0, 0, 0, 0, cov_twist};
         _imu_publishers[stream_index].publish(odom_msg);
+        updateMonitoredTopic(stream_index, TOPIC_ODOM);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
+    }
+    else
+    {
+        clearMonitoredTopic(stream_index, TOPIC_ODOM);
     }
 }
 
@@ -1643,10 +1725,11 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
 
                 if (f.is<rs2::points>())
                 {
-                    if (0 != _pointcloud_publisher.getNumSubscribers())
+                    if (_pointcloud)
                     {
                         ROS_DEBUG("Publish pointscloud");
                         publishPointCloud(f.as<rs2::points>(), t, frameset);
+                        updateMonitoredTopic(DEPTH, TOPIC_POINTS);
                     }
                     continue;
                 }
@@ -2066,7 +2149,6 @@ void BaseRealSenseNode::publishStaticTransforms()
         _depth_to_other_extrinsics[INFRA2] = ex;
         _depth_to_other_extrinsics_publishers[INFRA2].publish(rsExtrinsicsToMsg(ex, frame_id));
     }
-
 }
 
 void BaseRealSenseNode::publishDynamicTransforms()
@@ -2318,7 +2400,8 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
                                      std::map<stream_index_pair, sensor_msgs::CameraInfo>& camera_info,
                                      const std::map<stream_index_pair, std::string>& optical_frame_id,
                                      const std::map<rs2_stream, std::string>& encoding,
-                                     bool copy_data_from_frame)
+                                     bool copy_data_from_frame,
+                                     bool aligned)
 {
     ROS_DEBUG("publishFrame(...)");
     unsigned int width = 0;
@@ -2374,8 +2457,34 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
         info_publisher.publish(cam_info);
 
         image_publisher.first.publish(img);
+        image_publisher.second->update();
+
         // ROS_INFO_STREAM("fid: " << cam_info.header.seq << ", time: " << std::setprecision (20) << t.toSec());
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
+
+        if (aligned)
+        {
+            updateMonitoredTopic(stream, TOPIC_ALIGNED_INFO);
+            updateMonitoredTopic(stream, TOPIC_ALIGNED_IMAGE);
+        }
+        else
+        {
+            updateMonitoredTopic(stream, TOPIC_INFO);
+            updateMonitoredTopic(stream, TOPIC_IMAGE);
+        }
+    }
+    else
+    {
+        if (aligned)
+        {
+            clearMonitoredTopic(stream, TOPIC_ALIGNED_INFO);
+            clearMonitoredTopic(stream, TOPIC_ALIGNED_IMAGE);
+        }
+        else
+        {
+            clearMonitoredTopic(stream, TOPIC_INFO);
+            clearMonitoredTopic(stream, TOPIC_IMAGE);
+        }
     }
 }
 
