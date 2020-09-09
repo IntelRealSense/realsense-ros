@@ -10,7 +10,6 @@
 #include <condition_variable>
 #include <signal.h>
 #include <thread>
-#include <sys/time.h>
 #include <regex>
 
 using namespace realsense2_camera;
@@ -336,6 +335,8 @@ void RealSenseNodeFactory::StartDevice()
 	case RS430_MM_RGB_PID:
 	case RS435_RGB_PID:
 	case RS435i_RGB_PID:
+	case RS455_PID:
+	case RS465_PID:
 	case RS_USB2_PID:
 	case RS_L515_PID_PRE_PRQ:
 	case RS_L515_PID:

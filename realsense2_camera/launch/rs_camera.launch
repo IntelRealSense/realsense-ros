@@ -18,6 +18,7 @@
 
   <arg name="infra_width"        default="640"/>
   <arg name="infra_height"       default="480"/>
+  <arg name="enable_infra"        default="false"/>
   <arg name="enable_infra1"       default="false"/>
   <arg name="enable_infra2"       default="false"/>
 
@@ -84,6 +85,7 @@
 
       <arg name="infra_width"              value="$(arg infra_width)"/>
       <arg name="infra_height"             value="$(arg infra_height)"/>
+      <arg name="enable_infra"            value="$(arg enable_infra)"/>
       <arg name="enable_infra1"            value="$(arg enable_infra1)"/>
       <arg name="enable_infra2"            value="$(arg enable_infra2)"/>
 

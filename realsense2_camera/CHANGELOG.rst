@@ -2,6 +2,18 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.2.17 (2020-09-09)
+-------------------
+* Fix for ROS on Windows
+* Contributors: Lou Amadio, doronhi
+
+2.2.16 (2020-08-06)
+-------------------
+* Add PID to support D455.
+* Improve instability of dynamic reconfigurable options.
+* rs_camera.lauch: add "enable_infra" for L515 support.
+* Contributors: doronhi
+
 2.2.15 (2020-07-13)
 -------------------
 * Check runtime version of librealsense2 vs. compiled version and issue a warning is mismatch occurs.
