@@ -45,7 +45,6 @@ namespace realsense2_camera
             void setupErrorCallback();
 
         protected:
-            rs2::sensor _sensor;
             rclcpp::Node& _node;
             rclcpp::Logger _logger;
             std::function<void(rs2::frame)> _frame_callback;

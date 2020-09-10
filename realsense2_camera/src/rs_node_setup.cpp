@@ -8,7 +8,7 @@ void BaseRealSenseNode::setup()
 {
     // getParameters();
     setAvailableSensors();
-    // registerDynamicParameters();
+    registerDynamicParameters();
     SetBaseStream();
     setupFiltersPublishers();
     setCallbackFunctions();
@@ -172,7 +172,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             stream_index_pair sip(profile.stream_type(), profile.stream_index());
             std::stringstream image_raw, camera_info;
             bool rectified_image = false;
-            if (sensor.is<rs2::depth_sensor>())
+            if (sensor.rs2::sensor::is<rs2::depth_sensor>())
                 rectified_image = true;
 
             std::string stream_name(STREAM_NAME(sip));

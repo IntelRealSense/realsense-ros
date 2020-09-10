@@ -271,6 +271,10 @@ namespace realsense2_camera
         void pose_callback(rs2::frame frame);
         void multiple_message_callback(rs2::frame frame, imu_sync_method sync_method);
         void frame_callback(rs2::frame frame);
+        
+        template<class T>
+        void set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name);
+
         void registerDynamicOption(rs2::options sensor, std::string& module_name);
         void registerDynamicParameters();
         // void readAndSetDynamicParam(ros::NodeHandle& nh1, std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec, const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, int* option_value);
@@ -363,7 +367,7 @@ namespace realsense2_camera
 
         sensor_msgs::msg::PointCloud2 _msg_pointcloud;
         std::vector< unsigned int > _valid_pc_indices;
-        rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr _callback_handler;
+        std::vector<rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr> _callback_handlers;
     };//end class
 }
 #endif //___BASE_REALSENSE_NODE_HEADER___

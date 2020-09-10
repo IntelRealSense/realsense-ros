@@ -14,7 +14,7 @@ VideoSensor::VideoSensor(rs2::sensor sensor, rclcpp::Node& node,
 void VideoSensor::getUpdatedSensorParameters()
 {
     // std::string module_name = sensor.get_info(RS2_CAMERA_INFO_NAME);
-    const std::string module_name(_sensor.get_info(RS2_CAMERA_INFO_NAME));
+    const std::string module_name(create_graph_resource_name(get_info(RS2_CAMERA_INFO_NAME)));
 
     std::string param_name(module_name + ".width");
     ROS_DEBUG_STREAM("reading parameter:" << param_name);

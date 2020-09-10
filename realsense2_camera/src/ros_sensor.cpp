@@ -5,7 +5,7 @@ using namespace rs2;
 
 void RosSensor::setupErrorCallback()
 {
-    _sensor.set_notifications_callback([&](const rs2::notification& n)
+    set_notifications_callback([&](const rs2::notification& n)
     {
         std::vector<std::string> error_strings({"RT IC2 Config error",
                                                 "Left IC2 Config error"});
@@ -18,9 +18,9 @@ void RosSensor::setupErrorCallback()
         {
             ROS_ERROR_STREAM("Performing Hardware Reset.");
             // _sensor.get().get()->parent.hardware_reset();
-            rs2_error* e = nullptr;
+            // rs2_error* e = nullptr;
 
-            rs2_create_device_from_sensor(_sensor.get().get(), &e);
+            // rs2_create_device_from_sensor(_sensor.get().get(), &e);
             // rs2::get_sensor_parent(_sensor).hardware_reset();
         }
     });
@@ -28,29 +28,29 @@ void RosSensor::setupErrorCallback()
 
 bool RosSensor::start(const std::vector<stream_profile>& profiles)
 {
-    if (_sensor.get_active_streams().size() > 0)
+    if (get_active_streams().size() > 0)
         return false;
     setupErrorCallback();
-    _sensor.open(profiles);
-    _sensor.start(_frame_callback);
+    open(profiles);
+    rs2::sensor::start(_frame_callback);
     return true;
 }
 
 void RosSensor::stop()
 {
-    if (_sensor.get_active_streams().size() == 0)
+    if (get_active_streams().size() == 0)
         return;
-    _sensor.stop();
-    _sensor.close();
+    rs2::sensor::stop();
+    close();
 }
 
 std::vector<stream_profile> RosSensor::getUpdatedProfiles()
 {
     getUpdatedSensorParameters();
-    std::vector<stream_profile> active_profiles = _sensor.get_active_streams();
+    std::vector<stream_profile> active_profiles = get_active_streams();
     std::vector<stream_profile> wanted_profiles;
     std::set<stream_index_pair> checked_sips, found_sips;
-    for (auto& profile : _sensor.get_stream_profiles())
+    for (auto& profile : get_stream_profiles())
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
         if (checked_sips.insert(sip).second == true)
