@@ -215,9 +215,9 @@ void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, co
         range.to_value = int(op_range.max);
         crnt_descriptor.integer_range.push_back(range);
         if (std::is_same<T, bool>::value)
-            ROS_WARN_STREAM("Declare: BOOL::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
+            ROS_INFO_STREAM("Declare: BOOL::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
         else
-            ROS_WARN_STREAM("Declare: INT::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
+            ROS_INFO_STREAM("Declare: INT::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
     }
     else
     {
@@ -225,7 +225,7 @@ void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, co
         range.from_value = double(op_range.min);
         range.to_value = double(op_range.max);
         crnt_descriptor.floating_point_range.push_back(range);
-        ROS_WARN_STREAM("Declare: DOUBLE::" << option_name << " = " << option_value);
+        ROS_INFO_STREAM("Declare: DOUBLE::" << option_name << " = " << option_value);
     }
     T new_val;
     try
@@ -266,7 +266,6 @@ void BaseRealSenseNode::registerDynamicOption(rs2::options sensor, std::string& 
     for (auto i = 0; i < RS2_OPTION_COUNT; i++)
     {
         rs2_option option = static_cast<rs2_option>(i);
-        const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
         if (!sensor.supports(option) || sensor.is_option_read_only(option))
         {
             continue;
@@ -305,6 +304,8 @@ void BaseRealSenseNode::registerDynamicOption(rs2::options sensor, std::string& 
         }
         else
         {
+            const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
+            ROS_WARN_STREAM("Skip enum-type option: " << option_name);
 #if false            
             const auto sensor_option_value = sensor.get_option(option);
             auto option_value = int(sensor_option_value);
@@ -315,7 +316,7 @@ void BaseRealSenseNode::registerDynamicOption(rs2::options sensor, std::string& 
             rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
             crnt_descriptor.description = sensor.get_option_description(option);
             crnt_descriptor.integer_range.push_back(range);
-            ROS_WARN_STREAM("Declare: " << option_name);
+            ROS_INFO_STREAM("Declare: " << option_name);
             bool new_val = _node.declare_parameter(option_name, rclcpp::ParameterValue(option_value), crnt_descriptor).get<rclcpp::PARAMETER_BOOL>();
             if (new_val != option_value)
             {

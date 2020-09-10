@@ -1,7 +1,7 @@
 # ROS2 Wrapper for Intel&reg; RealSense&trade; Devices
 These are packages for using Intel RealSense cameras (D400 series SR300 camera and T265 Tracking Module) with ROS2.
 
-LibRealSense supported version: v2.36.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
+LibRealSense supported version: v2.38.1 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
 # NOTICE:
 The building of this version is still underway. 
@@ -83,13 +83,13 @@ To start the camera node in ROS:
 ```
 or, with parameters, for example - pointcloud enabled:
 ```bash
-ros2 run realsense2_node realsense2_node --ros-args -p filters:=pointcloud
+ros2 run realsense2_node realsense2_node --ros-args -p enable_pointcloud:=true -p filters:=spatial,temporal
 ```
 
 This will stream all camera sensors and publish on the appropriate ROS topics.
 
 ## Known Issues
-* Reconfigure parameters on runtime is missing.
+* parameters of type enum are missing (i.e. `rgb_camera.power_line_frequency`, etc).
 * Topic names miss node namespace.
 * No support for T265.
 * Missing descriptive files (realsense2_description package).
