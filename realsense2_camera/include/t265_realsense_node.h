@@ -14,7 +14,7 @@ namespace realsense2_camera
             void publishTopics();
 
         protected:
-            void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile) override;
+            void calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile) override;
 
         private:
             void initializeOdometryInput();
