@@ -1,5 +1,4 @@
 #include "../include/t265_realsense_node.h"
-#include <functional>
 
 using namespace realsense2_camera;
 
@@ -139,5 +138,4 @@ void T265RealsenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
 void T265RealsenseNode::warningDiagnostic(diagnostic_updater::DiagnosticStatusWrapper& status)
 {
   status.summary(diagnostic_msgs::DiagnosticStatus::WARN, _T265_fault);
-
 }
