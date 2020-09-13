@@ -97,6 +97,8 @@ void BaseRealSenseNode::setAvailableSensors()
 
     std::function<void(rs2::frame)> multiple_message_callback_function = [this](rs2::frame frame){multiple_message_callback(frame, _imu_sync_method);};
 
+    std::function<void()> update_sensor_func = [this](){updateSensors();};
+
     _dev_sensors = _dev.query_sensors();
     for(auto&& sensor : _dev_sensors)
     {
@@ -107,17 +109,17 @@ void BaseRealSenseNode::setAvailableSensors()
             sensor.is<rs2::fisheye_sensor>())
         {
             ROS_INFO_STREAM("Set " << module_name << " as VideoSensor.");
-            rosSensor = std::make_shared<VideoSensor>(sensor, _node, frame_callback_function);
+            rosSensor = std::make_shared<VideoSensor>(sensor, _node, frame_callback_function, update_sensor_func);
         }
         else if (sensor.is<rs2::motion_sensor>())
         {
             ROS_INFO_STREAM("Set " << module_name << " as ImuSensor.");
-            rosSensor = std::make_shared<ImuSensor>(sensor, _node, imu_callback_function);
+            rosSensor = std::make_shared<ImuSensor>(sensor, _node, imu_callback_function, update_sensor_func);
         }
         // else if (sensor.is<rs2::pose_sensor>())
         // {
         //     ROS_INFO_STREAM("Set " << module_name << " as PoseSensor.");
-        //     rosSensor = std::make_shared<PoseSensor>(sensor, _node, multiple_message_callback_function);
+        //     rosSensor = std::make_shared<PoseSensor>(sensor, _node, multiple_message_callback_function, update_sensor_func);
         // }
         else
         {
@@ -229,8 +231,12 @@ void BaseRealSenseNode::updateSensors()
         {
             std::string module_name(sensor->get_info(RS2_CAMERA_INFO_NAME));
             // if active_profiles != wanted_profiles: stop sensor.
-            std::vector<stream_profile> wanted_profiles = sensor->getUpdatedProfiles();
-            if (!wanted_profiles.empty())
+            ROS_INFO_STREAM(__LINE__ << " : " << module_name);
+            std::vector<stream_profile> wanted_profiles;
+
+            bool is_changed(sensor->getUpdatedProfiles(wanted_profiles));
+            ROS_INFO_STREAM(__LINE__ << " : " << wanted_profiles.size());
+            if (is_changed)
             {
                 std::vector<stream_profile> active_profiles = sensor->get_active_streams();
                 ROS_INFO_STREAM("Stop Sensor: " << module_name);
@@ -238,21 +244,24 @@ void BaseRealSenseNode::updateSensors()
                 stopPublishers(active_profiles);
                 ROS_INFO("Done");
 
-                ROS_INFO_STREAM("Start Sensor: " << module_name);
-                startPublishers(wanted_profiles, *sensor);
-                updateProfilesStreamCalibData(wanted_profiles);
+                if (!wanted_profiles.empty())
                 {
-                    std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
-                    _static_tf_msgs.clear();
-                    publishStaticTransforms(wanted_profiles);
-                }
+                    ROS_INFO_STREAM("Start Sensor: " << module_name);
+                    startPublishers(wanted_profiles, *sensor);
+                    updateProfilesStreamCalibData(wanted_profiles);
+                    {
+                        std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
+                        _static_tf_msgs.clear();
+                        publishStaticTransforms(wanted_profiles);
+                    }
 
-                sensor->start(wanted_profiles);
-                if (sensor->is<rs2::depth_sensor>())
-                {
-                    _depth_scale_meters = sensor->as<rs2::depth_sensor>().get_depth_scale();
+                    sensor->start(wanted_profiles);
+                    if (sensor->is<rs2::depth_sensor>())
+                    {
+                        _depth_scale_meters = sensor->as<rs2::depth_sensor>().get_depth_scale();
+                    }
+                    ROS_INFO("Done");
                 }
-                ROS_INFO("Done");
             }
         }
     }

@@ -53,17 +53,17 @@ namespace realsense2_camera
 {
     typedef std::pair<rs2_stream, int> stream_index_pair;
 
-    const stream_index_pair COLOR{RS2_STREAM_COLOR, 0};
-    const stream_index_pair DEPTH{RS2_STREAM_DEPTH, 0};
-    const stream_index_pair INFRA0{RS2_STREAM_INFRARED, 0};
-    const stream_index_pair INFRA1{RS2_STREAM_INFRARED, 1};
-    const stream_index_pair INFRA2{RS2_STREAM_INFRARED, 2};
-    const stream_index_pair FISHEYE{RS2_STREAM_FISHEYE, 0};
-    const stream_index_pair FISHEYE1{RS2_STREAM_FISHEYE, 1};
-    const stream_index_pair FISHEYE2{RS2_STREAM_FISHEYE, 2};
-    const stream_index_pair GYRO{RS2_STREAM_GYRO, 0};
-    const stream_index_pair ACCEL{RS2_STREAM_ACCEL, 0};
-    const stream_index_pair POSE{RS2_STREAM_POSE, 0};
+    // const stream_index_pair COLOR{RS2_STREAM_COLOR, 0};
+    // const stream_index_pair DEPTH{RS2_STREAM_DEPTH, 0};
+    // const stream_index_pair INFRA0{RS2_STREAM_INFRARED, 0};
+    // const stream_index_pair INFRA1{RS2_STREAM_INFRARED, 1};
+    // const stream_index_pair INFRA2{RS2_STREAM_INFRARED, 2};
+    // const stream_index_pair FISHEYE{RS2_STREAM_FISHEYE, 0};
+    // const stream_index_pair FISHEYE1{RS2_STREAM_FISHEYE, 1};
+    // const stream_index_pair FISHEYE2{RS2_STREAM_FISHEYE, 2};
+    // const stream_index_pair GYRO{RS2_STREAM_GYRO, 0};
+    // const stream_index_pair ACCEL{RS2_STREAM_ACCEL, 0};
+    // const stream_index_pair POSE{RS2_STREAM_POSE, 0};
     
 
     const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA0, INFRA1, INFRA2,
@@ -275,13 +275,12 @@ namespace realsense2_camera
         template<class T>
         void set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name);
 
-        void registerDynamicOption(rs2::options sensor, std::string& module_name);
+        void registerDynamicOptions(rs2::options sensor, std::string& module_name);
         void registerDynamicParameters();
         // void readAndSetDynamicParam(ros::NodeHandle& nh1, std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec, const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, int* option_value);
         // void registerAutoExposureROIOptions(ros::NodeHandle& nh);
         void set_auto_exposure_roi(const std::string option_name, rs2::sensor sensor, int new_value);
         void set_sensor_auto_exposure_roi(rs2::sensor sensor);
-        rs2_stream rs2_string_to_stream(std::string str);
         void startMonitoring();
         void publish_temperature();
         void setupFiltersPublishers();
