@@ -22,7 +22,10 @@ def generate_launch_description():
     return LaunchDescription([
         # Realsense
         launch_ros.actions.Node(
-            package='realsense2_camera', node_executable='realsense2_camera',
+            package='realsense2_node', 
+            node_namespace='camera1',
+            node_executable='realsense2_node',
+            name='cam1',
             output='screen',
             emulate_tty=True,
             ),

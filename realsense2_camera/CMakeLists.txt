@@ -148,6 +148,7 @@ set(node_plugins "${node_plugins}realsense2_camera::RealSenseNodeFactory;$<TARGE
 
 # Install binaries
 install(TARGETS ${PROJECT_NAME}
+  DESTINATION lib/${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -160,7 +161,7 @@ install(
 
 # Install launch files
 install(DIRECTORY launch/
-    DESTINATION launch
+    DESTINATION share/${PROJECT_NAME}
     )
 
 if(BUILD_TESTING)
