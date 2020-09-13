@@ -277,9 +277,9 @@ namespace realsense2_camera
 
         void registerDynamicOption(rs2::options sensor, std::string& module_name);
         void registerDynamicReconfigCb();
-        // void readAndSetDynamicParam(ros::NodeHandle& nh1, std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec, const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, int* option_value);
-        // void registerAutoExposureROIOptions(ros::NodeHandle& nh);
-        void set_auto_exposure_roi(const std::string option_name, rs2::sensor sensor, int new_value);
+        void registerAutoExposureROIOption(const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, int* option_value);
+        void registerAutoExposureROIOptions();
+        void set_auto_exposure_roi(const std::string variable_name, rs2::sensor sensor, const std::vector<rclcpp::Parameter> & parameters);
         void set_sensor_auto_exposure_roi(rs2::sensor sensor);
         rs2_stream rs2_string_to_stream(std::string str);
         void startMonitoring();

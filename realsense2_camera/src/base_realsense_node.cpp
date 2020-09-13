@@ -192,7 +192,7 @@ void BaseRealSenseNode::publishTopics()
     setupPublishers();
     setupStreams();
     SetBaseStream();
-//    registerAutoExposureROIOptions(_node_handle);
+   registerAutoExposureROIOptions();
     publishStaticTransforms();
     publishIntrinsics();
     startMonitoring();
@@ -307,23 +307,42 @@ std::string create_graph_resource_name(const std::string &original_name)
   return fixed_name;
 }
 
-void BaseRealSenseNode::set_auto_exposure_roi(const std::string option_name, rs2::sensor sensor, int new_value)
+void BaseRealSenseNode::set_auto_exposure_roi(const std::string variable_name, rs2::sensor sensor, const std::vector<rclcpp::Parameter> & parameters)
 {
-    rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
-    if (option_name == "left")
-        auto_exposure_roi.min_x = new_value;
-    else if (option_name == "right")
-        auto_exposure_roi.max_x = new_value;
-    else if (option_name == "top")
-        auto_exposure_roi.min_y = new_value;
-    else if (option_name == "bottom")
-        auto_exposure_roi.max_y = new_value;
-    else
-    {
-        ROS_WARN_STREAM("Invalid option_name: " << option_name << " while setting auto exposure ROI.");
-        return;
+    for (const auto & parameter : parameters) {
+        if (variable_name == parameter.get_name())
+        {
+            int new_value(parameter.get_value<int>());
+            ROS_INFO_STREAM("set_option: " << variable_name << " = " << new_value);
+            try
+            {
+                std::vector<std::string> option_parts;
+                boost::split(option_parts, variable_name, [](char c){return c == '.';});
+                const std::string& option_name(option_parts[option_parts.size()-1]);
+
+                rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
+                if (option_name == "left")
+                    auto_exposure_roi.min_x = new_value;
+                else if (option_name == "right")
+                    auto_exposure_roi.max_x = new_value;
+                else if (option_name == "top")
+                    auto_exposure_roi.min_y = new_value;
+                else if (option_name == "bottom")
+                    auto_exposure_roi.max_y = new_value;
+                else
+                {
+                    ROS_WARN_STREAM("Invalid option_name: " << option_name << " while setting auto exposure ROI.");
+                    return;
+                }
+                set_sensor_auto_exposure_roi(sensor);
+            }
+            catch(const rs2::invalid_value_error& e)
+            {
+                ROS_WARN_STREAM("Failed to set value: " << e.what());
+            }
+            break;
+        }
     }
-    set_sensor_auto_exposure_roi(sensor);
 }
 
 void BaseRealSenseNode::set_sensor_auto_exposure_roi(rs2::sensor sensor)
@@ -339,21 +358,44 @@ void BaseRealSenseNode::set_sensor_auto_exposure_roi(rs2::sensor sensor)
     }
 }
 
-#ifdef false
-void BaseRealSenseNode::readAndSetDynamicParam(ros::NodeHandle& nh1, std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec, 
-                                               const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, 
+void BaseRealSenseNode::registerAutoExposureROIOption(const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, 
                                                int* option_value)
 {
-    nh1.param(option_name, *option_value, *option_value); //param (const std::string &param_name, T &param_val, const T &default_val) const
-    if (*option_value < min_val) *option_value = min_val;
-    if (*option_value > max_val) *option_value = max_val;
+    // set_parameter<int>(sensor, option, module_name);
+    std::string module_base_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
+    std::string module_name = create_graph_resource_name(module_base_name) +".auto_exposure_roi";
     
-    ddynrec->registerVariable<int>(
-        option_name, *option_value, [this, sensor, option_name](int new_value){set_auto_exposure_roi(option_name, sensor, new_value);},
-        "auto-exposure " + option_name + " coordinate", min_val, max_val);
+    rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
+    crnt_descriptor.description = option_name + " coordinate";
+    rcl_interfaces::msg::IntegerRange range;
+    range.from_value = min_val;
+    range.to_value = max_val;
+    crnt_descriptor.integer_range.push_back(range);
+    std::string variable_name(module_name + "." + option_name);
+    ROS_INFO_STREAM("Declare ROI: INT::" << variable_name << " = " << *option_value << "[" << range.from_value << ", " << range.to_value << "]");
+    
+    try
+    {
+        *option_value = _node.declare_parameter(variable_name, rclcpp::ParameterValue(*option_value), crnt_descriptor).get<int>();
+    }
+    catch(const rclcpp::exceptions::InvalidParameterValueException& e)
+    {
+        ROS_WARN_STREAM("Failed to set ROI parameter:" << variable_name << " = " << *option_value << "[" << range.from_value << ", " << range.to_value << "]\n" << e.what());
+        return;
+    }
+
+    _callback_handlers.push_back(
+        _node.add_on_set_parameters_callback(
+            [this, sensor, variable_name](const std::vector<rclcpp::Parameter> & parameters) 
+                { 
+                    rcl_interfaces::msg::SetParametersResult result;
+                    result.successful = true;
+                    set_auto_exposure_roi(variable_name, sensor, parameters);
+                    return result;
+                }));
 }
 
-void BaseRealSenseNode::registerAutoExposureROIOptions(ros::NodeHandle& nh)
+void BaseRealSenseNode::registerAutoExposureROIOptions()
 {
     for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
     {
@@ -364,19 +406,14 @@ void BaseRealSenseNode::registerAutoExposureROIOptions(ros::NodeHandle& nh)
             int max_x(_width[profile.first]-1);
             int max_y(_height[profile.first]-1);
 
-            std::string module_name = create_graph_resource_name(module_base_name) +"/auto_exposure_roi";
-            ros::NodeHandle nh1(nh, module_name);
-            std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec = std::make_shared<ddynamic_reconfigure::DDynamicReconfigure>(nh1);
+            std::string module_name = create_graph_resource_name(module_base_name) +".auto_exposure_roi";
 
             _auto_exposure_roi[module_base_name] = {0, 0, max_x, max_y};
             rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[module_base_name]);
-            readAndSetDynamicParam(nh1, ddynrec, "left", 0, max_x, sensor, &(auto_exposure_roi.min_x));
-            readAndSetDynamicParam(nh1, ddynrec, "right", 0, max_x, sensor, &(auto_exposure_roi.max_x));
-            readAndSetDynamicParam(nh1, ddynrec, "top", 0, max_y, sensor, &(auto_exposure_roi.min_y));
-            readAndSetDynamicParam(nh1, ddynrec, "bottom", 0, max_y, sensor, &(auto_exposure_roi.max_y));
-
-            ddynrec->publishServicesTopics();
-            _ddynrec.push_back(ddynrec);
+            registerAutoExposureROIOption("left", 0, max_x, sensor, &(auto_exposure_roi.min_x));
+            registerAutoExposureROIOption("right", 0, max_x, sensor, &(auto_exposure_roi.max_x));
+            registerAutoExposureROIOption("top", 0, max_y, sensor, &(auto_exposure_roi.min_y));
+            registerAutoExposureROIOption("bottom", 0, max_y, sensor, &(auto_exposure_roi.max_y));
 
             // Initiate the call to set_sensor_auto_exposure_roi, after the first frame arrive.
             rs2_stream stream_type = profile.first.first;
@@ -385,7 +422,6 @@ void BaseRealSenseNode::registerAutoExposureROIOptions(ros::NodeHandle& nh)
         }
     }
 }
-#endif //#ifdef false
 
 template<class T>
 void param_set_option(rs2::options sensor, rs2_option option, std::string option_name, const std::vector<rclcpp::Parameter> & parameters)
@@ -402,6 +438,7 @@ void param_set_option(rs2::options sensor, rs2_option option, std::string option
             {
                 std::cout << "Failed to set value: " << e.what() << std::endl;
             }
+            break;
         }
     }
 }
