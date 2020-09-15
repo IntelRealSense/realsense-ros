@@ -350,20 +350,7 @@ void RealSenseNodeFactory::startDevice()
 		std::cerr << "Failed to start device: " << e.what() << '\n';
 		_device.hardware_reset();
 		_device = rs2::device();
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << "Failed to start device: " << e.what() << '\n';
-		_device.hardware_reset();
-		_device = rs2::device();
-	}
-    catch(...)
-    {
-		std::cerr << "Failed to start device: " << "Unknown exception has occured!" << '\n';
-		_device.hardware_reset();
-		_device = rs2::device();
-	}
-	
+	}	
 }
 
 void RealSenseNodeFactory::tryGetLogSeverity(rs2_log_severity& severity) const

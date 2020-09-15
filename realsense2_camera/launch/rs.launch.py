@@ -34,7 +34,10 @@ def generate_launch_description():
             node_namespace='camera1',
             node_executable='realsense2_node',
             name='cam1',
-            parameters = [config],
+            parameters = [{
+                           'enable_pointcloud': True,
+                           'unite_imu_method': 'linear_interpolation'
+                           }],
             output='screen',
             emulate_tty=True,
             ),

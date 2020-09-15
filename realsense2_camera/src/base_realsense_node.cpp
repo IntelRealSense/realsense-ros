@@ -410,7 +410,7 @@ void BaseRealSenseNode::registerAutoExposureROIOption(const std::string option_n
     range.to_value = max_val;
     crnt_descriptor.integer_range.push_back(range);
     std::string variable_name(module_name + "." + option_name);
-    ROS_INFO_STREAM("Declare ROI: INT::" << variable_name << " = " << *option_value << "[" << range.from_value << ", " << range.to_value << "]");
+    ROS_DEBUG_STREAM("Declare ROI: INT::" << variable_name << " = " << *option_value << "[" << range.from_value << ", " << range.to_value << "]");
     
     try
     {
@@ -498,9 +498,9 @@ void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, co
         range.to_value = int(op_range.max);
         crnt_descriptor.integer_range.push_back(range);
         if (std::is_same<T, bool>::value)
-            ROS_INFO_STREAM("Declare: BOOL::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
+            ROS_DEBUG_STREAM("Declare: BOOL::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
         else
-            ROS_INFO_STREAM("Declare: INT::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
+            ROS_DEBUG_STREAM("Declare: INT::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
     }
     else
     {
@@ -508,7 +508,7 @@ void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, co
         range.from_value = double(op_range.min);
         range.to_value = double(op_range.max);
         crnt_descriptor.floating_point_range.push_back(range);
-        ROS_INFO_STREAM("Declare: DOUBLE::" << option_name << " = " << option_value);
+        ROS_DEBUG_STREAM("Declare: DOUBLE::" << option_name << " = " << option_value);
     }
     T new_val;
     try
@@ -601,7 +601,7 @@ void BaseRealSenseNode::registerDynamicOption(rs2::options sensor, std::string& 
             {
                 description << std::setw(longest_desc) << std::left << vec_iter.first << " - " << vec_iter.second << std::endl;
             }
-            ROS_INFO_STREAM(description.str());
+            ROS_DEBUG_STREAM(description.str());
             set_parameter<int>(sensor, option, module_name, description.str());
         }
     }
@@ -1772,7 +1772,7 @@ void BaseRealSenseNode::setupStreams()
         for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
         {
             std::string module_name = _sensors[profile.first].get_info(RS2_CAMERA_INFO_NAME);
-            ROS_INFO_STREAM("insert " << rs2_stream_to_string(profile.second.begin()->stream_type())
+            ROS_DEBUG_STREAM("insert " << rs2_stream_to_string(profile.second.begin()->stream_type())
               << " to " << module_name);
             profiles[module_name].insert(profiles[module_name].begin(),
                                             profile.second.begin(),
