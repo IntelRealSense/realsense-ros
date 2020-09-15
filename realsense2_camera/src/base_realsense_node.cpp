@@ -78,13 +78,11 @@ size_t SyncedImuPublisher::getNumSubscribers()
 }
 
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
-                                    rs2::device dev, const std::string& serial_no,
-                                    std::shared_ptr<diagnostic_updater::Updater> diagnostic_updater) :
+                                    rs2::device dev, const std::string& serial_no) :
     _ros_clock(RCL_ROS_TIME),
-    _is_running(true), _base_frame_id(""),
+    _base_frame_id(""),
     _node(node),
     _logger(rclcpp::get_logger("RealSenseCameraNode")),
-    _rs_diagnostic_updater(diagnostic_updater, serial_no),
     _dev(dev),
     _json_file_path(""),
     _serial_no(serial_no),
@@ -130,21 +128,28 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
 
     _monitor_options = {RS2_OPTION_ASIC_TEMPERATURE, RS2_OPTION_PROJECTOR_TEMPERATURE};
 
-    publishTopics();
+    try
+    {
+        publishTopics();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        clean();
+        throw;
+    }
+    
 }
 
-BaseRealSenseNode::~BaseRealSenseNode()
+void BaseRealSenseNode::clean()
 {
     // Kill dynamic transform thread
+    for (auto& name : _variable_names)
+    {
+        _node.undeclare_parameter(name);        
+    }
     if (_tf_t)
         _tf_t->join();
-
-    _is_running = false;
-    _cv.notify_one();
-    if (_monitoring_t && _monitoring_t->joinable())
-    {
-        _monitoring_t->join();
-    }
 
     std::set<std::string> module_names;
     for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
@@ -153,10 +158,44 @@ BaseRealSenseNode::~BaseRealSenseNode()
         std::pair< std::set<std::string>::iterator, bool> res = module_names.insert(module_name);
         if (res.second)
         {
-            _sensors[profile.first].stop();
+            try
+            {
+                _sensors[profile.first].stop();
+            }
+            catch(const rs2::wrong_api_call_sequence_error& e)
+            {
+                std::cerr << e.what() << '\n';
+            }
             _sensors[profile.first].close();
         }
     }
+    _synced_imu_publisher.reset();
+}
+BaseRealSenseNode::~BaseRealSenseNode()
+{
+    ROS_WARN("BaseRealSenseNode::~BaseRealSenseNode()");
+    clean();
+    ROS_WARN("BaseRealSenseNode::~BaseRealSenseNode() - Done");
+}
+
+const rclcpp::ParameterValue BaseRealSenseNode::declareParameter(const std::string &name, 
+                                                           const rclcpp::ParameterValue &default_value, 
+                                                           const rcl_interfaces::msg::ParameterDescriptor &parameter_descriptor)
+{
+    rclcpp::ParameterValue value;
+    _variable_names.insert(name);
+    if (_node.has_parameter(name))
+    {
+        ROS_WARN_STREAM(__LINE__ << "has_parameter(" << name << ")" );
+        std::vector<rclcpp::Parameter> params{rclcpp::Parameter(name, default_value)};
+        _node.set_parameters(params);
+        value = default_value;
+    }
+    else
+    {
+        value = _node.declare_parameter(name, default_value, parameter_descriptor);
+    }
+    return value;
 }
 
 void BaseRealSenseNode::setupErrorCallback()
@@ -192,10 +231,9 @@ void BaseRealSenseNode::publishTopics()
     setupPublishers();
     setupStreams();
     SetBaseStream();
-   registerAutoExposureROIOptions();
+    registerAutoExposureROIOptions();
     publishStaticTransforms();
     publishIntrinsics();
-    startMonitoring();
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
@@ -376,7 +414,7 @@ void BaseRealSenseNode::registerAutoExposureROIOption(const std::string option_n
     
     try
     {
-        *option_value = _node.declare_parameter(variable_name, rclcpp::ParameterValue(*option_value), crnt_descriptor).get<int>();
+        *option_value = declareParameter(variable_name, rclcpp::ParameterValue(*option_value), crnt_descriptor).get<int>();
     }
     catch(const rclcpp::exceptions::InvalidParameterValueException& e)
     {
@@ -475,7 +513,7 @@ void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, co
     T new_val;
     try
     {
-        new_val = _node.declare_parameter(option_name, rclcpp::ParameterValue(option_value), crnt_descriptor).get<T>();
+        new_val = declareParameter(option_name, rclcpp::ParameterValue(option_value), crnt_descriptor).get<T>();
     }
     catch(const rclcpp::exceptions::InvalidParameterValueException& e)
     {
@@ -606,23 +644,23 @@ rs2_stream BaseRealSenseNode::rs2_string_to_stream(std::string str)
 void BaseRealSenseNode::getParameters()
 {
     ROS_INFO("getParameters...");
-    _align_depth = _node.declare_parameter("align_depth", rclcpp::ParameterValue(ALIGN_DEPTH)).get<rclcpp::PARAMETER_BOOL>();
-    _pointcloud  = _node.declare_parameter("enable_pointcloud", rclcpp::ParameterValue(POINTCLOUD)).get<rclcpp::PARAMETER_BOOL>();
+    _align_depth = declareParameter("align_depth", rclcpp::ParameterValue(ALIGN_DEPTH)).get<rclcpp::PARAMETER_BOOL>();
+    _pointcloud  = declareParameter("enable_pointcloud", rclcpp::ParameterValue(POINTCLOUD)).get<rclcpp::PARAMETER_BOOL>();
 
-    std::string pc_texture_stream = _node.declare_parameter("pointcloud_texture_stream", rclcpp::ParameterValue("RS2_STREAM_COLOR")).get<rclcpp::PARAMETER_STRING>();
-    int pc_texture_idx = _node.declare_parameter("pointcloud_texture_index", rclcpp::ParameterValue(0)).get<rclcpp::PARAMETER_INTEGER>();
+    std::string pc_texture_stream = declareParameter("pointcloud_texture_stream", rclcpp::ParameterValue("RS2_STREAM_COLOR")).get<rclcpp::PARAMETER_STRING>();
+    int pc_texture_idx = declareParameter("pointcloud_texture_index", rclcpp::ParameterValue(0)).get<rclcpp::PARAMETER_INTEGER>();
     _pointcloud_texture = stream_index_pair{rs2_string_to_stream(pc_texture_stream), pc_texture_idx};
 
-    _filters_str = _node.declare_parameter("filters", rclcpp::ParameterValue(DEFAULT_FILTERS)).get<rclcpp::PARAMETER_STRING>();
+    _filters_str = declareParameter("filters", rclcpp::ParameterValue(DEFAULT_FILTERS)).get<rclcpp::PARAMETER_STRING>();
     _pointcloud |= (_filters_str.find("pointcloud") != std::string::npos);
 
-    _publish_tf = _node.declare_parameter("publish_tf", rclcpp::ParameterValue(PUBLISH_TF)).get<rclcpp::PARAMETER_BOOL>();
-    _tf_publish_rate = _node.declare_parameter("tf_publish_rate", rclcpp::ParameterValue(TF_PUBLISH_RATE)).get<rclcpp::PARAMETER_DOUBLE>();
-    _sync_frames = _node.declare_parameter("enable_sync", rclcpp::ParameterValue(SYNC_FRAMES)).get<rclcpp::PARAMETER_BOOL>();
+    _publish_tf = declareParameter("publish_tf", rclcpp::ParameterValue(PUBLISH_TF)).get<rclcpp::PARAMETER_BOOL>();
+    _tf_publish_rate = declareParameter("tf_publish_rate", rclcpp::ParameterValue(TF_PUBLISH_RATE)).get<rclcpp::PARAMETER_DOUBLE>();
+    _sync_frames = declareParameter("enable_sync", rclcpp::ParameterValue(SYNC_FRAMES)).get<rclcpp::PARAMETER_BOOL>();
     if (_pointcloud || _align_depth || _filters_str.size() > 0)
         _sync_frames = true;
 
-    _json_file_path = _node.declare_parameter("json_file_path", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
+    _json_file_path = declareParameter("json_file_path", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
 
     for (auto& stream : IMAGE_STREAMS)
     {
@@ -631,39 +669,39 @@ void BaseRealSenseNode::getParameters()
         if (_node.has_parameter(param_name))
             _width[stream] = _node.get_parameter(param_name).get_parameter_value().get<rclcpp::PARAMETER_INTEGER>();
         else
-            _width[stream] = _node.declare_parameter(param_name, rclcpp::ParameterValue(IMAGE_WIDTH)).get<rclcpp::PARAMETER_INTEGER>();
+            _width[stream] = declareParameter(param_name, rclcpp::ParameterValue(IMAGE_WIDTH)).get<rclcpp::PARAMETER_INTEGER>();
         param_name = _stream_name[stream.first] + "_height";
         ROS_DEBUG_STREAM("reading parameter:" << param_name);
-        _height[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : _node.declare_parameter(param_name, rclcpp::ParameterValue(IMAGE_HEIGHT))).get<rclcpp::PARAMETER_INTEGER>();
+        _height[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : declareParameter(param_name, rclcpp::ParameterValue(IMAGE_HEIGHT))).get<rclcpp::PARAMETER_INTEGER>();
         param_name = _stream_name[stream.first] + "_fps";
         ROS_DEBUG_STREAM("reading parameter:" << param_name);
-        _fps[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : _node.declare_parameter(param_name, rclcpp::ParameterValue(IMAGE_FPS))).get<rclcpp::PARAMETER_DOUBLE>();
+        _fps[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : declareParameter(param_name, rclcpp::ParameterValue(IMAGE_FPS))).get<rclcpp::PARAMETER_DOUBLE>();
         param_name = "enable_" + STREAM_NAME(stream);
         ROS_DEBUG_STREAM("reading parameter:" << param_name);
-        _enable[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : _node.declare_parameter(param_name, rclcpp::ParameterValue(true))).get<rclcpp::PARAMETER_BOOL>();
+        _enable[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : declareParameter(param_name, rclcpp::ParameterValue(true))).get<rclcpp::PARAMETER_BOOL>();
     }
 
     for (auto& stream : HID_STREAMS)
     {
         std::string param_name(_stream_name[stream.first] + "_fps");
-        _fps[stream] = _node.declare_parameter(param_name, rclcpp::ParameterValue(IMU_FPS)).get<rclcpp::PARAMETER_DOUBLE>();
+        _fps[stream] = declareParameter(param_name, rclcpp::ParameterValue(IMU_FPS)).get<rclcpp::PARAMETER_DOUBLE>();
         param_name = "enable_" + STREAM_NAME(stream);
-        _enable[stream] = _node.declare_parameter(param_name, rclcpp::ParameterValue(ENABLE_IMU)).get<rclcpp::PARAMETER_BOOL>();
+        _enable[stream] = declareParameter(param_name, rclcpp::ParameterValue(ENABLE_IMU)).get<rclcpp::PARAMETER_BOOL>();
     }
-    _base_frame_id = _node.declare_parameter("base_frame_id", rclcpp::ParameterValue(DEFAULT_BASE_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
-    _odom_frame_id = _node.declare_parameter("odom_frame_id", rclcpp::ParameterValue(DEFAULT_ODOM_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
+    _base_frame_id = declareParameter("base_frame_id", rclcpp::ParameterValue(DEFAULT_BASE_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
+    _odom_frame_id = declareParameter("odom_frame_id", rclcpp::ParameterValue(DEFAULT_ODOM_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
 
     std::vector<stream_index_pair> streams(IMAGE_STREAMS);
     streams.insert(streams.end(), HID_STREAMS.begin(), HID_STREAMS.end());
     for (auto& stream : streams)
     {
         std::string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_frame_id").str());
-        _frame_id[stream] = _node.declare_parameter(param_name, rclcpp::ParameterValue(FRAME_ID(stream))).get<rclcpp::PARAMETER_STRING>();
+        _frame_id[stream] = declareParameter(param_name, rclcpp::ParameterValue(FRAME_ID(stream))).get<rclcpp::PARAMETER_STRING>();
         param_name = static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_optical_frame_id").str();
-        _optical_frame_id[stream] = _node.declare_parameter(param_name, rclcpp::ParameterValue(OPTICAL_FRAME_ID(stream))).get<rclcpp::PARAMETER_STRING>();
+        _optical_frame_id[stream] = declareParameter(param_name, rclcpp::ParameterValue(OPTICAL_FRAME_ID(stream))).get<rclcpp::PARAMETER_STRING>();
     }
 
-    std::string unite_imu_method_str = _node.declare_parameter("unite_imu_method", rclcpp::ParameterValue(DEFAULT_UNITE_IMU_METHOD)).get<rclcpp::PARAMETER_STRING>();
+    std::string unite_imu_method_str = declareParameter("unite_imu_method", rclcpp::ParameterValue(DEFAULT_UNITE_IMU_METHOD)).get<rclcpp::PARAMETER_STRING>();
     if (unite_imu_method_str == "linear_interpolation")
         _imu_sync_method = imu_sync_method::LINEAR_INTERPOLATION;
     else if (unite_imu_method_str == "copy")
@@ -673,7 +711,7 @@ void BaseRealSenseNode::getParameters()
 
     if (_imu_sync_method > imu_sync_method::NONE)
     {
-        _optical_frame_id[GYRO] = _node.declare_parameter("imu_optical_frame_id", rclcpp::ParameterValue(DEFAULT_IMU_OPTICAL_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
+        _optical_frame_id[GYRO] = declareParameter("imu_optical_frame_id", rclcpp::ParameterValue(DEFAULT_IMU_OPTICAL_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
     }
 
     for (auto& stream : IMAGE_STREAMS)
@@ -681,15 +719,15 @@ void BaseRealSenseNode::getParameters()
         if (stream == DEPTH) continue;
         if (stream.second > 1) continue;
         std::string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << "aligned_depth_to_" << STREAM_NAME(stream) << "_frame_id").str());
-        _depth_aligned_frame_id[stream] = _node.declare_parameter(param_name, rclcpp::ParameterValue(ALIGNED_DEPTH_TO_FRAME_ID(stream))).get<rclcpp::PARAMETER_STRING>();
+        _depth_aligned_frame_id[stream] = declareParameter(param_name, rclcpp::ParameterValue(ALIGNED_DEPTH_TO_FRAME_ID(stream))).get<rclcpp::PARAMETER_STRING>();
     }
 
-    _allow_no_texture_points = _node.declare_parameter("allow_no_texture_points", rclcpp::ParameterValue(ALLOW_NO_TEXTURE_POINTS)).get<rclcpp::PARAMETER_BOOL>();
-    _clipping_distance = static_cast<float>(_node.declare_parameter("clip_distance", rclcpp::ParameterValue(-1.0)).get<rclcpp::PARAMETER_DOUBLE>());
-    _linear_accel_cov = _node.declare_parameter("linear_accel_cov", rclcpp::ParameterValue(0.01)).get<rclcpp::PARAMETER_DOUBLE>();
-    _angular_velocity_cov = _node.declare_parameter("angular_velocity_cov", rclcpp::ParameterValue(0.01)).get<rclcpp::PARAMETER_DOUBLE>();
-    _hold_back_imu_for_frames = _node.declare_parameter("hold_back_imu_for_frames", rclcpp::ParameterValue(HOLD_BACK_IMU_FOR_FRAMES)).get<rclcpp::PARAMETER_BOOL>();
-    _publish_odom_tf = _node.declare_parameter("publish_odom_tf", rclcpp::ParameterValue(PUBLISH_ODOM_TF)).get<rclcpp::PARAMETER_BOOL>();
+    _allow_no_texture_points = declareParameter("allow_no_texture_points", rclcpp::ParameterValue(ALLOW_NO_TEXTURE_POINTS)).get<rclcpp::PARAMETER_BOOL>();
+    _clipping_distance = static_cast<float>(declareParameter("clip_distance", rclcpp::ParameterValue(-1.0)).get<rclcpp::PARAMETER_DOUBLE>());
+    _linear_accel_cov = declareParameter("linear_accel_cov", rclcpp::ParameterValue(0.01)).get<rclcpp::PARAMETER_DOUBLE>();
+    _angular_velocity_cov = declareParameter("angular_velocity_cov", rclcpp::ParameterValue(0.01)).get<rclcpp::PARAMETER_DOUBLE>();
+    _hold_back_imu_for_frames = declareParameter("hold_back_imu_for_frames", rclcpp::ParameterValue(HOLD_BACK_IMU_FOR_FRAMES)).get<rclcpp::PARAMETER_BOOL>();
+    _publish_odom_tf = declareParameter("publish_odom_tf", rclcpp::ParameterValue(PUBLISH_ODOM_TF)).get<rclcpp::PARAMETER_BOOL>();
 }
 
 void BaseRealSenseNode::setupDevice()
@@ -821,7 +859,7 @@ void BaseRealSenseNode::setupDevice()
     }
     catch(const std::exception& ex)
     {
-        ROS_ERROR_STREAM("An exception has been thrown: " << ex.what());
+        ROS_ERROR_STREAM("An exception has been thrown: " << __FILE__ << ":" << __LINE__ << ":" << ex.what());
         throw;
     }
     catch(...)
@@ -861,9 +899,7 @@ void BaseRealSenseNode::setupPublishers()
             image_raw << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << stream_name << "/camera_info";
 
-            _rs_diagnostic_updater.Add(stream_name, diagnostic_updater::FrequencyStatusParam(&_fps[stream], &_fps[stream]));
-            
-            _image_publishers[stream] = {image_transport::create_publisher(&_node, image_raw.str(), rmw_qos_profile_sensor_data), stream_name};
+            _image_publishers[stream] = {image_transport::create_publisher(&_node, image_raw.str(), rmw_qos_profile_sensor_data)};
             _info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);
 
             if (_align_depth && (stream != DEPTH) && stream.second < 2)
@@ -873,8 +909,7 @@ void BaseRealSenseNode::setupPublishers()
                 aligned_camera_info << "aligned_depth_to_" << stream_name << "/camera_info";
 
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
-                _rs_diagnostic_updater.Add(aligned_stream_name, diagnostic_updater::FrequencyStatusParam(&_fps[stream], &_fps[stream]));
-                _depth_aligned_image_publishers[stream] = {image_transport::create_publisher(&_node, aligned_image_raw.str(), rmw_qos_profile_sensor_data), aligned_stream_name};
+                _depth_aligned_image_publishers[stream] = {image_transport::create_publisher(&_node, aligned_image_raw.str(), rmw_qos_profile_sensor_data)};
                 _depth_aligned_info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(), 1);
             }
 
@@ -954,7 +989,7 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
         auto& image_publisher = _depth_aligned_image_publishers.at(sip);
 
         if(0 != info_publisher->get_subscription_count() ||
-           0 != image_publisher.first.getNumSubscribers())
+           0 != image_publisher.getNumSubscribers())
         {
             std::shared_ptr<rs2::align> align;
             try{
@@ -1759,7 +1794,7 @@ void BaseRealSenseNode::setupStreams()
     }
     catch(const std::exception& ex)
     {
-        ROS_ERROR_STREAM("An exception has been thrown: " << ex.what());
+        ROS_ERROR_STREAM("An exception has been thrown: " << __FILE__ << ":" << __LINE__ << ":" << ex.what());
         throw;
     }
     catch(...)
@@ -2233,7 +2268,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
                                      const stream_index_pair& stream,
                                      std::map<stream_index_pair, cv::Mat>& images,
                                      const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
-                                     const std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics>& image_publishers,
+                                     const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
                                      std::map<stream_index_pair, int>& seq,
                                      std::map<stream_index_pair, sensor_msgs::msg::CameraInfo>& camera_info,
                                      const std::map<stream_index_pair, std::string>& optical_frame_id,
@@ -2267,7 +2302,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     auto& info_publisher = info_publishers.at(stream);
     auto& image_publisher = image_publishers.at(stream);
     if(0 != info_publisher->get_subscription_count() ||
-       0 != image_publisher.first.getNumSubscribers())
+       0 != image_publisher.getNumSubscribers())
     {
         sensor_msgs::msg::Image::SharedPtr img;
         img = cv_bridge::CvImage(std_msgs::msg::Header(), encoding.at(stream.first), image).toImageMsg();
@@ -2286,60 +2321,21 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         cam_info.header.stamp = t;
         info_publisher->publish(cam_info);
 
-        image_publisher.first.publish(img);
-        _rs_diagnostic_updater.Tick(image_publisher.second);
+        image_publisher.publish(img);
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
     }
 }
 
 bool BaseRealSenseNode::getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile)
-    {
-        // Assuming that all D400 SKUs have depth sensor
-        auto profiles = _enabled_profiles[stream_index];
-        auto it = std::find_if(profiles.begin(), profiles.end(),
-                               [&](const rs2::stream_profile& profile)
-                               { return (profile.stream_type() == stream_index.first); });
-        if (it == profiles.end())
-            return false;
-
-        profile =  *it;
-        return true;
-    }
-
-void BaseRealSenseNode::startMonitoring()
 {
-    int time_interval(10000);
-    std::function<void()> func = [this, time_interval](){
-        std::mutex mu;
-        std::unique_lock<std::mutex> lock(mu);
-        while(_is_running) {
-            _cv.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return !_is_running;});
-            if (_is_running)
-            {
-                publish_temperature();
-            }
-        }
-    };
-    _monitoring_t = std::make_shared<std::thread>(func);
-}
+    // Assuming that all D400 SKUs have depth sensor
+    auto profiles = _enabled_profiles[stream_index];
+    auto it = std::find_if(profiles.begin(), profiles.end(),
+                            [&](const rs2::stream_profile& profile)
+                            { return (profile.stream_type() == stream_index.first); });
+    if (it == profiles.end())
+        return false;
 
-void BaseRealSenseNode::publish_temperature()
-{
-    rs2::options sensor(_sensors[_base_stream]);
-    for (rs2_option option : _monitor_options)
-    {
-        if (sensor.supports(option))
-        {
-            std::string name(rs2_option_to_string(option));
-            try
-            {
-                auto option_value = sensor.get_option(option);
-                _rs_diagnostic_updater.update_temperatue(name, option_value);
-            }
-            catch(const std::exception& e)
-            {
-                ROS_DEBUG_STREAM("Failed checking for temperature - " << name << std::endl << e.what());
-            }
-        }
-    }
+    profile =  *it;
+    return true;
 }

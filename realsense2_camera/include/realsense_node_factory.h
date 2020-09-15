@@ -53,7 +53,6 @@ namespace realsense2_camera
         std::thread _query_thread;
         bool _is_alive;
         rclcpp::Logger _logger;
-        std::shared_ptr<diagnostic_updater::Updater> _diagnostic_updater;
     };
 }//end namespace
 #endif //___REALSENSE_NODE_FACTORY_HEADER___
