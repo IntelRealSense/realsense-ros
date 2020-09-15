@@ -42,6 +42,8 @@
   <arg name="enable_sync"               default="false"/>
   <arg name="align_depth"               default="false"/>
 
+  <arg name="base_frame_id"             default="$(arg tf_prefix)_link"/>
+
   <arg name="publish_tf"                default="true"/>
   <arg name="tf_publish_rate"           default="0"/>
 
@@ -97,6 +99,8 @@
       <arg name="accel_fps"                value="$(arg accel_fps)"/>
       <arg name="enable_gyro"              value="$(arg enable_gyro)"/>
       <arg name="enable_accel"             value="$(arg enable_accel)"/>
+
+      <arg name="base_frame_id"            value="$(arg base_frame_id)"/>
 
       <arg name="publish_tf"               value="$(arg publish_tf)"/>
       <arg name="tf_publish_rate"          value="$(arg tf_publish_rate)"/>
