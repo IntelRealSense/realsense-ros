@@ -166,6 +166,7 @@ namespace realsense2_camera
                                const tf2::Quaternion& q,
                                const std::string& from,
                                const std::string& to);
+        const rclcpp::ParameterValue declareParameter(const std::string &name, const rclcpp::ParameterValue &default_value=rclcpp::ParameterValue(), const rcl_interfaces::msg::ParameterDescriptor &parameter_descriptor=rcl_interfaces::msg::ParameterDescriptor());
 
 
     private:
@@ -237,7 +238,6 @@ namespace realsense2_camera
         void set_auto_exposure_roi(const std::string variable_name, rs2::sensor sensor, const std::vector<rclcpp::Parameter> & parameters);
         void set_sensor_auto_exposure_roi(rs2::sensor sensor);
         rs2_stream rs2_string_to_stream(std::string str);
-        const rclcpp::ParameterValue declareParameter(const std::string &name, const rclcpp::ParameterValue &default_value=rclcpp::ParameterValue(), const rcl_interfaces::msg::ParameterDescriptor &parameter_descriptor=rcl_interfaces::msg::ParameterDescriptor());
         void clean();
 
         rs2::device _dev;

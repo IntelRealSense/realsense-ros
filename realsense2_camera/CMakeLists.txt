@@ -117,10 +117,10 @@ add_library(${PROJECT_NAME} SHARED
     include/constants.h
     include/realsense_node_factory.h
     include/base_realsense_node.h
-#    include/t265_realsense_node.h
+    include/t265_realsense_node.h
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
-#    src/t265_realsense_node.cpp
+    src/t265_realsense_node.cpp
     )
 
 
