@@ -8,6 +8,9 @@ Changelog for package realsense_camera_msgs
 1.0.0 (2020-09-16)
 ------------------
 
+Forthcoming
+-----------
+
 2.0.4 (2019-05-30)
 ------------------
 * update maintainer
