@@ -1,5 +1,5 @@
 # ROS2 Wrapper for Intel&reg; RealSense&trade; Devices
-These are packages for using Intel RealSense cameras (D400, L500 series and SR300 camera) with ROS2.
+These are packages for using Intel RealSense cameras (D400 and L500 series, SR300 camera and T265 Tracking Module) with ROS2.
 
 LibRealSense supported version: v2.38.1 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
@@ -106,6 +106,8 @@ After running the above command with D435i attached, the following list of topic
 - /rosout
 - /tf_static
 
+The "/camera1" prefix is the namesapce specified in the given launch file.
+When using D435 or D415, the gyro and accel topics wont be available. Likewise, other topics will be available when using T265 (see below).
 
 ### Available Parameters:
 For the entire list of parameters type `ros2 param list`.
@@ -154,9 +156,17 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 - **tf_publish_rate**: double, positive values mean dynamic transform publication with specified rate, all other values mean static transform publication. Defaults to 0 
 - **publish_odom_tf**: If True (default) publish TF from odom_frame to pose_frame.
 
+## Using T265 ##
+**Important Notice:** For wheeled robots, odometer input is a requirement for robust and accurate tracking. The relevant APIs will be added to librealsense and ROS/realsense in upcoming releases. Currently, the API is available in the [underlying device driver](https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/libtm/include/TrackingDevice.h#L508-L515).
+
+### Start the camera node
+To start the camera node in ROS:
+
+```bash
+ros2 run realsense2_node realsense2_node --ros-args -p enable_pose:=true -p device_type:=t265 -p fisheye_width:=848 -p fisheye_height:=800
+```
 
 ## Still on the pipelie:
-* T265 support.
 * Launch files for running multiple cameras.
 * Import descriptive files (realsense2_description package).
 * Support ROS2 life cycle.
