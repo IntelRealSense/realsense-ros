@@ -2,9 +2,9 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>realsense2_node</name>
-  <version>2.0.8</version>
+  <version>1.0.0</version>
   <description>ROS2 realsense node</description>
-  <maintainer email="xiaojun.huang@intel.com">Xiaojun Huang</maintainer>
+  <maintainer email="doron.hirshberg@intel.com">Doron Hirshberg</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
