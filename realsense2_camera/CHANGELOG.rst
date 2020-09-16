@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.0 (2020-09-16)
+------------------
 * Update README.md
 * Enable recovery from reconnect event.
 * Add an example config file: d435i.yaml.
