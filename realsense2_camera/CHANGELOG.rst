@@ -2,7 +2,7 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.0.0 (2020-09-16)
+3.0.0 (2020-09-16)
 ------------------
 * Update README.md
 * Enable recovery from reconnect event.

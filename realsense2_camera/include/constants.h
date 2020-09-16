@@ -5,7 +5,7 @@
 
 #include <string>
 
-#define REALSENSE_ROS_MAJOR_VERSION    1
+#define REALSENSE_ROS_MAJOR_VERSION    3
 #define REALSENSE_ROS_MINOR_VERSION    0
 #define REALSENSE_ROS_PATCH_VERSION    0
 
