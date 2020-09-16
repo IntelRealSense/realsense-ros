@@ -2,6 +2,11 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* port support of T265 from ROS1.
+* Contributors: doronhi
+
 3.0.0 (2020-09-16)
 ------------------
 * Update README.md
