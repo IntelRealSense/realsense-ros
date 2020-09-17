@@ -7,14 +7,14 @@
 
 #include <librealsense2/rs.hpp>
 #include <librealsense2/rsutil.h>
-#include "constants.h"
+#include "realsense2_camera/constants.h"
 #include <cv_bridge/cv_bridge.h>
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <diagnostic_updater/update_functions.hpp>
 #include <diagnostic_updater/publisher.hpp>
 // #include <nav_msgs/Odometry.h>
-#include <image_transport/image_transport.h>
+#include <image_transport/image_transport.hpp>
 #include "realsense_camera_msgs/msg/imu_info.hpp"
 #include "realsense_camera_msgs/msg/extrinsics.hpp"
 #include <librealsense2/hpp/rs_processing.hpp>
