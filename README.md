@@ -77,7 +77,7 @@ The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but 
    ```
    *Windows*
    ```batch
-   mkdir c:\catkin_wssrc
+   mkdir c:\catkin_ws\src
    cd c:\catkin_ws\src
    ```
 
