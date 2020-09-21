@@ -19,10 +19,14 @@ namespace realsense2_camera
         private:
             void initializeOdometryInput();
             void setupSubscribers();
+            void handleWarning();   
             void odom_in_callback(const nav_msgs::Odometry::ConstPtr& msg);
+            void warningDiagnostic (diagnostic_updater::DiagnosticStatusWrapper &stat);
+            diagnostic_updater::Updater callback_updater;
 
             ros::Subscriber _odom_subscriber;
             rs2::wheel_odometer _wo_snr;
             bool _use_odom_in;
+            std::string  _T265_fault;
     };
 }
