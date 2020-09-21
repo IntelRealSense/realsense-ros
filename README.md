@@ -189,8 +189,8 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 - **publish_odom_tf**: If True (default) publish TF from odom_frame to pose_frame.
 
 
-### RGBD Point Cloud
-Here is an example of how to start the camera node and make it publish the RGBD point cloud using aligned depth topic.
+### Point Cloud
+Here is an example of how to start the camera node and make it publish the point cloud using the pointcloud option.
 ```bash
 roslaunch realsense2_camera rs_camera.launch filters:=pointcloud
 ```
