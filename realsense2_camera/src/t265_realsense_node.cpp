@@ -76,7 +76,7 @@ void T265RealsenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
     quaternion_optical.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
     float3 zero_trans{0, 0, 0};
 
-    rclcpp::Time transform_ts_ = _ros_clock.now();
+    rclcpp::Time transform_ts_ = _node.now();
 
     rs2_extrinsics ex;
     try
