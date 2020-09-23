@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <memory>
-#include "realsense_node_factory.h"
+#include "realsense2_camera/realsense_node_factory.h"
 
 int main(int argc, char ** argv)
 {

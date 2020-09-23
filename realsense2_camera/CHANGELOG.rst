@@ -2,20 +2,21 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.2.14 (2020-06-18)
--------------------
-* Fix compatibility with Librealsense2 Version 2.35.2.
-* Fix support for L515.
-* Fix urdf issues.
-* Add noetic support: change state_publisher into robot_state_publisher
-* fix distortion correction model for T265 (equidistant)
-* fix stability issues. Stop sensors at program termination.
-* Contributors: Brice, Helen Oleynikova, doronhi
+3.1.0 (2020-09-16)
+------------------
+* port support of T265 from ROS1.
+* Contributors: doronhi
 
-* upgrade version to 2.2.13
-* fix ctrl-C closing issues.
-* handle device creation exceptions.
-* support LiDAR camera L515.
-* optimize pointcloud. Contributors: Davide Faconti
-* fix usb port id parsing issues.
-* Add eigen dependency - missing for Melodic. Contributors: Antoine Hoarau
+3.0.0 (2020-09-16)
+------------------
+* Update README.md
+* Enable recovery from reconnect event.
+* Add an example config file: d435i.yaml.
+* fix launch file installation. Allow running the following command: 'ros2 launch realsense2_camera rs.launch.py'
+* enable set_auto_exposure_roi options.
+* enable sensors and filters dynamic parameters.
+* clean
+* RealSenseNodeFactory inherits from rclcpp::Node
+* Add project: realsense2_node
+* Add support for D455
+* README.md: update installation process.

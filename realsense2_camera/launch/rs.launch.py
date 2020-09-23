@@ -13,16 +13,31 @@
 # limitations under the License.
 
 """Launch realsense2_camera node without rviz2."""
-
+import os
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 import launch_ros.actions
 
 
 def generate_launch_description():
+
+    config = os.path.join(
+        get_package_share_directory('realsense2_camera'),
+        'config',
+        'd435i.yaml'
+        )
+
     return LaunchDescription([
         # Realsense
         launch_ros.actions.Node(
-            package='realsense2_camera', node_executable='realsense2_camera',
+            package='realsense2_node', 
+            node_namespace='camera1',
+            node_executable='realsense2_node',
+            name='cam1',
+            parameters = [{
+                           'enable_pointcloud': True,
+                           'unite_imu_method': 'linear_interpolation'
+                           }],
             output='screen',
             emulate_tty=True,
             ),

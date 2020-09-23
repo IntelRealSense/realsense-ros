@@ -66,46 +66,19 @@ set(CMAKE_CXX_FLAGS "-fPIE -fPIC -D_FORTIFY_SOURCE=2 -fstack-protector -Wformat 
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(OpenCV REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(tf2_ros REQUIRED)
 find_package(realsense2_camera REQUIRED)
-find_package(realsense_camera_msgs REQUIRED)
 
-find_library(realsense2_LIBRARIES realsense2)
-find_path(realsense2_INCLUDE_DIRS librealsense2/rs.hpp)
+set(executable_name realsense2_node)
 
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${realsense2_INCLUDE_DIRS}
-)
-
-add_executable(realsense2_node
+add_executable(${executable_name}
   src/realsense2_node.cpp
 )
-
-ament_target_dependencies(realsense2_node
-  rclcpp
-  nav_msgs
-  sensor_msgs
-  tf2
-  tf2_ros
+ament_target_dependencies(${executable_name}
   realsense2_camera
-  realsense_camera_msgs
 )
 
-target_link_libraries(realsense2_node
-  ${OpenCV_LIBRARIES}
-)
-
-install(TARGETS realsense2_node
+install(TARGETS ${executable_name}
   DESTINATION lib/${PROJECT_NAME}
-)
-
-install(TARGETS realsense2_node
-  RUNTIME DESTINATION bin
 )
 
 if(BUILD_TESTING)
