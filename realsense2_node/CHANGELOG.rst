@@ -2,8 +2,8 @@
 Changelog for package realsense2_node
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.1.1 (2020-09-23)
+------------------
 * remove uneeded realsense_camera_msgs from package.xml
 * various fixes for canonical ROS2
 * Contributors: AustinDeric

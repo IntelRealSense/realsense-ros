@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.1.1 (2020-09-23)
+------------------
 * fix bug: Conversion from milliseconds to nanoseconds.
   enable use of parameter: use_sim_time.
 * various fixes for canonical ROS2
