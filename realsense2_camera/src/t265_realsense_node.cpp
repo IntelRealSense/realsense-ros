@@ -69,7 +69,7 @@ void T265RealsenseNode::odom_in_callback(const nav_msgs::msg::Odometry::SharedPt
     _wo_snr.send_wheel_odometry(0, 0, velocity);
 }
 
-void T265RealsenseNode::calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile)
+void T265RealsenseNode::calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile)
 {
     // Transform base to stream
     tf2::Quaternion quaternion_optical;
@@ -81,7 +81,7 @@ void T265RealsenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
     rs2_extrinsics ex;
     try
     {
-        ex = profile.get_extrinsics_to(base_profile);
+        ex = getAProfile(stream).get_extrinsics_to(base_profile);
     }
     catch (std::exception& e)
     {
@@ -100,22 +100,21 @@ void T265RealsenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
     Q = quaternion_optical * Q * quaternion_optical.inverse();
 
     float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
-    // TODO: Fix static transform publication:
-    // if (stream == POSE)
-    // {
-    //     Q = Q.inverse();
-    //     publish_static_tf(transform_ts_, trans, Q, _frame_id[stream], _base_frame_id);
-    // }
-    // else
-    // {
-    //     publish_static_tf(transform_ts_, trans, Q, _base_frame_id, _frame_id[stream]);
-    //     publish_static_tf(transform_ts_, zero_trans, quaternion_optical, _frame_id[stream], _optical_frame_id[stream]);
+    if (stream == POSE)
+    {
+        Q = Q.inverse();
+        publish_static_tf(transform_ts_, trans, Q, _frame_id[stream], _base_frame_id);
+    }
+    else
+    {
+        publish_static_tf(transform_ts_, trans, Q, _base_frame_id, _frame_id[stream]);
+        publish_static_tf(transform_ts_, zero_trans, quaternion_optical, _frame_id[stream], _optical_frame_id[stream]);
 
-    //     // Add align_depth_to if exist:
-    //     if (_align_depth && _depth_aligned_frame_id.find(stream) != _depth_aligned_frame_id.end())
-    //     {
-    //         publish_static_tf(transform_ts_, trans, Q, _base_frame_id, _depth_aligned_frame_id[stream]);
-    //         publish_static_tf(transform_ts_, zero_trans, quaternion_optical, _depth_aligned_frame_id[stream], _optical_frame_id[stream]);
-    //     }
-    // }
+        // Add align_depth_to if exist:
+        if (_align_depth && _depth_aligned_frame_id.find(stream) != _depth_aligned_frame_id.end())
+        {
+            publish_static_tf(transform_ts_, trans, Q, _base_frame_id, _depth_aligned_frame_id[stream]);
+            publish_static_tf(transform_ts_, zero_trans, quaternion_optical, _depth_aligned_frame_id[stream], _optical_frame_id[stream]);
+        }
+    }
 }
