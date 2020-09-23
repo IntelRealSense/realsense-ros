@@ -2,6 +2,13 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix bug: Conversion from milliseconds to nanoseconds.
+  enable use of parameter: use_sim_time.
+* various fixes for canonical ROS2
+* Contributors: AustinDeric, doronhi
+
 3.1.0 (2020-09-16)
 ------------------
 * port support of T265 from ROS1.
