@@ -1,4 +1,4 @@
-#include "../include/base_realsense_node.h"
+#include "realsense2_camera/base_realsense_node.h"
 #include "assert.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
@@ -7,6 +7,7 @@
 #include <geometry_msgs/msg/vector3_stamped.hpp>
 #include <rclcpp/clock.hpp>
 #include <fstream>
+#include <iomanip>
 
 using namespace realsense2_camera;
 
@@ -69,13 +70,10 @@ size_t SyncedImuPublisher::getNumSubscribers()
 }
 
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
-                                    rs2::device dev, const std::string& serial_no,
-                                    std::shared_ptr<diagnostic_updater::Updater> diagnostic_updater) :
-    _ros_clock(RCL_ROS_TIME),
-    _is_running(true),
+                                    rs2::device dev, const std::string& serial_no) :
+    _base_frame_id(""),
     _node(node),
     _logger(rclcpp::get_logger("RealSenseCameraNode")),
-    _rs_diagnostic_updater(diagnostic_updater, serial_no),
     _dev(dev),
     _json_file_path(""),
     _serial_no(serial_no),
@@ -94,21 +92,28 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
 
     _monitor_options = {RS2_OPTION_ASIC_TEMPERATURE, RS2_OPTION_PROJECTOR_TEMPERATURE};
 
-    publishTopics();
+    try
+    {
+        publishTopics();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        clean();
+        throw;
+    }
+    
 }
 
-BaseRealSenseNode::~BaseRealSenseNode()
+void BaseRealSenseNode::clean()
 {
     // Kill dynamic transform thread
+    for (auto& name : _variable_names)
+    {
+        _node.undeclare_parameter(name);        
+    }
     if (_tf_t)
         _tf_t->join();
-
-    _is_running = false;
-    _cv.notify_one();
-    if (_monitoring_t && _monitoring_t->joinable())
-    {
-        _monitoring_t->join();
-    }
 
     std::set<std::string> module_names;
     for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
@@ -117,47 +122,81 @@ BaseRealSenseNode::~BaseRealSenseNode()
         std::pair< std::set<std::string>::iterator, bool> res = module_names.insert(module_name);
         if (res.second)
         {
-            _sensors[profile.first].stop();
+            try
+            {
+                _sensors[profile.first].stop();
+            }
+            catch(const rs2::wrong_api_call_sequence_error& e)
+            {
+                std::cerr << e.what() << '\n';
+            }
             _sensors[profile.first].close();
         }
     }
+    _synced_imu_publisher.reset();
+}
+BaseRealSenseNode::~BaseRealSenseNode()
+{
+    ROS_WARN("BaseRealSenseNode::~BaseRealSenseNode()");
+    clean();
+    ROS_WARN("BaseRealSenseNode::~BaseRealSenseNode() - Done");
 }
 
-void BaseRealSenseNode::setupErrorCallback(const rs2::sensor& sensor)
+const rclcpp::ParameterValue BaseRealSenseNode::declareParameter(const std::string &name, 
+                                                           const rclcpp::ParameterValue &default_value, 
+                                                           const rcl_interfaces::msg::ParameterDescriptor &parameter_descriptor)
 {
-    sensor.set_notifications_callback([&](const rs2::notification& n)
+    rclcpp::ParameterValue value;
+    _variable_names.insert(name);
+    if (_node.has_parameter(name))
     {
-        std::vector<std::string> error_strings({"RT IC2 Config error",
-                                                "Left IC2 Config error"});
-        if (n.get_severity() >= RS2_LOG_SEVERITY_ERROR)
+        ROS_WARN_STREAM(__LINE__ << "has_parameter(" << name << ")" );
+        std::vector<rclcpp::Parameter> params{rclcpp::Parameter(name, default_value)};
+        _node.set_parameters(params);
+        value = default_value;
+    }
+    else
+    {
+        value = _node.declare_parameter(name, default_value, parameter_descriptor);
+    }
+    return value;
+}
+
+void BaseRealSenseNode::setupErrorCallback()
+{
+    for (auto&& s : _dev.query_sensors())
+    {
+        s.set_notifications_callback([&](const rs2::notification& n)
         {
-            ROS_WARN_STREAM("Hardware Notification:" << n.get_description() << "," << n.get_timestamp() << "," << n.get_severity() << "," << n.get_category());
-        }
-        if (error_strings.end() != find_if(error_strings.begin(), error_strings.end(), [&n] (std::string err) 
-                                    {return (n.get_description().find(err) != std::string::npos); }))
-        {
-            ROS_ERROR_STREAM("Performing Hardware Reset.");
-            _dev.hardware_reset();
-        }
-    });
+            std::vector<std::string> error_strings({"RT IC2 Config error",
+                                                    "Left IC2 Config error"});
+            if (n.get_severity() >= RS2_LOG_SEVERITY_ERROR)
+            {
+                ROS_WARN_STREAM("Hardware Notification:" << n.get_description() << "," << n.get_timestamp() << "," << n.get_severity() << "," << n.get_category());
+            }
+            if (error_strings.end() != find_if(error_strings.begin(), error_strings.end(), [&n] (std::string err) 
+                                        {return (n.get_description().find(err) != std::string::npos); }))
+            {
+                ROS_ERROR_STREAM("Performing Hardware Reset.");
+                _dev.hardware_reset();
+            }
+        });
+    }
 }
 
 void BaseRealSenseNode::publishTopics()
 {
     getParameters();
     setupFilters();
-    setup();
-    // setupDevice();
-    // registerDynamicReconfigCb();
-    // setupErrorCallback();
-    // enable_devices();
-    // setupPublishers();
-    // setupStreams();
-    // SetBaseStream();
-//    registerAutoExposureROIOptions(_node_handle);
-    // publishStaticTransforms();
-    // publishIntrinsics();
-    // startMonitoring();   TODO: do
+    registerDynamicReconfigCb();
+    setupErrorCallback();
+    enable_devices();
+    setupPublishers();
+    setupStreams();
+    SetBaseStream();
+    registerAutoExposureROIOptions();
+    publishStaticTransforms();
+    publishIntrinsics();
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
@@ -194,259 +233,704 @@ void BaseRealSenseNode::runFirstFrameInitialization(rs2_stream stream_type)
 //     static const int MAX_ENUM_OPTION_VALUES(100);
 //     static const float EPSILON(0.05);
     
-//     rs2::option_range op_range = sensor.get_option_range(option);
-//     if (abs((op_range.step - 1)) > EPSILON || (op_range.max > MAX_ENUM_OPTION_VALUES)) return false;
-//     for (auto i = op_range.min; i <= op_range.max; i += op_range.step)
-//     {
-//         if (sensor.get_option_value_description(option, i) == nullptr)
-//             continue;
-//         return true;
-//     }
-//     return false;
-// }
+    rs2::option_range op_range = sensor.get_option_range(option);
+    if (abs((op_range.step - 1)) > EPSILON || (op_range.max > MAX_ENUM_OPTION_VALUES)) return false;
+    for (auto i = op_range.min; i <= op_range.max; i += op_range.step)
+    {
+        if (sensor.get_option_value_description(option, i) == nullptr)
+            continue;
+        return true;
+    }
+    return false;
+}
 
-// bool is_int_option(rs2::options sensor, rs2_option option)
-// {
-//     rs2::option_range op_range = sensor.get_option_range(option);
-//     return (op_range.step == 1.0);
-// }
+bool is_int_option(rs2::options sensor, rs2_option option)
+{
+    rs2::option_range op_range = sensor.get_option_range(option);
+    return (op_range.step == 1.0);
+}
 
-// std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option option)
-// {
-//     std::map<std::string, int> dict; // An enum to set size
-//     if (is_enum_option(sensor, option))
-//     {
-//         rs2::option_range op_range = sensor.get_option_range(option);
-//         const auto op_range_min = int(op_range.min);
-//         const auto op_range_max = int(op_range.max);
-//         const auto op_range_step = int(op_range.step);
-//         for (auto val = op_range_min; val <= op_range_max; val += op_range_step)
-//         {
-//             if (sensor.get_option_value_description(option, val) == nullptr)
-//                 continue;
-//             dict[sensor.get_option_value_description(option, val)] = val;
-//         }
-//     }
-//     return dict;
-// }
+std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option option)
+{
+    std::map<std::string, int> dict; // An enum to set size
+    if (is_enum_option(sensor, option))
+    {
+        rs2::option_range op_range = sensor.get_option_range(option);
+        const auto op_range_min = int(op_range.min);
+        const auto op_range_max = int(op_range.max);
+        const auto op_range_step = int(op_range.step);
+        for (auto val = op_range_min; val <= op_range_max; val += op_range_step)
+        {
+            if (sensor.get_option_value_description(option, val) == nullptr)
+                continue;
+            dict[sensor.get_option_value_description(option, val)] = val;
+        }
+    }
+    return dict;
+}
 
+namespace realsense2_camera
+{
 
-// void BaseRealSenseNode::set_auto_exposure_roi(const std::string option_name, rs2::sensor sensor, int new_value)
-// {
-//     rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
-//     if (option_name == "left")
-//         auto_exposure_roi.min_x = new_value;
-//     else if (option_name == "right")
-//         auto_exposure_roi.max_x = new_value;
-//     else if (option_name == "top")
-//         auto_exposure_roi.min_y = new_value;
-//     else if (option_name == "bottom")
-//         auto_exposure_roi.max_y = new_value;
-//     else
-//     {
-//         ROS_WARN_STREAM("Invalid option_name: " << option_name << " while setting auto exposure ROI.");
-//         return;
-//     }
-//     set_sensor_auto_exposure_roi(sensor);
-// }
+template <typename K, typename V>
+std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m)
+{
+    os << '{';
+    for (const auto& kv : m)
+    {
+        os << " {" << kv.first << ": " << kv.second << '}';
+    }
+    os << " }";
+    return os;
+}
 
-// void BaseRealSenseNode::set_sensor_auto_exposure_roi(rs2::sensor sensor)
-// {
-//     const rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
-//     try
-//     {
-//         sensor.as<rs2::roi_sensor>().set_region_of_interest(auto_exposure_roi);
-//     }
-//     catch(const std::runtime_error& e)
-//     {
-//         ROS_ERROR_STREAM(e.what());
-//     }
-// }
+}
 
-// #ifdef false
-// void BaseRealSenseNode::readAndSetDynamicParam(ros::NodeHandle& nh1, std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec, 
-//                                                const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, 
-//                                                int* option_value)
-// {
-//     nh1.param(option_name, *option_value, *option_value); //param (const std::string &param_name, T &param_val, const T &default_val) const
-//     if (*option_value < min_val) *option_value = min_val;
-//     if (*option_value > max_val) *option_value = max_val;
+/**
+ * Same as ros::names::isValidCharInName, but re-implemented here because it's not exposed.
+ */
+bool isValidCharInName(char c)
+{
+    return std::isalnum(c) || c == '/' || c == '_';
+}
+
+/**
+ * ROS Graph Resource names don't allow spaces and hyphens (see http://wiki.ros.org/Names),
+ * so we replace them here with underscores.
+ */
+std::string create_graph_resource_name(const std::string &original_name)
+{
+  std::string fixed_name = original_name;
+  std::transform(fixed_name.begin(), fixed_name.end(), fixed_name.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  std::replace_if(fixed_name.begin(), fixed_name.end(), [](const char c) { return !isValidCharInName(c); },
+                  '_');
+  return fixed_name;
+}
+
+void BaseRealSenseNode::set_auto_exposure_roi(const std::string variable_name, rs2::sensor sensor, const std::vector<rclcpp::Parameter> & parameters)
+{
+    for (const auto & parameter : parameters) {
+        if (variable_name == parameter.get_name())
+        {
+            int new_value(parameter.get_value<int>());
+            ROS_INFO_STREAM("set_option: " << variable_name << " = " << new_value);
+            try
+            {
+                std::vector<std::string> option_parts;
+                boost::split(option_parts, variable_name, [](char c){return c == '.';});
+                const std::string& option_name(option_parts[option_parts.size()-1]);
+
+                rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
+                if (option_name == "left")
+                    auto_exposure_roi.min_x = new_value;
+                else if (option_name == "right")
+                    auto_exposure_roi.max_x = new_value;
+                else if (option_name == "top")
+                    auto_exposure_roi.min_y = new_value;
+                else if (option_name == "bottom")
+                    auto_exposure_roi.max_y = new_value;
+                else
+                {
+                    ROS_WARN_STREAM("Invalid option_name: " << option_name << " while setting auto exposure ROI.");
+                    return;
+                }
+                set_sensor_auto_exposure_roi(sensor);
+            }
+            catch(const rs2::invalid_value_error& e)
+            {
+                ROS_WARN_STREAM("Failed to set value: " << e.what());
+            }
+            break;
+        }
+    }
+}
+
+void BaseRealSenseNode::set_sensor_auto_exposure_roi(rs2::sensor sensor)
+{
+    const rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
+    try
+    {
+        sensor.as<rs2::roi_sensor>().set_region_of_interest(auto_exposure_roi);
+    }
+    catch(const std::runtime_error& e)
+    {
+        ROS_ERROR_STREAM(e.what());
+    }
+}
+
+void BaseRealSenseNode::registerAutoExposureROIOption(const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, 
+                                               int* option_value)
+{
+    // set_parameter<int>(sensor, option, module_name);
+    std::string module_base_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
+    std::string module_name = create_graph_resource_name(module_base_name) +".auto_exposure_roi";
     
-//     ddynrec->registerVariable<int>(
-//         option_name, *option_value, [this, sensor, option_name](int new_value){set_auto_exposure_roi(option_name, sensor, new_value);},
-//         "auto-exposure " + option_name + " coordinate", min_val, max_val);
-// }
+    rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
+    crnt_descriptor.description = option_name + " coordinate";
+    rcl_interfaces::msg::IntegerRange range;
+    range.from_value = min_val;
+    range.to_value = max_val;
+    crnt_descriptor.integer_range.push_back(range);
+    std::string variable_name(module_name + "." + option_name);
+    ROS_DEBUG_STREAM("Declare ROI: INT::" << variable_name << " = " << *option_value << "[" << range.from_value << ", " << range.to_value << "]");
+    
+    try
+    {
+        *option_value = declareParameter(variable_name, rclcpp::ParameterValue(*option_value), crnt_descriptor).get<int>();
+    }
+    catch(const rclcpp::exceptions::InvalidParameterValueException& e)
+    {
+        ROS_WARN_STREAM("Failed to set ROI parameter:" << variable_name << " = " << *option_value << "[" << range.from_value << ", " << range.to_value << "]\n" << e.what());
+        return;
+    }
 
-// void BaseRealSenseNode::registerAutoExposureROIOptions(ros::NodeHandle& nh)
-// {
-//     for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
-//     {
-//         rs2::sensor sensor = _sensors[profile.first];
-//         std::string module_base_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
-//         if (sensor.is<rs2::roi_sensor>() && _auto_exposure_roi.find(module_base_name) == _auto_exposure_roi.end())
-//         {
-//             int max_x(_width[profile.first]-1);
-//             int max_y(_height[profile.first]-1);
+    _callback_handlers.push_back(
+        _node.add_on_set_parameters_callback(
+            [this, sensor, variable_name](const std::vector<rclcpp::Parameter> & parameters) 
+                { 
+                    rcl_interfaces::msg::SetParametersResult result;
+                    result.successful = true;
+                    set_auto_exposure_roi(variable_name, sensor, parameters);
+                    return result;
+                }));
+}
 
-//             std::string module_name = create_graph_resource_name(module_base_name) +"/auto_exposure_roi";
-//             ros::NodeHandle nh1(nh, module_name);
-//             std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec = std::make_shared<ddynamic_reconfigure::DDynamicReconfigure>(nh1);
+void BaseRealSenseNode::registerAutoExposureROIOptions()
+{
+    for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
+    {
+        rs2::sensor sensor = _sensors[profile.first];
+        std::string module_base_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
+        if (sensor.is<rs2::roi_sensor>() && _auto_exposure_roi.find(module_base_name) == _auto_exposure_roi.end())
+        {
+            int max_x(_width[profile.first]-1);
+            int max_y(_height[profile.first]-1);
 
-//             _auto_exposure_roi[module_base_name] = {0, 0, max_x, max_y};
-//             rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[module_base_name]);
-//             readAndSetDynamicParam(nh1, ddynrec, "left", 0, max_x, sensor, &(auto_exposure_roi.min_x));
-//             readAndSetDynamicParam(nh1, ddynrec, "right", 0, max_x, sensor, &(auto_exposure_roi.max_x));
-//             readAndSetDynamicParam(nh1, ddynrec, "top", 0, max_y, sensor, &(auto_exposure_roi.min_y));
-//             readAndSetDynamicParam(nh1, ddynrec, "bottom", 0, max_y, sensor, &(auto_exposure_roi.max_y));
+            std::string module_name = create_graph_resource_name(module_base_name) +".auto_exposure_roi";
 
-//             ddynrec->publishServicesTopics();
-//             _ddynrec.push_back(ddynrec);
+            _auto_exposure_roi[module_base_name] = {0, 0, max_x, max_y};
+            rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[module_base_name]);
+            registerAutoExposureROIOption("left", 0, max_x, sensor, &(auto_exposure_roi.min_x));
+            registerAutoExposureROIOption("right", 0, max_x, sensor, &(auto_exposure_roi.max_x));
+            registerAutoExposureROIOption("top", 0, max_y, sensor, &(auto_exposure_roi.min_y));
+            registerAutoExposureROIOption("bottom", 0, max_y, sensor, &(auto_exposure_roi.max_y));
 
-//             // Initiate the call to set_sensor_auto_exposure_roi, after the first frame arrive.
-//             rs2_stream stream_type = profile.first.first;
-//             _video_functions_stack[stream_type].push_back([this, sensor](){set_sensor_auto_exposure_roi(sensor);});
-//             _is_first_frame[stream_type] = true;
-//         }
-//     }
-// }
-// #endif //#ifdef false
+            // Initiate the call to set_sensor_auto_exposure_roi, after the first frame arrive.
+            rs2_stream stream_type = profile.first.first;
+            _video_functions_stack[stream_type].push_back([this, sensor](){set_sensor_auto_exposure_roi(sensor);});
+            _is_first_frame[stream_type] = true;
+        }
+    }
+}
 
-// void BaseRealSenseNode::registerDynamicOption(rs2::options sensor, std::string& module_name)
-// {
-//     rclcpp::Parameter node_param;
-//     for (auto i = 0; i < RS2_OPTION_COUNT; i++)
-//     {
-//         rs2_option option = static_cast<rs2_option>(i);
-//         const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
-//         if (!sensor.supports(option) || sensor.is_option_read_only(option))
-//         {
-//             continue;
-//         }
-//         if (is_checkbox(sensor, option))
-//         {
-//             auto option_value = bool(sensor.get_option(option));
-//             // if (nh1.param(option_name, option_value, option_value))
-//             // if (_node.get_parameter(option_name, node_param))
-//             // {
-//             //     option_value = node_param.as_bool();
-//             //     sensor.set_option(option, option_value);
-//             // }
-//             rcl_interfaces::msg::IntegerRange range;
-//             range.from_value = 0;
-//             range.to_value = 1;
-//             rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
-//             crnt_descriptor.description = sensor.get_option_description(option);
-//             crnt_descriptor.integer_range.push_back(range);
-//             ROS_DEBUG_STREAM("Declare: " << option_name);
-//             bool new_val = _node.declare_parameter(option_name, rclcpp::ParameterValue(option_value), crnt_descriptor).get<rclcpp::PARAMETER_BOOL>();
-//             if (new_val != option_value)
-//             {
-//                 sensor.set_option(option, new_val);
-//             }
-//             continue;
-//         }
-// #ifdef false        
-//         const auto enum_dict = get_enum_method(sensor, option);
-//         if (enum_dict.empty())
-//         {
-//             rs2::option_range op_range = sensor.get_option_range(option);
-//             const auto sensor_option_value = sensor.get_option(option);
-//             auto option_value = sensor_option_value;
-//             if (nh1.param(option_name, option_value, option_value))
-//             {
-//                 if (option_value < op_range.min || op_range.max < option_value)
-//                 {
-//                     ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option_value
-//                             << " outside the range [" << op_range.min << ", " << op_range.max
-//                             << "]. Using current sensor value " << sensor_option_value << " instead.");
-//                     option_value = sensor_option_value;
-//                 }
-//                 else
-//                 {
-//                     sensor.set_option(option, option_value);
-//                 }
-//             }
-//             if (is_int_option(sensor, option))
-//             {
-//               ddynrec->registerVariable<int>(
-//                   option_name, int(option_value),
-//                   [option, sensor](int new_value) { sensor.set_option(option, new_value); },
-//                   sensor.get_option_description(option), int(op_range.min), int(op_range.max));
-//             }
-//             else
-//             {
-//                 if (i == RS2_OPTION_DEPTH_UNITS)
-//                 {
-//                     if (ROS_DEPTH_SCALE >= op_range.min && ROS_DEPTH_SCALE <= op_range.max)
-//                     {
-//                         sensor.set_option(option, ROS_DEPTH_SCALE);
-//                         op_range.min = ROS_DEPTH_SCALE;
-//                         op_range.max = ROS_DEPTH_SCALE;
+template<class T>
+void param_set_option(rs2::options sensor, rs2_option option, std::string option_name, const std::vector<rclcpp::Parameter> & parameters)
+{ 
+    for (const auto & parameter : parameters) {
+        if (option_name == parameter.get_name())
+        {
+            std::cout << "set_option: " << option_name << " = " << parameter.get_value<T>() << std::endl;
+            try
+            {
+                sensor.set_option(option, parameter.get_value<T>());
+            }
+            catch(const rs2::invalid_value_error& e)
+            {
+                std::cout << "Failed to set value: " << e.what() << std::endl;
+            }
+            break;
+        }
+    }
+}
 
-//                         _depth_scale_meters = ROS_DEPTH_SCALE;
-//                     }
-//                 }
-//                 else
-//                 {
-//                   ddynrec->registerVariable<double>(
-//                       option_name, option_value,
-//                       [option, sensor](double new_value) { sensor.set_option(option, new_value); },
-//                       sensor.get_option_description(option), double(op_range.min), double(op_range.max));
-//                 }
-//             }
-//         }
-//         else
-//         {
-//             const auto sensor_option_value = sensor.get_option(option);
-//             auto option_value = int(sensor_option_value);
-//             if (nh1.param(option_name, option_value, option_value))
-//             {
-//                 if (std::find_if(enum_dict.cbegin(), enum_dict.cend(),
-//                                  [&option_value](const std::pair<std::string, int>& kv) {
-//                                      return kv.second == option_value;
-//                                  }) == enum_dict.cend())
-//                 {
-//                     ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option_value
-//                                               << " that is not in the enum " << enum_dict
-//                                               << ". Using current sensor value " << sensor_option_value << " instead.");
-//                     option_value = sensor_option_value;
-//                 }
-//                 else
-//                 {
-//                     sensor.set_option(option, option_value);
-//                 }
-//             }
-//             ddynrec->registerEnumVariable<int>(
-//                 option_name, option_value,
-//                 [option, sensor](int new_value) { sensor.set_option(option, new_value); },
-//                 sensor.get_option_description(option), enum_dict);
-//         }
-// #endif // false        
-//     }
-//     // ddynrec->publishServicesTopics();
-//     // _ddynrec.push_back(ddynrec);
-// }
+template<class T>
+void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name, const std::string& description_addition)
+{
+    const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
+    T option_value = static_cast<T>(sensor.get_option(option));
+    rs2::option_range op_range = sensor.get_option_range(option);
+    rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
+    std::stringstream desc;
+    desc << sensor.get_option_description(option) << std::endl << description_addition;
+    crnt_descriptor.description = desc.str();
+    if (std::is_same<T, int>::value || std::is_same<T, bool>::value)
+    {
+        rcl_interfaces::msg::IntegerRange range;
+        range.from_value = int(op_range.min);
+        range.to_value = int(op_range.max);
+        crnt_descriptor.integer_range.push_back(range);
+        if (std::is_same<T, bool>::value)
+            ROS_DEBUG_STREAM("Declare: BOOL::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
+        else
+            ROS_DEBUG_STREAM("Declare: INT::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
+    }
+    else
+    {
+        rcl_interfaces::msg::FloatingPointRange range;
+        range.from_value = double(op_range.min);
+        range.to_value = double(op_range.max);
+        crnt_descriptor.floating_point_range.push_back(range);
+        ROS_DEBUG_STREAM("Declare: DOUBLE::" << option_name << " = " << option_value);
+    }
+    T new_val;
+    try
+    {
+        new_val = declareParameter(option_name, rclcpp::ParameterValue(option_value), crnt_descriptor).get<T>();
+    }
+    catch(const rclcpp::exceptions::InvalidParameterValueException& e)
+    {
+        ROS_WARN_STREAM("Failed to set parameter:" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]\n" << e.what());
+        return;
+    }
+    
+    if (new_val != option_value)
+    {
+        try
+        {
+            sensor.set_option(option, new_val);
+        }
+        catch(const rs2::invalid_value_error& e)
+        {
+            ROS_WARN_STREAM("Failed to set value to sensor: " << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]\n" << e.what());            
+        }
+    }
+    _callback_handlers.push_back(
+        _node.add_on_set_parameters_callback(
+            [option, sensor, option_name](const std::vector<rclcpp::Parameter> & parameters) 
+                { 
+                    rcl_interfaces::msg::SetParametersResult result;
+                    result.successful = true;
+                    param_set_option<T>(sensor, option, option_name, parameters);
+                    return result;
+                }));
+}
 
-// void BaseRealSenseNode::registerDynamicReconfigCb()
-// {
-//     ROS_INFO("Setting Dynamic reconfig parameters.");
+void BaseRealSenseNode::registerDynamicOption(rs2::options sensor, std::string& module_name)
+{
+    rclcpp::Parameter node_param;
+    for (auto i = 0; i < RS2_OPTION_COUNT; i++)
+    {
+        rs2_option option = static_cast<rs2_option>(i);
+        const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
+        if (!sensor.supports(option) || sensor.is_option_read_only(option))
+        {
+            continue;
+        }
+        if (is_checkbox(sensor, option))
+        {
+            set_parameter<bool>(sensor, option, module_name);
+            continue;
+        }
+        const auto enum_dict = get_enum_method(sensor, option);
+        if (enum_dict.empty())
+        {
+            if (is_int_option(sensor, option))
+            {
+                set_parameter<int>(sensor, option, module_name);
+            }
+            else
+            {
+                if (i == RS2_OPTION_DEPTH_UNITS)
+                {
+                    rs2::option_range op_range = sensor.get_option_range(option);
+                    if (ROS_DEPTH_SCALE >= op_range.min && ROS_DEPTH_SCALE <= op_range.max)
+                    {
+                        sensor.set_option(option, ROS_DEPTH_SCALE);
+                        op_range.min = ROS_DEPTH_SCALE;
+                        op_range.max = ROS_DEPTH_SCALE;
 
-//     for(rs2::sensor sensor : _dev_sensors)
-//     {
-//         std::string module_name = create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
-//         ROS_DEBUG_STREAM("module_name:" << module_name);
-//         registerDynamicOption(sensor, module_name);
-//     }
+                        _depth_scale_meters = ROS_DEPTH_SCALE;
+                    }
+                }
+                else
+                {
+                    set_parameter<double>(sensor, option, module_name);
+                }
+            }
+        }
+        else
+        {
+            std::vector<std::pair<std::string, int> > enum_vec;
+            size_t longest_desc(0);
+            for (auto enum_iter : enum_dict)
+            {
+                enum_vec.push_back(std::make_pair(enum_iter.first, enum_iter.second));
+                longest_desc = std::max(longest_desc, enum_iter.first.size());
+            }
+            sort(enum_vec.begin(), enum_vec.end(), [](std::pair<std::string, int> e1, std::pair<std::string, int> e2){return (e1.second < e2.second);});
+            std::stringstream description;
+            for (auto vec_iter : enum_vec)
+            {
+                description << std::setw(longest_desc) << std::left << vec_iter.first << " - " << vec_iter.second << std::endl;
+            }
+            ROS_DEBUG_STREAM(description.str());
+            set_parameter<int>(sensor, option, module_name, description.str());
+        }
+    }
+}
 
-//     for (NamedFilter nfilter : _filters)
-//     {
-//         std::string module_name = nfilter._name;
-//         auto sensor = *(nfilter._filter);
-//         ROS_DEBUG_STREAM("module_name:" << module_name);
-//         registerDynamicOption(sensor, module_name);
-//     }
-//     ROS_INFO("Done Setting Dynamic reconfig parameters.");
-// }
+void BaseRealSenseNode::registerDynamicReconfigCb()
+{
+    ROS_INFO("Setting Dynamic reconfig parameters.");
+
+    for(rs2::sensor sensor : _dev_sensors)
+    {
+        std::string module_name = create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
+        ROS_DEBUG_STREAM("module_name:" << module_name);
+        registerDynamicOption(sensor, module_name);
+    }
+
+    for (NamedFilter nfilter : _filters)
+    {
+        std::string module_name = nfilter._name;
+        auto sensor = *(nfilter._filter);
+        ROS_DEBUG_STREAM("module_name:" << module_name);
+        registerDynamicOption(sensor, module_name);
+    }
+    ROS_INFO("Done Setting Dynamic reconfig parameters.");
+}
+
+rs2_stream BaseRealSenseNode::rs2_string_to_stream(std::string str)
+{
+    if (str == "RS2_STREAM_ANY")
+        return RS2_STREAM_ANY;
+    if (str == "RS2_STREAM_COLOR")
+        return RS2_STREAM_COLOR;
+    if (str == "RS2_STREAM_INFRARED")
+        return RS2_STREAM_INFRARED;
+    if (str == "RS2_STREAM_FISHEYE")
+        return RS2_STREAM_FISHEYE;
+    throw std::runtime_error("Unknown stream string " + str);
+}
+
+void BaseRealSenseNode::getParameters()
+{
+    ROS_INFO("getParameters...");
+    _align_depth = declareParameter("align_depth", rclcpp::ParameterValue(ALIGN_DEPTH)).get<rclcpp::PARAMETER_BOOL>();
+    _pointcloud  = declareParameter("enable_pointcloud", rclcpp::ParameterValue(POINTCLOUD)).get<rclcpp::PARAMETER_BOOL>();
+
+    std::string pc_texture_stream = declareParameter("pointcloud_texture_stream", rclcpp::ParameterValue("RS2_STREAM_COLOR")).get<rclcpp::PARAMETER_STRING>();
+    int pc_texture_idx = declareParameter("pointcloud_texture_index", rclcpp::ParameterValue(0)).get<rclcpp::PARAMETER_INTEGER>();
+    _pointcloud_texture = stream_index_pair{rs2_string_to_stream(pc_texture_stream), pc_texture_idx};
+
+    _filters_str = declareParameter("filters", rclcpp::ParameterValue(DEFAULT_FILTERS)).get<rclcpp::PARAMETER_STRING>();
+    _pointcloud |= (_filters_str.find("pointcloud") != std::string::npos);
+
+    _publish_tf = declareParameter("publish_tf", rclcpp::ParameterValue(PUBLISH_TF)).get<rclcpp::PARAMETER_BOOL>();
+    _tf_publish_rate = declareParameter("tf_publish_rate", rclcpp::ParameterValue(TF_PUBLISH_RATE)).get<rclcpp::PARAMETER_DOUBLE>();
+    _sync_frames = declareParameter("enable_sync", rclcpp::ParameterValue(SYNC_FRAMES)).get<rclcpp::PARAMETER_BOOL>();
+    if (_pointcloud || _align_depth || _filters_str.size() > 0)
+        _sync_frames = true;
+
+    _json_file_path = declareParameter("json_file_path", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
+
+    for (auto& stream : IMAGE_STREAMS)
+    {
+        std::string param_name(_stream_name[stream.first] + "_width");
+        ROS_DEBUG_STREAM("reading parameter:" << param_name);
+        if (_node.has_parameter(param_name))
+            _width[stream] = _node.get_parameter(param_name).get_parameter_value().get<rclcpp::PARAMETER_INTEGER>();
+        else
+            _width[stream] = declareParameter(param_name, rclcpp::ParameterValue(IMAGE_WIDTH)).get<rclcpp::PARAMETER_INTEGER>();
+        param_name = _stream_name[stream.first] + "_height";
+        ROS_DEBUG_STREAM("reading parameter:" << param_name);
+        _height[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : declareParameter(param_name, rclcpp::ParameterValue(IMAGE_HEIGHT))).get<rclcpp::PARAMETER_INTEGER>();
+        param_name = _stream_name[stream.first] + "_fps";
+        ROS_DEBUG_STREAM("reading parameter:" << param_name);
+        _fps[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : declareParameter(param_name, rclcpp::ParameterValue(IMAGE_FPS))).get<rclcpp::PARAMETER_DOUBLE>();
+        param_name = "enable_" + STREAM_NAME(stream);
+        ROS_DEBUG_STREAM("reading parameter:" << param_name);
+        _enable[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : declareParameter(param_name, rclcpp::ParameterValue(true))).get<rclcpp::PARAMETER_BOOL>();
+    }
+
+    for (auto& stream : HID_STREAMS)
+    {
+        std::string param_name(_stream_name[stream.first] + "_fps");
+        _fps[stream] = declareParameter(param_name, rclcpp::ParameterValue(IMU_FPS)).get<rclcpp::PARAMETER_DOUBLE>();
+        param_name = "enable_" + STREAM_NAME(stream);
+        _enable[stream] = declareParameter(param_name, rclcpp::ParameterValue(ENABLE_IMU)).get<rclcpp::PARAMETER_BOOL>();
+    }
+    _base_frame_id = declareParameter("base_frame_id", rclcpp::ParameterValue(DEFAULT_BASE_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
+    _odom_frame_id = declareParameter("odom_frame_id", rclcpp::ParameterValue(DEFAULT_ODOM_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
+
+    std::vector<stream_index_pair> streams(IMAGE_STREAMS);
+    streams.insert(streams.end(), HID_STREAMS.begin(), HID_STREAMS.end());
+    for (auto& stream : streams)
+    {
+        std::string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_frame_id").str());
+        _frame_id[stream] = declareParameter(param_name, rclcpp::ParameterValue(FRAME_ID(stream))).get<rclcpp::PARAMETER_STRING>();
+        param_name = static_cast<std::ostringstream&&>(std::ostringstream() << STREAM_NAME(stream) << "_optical_frame_id").str();
+        _optical_frame_id[stream] = declareParameter(param_name, rclcpp::ParameterValue(OPTICAL_FRAME_ID(stream))).get<rclcpp::PARAMETER_STRING>();
+    }
+
+    std::string unite_imu_method_str = declareParameter("unite_imu_method", rclcpp::ParameterValue(DEFAULT_UNITE_IMU_METHOD)).get<rclcpp::PARAMETER_STRING>();
+    if (unite_imu_method_str == "linear_interpolation")
+        _imu_sync_method = imu_sync_method::LINEAR_INTERPOLATION;
+    else if (unite_imu_method_str == "copy")
+        _imu_sync_method = imu_sync_method::COPY;
+    else
+        _imu_sync_method = imu_sync_method::NONE;
+
+    if (_imu_sync_method > imu_sync_method::NONE)
+    {
+        _optical_frame_id[GYRO] = declareParameter("imu_optical_frame_id", rclcpp::ParameterValue(DEFAULT_IMU_OPTICAL_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
+    }
+
+    for (auto& stream : IMAGE_STREAMS)
+    {
+        if (stream == DEPTH) continue;
+        if (stream.second > 1) continue;
+        std::string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << "aligned_depth_to_" << STREAM_NAME(stream) << "_frame_id").str());
+        _depth_aligned_frame_id[stream] = declareParameter(param_name, rclcpp::ParameterValue(ALIGNED_DEPTH_TO_FRAME_ID(stream))).get<rclcpp::PARAMETER_STRING>();
+    }
+
+    _allow_no_texture_points = declareParameter("allow_no_texture_points", rclcpp::ParameterValue(ALLOW_NO_TEXTURE_POINTS)).get<rclcpp::PARAMETER_BOOL>();
+    _clipping_distance = static_cast<float>(declareParameter("clip_distance", rclcpp::ParameterValue(-1.0)).get<rclcpp::PARAMETER_DOUBLE>());
+    _linear_accel_cov = declareParameter("linear_accel_cov", rclcpp::ParameterValue(0.01)).get<rclcpp::PARAMETER_DOUBLE>();
+    _angular_velocity_cov = declareParameter("angular_velocity_cov", rclcpp::ParameterValue(0.01)).get<rclcpp::PARAMETER_DOUBLE>();
+    _hold_back_imu_for_frames = declareParameter("hold_back_imu_for_frames", rclcpp::ParameterValue(HOLD_BACK_IMU_FOR_FRAMES)).get<rclcpp::PARAMETER_BOOL>();
+    _publish_odom_tf = declareParameter("publish_odom_tf", rclcpp::ParameterValue(PUBLISH_ODOM_TF)).get<rclcpp::PARAMETER_BOOL>();
+}
+
+void BaseRealSenseNode::setupDevice()
+{
+    ROS_INFO("setupDevice...");
+    try{
+        if (!_json_file_path.empty())
+        {
+            if (_dev.is<rs400::advanced_mode>())
+            {
+                std::stringstream ss;
+                std::ifstream in(_json_file_path);
+                if (in.is_open())
+                {
+                    ss << in.rdbuf();
+                    std::string json_file_content = ss.str();
+
+                    auto adv = _dev.as<rs400::advanced_mode>();
+                    adv.load_json(json_file_content);
+                    ROS_INFO_STREAM("JSON file is loaded! (" << _json_file_path << ")");
+                }
+                else
+                    ROS_WARN_STREAM("JSON file provided doesn't exist! (" << _json_file_path << ")");
+            }
+            else
+                ROS_WARN("Device does not support advanced settings!");
+        }
+        else
+            ROS_INFO("JSON file is not provided");
+
+        auto camera_name = _dev.get_info(RS2_CAMERA_INFO_NAME);
+        ROS_INFO_STREAM("Device Name: " << camera_name);
+
+        ROS_INFO_STREAM("Device Serial No: " << _serial_no);
+
+        auto camera_id = _dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
+
+        ROS_INFO_STREAM("Device physical port: " << camera_id);
+
+        auto fw_ver = _dev.get_info(RS2_CAMERA_INFO_FIRMWARE_VERSION);
+        ROS_INFO_STREAM("Device FW version: " << fw_ver);
+
+        auto pid = _dev.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
+        ROS_INFO_STREAM("Device Product ID: 0x" << pid);
+
+        ROS_INFO_STREAM("Enable PointCloud: " << ((_pointcloud)?"On":"Off"));
+        ROS_INFO_STREAM("Align Depth: " << ((_align_depth)?"On":"Off"));
+        ROS_INFO_STREAM("Sync Mode: " << ((_sync_frames)?"On":"Off"));
+
+        _dev_sensors = _dev.query_sensors();
+
+
+        std::function<void(rs2::frame)> frame_callback_function, imu_callback_function;
+        if (_sync_frames)
+        {
+            frame_callback_function = _syncer;
+
+            auto frame_callback_inner = [this](rs2::frame frame){
+                frame_callback(frame);
+            };
+            _syncer.start(frame_callback_inner);
+        }
+        else
+        {
+            frame_callback_function = [this](rs2::frame frame){frame_callback(frame);};
+        }
+
+        if (_imu_sync_method == imu_sync_method::NONE)
+        {
+            imu_callback_function = [this](rs2::frame frame){imu_callback(frame);};
+        }
+        else
+        {
+            imu_callback_function = [this](rs2::frame frame){imu_callback_sync(frame, _imu_sync_method);};
+        }
+        std::function<void(rs2::frame)> multiple_message_callback_function = [this](rs2::frame frame){multiple_message_callback(frame, _imu_sync_method);};
+
+        ROS_INFO_STREAM("Device Sensors: ");
+        for(auto&& sensor : _dev_sensors)
+        {
+            for (auto& profile : sensor.get_stream_profiles())
+            {
+                auto video_profile = profile.as<rs2::video_stream_profile>();
+                stream_index_pair sip(video_profile.stream_type(), video_profile.stream_index());
+                if (_sensors.find( sip ) != _sensors.end())
+                    continue;
+                _sensors[sip] = sensor;
+            }
+
+            std::string module_name = sensor.get_info(RS2_CAMERA_INFO_NAME);
+            if (sensor.is<rs2::depth_sensor>())
+            {
+                _sensors_callback[module_name] = frame_callback_function;
+            }
+            else if (sensor.is<rs2::color_sensor>())
+            {
+                _sensors_callback[module_name] = frame_callback_function;
+            }
+            else if (sensor.is<rs2::fisheye_sensor>())
+            {
+                _sensors_callback[module_name] = frame_callback_function;
+            }
+            else if (sensor.is<rs2::motion_sensor>())
+            {
+                _sensors_callback[module_name] = imu_callback_function;
+            }
+            else if (sensor.is<rs2::pose_sensor>())
+            {
+                _sensors_callback[module_name] = multiple_message_callback_function;
+            }
+            else
+            {
+                ROS_ERROR_STREAM("Module Name \"" << module_name << "\" isn't supported by LibRealSense! Terminating RealSense Node...");
+                throw("Error: Module not supported");
+            }
+            ROS_INFO_STREAM(std::string(sensor.get_info(RS2_CAMERA_INFO_NAME)) << " was found.");
+        }
+
+        // Update "enable" map
+        for (std::pair<stream_index_pair, bool> const& enable : _enable )
+        {
+            const stream_index_pair& stream_index(enable.first);
+            if (enable.second && _sensors.find(stream_index) == _sensors.end())
+            {
+                ROS_INFO_STREAM("(" << rs2_stream_to_string(stream_index.first) << ", " << stream_index.second << ") sensor isn't supported by current device! -- Skipping...");
+                _enable[enable.first] = false;
+            }
+        }
+    }
+    catch(const std::exception& ex)
+    {
+        ROS_ERROR_STREAM("An exception has been thrown: " << __FILE__ << ":" << __LINE__ << ":" << ex.what());
+        throw;
+    }
+    catch(...)
+    {
+        ROS_ERROR_STREAM("Unknown exception has occured!");
+        throw;
+    }
+}
+
+static const rmw_qos_profile_t rmw_qos_profile_latched =
+{
+    RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+    1,
+    RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+    RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+    RMW_QOS_DEADLINE_DEFAULT,
+    RMW_QOS_LIFESPAN_DEFAULT,
+    RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+    RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+    false
+};
+static const rclcpp::QoS qos_profile_latched(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_latched));
+
+void BaseRealSenseNode::setupPublishers()
+{
+    ROS_INFO("setupPublishers...");
+    for (auto& stream : IMAGE_STREAMS)
+    {
+        if (_enable[stream])
+        {
+            std::stringstream image_raw, camera_info;
+            bool rectified_image = false;
+            if (stream == DEPTH || stream == INFRA1 || stream == INFRA2)
+                rectified_image = true;
+
+            std::string stream_name(STREAM_NAME(stream));
+            image_raw << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
+            camera_info << stream_name << "/camera_info";
+
+            _image_publishers[stream] = {image_transport::create_publisher(&_node, image_raw.str(), rmw_qos_profile_sensor_data)};
+            _info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);
+
+            if (_align_depth && (stream != DEPTH) && stream.second < 2)
+            {
+                std::stringstream aligned_image_raw, aligned_camera_info;
+                aligned_image_raw << "aligned_depth_to_" << stream_name << "/image_raw";
+                aligned_camera_info << "aligned_depth_to_" << stream_name << "/camera_info";
+
+                std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
+                _depth_aligned_image_publishers[stream] = {image_transport::create_publisher(&_node, aligned_image_raw.str(), rmw_qos_profile_sensor_data)};
+                _depth_aligned_info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(), 1);
+            }
+
+            if (stream == DEPTH && _pointcloud)
+            {
+                _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 1);
+            }
+        }
+    }
+
+    _synced_imu_publisher = std::make_shared<SyncedImuPublisher>();
+    if (_imu_sync_method > imu_sync_method::NONE && _enable[GYRO] && _enable[ACCEL])
+    {
+        ROS_INFO("Start publisher IMU");
+        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
+        _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
+    }
+    else
+    {
+        if (_enable[GYRO])
+        {
+            _imu_publishers[GYRO] = _node.create_publisher<sensor_msgs::msg::Imu>("gyro/sample", 100);
+        }
+
+        if (_enable[ACCEL])
+        {
+            _imu_publishers[ACCEL] = _node.create_publisher<sensor_msgs::msg::Imu>("accel/sample", 100);
+        }
+    }
+    if (_enable[POSE])
+    {
+        _odom_publisher = _node.create_publisher<nav_msgs::msg::Odometry>("odom/sample", 100);
+    }
+
+    if (_enable[FISHEYE] &&
+        _enable[DEPTH])
+    {
+        _depth_to_other_extrinsics_publishers[FISHEYE] = _node.create_publisher<Extrinsics>("extrinsics/depth_to_fisheye", qos_profile_latched);
+    }
+
+    if (_enable[COLOR] &&
+        _enable[DEPTH])
+    {
+        _depth_to_other_extrinsics_publishers[COLOR] = _node.create_publisher<Extrinsics>("extrinsics/depth_to_color", qos_profile_latched);
+    }
+
+    if (_enable[INFRA1] &&
+        _enable[DEPTH])
+    {
+        _depth_to_other_extrinsics_publishers[INFRA1] = _node.create_publisher<Extrinsics>("extrinsics/depth_to_infra1", qos_profile_latched);
+    }
+
+    if (_enable[INFRA2] &&
+        _enable[DEPTH])
+    {
+        _depth_to_other_extrinsics_publishers[INFRA2] = _node.create_publisher<Extrinsics>("extrinsics/depth_to_infra2", qos_profile_latched);
+    }
+}
 
 void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const rclcpp::Time& t)
 {
@@ -468,7 +952,7 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
         auto& image_publisher = _depth_aligned_image_publishers.at(sip);
 
         if(0 != info_publisher->get_subscription_count() ||
-           0 != image_publisher.first.getNumSubscribers())
+           0 != image_publisher.getNumSubscribers())
         {
             std::shared_ptr<rs2::align> align;
             try{
@@ -738,7 +1222,8 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
         setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
     }
 
-    double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1000.0;
+    seq += 1;
+    double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1e6;
 
     if (0 != _synced_imu_publisher->getNumSubscribers())
     {
@@ -788,7 +1273,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
     auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
     if (0 != _imu_publishers[stream_index]->get_subscription_count())
     {
-        double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1000.0;
+        double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1e6;
         rclcpp::Time t(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
 
         auto imu_msg = sensor_msgs::msg::Imu();
@@ -828,7 +1313,7 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
                 frame.get_profile().stream_index(),
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
     rs2_pose pose = frame.as<rs2::pose_frame>().get_pose_data();
-    double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1000.0;
+    double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1e6;
     rclcpp::Time t(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
 
     geometry_msgs::msg::PoseStamped pose_msg;
@@ -918,11 +1403,11 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
         rclcpp::Time t;
         if (_sync_frames)
         {
-            t = _ros_clock.now();
+            t = _node.now();
         }
         else
         {
-            double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1000.0;
+            double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1e6;
             t = rclcpp::Time(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
         }
 
@@ -1094,7 +1579,8 @@ void BaseRealSenseNode::setBaseTime(double frame_time, bool warn_no_metadata)
 {
     ROS_WARN_COND(warn_no_metadata, "Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)");
 
-    _ros_time_base = _ros_clock.now();
+    _ros_time_base = _node.now();
+    
     _camera_time_base = frame_time;
 }
 
@@ -1104,8 +1590,36 @@ void BaseRealSenseNode::updateProfilesStreamCalibData(const std::vector<rs2::str
     {
         if (profile.is<rs2::video_stream_profile>())
         {
-            updateStreamCalibData(profile.as<rs2::video_stream_profile>());
+            std::string module_name = _sensors[profile.first].get_info(RS2_CAMERA_INFO_NAME);
+            ROS_DEBUG_STREAM("insert " << rs2_stream_to_string(profile.second.begin()->stream_type())
+              << " to " << module_name);
+            profiles[module_name].insert(profiles[module_name].begin(),
+                                            profile.second.begin(),
+                                            profile.second.end());
+            active_sensors[module_name] = _sensors[profile.first];
         }
+
+        for (const std::pair<std::string, std::vector<rs2::stream_profile> >& sensor_profile : profiles)
+        {
+            std::string module_name = sensor_profile.first;
+            rs2::sensor sensor = active_sensors[module_name];
+            sensor.open(sensor_profile.second);
+            sensor.start(_sensors_callback[module_name]);
+            if (sensor.is<rs2::depth_sensor>())
+            {
+                _depth_scale_meters = sensor.as<rs2::depth_sensor>().get_depth_scale();
+            }
+        }
+    }
+    catch(const std::exception& ex)
+    {
+        ROS_ERROR_STREAM("An exception has been thrown: " << __FILE__ << ":" << __LINE__ << ":" << ex.what());
+        throw;
+    }
+    catch(...)
+    {
+        ROS_ERROR_STREAM("Unknown exception has occured!");
+        throw;
     }
 }
 
@@ -1209,7 +1723,7 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
     quaternion_optical.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
     float3 zero_trans{0, 0, 0};
 
-    rclcpp::Time transform_ts_ = _ros_clock.now();
+    rclcpp::Time transform_ts_ = _node.now();
 
     rs2_extrinsics ex;
     try
@@ -1303,13 +1817,11 @@ void BaseRealSenseNode::publishDynamicTransforms()
     while (rclcpp::ok())
     {
         // Update the time stamp for publication
-        {
-            std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
-            rclcpp::Time t = _ros_clock.now();        
-            for(auto& msg : _static_tf_msgs)
-                msg.header.stamp = t;
-            _dynamic_tf_broadcaster->sendTransform(_static_tf_msgs);
-        }
+        rclcpp::Time t = _node.now();        
+        for(auto& msg : _static_tf_msgs)
+            msg.header.stamp = t;
+
+        _dynamic_tf_broadcaster->sendTransform(_static_tf_msgs);
 
         loop_rate.sleep();
     }
@@ -1526,7 +2038,11 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
                                      const stream_index_pair& stream,
                                      std::map<stream_index_pair, cv::Mat>& images,
                                      const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
-                                     const std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics>& image_publishers)
+                                     const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
+                                     std::map<stream_index_pair, int>& seq,
+                                     std::map<stream_index_pair, sensor_msgs::msg::CameraInfo>& camera_info,
+                                     const std::map<stream_index_pair, std::string>& optical_frame_id,
+                                     const std::map<rs2_stream, std::string>& encoding)
 {
     ROS_DEBUG("publishFrame(...)");
     unsigned int width = 0;
@@ -1555,7 +2071,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     auto& info_publisher = info_publishers.at(stream);
     auto& image_publisher = image_publishers.at(stream);
     if(0 != info_publisher->get_subscription_count() ||
-       0 != image_publisher.first.getNumSubscribers())
+       0 != image_publisher.getNumSubscribers())
     {
         sensor_msgs::msg::Image::SharedPtr img;
         img = cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(bpp), image).toImageMsg();
@@ -1574,60 +2090,21 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         cam_info.header.stamp = t;
         info_publisher->publish(cam_info);
 
-        image_publisher.first.publish(img);
-        _rs_diagnostic_updater.Tick(image_publisher.second);
+        image_publisher.publish(img);
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
     }
 }
 
 bool BaseRealSenseNode::getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile)
-    {
-        // Assuming that all D400 SKUs have depth sensor
-        auto profiles = _enabled_profiles[stream_index];
-        auto it = std::find_if(profiles.begin(), profiles.end(),
-                               [&](const rs2::stream_profile& profile)
-                               { return (profile.stream_type() == stream_index.first); });
-        if (it == profiles.end())
-            return false;
-
-        profile =  *it;
-        return true;
-    }
-
-void BaseRealSenseNode::startMonitoring()
 {
-    int time_interval(10000);
-    std::function<void()> func = [this, time_interval](){
-        std::mutex mu;
-        std::unique_lock<std::mutex> lock(mu);
-        while(_is_running) {
-            _cv.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return !_is_running;});
-            if (_is_running)
-            {
-                publish_temperature();
-            }
-        }
-    };
-    _monitoring_t = std::make_shared<std::thread>(func);
-}
+    // Assuming that all D400 SKUs have depth sensor
+    auto profiles = _enabled_profiles[stream_index];
+    auto it = std::find_if(profiles.begin(), profiles.end(),
+                            [&](const rs2::stream_profile& profile)
+                            { return (profile.stream_type() == stream_index.first); });
+    if (it == profiles.end())
+        return false;
 
-void BaseRealSenseNode::publish_temperature()
-{
-    rs2::options sensor(*_available_ros_sensors[0]);
-    for (rs2_option option : _monitor_options)
-    {
-        if (sensor.supports(option))
-        {
-            std::string name(rs2_option_to_string(option));
-            try
-            {
-                auto option_value = sensor.get_option(option);
-                _rs_diagnostic_updater.update_temperatue(name, option_value);
-            }
-            catch(const std::exception& e)
-            {
-                ROS_DEBUG_STREAM("Failed checking for temperature - " << name << std::endl << e.what());
-            }
-        }
-    }
+    profile =  *it;
+    return true;
 }

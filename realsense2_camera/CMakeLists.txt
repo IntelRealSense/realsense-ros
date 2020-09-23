@@ -88,7 +88,6 @@ find_package(ament_cmake REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
-#find_package(librealsense2 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(realsense_camera_msgs REQUIRED)
@@ -106,40 +105,23 @@ if(NOT realsense2_FOUND)
 endif()
 
 #set(CMAKE_NO_SYSTEM_FROM_IMPORTED true)
-include_directories(
-    include
-    ${realsense2_INCLUDE_DIR}
-    )
+include_directories(include)
 
 set(node_plugins "")
 
 add_library(${PROJECT_NAME} SHARED
-    include/constants.h
-    include/realsense_node_factory.h
-    include/base_realsense_node.h
-    include/ros_sensor.h
-    include/ros_utils.h
-#    include/t265_realsense_node.h
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
-    src/parameters.cpp
-    src/rs_node_setup.cpp
-    src/ros_sensor.cpp
-    src/ros_video_sensor.cpp
-    src/ros_imu_sensor.cpp
-    src/ros_utils.cpp
-#    src/t265_realsense_node.cpp
-    )
-
+    src/t265_realsense_node.cpp
+)
 
 target_link_libraries(${PROJECT_NAME}
     ${realsense2_LIBRARY}
     )
 
-ament_target_dependencies(${PROJECT_NAME}
+set(dependencies 
   cv_bridge
   image_transport
-  realsense2
   rclcpp
   rclcpp_components
   realsense_camera_msgs
@@ -148,7 +130,13 @@ ament_target_dependencies(${PROJECT_NAME}
   diagnostic_msgs
   nav_msgs
   tf2
+  diagnostic_updater
+  realsense2
   tf2_ros
+)
+
+ament_target_dependencies(${PROJECT_NAME}
+  ${dependencies}
 )
 
 rclcpp_components_register_nodes(${PROJECT_NAME} "realsense2_camera::RealSenseNodeFactory")
@@ -156,21 +144,26 @@ set(node_plugins "${node_plugins}realsense2_camera::RealSenseNodeFactory;$<TARGE
 
 # Install binaries
 install(TARGETS ${PROJECT_NAME}
+  DESTINATION lib/${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
 
+# Install headers
 install(
   DIRECTORY include/
   DESTINATION include
 )
 
 # Install launch files
-install(DIRECTORY launch/
-    DESTINATION launch
+install(DIRECTORY 
+    launch
+    config
+    DESTINATION share/${PROJECT_NAME}
     )
 
+# Test
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(OpenCV REQUIRED)
@@ -196,7 +189,9 @@ if(BUILD_TESTING)
   endif()
 endif()
 
+# Ament exports
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
+ament_export_dependencies(${dependencies})
 
 ament_package()

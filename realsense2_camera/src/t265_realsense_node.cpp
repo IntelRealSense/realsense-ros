@@ -1,12 +1,11 @@
-#include "../include/t265_realsense_node.h"
+#include "realsense2_camera/t265_realsense_node.h"
+#include <fstream>
 
 using namespace realsense2_camera;
 
-T265RealsenseNode::T265RealsenseNode(ros::NodeHandle& nodeHandle,
-                                     ros::NodeHandle& privateNodeHandle,
-                                     rs2::device dev,
-                                     const std::string& serial_no) : 
-                                     BaseRealSenseNode(nodeHandle, privateNodeHandle, dev, serial_no),
+T265RealsenseNode::T265RealsenseNode(rclcpp::Node& node,
+                                     rs2::device dev, const std::string& serial_no) : 
+                                     BaseRealSenseNode(node, dev, serial_no),
                                      _wo_snr(dev.first<rs2::wheel_odometer>()),
                                      _use_odom_in(false) 
                                      {
@@ -17,14 +16,14 @@ T265RealsenseNode::T265RealsenseNode(ros::NodeHandle& nodeHandle,
 void T265RealsenseNode::initializeOdometryInput()
 {
     std::string calib_odom_file;
-    _pnh.param("calib_odom_file", calib_odom_file, std::string(""));
+    calib_odom_file = declareParameter("calib_odom_file", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
     if (calib_odom_file.empty())
     {
         ROS_INFO("No calib_odom_file. No input odometry accepted.");
         return;
     }
     std::ifstream calibrationFile(calib_odom_file);
-    if (not calibrationFile)
+    if (!calibrationFile)
     {
         ROS_FATAL_STREAM("calibration_odometry file not found. calib_odom_file = " << calib_odom_file);
         throw std::runtime_error("calibration_odometry file not found" );
@@ -49,16 +48,17 @@ void T265RealsenseNode::publishTopics()
 
 void T265RealsenseNode::setupSubscribers()
 {
-    if (not _use_odom_in) return;
+    if (!_use_odom_in) return;
 
     std::string topic_odom_in;
-    _pnh.param("topic_odom_in", topic_odom_in, DEFAULT_TOPIC_ODOM_IN);
+    topic_odom_in = declareParameter("topic_odom_in", rclcpp::ParameterValue(DEFAULT_TOPIC_ODOM_IN)).get<rclcpp::PARAMETER_STRING>();
+
     ROS_INFO_STREAM("Subscribing to in_odom topic: " << topic_odom_in);
 
-    _odom_subscriber = _node_handle.subscribe(topic_odom_in, 1, &T265RealsenseNode::odom_in_callback, this);
+    _odom_subscriber = _node.create_subscription<nav_msgs::msg::Odometry>(topic_odom_in, 1, std::bind(&T265RealsenseNode::odom_in_callback, this, std::placeholders::_1));
 }
 
-void T265RealsenseNode::odom_in_callback(const nav_msgs::Odometry::ConstPtr& msg)
+void T265RealsenseNode::odom_in_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
     ROS_DEBUG("Got in_odom message");
     rs2_vector velocity {-(float)(msg->twist.twist.linear.y),
@@ -72,13 +72,11 @@ void T265RealsenseNode::odom_in_callback(const nav_msgs::Odometry::ConstPtr& msg
 void T265RealsenseNode::calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile)
 {
     // Transform base to stream
-    stream_index_pair sip(profile.stream_type(), profile.stream_index());
-
-    tf::Quaternion quaternion_optical;
-    quaternion_optical.setRPY(M_PI / 2, 0.0, -M_PI / 2);    //Pose To ROS
+    tf2::Quaternion quaternion_optical;
+    quaternion_optical.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
     float3 zero_trans{0, 0, 0};
 
-    ros::Time transform_ts_ = ros::Time::now();
+    rclcpp::Time transform_ts_ = _node.now();
 
     rs2_extrinsics ex;
     try
@@ -100,6 +98,7 @@ void T265RealsenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
 
     auto Q = rotationMatrixToQuaternion(ex.rotation);
     Q = quaternion_optical * Q * quaternion_optical.inverse();
+
     float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
     // TODO: Fix static transform publication:
     // if (stream == POSE)
