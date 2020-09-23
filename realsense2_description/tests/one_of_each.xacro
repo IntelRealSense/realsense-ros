@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<robot name="realsense2_camera" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="../urdf/_d415.urdf.xacro" />
+  <xacro:include filename="../urdf/_d435.urdf.xacro" />
+  <xacro:include filename="../urdf/_r410.urdf.xacro" />
+  <xacro:include filename="../urdf/_r430.urdf.xacro" />
+  
+  <xacro:arg name="use_nominal_extrinsics" default="True" />
+  <link name="base_link" />
+  <xacro:sensor_d415 parent="base_link" name="d415">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:sensor_d415>
+  <xacro:sensor_d435 parent="base_link" name="d435">
+    <origin xyz="0 0 0.1" rpy="0 0 0"/>
+  </xacro:sensor_d435>
+  <xacro:sensor_r410 parent="base_link" name="r410">
+    <origin xyz="0 0 0.2" rpy="0 0 0"/>
+  </xacro:sensor_r410>
+  <xacro:sensor_r430 parent="base_link" name="r430">
+    <origin xyz="0 0 0.3" rpy="0 0 0"/>
+  </xacro:sensor_r430>
+</robot>
