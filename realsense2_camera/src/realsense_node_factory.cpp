@@ -229,6 +229,17 @@ void RealSenseNodeFactory::change_device_callback(rs2::event_information& info)
 	}
 }
 
+bool RealSenseNodeFactory::toggle_sensor_callback(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+{
+  if (req.data)
+    ROS_INFO_STREAM("toggling sensor : ON");
+  else
+    ROS_INFO_STREAM("toggling sensor : OFF");
+  _realSenseNode->toggleSensors(req.data);
+  res.success=true;
+  return true;
+}
+
 void RealSenseNodeFactory::onInit()
 {
 	try
@@ -243,9 +254,10 @@ void RealSenseNodeFactory::onInit()
 		privateNh.param("serial_no", _serial_no, std::string(""));
     	privateNh.param("usb_port_id", _usb_port_id, std::string(""));
     	privateNh.param("device_type", _device_type, std::string(""));
-
+    toggle_sensor_srv = nh.advertiseService("enable", &RealSenseNodeFactory::toggle_sensor_callback, this);
 		std::string rosbag_filename("");
 		privateNh.param("rosbag_filename", rosbag_filename, std::string(""));
+
 		if (!rosbag_filename.empty())
 		{
 			{
