@@ -146,7 +146,14 @@ BaseRealSenseNode::~BaseRealSenseNode()
         std::pair< std::set<std::string>::iterator, bool> res = module_names.insert(module_name);
         if (res.second)
         {
-            _sensors[profile.first].stop();
+            try
+            {
+                _sensors[profile.first].stop();
+            }
+            catch(const rs2::wrong_api_call_sequence_error& e)
+            {
+            }
+            
             _sensors[profile.first].close();
         }
     }
