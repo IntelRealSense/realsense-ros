@@ -8,6 +8,7 @@
 #include <image_transport/image_transport.h>
 #include <ros/ros.h>
 #include <ros/package.h>
+#include <std_srvs/SetBool.h>
 #include <librealsense2/rs.hpp>
 #include <librealsense2/rsutil.h>
 #include <librealsense2/hpp/rs_processing.hpp>
@@ -47,6 +48,7 @@ namespace realsense2_camera
     {
     public:
         virtual void publishTopics() = 0;
+        virtual void toggleSensors(bool enabled) = 0;
         virtual void registerDynamicReconfigCb(ros::NodeHandle& nh) = 0;
         virtual ~InterfaceRealSenseNode() = default;
     };
@@ -65,6 +67,7 @@ namespace realsense2_camera
         virtual void onInit() override;
         void tryGetLogSeverity(rs2_log_severity& severity) const;
         static std::string parse_usb_port(std::string line);
+        bool toggle_sensor_callback(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
 
         rs2::device _device;
         std::unique_ptr<InterfaceRealSenseNode> _realSenseNode;
@@ -75,6 +78,7 @@ namespace realsense2_camera
         bool _initial_reset;
         std::thread _query_thread;
         bool _is_alive;
+        ros::ServiceServer toggle_sensor_srv;
 
     };
 }//end namespace
