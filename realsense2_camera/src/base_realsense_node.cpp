@@ -149,12 +149,11 @@ BaseRealSenseNode::~BaseRealSenseNode()
             try
             {
                 _sensors[profile.first].stop();
+                _sensors[profile.first].close();
             }
             catch(const rs2::wrong_api_call_sequence_error& e)
             {
             }
-            
-            _sensors[profile.first].close();
         }
     }
 }
@@ -180,6 +179,7 @@ void BaseRealSenseNode::toggleSensors(bool enabled)
     {
         std::string module_name = sensor_profile.first;
         rs2::sensor sensor = active_sensors[module_name];
+        sensor.open(sensor_profile.second);
         sensor.start(_sensors_callback[module_name]);
         if (sensor.is<rs2::depth_sensor>())
         {
@@ -197,6 +197,7 @@ void BaseRealSenseNode::toggleSensors(bool enabled)
         if (res.second)
         {
             _sensors[profile.first].stop();
+            _sensors[profile.first].close();
         }
     }
   }
