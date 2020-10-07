@@ -25,11 +25,6 @@ Panels:
       - /Current View1
     Name: Views
     Splitter Ratio: 0.5
-  - Class: rviz/Time
-    Experimental: false
-    Name: Time
-    SyncMode: 0
-    SyncSource: PointCloud2
 Visualization Manager:
   Class: ""
   Displays:
@@ -63,25 +58,6 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /robot_description
       Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_bottom_screw_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Name: RobotModel
       TF Prefix: ""
       Update Interval: 0
@@ -90,51 +66,11 @@ Visualization Manager:
     - Class: rviz_default_plugins/TF
       Enabled: true
       Frame Timeout: 15
-      Frames:
-        All Enabled: false
-        base_link:
-          Value: true
-        camera_bottom_screw_frame:
-          Value: false
-        camera_color_frame:
-          Value: false
-        camera_color_optical_frame:
-          Value: false
-        camera_depth_frame:
-          Value: false
-        camera_depth_optical_frame:
-          Value: false
-        camera_infra1_frame:
-          Value: true
-        camera_infra1_optical_frame:
-          Value: true
-        camera_infra2_frame:
-          Value: true
-        camera_infra2_optical_frame:
-          Value: true
-        camera_link:
-          Value: true
       Marker Scale: 0.100000001
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: false
-      Tree:
-        base_link:
-          camera_bottom_screw_frame:
-            camera_link:
-              camera_color_frame:
-                camera_color_optical_frame:
-                  {}
-              camera_depth_frame:
-                camera_depth_optical_frame:
-                  {}
-              camera_infra1_frame:
-                camera_infra1_optical_frame:
-                  {}
-              camera_infra2_frame:
-                camera_infra2_optical_frame:
-                  {}
       Update Interval: 0
       Value: true
   Enabled: true
