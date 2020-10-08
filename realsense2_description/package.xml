@@ -18,9 +18,6 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
 
-  <depend>realsense2_camera</depend>
-  <depend>realsense2_node</depend>
-  <depend>librealsense2</depend>
   <depend>realsense_camera_msgs</depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>xacro</exec_depend>
