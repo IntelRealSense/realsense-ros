@@ -90,7 +90,7 @@ find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
-find_package(realsense_camera_msgs REQUIRED)
+find_package(realsense2_camera_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(diagnostic_msgs REQUIRED)
@@ -124,7 +124,7 @@ set(dependencies
   image_transport
   rclcpp
   rclcpp_components
-  realsense_camera_msgs
+  realsense2_camera_msgs
   std_msgs
   sensor_msgs
   diagnostic_msgs
@@ -139,12 +139,13 @@ ament_target_dependencies(${PROJECT_NAME}
   ${dependencies}
 )
 
-rclcpp_components_register_nodes(${PROJECT_NAME} "realsense2_camera::RealSenseNodeFactory")
-set(node_plugins "${node_plugins}realsense2_camera::RealSenseNodeFactory;$<TARGET_FILE:${PROJECT_NAME}>\n")
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "realsense2_camera::RealSenseNodeFactory"
+  EXECUTABLE realsense2_camera_node
+)
 
 # Install binaries
 install(TARGETS ${PROJECT_NAME}
-  DESTINATION lib/${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
