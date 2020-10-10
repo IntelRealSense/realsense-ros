@@ -1,5 +1,5 @@
 # ROS Wrapper for Intel&reg; RealSense&trade; Devices
-These are packages for using Intel RealSense cameras (D400 series SR300 camera and T265 Tracking Module) with ROS.
+These are packages for using Intel RealSense cameras (D400 series SR300 camera and T265 Tracking Module) with ROS. For running in ROS2 environment please switch to the [eloquent branch](https://github.com/IntelRealSense/realsense-ros/tree/eloquent)
 
 LibRealSense supported version: v2.38.1 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
@@ -85,7 +85,7 @@ The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but 
    ```bashrc
    git clone https://github.com/IntelRealSense/realsense-ros.git
    cd realsense-ros/
-   git checkout `git tag | sort -V | grep -P "^\d+\.\d+\.\d+" | tail -1`
+   git checkout `git tag | sort -V | grep -P "^2.\d+\.\d+" | tail -1`
    cd ..
    ```
    - Make sure all dependent packages are installed. You can check .travis.yml file for reference.
