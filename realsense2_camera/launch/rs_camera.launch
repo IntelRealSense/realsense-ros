@@ -67,8 +67,11 @@
   <arg name="stereo_module/gain/1"      default="16"/>
   <arg name="stereo_module/exposure/2"  default="1"/>
   <arg name="stereo_module/gain/2"      default="16"/>
-  
-  
+
+
+
+  <arg name="bond"                default="false" />
+  <arg name="respawn"             default="$(arg bond)" />
 
   <group ns="$(arg camera)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
@@ -138,7 +141,8 @@
 
       <arg name="allow_no_texture_points"  value="$(arg allow_no_texture_points)"/>
       <arg name="ordered_pc"               value="$(arg ordered_pc)"/>
-      
+      <arg name="bond"                     value="$(arg bond)" />
+      <arg name="respawn"                  value="$(arg respawn)" />
     </include>
   </group>
 </launch>
