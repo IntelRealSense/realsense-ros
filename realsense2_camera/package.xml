@@ -6,7 +6,7 @@
   <maintainer email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</maintainer>
   <maintainer email="doron.hirshberg@intel.com">Doron Hirshberg</maintainer>
   <license>Apache 2.0</license>
-  
+
   <url type="website">http://www.ros.org/wiki/RealSense</url>
   <url type="bugtracker">https://github.com/intel-ros/realsense/issues</url>
 
@@ -17,7 +17,7 @@
   <depend>image_transport</depend>
   <depend>cv_bridge</depend>
   <depend>nav_msgs</depend>
-  <depend>nodelet</depend>  
+  <depend>nodelet</depend>
   <depend>genmsg</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
@@ -27,6 +27,14 @@
   <depend>ddynamic_reconfigure</depend>
   <depend>diagnostic_updater</depend>
   <depend>librealsense2</depend>
+
+  <exec_depend>imu_filter_madgwick</exec_depend>
+  <exec_depend>rgbd_launch</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rtabmap_ros</exec_depend>
+  <exec_depend>rviz</exec_depend>
+
   <export>
     <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>
