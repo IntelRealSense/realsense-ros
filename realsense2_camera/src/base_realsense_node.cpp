@@ -940,9 +940,18 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
                 align = (_align[stream_type] = std::make_shared<rs2::align>(stream_type));
             }
             rs2::frameset processed = frames.apply_filter(*align);
-            rs2::depth_frame aligned_depth_frame = processed.get_depth_frame();
+            std::vector<rs2::frame> frames_to_publish;
+            frames_to_publish.push_back(processed.get_depth_frame());   // push_back(aligned_depth_frame)
+            for (std::vector<NamedFilter>::const_iterator filter_it = _filters.begin(); filter_it != _filters.end(); filter_it++)
+            {
+                if (filter_it->_name == "colorizer")
+                {
+                    frames_to_publish.push_back(filter_it->_filter->process(frames_to_publish.back()));  //push_back(colorized)
+                    break;
+                }
+            }
 
-            publishFrame(aligned_depth_frame, t, sip,
+            publishFrame(frames_to_publish.back(), t, sip,
                          _depth_aligned_image,
                          _depth_aligned_info_publisher,
                          _depth_aligned_image_publishers, _depth_aligned_seq,
@@ -1116,6 +1125,9 @@ void BaseRealSenseNode::setupFilters()
         _image_format[DEPTH.first] = _image_format[COLOR.first];    // CVBridge type
         _encoding[DEPTH.first] = _encoding[COLOR.first]; // ROS message type
         _unit_step_size[DEPTH.first] = _unit_step_size[COLOR.first]; // sensor_msgs::ImagePtr row step size
+        _depth_aligned_encoding[RS2_STREAM_INFRARED] = _encoding[COLOR.first]; // ROS message type
+        _depth_aligned_encoding[RS2_STREAM_COLOR] = _encoding[COLOR.first]; // ROS message type
+        _depth_aligned_encoding[RS2_STREAM_FISHEYE] = _encoding[COLOR.first]; // ROS message type
 
         _width[DEPTH] = _width[COLOR];
         _height[DEPTH] = _height[COLOR];
@@ -1128,8 +1140,6 @@ void BaseRealSenseNode::setupFilters()
     }
     ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));
 }
-
-
 
 cv::Mat& BaseRealSenseNode::fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image)
 {
