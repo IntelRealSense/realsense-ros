@@ -477,6 +477,13 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
                         sensor.set_option(option, option_value);
                     }
                 }
+                if (option_value < op_range.min || op_range.max < option_value)
+                {
+                    ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option_value
+                                            << " that is not in range [" << op_range.min << ", " << op_range.max << "]"
+                                            << ". Removing this parameter from dynamic reconfigure options.");
+                    continue;
+                }
                 if (is_int_option(sensor, option))
                 {
                 ddynrec->registerVariable<int>(
@@ -526,6 +533,16 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
                     {
                         sensor.set_option(option, option_value);
                     }
+                }
+                if (std::find_if(enum_dict.cbegin(), enum_dict.cend(),
+                                    [&option_value](const std::pair<std::string, int>& kv) {
+                                        return kv.second == option_value;
+                                    }) == enum_dict.cend())
+                {
+                    ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option_value
+                                            << " that is not in the enum " << enum_dict
+                                            << ". Removing this parameter from dynamic reconfigure options.");
+                    continue;
                 }
                 ddynrec->registerEnumVariable<int>(
                     option_name, option_value,
