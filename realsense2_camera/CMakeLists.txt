@@ -40,7 +40,7 @@ endif()
 if (WIN32)
 find_package(realsense2 CONFIG REQUIRED)
 else()
-find_package(realsense2 2.38.1)
+find_package(realsense2 2.39.0)
 endif()
 
 if(NOT realsense2_FOUND)
