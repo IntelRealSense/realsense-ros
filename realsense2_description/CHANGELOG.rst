@@ -2,8 +2,8 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.18 (2020-10-26)
+-------------------
 * Feature: Add name to usb_plug to enable multiple copies of usb_plug model.
 * Fix mass of d435 - from lgulich
 * Contributors: Guillaume, doronhi, lgulich

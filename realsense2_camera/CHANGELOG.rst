@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.18 (2020-10-26)
+-------------------
 * Fix bug: Remove parameter with invalid value.
 * Fix bug: Colorize the aligned depth image.
 * Fix bug: Added pointcloud attributes, when RS2_STREAM_ANY is enabled
