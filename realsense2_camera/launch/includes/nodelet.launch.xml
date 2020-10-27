@@ -8,6 +8,7 @@
   <arg name="json_file_path"      default=""/>
   <arg name="rosbag_filename"     default=""/>
   <arg name="required"            default="false"/>
+  <arg name="output"              default="screen"/>
 
   <arg name="fisheye_width"       default="0"/>
   <arg name="fisheye_height"      default="0"/>
@@ -92,7 +93,7 @@
   <arg name="allow_no_texture_points"  default="false"/>
 
 
-  <node unless="$(arg external_manager)" pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen" required="$(arg required)"/>
+  <node unless="$(arg external_manager)" pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="$(arg output)" required="$(arg required)"/>
   <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)" required="$(arg required)">
     <param name="serial_no"                type="str"  value="$(arg serial_no)"/>
     <param name="usb_port_id"              type="str"  value="$(arg usb_port_id)"/>
