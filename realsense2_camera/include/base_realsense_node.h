@@ -242,6 +242,7 @@ namespace realsense2_camera
         rs2_stream rs2_string_to_stream(std::string str);
         void startMonitoring();
         void publish_temperature();
+        void publish_frequency_update();
 
         rs2::device _dev;
         std::map<stream_index_pair, rs2::sensor> _sensors;

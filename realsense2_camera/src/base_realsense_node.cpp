@@ -2322,7 +2322,7 @@ void BaseRealSenseNode::startMonitoring()
         _temperature_nodes.push_back({option, std::make_shared<TemperatureDiagnostics>(rs2_option_to_string(option), _serial_no )});
     }
 
-    int time_interval(10000);
+    int time_interval(1000);
     std::function<void()> func = [this, time_interval](){
         std::mutex mu;
         std::unique_lock<std::mutex> lock(mu);
@@ -2331,6 +2331,7 @@ void BaseRealSenseNode::startMonitoring()
             if (_is_running)
             {
                 publish_temperature();
+                publish_frequency_update();
             }
         }
     };
@@ -2355,6 +2356,14 @@ void BaseRealSenseNode::publish_temperature()
                 ROS_DEBUG_STREAM("Failed checking for temperature." << std::endl << e.what());
             }
         }
+    }
+}
+
+void BaseRealSenseNode::publish_frequency_update()
+{
+    for (auto &image_publisher : _image_publishers)
+    {
+        image_publisher.second.second->update();
     }
 }
 
