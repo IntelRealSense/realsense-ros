@@ -36,9 +36,13 @@ namespace realsense2_camera
         diagnostic_updater_.add(frequency_status_);
       }
 
-      void update()
+      void tick()
       {
         frequency_status_.tick();
+      }
+
+      void update()
+      {
         diagnostic_updater_.update();
       }
 
