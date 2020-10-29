@@ -1,15 +1,15 @@
 # ROS Wrapper for Intel&reg; RealSense&trade; Devices
-These are packages for using Intel RealSense cameras (D400 series SR300 camera and T265 Tracking Module) with ROS. For running in ROS2 environment please switch to the [eloquent branch](https://github.com/IntelRealSense/realsense-ros/tree/eloquent)
+These are packages for using Intel RealSense cameras (D400 series SR300 camera and T265 Tracking Module) with ROS. 
+This version supports Kinetic, Melodic and Noetic distributions.
+For running in ROS2 environment please switch to the [eloquent branch](https://github.com/IntelRealSense/realsense-ros/tree/eloquent)
 
 LibRealSense supported version: v2.39.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
 ## Installation Instructions
 
 ### Ubuntu
-The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but apply to ROS Melodic on **Ubuntu 18.04** as well, by replacing kinetic with melodic wherever is needed.
-
    #### Step 1: Install the ROS distribution
-   - #### Install [ROS Kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu), on Ubuntu 16.04 or [ROS Melodic](http://wiki.ros.org/melodic/Installation/Ubuntu) on Ubuntu 18.04.
+   - #### Install [ROS Kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu), on Ubuntu 16.04, [ROS Melodic](http://wiki.ros.org/melodic/Installation/Ubuntu) on Ubuntu 18.04 or [ROS Noetic](http://wiki.ros.org/noetic/Installation/Ubuntu) on Ubuntu 20.04.
 
 ### Windows
    #### Step 1: Install the ROS distribution
@@ -30,6 +30,10 @@ The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but 
     or
     ```
     export ROS_VER=melodic 
+    ```
+    or
+    ```
+    export ROS_VER=noetic 
     ```
     
     Then install the ros packages using the environment variable created above:
@@ -89,7 +93,7 @@ The following instructions are written for ROS Kinetic, on **Ubuntu 16.04** but 
    cd ..
    ```
    - Make sure all dependent packages are installed. You can check .travis.yml file for reference.
-   - Specifically, make sure that the ros package *ddynamic_reconfigure* is installed. If *ddynamic_reconfigure* cannot be installed using APT or if you are using *Windows* you may clone it into your workspace 'catkin_ws/src/' from [here](https://github.com/pal-robotics/ddynamic_reconfigure/tree/kinetic-devel) (Version 0.2.2)
+   - Specifically, make sure that the ros package *ddynamic_reconfigure* is installed. If *ddynamic_reconfigure* cannot be installed using APT or if you are using *Windows* you may clone it into your workspace 'catkin_ws/src/' from [here](https://github.com/pal-robotics/ddynamic_reconfigure/tree/kinetic-devel)
 
 
    ```bash
@@ -282,7 +286,7 @@ cd catkin_ws
 wget "http://realsense-hw-public.s3.amazonaws.com/rs-tests/TestData/outdoors.bag" -P "records/"
 wget "http://realsense-hw-public.s3-eu-west-1.amazonaws.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag" -P "records/"
 ```
-Then, unit-tests can be run using the following command:
+Then, unit-tests can be run using the following command (use either python or python3):
 ```bash
 python src/realsense/realsense2_camera/scripts/rs2_test.py --all
 ```
@@ -294,7 +298,6 @@ python src/realsense/realsense2_camera/scripts/rs2_test.py --all
 
 ## Known Issues
 * This ROS node does not currently support [ROS Lunar Loggerhead](http://wiki.ros.org/lunar).
-* This ROS node does not currently work with [ROS 2](https://github.com/ros2/ros2/wiki).
 * This ROS node currently does not support running multiple T265 cameras at once. This will be addressed in a future update. 
 
 ## License

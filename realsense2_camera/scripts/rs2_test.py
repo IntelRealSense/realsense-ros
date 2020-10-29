@@ -51,7 +51,7 @@ def ImuTest(data, gt_data):
         diff = v_data - v_gt_data
         max_diff = abs(diff).max()
         msg = 'original accel: Expect max diff of %.3f. Got %.3f.' % (gt_data['max_diff'].max(), max_diff)
-        print msg
+        print (msg)
         if max_diff > gt_data['max_diff'].max():
             return False, msg
 
@@ -60,12 +60,12 @@ def ImuTest(data, gt_data):
         diff = v_data - v_gt_data
         max_diff = abs(diff).max()
         msg = 'rotated to ROS: Expect max diff of %.3f. Got %.3f.' % (gt_data['ros_max_diff'].max(), max_diff)
-        print msg
+        print (msg)
         if max_diff > gt_data['ros_max_diff'].max():
             return False, msg
     except Exception as e:
         msg = '%s' % e
-        print 'Test Failed: %s' % msg
+        print ('Test Failed: %s' % msg)
         return False, msg
     return True, ''
 
@@ -129,34 +129,34 @@ def ImageColorTest(data, gt_data):
     try:
         channels = list(set(data['num_channels']))
         msg = 'Expect %d channels. Got %d channels.' % (gt_data['num_channels'], channels[0])
-        print msg
+        print (msg)
         if len(channels) > 1 or channels[0] != gt_data['num_channels']:
             return False, msg
         msg = 'Expected all received images to be the same shape. Got %s' % str(set(data['shape']))
-        print msg
+        print (msg)
         if len(set(data['shape'])) > 1:
             return False, msg
         msg = 'Expected shape to be %s. Got %s' % (gt_data['shape'], list(set(data['shape']))[0])
-        print msg
+        print (msg)
         if (np.array(list(set(data['shape']))[0]) != np.array(gt_data['shape'])).any():
             return False, msg
         msg = 'Expected header [width, height, step] to be %s. Got %s' % (gt_data['reported_size'], list(set(data['reported_size']))[0])
-        print msg
+        print (msg)
         if (np.array(list(set(data['reported_size']))[0]) != np.array(gt_data['reported_size'])).any():
             return False, msg
         msg = 'Expect average of %.3f (+-%.3f). Got average of %.3f.' % (gt_data['avg'].mean(), gt_data['epsilon'], np.array(data['avg']).mean())
-        print msg
+        print (msg)
         if abs(np.array(data['avg']).mean() - gt_data['avg'].mean()) > gt_data['epsilon']:
             return False, msg
 
         msg = 'Expect no holes percent > %.3f. Got %.3f.' % (gt_data['ok_percent']['value']-gt_data['ok_percent']['epsilon'], np.array(data['ok_percent']).mean())
-        print msg
+        print (msg)
         if np.array(data['ok_percent']).mean() < gt_data['ok_percent']['value']-gt_data['ok_percent']['epsilon']:
             return False, msg
 
     except Exception as e:
         msg = '%s' % e
-        print 'Test Failed: %s' % msg
+        print ('Test Failed: %s' % msg)
         return False, msg
     return True, ''
 
@@ -173,17 +173,17 @@ def PointCloudTest(data, gt_data):
     width = np.array(data['width']).mean()
     height = np.array(data['height']).mean()
     msg = 'Expect image size %d(+-%d), %d. Got %d, %d.' % (gt_data['width'][0], gt_data['width'][1], gt_data['height'][0], width, height)
-    print msg
+    print (msg)
     if abs(width - gt_data['width'][0]) > gt_data['width'][1] or height != gt_data['height'][0]:
         return False, msg
     mean_pos = np.array([xx[:3] for xx in data['avg']]).mean(0)
     msg = 'Expect average position of %s (+-%.3f). Got average of %s.' % (gt_data['avg'][0][:3], gt_data['epsilon'][0], mean_pos)
-    print msg
+    print (msg)
     if abs(mean_pos - gt_data['avg'][0][:3]).max() > gt_data['epsilon'][0]:
         return False, msg
     mean_col = np.array([xx[3:] for xx in data['avg']]).mean(0)
     msg = 'Expect average color of %s (+-%.3f). Got average of %s.' % (gt_data['avg'][0][3:], gt_data['epsilon'][1], mean_col)
-    print msg
+    print (msg)
     if abs(mean_col - gt_data['avg'][0][3:]).max() > gt_data['epsilon'][1]:
         return False, msg
 
@@ -257,11 +257,11 @@ def print_results(results):
     col_3_width = max([len(headers[3])] + [len(test[1][1]) for test in results]) + 1
     total_width = col_0_width + col_1_width + col_2_width + col_3_width
     print
-    print ('{:^%ds}'%total_width).format(title)
-    print '-'*total_width
-    print ('{:<%ds}{:<%ds}{:>%ds} : {:<%ds}' % (col_0_width, col_1_width, col_2_width, col_3_width)).format(*headers)
-    print '-'*(col_0_width-1) + ' '*1 + '-'*(col_1_width-1) + ' '*2 + '-'*(col_2_width-1) + ' '*3 + '-'*(col_3_width-1)
-    print '\n'.join([('{:<%dd}{:<%ds}{:>%ds} : {:<s}' % (col_0_width, col_1_width, col_2_width)).format(idx, test[0], 'OK' if test[1][0] else 'FAILED', test[1][1]) for idx, test in enumerate(results)])
+    print (('{:^%ds}'%total_width).format(title))
+    print ('-'*total_width)
+    print (('{:<%ds}{:<%ds}{:>%ds} : {:<%ds}' % (col_0_width, col_1_width, col_2_width, col_3_width)).format(*headers))
+    print ('-'*(col_0_width-1) + ' '*1 + '-'*(col_1_width-1) + ' '*2 + '-'*(col_2_width-1) + ' '*3 + '-'*(col_3_width-1))
+    print ('\n'.join([('{:<%dd}{:<%ds}{:>%ds} : {:<s}' % (col_0_width, col_1_width, col_2_width)).format(idx, test[0], 'OK' if test[1][0] else 'FAILED', test[1][1]) for idx, test in enumerate(results)]))
     print
 
 
@@ -288,52 +288,52 @@ def run_tests(tests):
         rec_tests = [test for test in tests if test['params_str'] == params_str]
         themes = [test_types[test['type']]['listener_theme'] for test in rec_tests]
         msg_retriever = CWaitForMessage(msg_params)
-        print '*'*30
-        print 'Running the following tests: %s' % ('\n' + '\n'.join([test['name'] for test in rec_tests]))
-        print '*'*30
+        print ('*'*30)
+        print ('Running the following tests: %s' % ('\n' + '\n'.join([test['name'] for test in rec_tests])))
+        print ('*'*30)
         num_of_startups = 5
         is_node_up = False
         for run_no in range(num_of_startups):
             print 
-            print '*'*8 + ' Starting ROS ' + '*'*8
-            print 'running node (%d/%d)' % (run_no, num_of_startups)
+            print ('*'*8 + ' Starting ROS ' + '*'*8)
+            print ('running node (%d/%d)' % (run_no, num_of_startups))
             cmd_params = ['roslaunch', 'realsense2_camera', 'rs_from_file.launch'] + params_str.split(' ')
-            print 'running command: ' + ' '.join(cmd_params)
+            print ('running command: ' + ' '.join(cmd_params))
             p_wrapper = subprocess.Popen(cmd_params, stdout=None, stderr=None)
             time.sleep(2)
             service_list = rosservice.get_service_list()
             is_node_up = len([service for service in service_list if 'realsense2_camera/' in service]) > 0
             if is_node_up:
-                print 'Node is UP'
+                print ('Node is UP')
                 break
-            print 'Node is NOT UP'
-            print '*'*8 + ' Killing ROS ' + '*'*9
+            print ('Node is NOT UP')
+            print ('*'*8 + ' Killing ROS ' + '*'*9)
             p_wrapper.terminate()
             p_wrapper.wait()
-            print 'DONE'
+            print ('DONE')
 
         if is_node_up:
             listener_res = msg_retriever.wait_for_messages(themes)
             if 'static_tf' in [test['type'] for test in rec_tests]:
-                print 'Gathering static transforms'
+                print ('Gathering static transforms')
                 frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame', 'camera_fisheye_frame', 'camera_pose']
                 tf_listener = tf.TransformListener()
                 listener_res['static_tf'] = dict([(xx, get_tf(tf_listener, xx[0], xx[1])) for xx in itertools.combinations(frame_ids, 2)])
-            print '*'*8 + ' Killing ROS ' + '*'*9
+            print ('*'*8 + ' Killing ROS ' + '*'*9)
             p_wrapper.terminate()
             p_wrapper.wait()
         else:
             listener_res = dict([[theme_name, {}] for theme_name in themes])
 
-        print '*'*30
-        print 'DONE run'
-        print '*'*30
+        print ('*'*30)
+        print ('DONE run')
+        print ('*'*30)
 
         for test in rec_tests:
             try:
                 res = run_test(test, listener_res)
             except Exception as e:
-                print 'Test %s Failed: %s' % (test['name'], e)
+                print ('Test %s Failed: %s' % (test['name'], e))
                 res = False, '%s' % e
             results.append([test['name'], res])
 
@@ -361,12 +361,12 @@ def main():
         test['params_str'] = ' '.join([key + ':=' + test['params'][key] for key in sorted(test['params'].keys())])
 
     if len(sys.argv) < 2 or '--help' in sys.argv or '/?' in sys.argv:
-        print 'USAGE:'
-        print '------'
-        print 'rs2_test.py --all | <test_name> [<test_name> [...]]'
+        print ('USAGE:')
+        print ('------')
+        print ('rs2_test.py --all | <test_name> [<test_name> [...]]')
         print
-        print 'Available tests are:'
-        print '\n'.join([test['name'] for test in all_tests])
+        print ('Available tests are:')
+        print ('\n'.join([test['name'] for test in all_tests]))
         exit(-1)
 
     if '--all' in sys.argv[1:]:
@@ -378,7 +378,7 @@ def main():
     print_results(results)
 
     res = int(all([result[1][0] for result in results])) - 1
-    print 'exit (%d)' % res
+    print ('exit (%d)' % res)
     exit(res)
 
 if __name__ == '__main__':
