@@ -553,6 +553,18 @@ void BaseRealSenseNode::getParameters()
 {
     ROS_INFO("getParameters...");
 
+    // Setup system to use RGB image from the infra stream if configured by user
+    bool infrargb;
+    _pnh.param("infrargb", infrargb, false);
+    if (infrargb)
+    {
+      _format[RS2_STREAM_INFRARED] = RS2_FORMAT_RGB8;
+      _image_format[RS2_STREAM_INFRARED] = CV_8UC3;    // CVBridge type
+      _encoding[RS2_STREAM_INFRARED] = sensor_msgs::image_encodings::RGB8; // ROS message type
+      _unit_step_size[RS2_STREAM_INFRARED] = 3 * sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
+      ROS_INFO_STREAM("Infrared RGB stream enabled");
+    }
+
     _pnh.param("align_depth", _align_depth, ALIGN_DEPTH);
     _pnh.param("enable_pointcloud", _pointcloud, POINTCLOUD);
     std::string pc_texture_stream("");
