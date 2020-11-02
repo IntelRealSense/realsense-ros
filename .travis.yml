@@ -33,6 +33,9 @@ install:
   - sudo apt-get install ros-$_ros_dist-tf -y
   - sudo apt-get install ros-$_ros_dist-diagnostic-updater -y
   - sudo apt-get install ros-$_ros_dist-ddynamic-reconfigure -y
+  - if [[ $(lsb_release -sc) == "bionic" ]]; then
+    sudo apt-get install libeigen3-dev;
+    fi
   - source ~/.bashrc
   - mkdir -p ~/catkin_ws/src/realsense
 
