@@ -556,6 +556,11 @@ void BaseRealSenseNode::setupFilters()
     if (_pointcloud)
     {
     	ROS_INFO("Add Filter: pointcloud");
+        // Get PointCloud parameters:
+        std::string pc_texture_stream = _node.declare_parameter("pointcloud_texture_stream", rclcpp::ParameterValue("RS2_STREAM_COLOR")).get<rclcpp::PARAMETER_STRING>();
+        int pc_texture_idx = _node.declare_parameter("pointcloud_texture_index", rclcpp::ParameterValue(0)).get<rclcpp::PARAMETER_INTEGER>();
+        _pointcloud_texture = stream_index_pair{rs2_string_to_stream(pc_texture_stream), pc_texture_idx};
+
         _filters.push_back(NamedFilter("pointcloud", std::make_shared<rs2::pointcloud>(_pointcloud_texture.first, _pointcloud_texture.second)));
     }
     ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));

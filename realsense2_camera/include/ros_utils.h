@@ -13,32 +13,6 @@
 
 namespace realsense2_camera
 {
-
-    // std::string create_graph_resource_name(const std::string &original_name);
-
-    /**
-     * Same as ros::names::isValidCharInName, but re-implemented here because it's not exposed.
-     */
-    bool isValidCharInName(char c)
-    {
-        return std::isalnum(c) || c == '/' || c == '_';
-    }
-
-    /**
-     * ROS Graph Resource names don't allow spaces and hyphens (see http://wiki.ros.org/Names),
-     * so we replace them here with underscores.
-     */
-
-    std::string create_graph_resource_name(const std::string &original_name)
-    {
-        std::string fixed_name = original_name;
-        std::transform(fixed_name.begin(), fixed_name.end(), fixed_name.begin(),
-                        [](unsigned char c) { return std::tolower(c); });
-        std::replace_if(fixed_name.begin(), fixed_name.end(), [](const char c) { return !(realsense2_camera::isValidCharInName(c)); },
-                        '_');
-        return fixed_name;
-    }
-
     typedef std::pair<rs2_stream, int> stream_index_pair;
 
     const stream_index_pair COLOR{RS2_STREAM_COLOR, 0};
@@ -52,6 +26,10 @@ namespace realsense2_camera
     const stream_index_pair GYRO{RS2_STREAM_GYRO, 0};
     const stream_index_pair ACCEL{RS2_STREAM_ACCEL, 0};
     const stream_index_pair POSE{RS2_STREAM_POSE, 0};
+
+    bool isValidCharInName(char c);
+
+    std::string create_graph_resource_name(const std::string &original_name);
 
     rs2_stream rs2_string_to_stream(std::string str);
 

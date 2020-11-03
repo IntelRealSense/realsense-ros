@@ -3,8 +3,8 @@
 #include <map>
 #include <cctype>
 
-using namespace realsense2_camera;
-
+namespace realsense2_camera
+{
 template <typename K, typename V>
 std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m)
 {
@@ -80,4 +80,6 @@ stream_index_pair rs2_string_to_sip(const std::string& str)
     std::stringstream ss;
     ss << "Unknown parameter name in" << __FILE__ << ":" << __LINE__;
     throw std::runtime_error(ss.str());
+}
+
 }
