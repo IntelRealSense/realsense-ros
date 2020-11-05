@@ -75,12 +75,13 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _is_running(true),
     _node(node),
     _logger(rclcpp::get_logger("RealSenseCameraNode")),
-    _rs_diagnostic_updater(diagnostic_updater, serial_no),
+    // _rs_diagnostic_updater(diagnostic_updater, serial_no),
     _dev(dev),
     _json_file_path(""),
     _serial_no(serial_no),
     _static_tf_broadcaster(node),
-    _is_initialized_time_base(false)
+    _is_initialized_time_base(false),
+    _is_profile_changed(false)
 {
     _image_format[1] = CV_8UC1;    // CVBridge type
     _image_format[2] = CV_16UC1;    // CVBridge type
@@ -104,10 +105,15 @@ BaseRealSenseNode::~BaseRealSenseNode()
         _tf_t->join();
 
     _is_running = false;
-    _cv.notify_one();
+    _cv_temp.notify_one();
+    _cv_mpc.notify_one();
     if (_monitoring_t && _monitoring_t->joinable())
     {
         _monitoring_t->join();
+    }
+    if (_monitoring_pc && _monitoring_pc->joinable())
+    {
+        _monitoring_pc->join();
     }
 
     std::set<std::string> module_names;
@@ -560,7 +566,11 @@ void BaseRealSenseNode::setupFilters()
         std::string pc_texture_stream = _node.declare_parameter("pointcloud_texture_stream", rclcpp::ParameterValue("RS2_STREAM_COLOR")).get<rclcpp::PARAMETER_STRING>();
         int pc_texture_idx = _node.declare_parameter("pointcloud_texture_index", rclcpp::ParameterValue(0)).get<rclcpp::PARAMETER_INTEGER>();
         _pointcloud_texture = stream_index_pair{rs2_string_to_stream(pc_texture_stream), pc_texture_idx};
-
+        if (!_pointcloud_publisher)
+        {
+            ROS_INFO("Start pointcloud publisher.");
+            _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 1);
+        }
         _filters.push_back(NamedFilter("pointcloud", std::make_shared<rs2::pointcloud>(_pointcloud_texture.first, _pointcloud_texture.second)));
     }
     ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));
@@ -1580,7 +1590,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         info_publisher->publish(cam_info);
 
         image_publisher.first.publish(img);
-        _rs_diagnostic_updater.Tick(image_publisher.second);
+        // _rs_diagnostic_updater.Tick(image_publisher.second);
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
     }
 }
@@ -1606,7 +1616,7 @@ void BaseRealSenseNode::startMonitoring()
         std::mutex mu;
         std::unique_lock<std::mutex> lock(mu);
         while(_is_running) {
-            _cv.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return !_is_running;});
+            _cv_temp.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return !_is_running;});
             if (_is_running)
             {
                 publish_temperature();
@@ -1627,7 +1637,7 @@ void BaseRealSenseNode::publish_temperature()
             try
             {
                 auto option_value = sensor.get_option(option);
-                _rs_diagnostic_updater.update_temperatue(name, option_value);
+                // _rs_diagnostic_updater.update_temperatue(name, option_value);
             }
             catch(const std::exception& e)
             {

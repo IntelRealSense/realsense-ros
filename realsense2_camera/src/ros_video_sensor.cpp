@@ -15,7 +15,6 @@ VideoSensor::VideoSensor(rs2::sensor sensor, rclcpp::Node& node,
 
 void VideoSensor::getUpdatedSensorParameters()
 {
-    // std::string module_name = sensor.get_info(RS2_CAMERA_INFO_NAME);
     const std::string module_name(create_graph_resource_name(get_info(RS2_CAMERA_INFO_NAME)));
 
     std::string param_name(module_name + ".width");
@@ -32,10 +31,8 @@ void VideoSensor::getUpdatedSensorParameters()
 void VideoSensor::getUpdatedProfileParameters(const rs2::stream_profile& profile)
 {
     stream_index_pair stream(profile.stream_type(), profile.stream_index());
-    std::string param_name = "enable_" + STREAM_NAME(stream);
+    std::string param_name = "enable_" + create_graph_resource_name(STREAM_NAME(stream));
     ROS_INFO_STREAM("reading parameter:" << param_name);
-    // _enabled_profiles[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : _node.declare_parameter(param_name, rclcpp::ParameterValue(true))).get<rclcpp::PARAMETER_BOOL>();
-    // _enabled_profiles[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : _node.declare_parameter(param_name, rclcpp::ParameterValue(true))).get<rclcpp::PARAMETER_BOOL>();
     _enabled_profiles[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value().get<rclcpp::PARAMETER_BOOL>() : true);
     ROS_INFO_STREAM(param_name << "=" << _enabled_profiles[stream]);
 }
@@ -56,67 +53,31 @@ bool VideoSensor::isWantedProfile(const rs2::stream_profile& profile)
             (_allowed_formats.find(video_profile.stream_type()) == _allowed_formats.end() || video_profile.format() == _allowed_formats[video_profile.stream_type()] ));
 }
 
-template<class T>
-rcl_interfaces::msg::SetParametersResult VideoSensor::set_sensor_general_param(std::string option_name, const std::vector<rclcpp::Parameter> & parameters)
-{ 
-    rcl_interfaces::msg::SetParametersResult result;
-    result.successful = true;
-    for (const auto & parameter : parameters) {
-        if (option_name == parameter.get_name())
-        {
-            std::vector<std::string> option_parts;
-            boost::split(option_parts, option_name, [](char c){return c == '_';});
-            if (option_parts[0] == "enable")
-            {
-                ROS_WARN_STREAM("****enable FOUND");
-            }
-        }
-    }
-    return result;
-}
+// template<class T>
+// rcl_interfaces::msg::SetParametersResult VideoSensor::set_sensor_general_param(std::string option_name, const std::vector<rclcpp::Parameter> & parameters)
+// { 
+//     rcl_interfaces::msg::SetParametersResult result;
+//     result.successful = true;
+//     for (const auto & parameter : parameters) {
+//         if (option_name == parameter.get_name())
+//         {
+//             std::vector<std::string> option_parts;
+//             boost::split(option_parts, option_name, [](char c){return c == '_';});
+//             if (option_parts[0] == "enable")
+//             {
+//                 ROS_WARN_STREAM("****enable FOUND");
+//             }
+//         }
+//     }
+//     return result;
+// }
 
 void VideoSensor::registerSensorParameters()
 {}
 
 void VideoSensor::registerProfileParameters()
 {
-    std::string module_name = create_graph_resource_name(get_info(RS2_CAMERA_INFO_NAME));
-    std::set<stream_index_pair> checked_sips, found_sips;
-    for (auto& profile : get_stream_profiles())
-    {
-        stream_index_pair sip(profile.stream_type(), profile.stream_index());
-        if (checked_sips.insert(sip).second == false)
-            continue;
-        std::string param_name = "enable_" + STREAM_NAME(sip);
-        ROS_INFO_STREAM("reading parameter:" << param_name);
-        _enabled_profiles[sip] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : _node.declare_parameter(param_name, rclcpp::ParameterValue(true))).get<rclcpp::PARAMETER_BOOL>();
-
-        _callback_handlers.push_back(
-        _node.add_on_set_parameters_callback(
-            [this, param_name](const std::vector<rclcpp::Parameter> & parameters) 
-                { 
-                    // rcl_interfaces::msg::SetParametersResult result;
-                    // result.successful = true;
-                    return set_sensor_enable_param(param_name, parameters);
-                    // for (const auto & parameter : parameters) {
-                    //     // ROS_INFO_STREAM("set_option: " << param_name << " == " << parameter.get_name());
-                    //     if (param_name == parameter.get_name())
-                    //     {
-                    //         ROS_INFO_STREAM("Check sensors change: ");
-                    //         try
-                    //         {
-                    //             ROS_INFO_STREAM("set_option: " << param_name << " = " << parameter.get_value<bool>());
-                    //             _update_sensor_func();
-                    //         }
-                    //         catch(const rclcpp::ParameterTypeException& e)
-                    //         {
-                    //             ROS_WARN_STREAM("Error handling profile enabling: " << e.what());
-                    //         }
-                    //     }
-                    // }
-                    // return result;
-                }));
-    }
+    registerSensorUpdateParam("enable_%s", true);
 }
 
 // stream_profile VideoSensor::getWantedProfile(const stream_index_pair& sip)

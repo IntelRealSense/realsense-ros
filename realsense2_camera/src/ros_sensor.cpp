@@ -145,19 +145,39 @@ rcl_interfaces::msg::SetParametersResult RosSensor::set_sensor_enable_param(std:
     for (const auto & parameter : parameters) {
         if (option_name == parameter.get_name())
         {
-            std::vector<std::string> option_parts;
-            boost::split(option_parts, option_name, [](char c){return c == '_';});
-            if (option_parts[0] == "enable")
-            {
-                ROS_WARN_STREAM("****enable FOUND:" << option_parts[1]);
-                stream_index_pair sip(rs2_string_to_sip(option_parts[1]));
-                _enabled_profiles[sip] = parameter.get_value<bool>();
-                ROS_WARN_STREAM("_enabled_profiles[" << option_parts[1] << "] = " << _enabled_profiles[sip]);
-            }
+            _update_sensor_func();
         }
     }
     return result;
 }
+
+template<class T>
+void RosSensor::registerSensorUpdateParam(std::string template_name, T value)
+{
+    std::set<stream_index_pair> checked_sips, found_sips;
+    for (auto& profile : get_stream_profiles())
+    {
+        stream_index_pair sip(profile.stream_type(), profile.stream_index());
+        if (checked_sips.insert(sip).second == false)
+            continue;
+        const std::string stream_name(create_graph_resource_name(STREAM_NAME(sip)));
+        char* param_name = new char[template_name.size() + stream_name.size()];
+        sprintf(param_name, template_name.c_str(), stream_name.c_str());
+
+        ROS_INFO_STREAM("reading parameter:" << param_name);
+        if (!_node.has_parameter(param_name))
+            _node.declare_parameter(param_name, rclcpp::ParameterValue(value));
+
+        _callback_handlers.push_back(
+        _node.add_on_set_parameters_callback(
+            [this, param_name](const std::vector<rclcpp::Parameter> & parameters) 
+                { 
+                    return set_sensor_enable_param(param_name, parameters);
+                }));
+    }
+}
+template void RosSensor::registerSensorUpdateParam<bool>(std::string template_name, bool value);
+template void RosSensor::registerSensorUpdateParam<double>(std::string template_name, double value);
 
 // void RosSensor::registerEnableProfileParams()
 // {

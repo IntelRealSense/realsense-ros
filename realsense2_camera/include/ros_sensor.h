@@ -39,7 +39,8 @@ namespace realsense2_camera
             
             bool start(const std::vector<rs2::stream_profile>& profiles);
             void stop();
-            // void registerEnableProfileParams();
+            template<class T>
+            void registerSensorUpdateParam(std::string template_name, T value);
 
             template<class T> 
             bool is() const
@@ -75,8 +76,8 @@ namespace realsense2_camera
             bool isWantedProfile(const rs2::stream_profile& profile) override;
             void registerSensorParameters();
             void registerProfileParameters();
-            template<class T>
-            rcl_interfaces::msg::SetParametersResult set_sensor_general_param(std::string option_name, const std::vector<rclcpp::Parameter> & parameters);
+            // template<class T>
+            // rcl_interfaces::msg::SetParametersResult set_sensor_general_param(std::string option_name, const std::vector<rclcpp::Parameter> & parameters);
 
         private:
             std::map<rs2_stream, rs2_format>  _allowed_formats;

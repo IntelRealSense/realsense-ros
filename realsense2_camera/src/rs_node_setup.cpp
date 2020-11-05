@@ -12,28 +12,49 @@ void BaseRealSenseNode::setup()
     SetBaseStream();
     setupFiltersPublishers();
     setCallbackFunctions();
+    startMonitoring();
+    monitoringProfileChanges();
     updateSensors();
 }
 
 void BaseRealSenseNode::setupFiltersPublishers()
 {
-    _synced_imu_publisher = std::make_shared<SyncedImuPublisher>();
-    for(auto&& sensor : _available_ros_sensors)
-    {
-        if (sensor->is<VideoSensor>() && !_pointcloud_publisher)
-        {
-            ROS_INFO("Start pointcloud publisher.");
-            _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 1);
-        }
-        else if (sensor->is<ImuSensor>())
-        {
-            ROS_INFO("Start imu publisher.");
-            _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
-            _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
-        }
-    }
+    _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
+    //_synced_imu_publisher = std::make_shared<SyncedImuPublisher>();
+    // for(auto&& sensor : _available_ros_sensors)
+    // {
+    //     if (sensor->is<VideoSensor>() && !_pointcloud_publisher)
+    //     {
+    //         ROS_INFO("Start pointcloud publisher.");
+    //         _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 1);
+    //     }
+    //     else if (sensor->is<ImuSensor>())
+    //     {
+    //         ROS_INFO("Start imu publisher.");
+    //         _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
+    //         _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
+    //     }
+    // }
 }
 
+void BaseRealSenseNode::monitoringProfileChanges()
+{
+    int time_interval(10000);
+    std::function<void()> func = [this, time_interval](){
+        std::mutex mu;
+        std::unique_lock<std::mutex> lock(mu);
+        while(_is_running) {
+            _cv_mpc.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return (!_is_running || _is_profile_changed);});
+            if (_is_running && _is_profile_changed)
+            {
+                ROS_WARN("Profile has changed");
+                updateSensors();
+                _is_profile_changed = false;
+            }
+        }
+    };
+    _monitoring_pc = std::make_shared<std::thread>(func);
+}
 
 void BaseRealSenseNode::setAvailableSensors()
 {
@@ -97,7 +118,7 @@ void BaseRealSenseNode::setAvailableSensors()
 
     std::function<void(rs2::frame)> multiple_message_callback_function = [this](rs2::frame frame){multiple_message_callback(frame, _imu_sync_method);};
 
-    std::function<void()> update_sensor_func = [this](){updateSensors();};
+    std::function<void()> update_sensor_func = [this](){_is_profile_changed = true; _cv_mpc.notify_one();};
 
     _dev_sensors = _dev.query_sensors();
     for(auto&& sensor : _dev_sensors)
@@ -142,18 +163,19 @@ void BaseRealSenseNode::setCallbackFunctions()
 
 void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profiles)
 {
+    ROS_WARN("stopPublishers");
     for (auto& profile : profiles)
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
         if (profile.is<rs2::video_stream_profile>())
         {
             std::string name = _image_publishers[sip].second;
-            _rs_diagnostic_updater.Remove(name);
+            // _rs_diagnostic_updater.Remove(name);
             _image_publishers.erase(sip);
             _info_publisher.erase(sip);
 
             name = _depth_aligned_image_publishers[sip].second;
-            _rs_diagnostic_updater.Remove(name);
+            // _rs_diagnostic_updater.Remove(name);
             _depth_aligned_image_publishers.erase(sip);
             _depth_aligned_info_publisher.erase(sip);
         }
@@ -181,8 +203,8 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             image_raw << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << stream_name << "/camera_info";
 
-            double fps(profile.fps());
-            _rs_diagnostic_updater.Add(stream_name, diagnostic_updater::FrequencyStatusParam(&fps, &fps));
+            // double fps(profile.fps());
+            // _rs_diagnostic_updater.Add(stream_name, diagnostic_updater::FrequencyStatusParam(&fps, &fps));
             
             _image_publishers[sip] = {image_transport::create_publisher(&_node, image_raw.str(), rmw_qos_profile_sensor_data), stream_name}; // TODO: remove "stream_name"
             _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);
@@ -194,7 +216,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                 aligned_camera_info << "aligned_depth_to_" << stream_name << "/camera_info";
 
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
-                _rs_diagnostic_updater.Add(aligned_stream_name, diagnostic_updater::FrequencyStatusParam(&fps, &fps));
+                // _rs_diagnostic_updater.Add(aligned_stream_name, diagnostic_updater::FrequencyStatusParam(&fps, &fps));
                 _depth_aligned_image_publishers[sip] = {image_transport::create_publisher(&_node, aligned_image_raw.str(), rmw_qos_profile_sensor_data), aligned_stream_name};
                 _depth_aligned_info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(), 1);
             }
@@ -216,8 +238,8 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             IMUInfo info_msg = getImuInfo(profile);
             _imu_info_publisher[sip]->publish(info_msg);
         }
-        ROS_INFO("Start publisher IMU");
-        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
+        // ROS_INFO("Start publisher IMU");
+        // _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
         _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
     }
     // else if (sensor.is<PoseSensor>())

@@ -205,7 +205,7 @@ namespace realsense2_camera
         bool _align_depth;
         std::vector<rs2_option> _monitor_options;
         rclcpp::Logger _logger;
-        Diagnostics _rs_diagnostic_updater;
+        // Diagnostics _rs_diagnostic_updater;
 
         virtual void calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile);
         void publishTopics();
@@ -282,6 +282,7 @@ namespace realsense2_camera
         void set_auto_exposure_roi(const std::string option_name, rs2::sensor sensor, int new_value);
         void set_sensor_auto_exposure_roi(rs2::sensor sensor);
         void startMonitoring();
+        void monitoringProfileChanges();
         void publish_temperature();
         void setupFiltersPublishers();
         void setAvailableSensors();
@@ -360,7 +361,9 @@ namespace realsense2_camera
         std::map<rs2_stream, std::vector<std::function<void()> > > _video_functions_stack;
 
         std::shared_ptr<std::thread> _monitoring_t;
-        mutable std::condition_variable _cv;
+        std::shared_ptr<std::thread> _monitoring_pc;   //pc = profile changes
+        mutable std::condition_variable _cv_temp, _cv_mpc;
+        bool _is_profile_changed;
 
         rs2::stream_profile _base_profile;
 
