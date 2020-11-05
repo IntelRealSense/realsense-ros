@@ -334,31 +334,17 @@ void RealSenseNodeFactory::initialize(const ros::WallTimerEvent &ignored)
 						{
 							ROS_DEBUG("Waiting for device...");
 
- 
 							std::chrono::milliseconds timespan(6000);
 							while (_is_alive && !_device)
 							{
 								ROS_DEBUG("Checking for device...");
-								_device = getDevice();
- 								// getDevice(_ctx.query_devices());  // This line is obtained from the latest upstream.
+								getDevice(_ctx.query_devices());
 								if (_device)
 								{
-									ROS_DEBUG("got device");
-									if (_initial_reset)
-									{
-										ROS_DEBUG("Resetting device...");
-										_initial_reset = false;
-										_device.hardware_reset();
-										std::this_thread::sleep_for(std::chrono::seconds(10));
-										_device = getDevice();
-									}
-									if (_device)
-									{
-										ROS_DEBUG("starting device...");
-										std::function<void(rs2::event_information&)> change_device_callback_function = [this](rs2::event_information& info){change_device_callback(info);};
-										_ctx.set_devices_changed_callback(change_device_callback_function);
-										StartDevice();
-									}
+									ROS_DEBUG("starting device...");
+									std::function<void(rs2::event_information&)> change_device_callback_function = [this](rs2::event_information& info){change_device_callback(info);};
+									_ctx.set_devices_changed_callback(change_device_callback_function);
+									StartDevice();
 								}
 								else
 								{

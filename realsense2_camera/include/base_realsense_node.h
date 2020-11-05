@@ -18,6 +18,7 @@
 #include <condition_variable>
 
 #include <queue>
+#include <map>
 #include <mutex>
 #include <atomic>
 #include <string>
@@ -330,6 +331,20 @@ namespace realsense2_camera
 
         sensor_msgs::PointCloud2 _msg_pointcloud;
         std::vector< unsigned int > _valid_pc_indices;
+
+        // Topic monitoring
+        enum Topic { TOPIC_IMAGE, TOPIC_INFO, TOPIC_ALIGNED_IMAGE, TOPIC_ALIGNED_INFO, TOPIC_IMU, TOPIC_POINTS, TOPIC_ODOM};
+        struct TopicInfo
+        {
+            std::string name;
+            std::string resolved_name;
+            ros::Time last_published;
+        };
+        std::mutex _topic_monitor_mutex;
+        std::map<stream_index_pair, std::map<Topic, TopicInfo>> _topics;
+        void addMonitoredTopic(const stream_index_pair& stream, Topic topic, const std::string& name);
+        void updateMonitoredTopic(const stream_index_pair& stream, Topic topic);
+        void clearMonitoredTopic(const stream_index_pair& stream, Topic topic);
 
     };//end class
 

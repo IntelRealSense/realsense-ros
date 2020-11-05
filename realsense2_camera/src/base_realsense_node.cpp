@@ -1446,11 +1446,10 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
             ROS_DEBUG("Publish united %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
             imu_msgs.pop_front();
         }
-        else
-        {
-            clearMonitoredTopic(stream_index, TOPIC_IMU);
-        }
-        break;
+    }
+    else
+    {
+        clearMonitoredTopic(stream_index, TOPIC_IMU);
     }
     m_mutex.unlock();
 };
