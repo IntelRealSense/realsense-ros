@@ -197,7 +197,7 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
   - **NOTE** The configuration required for `enable_infra` is independent of `enable_depth`
   - **NOTE** To enable the Infrared stream, you should enable `enable_infra:=true` NOT `enable_infra1:=true` nor `enable_infra2:=true`
   - **NOTE** This feature is only supported by Realsense sensors with RGB streams available from the `infra` cameras, which can be checked by observing the output of `rs-enumerate-devices`
-
+- **respawn** (`rs_camera.launch`): When `true`, realsense Nodelet (not Nodelet Manager) re-spawns when it detects 2D/3D image topics stopped being published when they shouldn't, for which restarting the Nodelet is helpful to recover (discussed in [IntelRealSense/librealsense#7151](https://github.com/IntelRealSense/librealsense/issues/7151))
 
 ### Point Cloud
 Here is an example of how to start the camera node and make it publish the point cloud using the pointcloud option.
