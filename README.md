@@ -187,6 +187,10 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 - **publish_tf**: boolean, publish or not TF at all. Defaults to True.
 - **tf_publish_rate**: double, positive values mean dynamic transform publication with specified rate, all other values mean static transform publication. Defaults to 0 
 - **publish_odom_tf**: If True (default) publish TF from odom_frame to pose_frame.
+- **infrargb**: When set to True (default: False), it configures the infrared camera to stream in RGB (color) mode, thus enabling the use of a RGB image in the same frame as the depth image, potentially avoiding frame transformation related errors. When this feature is required, you are additionally required to also enable `enable_infra:=true` for the infrared stream to be enabled.
+  - **NOTE** The configuration required for `enable_infra` is independent of `enable_depth`
+  - **NOTE** To enable the Infrared stream, you should enable `enable_infra:=true` NOT `enable_infra1:=true` nor `enable_infra2:=true`
+  - **NOTE** This feature is only supported by Realsense sensors with RGB streams available from the `infra` cameras, which can be checked by observing the output of `rs-enumerate-devices`
 
 
 ### RGBD Point Cloud
