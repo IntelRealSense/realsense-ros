@@ -24,6 +24,7 @@
   <arg name="enable_infra"        default="false"/>
   <arg name="enable_infra1"       default="false"/>
   <arg name="enable_infra2"       default="false"/>
+  <arg name="enable_infrargb"    default="false"/>
 
   <arg name="color_width"         default="640"/>
   <arg name="color_height"        default="480"/>
@@ -125,6 +126,7 @@
     <param name="enable_infra"             type="bool" value="$(arg enable_infra)"/>
     <param name="enable_infra1"            type="bool" value="$(arg enable_infra1)"/>
     <param name="enable_infra2"            type="bool" value="$(arg enable_infra2)"/>
+    <param name="infrargb"                 type="bool" value="$(arg enable_infrargb)"/>
 
     <param name="fisheye_fps"              type="int"  value="$(arg fisheye_fps)"/>
     <param name="depth_fps"                type="int"  value="$(arg depth_fps)"/>
