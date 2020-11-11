@@ -166,7 +166,8 @@ namespace realsense2_camera
                                const std::string& from,
                                const std::string& to);
         const rclcpp::ParameterValue declareParameter(const std::string &name, const rclcpp::ParameterValue &default_value=rclcpp::ParameterValue(), const rcl_interfaces::msg::ParameterDescriptor &parameter_descriptor=rcl_interfaces::msg::ParameterDescriptor());
-
+        template<class T>
+        void setNgetNodeParameter(T& param, const std::string& param_name, const T& default_value);
 
     private:
         class CimuData

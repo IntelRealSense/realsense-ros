@@ -31,29 +31,31 @@ def generate_launch_description():
         # Realsense
         launch_ros.actions.Node(
             package='realsense2_node', 
-            node_namespace='camera1',
+            node_namespace='t265',
             node_executable='realsense2_node',
-            name='cam1',
             parameters = [{
-                           'device_type': 'd4.5',
-                           'enable_pointcloud': True,
-                           'unite_imu_method': 'linear_interpolation'
+                           'device_type': 't265',
+                           'enable_fisheye1': False,
+                           'enable_fisheye2': False,
+                           'topic_odom_in': 'odom_in',
+                           'calib_odom_file': '',
                            }],
             output='screen',
             emulate_tty=True,
             ),
-        # Realsense
         launch_ros.actions.Node(
             package='realsense2_node', 
-            node_namespace='camera2',
+            node_namespace='d400',
             node_executable='realsense2_node',
-            name='cam2',
             parameters = [{
-                           'device_type': 't265',
-                           'fisheye_width': 848,
-                           'fisheye_height': 800,
-                           'enable_pose': True,
-                           'unite_imu_method': 'linear_interpolation'
+                           'device_type': 'd4.5',
+                           'align_depth': True,
+                           'enable_pointcloud': True,
+                           'color_width': 640,
+                           'color_height': 480,
+                           'depth_width': 640,
+                           'depth_height': 480,
+                           'clip_distance': -2.0,
                            }],
             output='screen',
             emulate_tty=True,
