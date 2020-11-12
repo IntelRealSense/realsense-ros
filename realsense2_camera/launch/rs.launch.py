@@ -16,29 +16,52 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-import launch_ros.actions
-
+from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
 def generate_launch_description():
 
     config = os.path.join(
         get_package_share_directory('realsense2_camera'),
         'config',
-        'd435i.yaml'
-        )
+        'd435.yaml')
+    
+    rviz_config_dir = os.path.join(
+            get_package_share_directory('realsense2_camera'),
+            'rviz',
+            'default.rviz')
 
     return LaunchDescription([
         # Realsense
-        launch_ros.actions.Node(
+        Node(
             package='realsense2_camera', 
-            node_namespace='camera1',
             node_executable='realsense2_camera_node',
-            name='cam1',
-            parameters = [{
-                           'enable_pointcloud': True,
-                           'unite_imu_method': 'linear_interpolation'
-                           }],
+            node_namespace='camera',
+            parameters = [
+                {config},
+                {'serial_no': '',
+                 'color_height': 720,
+                 'color_width': 1280,
+                 'enable_pointcloud': True,
+                #  'enable_accel': True, # enable accel for d435i
+                #  'enable_gyro': True, # enable gyro d435i
+                 }],
             output='screen',
             emulate_tty=True,
             ),
+
+        # rviz2
+        DeclareLaunchArgument(
+            'open_rviz',
+            default_value='false',
+            description='Launch Rviz?'),            
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
+            arguments=['-d', rviz_config_dir],
+            condition=IfCondition(LaunchConfiguration("open_rviz"))
+            ),            
     ])

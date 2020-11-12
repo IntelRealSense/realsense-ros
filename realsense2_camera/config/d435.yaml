@@ -1,0 +1,40 @@
+/**:
+  ros__parameters:
+    device_type: ''
+    serial_no: ''
+    usb_port_id: ''
+  
+    base_frame_id: 'camera_link'
+
+    color_fps: 30.0
+    color_height: 480
+    color_width: 640
+  
+    depth_fps: 30.0
+    depth_height: 720
+    depth_width: 1280
+        
+    infra_height: 720
+    infra_width: 1280
+  
+    gyro_fps: 0.0
+  
+    enable_color: true
+    enable_depth: true
+    enable_pointcloud: true
+    enable_infra1: true
+    enable_infra2: true
+    enable_accel: false
+    enable_gyro: false
+  
+    filters: ''
+  
+    pointcloud_texture_index: 0
+    pointcloud_texture_stream: RS2_STREAM_COLOR
+  
+    stereo_module:
+      emitter_enabled: 1
+            
+    unite_imu_method: ''
+    
+    rosbag_filename: ''
