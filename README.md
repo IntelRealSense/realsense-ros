@@ -73,11 +73,7 @@ This version supports ROS2 eloquent on Ubuntu 18.04.
 To start the camera node in ROS:
 
 ```bash
-  ros2 run realsense2_node realsense2_node 
-```
-or, with parameters, for example - pointcloud enabled:
-```bash
-ros2 run realsense2_node realsense2_node --ros-args -p filters:=pointcloud -p 
+ros2 launch realsense2_camera rs.launch.py open_rviz:=true
 ```
 
 This will stream all camera sensors and publish on the appropriate ROS topics.
@@ -85,28 +81,25 @@ This will stream all camera sensors and publish on the appropriate ROS topics.
 ### Published Topics
 The published topics differ according to the device and parameters.
 After running the above command with D435i attached, the following list of topics will be available (This is a partial list. For full one type `ros2 topic list`):
-- /camera1/accel/imu_info
-- /camera1/color/camera_info
-- /camera1/color/image_raw
-- /camera1/depth/camera_info
-- /camera1/depth/color/points
-- /camera1/depth/image_rect_raw
-- /camera1/extrinsics/depth_to_color
-- /camera1/extrinsics/depth_to_infra1
-- /camera1/extrinsics/depth_to_infra2
-- /camera1/gyro/imu_info
-- /camera1/imu
-- /camera1/infra1/camera_info
-- /camera1/infra1/image_rect_raw
-- /camera1/infra2/camera_info
-- /camera1/infra2/image_rect_raw
-- /camera1/parameter_events
-- /camera1/rosout
-- /parameter_events
-- /rosout
-- /tf_static
+- /camera/accel/imu_info
+- /camera/accel/sample
+- /camera/color/camera_info
+- /camera/color/image_raw
+- /camera/depth/camera_info
+- /camera/depth/color/points
+- /camera/depth/image_rect_raw
+- /camera/extrinsics/depth_to_color
+- /camera/extrinsics/depth_to_infra1
+- /camera/extrinsics/depth_to_infra2
+- /camera/gyro/imu_info
+- /camera/gyro/sample
+- /camera/infra1/camera_info
+- /camera/infra1/image_rect_raw
+- /camera/infra2/camera_info
+- /camera/infra2/image_rect_raw
+- /camera/parameter_events
 
-The "/camera1" prefix is the namesapce specified in the given launch file.
+The "/camera" prefix is the namesapce specified in the given launch file.
 When using D435 or D415, the gyro and accel topics wont be available. Likewise, other topics will be available when using T265 (see below).
 
 ### Available Parameters:
