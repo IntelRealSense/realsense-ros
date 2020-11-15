@@ -119,6 +119,7 @@ add_library(${PROJECT_NAME} SHARED
     include/base_realsense_node.h
     include/ros_sensor.h
     include/ros_utils.h
+    include/dynamic_params.h
 #    include/t265_realsense_node.h
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
@@ -128,6 +129,7 @@ add_library(${PROJECT_NAME} SHARED
     src/ros_video_sensor.cpp
     src/ros_imu_sensor.cpp
     src/ros_utils.cpp
+    src/dynamic_params.cpp
 #    src/t265_realsense_node.cpp
     )
 

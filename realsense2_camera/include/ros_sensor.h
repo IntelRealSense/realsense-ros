@@ -4,6 +4,7 @@
 #include <map>
 #include <rclcpp/rclcpp.hpp>
 #include <ros_utils.h>
+#include <dynamic_params.h>
 
 #define STREAM_NAME(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << create_graph_resource_name(rs2_stream_to_string(sip.first)) << ((sip.second>0) ? std::to_string(sip.second) : ""))).str()
 
@@ -22,6 +23,7 @@ namespace realsense2_camera
                 _node(node),
                 _logger(rclcpp::get_logger("RealSenseCameraNode")),
                 _frame_callback(frame_callback),
+                _parameters(node),
                 _update_sensor_func(update_sensor_func)
                 {
                 };
@@ -47,7 +49,6 @@ namespace realsense2_camera
             {
                 return (dynamic_cast<const T*> (&(*this)));
             }
-            rcl_interfaces::msg::SetParametersResult set_sensor_enable_param(std::string option_name, const std::vector<rclcpp::Parameter> & parameters);
 
         private:
             void setupErrorCallback();
@@ -56,13 +57,13 @@ namespace realsense2_camera
             rclcpp::Node& _node;
             rclcpp::Logger _logger;
             std::function<void(rs2::frame)> _frame_callback;
+            Parameters _parameters;
             std::function<void()> _update_sensor_func;
             // std::condition_variable _cv_update;
             // std::mutex _m_update;
             std::shared_ptr<std::thread> _check_update_t;
 
             std::map<stream_index_pair, bool> _enabled_profiles;
-            std::vector<rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr> _callback_handlers;
     };
 
     class VideoSensor : public RosSensor

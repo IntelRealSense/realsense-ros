@@ -124,11 +124,13 @@ namespace realsense2_camera
         public:
             std::string _name;
             std::shared_ptr<rs2::filter> _filter;
+            bool _is_enabled;
 
         public:
-            NamedFilter(std::string name, std::shared_ptr<rs2::filter> filter):
-            _name(name), _filter(filter)
+            NamedFilter(std::string name, std::shared_ptr<rs2::filter> filter, bool is_enabled=false):
+            _name(name), _filter(filter), _is_enabled(is_enabled)
             {}
+            void set(const bool is_enabled) {_is_enabled = is_enabled;};
     };
 
 	class PipelineSyncer : public rs2::asynchronous_syncer
@@ -275,7 +277,7 @@ namespace realsense2_camera
         template<class T>
         void set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name);
 
-        void registerDynamicOptions(rs2::options sensor, std::string& module_name);
+        void registerDynamicOptions(rs2::options sensor, const std::string& module_name);
         void registerDynamicParameters();
         // void readAndSetDynamicParam(ros::NodeHandle& nh1, std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec, const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, int* option_value);
         // void registerAutoExposureROIOptions(ros::NodeHandle& nh);
@@ -369,7 +371,7 @@ namespace realsense2_camera
 
         sensor_msgs::msg::PointCloud2 _msg_pointcloud;
         std::vector< unsigned int > _valid_pc_indices;
-        std::vector<rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr> _callback_handlers;
+        Parameters _parameters;
     };//end class
 }
 #endif //___BASE_REALSENSE_NODE_HEADER___

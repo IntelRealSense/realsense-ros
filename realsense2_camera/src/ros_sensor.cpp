@@ -138,19 +138,6 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
     return true;
 }
 
-rcl_interfaces::msg::SetParametersResult RosSensor::set_sensor_enable_param(std::string option_name, const std::vector<rclcpp::Parameter> & parameters)
-{ 
-    rcl_interfaces::msg::SetParametersResult result;
-    result.successful = true;
-    for (const auto & parameter : parameters) {
-        if (option_name == parameter.get_name())
-        {
-            _update_sensor_func();
-        }
-    }
-    return result;
-}
-
 template<class T>
 void RosSensor::registerSensorUpdateParam(std::string template_name, T value)
 {
@@ -164,58 +151,15 @@ void RosSensor::registerSensorUpdateParam(std::string template_name, T value)
         char* param_name = new char[template_name.size() + stream_name.size()];
         sprintf(param_name, template_name.c_str(), stream_name.c_str());
 
-        ROS_INFO_STREAM("reading parameter:" << param_name);
-        if (!_node.has_parameter(param_name))
-            _node.declare_parameter(param_name, rclcpp::ParameterValue(value));
-
-        _callback_handlers.push_back(
-        _node.add_on_set_parameters_callback(
-            [this, param_name](const std::vector<rclcpp::Parameter> & parameters) 
-                { 
-                    return set_sensor_enable_param(param_name, parameters);
-                }));
+        _parameters.setParam(std::string(param_name), rclcpp::ParameterValue(value), [this](const rclcpp::Parameter& parameter)
+                {
+                    ROS_INFO_STREAM("callback for: " << parameter.get_name() << " with value: ");
+                    _update_sensor_func();                    
+                });
     }
 }
 template void RosSensor::registerSensorUpdateParam<bool>(std::string template_name, bool value);
 template void RosSensor::registerSensorUpdateParam<double>(std::string template_name, double value);
-
-// void RosSensor::registerEnableProfileParams()
-// {
-//     std::string module_name = create_graph_resource_name(get_info(RS2_CAMERA_INFO_NAME));
-//     std::set<stream_index_pair> checked_sips, found_sips;
-//     for (auto& profile : get_stream_profiles())
-//     {
-//         stream_index_pair sip(profile.stream_type(), profile.stream_index());
-//         if (checked_sips.insert(sip).second == false)
-//             continue;
-//         std::string param_name = "enable_" + STREAM_NAME(sip);
-//         _node.declare_parameter(param_name, rclcpp::ParameterValue(true));
-//         _callback_handlers.push_back(
-//             _node.add_on_set_parameters_callback(
-//                 [param_name, this](const std::vector<rclcpp::Parameter> & parameters) 
-//                     { 
-//                         rcl_interfaces::msg::SetParametersResult result;
-//                         result.successful = true;
-//                         for (const auto & parameter : parameters) {
-//                             ROS_INFO_STREAM("set_option: " << param_name << " == " << parameter.get_name());
-//                             if (param_name == parameter.get_name())
-//                             {
-//                                 ROS_INFO_STREAM("Check sensors change: ");
-//                                 try
-//                                 {
-//                                     ROS_INFO_STREAM("set_option: " << param_name << " = " << parameter.get_value<bool>());
-//                                     _update_sensor_func();
-//                                 }
-//                                 catch(const rclcpp::ParameterTypeException& e)
-//                                 {
-//                                     ROS_WARN_STREAM("Error handling profile enabling: " << e.what());
-//                                 }
-//                             }
-//                         }
-//                         return result;
-//                     }));
-//     }
-// }
 
 // void RosSensor::startWaitingUpdates()
 // {

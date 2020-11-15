@@ -81,7 +81,8 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _serial_no(serial_no),
     _static_tf_broadcaster(node),
     _is_initialized_time_base(false),
-    _is_profile_changed(false)
+    _is_profile_changed(false),
+    _parameters(node)
 {
     _image_format[1] = CV_8UC1;    // CVBridge type
     _image_format[2] = CV_16UC1;    // CVBridge type
@@ -498,83 +499,189 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
 
 void BaseRealSenseNode::setupFilters()
 {
-    std::vector<std::string> filters_str;
-    boost::split(filters_str, _filters_str, [](char c){return c == ',';});
-    bool use_disparity_filter(false);
-    bool use_colorizer_filter(false);
-    bool use_decimation_filter(false);
-    for (std::vector<std::string>::const_iterator s_iter=filters_str.begin(); s_iter!=filters_str.end(); s_iter++)
+    _filters.push_back(NamedFilter("decimation", std::make_shared<rs2::decimation_filter>()));
+    _filters.push_back(NamedFilter("disparity_start", std::make_shared<rs2::disparity_transform>()));
+    _filters.push_back(NamedFilter("spatial", std::make_shared<rs2::spatial_filter>()));
+    _filters.push_back(NamedFilter("temporal", std::make_shared<rs2::temporal_filter>()));
+    _filters.push_back(NamedFilter("hole_filling", std::make_shared<rs2::hole_filling_filter>()));
+    _filters.push_back(NamedFilter("disparity_end", std::make_shared<rs2::disparity_transform>(false)));
+    _filters.push_back(NamedFilter("colorizer", std::make_shared<rs2::colorizer>())); // TODO: Callback must take care of depth image_format, encoding etc.
+    _filters.push_back(NamedFilter("pointcloud", std::make_shared<rs2::pointcloud>(_pointcloud_texture.first, _pointcloud_texture.second)));
+
+    for (NamedFilter& nfilter : _filters)
     {
-        if ((*s_iter) == "colorizer")
-        {
-            use_colorizer_filter = true;
-        }
-        else if ((*s_iter) == "disparity")
-        {
-            use_disparity_filter = true;
-        }
-        else if ((*s_iter) == "spatial")
-        {
-            ROS_INFO("Add Filter: spatial");
-            _filters.push_back(NamedFilter("spatial", std::make_shared<rs2::spatial_filter>()));
-        }
-        else if ((*s_iter) == "temporal")
-        {
-            ROS_INFO("Add Filter: temporal");
-            _filters.push_back(NamedFilter("temporal", std::make_shared<rs2::temporal_filter>()));
-        }
-        else if ((*s_iter) == "hole_filling")
-        {
-            ROS_INFO("Add Filter: hole_filling");
-            _filters.push_back(NamedFilter("hole_filling", std::make_shared<rs2::hole_filling_filter>()));
-        }
-        else if ((*s_iter) == "decimation")
-        {
-            use_decimation_filter = true;
-        }
-        else if ((*s_iter) == "pointcloud")
-        {
-            assert(_pointcloud); // For now, it is set in getParameters()..
-        }
-        else if ((*s_iter).size() > 0)
-        {
-            ROS_ERROR_STREAM("Unknown Filter: " << (*s_iter));
-            throw;
-        }
+        if (nfilter._name == "disparity_end")
+            continue;
+        std::stringstream param_name;
+        auto sensor = *(nfilter._filter);
+        std::string module_name = create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
+        param_name << "post_processing_block." << module_name;
+        ROS_DEBUG_STREAM("module_name:" << param_name.str());
+        registerDynamicOptions(sensor, param_name.str());
+        param_name << ".enable";
+        _parameters.setParam(param_name.str(), rclcpp::ParameterValue(nfilter._is_enabled), [this, &nfilter](const rclcpp::Parameter& parameter)
+                {
+                    nfilter.set(parameter.get_value<bool>());
+                });
     }
-    if (use_disparity_filter)
-    {
-        ROS_INFO("Add Filter: disparity");
-        _filters.insert(_filters.begin(), NamedFilter("disparity_start", std::make_shared<rs2::disparity_transform>()));
-        _filters.push_back(NamedFilter("disparity_end", std::make_shared<rs2::disparity_transform>(false)));
-        ROS_INFO("Done Add Filter: disparity");
-    }
-    if (use_decimation_filter)
-    {
-      ROS_INFO("Add Filter: decimation");
-      _filters.insert(_filters.begin(),NamedFilter("decimation", std::make_shared<rs2::decimation_filter>()));
-    }
-    if (use_colorizer_filter)
-    {
-        ROS_INFO("Add Filter: colorizer");
-        _filters.push_back(NamedFilter("colorizer", std::make_shared<rs2::colorizer>()));
-    }
-    if (_pointcloud)
-    {
-    	ROS_INFO("Add Filter: pointcloud");
-        // Get PointCloud parameters:
-        std::string pc_texture_stream = _node.declare_parameter("pointcloud_texture_stream", rclcpp::ParameterValue("RS2_STREAM_COLOR")).get<rclcpp::PARAMETER_STRING>();
-        int pc_texture_idx = _node.declare_parameter("pointcloud_texture_index", rclcpp::ParameterValue(0)).get<rclcpp::PARAMETER_INTEGER>();
-        _pointcloud_texture = stream_index_pair{rs2_string_to_stream(pc_texture_stream), pc_texture_idx};
-        if (!_pointcloud_publisher)
-        {
-            ROS_INFO("Start pointcloud publisher.");
-            _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 1);
-        }
-        _filters.push_back(NamedFilter("pointcloud", std::make_shared<rs2::pointcloud>(_pointcloud_texture.first, _pointcloud_texture.second)));
-    }
-    ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));
 }
+
+// void BaseRealSenseNode::setupFilters()
+// {
+//     ROS_WARN_STREAM("READING parameters:");
+//     std::vector<std::string> parameter_prefixes({"post_processing_block"});
+//     rcl_interfaces::msg::ListParametersResult pp_params = _node.list_parameters(parameter_prefixes, 10);
+//     bool use_disparity_filter(false);
+//     bool use_colorizer_filter(false);
+//     bool use_decimation_filter(false);
+//     for (auto & param_name : pp_params.names)
+//     {
+//         std::string filter_name;
+//         ROS_WARN_STREAM("parameter: " << param_name);
+//         std::vector<std::string> param_parts;
+//         boost::split(param_parts, param_name, [](char c){return c == '.';});
+//         for (int i=0; i<param_parts.size(); i++)
+//         {
+//             if (param_parts[i] == "post_processing_block")
+//             {
+//                 filter_name = param_parts[i+1];
+//             }
+//         }
+//         if (filter_name == "colorizer")
+//         {
+//             use_colorizer_filter = true;
+//         }
+//         else if (filter_name == "disparity")
+//         {
+//             use_disparity_filter = true;
+//         }
+//         else if (filter_name == "decimation")
+//         {
+//             use_decimation_filter = true;
+//         }
+//         else
+//         {
+//             bool filter_enabled = _node.get_parameter(param_name).get_parameter_value().get<rclcpp::PARAMETER_BOOL>();
+//             std::vector<NamedFilter>::const_iterator filter_iter = find_if(_filters.begin(), _filters.end(), [&filter_name] (NamedFilter filter) 
+//                                         {return (filter._name == filter_name); });
+
+//             if (!filter_enabled && _filters.end() != filter_iter)
+//             {
+//                 ROS_WARN_STREAM("filter: " << filter_name << " exists.");
+//                 _filters.erase(filter_iter);
+//             }
+//             else if (filter_enabled && _filters.end() == filter_iter)
+//             {
+//                 ROS_WARN_STREAM("filter: " << filter_name << " NOT exists.");
+//                 if (filter_name == "spatial")
+//                 {
+//                     ROS_INFO("Add Filter: spatial");
+//                     _filters.push_back(NamedFilter("spatial", std::make_shared<rs2::spatial_filter>()));
+//                 }
+//                 else if (filter_name == "temporal")
+//                 {
+//                     ROS_INFO("Add Filter: temporal");
+//                     _filters.push_back(NamedFilter("temporal", std::make_shared<rs2::temporal_filter>()));
+//                 }
+//                 else if (filter_name == "hole_filling")
+//                 {
+//                     ROS_INFO("Add Filter: hole_filling");
+//                     _filters.push_back(NamedFilter("hole_filling", std::make_shared<rs2::hole_filling_filter>()));
+//                 }
+//             }
+//         }
+        
+//         // else if ((*s_iter) == "pointcloud")
+//         // {
+//         //     assert(_pointcloud); // For now, it is set in getParameters()..
+//         // }
+//         // if (_node.get_parameter(param_name).get_parameter_value().get<rclcpp::PARAMETER_BOOL>())
+//         // {
+
+//         // }
+
+//     }
+// }
+
+// void BaseRealSenseNode::setupFilters()
+// {
+//     std::vector<std::string> filters_str;
+//     boost::split(filters_str, _filters_str, [](char c){return c == ',';});
+//     bool use_disparity_filter(false);
+//     bool use_colorizer_filter(false);
+//     bool use_decimation_filter(false);
+//     for (std::vector<std::string>::const_iterator s_iter=filters_str.begin(); s_iter!=filters_str.end(); s_iter++)
+//     {
+//         if ((*s_iter) == "colorizer")
+//         {
+//             use_colorizer_filter = true;
+//         }
+//         else if ((*s_iter) == "disparity")
+//         {
+//             use_disparity_filter = true;
+//         }
+//         else if ((*s_iter) == "spatial")
+//         {
+//             ROS_INFO("Add Filter: spatial");
+//             _filters.push_back(NamedFilter("spatial", std::make_shared<rs2::spatial_filter>()));
+//         }
+//         else if ((*s_iter) == "temporal")
+//         {
+//             ROS_INFO("Add Filter: temporal");
+//             _filters.push_back(NamedFilter("temporal", std::make_shared<rs2::temporal_filter>()));
+//         }
+//         else if ((*s_iter) == "hole_filling")
+//         {
+//             ROS_INFO("Add Filter: hole_filling");
+//             _filters.push_back(NamedFilter("hole_filling", std::make_shared<rs2::hole_filling_filter>()));
+//         }
+//         else if ((*s_iter) == "decimation")
+//         {
+//             use_decimation_filter = true;
+//         }
+//         else if ((*s_iter) == "pointcloud")
+//         {
+//             assert(_pointcloud); // For now, it is set in getParameters()..
+//         }
+//         else if ((*s_iter).size() > 0)
+//         {
+//             ROS_ERROR_STREAM("Unknown Filter: " << (*s_iter));
+//             throw;
+//         }
+//     }
+//     if (use_disparity_filter)
+//     {
+//         ROS_INFO("Add Filter: disparity");
+//         _filters.insert(_filters.begin(), NamedFilter("disparity_start", std::make_shared<rs2::disparity_transform>()));
+//         _filters.push_back(NamedFilter("disparity_end", std::make_shared<rs2::disparity_transform>(false)));
+//         ROS_INFO("Done Add Filter: disparity");
+//     }
+//     if (use_decimation_filter)
+//     {
+//       ROS_INFO("Add Filter: decimation");
+//       _filters.insert(_filters.begin(),NamedFilter("decimation", std::make_shared<rs2::decimation_filter>()));
+//     }
+//     if (use_colorizer_filter)
+//     {
+//         ROS_INFO("Add Filter: colorizer");
+//         _filters.push_back(NamedFilter("colorizer", std::make_shared<rs2::colorizer>()));
+//     }
+//     if (_pointcloud)
+//     {
+//     	ROS_INFO("Add Filter: pointcloud");
+//         // Get PointCloud parameters:
+//         std::string pc_texture_stream = _node.declare_parameter("pointcloud_texture_stream", rclcpp::ParameterValue("RS2_STREAM_COLOR")).get<rclcpp::PARAMETER_STRING>();
+//         int pc_texture_idx = _node.declare_parameter("pointcloud_texture_index", rclcpp::ParameterValue(0)).get<rclcpp::PARAMETER_INTEGER>();
+//         _pointcloud_texture = stream_index_pair{rs2_string_to_stream(pc_texture_stream), pc_texture_idx};
+//         if (!_pointcloud_publisher)
+//         {
+//             ROS_INFO("Start pointcloud publisher.");
+//             _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 1);
+//         }
+//         _filters.push_back(NamedFilter("pointcloud", std::make_shared<rs2::pointcloud>(_pointcloud_texture.first, _pointcloud_texture.second)));
+//     }
+//     ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));
+// }
 
 
 
@@ -969,8 +1076,11 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             ROS_DEBUG("num_filters: %d", static_cast<int>(_filters.size()));
             for (std::vector<NamedFilter>::const_iterator filter_it = _filters.begin(); filter_it != _filters.end(); filter_it++)
             {
-                ROS_DEBUG("Applying filter: %s", filter_it->_name.c_str());
-                frameset = filter_it->_filter->process(frameset);
+                if (filter_it->_is_enabled)
+                {
+                    ROS_DEBUG("Applying filter: %s", filter_it->_name.c_str());
+                    frameset = filter_it->_filter->process(frameset);
+                }
             }
 
             ROS_DEBUG("List of frameset after applying filters: size: %d", static_cast<int>(frameset.size()));
@@ -1359,6 +1469,8 @@ void reverse_memcpy(unsigned char* dst, const unsigned char* src, size_t n)
 void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset)
 {
     std::vector<NamedFilter>::iterator pc_filter = find_if(_filters.begin(), _filters.end(), [] (NamedFilter s) { return s._name == "pointcloud"; } );
+    if (!pc_filter->_is_enabled)
+        return;
     rs2_stream texture_source_id = static_cast<rs2_stream>(pc_filter->_filter->get_option(rs2_option::RS2_OPTION_STREAM_FILTER));
     bool use_texture = texture_source_id != RS2_STREAM_ANY;
     static int warn_count(0);
