@@ -554,9 +554,9 @@ void BaseRealSenseNode::getParameters()
     ROS_INFO("getParameters...");
 
     // Setup system to use RGB image from the infra stream if configured by user
-    bool infrargb;
-    _pnh.param("infrargb", infrargb, false);
-    if (infrargb)
+    bool infra_rgb;
+    _pnh.param("infra_rgb", infra_rgb, false);
+    if (infra_rgb)
     {
       _format[RS2_STREAM_INFRARED] = RS2_FORMAT_RGB8;
       _image_format[RS2_STREAM_INFRARED] = CV_8UC3;    // CVBridge type
