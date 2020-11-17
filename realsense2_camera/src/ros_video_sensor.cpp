@@ -32,9 +32,9 @@ void VideoSensor::getUpdatedProfileParameters(const rs2::stream_profile& profile
 {
     stream_index_pair stream(profile.stream_type(), profile.stream_index());
     std::string param_name = "enable_" + create_graph_resource_name(STREAM_NAME(stream));
-    ROS_INFO_STREAM("reading parameter:" << param_name);
+    ROS_DEBUG_STREAM("reading parameter:" << param_name);
     _enabled_profiles[stream] = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value().get<rclcpp::PARAMETER_BOOL>() : true);
-    ROS_INFO_STREAM(param_name << "=" << _enabled_profiles[stream]);
+    ROS_DEBUG_STREAM(param_name << "=" << _enabled_profiles[stream]);
 }
 
 bool VideoSensor::isWantedProfile(const rs2::stream_profile& profile)

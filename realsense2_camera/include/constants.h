@@ -23,6 +23,7 @@
 #define ROS_WARN_STREAM(msg) RCLCPP_WARN_STREAM(_logger, msg)
 #define ROS_ERROR_STREAM(msg) RCLCPP_ERROR_STREAM(_logger, msg)
 #define ROS_FATAL_STREAM(msg) RCLCPP_FATAL_STREAM(_logger, msg)
+#define ROS_DEBUG_STREAM_ONCE(msg) RCLCPP_DEBUG_STREAM_ONCE(_logger, msg)
 #define ROS_INFO_STREAM_ONCE(msg) RCLCPP_INFO_STREAM_ONCE(_logger, msg)
 
 #define ROS_WARN_COND(cond, ...) RCLCPP_WARN_EXPRESSION(_logger, cond, __VA_ARGS__)

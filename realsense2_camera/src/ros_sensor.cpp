@@ -89,24 +89,21 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
             getUpdatedProfileParameters(profile);
         if (!_enabled_profiles[sip])
             continue;
-        ROS_INFO_STREAM_ONCE("Looking for " << rs2_stream_to_string(sip.first) << ":" << sip.second);
+        ROS_DEBUG_STREAM_ONCE("Looking for wanted profile: " << rs2_stream_to_string(sip.first) << ":" << sip.second);
         if (found_sips.find(sip) == found_sips.end() && isWantedProfile(profile))
         {
             wanted_profiles.push_back(profile);
             found_sips.insert(sip);
-            ROS_INFO_STREAM("Found profile for " << rs2_stream_to_string(sip.first) << ":" << sip.second);
-            ROS_INFO_STREAM("wanted_profiles.size() = " << wanted_profiles.size());
+            ROS_DEBUG_STREAM("Found profile for " << rs2_stream_to_string(sip.first) << ":" << sip.second);
         }
     }
 
-    // std::set<stream_profile> set_active_profiles(active_profiles.begin(), active_profiles.end(), [](stream_profile a, stream_profile b){ return (if (a.stream_type()< ) });
     std::set<stream_profile, bool(*)(stream_profile,stream_profile)> set_active_profiles(active_profiles.begin(), active_profiles.end(), compare_profile);
-    ROS_WARN("set_active_profiles");
-    ROS_WARN_STREAM("set_active_profiles.size() = " << set_active_profiles.size());
+    ROS_DEBUG_STREAM("set_active_profiles.size() = " << set_active_profiles.size());
     for (auto& profile : set_active_profiles)
     {
         auto video_profile = profile.as<rs2::video_stream_profile>();
-        ROS_WARN_STREAM("Sensor profile: " <<
+        ROS_DEBUG_STREAM("Sensor profile: " <<
                             "stream_type: " << rs2_stream_to_string(video_profile.stream_type()) << "(" << video_profile.stream_index() << ")" <<
                             "Format: " << video_profile.format() <<
                             ", Width: " << video_profile.width() <<
@@ -116,12 +113,11 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
     }
 
     std::set<stream_profile, bool(*)(stream_profile,stream_profile)> set_wanted_profiles(wanted_profiles.begin(), wanted_profiles.end(), compare_profile);
-    ROS_WARN("wanted_profiles");
-    ROS_WARN_STREAM("set_wanted_profiles.size() = " << set_wanted_profiles.size());
+    ROS_DEBUG_STREAM("wanted_profiles");
     for (auto& profile : set_wanted_profiles)
     {
         auto video_profile = profile.as<rs2::video_stream_profile>();
-        ROS_WARN_STREAM("Sensor profile: " <<
+        ROS_DEBUG_STREAM("Sensor profile: " <<
                             "stream_type: " << rs2_stream_to_string(video_profile.stream_type()) << "(" << video_profile.stream_index() << ")" <<
                             "Format: " << video_profile.format() <<
                             ", Width: " << video_profile.width() <<
@@ -129,7 +125,6 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
                             ", unique_id: " << video_profile.unique_id() <<
                             ", FPS: " << video_profile.fps());
     }
-
 
     if (set_active_profiles == set_wanted_profiles)
     {

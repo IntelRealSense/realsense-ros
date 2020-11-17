@@ -253,18 +253,15 @@ void BaseRealSenseNode::updateSensors()
         {
             std::string module_name(sensor->get_info(RS2_CAMERA_INFO_NAME));
             // if active_profiles != wanted_profiles: stop sensor.
-            ROS_INFO_STREAM(__LINE__ << " : " << module_name);
             std::vector<stream_profile> wanted_profiles;
 
             bool is_changed(sensor->getUpdatedProfiles(wanted_profiles));
-            ROS_INFO_STREAM(__LINE__ << " : " << wanted_profiles.size());
             if (is_changed)
             {
                 std::vector<stream_profile> active_profiles = sensor->get_active_streams();
                 ROS_INFO_STREAM("Stop Sensor: " << module_name);
                 sensor->stop();
                 stopPublishers(active_profiles);
-                ROS_INFO("Done");
 
                 if (!wanted_profiles.empty())
                 {
@@ -282,7 +279,6 @@ void BaseRealSenseNode::updateSensors()
                     {
                         _depth_scale_meters = sensor->as<rs2::depth_sensor>().get_depth_scale();
                     }
-                    ROS_INFO("Done");
                 }
             }
         }

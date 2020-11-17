@@ -68,6 +68,19 @@ size_t SyncedImuPublisher::getNumSubscribers()
     return _publisher->get_subscription_count();
 }
 
+void PointcloudFilter::set(const bool is_enabled)
+{
+    if ((is_enabled) && (!_pointcloud_publisher))
+    {
+        _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 1);
+    }
+    else if ((!is_enabled) && (_pointcloud_publisher))
+    {
+        _pointcloud_publisher.reset();        
+    }
+    NamedFilter::set(is_enabled);
+}
+
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
                                     rs2::device dev, const std::string& serial_no,
                                     std::shared_ptr<diagnostic_updater::Updater> diagnostic_updater) :
@@ -499,29 +512,29 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
 
 void BaseRealSenseNode::setupFilters()
 {
-    _filters.push_back(NamedFilter("decimation", std::make_shared<rs2::decimation_filter>()));
-    _filters.push_back(NamedFilter("disparity_start", std::make_shared<rs2::disparity_transform>()));
-    _filters.push_back(NamedFilter("spatial", std::make_shared<rs2::spatial_filter>()));
-    _filters.push_back(NamedFilter("temporal", std::make_shared<rs2::temporal_filter>()));
-    _filters.push_back(NamedFilter("hole_filling", std::make_shared<rs2::hole_filling_filter>()));
-    _filters.push_back(NamedFilter("disparity_end", std::make_shared<rs2::disparity_transform>(false)));
-    _filters.push_back(NamedFilter("colorizer", std::make_shared<rs2::colorizer>())); // TODO: Callback must take care of depth image_format, encoding etc.
-    _filters.push_back(NamedFilter("pointcloud", std::make_shared<rs2::pointcloud>(_pointcloud_texture.first, _pointcloud_texture.second)));
+    _filters.push_back(std::make_shared<NamedFilter>("decimation", std::make_shared<rs2::decimation_filter>()));
+    _filters.push_back(std::make_shared<NamedFilter>("disparity_start", std::make_shared<rs2::disparity_transform>()));
+    _filters.push_back(std::make_shared<NamedFilter>("spatial", std::make_shared<rs2::spatial_filter>()));
+    _filters.push_back(std::make_shared<NamedFilter>("temporal", std::make_shared<rs2::temporal_filter>()));
+    _filters.push_back(std::make_shared<NamedFilter>("hole_filling", std::make_shared<rs2::hole_filling_filter>()));
+    _filters.push_back(std::make_shared<NamedFilter>("disparity_end", std::make_shared<rs2::disparity_transform>(false)));
+    _filters.push_back(std::make_shared<NamedFilter>("colorizer", std::make_shared<rs2::colorizer>())); // TODO: Callback must take care of depth image_format, encoding etc.
+    _filters.push_back(std::make_shared<PointcloudFilter>("pointcloud", std::make_shared<rs2::pointcloud>(_pointcloud_texture.first, _pointcloud_texture.second), _node, false));
 
-    for (NamedFilter& nfilter : _filters)
+    for (auto nfilter : _filters)
     {
-        if (nfilter._name == "disparity_end")
+        if (nfilter->_name == "disparity_end")
             continue;
         std::stringstream param_name;
-        auto sensor = *(nfilter._filter);
+        auto sensor = *(nfilter->_filter);
         std::string module_name = create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
         param_name << "post_processing_block." << module_name;
         ROS_DEBUG_STREAM("module_name:" << param_name.str());
         registerDynamicOptions(sensor, param_name.str());
         param_name << ".enable";
-        _parameters.setParam(param_name.str(), rclcpp::ParameterValue(nfilter._is_enabled), [this, &nfilter](const rclcpp::Parameter& parameter)
+        _parameters.setParam(param_name.str(), rclcpp::ParameterValue(nfilter->_is_enabled), [this, nfilter](const rclcpp::Parameter& parameter)
                 {
-                    nfilter.set(parameter.get_value<bool>());
+                    nfilter->set(parameter.get_value<bool>());
                 });
     }
 }
@@ -1074,7 +1087,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             }
 
             ROS_DEBUG("num_filters: %d", static_cast<int>(_filters.size()));
-            for (std::vector<NamedFilter>::const_iterator filter_it = _filters.begin(); filter_it != _filters.end(); filter_it++)
+            for (auto filter_it : _filters)
             {
                 if (filter_it->_is_enabled)
                 {
@@ -1146,11 +1159,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
 
                 if (f.is<rs2::points>())
                 {
-                    if (0 != _pointcloud_publisher->get_subscription_count())
-                    {
-                        ROS_DEBUG("Publish pointscloud");
-                        publishPointCloud(f.as<rs2::points>(), t, frameset);
-                    }
+                    publishPointCloud(f.as<rs2::points>(), t, frameset);
                     continue;
                 }
                 stream_index_pair sip{stream_type,stream_index};
@@ -1468,9 +1477,13 @@ void reverse_memcpy(unsigned char* dst, const unsigned char* src, size_t n)
 
 void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset)
 {
-    std::vector<NamedFilter>::iterator pc_filter = find_if(_filters.begin(), _filters.end(), [] (NamedFilter s) { return s._name == "pointcloud"; } );
-    if (!pc_filter->_is_enabled)
+    std::vector<std::shared_ptr<NamedFilter>>::iterator pc_filter_ = find_if(_filters.begin(), _filters.end(), [] (std::shared_ptr<NamedFilter> s) { return s->is<PointcloudFilter>(); } );
+    std::shared_ptr<PointcloudFilter> pc_filter = std::static_pointer_cast<PointcloudFilter>(*pc_filter_);
+
+    if (!pc_filter->getPublisher()->get_subscription_count())
         return;
+
+    ROS_DEBUG("Publish pointscloud");
     rs2_stream texture_source_id = static_cast<rs2_stream>(pc_filter->_filter->get_option(rs2_option::RS2_OPTION_STREAM_FILTER));
     bool use_texture = texture_source_id != RS2_STREAM_ANY;
     static int warn_count(0);
@@ -1600,7 +1613,7 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t,
             ++iter_x; ++iter_y; ++iter_z;
         }
     }
-    _pointcloud_publisher->publish(_msg_pointcloud);
+    pc_filter->getPublisher()->publish(_msg_pointcloud);
 }
 
 

@@ -130,7 +130,28 @@ namespace realsense2_camera
             NamedFilter(std::string name, std::shared_ptr<rs2::filter> filter, bool is_enabled=false):
             _name(name), _filter(filter), _is_enabled(is_enabled)
             {}
-            void set(const bool is_enabled) {_is_enabled = is_enabled;};
+            virtual void set(const bool is_enabled) {_is_enabled = is_enabled;};
+
+            template<class T> 
+            bool is() const
+            {
+                return (dynamic_cast<const T*> (&(*this)));
+            }
+    };
+
+    class PointcloudFilter : public NamedFilter
+    {
+        public:
+            PointcloudFilter(std::string name, std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, bool is_enabled=false):
+                NamedFilter(name, filter, is_enabled),
+                _node(node) {}
+        
+            void set(const bool is_enabled) override;
+            rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr getPublisher() {return _pointcloud_publisher;};
+
+        private:
+            rclcpp::Node& _node;
+            rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _pointcloud_publisher;
     };
 
 	class PipelineSyncer : public rs2::asynchronous_syncer
@@ -275,7 +296,7 @@ namespace realsense2_camera
         void frame_callback(rs2::frame frame);
         
         template<class T>
-        void set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name);
+        void set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name, const std::string& description_addition="");
 
         void registerDynamicOptions(rs2::options sensor, const std::string& module_name);
         void registerDynamicParameters();
@@ -336,7 +357,6 @@ namespace realsense2_camera
         double _camera_time_base;
         std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
 
-        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _pointcloud_publisher;
         rclcpp::Time _ros_time_base;
         bool _sync_frames;
         bool _pointcloud;
@@ -346,7 +366,7 @@ namespace realsense2_camera
         stream_index_pair _pointcloud_texture;
         PipelineSyncer _syncer;
         rs2::asynchronous_syncer _asyncer;
-        std::vector<NamedFilter> _filters;
+        std::vector<std::shared_ptr<NamedFilter>> _filters;
         std::vector<rs2::sensor> _dev_sensors;
         std::vector<std::shared_ptr<RosSensor>> _available_ros_sensors;
 

@@ -1,5 +1,6 @@
 #include "../include/base_realsense_node.h"
 #include <ros_utils.h>
+#include <iomanip>
 
 using namespace realsense2_camera;
 
@@ -186,13 +187,24 @@ void param_set_option(rs2::options sensor, rs2_option option, std::string option
 }
 
 template<class T>
-void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name)
+void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name, const std::string& description_addition)
 {
     const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
-    T option_value = static_cast<T>(sensor.get_option(option));
+    T option_value;
+    try
+    {
+        option_value = static_cast<T>(sensor.get_option(option));
+    }
+    catch(const rs2::invalid_value_error& e)
+    {
+        ROS_WARN_STREAM("Failed to get value for " << option_name << " : " << e.what());
+        return;
+    }
     rs2::option_range op_range = sensor.get_option_range(option);
     rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
-    crnt_descriptor.description = sensor.get_option_description(option);
+    std::stringstream desc;
+    desc << sensor.get_option_description(option) << std::endl << description_addition;
+    crnt_descriptor.description = desc.str();
     if (std::is_same<T, int>::value || std::is_same<T, bool>::value)
     {
         rcl_interfaces::msg::IntegerRange range;
@@ -200,9 +212,9 @@ void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, co
         range.to_value = int(op_range.max);
         crnt_descriptor.integer_range.push_back(range);
         if (std::is_same<T, bool>::value)
-            ROS_INFO_STREAM("Declare: BOOL::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
+            ROS_DEBUG_STREAM("Declare: BOOL::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
         else
-            ROS_INFO_STREAM("Declare: INT::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
+            ROS_DEBUG_STREAM("Declare: INT::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
     }
     else
     {
@@ -210,7 +222,7 @@ void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, co
         range.from_value = double(op_range.min);
         range.to_value = double(op_range.max);
         crnt_descriptor.floating_point_range.push_back(range);
-        ROS_INFO_STREAM("Declare: DOUBLE::" << option_name << " = " << option_value);
+        ROS_DEBUG_STREAM("Declare: DOUBLE::" << option_name << " = " << option_value);
     }
 
     T new_val;
@@ -244,11 +256,10 @@ void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, co
 void BaseRealSenseNode::registerDynamicOptions(rs2::options sensor, const std::string& module_name)
 {
     rclcpp::Parameter node_param;
-    // Set enable_<sensor> option:
-
     for (auto i = 0; i < RS2_OPTION_COUNT; i++)
     {
         rs2_option option = static_cast<rs2_option>(i);
+        const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
         if (!sensor.supports(option) || sensor.is_option_read_only(option))
         {
             continue;
@@ -272,7 +283,14 @@ void BaseRealSenseNode::registerDynamicOptions(rs2::options sensor, const std::s
                     rs2::option_range op_range = sensor.get_option_range(option);
                     if (ROS_DEPTH_SCALE >= op_range.min && ROS_DEPTH_SCALE <= op_range.max)
                     {
-                        sensor.set_option(option, ROS_DEPTH_SCALE);
+                        try
+                        {
+                            sensor.set_option(option, ROS_DEPTH_SCALE);
+                        }
+                        catch(const rs2::invalid_value_error& e)
+                        {
+                            std::cout << "Failed to set value: " << e.what() << std::endl;
+                        }
                         op_range.min = ROS_DEPTH_SCALE;
                         op_range.max = ROS_DEPTH_SCALE;
 
@@ -287,62 +305,20 @@ void BaseRealSenseNode::registerDynamicOptions(rs2::options sensor, const std::s
         }
         else
         {
-            const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
-            ROS_WARN_STREAM("Skip enum-type option: " << option_name);
-#if false            
-            const auto sensor_option_value = sensor.get_option(option);
-            auto option_value = int(sensor_option_value);
-
-            rcl_interfaces::msg::IntegerRange range;
-            range.from_value = 0;
-            range.to_value = 1;
-            rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
-            crnt_descriptor.description = sensor.get_option_description(option);
-            crnt_descriptor.integer_range.push_back(range);
-            ROS_INFO_STREAM("Declare: " << option_name);
-            bool new_val = _node.declare_parameter(option_name, rclcpp::ParameterValue(option_value), crnt_descriptor).get<rclcpp::PARAMETER_BOOL>();
-            if (new_val != option_value)
+            std::vector<std::pair<std::string, int> > enum_vec;
+            size_t longest_desc(0);
+            for (auto enum_iter : enum_dict)
             {
-                sensor.set_option(option, new_val);
+                enum_vec.push_back(std::make_pair(enum_iter.first, enum_iter.second));
+                longest_desc = std::max(longest_desc, enum_iter.first.size());
             }
-            _callback_handlers.push_back(
-                _node.add_on_set_parameters_callback(
-                    [option, sensor, option_name](const std::vector<rclcpp::Parameter> & parameters) 
-                        { 
-                            rcl_interfaces::msg::SetParametersResult result;
-                            result.successful = true;
-                            param_set_option<bool>(sensor, option, option_name, parameters);
-                            return result;
-                        }));
-            continue;
-
-
-
-
-            const auto sensor_option_value = sensor.get_option(option);
-            auto option_value = int(sensor_option_value);
-            if (nh1.param(option_name, option_value, option_value))
+            sort(enum_vec.begin(), enum_vec.end(), [](std::pair<std::string, int> e1, std::pair<std::string, int> e2){return (e1.second < e2.second);});
+            std::stringstream description;
+            for (auto vec_iter : enum_vec)
             {
-                if (std::find_if(enum_dict.cbegin(), enum_dict.cend(),
-                                 [&option_value](const std::pair<std::string, int>& kv) {
-                                     return kv.second == option_value;
-                                 }) == enum_dict.cend())
-                {
-                    ROS_WARN_STREAM("Param '" << nh1.resolveName(option_name) << "' has value " << option_value
-                                              << " that is not in the enum " << enum_dict
-                                              << ". Using current sensor value " << sensor_option_value << " instead.");
-                    option_value = sensor_option_value;
-                }
-                else
-                {
-                    sensor.set_option(option, option_value);
-                }
+                description << std::setw(longest_desc+6) << std::left << vec_iter.first << " : " << vec_iter.second << std::endl;
             }
-            ddynrec->registerEnumVariable<int>(
-                option_name, option_value,
-                [option, sensor](int new_value) { sensor.set_option(option, new_value); },
-                sensor.get_option_description(option), enum_dict);
-#endif            
+            set_parameter<int>(sensor, option, module_name, description.str());
         }
     }
 }
