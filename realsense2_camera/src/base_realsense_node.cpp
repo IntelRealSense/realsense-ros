@@ -1674,14 +1674,14 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     unsigned int bpp = 1;
     if (f.is<rs2::video_frame>())
     {
-        auto image = f.as<rs2::video_frame>();
-        width = image.get_width();
-        height = image.get_height();
-        bpp = image.get_bytes_per_pixel();
+        auto timage = f.as<rs2::video_frame>();
+        width = timage.get_width();
+        height = timage.get_height();
+        bpp = timage.get_bytes_per_pixel();
     }
     auto& image = images[stream];
 
-    if (image.size() != cv::Size(width, height))
+    if (image.size() != cv::Size(width, height) || image.depth() != _image_format[bpp])
     {
         image.create(height, width, _image_format[bpp]);
     }
