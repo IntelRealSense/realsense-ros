@@ -97,13 +97,12 @@ void BaseRealSenseNode::setAvailableSensors()
     auto pid = _dev.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
     ROS_INFO_STREAM("Device Product ID: 0x" << pid);
 
-
-    ROS_INFO_STREAM("Enable PointCloud: " << ((_pointcloud)?"On":"Off"));
     ROS_INFO_STREAM("Align Depth: " << ((_align_depth)?"On":"Off"));
     ROS_INFO_STREAM("Sync Mode: " << ((_sync_frames)?"On":"Off"));
 
     std::function<void(rs2::frame)> frame_callback_function = [this](rs2::frame frame){
-        if (_sync_frames)
+        bool is_filter(_filters.end() != find_if(_filters.begin(), _filters.end(), [](std::shared_ptr<NamedFilter> f){return (f->_is_enabled); }));
+        if (_sync_frames || _align_depth || is_filter)
             this->_asyncer.invoke(frame);
         else 
             frame_callback(frame);

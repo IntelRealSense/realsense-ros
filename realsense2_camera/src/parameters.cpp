@@ -7,23 +7,12 @@ using namespace realsense2_camera;
 void BaseRealSenseNode::getParameters()
 {
     ROS_INFO("getParameters...");
-    _align_depth = _node.declare_parameter("align_depth", rclcpp::ParameterValue(ALIGN_DEPTH)).get<rclcpp::PARAMETER_BOOL>();
-    _pointcloud  = _node.declare_parameter("enable_pointcloud", rclcpp::ParameterValue(POINTCLOUD)).get<rclcpp::PARAMETER_BOOL>();
-
-    _filters_str = _node.declare_parameter("filters", rclcpp::ParameterValue(DEFAULT_FILTERS)).get<rclcpp::PARAMETER_STRING>();
+    _parameters.setParamT(std::string("align_depth"), rclcpp::ParameterValue(ALIGN_DEPTH), _align_depth);
 
     _publish_tf = _node.declare_parameter("publish_tf", rclcpp::ParameterValue(PUBLISH_TF)).get<rclcpp::PARAMETER_BOOL>();
     _tf_publish_rate = _node.declare_parameter("tf_publish_rate", rclcpp::ParameterValue(TF_PUBLISH_RATE)).get<rclcpp::PARAMETER_DOUBLE>();
-    _sync_frames = _node.declare_parameter("enable_sync", rclcpp::ParameterValue(SYNC_FRAMES)).get<rclcpp::PARAMETER_BOOL>();
-    _parameters.setParam(std::string("enable_sync"), rclcpp::ParameterValue(SYNC_FRAMES), [this](const rclcpp::Parameter& parameter)
-            {
-                std::cout << "parameter: " << parameter.get_name() << " = " << parameter.get_value<bool>() << std::endl;
-                _sync_frames = parameter.get_value<bool>();
-            });
-    
-    
-    if (_pointcloud || _align_depth || _filters_str.size() > 0)
-        _sync_frames = true;
+
+    _parameters.setParamT(std::string("enable_sync"), rclcpp::ParameterValue(SYNC_FRAMES || _align_depth), _sync_frames);
 
     _json_file_path = _node.declare_parameter("json_file_path", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
 

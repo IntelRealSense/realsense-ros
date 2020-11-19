@@ -10,6 +10,11 @@ namespace realsense2_camera
             rclcpp::ParameterValue setParam(std::string param_name, rclcpp::ParameterValue initial_value, 
                                             std::function<void(const rclcpp::Parameter&)> func,
                                             rcl_interfaces::msg::ParameterDescriptor descriptor=rcl_interfaces::msg::ParameterDescriptor());
+
+            template <class T>
+            void setParamT(std::string param_name, rclcpp::ParameterValue initial_value, 
+                           T& param,
+                           rcl_interfaces::msg::ParameterDescriptor descriptor=rcl_interfaces::msg::ParameterDescriptor());
             void removeParam(std::string param_name);
 
         private:
