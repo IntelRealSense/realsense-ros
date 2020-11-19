@@ -54,24 +54,24 @@ def publish_status(broadcaster, status):
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print 'USAGE:'
-        print 'set_cams_transforms.py from_cam to_cam x y z azimuth pitch roll'
-        print 'x, y, z: in meters'
-        print 'azimuth, pitch, roll: in degrees'
+        print ('USAGE:')
+        print ('set_cams_transforms.py from_cam to_cam x y z azimuth pitch roll')
+        print ('x, y, z: in meters')
+        print ('azimuth, pitch, roll: in degrees')
         print
-        print 'If parameters are not given read last used parameters.'
+        print ('If parameters are not given read last used parameters.')
         print
-        print '[OPTIONS]'
-        print '--file <file name> : if given, default values are loaded from file'
+        print ('[OPTIONS]')
+        print ('--file <file name> : if given, default values are loaded from file')
         sys.exit(-1)
 
     from_cam, to_cam = sys.argv[1:3]
     try:
         filename = sys.argv[sys.argv.index('--file')+1]
-        print 'Using file %s' % os.path.abspath(filename)
+        print ('Using file %s' % os.path.abspath(filename))
     except:
         filename = os.path.join(os.path.dirname(__file__), '_set_cams_info_file.txt')
-        print 'Using default file %s' % os.path.abspath(filename)
+        print ('Using default file %s' % os.path.abspath(filename))
 
     if len(sys.argv) >= 9:
         x, y, z, yaw, pitch, roll = [float(arg) for arg in sys.argv[3:10]]
@@ -83,29 +83,29 @@ if __name__ == '__main__':
                   'pitch': {'value': pitch, 'step': 1},
                   'roll': {'value': roll, 'step': 1},
                   'message': ''}
-        print 'Use given initial values.'
+        print ('Use given initial values.')
     else:
         try:
             status = json.load(open(filename, 'r'))
-            print 'Read initial values from file.'
+            print ('Read initial values from file.')
         except IOError as e:
-            print 'Failed reading initial parameters from file %s' % filename
-            print 'Initial parameters must be given for initial run or if an un-initialized file has been given.'
+            print ('Failed reading initial parameters from file %s' % filename)
+            print ('Initial parameters must be given for initial run or if an un-initialized file has been given.')
             sys.exit(-1)
 
     rospy.init_node('my_static_tf2_broadcaster')
     broadcaster = tf2_ros.StaticTransformBroadcaster()
 
     print
-    print 'Press the following keys to change mode: x, y, z, (a)zimuth, (p)itch, (r)oll'
-    print 'For each mode, press 6 to increase by step and 4 to decrease'
-    print 'Press + to multiply step by 2 or - to divide'
+    print ('Press the following keys to change mode: x, y, z, (a)zimuth, (p)itch, (r)oll')
+    print ('For each mode, press 6 to increase by step and 4 to decrease')
+    print ('Press + to multiply step by 2 or - to divide')
     print
-    print 'Press Q to quit'
+    print ('Press Q to quit')
     print
 
     status_keys = [key[0] for key in status.keys()]
-    print '%-8s%-8s%-8s%s' % ('Mode', 'value', 'step', 'message')
+    print ('%-8s%-8s%-8s%s' % ('Mode', 'value', 'step', 'message'))
     print_status(status)
     publish_status(broadcaster, status)
     while True:

@@ -1,30 +1,41 @@
 sudo: required
-dist: xenial
+matrix:
+    include:
+        - dist: xenial
+        - dist: bionic
+        - dist: focal
 
   # - git clone -v --progress https://github.com/doronhi/realsense.git  # This is Done automatically by TravisCI
 before_install:
-  - echo 'deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main' || sudo tee /etc/apt/sources.list.d/realsense-public.list
-  # - sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keys.gnupg.net:80 --recv-key C8B3A55A6F3EFCDE
-  - sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main"
+  - if [[ $(lsb_release -sc) == "xenial" ]]; then _python=python; _ros_dist=kinetic;
+    elif [[ $(lsb_release -sc) == "bionic" ]]; then _python=python; _ros_dist=melodic;
+    elif [[ $(lsb_release -sc) == "focal" ]]; then _python=python3; _ros_dist=noetic; fi
+  - echo _python:$_python
+  - echo _ros_dist:$_ros_dist
+  - sudo apt-key adv --keyserver hkp://keys.gnupg.net:80 --recv-key C8B3A55A6F3EFCDE
+  - sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo $(lsb_release -sc) main"
   - sudo apt-get update -qq
   - sudo apt-get install librealsense2-dkms --allow-unauthenticated -y
   - sudo apt-get install librealsense2-dev --allow-unauthenticated -y
 
 install:
   # install ROS:
-  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+  - echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/ros-latest.list
   - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
   - sudo apt-get update -qq
-  - sudo apt-get install ros-kinetic-ros-base -y
-  - sudo apt install python-rosdep -y
+  - sudo apt-get install ros-$_ros_dist-ros-base -y
+  - sudo apt install "$_python"-rosdep -y
   - sudo rosdep init
   - rosdep update
-  - echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
-  - sudo apt-get install ros-kinetic-cv-bridge -y
-  - sudo apt-get install ros-kinetic-image-transport
-  - sudo apt-get install ros-kinetic-tf -y
-  - sudo apt-get install ros-kinetic-diagnostic-updater -y
-  - sudo apt-get install ros-kinetic-ddynamic-reconfigure -y
+  - echo "source /opt/ros/$_ros_dist/setup.bash" >> ~/.bashrc
+  - sudo apt-get install ros-$_ros_dist-cv-bridge -y
+  - sudo apt-get install ros-$_ros_dist-image-transport
+  - sudo apt-get install ros-$_ros_dist-tf -y
+  - sudo apt-get install ros-$_ros_dist-diagnostic-updater -y
+  - sudo apt-get install ros-$_ros_dist-ddynamic-reconfigure -y
+  - if [[ $(lsb_release -sc) == "bionic" ]] || [[ $(lsb_release -sc) == "focal" ]]; then
+    sudo apt-get install libeigen3-dev;
+    fi
   - source ~/.bashrc
   - mkdir -p ~/catkin_ws/src/realsense
 
@@ -47,7 +58,7 @@ install:
   
   # Run test:
 script:
-  - python src/realsense/realsense2_camera/scripts/rs2_test.py --all
+  - $_python src/realsense/realsense2_camera/scripts/rs2_test.py --all
 
 
 before_cache:
