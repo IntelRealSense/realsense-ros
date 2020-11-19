@@ -2,6 +2,11 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add urdf file for l515
+* Contributors: doronhi
+
 2.2.18 (2020-10-26)
 -------------------
 * Feature: Add name to usb_plug to enable multiple copies of usb_plug model.

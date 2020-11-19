@@ -2,6 +2,18 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add Support - Noetic
+* Add demo for using intrinsics from camera_info (show_center_depth.py).
+* Add launch option: send logs to ros log file.
+* Add feature: get rgb stream from infrared sensor (applies to D415)
+* Add feature: Add notification if connected using USB2.1 port.
+* Fix bug: Avoid z16h format
+* Fix bug: monitor streams frequency without subsribing.
+* Fix bug: extrinsincs for right stereo camera refers to the left stereo camera.
+* Contributors: Abhijit Majumdar, Isaac I. Y. Saito, Jakub, M-frctrl, Thomas Jespersen, doronhi
+
 2.2.18 (2020-10-26)
 -------------------
 * Fix bug: Remove parameter with invalid value.
