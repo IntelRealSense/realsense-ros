@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.20 (2020-11-19)
+-------------------
 * Add Support - Noetic
 * Add demo for using intrinsics from camera_info (show_center_depth.py).
 * Add launch option: send logs to ros log file.

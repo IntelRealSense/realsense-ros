@@ -2,8 +2,8 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.20 (2020-11-19)
+-------------------
 * Add urdf file for l515
 * Contributors: doronhi
 
