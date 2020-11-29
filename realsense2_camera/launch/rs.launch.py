@@ -35,6 +35,10 @@ def generate_launch_description():
             node_executable='realsense2_camera_node',
             name='cam1',
             parameters = [{
+                           'color_width': 640,
+                           'color_height': 480,
+                           'depth_width': 640,
+                           'depth_height': 480,
                            'enable_pointcloud': True,
                            'unite_imu_method': 'linear_interpolation'
                            }],

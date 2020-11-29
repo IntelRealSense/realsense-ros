@@ -16,7 +16,7 @@ T265RealsenseNode::T265RealsenseNode(rclcpp::Node& node,
 void T265RealsenseNode::initializeOdometryInput()
 {
     std::string calib_odom_file;
-    calib_odom_file = declareParameter("calib_odom_file", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
+    setNgetNodeParameter(calib_odom_file, "calib_odom_file", std::string(""));
     if (calib_odom_file.empty())
     {
         ROS_INFO("No calib_odom_file. No input odometry accepted.");
@@ -51,7 +51,7 @@ void T265RealsenseNode::setupSubscribers()
     if (!_use_odom_in) return;
 
     std::string topic_odom_in;
-    topic_odom_in = declareParameter("topic_odom_in", rclcpp::ParameterValue(DEFAULT_TOPIC_ODOM_IN)).get<rclcpp::PARAMETER_STRING>();
+    setNgetNodeParameter(topic_odom_in, "topic_odom_in", DEFAULT_TOPIC_ODOM_IN);
 
     ROS_INFO_STREAM("Subscribing to in_odom topic: " << topic_odom_in);
 
