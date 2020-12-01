@@ -300,7 +300,7 @@ def run_tests(tests):
             cmd_params = ['roslaunch', 'realsense2_camera', 'rs_from_file.launch'] + params_str.split(' ')
             print ('running command: ' + ' '.join(cmd_params))
             p_wrapper = subprocess.Popen(cmd_params, stdout=None, stderr=None)
-            time.sleep(2)
+            time.sleep(4)
             service_list = rosservice.get_service_list()
             is_node_up = len([service for service in service_list if 'realsense2_camera/' in service]) > 0
             if is_node_up:
