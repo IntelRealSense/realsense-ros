@@ -1,0 +1,26 @@
+<launch>
+  <!-- arguments for the urdf xacro file, rviz visualization and namespace -->
+  <arg name="name" default="camera"/>
+  <arg name="topics_ns" default="camera"/>
+  <arg name="add_plug" default="false"/>
+  <arg name="publish_pointcloud" default="true"/>
+  <arg name="model" default="$(find realsense2_description)/urdf/test_d435i_camera.urdf.xacro"/>
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model) use_nominal_extrinsics:=true publish_pointcloud:=$(arg publish_pointcloud) add_plug:=$(arg add_plug) name:=$(arg name) topics_ns:=$(arg topics_ns)" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="30.0" />
+  </node>
+
+  <!-- this will include the launch file for gazebo given the model -->
+  <include file="$(find realsense2_description)/launch/gazebo.launch">
+    <arg name="model" value="$(arg model)" />
+    <arg name="name" default="$(arg name)" />
+    <arg name="topics_ns" default="$(arg topics_ns)" />
+    <arg name="add_plug" default="$(arg add_plug)" />
+    <arg name="publish_pointcloud" default="$(arg publish_pointcloud)"/>
+  </include>
+
+  <!-- loads rviz -->
+  <arg name="gui" default="True" />
+  <param name="use_gui" value="$(arg gui)" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find realsense2_description)/rviz/urdf.rviz" required="true" />
+</launch>
