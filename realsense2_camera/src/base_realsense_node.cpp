@@ -185,10 +185,7 @@ const rclcpp::ParameterValue BaseRealSenseNode::declareParameter(const std::stri
     _variable_names.insert(name);
     if (_node.has_parameter(name))
     {
-        ROS_WARN_STREAM(__LINE__ << "has_parameter(" << name << ")" );
-        std::vector<rclcpp::Parameter> params{rclcpp::Parameter(name, default_value)};
-        _node.set_parameters(params);
-        value = default_value;
+        value = _node.get_parameter(name).get_parameter_value();
     }
     else
     {
@@ -644,7 +641,6 @@ template<class T>
 void BaseRealSenseNode::setNgetNodeParameter(T& param, const std::string& param_name, const T& default_value)
 {
     try {
-        ROS_DEBUG_STREAM("reading parameter:" << param_name);
         param =  declareParameter(param_name, rclcpp::ParameterValue(default_value)).get<T>();
     }
     catch(const rclcpp::ParameterTypeException& ex)

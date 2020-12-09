@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Launch realsense2_camera node without rviz2."""
-import os
-from ament_index_python.packages import get_package_share_directory
+"""Launch realsense2_camera node."""
 from launch import LaunchDescription
 import launch_ros.actions
 from launch.actions import DeclareLaunchArgument
@@ -23,23 +21,25 @@ from launch.conditions import IfCondition
 
 
 configurable_parameters = [{'name': 'camera_name', 'default': 'camera', 'description': 'camera unique name'},
-                        {'name': 'serial_no', 'default': '', 'description': 'choose device by serial number'},
-                        {'name': 'usb_port_id', 'default': '', 'description': 'choose device by usb port id'},
-                        {'name': 'device_type', 'default': '', 'description': 'choose device by type'},
-                        ]
+                           {'name': 'serial_no', 'default': '', 'description': 'choose device by serial number'},
+                           {'name': 'usb_port_id', 'default': '', 'description': 'choose device by usb port id'},
+                           {'name': 'device_type', 'default': '', 'description': 'choose device by type'},
+                           {'name': 'config_file', 'default': '', 'description': 'yaml config file'},
+                           {'name': 'topic_odom_in', 'default': '', 'description': 'topic for T265 wheel odometry'},
+                           {'name': 'fisheye_width', 'default': '848', 'description': 'fisheye width'},
+                           {'name': 'fisheye_height', 'default': '800', 'description': 'fisheye width'},
+                           {'name': 'enable_fisheye1', 'default': 'true', 'description': 'enable fisheye1 stream'},
+                           {'name': 'enable_fisheye2', 'default': 'true', 'description': 'enable fisheye1 stream'},
+                          ]
 
-def declare_configurable_parameters():
-    aa = [DeclareLaunchArgument('config_file', default_value='', description='yaml config file')]
-    return aa + [DeclareLaunchArgument(param['name'], default_value=param['default'], description=param['description']) for param in configurable_parameters]
+def declare_configurable_parameters(parameters):
+    return [DeclareLaunchArgument(param['name'], default_value=param['default'], description=param['description']) for param in parameters]
 
-def set_configurable_parameters():
-    aa = dict([(param['name'], LaunchConfiguration(param['name'])) for param in configurable_parameters])
-    aa['serial_no'] = LaunchConfiguration('serial_no')
-    return aa
+def set_configurable_parameters(parameters):
+    return dict([(param['name'], LaunchConfiguration(param['name'])) for param in parameters])
 
 def generate_launch_description():
-    DeclareLaunchArgument('config_file', default_value='', description='yaml config file'),
-    return LaunchDescription(declare_configurable_parameters() + [
+    return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
         # Realsense
         launch_ros.actions.Node(
             condition=IfCondition(PythonExpression(["'", LaunchConfiguration('config_file'), "' == ''"])),
@@ -47,7 +47,7 @@ def generate_launch_description():
             node_namespace=LaunchConfiguration("camera_name"),
             name=LaunchConfiguration("camera_name"),
             node_executable='realsense2_camera_node',
-            parameters = [set_configurable_parameters()
+            parameters = [set_configurable_parameters(configurable_parameters)
                           ],
             output='screen',
             emulate_tty=True,
@@ -58,7 +58,7 @@ def generate_launch_description():
             node_namespace=LaunchConfiguration("camera_name"),
             name=LaunchConfiguration("camera_name"),
             node_executable='realsense2_camera_node',
-            parameters = [set_configurable_parameters()
+            parameters = [set_configurable_parameters(configurable_parameters)
                           ,{LaunchConfiguration("config_file")}
                           ],
             output='screen',
