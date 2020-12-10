@@ -510,7 +510,7 @@ void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, co
     T new_val;
     try
     {
-        setNgetNodeParameter(new_val, option_name, option_value);
+        setNgetNodeParameter(new_val, option_name, option_value, crnt_descriptor);
     }
     catch(const rclcpp::exceptions::InvalidParameterValueException& e)
     {
@@ -639,10 +639,10 @@ rs2_stream BaseRealSenseNode::rs2_string_to_stream(std::string str)
 }
 
 template<class T>
-void BaseRealSenseNode::setNgetNodeParameter(T& param, const std::string& param_name, const T& default_value)
+void BaseRealSenseNode::setNgetNodeParameter(T& param, const std::string& param_name, const T& default_value, const rcl_interfaces::msg::ParameterDescriptor &parameter_descriptor)
 {
     try {
-        param =  declareParameter(param_name, rclcpp::ParameterValue(default_value)).get<T>();
+        param =  declareParameter(param_name, rclcpp::ParameterValue(default_value), parameter_descriptor).get<T>();
     }
     catch(const rclcpp::ParameterTypeException& ex)
     {
@@ -655,6 +655,18 @@ void BaseRealSenseNode::setNgetNodeParameter(T& param, const std::string& param_
 void BaseRealSenseNode::getParameters()
 {
     ROS_INFO("getParameters...");
+    // Setup system to use RGB image from the infra stream if configured by user
+    bool infra_rgb;
+    setNgetNodeParameter(infra_rgb, "infra_rgb", false);
+    if (infra_rgb)
+    {
+      _format[RS2_STREAM_INFRARED] = RS2_FORMAT_RGB8;
+      _image_format[RS2_STREAM_INFRARED] = CV_8UC3;    // CVBridge type
+      _encoding[RS2_STREAM_INFRARED] = sensor_msgs::image_encodings::RGB8; // ROS message type
+      _unit_step_size[RS2_STREAM_INFRARED] = 3 * sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
+      ROS_INFO_STREAM("Infrared RGB stream enabled");
+    }
+
     setNgetNodeParameter(_align_depth, "align_depth", ALIGN_DEPTH);
     ROS_INFO_STREAM(__LINE__);
     setNgetNodeParameter(_pointcloud, "enable_pointcloud", POINTCLOUD);
@@ -1011,9 +1023,18 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
                 align = (_align[stream_type] = std::make_shared<rs2::align>(stream_type));
             }
             rs2::frameset processed = frames.apply_filter(*align);
-            rs2::depth_frame aligned_depth_frame = processed.get_depth_frame();
+            std::vector<rs2::frame> frames_to_publish;
+            frames_to_publish.push_back(processed.get_depth_frame());   // push_back(aligned_depth_frame)
+            for (std::vector<NamedFilter>::const_iterator filter_it = _filters.begin(); filter_it != _filters.end(); filter_it++)
+            {
+                if (filter_it->_name == "colorizer")
+                {
+                    frames_to_publish.push_back(filter_it->_filter->process(frames_to_publish.back()));  //push_back(colorized)
+                    break;
+                }
+            }
 
-            publishFrame(aligned_depth_frame, t, sip,
+            publishFrame(frames_to_publish.back(), t, sip,
                          _depth_aligned_image,
                          _depth_aligned_info_publisher,
                          _depth_aligned_image_publishers, _depth_aligned_seq,
@@ -1188,6 +1209,9 @@ void BaseRealSenseNode::setupFilters()
         _image_format[DEPTH.first] = _image_format[COLOR.first];    // CVBridge type
         _encoding[DEPTH.first] = _encoding[COLOR.first]; // ROS message type
         _unit_step_size[DEPTH.first] = _unit_step_size[COLOR.first]; // sensor_msgs::ImagePtr row step size
+        _depth_aligned_encoding[RS2_STREAM_INFRARED] = _encoding[COLOR.first]; // ROS message type
+        _depth_aligned_encoding[RS2_STREAM_COLOR] = _encoding[COLOR.first]; // ROS message type
+        _depth_aligned_encoding[RS2_STREAM_FISHEYE] = _encoding[COLOR.first]; // ROS message type
 
         _width[DEPTH] = _width[COLOR];
         _height[DEPTH] = _height[COLOR];
@@ -1200,8 +1224,6 @@ void BaseRealSenseNode::setupFilters()
     }
     ROS_INFO("num_filters: %d", static_cast<int>(_filters.size()));
 }
-
-
 
 cv::Mat& BaseRealSenseNode::fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image)
 {
@@ -2265,6 +2287,11 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t,
     }
     else
     {
+        std::string format_str = "intensity";
+        _msg_pointcloud.point_step = addPointField(_msg_pointcloud, format_str.c_str(), 1, sensor_msgs::msg::PointField::FLOAT32, _msg_pointcloud.point_step);
+        _msg_pointcloud.row_step = _msg_pointcloud.width * _msg_pointcloud.point_step;
+        _msg_pointcloud.data.resize(_msg_pointcloud.height * _msg_pointcloud.row_step);
+
         sensor_msgs::PointCloud2Iterator<float>iter_x(_msg_pointcloud, "x");
         sensor_msgs::PointCloud2Iterator<float>iter_y(_msg_pointcloud, "y");
         sensor_msgs::PointCloud2Iterator<float>iter_z(_msg_pointcloud, "z");
