@@ -2,6 +2,27 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* upgrade librealsense2 version to 2.40.0
+* Added pointcloud attributes, when RS2_STREAM_ANY is enabled
+* colorize the aligned depth image.
+  fix missing parameters description.
+* add infra_rgb option: enable streaming D415's infra stream as RGB.
+  Expose stereo extrinsics
+  Avoid currently unsupported Z16H depth format.
+  Enable launch cmd line params
+  Add notification if connected using USB2.1 port.
+* Fix README.md
+* Add launch option: output:=[screen|log]: enable sending logs to ros log file.
+* rename rs.d400_and_t265.launch.py to rs_d400_and_t265_launch.py
+  add rs_multi_camera_launch.py on top of rs_launch.py
+* Remove '_' prefix from parameter serial_no. Allow to pass serial_no which is sometimes a string containing only digits.
+* remove redundant nav_msgs dependency (caused build error)
+* remove node package, change msg package name
+* update README.md
+* Contributors: Ryan Shim, doronhi
+
 3.1.1 (2020-09-23)
 ------------------
 * fix bug: Conversion from milliseconds to nanoseconds.
