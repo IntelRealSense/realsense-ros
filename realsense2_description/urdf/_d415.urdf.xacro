@@ -136,7 +136,7 @@ aluminum peripherial evaluation case.
       <link name="${name}_color_optical_frame"/>
     </xacro:if>
 
-    <xacro:if value="$(arg add_plug)">
+    <xacro:if value="${add_plug}">
       <xacro:usb_plug parent="${name}_link" name="${name}_usb_plug">
         <origin xyz="${d415_cam_mount_from_center_offset - 0.01587} ${-d415_cam_depth_py - 0.0358} 0" rpy="0 0 0"/>
       </xacro:usb_plug>
