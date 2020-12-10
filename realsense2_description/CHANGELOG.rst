@@ -23,8 +23,8 @@ Changelog for package realsense2_description
 * add D435i modules, urdf and launchfile
 * Contributors: Marco Camurri, doronhi
 
-Forthcoming
------------
+3.1.2 (2020-12-10)
+------------------
 * Add urdf for L515.
 * remove librealsense2 and realsense2_camera dependencies
 * Add models for D415, D435, D435i.

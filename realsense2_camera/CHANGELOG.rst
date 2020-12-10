@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.1.2 (2020-12-10)
+------------------
 * upgrade librealsense2 version to 2.40.0
 * Added pointcloud attributes, when RS2_STREAM_ANY is enabled
 * colorize the aligned depth image.

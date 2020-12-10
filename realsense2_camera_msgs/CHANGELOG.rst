@@ -11,8 +11,8 @@ Changelog for package realsense2_camera_msgs
 1.0.0 (2020-09-16)
 ------------------
 
-Forthcoming
------------
+3.1.2 (2020-12-10)
+------------------
 * remove node package, change msg package name
 * Contributors: Ryan Shim, doronhi
 
