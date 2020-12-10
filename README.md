@@ -73,46 +73,52 @@ This version supports ROS2 eloquent on Ubuntu 18.04.
 To start the camera node in ROS:
 
 ```bash
-  ros2 run realsense2_node realsense2_node 
+  ros2 launch realsense2_camera rs_launch.py
 ```
-or, with parameters, for example - pointcloud enabled:
+or, with parameters specified in rs_launch.py, for example - pointcloud enabled:
 ```bash
-ros2 run realsense2_node realsense2_node --ros-args -p filters:=pointcloud -p 
+ros2 launch realsense2_camera rs_launch.py enable_pointcloud:=true device_type:=d435
 ```
+or, without using the supplement launch files:
+```bash
+ros2 run realsense2_node realsense2_node --ros-args -p filters:=colorizer
+```
+
 
 This will stream all camera sensors and publish on the appropriate ROS topics.
 
 ### Published Topics
 The published topics differ according to the device and parameters.
 After running the above command with D435i attached, the following list of topics will be available (This is a partial list. For full one type `ros2 topic list`):
-- /camera1/accel/imu_info
-- /camera1/color/camera_info
-- /camera1/color/image_raw
-- /camera1/depth/camera_info
-- /camera1/depth/color/points
-- /camera1/depth/image_rect_raw
-- /camera1/extrinsics/depth_to_color
-- /camera1/extrinsics/depth_to_infra1
-- /camera1/extrinsics/depth_to_infra2
-- /camera1/gyro/imu_info
-- /camera1/imu
-- /camera1/infra1/camera_info
-- /camera1/infra1/image_rect_raw
-- /camera1/infra2/camera_info
-- /camera1/infra2/image_rect_raw
-- /camera1/parameter_events
-- /camera1/rosout
+- /camera/accel/imu_info
+- /camera/color/camera_info
+- /camera/color/image_raw
+- /camera/depth/camera_info
+- /camera/depth/color/points
+- /camera/depth/image_rect_raw
+- /camera/extrinsics/depth_to_color
+- /camera/extrinsics/depth_to_infra1
+- /camera/extrinsics/depth_to_infra2
+- /camera/gyro/imu_info
+- /camera/imu
+- /camera/infra1/camera_info
+- /camera/infra1/image_rect_raw
+- /camera/infra2/camera_info
+- /camera/infra2/image_rect_raw
+- /camera/parameter_events
+- /camera/rosout
 - /parameter_events
 - /rosout
 - /tf_static
 
-The "/camera1" prefix is the namesapce specified in the given launch file.
+The "/camera" prefix is the namesapce specified in the given launch file.
 When using D435 or D415, the gyro and accel topics wont be available. Likewise, other topics will be available when using T265 (see below).
 
 ### Available Parameters:
 For the entire list of parameters type `ros2 param list`.
 
-- **serial_no**: will attach to the device with the given serial number (*serial_no*) number. Default, attach to available RealSense device in random.
+- **serial_no**: will attach to the device with the given serial number (*serial_no*) number. Default, attach to the first (in an inner list) RealSense device.
+  - Note: serial number can also be defined with "_" prefix. For instance, serial number 831612073525 can be set in command line as `serial_no:=_831612073525`. That is a workaround until a better method will be found to ROS2's auto conversion of strings containing only digits into integers.
 - **usb_port_id**: will attach to the device with the given USB port (*usb_port_id*). i.e 4-1, 4-2 etc. Default, ignore USB port when choosing a device.
 - **device_type**: will attach to a device whose name includes the given *device_type* regular expression pattern. Default, ignore device type. For example, device_type:=d435 will match d435 and d435i. device_type=d435(?!i) will match d435 but not d435i.
 
@@ -163,12 +169,15 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 To start the camera node in ROS:
 
 ```bash
-ros2 run realsense2_node realsense2_node --ros-args -p enable_pose:=true -p device_type:=t265 -p fisheye_width:=848 -p fisheye_height:=800
+ros2 run realsense2_camera realsense2_camera_node --ros-args -p enable_pose:=true -p device_type:=t265 -p fisheye_width:=848 -p fisheye_height:=800
 ```
+or, if you also have a d4xx connected, you can try out the launch file:
+```bash
+ros2 launch realsense2_camera rs_d400_and_t265_launch.py enable_fisheye12:=true enable_fisheye22:=true
+```
+- note: the parameters are called `enable_fisheye12` and `enable_fisheye22`. The node knows them as `enable_fisheye1` and `enable_fisheye2` but launch file runs 2 nodes and these parameters refer to the second one.
 
 ## Still on the pipelie:
-* Launch files for running multiple cameras.
-* Import descriptive files (realsense2_description package).
 * Support ROS2 life cycle.
 * Enable and disable sensors and filters.
 
