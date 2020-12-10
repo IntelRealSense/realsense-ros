@@ -510,7 +510,7 @@ void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, co
     T new_val;
     try
     {
-        setNgetNodeParameter(new_val, option_name, option_value);
+        setNgetNodeParameter(new_val, option_name, option_value, crnt_descriptor);
     }
     catch(const rclcpp::exceptions::InvalidParameterValueException& e)
     {
@@ -639,10 +639,10 @@ rs2_stream BaseRealSenseNode::rs2_string_to_stream(std::string str)
 }
 
 template<class T>
-void BaseRealSenseNode::setNgetNodeParameter(T& param, const std::string& param_name, const T& default_value)
+void BaseRealSenseNode::setNgetNodeParameter(T& param, const std::string& param_name, const T& default_value, const rcl_interfaces::msg::ParameterDescriptor &parameter_descriptor)
 {
     try {
-        param =  declareParameter(param_name, rclcpp::ParameterValue(default_value)).get<T>();
+        param =  declareParameter(param_name, rclcpp::ParameterValue(default_value), parameter_descriptor).get<T>();
     }
     catch(const rclcpp::ParameterTypeException& ex)
     {
@@ -657,7 +657,7 @@ void BaseRealSenseNode::getParameters()
     ROS_INFO("getParameters...");
     // Setup system to use RGB image from the infra stream if configured by user
     bool infra_rgb;
-    setNgetNodeParameter(infrargb, "infra_rgb", false);
+    setNgetNodeParameter(infra_rgb, "infra_rgb", false);
     if (infra_rgb)
     {
       _format[RS2_STREAM_INFRARED] = RS2_FORMAT_RGB8;
