@@ -2,16 +2,14 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>realsense2_description</name>
-  <version>2.2.17</version>
+  <version>3.1.1</version>
   <description>RealSense Camera description package for Intel 3D D400 cameras</description>
-  <maintainer email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</maintainer>
   <maintainer email="doron.hirshberg@intel.com">Doron Hirshberg</maintainer>
   <license>Apache 2.0</license>
 
   <url type="website">https://wiki.ros.org/realsense2_camera</url>
   <url type="bugtracker">https://github.com/intel-ros/realsense/issues</url>
 
-  <author email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</author>
   <author email="doron.hirshberg@intel.com">Doron Hirshberg</author>
   <buildtool_depend>ament_cmake</buildtool_depend>
 
