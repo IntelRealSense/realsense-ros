@@ -81,7 +81,7 @@ ros2 launch realsense2_camera rs_launch.py enable_pointcloud:=true device_type:=
 ```
 or, without using the supplement launch files:
 ```bash
-ros2 run realsense2_node realsense2_node --ros-args -p filters:=colorizer
+ros2 run realsense2_camera realsense2_camera_node --ros-args -p filters:=colorizer
 ```
 
 
