@@ -33,10 +33,10 @@ class ImageListener:
                 depth = cv_image[pix[1], pix[0]]
                 result = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [pix[0], pix[1]], depth)
                 line += '  Coordinate: %8.2f %8.2f %8.2f.' % (result[0], result[1], result[2])
-            if (self.pix_grade):
+            if (not self.pix_grade is None):
                 line += ' Grade: %2d' % self.pix_grade
             line += '\r'
-            sys.stdout.write(line)
+            sys.stdout.write(line+)
             sys.stdout.flush()
 
         except CvBridgeError as e:
