@@ -96,6 +96,13 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _stream_name[RS2_STREAM_DEPTH] = "depth";
     _depth_aligned_encoding[RS2_STREAM_DEPTH] = sensor_msgs::image_encodings::TYPE_16UC1;
 
+    // Types for confidence stream
+    _image_format[RS2_STREAM_CONFIDENCE] = CV_8UC1;    // CVBridge type
+    _encoding[RS2_STREAM_CONFIDENCE] = sensor_msgs::image_encodings::MONO8; // ROS message type
+    _unit_step_size[RS2_STREAM_CONFIDENCE] = sizeof(uint8_t); // sensor_msgs::ImagePtr row step size
+    _stream_name[RS2_STREAM_CONFIDENCE] = "confidence";
+    _depth_aligned_encoding[RS2_STREAM_CONFIDENCE] = sensor_msgs::image_encodings::TYPE_16UC1;
+
     // Infrared stream
     _format[RS2_STREAM_INFRARED] = RS2_FORMAT_Y8;
 
@@ -737,7 +744,7 @@ void BaseRealSenseNode::getParameters()
 
     for (auto& stream : IMAGE_STREAMS)
     {
-        if (stream == DEPTH) continue;
+        if (stream == DEPTH || stream == CONFIDENCE) continue;
         if (stream.second > 1) continue;
         std::string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << "aligned_depth_to_" << STREAM_NAME(stream) << "_frame_id").str());
         setNgetNodeParameter(_depth_aligned_frame_id[stream], param_name, ALIGNED_DEPTH_TO_FRAME_ID(stream));
@@ -914,7 +921,7 @@ void BaseRealSenseNode::setupPublishers()
         {
             std::stringstream image_raw, camera_info;
             bool rectified_image = false;
-            if (stream == DEPTH || stream == INFRA1 || stream == INFRA2)
+            if (stream == DEPTH || stream == CONFIDENCE || stream == INFRA1 || stream == INFRA2)
                 rectified_image = true;
 
             std::string stream_name(STREAM_NAME(stream));
@@ -924,7 +931,7 @@ void BaseRealSenseNode::setupPublishers()
             _image_publishers[stream] = {image_transport::create_publisher(&_node, image_raw.str(), rmw_qos_profile_sensor_data)};
             _info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);
 
-            if (_align_depth && (stream != DEPTH) && stream.second < 2)
+            if (_align_depth && (stream != DEPTH) && (stream != CONFIDENCE) && stream.second < 2)
             {
                 std::stringstream aligned_image_raw, aligned_camera_info;
                 aligned_image_raw << "aligned_depth_to_" << stream_name << "/image_raw";
