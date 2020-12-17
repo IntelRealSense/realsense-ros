@@ -150,6 +150,15 @@ After running the above command with D435i attached, the following list of topic
 - /camera/accel/sample
 - /diagnostics
 
+>Using an L515 device the list differs a little by adding a 4-bit confidence grade (pulished as a mono8 image):
+>- /camera/confidence/camera_info
+>- /camera/confidence/image_rect_raw
+>
+>It also replaces the 2 infrared topics with the single available one:
+>- /camera/infra/camera_info
+>- /camera/infra/image_raw
+
+
 The "/camera" prefix is the default and can be changed. Check the rs_multiple_devices.launch file for an example.
 If using D435 or D415, the gyro and accel topics wont be available. Likewise, other topics will be available when using T265 (see below).
 
