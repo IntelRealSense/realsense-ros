@@ -711,7 +711,7 @@ void BaseRealSenseNode::setupDevice()
     try{
         if (!_json_file_path.empty())
         {
-            if (_dev.is<rs400::advanced_mode>())
+            if (_dev.is<rs2::serializable_device>())
             {
                 std::stringstream ss;
                 std::ifstream in(_json_file_path);
@@ -720,7 +720,7 @@ void BaseRealSenseNode::setupDevice()
                     ss << in.rdbuf();
                     std::string json_file_content = ss.str();
 
-                    auto adv = _dev.as<rs400::advanced_mode>();
+                    auto adv = _dev.as<rs2::serializable_device>();
                     adv.load_json(json_file_content);
                     ROS_INFO_STREAM("JSON file is loaded! (" << _json_file_path << ")");
                 }
