@@ -35,12 +35,12 @@ namespace realsense2_camera
     const stream_index_pair GYRO{RS2_STREAM_GYRO, 0};
     const stream_index_pair ACCEL{RS2_STREAM_ACCEL, 0};
     const stream_index_pair POSE{RS2_STREAM_POSE, 0};
-    
+    const stream_index_pair CONFIDENCE{RS2_STREAM_CONFIDENCE, 0};    
 
     const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA0, INFRA1, INFRA2,
                                                           COLOR,
                                                           FISHEYE,
-                                                          FISHEYE1, FISHEYE2};
+                                                          FISHEYE1, FISHEYE2, CONFIDENCE};
 
     const std::vector<stream_index_pair> HID_STREAMS = {GYRO, ACCEL, POSE};
 
