@@ -95,6 +95,7 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _json_file_path(""),
     _serial_no(serial_no),
     _static_tf_broadcaster(node),
+    _dynamic_tf_broadcaster(node),
     _is_initialized_time_base(false)
 {
     // Types for depth stream
@@ -2148,12 +2149,11 @@ void BaseRealSenseNode::publishDynamicTransforms()
     while (rclcpp::ok())
     {
         // Update the time stamp for publication
-        rclcpp::Time t = _node.now();        
+        rclcpp::Time t = _node.now();
         for(auto& msg : _static_tf_msgs)
             msg.header.stamp = t;
 
-        _dynamic_tf_broadcaster->sendTransform(_static_tf_msgs);
-
+        _dynamic_tf_broadcaster.sendTransform(_static_tf_msgs);
         loop_rate.sleep();
     }
 }
