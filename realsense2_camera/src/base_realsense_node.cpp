@@ -1,7 +1,5 @@
 #include "realsense2_camera/base_realsense_node.h"
 #include "assert.h"
-#include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
 #include <algorithm>
 #include <cctype>
 #include <mutex>
@@ -19,6 +17,17 @@ using namespace realsense2_camera;
 #define ALIGNED_DEPTH_TO_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_aligned_depth_to_" << STREAM_NAME(sip) << "_frame")).str()
 
 
+std::vector<std::string> split(const std::string& s, char delimiter) // Thanks to Jonathan Boccara (https://www.fluentcpp.com/2017/04/21/how-to-split-a-string-in-c/)
+{
+   std::vector<std::string> tokens;
+   std::string token;
+   std::istringstream tokenStream(s);
+   while (std::getline(tokenStream, token, delimiter))
+   {
+      tokens.push_back(token);
+   }
+   return tokens;
+}
 SyncedImuPublisher::SyncedImuPublisher(rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher, 
                                        std::size_t waiting_list_size):
             _publisher(imu_publisher), _pause_mode(false),
@@ -352,7 +361,7 @@ void BaseRealSenseNode::set_auto_exposure_roi(const std::string variable_name, r
             try
             {
                 std::vector<std::string> option_parts;
-                boost::split(option_parts, variable_name, [](char c){return c == '.';});
+                option_parts = split(variable_name, '.');
                 const std::string& option_name(option_parts[option_parts.size()-1]);
 
                 rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
@@ -1145,7 +1154,7 @@ void BaseRealSenseNode::enable_devices()
 void BaseRealSenseNode::setupFilters()
 {
     std::vector<std::string> filters_str;
-    boost::split(filters_str, _filters_str, [](char c){return c == ',';});
+    filters_str = split(_filters_str, ',');
     bool use_disparity_filter(false);
     bool use_colorizer_filter(false);
     bool use_decimation_filter(false);
@@ -2081,7 +2090,10 @@ void BaseRealSenseNode::publishStaticTransforms()
         }
         // Static transform for non-positive values
         if (_tf_publish_rate > 0)
-            _tf_t = std::shared_ptr<std::thread>(new std::thread(boost::bind(&BaseRealSenseNode::publishDynamicTransforms, this)));
+            _tf_t = std::make_shared<std::thread>([this]()
+            {
+                publishDynamicTransforms();
+            });
         else
             _static_tf_broadcaster.sendTransform(_static_tf_msgs);
     }

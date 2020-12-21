@@ -77,9 +77,9 @@ def generate_launch_description():
         launch_ros.actions.Node(
             condition=IfCondition(PythonExpression(["'", LaunchConfiguration('config_file'), "' == ''"])),
             package='realsense2_camera', 
-            node_namespace=LaunchConfiguration("camera_name"),
+            namespace=LaunchConfiguration("camera_name"),
             name=LaunchConfiguration("camera_name"),
-            node_executable='realsense2_camera_node',
+            executable='realsense2_camera_node',
             parameters = [set_configurable_parameters(configurable_parameters)
                           ],
             output='screen',
@@ -88,9 +88,9 @@ def generate_launch_description():
         launch_ros.actions.Node(
             condition=IfCondition(PythonExpression(["'", LaunchConfiguration('config_file'), "' != ''"])),
             package='realsense2_camera', 
-            node_namespace=LaunchConfiguration("camera_name"),
+            namespace=LaunchConfiguration("camera_name"),
             name=LaunchConfiguration("camera_name"),
-            node_executable='realsense2_camera_node',
+            executable='realsense2_camera_node',
             parameters = [set_configurable_parameters(configurable_parameters)
                           ,{LaunchConfiguration("config_file")}
                           ],

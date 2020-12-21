@@ -14,7 +14,7 @@
 #include <diagnostic_updater/update_functions.hpp>
 #include <diagnostic_updater/publisher.hpp>
 // #include <nav_msgs/Odometry.h>
-#include <image_transport/image_transport.h>
+#include <image_transport/image_transport.hpp>
 #include "realsense2_camera_msgs/msg/imu_info.hpp"
 #include "realsense2_camera_msgs/msg/extrinsics.hpp"
 #include <librealsense2/hpp/rs_processing.hpp>

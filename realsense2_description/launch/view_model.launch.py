@@ -36,7 +36,7 @@ def generate_launch_description():
     urdf = to_urdf(xacro_path, {'use_nominal_extrinsics' : 'true', 'add_plug' : 'true'})
     rviz_node = Node(
         package='rviz2',
-        node_executable='rviz2',
+        executable='rviz2',
         node_name='rviz2',
         output = 'screen',
         arguments=['-d', rviz_config_dir],
@@ -45,8 +45,8 @@ def generate_launch_description():
     model_node = Node(
         node_name='model_node',
         package='robot_state_publisher',
-        node_executable='robot_state_publisher',
-        node_namespace='',
+        executable='robot_state_publisher',
+        namespace='',
         output='screen',
         arguments = [urdf]
         )
