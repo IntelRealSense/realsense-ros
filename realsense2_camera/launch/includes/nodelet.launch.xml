@@ -20,6 +20,11 @@
   <arg name="depth_height"        default="480"/>
   <arg name="enable_depth"        default="true"/>
 
+  <arg name="confidence_width"    default="640"/>
+  <arg name="confidence_height"   default="480"/>
+  <arg name="enable_confidence"   default="true"/>
+  <arg name="confidence_fps"      default="30"/>
+
   <arg name="infra_width"         default="640"/>
   <arg name="infra_height"        default="480"/>
   <arg name="enable_infra"        default="false"/>
@@ -117,6 +122,11 @@
     <param name="depth_width"              type="int"  value="$(arg depth_width)"/>
     <param name="depth_height"             type="int"  value="$(arg depth_height)"/>
     <param name="enable_depth"             type="bool" value="$(arg enable_depth)"/>
+
+    <param name="confidence_width"         type="int"  value="$(arg confidence_width)"/>
+    <param name="confidence_height"        type="int"  value="$(arg confidence_height)"/>
+    <param name="enable_confidence"        type="bool" value="$(arg enable_confidence)"/>
+    <param name="confidence_fps"           type="int"  value="$(arg confidence_fps)"/>
 
     <param name="color_width"              type="int"  value="$(arg color_width)"/>
     <param name="color_height"             type="int"  value="$(arg color_height)"/>
