@@ -4,13 +4,13 @@ These are packages for using Intel RealSense cameras (D400 and L500 series, SR30
 LibRealSense supported version: v2.40.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
 ## Installation Instructions
-This version supports ROS2 eloquent on Ubuntu 18.04.
+This version supports ROS2 foxy on Ubuntu 20.04.
 
    ### Step 1: Install the ROS2 distribution
-   - #### Install [ROS2 Eloquent](https://index.ros.org/doc/ros2/Installation/Eloquent/Linux-Install-Debians/), on Ubuntu 18.04.
+   - #### Install [ROS2 foxy](https://index.ros.org/doc/ros2/Installation/Foxy/Linux-Install-Debians/), on Ubuntu 20.04.
 
    ```bash
-  ROS_DISTRO=eloquent
+  ROS_DISTRO=foxy
   sudo apt update && sudo apt install curl gnupg2 lsb-release
   curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
   sudo sh -c 'echo "deb [arch=$(dpkg --print-architecture)] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
@@ -42,15 +42,15 @@ This version supports ROS2 eloquent on Ubuntu 18.04.
    mkdir -p ~/ros2_ws/src
    cd ~/ros2_ws/src/
    ```
-   - Clone the latest Eloquent Intel&reg; RealSense&trade;  wrapper from [here](https://github.com/IntelRealSense/realsense-ros.git) into '~/ros2_ws/src/'
+   - Clone the latest Foxy Intel&reg; RealSense&trade;  wrapper from [here](https://github.com/IntelRealSense/realsense-ros.git) into '~/ros2_ws/src/'
    ```bashrc
-   git clone https://github.com/IntelRealSense/realsense-ros.git -b eloquent
+   git clone https://github.com/IntelRealSense/realsense-ros.git -b foxy
    cd ~/ros2_ws
    ```
 
   ### Step 4: Install dependencies:
    ```bash
-  sudo apt-get install python-rosdep -y
+  sudo apt-get install python3-rosdep -y
   sudo rosdep init
   rosdep update
   rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y
