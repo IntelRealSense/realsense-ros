@@ -3,7 +3,9 @@ These are packages for using Intel RealSense cameras (D400 series SR300 camera a
 
 This version supports Kinetic, Melodic and Noetic distributions.
 
-For running in ROS2 environment please switch to the [eloquent branch](https://github.com/IntelRealSense/realsense-ros/tree/eloquent)
+For running in ROS2-Eloquent environment please switch to the [eloquent branch](https://github.com/IntelRealSense/realsense-ros/tree/eloquent). </br>
+For running in ROS2-Foxy environment please switch to the [foxy branch](https://github.com/IntelRealSense/realsense-ros/tree/foxy).
+
 
 LibRealSense supported version: v2.40.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
