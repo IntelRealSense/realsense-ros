@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.1.3 (2020-12-28)
+------------------
 * Publish depth confidence image for supporting devices (L515)
 * fix bug: dynamic tf publisher.
 * fix realsense2_description's dependency to realsense2_camera_msgs

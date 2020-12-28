@@ -2,8 +2,8 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.1.3 (2020-12-28)
+------------------
 * fix realsense2_description's dependency to realsense2_camera_msgs
   remove boost dependency.
   rename node_namespace to namespace
