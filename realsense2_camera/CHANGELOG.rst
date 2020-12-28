@@ -2,6 +2,16 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Publish depth confidence image for supporting devices (L515)
+* fix bug: dynamic tf publisher.
+* fix realsense2_description's dependency to realsense2_camera_msgs
+* remove boost dependency.
+* rename node_namespace to namespace
+* rename node_executable to executable
+* Contributors: doronhi
+
 3.1.2 (2020-12-10)
 ------------------
 * upgrade librealsense2 version to 2.40.0
