@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.21 (2020-12-31)
+-------------------
 * Publish depth confidence image for supporting devices (L515)
 * fix reading json file with device other than D400 series.
 * remove (temporarily) flaky IMU unit-test.
