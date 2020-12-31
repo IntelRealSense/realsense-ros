@@ -2,6 +2,13 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Publish depth confidence image for supporting devices (L515)
+* fix reading json file with device other than D400 series.
+* remove (temporarily) flaky IMU unit-test.
+* Contributors: Isaac I.Y. Saito, doronhi
+
 2.2.20 (2020-11-19)
 -------------------
 * Add Support - Noetic
