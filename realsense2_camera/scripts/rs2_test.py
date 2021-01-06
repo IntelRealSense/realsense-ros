@@ -312,8 +312,7 @@ def run_tests(tests):
                 p_wrapper.terminate()
                 p_wrapper.wait(timeout=2)
             except subprocess.TimeoutExpired:
-                os.system('kill -9 %d' % pid)
-                os.waitpid(pid, 0)
+                kill_realsense2_camera_node()
             print ('DONE')
 
         if is_node_up:
