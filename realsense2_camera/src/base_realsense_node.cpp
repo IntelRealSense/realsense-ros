@@ -1006,6 +1006,7 @@ void BaseRealSenseNode::enable_devices()
         {
             auto& sens = _sensors[elem];
             auto profiles = sens.get_stream_profiles();
+            rs2::stream_profile default_profile, selected_profile;
             for (auto& profile : profiles)
             {
                 auto video_profile = profile.as<rs2::video_stream_profile>();
@@ -1016,26 +1017,25 @@ void BaseRealSenseNode::enable_devices()
                                     ", Height: " << video_profile.height() <<
                                     ", FPS: " << video_profile.fps());
 
-                if ((video_profile.stream_type() == elem.first) &&
-                    (_width[elem] == 0 || video_profile.width() == _width[elem]) &&
-                    (_height[elem] == 0 || video_profile.height() == _height[elem]) &&
-                    (_fps[elem] == 0 || video_profile.fps() == _fps[elem]) &&
-                    (_format.find(elem.first) == _format.end() || video_profile.format() == _format[elem.first] ) &&
-                    video_profile.stream_index() == elem.second)
+                if (profile.stream_type() == elem.first)
                 {
-                    _width[elem] = video_profile.width();
-                    _height[elem] = video_profile.height();
-                    _fps[elem] = video_profile.fps();
-
-                    _enabled_profiles[elem].push_back(profile);
-
-                    _image[elem] = cv::Mat(_height[elem], _width[elem], _image_format[elem.first], cv::Scalar(0, 0, 0));
-
-                    ROS_INFO_STREAM(STREAM_NAME(elem) << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem] << ", " << "Format: " << video_profile.format());
-                    break;
+                    if (profile.is_default())
+                    {
+                        default_profile = profile;
+                    }
+                    if ((_width[elem] == 0 || video_profile.width() == _width[elem]) &&
+                        (_height[elem] == 0 || video_profile.height() == _height[elem]) &&
+                        (_fps[elem] == 0 || video_profile.fps() == _fps[elem]) &&
+                        (_format.find(elem.first) == _format.end() || video_profile.format() == _format[elem.first] ) &&
+                        video_profile.stream_index() == elem.second)
+                    {
+                        selected_profile = profile;
+                        break;
+                    }
                 }
+
             }
-            if (_enabled_profiles.find(elem) == _enabled_profiles.end())
+            if (!selected_profile)
             {
                 ROS_WARN_STREAM("Given stream configuration is not supported by the device! " <<
                     " Stream: " << rs2_stream_to_string(elem.first) <<
@@ -1044,6 +1044,24 @@ void BaseRealSenseNode::enable_devices()
                     ", Height: " << _height[elem] <<
                     ", FPS: " << _fps[elem] << 
                     ", Format: " << ((_format.find(elem.first) == _format.end())? "None":rs2_format_to_string(rs2_format(_format[elem.first]))));
+                if (default_profile)
+                {
+                    ROS_WARN_STREAM("Using default profile instead.");
+                    selected_profile = default_profile;
+                }
+            }
+            if (selected_profile)
+            {
+                auto video_profile = selected_profile.as<rs2::video_stream_profile>();
+                _width[elem] = video_profile.width();
+                _height[elem] = video_profile.height();
+                _fps[elem] = video_profile.fps();
+                _enabled_profiles[elem].push_back(selected_profile);
+                _image[elem] = cv::Mat(_height[elem], _width[elem], _image_format[elem.first], cv::Scalar(0, 0, 0));
+                ROS_INFO_STREAM(STREAM_NAME(elem) << " stream is enabled - width: " << _width[elem] << ", height: " << _height[elem] << ", fps: " << _fps[elem] << ", " << "Format: " << video_profile.format());
+            }
+            else
+            {
                 _enable[elem] = false;
             }
         }
@@ -1064,6 +1082,7 @@ void BaseRealSenseNode::enable_devices()
         {
             auto& sens = _sensors[elem];
             auto profiles = sens.get_stream_profiles();
+            rs2::stream_profile default_profile, selected_profile;
             ROS_DEBUG_STREAM("Available profiles:");
             for (rs2::stream_profile& profile : profiles)
             {
@@ -1072,24 +1091,35 @@ void BaseRealSenseNode::enable_devices()
             }
             for (rs2::stream_profile& profile : profiles)
             {
-                if (profile.stream_type() == elem.first &&
-                   (_fps[elem] == 0 || profile.fps() == _fps[elem]))
+                if (profile.stream_type() == elem.first)
                 {
-                    _fps[elem] = profile.fps();
-                    _enabled_profiles[elem].push_back(profile);
-                    break;
+                    if (profile.is_default())
+                        default_profile = profile;
+                    if (_fps[elem] == 0 || profile.fps() == _fps[elem])
+                    {
+                        selected_profile = profile;
+                        break;
+                    }
                 }
             }
-            if (_enabled_profiles.find(elem) == _enabled_profiles.end())
+            if (!selected_profile)
             {
                 std::string stream_name(STREAM_NAME(elem));
                 ROS_WARN_STREAM("No mathcing profile found for " << stream_name << " with fps=" << _fps[elem]);
-                ROS_WARN_STREAM("profiles found for " <<stream_name << ":");
-                for (rs2::stream_profile& profile : profiles)
+                if (default_profile)
                 {
-                    if (profile.stream_type() != elem.first) continue;
-                    ROS_WARN_STREAM("fps: " << profile.fps() << ". format: " << profile.format());
+                    ROS_WARN_STREAM("Using default profile instead.");
+                    selected_profile = default_profile;
                 }
+            }
+            if(selected_profile)
+            {
+                _fps[elem] = selected_profile.fps();
+                _enabled_profiles[elem].push_back(selected_profile);
+                ROS_INFO_STREAM(STREAM_NAME(elem) << " stream is enabled - fps: " << _fps[elem]);
+            }
+            else
+            {
                 _enable[elem] = false;
             }
         }
