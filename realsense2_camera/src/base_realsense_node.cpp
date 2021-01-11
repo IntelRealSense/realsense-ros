@@ -1037,7 +1037,7 @@ void BaseRealSenseNode::enable_devices()
             }
             if (!selected_profile)
             {
-                ROS_WARN_STREAM("Given stream configuration is not supported by the device! " <<
+                ROS_WARN_STREAM_COND((_width[elem]!=-1 && _height[elem]!=-1 && _fps[elem]!=-1), "Given stream configuration is not supported by the device! " <<
                     " Stream: " << rs2_stream_to_string(elem.first) <<
                     ", Stream Index: " << elem.second <<
                     ", Width: " << _width[elem] <<
@@ -1046,7 +1046,7 @@ void BaseRealSenseNode::enable_devices()
                     ", Format: " << ((_format.find(elem.first) == _format.end())? "None":rs2_format_to_string(rs2_format(_format[elem.first]))));
                 if (default_profile)
                 {
-                    ROS_WARN_STREAM("Using default profile instead.");
+                    ROS_WARN_STREAM_COND((_width[elem]!=-1 && _height[elem]!=-1 && _fps[elem]!=-1), "Using default profile instead.");
                     selected_profile = default_profile;
                 }
             }
@@ -1105,10 +1105,10 @@ void BaseRealSenseNode::enable_devices()
             if (!selected_profile)
             {
                 std::string stream_name(STREAM_NAME(elem));
-                ROS_WARN_STREAM("No mathcing profile found for " << stream_name << " with fps=" << _fps[elem]);
+                ROS_WARN_STREAM_COND((_fps[elem]!=-1), "No mathcing profile found for " << stream_name << " with fps=" << _fps[elem]);
                 if (default_profile)
                 {
-                    ROS_WARN_STREAM("Using default profile instead.");
+                    ROS_WARN_STREAM_COND((_fps[elem]!=-1), "Using default profile instead.");
                     selected_profile = default_profile;
                 }
             }
