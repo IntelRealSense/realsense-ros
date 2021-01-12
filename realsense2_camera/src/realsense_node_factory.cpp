@@ -30,7 +30,8 @@ std::string api_version_to_string(int version)
 }
 
 RealSenseNodeFactory::RealSenseNodeFactory():
-	_is_alive(true)
+	_is_alive(true),
+	_initialized(false)
 {
 	rs2_error* e = nullptr;
 	std::string running_librealsense_version(api_version_to_string(rs2_get_api_version(&e)));
@@ -55,10 +56,25 @@ RealSenseNodeFactory::RealSenseNodeFactory():
 
 RealSenseNodeFactory::~RealSenseNodeFactory()
 {
+	_initialized = false;
 	_is_alive = false;
 	if (_query_thread.joinable())
 	{
 		_query_thread.join();
+	}
+
+	try
+	{
+		_realSenseNode.reset();
+		if (_device)
+		{
+			_device.hardware_reset();
+			_device = rs2::device();
+		}
+	}
+	catch (const rs2::error& e)
+	{
+		ROS_ERROR_STREAM("Exception: " << e.what());
 	}
 }
 
@@ -220,23 +236,12 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 
 void RealSenseNodeFactory::change_device_callback(rs2::event_information& info)
 {
-	if (info.was_removed(_device))
+	if (_initialized)
 	{
-		ROS_ERROR("The device has been disconnected!");
-		_realSenseNode.reset(nullptr);
-		_device = rs2::device();
-	}
-	if (!_device)
-	{
-		rs2::device_list new_devices = info.get_new_devices();
-		if (new_devices.size() > 0)
+		if (info.was_removed(_device))
 		{
-			ROS_INFO("Checking new devices...");
-			getDevice(new_devices);
-			if (_device)
-			{
-				StartDevice();
-			}
+			ROS_ERROR("The device has been disconnected!");
+			reset();
 		}
 	}
 }
@@ -254,6 +259,13 @@ bool RealSenseNodeFactory::toggle_sensor_callback(std_srvs::SetBool::Request &re
 
 void RealSenseNodeFactory::onInit()
 {
+	auto nh = getNodeHandle();
+	_init_timer = nh.createWallTimer(ros::WallDuration(0.01), &RealSenseNodeFactory::initialize, this, true);
+}
+
+void RealSenseNodeFactory::initialize(const ros::WallTimerEvent &ignored)
+{
+	_device = rs2::device();
 	try
 	{
 #ifdef BPDEBUG
@@ -291,6 +303,7 @@ void RealSenseNodeFactory::onInit()
 		{
 			privateNh.param("initial_reset", _initial_reset, false);
 
+			_is_alive = true;
 			_query_thread = std::thread([=]()
 						{
 							std::chrono::milliseconds timespan(6000);
@@ -309,6 +322,10 @@ void RealSenseNodeFactory::onInit()
 								}
 							}
 						});
+			if (!_reset_srv)
+			{
+				_reset_srv = privateNh.advertiseService("reset", &RealSenseNodeFactory::handleReset, this);
+			}
 		}
 	}
 	catch(const std::exception& ex)
@@ -326,44 +343,90 @@ void RealSenseNodeFactory::onInit()
 void RealSenseNodeFactory::StartDevice()
 {
 	if (_realSenseNode) _realSenseNode.reset();
-	ros::NodeHandle nh = getNodeHandle();
-	ros::NodeHandle privateNh = getPrivateNodeHandle();
-	// TODO
-	std::string pid_str(_device.get_info(RS2_CAMERA_INFO_PRODUCT_ID));
-	uint16_t pid = std::stoi(pid_str, 0, 16);
-	switch(pid)
+	try
 	{
-	case SR300_PID:
-	case SR300v2_PID:
-	case RS400_PID:
-	case RS405_PID:
-	case RS410_PID:
-	case RS460_PID:
-	case RS415_PID:
-	case RS420_PID:
-	case RS420_MM_PID:
-	case RS430_PID:
-	case RS430_MM_PID:
-	case RS430_MM_RGB_PID:
-	case RS435_RGB_PID:
-	case RS435i_RGB_PID:
-	case RS455_PID:
-	case RS465_PID:
-	case RS_USB2_PID:
-	case RS_L515_PID_PRE_PRQ:
-	case RS_L515_PID:
-		_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(nh, privateNh, _device, _serial_no));
-		break;
-	case RS_T265_PID:
-		_realSenseNode = std::unique_ptr<T265RealsenseNode>(new T265RealsenseNode(nh, privateNh, _device, _serial_no));
-		break;
-	default:
-		ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);
-		ros::shutdown();
-		exit(1);
+		ros::NodeHandle nh = getNodeHandle();
+		ros::NodeHandle privateNh = getPrivateNodeHandle();
+		// TODO
+		std::string pid_str(_device.get_info(RS2_CAMERA_INFO_PRODUCT_ID));
+		uint16_t pid = std::stoi(pid_str, 0, 16);
+		switch(pid)
+		{
+		case SR300_PID:
+		case SR300v2_PID:
+		case RS400_PID:
+		case RS405_PID:
+		case RS410_PID:
+		case RS460_PID:
+		case RS415_PID:
+		case RS420_PID:
+		case RS420_MM_PID:
+		case RS430_PID:
+		case RS430_MM_PID:
+		case RS430_MM_RGB_PID:
+		case RS435_RGB_PID:
+		case RS435i_RGB_PID:
+		case RS455_PID:
+		case RS465_PID:
+		case RS_USB2_PID:
+		case RS_L515_PID_PRE_PRQ:
+		case RS_L515_PID:
+			_realSenseNode = std::shared_ptr<BaseRealSenseNode>(new BaseRealSenseNode(nh, privateNh, _device, _serial_no));
+			break;
+		case RS_T265_PID:
+			_realSenseNode = std::shared_ptr<T265RealsenseNode>(new T265RealsenseNode(nh, privateNh, _device, _serial_no));
+			break;
+		default:
+			ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);
+			ros::shutdown();
+			exit(1);
+		}
+		assert(_realSenseNode);
+		_realSenseNode->publishTopics();
+		_initialized = true;
 	}
-	assert(_realSenseNode);
-	_realSenseNode->publishTopics();
+	catch (const rs2::error& e)
+	{
+		ROS_ERROR_STREAM("Exception: " << e.what());
+	}
+}
+
+bool RealSenseNodeFactory::reset()
+{
+	if (!_initialized)
+	{
+		return false;
+	}
+
+	_initialized = false;
+
+	_is_alive = false;
+	if (_query_thread.joinable())
+	{
+		_query_thread.join();
+	}
+
+	try
+	{
+	_realSenseNode.reset();
+		if (_device)
+		{
+			_device.hardware_reset();
+			_device = rs2::device();
+		}
+	}
+	catch (const rs2::error& e)
+	{
+		ROS_ERROR_STREAM("Exception: " << e.what());
+	}
+
+	_init_timer = getNodeHandle().createWallTimer(ros::WallDuration(1.0), &RealSenseNodeFactory::initialize, this, true);
+	return true;
+}
+
+bool RealSenseNodeFactory::handleReset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+	return reset();
 }
 
 void RealSenseNodeFactory::tryGetLogSeverity(rs2_log_severity& severity) const
