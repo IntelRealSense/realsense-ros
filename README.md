@@ -52,7 +52,7 @@ This version supports ROS2 eloquent on Ubuntu 18.04.
    ```bash
   sudo apt-get install python-rosdep -y
   sudo rosdep init
-  rosdep update
+  rosdep update --include-eol-distros
   rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y
   ```
 
