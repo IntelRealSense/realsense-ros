@@ -49,6 +49,8 @@
   <arg name="enable_pointcloud"   default="false"/>
   <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>  <!-- use RS2_STREAM_ANY to avoid using texture -->
   <arg name="pointcloud_texture_index"  default="0"/>
+  <arg name="allow_no_texture_points"  default="false"/>
+  <arg name="ordered_pc"               default="false"/>
 
   <arg name="enable_sync"         default="false"/>
   <arg name="align_depth"         default="false"/>
@@ -96,7 +98,7 @@
   <arg name="linear_accel_cov"         default="0.01"/>
   <arg name="initial_reset"            default="false"/>
   <arg name="unite_imu_method"         default="none"/> <!-- Options are: [none, copy, linear_interpolation] -->
-  <arg name="allow_no_texture_points"  default="false"/>
+  
 
 
   <node unless="$(arg external_manager)" pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="$(arg output)" required="$(arg required)"/>
@@ -110,6 +112,9 @@
     <param name="enable_pointcloud"        type="bool" value="$(arg enable_pointcloud)"/>
     <param name="pointcloud_texture_stream" type="str" value="$(arg pointcloud_texture_stream)"/>
     <param name="pointcloud_texture_index"  type="int" value="$(arg pointcloud_texture_index)"/>
+    <param name="allow_no_texture_points"  type="bool"   value="$(arg allow_no_texture_points)"/>
+    <param name="ordered_pc"               type="bool"   value="$(arg ordered_pc)"/>
+
     <param name="enable_sync"              type="bool" value="$(arg enable_sync)"/>
     <param name="align_depth"              type="bool" value="$(arg align_depth)"/>
 
@@ -192,7 +197,6 @@
     <param name="linear_accel_cov"         type="double" value="$(arg linear_accel_cov)"/>
     <param name="initial_reset"            type="bool"   value="$(arg initial_reset)"/>
     <param name="unite_imu_method"         type="str"    value="$(arg unite_imu_method)"/>
-    <param name="allow_no_texture_points"  type="bool"   value="$(arg allow_no_texture_points)"/>
 
   </node>
 </launch>

@@ -41,10 +41,11 @@ namespace realsense2_camera
     const uint16_t RS_L515_PID      = 0x0B64; // 
     
 
-    const bool ALIGN_DEPTH    = false;
-    const bool POINTCLOUD     = false;
+    const bool ALIGN_DEPTH             = false;
+    const bool POINTCLOUD              = false;
     const bool ALLOW_NO_TEXTURE_POINTS = false;
-    const bool SYNC_FRAMES    = false;
+    const bool ORDERED_POINTCLOUD      = false;
+    const bool SYNC_FRAMES             = false;
 
     const bool PUBLISH_TF        = true;
     const double TF_PUBLISH_RATE = 0; // Static transform

@@ -45,6 +45,8 @@
   <arg name="enable_pointcloud"         default="false"/>
   <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>
   <arg name="pointcloud_texture_index"  default="0"/>
+  <arg name="allow_no_texture_points"   default="false"/>
+  <arg name="ordered_pc"                default="false"/>
 
   <arg name="enable_sync"               default="false"/>
   <arg name="align_depth"               default="false"/>
@@ -60,7 +62,7 @@
   <arg name="topic_odom_in"             default="odom_in"/>
   <arg name="calib_odom_file"           default=""/>
   <arg name="publish_odom_tf"           default="true"/>
-  <arg name="allow_no_texture_points"   default="false"/>
+  
 
   <group ns="$(arg camera)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
@@ -124,6 +126,8 @@
       <arg name="calib_odom_file"          value="$(arg calib_odom_file)"/>
       <arg name="publish_odom_tf"          value="$(arg publish_odom_tf)"/>
       <arg name="allow_no_texture_points"  value="$(arg allow_no_texture_points)"/>
+      <arg name="ordered_pc"               value="$(arg ordered_pc)"/>
+      
     </include>
   </group>
 </launch>
