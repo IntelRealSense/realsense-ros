@@ -1353,7 +1353,7 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
     bool placeholder_false(false);
     if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
     {
-        setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
+        setBaseTime(frame_time, frame.get_frame_timestamp_domain());
     }
 
     seq += 1;
@@ -1397,7 +1397,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
     bool placeholder_false(false);
     if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
     {
-        setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
+        setBaseTime(frame_time, frame.get_frame_timestamp_domain());
     }
 
     ROS_DEBUG("Frame arrived: stream: %s ; index: %d ; Timestamp Domain: %s",
@@ -1442,7 +1442,7 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
     bool placeholder_false(false);
     if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
     {
-        setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
+        setBaseTime(frame_time, frame.get_frame_timestamp_domain());
     }
 
     ROS_DEBUG("Frame arrived: stream: %s ; index: %d ; Timestamp Domain: %s",
@@ -1542,7 +1542,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
         bool placeholder_false(false);
         if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
         {
-            setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
+            setBaseTime(frame_time, frame.get_frame_timestamp_domain());
         }
 
         ros::Time t;
@@ -1723,9 +1723,11 @@ void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_met
     }
 }
 
-void BaseRealSenseNode::setBaseTime(double frame_time, bool warn_no_metadata)
+void BaseRealSenseNode::setBaseTime(double frame_time, rs2_timestamp_domain time_domain)
 {
-    ROS_WARN_COND(warn_no_metadata, "Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)");
+    
+    ROS_WARN_COND(time_domain == RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME, "Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)");
+    ROS_WARN_COND(time_domain == RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK, "frame's time domain is HARDWARE_CLOCK. Timestamps may reset periodically.");
 
     _ros_time_base = ros::Time::now();
     _camera_time_base = frame_time;
