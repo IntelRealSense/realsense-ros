@@ -173,8 +173,9 @@ install(
 )
 
 # Install launch files
-install(DIRECTORY launch/
-    DESTINATION launch
+install(DIRECTORY 
+    launch
+    DESTINATION share/${PROJECT_NAME}
     )
 
 # Test
