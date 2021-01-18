@@ -81,7 +81,6 @@ void PointcloudFilter::set(const bool is_enabled)
 
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
                                     rs2::device dev, const std::string& serial_no) :
-    _ros_clock(RCL_ROS_TIME),
     _is_running(true),
     _node(node),
     _logger(rclcpp::get_logger("RealSenseCameraNode")),
@@ -711,7 +710,7 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
         setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
     }
 
-    double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1000.0;
+    double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1e6;
 
     if (0 != _synced_imu_publisher->getNumSubscribers())
     {
@@ -761,7 +760,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
     auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
     if (0 != _imu_publishers[stream_index]->get_subscription_count())
     {
-        double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1000.0;
+        double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1e6;
         rclcpp::Time t(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
 
         auto imu_msg = sensor_msgs::msg::Imu();
@@ -801,7 +800,7 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
                 frame.get_profile().stream_index(),
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
     rs2_pose pose = frame.as<rs2::pose_frame>().get_pose_data();
-    double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1000.0;
+    double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1e6;
     rclcpp::Time t(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
 
     geometry_msgs::msg::PoseStamped pose_msg;
@@ -891,7 +890,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
         if (frame.is<rs2::frameset>())
         {
             ROS_DEBUG("Frameset arrived.");
-            rclcpp::Time t = _ros_clock.now();
+            rclcpp::Time t = _node.now();
             bool is_depth_arrived = false;
             auto frameset = frame.as<rs2::frameset>();
             ROS_DEBUG("List of frameset before applying filters: size: %d", static_cast<int>(frameset.size()));
@@ -1006,7 +1005,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
         }
         else if (frame.is<rs2::video_frame>())
         {
-            double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1000.0;
+            double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1e6;
             rclcpp::Time t = rclcpp::Time(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
 
             auto stream_type = frame.get_profile().stream_type();
@@ -1059,7 +1058,7 @@ void BaseRealSenseNode::setBaseTime(double frame_time, bool warn_no_metadata)
 {
     ROS_WARN_COND(warn_no_metadata, "Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)");
 
-    _ros_time_base = _ros_clock.now();
+    _ros_time_base = _node.now();
     _camera_time_base = frame_time;
 }
 
@@ -1174,7 +1173,7 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
     quaternion_optical.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
     float3 zero_trans{0, 0, 0};
 
-    rclcpp::Time transform_ts_ = _ros_clock.now();
+    rclcpp::Time transform_ts_ = _node.now();
 
     rs2_extrinsics ex;
     try
@@ -1273,7 +1272,7 @@ void BaseRealSenseNode::publishDynamicTransforms()
         // Update the time stamp for publication
         {
             std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
-            rclcpp::Time t = _ros_clock.now();        
+            rclcpp::Time t = _node.now();        
             for(auto& msg : _static_tf_msgs)
                 msg.header.stamp = t;
             _dynamic_tf_broadcaster->sendTransform(_static_tf_msgs);

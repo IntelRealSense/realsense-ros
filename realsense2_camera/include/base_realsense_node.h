@@ -221,7 +221,6 @@ namespace realsense2_camera
                 }
         };
 
-        rclcpp::Clock _ros_clock;
         bool _is_running;
         rclcpp::Node& _node;
         bool _align_depth;
