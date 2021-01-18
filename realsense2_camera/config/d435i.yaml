@@ -8,13 +8,16 @@ camera1:
         color_fps: 30.0
         color_height: 480
         color_width: 640
+        color_qos: "SENSOR_DATA"
 
         depth_fps: 30.0
         depth_height: 720
         depth_width: 1280
+        depth_qos: "SENSOR_DATA"
 
         infra_height: 720
         infra_width: 1280
+        infra_qos: "SENSOR_DATA"
 
         gyro_fps: 0.0
 

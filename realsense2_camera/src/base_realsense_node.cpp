@@ -635,6 +635,25 @@ void BaseRealSenseNode::registerDynamicReconfigCb()
     ROS_INFO("Done Setting Dynamic reconfig parameters.");
 }
 
+const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
+{
+    if (str == "UNKNOWN")
+        return rmw_qos_profile_unknown;
+    if (str == "SYSTEM_DEFAULT")
+        return rmw_qos_profile_system_default;
+    if (str == "PARAMETER_EVENTS")
+        return rmw_qos_profile_parameter_events;
+    if (str == "SERVICES_DEFAULT")
+        return rmw_qos_profile_services_default;
+    if (str == "PARAMETERS")
+        return rmw_qos_profile_parameters;
+    if (str == "DEFAULT")
+        return rmw_qos_profile_default;
+    if (str == "SENSOR_DATA")
+        return rmw_qos_profile_sensor_data;
+    throw std::runtime_error("Unknown QoS string " + str);
+}
+
 rs2_stream BaseRealSenseNode::rs2_string_to_stream(std::string str)
 {
     if (str == "RS2_STREAM_ANY")
@@ -706,6 +725,8 @@ void BaseRealSenseNode::getParameters()
         setNgetNodeParameter(_height[stream], param_name, IMAGE_HEIGHT);
         param_name = _stream_name[stream.first] + "_fps";
         setNgetNodeParameter(_fps[stream], param_name, IMAGE_FPS);
+        param_name = _stream_name[stream.first] + "_qos";
+        setNgetNodeParameter(_qos[stream], param_name, IMAGE_QOS);
         param_name = "enable_" + STREAM_NAME(stream);
         setNgetNodeParameter(_enable[stream], param_name, true);
     }
@@ -931,7 +952,7 @@ void BaseRealSenseNode::setupPublishers()
             image_raw << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << stream_name << "/camera_info";
 
-            _image_publishers[stream] = {image_transport::create_publisher(&_node, image_raw.str(), rmw_qos_profile_sensor_data)};
+            _image_publishers[stream] = {image_transport::create_publisher(&_node, image_raw.str(), qos_string_to_qos(_qos[stream]))};
             _info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);
 
             if (_align_depth && (stream != DEPTH) && stream.second < 2)
@@ -941,7 +962,8 @@ void BaseRealSenseNode::setupPublishers()
                 aligned_camera_info << "aligned_depth_to_" << stream_name << "/camera_info";
 
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
-                _depth_aligned_image_publishers[stream] = {image_transport::create_publisher(&_node, aligned_image_raw.str(), rmw_qos_profile_sensor_data)};
+                _depth_aligned_image_publishers[stream] = {image_transport::create_publisher(&_node, aligned_image_raw.str(),
+                                                           qos_string_to_qos(_qos[stream]))};
                 _depth_aligned_info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(), 1);
             }
 
