@@ -238,6 +238,7 @@ namespace realsense2_camera
         void registerAutoExposureROIOptions();
         void set_auto_exposure_roi(const std::string variable_name, rs2::sensor sensor, const std::vector<rclcpp::Parameter> & parameters);
         void set_sensor_auto_exposure_roi(rs2::sensor sensor);
+        const rmw_qos_profile_t qos_string_to_qos(std::string str);
         rs2_stream rs2_string_to_stream(std::string str);
         void clean();
 
@@ -259,6 +260,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, int> _width;
         std::map<stream_index_pair, int> _height;
         std::map<stream_index_pair, double> _fps;
+        std::map<stream_index_pair, std::string> _qos;
         std::map<rs2_stream, rs2_format>  _format;
         std::map<stream_index_pair, bool> _enable;
         std::map<rs2_stream, std::string> _stream_name;
