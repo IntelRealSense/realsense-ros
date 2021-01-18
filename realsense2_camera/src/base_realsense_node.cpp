@@ -80,8 +80,7 @@ void PointcloudFilter::set(const bool is_enabled)
 }
 
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
-                                    rs2::device dev, const std::string& serial_no,
-                                    std::shared_ptr<diagnostic_updater::Updater> diagnostic_updater) :
+                                    rs2::device dev, const std::string& serial_no) :
     _ros_clock(RCL_ROS_TIME),
     _is_running(true),
     _node(node),
@@ -1588,21 +1587,21 @@ void BaseRealSenseNode::startMonitoring()
 
 void BaseRealSenseNode::publish_temperature()
 {
-    rs2::options sensor(*_available_ros_sensors[0]);
-    for (rs2_option option : _monitor_options)
-    {
-        if (sensor.supports(option))
-        {
-            std::string name(rs2_option_to_string(option));
-            try
-            {
-                auto option_value = sensor.get_option(option);
-                // _rs_diagnostic_updater.update_temperatue(name, option_value);
-            }
-            catch(const std::exception& e)
-            {
-                ROS_DEBUG_STREAM("Failed checking for temperature - " << name << std::endl << e.what());
-            }
-        }
-    }
+    // rs2::options sensor(*_available_ros_sensors[0]);
+    // for (rs2_option option : _monitor_options)
+    // {
+    //     if (sensor.supports(option))
+    //     {
+    //         std::string name(rs2_option_to_string(option));
+    //         try
+    //         {
+    //             auto option_value = sensor.get_option(option);
+    //             _rs_diagnostic_updater.update_temperatue(name, option_value);
+    //         }
+    //         catch(const std::exception& e)
+    //         {
+    //             ROS_DEBUG_STREAM("Failed checking for temperature - " << name << std::endl << e.what());
+    //         }
+    //     }
+    // }
 }

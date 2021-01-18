@@ -192,8 +192,7 @@ namespace realsense2_camera
     {
     public:
         BaseRealSenseNode(rclcpp::Node& node,
-                          rs2::device dev, const std::string& serial_no,
-                          std::shared_ptr<diagnostic_updater::Updater> diagnostic_updater);
+                          rs2::device dev, const std::string& serial_no);
         ~BaseRealSenseNode();
 
     public:
