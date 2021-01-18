@@ -91,7 +91,7 @@ find_package(image_transport REQUIRED)
 #find_package(librealsense2 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
-find_package(realsense_camera_msgs REQUIRED)
+find_package(realsense2_camera_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(diagnostic_msgs REQUIRED)
@@ -144,7 +144,7 @@ ament_target_dependencies(${PROJECT_NAME}
   realsense2
   rclcpp
   rclcpp_components
-  realsense_camera_msgs
+  realsense2_camera_msgs
   std_msgs
   sensor_msgs
   diagnostic_msgs

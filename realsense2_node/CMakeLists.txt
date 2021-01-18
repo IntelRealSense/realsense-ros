@@ -72,7 +72,7 @@ find_package(OpenCV REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(realsense2_camera REQUIRED)
-find_package(realsense_camera_msgs REQUIRED)
+find_package(realsense2_camera_msgs REQUIRED)
 
 find_library(realsense2_LIBRARIES realsense2)
 find_path(realsense2_INCLUDE_DIRS librealsense2/rs.hpp)
@@ -93,7 +93,7 @@ ament_target_dependencies(realsense2_node
   tf2
   tf2_ros
   realsense2_camera
-  realsense_camera_msgs
+  realsense2_camera_msgs
 )
 
 target_link_libraries(realsense2_node

@@ -14,9 +14,9 @@
 #include <diagnostic_updater/update_functions.hpp>
 #include <diagnostic_updater/publisher.hpp>
 // #include <nav_msgs/Odometry.h>
-#include <image_transport/image_transport.h>
-#include "realsense_camera_msgs/msg/imu_info.hpp"
-#include "realsense_camera_msgs/msg/extrinsics.hpp"
+#include <image_transport/image_transport.hpp>
+#include "realsense2_camera_msgs/msg/imu_info.hpp"
+#include "realsense2_camera_msgs/msg/extrinsics.hpp"
 #include <librealsense2/hpp/rs_processing.hpp>
 #include <librealsense2/rs_advanced_mode.hpp>
 
@@ -42,8 +42,8 @@
 #include <atomic>
 #include <thread>
 
-using realsense_camera_msgs::msg::Extrinsics;
-using realsense_camera_msgs::msg::IMUInfo;
+using realsense2_camera_msgs::msg::Extrinsics;
+using realsense2_camera_msgs::msg::IMUInfo;
 
 #define FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_" << STREAM_NAME(sip) << "_frame")).str()
 #define OPTICAL_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_" << STREAM_NAME(sip) << "_optical_frame")).str()

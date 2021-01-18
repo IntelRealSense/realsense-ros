@@ -15,7 +15,7 @@
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>realsense2_camera</depend>
-  <depend>realsense_camera_msgs</depend>
+  <depend>realsense2_camera_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>realsense_camera_msgs</name>
+  <name>realsense2_camera_msgs</name>
   <version>2.0.4</version>
   <description>A package containing realsense camera messages definitions.</description>
   <maintainer email="sharron.liu@intel.com">Sharron LIU</maintainer>

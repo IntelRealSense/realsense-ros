@@ -1,5 +1,4 @@
 #include <ros_sensor.h>
-#include <boost/algorithm/string.hpp>
 
 using namespace realsense2_camera;
 using namespace rs2;

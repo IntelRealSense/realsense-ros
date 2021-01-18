@@ -1,7 +1,5 @@
 #include "../include/base_realsense_node.h"
 #include "assert.h"
-#include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
 #include <algorithm>
 #include <mutex>
 #include <geometry_msgs/msg/vector3_stamped.hpp>
@@ -1255,7 +1253,10 @@ void BaseRealSenseNode::publishStaticTransforms(std::vector<rs2::stream_profile>
         }
         // Static transform for non-positive values
         if (_tf_publish_rate > 0)
-            _tf_t = std::shared_ptr<std::thread>(new std::thread(boost::bind(&BaseRealSenseNode::publishDynamicTransforms, this)));
+            _tf_t = std::make_shared<std::thread>([this]()
+            {
+                publishDynamicTransforms();
+            });
         else
             _static_tf_broadcaster.sendTransform(_static_tf_msgs);
     }
