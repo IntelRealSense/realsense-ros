@@ -264,6 +264,7 @@ namespace realsense2_camera
         cv::Mat& fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image);
         void clip_depth(rs2::depth_frame depth_frame, float clipping_dist);
         void updateProfilesStreamCalibData(const std::vector<rs2::stream_profile>& profiles);
+        void updateExtrinsicsCalibData(const rs2::video_stream_profile& left_video_profile, const rs2::video_stream_profile& right_video_profile);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         void SetBaseStream();
         void publishStaticTransforms(std::vector<rs2::stream_profile> profiles);
