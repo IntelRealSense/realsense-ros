@@ -11,6 +11,7 @@
 #include <builtin_interfaces/msg/time.hpp>
 #include <console_bridge/console.h>
 #include <rclcpp/rclcpp.hpp>
+#include "rclcpp_components/register_node_macro.hpp"
 #include <algorithm>
 #include <csignal>
 #include <iostream>

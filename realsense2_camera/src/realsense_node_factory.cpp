@@ -373,3 +373,5 @@ void RealSenseNodeFactory::tryGetLogSeverity(rs2_log_severity& severity) const
 		}
 	}
 }
+
+RCLCPP_COMPONENTS_REGISTER_NODE(realsense2_camera::RealSenseNodeFactory)

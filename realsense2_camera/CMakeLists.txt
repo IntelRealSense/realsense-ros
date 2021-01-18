@@ -88,7 +88,6 @@ find_package(ament_cmake REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
-#find_package(librealsense2 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(realsense2_camera_msgs REQUIRED)
@@ -100,16 +99,13 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 
-find_package(realsense2 2.38.1)
+find_package(realsense2 2.41.0)
 if(NOT realsense2_FOUND)
     message(FATAL_ERROR "\n\n Intel RealSense SDK 2.0 is missing, please install it from https://github.com/IntelRealSense/librealsense/releases\n\n")
 endif()
 
 #set(CMAKE_NO_SYSTEM_FROM_IMPORTED true)
-include_directories(
-    include
-    ${realsense2_INCLUDE_DIR}
-    )
+include_directories(include)
 
 set(node_plugins "")
 
@@ -138,10 +134,9 @@ target_link_libraries(${PROJECT_NAME}
     ${realsense2_LIBRARY}
     )
 
-ament_target_dependencies(${PROJECT_NAME}
+set(dependencies 
   cv_bridge
   image_transport
-  realsense2
   rclcpp
   rclcpp_components
   realsense2_camera_msgs
@@ -150,11 +145,19 @@ ament_target_dependencies(${PROJECT_NAME}
   diagnostic_msgs
   nav_msgs
   tf2
+  diagnostic_updater
+  realsense2
   tf2_ros
 )
 
-rclcpp_components_register_nodes(${PROJECT_NAME} "realsense2_camera::RealSenseNodeFactory")
-set(node_plugins "${node_plugins}realsense2_camera::RealSenseNodeFactory;$<TARGET_FILE:${PROJECT_NAME}>\n")
+ament_target_dependencies(${PROJECT_NAME}
+  ${dependencies}
+)
+
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "realsense2_camera::RealSenseNodeFactory"
+  EXECUTABLE realsense2_camera_node
+)
 
 # Install binaries
 install(TARGETS ${PROJECT_NAME}
@@ -163,6 +166,7 @@ install(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION bin
 )
 
+# Install headers
 install(
   DIRECTORY include/
   DESTINATION include
@@ -173,6 +177,7 @@ install(DIRECTORY launch/
     DESTINATION launch
     )
 
+# Test
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(OpenCV REQUIRED)
@@ -198,7 +203,9 @@ if(BUILD_TESTING)
   endif()
 endif()
 
+# Ament exports
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
+ament_export_dependencies(${dependencies})
 
 ament_package()
