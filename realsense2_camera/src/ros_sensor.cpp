@@ -78,7 +78,7 @@ bool compare_profile(stream_profile a, stream_profile b)
 bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
 {
     wanted_profiles.clear();
-    getUpdatedSensorParameters();
+    getUpdatedSensorParameters();   // read user parameters (_width, _height, _fps)
     std::vector<stream_profile> active_profiles = get_active_streams();
     std::set<stream_index_pair> checked_sips, found_sips;
     for (auto& profile : get_stream_profiles())

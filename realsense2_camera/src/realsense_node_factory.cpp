@@ -158,6 +158,18 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 				msg += " is NOT found. Will Try again.";
 				ROS_ERROR_STREAM(msg);
 			}
+			else
+			{
+				if (_device.supports(RS2_CAMERA_INFO_USB_TYPE_DESCRIPTOR))
+				{
+					std::string usb_type = _device.get_info(RS2_CAMERA_INFO_USB_TYPE_DESCRIPTOR);
+					ROS_INFO_STREAM("Device USB type: " << usb_type);
+					if (usb_type.find("2.") != std::string::npos)
+					{
+						ROS_WARN_STREAM("Device " << _serial_no << " is connected using a " << usb_type << " port. Reduced performance is expected.");
+					}
+				}
+			}
 		}
 	}
 
@@ -179,7 +191,7 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 		}
 		catch(const std::exception& ex)
 		{
-			ROS_WARN_STREAM("An exception has been thrown: " << ex.what());
+			ROS_WARN_STREAM("An exception has been thrown: " << __FILE__ << ":" << __LINE__ << ":" << ex.what());
 		}
 	}
 }
@@ -299,7 +311,7 @@ void RealSenseNodeFactory::init()
 	}
 	catch(const std::exception& ex)
 	{
-		ROS_ERROR_STREAM("An exception has been thrown: " << ex.what());
+		ROS_ERROR_STREAM("An exception has been thrown: " << __FILE__ << ":" << __LINE__ << ":" << ex.what());
 		exit(1);
 	}
 	catch(...)
@@ -320,38 +332,46 @@ void RealSenseNodeFactory::startDevice()
 		_diagnostic_updater = std::make_shared<diagnostic_updater::Updater>(this);
 		_diagnostic_updater->setHardwareID(_serial_no);
 	}
-	switch(pid)
+	try
 	{
-	case SR300_PID:
-	case SR300v2_PID:
-	case RS400_PID:
-	case RS405_PID:
-	case RS410_PID:
-	case RS460_PID:
-	case RS415_PID:
-	case RS420_PID:
-	case RS420_MM_PID:
-	case RS430_PID:
-	case RS430_MM_PID:
-	case RS430_MM_RGB_PID:
-	case RS435_RGB_PID:
-	case RS435i_RGB_PID:
-	case RS455_PID:
-	case RS465_PID:
-	case RS_USB2_PID:
-	case RS_L515_PID_PRE_PRQ:
-	case RS_L515_PID:
-		_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(*this, _device, _serial_no));
-		break;
-	// case RS_T265_PID:
-	// 	_realSenseNode = std::unique_ptr<T265RealsenseNode>(new T265RealsenseNode(nh, privateNh, _device, _serial_no));
-	// 	break;
-	default:
-		ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);
-		rclcpp::shutdown();
-		exit(1);
+		switch(pid)
+		{
+		case SR300_PID:
+		case SR300v2_PID:
+		case RS400_PID:
+		case RS405_PID:
+		case RS410_PID:
+		case RS460_PID:
+		case RS415_PID:
+		case RS420_PID:
+		case RS420_MM_PID:
+		case RS430_PID:
+		case RS430_MM_PID:
+		case RS430_MM_RGB_PID:
+		case RS435_RGB_PID:
+		case RS435i_RGB_PID:
+		case RS455_PID:
+		case RS465_PID:
+		case RS_USB2_PID:
+		case RS_L515_PID_PRE_PRQ:
+		case RS_L515_PID:
+			_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(*this, _device, _serial_no));
+			break;
+		// case RS_T265_PID:
+		// 	_realSenseNode = std::unique_ptr<T265RealsenseNode>(new T265RealsenseNode(nh, privateNh, _device, _serial_no));
+		// 	break;
+		default:
+			ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);
+			rclcpp::shutdown();
+			exit(1);
+		}
 	}
-	assert(_realSenseNode);
+	catch(const rs2::backend_error& e)
+	{
+		std::cerr << "Failed to start device: " << e.what() << '\n';
+		_device.hardware_reset();
+		_device = rs2::device();
+	}	
 }
 
 void RealSenseNodeFactory::tryGetLogSeverity(rs2_log_severity& severity) const

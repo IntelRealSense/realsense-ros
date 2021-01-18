@@ -9,6 +9,7 @@ VideoSensor::VideoSensor(rs2::sensor sensor, rclcpp::Node& node,
                          std::function<void()> update_sensor_func): 
     RosSensor(sensor, node, frame_callback, update_sensor_func) 
 {
+    _allowed_formats[RS2_STREAM_DEPTH] = RS2_FORMAT_Z16;
     _allowed_formats[RS2_STREAM_INFRARED] = RS2_FORMAT_Y8;
 }
 
