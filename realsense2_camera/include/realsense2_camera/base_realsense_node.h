@@ -251,6 +251,7 @@ namespace realsense2_camera
         float _depth_scale_meters;
         float _clipping_distance;
         bool _allow_no_texture_points;
+        bool _ordered_pc;
 
         double _linear_accel_cov;
         double _angular_velocity_cov;
