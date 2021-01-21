@@ -64,6 +64,7 @@ aluminum peripherial evaluation case.
           <box size="${d455_cam_depth} ${d455_cam_width} ${d455_cam_height}"/>
 	        <!-- <mesh filename="package://realsense2_description/meshes/d455.dae" /> -->
         </geometry>
+        <material name="aluminum"/>
       </visual>
       <collision>
         <origin xyz="${d455_zero_depth_to_glass-d455_cam_depth/2} ${-d455_cam_depth_py} 0" rpy="0 0 0"/>
