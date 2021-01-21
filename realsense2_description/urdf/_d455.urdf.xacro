@@ -57,7 +57,7 @@ aluminum peripherial evaluation case.
 
     <link name="${name}_link">
       <visual>
-        <origin xyz="0 ${-d455_cam_depth_py} 0" rpy="0 0 0"/>
+        <origin xyz="${d455_zero_depth_to_glass-d455_cam_depth/2} ${-d455_cam_depth_py} 0" rpy="0 0 0"/>
         <!-- the mesh origin is at front plate in between the two infrared camera axes -->
         <!-- <origin xyz="${d455_zero_depth_to_glass + d455_glass_to_front} ${-d455_cam_depth_py} 0" rpy="${M_PI/2} 0 ${M_PI/2}"/> -->
         <geometry>
@@ -66,7 +66,7 @@ aluminum peripherial evaluation case.
         </geometry>
       </visual>
       <collision>
-        <origin xyz="0 ${-d455_cam_depth_py} 0" rpy="0 0 0"/>
+        <origin xyz="${d455_zero_depth_to_glass-d455_cam_depth/2} ${-d455_cam_depth_py} 0" rpy="0 0 0"/>
         <geometry>
           <box size="${d455_cam_depth} ${d455_cam_width} ${d455_cam_height}"/>
         </geometry>
