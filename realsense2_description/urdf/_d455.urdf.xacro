@@ -20,27 +20,25 @@ aluminum peripherial evaluation case.
     <!-- The following values are approximate, and the camera node
      publishing TF values with actual calibrated camera extrinsic values -->
     <xacro:property name="d455_cam_depth_to_infra1_offset" value="0.0"/>
-    <xacro:property name="d455_cam_depth_to_infra2_offset" value="-0.050"/>
-    <xacro:property name="d455_cam_depth_to_color_offset" value="0.015"/>
+    <xacro:property name="d455_cam_depth_to_infra2_offset" value="-0.095"/>
+    <xacro:property name="d455_cam_depth_to_color_offset" value="-0.059"/>
+
+    <!-- see datasheet Revision 009, Fig. 4-4 page 68 -->
+    <xacro:property name="d455_zero_depth_to_glass" value="4.55e-3"/>
 
     <!-- The following values model the aluminum peripherial case for the
   	d455 camera, with the camera joint represented by the actual
   	peripherial camera tripod mount -->
-    <xacro:property name="d455_cam_width" value="0.090"/>
-    <xacro:property name="d455_cam_height" value="0.025"/>
-    <xacro:property name="d455_cam_depth" value="0.02505"/>
-    <xacro:property name="d455_cam_mount_from_center_offset" value="0.0149"/>
-    <!-- glass cover is 0.1 mm inwards from front aluminium plate -->
-    <xacro:property name="d455_glass_to_front" value="0.1e-3"/>
-    <!-- see datasheet Revision 007, Fig. 4-4 page 65 -->
-    <xacro:property name="d455_zero_depth_to_glass" value="4.2e-3"/>
-    <!-- convenience precomputation to avoid clutter-->
-    <xacro:property name="d455_mesh_x_offset" value="${d455_cam_mount_from_center_offset-d455_glass_to_front-d455_zero_depth_to_glass}"/>
+    <xacro:property name="d455_cam_width" value="0.124"/>
+    <xacro:property name="d455_cam_height" value="0.029"/>
+    <xacro:property name="d455_cam_depth" value="0.026"/>
+    <xacro:property name="d455_cam_mount_to_front" value="0.0158"/>
+    <xacro:property name="d455_cam_mount_from_center_offset" value="${d455_cam_mount_to_front-d455_zero_depth_to_glass}"/>
 
     <!-- The following offset is relative the the physical d455 camera peripherial
   	camera tripod mount -->
     <xacro:property name="d455_cam_depth_px" value="${d455_cam_mount_from_center_offset}"/>
-    <xacro:property name="d455_cam_depth_py" value="0.0175"/>
+    <xacro:property name="d455_cam_depth_py" value="0.0475"/>
     <xacro:property name="d455_cam_depth_pz" value="${d455_cam_height/2}"/>
 
     <!-- camera body, with origin at bottom screw mount -->
@@ -52,18 +50,19 @@ aluminum peripherial evaluation case.
     <link name="${name}_bottom_screw_frame"/>
 
     <joint name="${name}_link_joint" type="fixed">
-      <origin xyz="${d455_mesh_x_offset} ${d455_cam_depth_py} ${d455_cam_depth_pz}" rpy="0 0 0"/>
+      <origin xyz="${d455_cam_depth_px} ${d455_cam_depth_py} ${d455_cam_depth_pz}" rpy="0 0 0"/>
       <parent link="${name}_bottom_screw_frame"/>
       <child link="${name}_link" />
     </joint>
 
     <link name="${name}_link">
       <visual>
+        <origin xyz="0 ${-d455_cam_depth_py} 0" rpy="0 0 0"/>
         <!-- the mesh origin is at front plate in between the two infrared camera axes -->
-        <origin xyz="${d455_zero_depth_to_glass + d455_glass_to_front} ${-d455_cam_depth_py} 0" rpy="${M_PI/2} 0 ${M_PI/2}"/>
+        <!-- <origin xyz="${d455_zero_depth_to_glass + d455_glass_to_front} ${-d455_cam_depth_py} 0" rpy="${M_PI/2} 0 ${M_PI/2}"/> -->
         <geometry>
-          <!-- <box size="${d455_cam_width} ${d455_cam_height} ${d455_cam_depth}"/> -->
-	        <mesh filename="package://realsense2_description/meshes/d455.dae" />
+          <box size="${d455_cam_width} ${d455_cam_height} ${d455_cam_depth}"/>
+	        <!-- <mesh filename="package://realsense2_description/meshes/d455.dae" /> -->
         </geometry>
       </visual>
       <collision>
@@ -141,11 +140,46 @@ aluminum peripherial evaluation case.
         <child link="${name}_color_optical_frame" />
       </joint>
       <link name="${name}_color_optical_frame"/>
+      
+      <!-- IMU -->
+      <!-- see datasheet Revision 009, page 114 -->
+      <xacro:property name="d455_imu_px" value="${d455_cam_depth_px-0.01602}"/>
+      <xacro:property name="d455_imu_py" value="0.d455_cam_depth_py-0.03022"/>
+      <xacro:property name="d455_imu_pz" value="${d455_cam_depth_pz+0.0074}"/>
+
+      <link name="${name}_accel_frame" />
+      <link name="${name}_accel_optical_frame" />
+      <link name="${name}_gyro_frame" />
+      <link name="${name}_gyro_optical_frame" />
+
+      <joint name="${name}_accel_joint" type="fixed">
+        <origin xyz = "${d455_imu_px} ${d455_imu_py} ${d455_imu_pz}" rpy = "0 0 0" />
+        <parent link="${name}_link" />
+        <child link="${name}_accel_frame" />
+      </joint>
+
+      <joint name="${name}_accel_optical_joint" type="fixed">
+        <origin xyz = "0 0 0" rpy = "${-M_PI/2} 0 ${-M_PI/2}" />
+        <parent link="${name}_accel_frame" />
+        <child link="${name}_accel_optical_frame" />
+      </joint>
+
+      <joint name="${name}_gyro_joint" type="fixed">
+        <origin xyz = "${d455_imu_px} ${d455_imu_py} ${d455_imu_pz}" rpy = "0 0 0" />
+        <parent link="${name}_link" />
+        <child link="${name}_gyro_frame" />
+      </joint>
+
+      <joint name="${name}_gyro_optical_joint" type="fixed">
+        <origin xyz = "0 0 0" rpy = "${-M_PI/2} 0 ${-M_PI/2}" />
+        <parent link="${name}_gyro_frame" />
+        <child link="${name}_gyro_optical_frame" />
+      </joint>
     </xacro:if>
 
     <xacro:if value="$(arg add_plug)">
       <xacro:usb_plug parent="${name}_link" name="${name}_usb_plug">
-        <origin xyz="${d455_cam_mount_from_center_offset - 0.02095} ${-d455_cam_depth_py - 0.0353} 0" rpy="0 0 0"/>
+        <origin xyz="-0.00406 0.03701 0" rpy="0 ${-M_PI/2} 0"/>
       </xacro:usb_plug>
     </xacro:if>
   </xacro:macro>
