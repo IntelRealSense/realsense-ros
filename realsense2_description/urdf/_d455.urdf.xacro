@@ -179,7 +179,7 @@ aluminum peripherial evaluation case.
 
     <xacro:if value="$(arg add_plug)">
       <xacro:usb_plug parent="${name}_link" name="${name}_usb_plug">
-        <origin xyz="-0.00406 0.03701 0" rpy="0 ${-M_PI/2} 0"/>
+        <origin xyz="${-0.00406-d455_cam_depth_px} ${-0.03701-d455_cam_depth_py} ${-d455_cam_depth_pz}" rpy="${M_PI/2} 0 0"/>
       </xacro:usb_plug>
     </xacro:if>
   </xacro:macro>
