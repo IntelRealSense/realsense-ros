@@ -30,8 +30,7 @@ std::string api_version_to_string(int version)
 }
 
 RealSenseNodeFactory::RealSenseNodeFactory():
-	_is_alive(true),
-	_initialized(false)
+	_is_alive(true)
 {
 	rs2_error* e = nullptr;
 	std::string running_librealsense_version(api_version_to_string(rs2_get_api_version(&e)));
@@ -56,7 +55,6 @@ RealSenseNodeFactory::RealSenseNodeFactory():
 
 RealSenseNodeFactory::~RealSenseNodeFactory()
 {
-	_initialized = false;
 	_is_alive = false;
 	if (_query_thread.joinable())
 	{
@@ -225,7 +223,6 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 			ROS_INFO("Resetting device...");
 			_device.hardware_reset();
 			_device = rs2::device();
-			
 		}
 		catch(const std::exception& ex)
 		{
@@ -236,13 +233,10 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 
 void RealSenseNodeFactory::change_device_callback(rs2::event_information& info)
 {
-	if (_initialized)
+	if (info.was_removed(_device))
 	{
-		if (info.was_removed(_device))
-		{
-			ROS_ERROR("The device has been disconnected!");
-			reset();
-		}
+		ROS_ERROR("The device has been disconnected!");
+		reset();
 	}
 }
 
@@ -276,9 +270,13 @@ void RealSenseNodeFactory::initialize(const ros::WallTimerEvent &ignored)
 		ros::NodeHandle nh = getNodeHandle();
 		auto privateNh = getPrivateNodeHandle();
 		privateNh.param("serial_no", _serial_no, std::string(""));
-    	privateNh.param("usb_port_id", _usb_port_id, std::string(""));
-    	privateNh.param("device_type", _device_type, std::string(""));
-    toggle_sensor_srv = nh.advertiseService("enable", &RealSenseNodeFactory::toggle_sensor_callback, this);
+		privateNh.param("usb_port_id", _usb_port_id, std::string(""));
+		privateNh.param("device_type", _device_type, std::string(""));
+
+		if (!toggle_sensor_srv)
+		{
+			toggle_sensor_srv = nh.advertiseService("enable", &RealSenseNodeFactory::toggle_sensor_callback, this);
+		}
 		std::string rosbag_filename("");
 		privateNh.param("rosbag_filename", rosbag_filename, std::string(""));
 
@@ -383,7 +381,6 @@ void RealSenseNodeFactory::StartDevice()
 		}
 		assert(_realSenseNode);
 		_realSenseNode->publishTopics();
-		_initialized = true;
 	}
 	catch (const rs2::error& e)
 	{
@@ -391,15 +388,8 @@ void RealSenseNodeFactory::StartDevice()
 	}
 }
 
-bool RealSenseNodeFactory::reset()
+void RealSenseNodeFactory::reset()
 {
-	if (!_initialized)
-	{
-		return false;
-	}
-
-	_initialized = false;
-
 	_is_alive = false;
 	if (_query_thread.joinable())
 	{
@@ -408,7 +398,7 @@ bool RealSenseNodeFactory::reset()
 
 	try
 	{
-	_realSenseNode.reset();
+		_realSenseNode.reset();
 		if (_device)
 		{
 			_device.hardware_reset();
@@ -421,12 +411,12 @@ bool RealSenseNodeFactory::reset()
 	}
 
 	_init_timer = getNodeHandle().createWallTimer(ros::WallDuration(1.0), &RealSenseNodeFactory::initialize, this, true);
-	return true;
 }
 
 bool RealSenseNodeFactory::handleReset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
-	return reset();
+	reset();
+	return true;
 }
 
 void RealSenseNodeFactory::tryGetLogSeverity(rs2_log_severity& severity) const

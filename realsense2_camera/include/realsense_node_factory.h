@@ -68,7 +68,7 @@ namespace realsense2_camera
         virtual void onInit() override;
         void initialize(const ros::WallTimerEvent &ignored);
         void tryGetLogSeverity(rs2_log_severity& severity) const;
-        bool reset();
+        void reset();
         bool handleReset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
         static std::string parse_usb_port(std::string line);
         bool toggle_sensor_callback(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
@@ -83,7 +83,6 @@ namespace realsense2_camera
         std::thread _query_thread;
         bool _is_alive;
         ros::ServiceServer toggle_sensor_srv;
-        bool _initialized;
         ros::WallTimer _init_timer;
         ros::ServiceServer _reset_srv;
 
