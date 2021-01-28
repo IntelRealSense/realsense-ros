@@ -26,6 +26,12 @@ void RosSensor::setupErrorCallback()
     });
 }
 
+void RosSensor::setParameters()
+{
+    std::string module_name = create_graph_resource_name(get_info(RS2_CAMERA_INFO_NAME));
+    _params.registerDynamicOptions(*this, module_name);
+}
+
 bool RosSensor::start(const std::vector<stream_profile>& profiles)
 {
     if (get_active_streams().size() > 0)
@@ -145,7 +151,7 @@ void RosSensor::registerSensorUpdateParam(std::string template_name, T value)
         char* param_name = new char[template_name.size() + stream_name.size()];
         sprintf(param_name, template_name.c_str(), stream_name.c_str());
 
-        _parameters.setParam(std::string(param_name), rclcpp::ParameterValue(value), [this](const rclcpp::Parameter& parameter)
+        _params.getParameters().setParam(std::string(param_name), rclcpp::ParameterValue(value), [this](const rclcpp::Parameter& parameter)
                 {
                     ROS_INFO_STREAM("callback for: " << parameter.get_name() << " with value: ");
                     _update_sensor_func();                    

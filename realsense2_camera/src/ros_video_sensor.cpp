@@ -9,6 +9,7 @@ VideoSensor::VideoSensor(rs2::sensor sensor, rclcpp::Node& node,
                          std::function<void()> update_sensor_func): 
     RosSensor(sensor, node, frame_callback, update_sensor_func) 
 {
+    registerProfileParameters();
     _allowed_formats[RS2_STREAM_DEPTH] = RS2_FORMAT_Z16;
     _allowed_formats[RS2_STREAM_INFRARED] = RS2_FORMAT_Y8;
 }
@@ -52,28 +53,6 @@ bool VideoSensor::isWantedProfile(const rs2::stream_profile& profile)
             (video_profile.fps() == _fps) &&
             (_allowed_formats.find(video_profile.stream_type()) == _allowed_formats.end() || video_profile.format() == _allowed_formats[video_profile.stream_type()] ));
 }
-
-// template<class T>
-// rcl_interfaces::msg::SetParametersResult VideoSensor::set_sensor_general_param(std::string option_name, const std::vector<rclcpp::Parameter> & parameters)
-// { 
-//     rcl_interfaces::msg::SetParametersResult result;
-//     result.successful = true;
-//     for (const auto & parameter : parameters) {
-//         if (option_name == parameter.get_name())
-//         {
-//             std::vector<std::string> option_parts;
-//             boost::split(option_parts, option_name, [](char c){return c == '_';});
-//             if (option_parts[0] == "enable")
-//             {
-//                 ROS_WARN_STREAM("****enable FOUND");
-//             }
-//         }
-//     }
-//     return result;
-// }
-
-void VideoSensor::registerSensorParameters()
-{}
 
 void VideoSensor::registerProfileParameters()
 {

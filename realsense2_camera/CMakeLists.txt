@@ -99,7 +99,7 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 
-find_package(realsense2 2.41.0)
+find_package(realsense2 2.40.0)
 if(NOT realsense2_FOUND)
     message(FATAL_ERROR "\n\n Intel RealSense SDK 2.0 is missing, please install it from https://github.com/IntelRealSense/librealsense/releases\n\n")
 endif()
@@ -116,6 +116,9 @@ add_library(${PROJECT_NAME} SHARED
     include/ros_sensor.h
     include/ros_utils.h
     include/dynamic_params.h
+    include/sensor_params.h
+    include/named_filter.h
+    
 #    include/t265_realsense_node.h
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
@@ -126,6 +129,8 @@ add_library(${PROJECT_NAME} SHARED
     src/ros_imu_sensor.cpp
     src/ros_utils.cpp
     src/dynamic_params.cpp
+    src/sensor_params.cpp
+    src/named_filter.cpp
 #    src/t265_realsense_node.cpp
     )
 

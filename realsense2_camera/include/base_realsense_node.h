@@ -24,8 +24,6 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/imu.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
@@ -36,6 +34,7 @@
 #include <condition_variable>
 
 #include <ros_sensor.h>
+#include <named_filter.h>
 
 #include <queue>
 #include <mutex>
@@ -118,41 +117,6 @@ namespace realsense2_camera
     };
 
     typedef std::pair<image_transport::Publisher, std::string> ImagePublisherWithFrequencyDiagnostics;
-
-    class NamedFilter
-    {
-        public:
-            std::string _name;
-            std::shared_ptr<rs2::filter> _filter;
-            bool _is_enabled;
-
-        public:
-            NamedFilter(std::string name, std::shared_ptr<rs2::filter> filter, bool is_enabled=false):
-            _name(name), _filter(filter), _is_enabled(is_enabled)
-            {}
-            virtual void set(const bool is_enabled) {_is_enabled = is_enabled;};
-
-            template<class T> 
-            bool is() const
-            {
-                return (dynamic_cast<const T*> (&(*this)));
-            }
-    };
-
-    class PointcloudFilter : public NamedFilter
-    {
-        public:
-            PointcloudFilter(std::string name, std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, bool is_enabled=false):
-                NamedFilter(name, filter, is_enabled),
-                _node(node) {}
-        
-            void set(const bool is_enabled) override;
-            rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr getPublisher() {return _pointcloud_publisher;};
-
-        private:
-            rclcpp::Node& _node;
-            rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _pointcloud_publisher;
-    };
 
 	class PipelineSyncer : public rs2::asynchronous_syncer
 	{
@@ -294,11 +258,6 @@ namespace realsense2_camera
         void multiple_message_callback(rs2::frame frame, imu_sync_method sync_method);
         void frame_callback(rs2::frame frame);
         
-        template<class T>
-        void set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name, const std::string& description_addition="");
-
-        void registerDynamicOptions(rs2::options sensor, const std::string& module_name);
-        void registerDynamicParameters();
         // void readAndSetDynamicParam(ros::NodeHandle& nh1, std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec, const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, int* option_value);
         // void registerAutoExposureROIOptions(ros::NodeHandle& nh);
         void set_auto_exposure_roi(const std::string option_name, rs2::sensor sensor, int new_value);
@@ -322,7 +281,6 @@ namespace realsense2_camera
         std::string _serial_no;
         float _depth_scale_meters;
         float _clipping_distance;
-        bool _allow_no_texture_points;
 
         double _linear_accel_cov;
         double _angular_velocity_cov;
@@ -387,8 +345,6 @@ namespace realsense2_camera
 
         rs2::stream_profile _base_profile;
 
-        sensor_msgs::msg::PointCloud2 _msg_pointcloud;
-        std::vector< unsigned int > _valid_pc_indices;
         Parameters _parameters;
     };//end class
 }

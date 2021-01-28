@@ -8,7 +8,6 @@ void BaseRealSenseNode::setup()
 {
     // getParameters();
     setAvailableSensors();
-    registerDynamicParameters();
     SetBaseStream();
     setupFiltersPublishers();
     setCallbackFunctions();
