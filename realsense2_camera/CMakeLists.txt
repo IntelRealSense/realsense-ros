@@ -82,10 +82,10 @@ add_library(${PROJECT_NAME}
     include/constants.h
     include/realsense_node_factory.h
     include/base_realsense_node.h
-    include/t265_realsense_node.h
+    #include/t265_realsense_node.h
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
-    src/t265_realsense_node.cpp
+    #src/t265_realsense_node.cpp
     )
 
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)

@@ -285,6 +285,10 @@ namespace realsense2_camera
 
         ros::Publisher _pointcloud_publisher;
         ros::Time _ros_time_base;
+        bool _enable_emitter;
+        bool _emitter_on_off;
+        bool _enable_auto_exposure;
+        int _manual_exposure;
         bool _sync_frames;
         bool _pointcloud;
         bool _publish_odom_tf;

@@ -1,5 +1,4 @@
 <launch>
-  <arg name="external_manager"    default="false"/>
   <arg name="manager"             default="realsense2_camera_manager"/>
   <arg name="serial_no"           default=""/>
   <arg name="usb_port_id"         default=""/>
@@ -41,6 +40,8 @@
   <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>  <!-- use RS2_STREAM_ANY to avoid using texture -->
   <arg name="pointcloud_texture_index"  default="0"/>
 
+  <arg name="enable_emitter"      default="false"/>
+  <arg name="emitter_on_off"      default="false"/>
   <arg name="enable_sync"         default="false"/>
   <arg name="align_depth"         default="false"/>
 
@@ -90,8 +91,39 @@
   <arg name="allow_no_texture_points"  default="false"/>
 
 
-  <node unless="$(arg external_manager)" pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen" required="$(arg required)"/>
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
   <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)" required="$(arg required)">
+
+    <rosparam param="/camera/color/image_raw/disable_pub_plugins">
+        - 'image_transport/compressedDepth'
+        - 'image_transport/theora'
+    </rosparam>
+    <rosparam param="/camera/depth/image_rect_raw/disable_pub_plugins">
+        - 'image_transport/compressed'
+        - 'image_transport/compressedDepth'
+        - 'image_transport/theora'
+    </rosparam>
+    <rosparam param="/camera/infra1/image_rect_raw/disable_pub_plugins">
+        - 'image_transport/compressed'
+        - 'image_transport/compressedDepth'
+        - 'image_transport/theora'
+    </rosparam>
+    <rosparam param="/camera/infra2/image_rect_raw/disable_pub_plugins">
+        - 'image_transport/compressed'
+        - 'image_transport/compressedDepth'
+        - 'image_transport/theora'
+    </rosparam>
+    <rosparam param="/camera/aligned_depth_to_color/image_raw/disable_pub_plugins">
+        - 'image_transport/compressed'
+        - 'image_transport/compressedDepth'
+        - 'image_transport/theora'
+    </rosparam>
+    <rosparam param="/camera/aligned_depth_to_infra1/image_raw/disable_pub_plugins">
+        - 'image_transport/compressed'
+        - 'image_transport/compressedDepth'
+        - 'image_transport/theora'
+    </rosparam>
+
     <param name="serial_no"                type="str"  value="$(arg serial_no)"/>
     <param name="usb_port_id"              type="str"  value="$(arg usb_port_id)"/>
     <param name="device_type"              type="str"  value="$(arg device_type)"/>
@@ -101,6 +133,8 @@
     <param name="enable_pointcloud"        type="bool" value="$(arg enable_pointcloud)"/>
     <param name="pointcloud_texture_stream" type="str" value="$(arg pointcloud_texture_stream)"/>
     <param name="pointcloud_texture_index"  type="int" value="$(arg pointcloud_texture_index)"/>
+    <param name="enable_emitter"            type="bool" value="$(arg enable_emitter)"/>
+    <param name="emitter_on_off"            type="bool" value="$(arg emitter_on_off)"/>
     <param name="enable_sync"              type="bool" value="$(arg enable_sync)"/>
     <param name="align_depth"              type="bool" value="$(arg align_depth)"/>
 

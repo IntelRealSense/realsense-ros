@@ -5,43 +5,44 @@
   <arg name="json_file_path"      default=""/>
   <arg name="camera"              default="camera"/>
   <arg name="tf_prefix"           default="$(arg camera)"/>
-  <arg name="external_manager"    default="false"/>
-  <arg name="manager"             default="realsense2_camera_manager"/>
+  <arg name="manager"             value="manager"/>
 
   <arg name="fisheye_width"       default="640"/>
   <arg name="fisheye_height"      default="480"/>
-  <arg name="enable_fisheye"      default="true"/>
+  <arg name="enable_fisheye"      default="false"/>
 
   <arg name="depth_width"         default="640"/>
   <arg name="depth_height"        default="480"/>
   <arg name="enable_depth"        default="true"/>
 
-  <arg name="infra_width"        default="640"/>
-  <arg name="infra_height"       default="480"/>
+  <arg name="infra_width"         default="640"/>
+  <arg name="infra_height"        default="480"/>
   <arg name="enable_infra1"       default="true"/>
   <arg name="enable_infra2"       default="true"/>
 
-  <arg name="color_width"         default="640"/>
-  <arg name="color_height"        default="480"/>
-  <arg name="enable_color"        default="true"/>
+  <arg name="color_width"         default="1280"/>
+  <arg name="color_height"        default="720"/>
+  <arg name="enable_color"        default="false"/>
 
   <arg name="fisheye_fps"         default="30"/>
-  <arg name="depth_fps"           default="30"/>
-  <arg name="infra_fps"           default="30"/>
+  <arg name="depth_fps"           default="60"/> <!--If emitter_on_off=true, depth_fps must equal to infra_fps, and the actual output frame rate will be halved.-->
+  <arg name="infra_fps"           default="60"/> <!--If emitter_on_off=true, depth_fps must equal to infra_fps, and the actual output frame rate will be halved.-->
   <arg name="color_fps"           default="30"/>
   <arg name="gyro_fps"            default="400"/>
   <arg name="accel_fps"           default="250"/>
-  <arg name="enable_gyro"         default="true"/>
-  <arg name="enable_accel"        default="true"/>
+  <arg name="enable_gyro"         default="false"/>
+  <arg name="enable_accel"        default="false"/>
 
   <arg name="enable_pointcloud"         default="false"/>
   <arg name="pointcloud_texture_stream" default="RS2_STREAM_COLOR"/>
   <arg name="pointcloud_texture_index"  default="0"/>
 
-  <arg name="enable_sync"               default="false"/>
+  <arg name="enable_emitter"            default="true"/>
+  <arg name="emitter_on_off"            default="true"/> <!--If emitter_on_off=true, depth_fps must equal to infra_fps, and the actual output frame rate will be halved.-->
+  <arg name="enable_sync"               default="true"/>
   <arg name="align_depth"               default="false"/>
 
-  <arg name="publish_tf"                default="true"/>
+  <arg name="publish_tf"                default="false"/>
   <arg name="tf_publish_rate"           default="0"/>
 
   <arg name="filters"                   default=""/>
@@ -51,13 +52,12 @@
   <arg name="unite_imu_method"          default=""/>
   <arg name="topic_odom_in"             default="odom_in"/>
   <arg name="calib_odom_file"           default=""/>
-  <arg name="publish_odom_tf"           default="true"/>
+  <arg name="publish_odom_tf"           default="false"/>
   <arg name="allow_no_texture_points"   default="false"/>
 
   <group ns="$(arg camera)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="tf_prefix"                value="$(arg tf_prefix)"/>
-      <arg name="external_manager"         value="$(arg external_manager)"/>
       <arg name="manager"                  value="$(arg manager)"/>
       <arg name="serial_no"                value="$(arg serial_no)"/>
       <arg name="usb_port_id"              value="$(arg usb_port_id)"/>
@@ -67,6 +67,8 @@
       <arg name="enable_pointcloud"        value="$(arg enable_pointcloud)"/>
       <arg name="pointcloud_texture_stream" value="$(arg pointcloud_texture_stream)"/>
       <arg name="pointcloud_texture_index"  value="$(arg pointcloud_texture_index)"/>
+      <arg name="enable_emitter"           value="$(arg enable_emitter)"/>
+      <arg name="emitter_on_off"           value="$(arg emitter_on_off)"/>
       <arg name="enable_sync"              value="$(arg enable_sync)"/>
       <arg name="align_depth"              value="$(arg align_depth)"/>
 
