@@ -2240,8 +2240,18 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t,
                 throw std::runtime_error("Unhandled texture format passed in pointcloud " + std::to_string(texture_frame.get_profile().format()));
         }
         _msg_pointcloud.point_step = addPointField(_msg_pointcloud, format_str.c_str(), 1, sensor_msgs::msg::PointField::FLOAT32, _msg_pointcloud.point_step);
-        _msg_pointcloud.row_step = _msg_pointcloud.width * _msg_pointcloud.point_step;
-        _msg_pointcloud.data.resize(_msg_pointcloud.height * _msg_pointcloud.row_step);
+        
+        if (_ordered_pc)
+        {
+            _msg_pointcloud.row_step = depth_intrin.width * _msg_pointcloud.point_step;
+            _msg_pointcloud.data.resize( depth_intrin.height  * _msg_pointcloud.row_step);
+            
+        }
+        else {
+            _msg_pointcloud.row_step = _msg_pointcloud.width * _msg_pointcloud.point_step;
+            _msg_pointcloud.data.resize(_msg_pointcloud.height * _msg_pointcloud.row_step);
+        }
+    
 
         sensor_msgs::PointCloud2Iterator<float>iter_x(_msg_pointcloud, "x");
         sensor_msgs::PointCloud2Iterator<float>iter_y(_msg_pointcloud, "y");
@@ -2281,8 +2291,17 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t,
     {
         std::string format_str = "intensity";
         _msg_pointcloud.point_step = addPointField(_msg_pointcloud, format_str.c_str(), 1, sensor_msgs::msg::PointField::FLOAT32, _msg_pointcloud.point_step);
-        _msg_pointcloud.row_step = _msg_pointcloud.width * _msg_pointcloud.point_step;
-        _msg_pointcloud.data.resize(_msg_pointcloud.height * _msg_pointcloud.row_step);
+        
+        if (_ordered_pc)
+        {
+            _msg_pointcloud.row_step = depth_intrin.width * _msg_pointcloud.point_step;
+            _msg_pointcloud.data.resize( depth_intrin.height  * _msg_pointcloud.row_step);
+            
+        }
+        else {
+            _msg_pointcloud.row_step = _msg_pointcloud.width * _msg_pointcloud.point_step;
+            _msg_pointcloud.data.resize(_msg_pointcloud.height * _msg_pointcloud.row_step);
+        }
 
         sensor_msgs::PointCloud2Iterator<float>iter_x(_msg_pointcloud, "x");
         sensor_msgs::PointCloud2Iterator<float>iter_y(_msg_pointcloud, "y");
