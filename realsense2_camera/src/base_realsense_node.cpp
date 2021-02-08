@@ -1734,6 +1734,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
 
                 if (f.is<rs2::points>())
                 {
+                    ROS_WARN_STREAM("_pointcloud_publisher->get_subscription_count(): " << _pointcloud_publisher->get_subscription_count());
                     if (0 != _pointcloud_publisher->get_subscription_count())
                     {
                         ROS_DEBUG("Publish pointscloud");
@@ -2244,6 +2245,12 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t,
     sensor_msgs::PointCloud2Modifier modifier(_msg_pointcloud);
     modifier.setPointCloud2FieldsByString(1, "xyz");    
     modifier.resize(pc.size());
+    if (_ordered_pc)
+    {
+        _msg_pointcloud.width = depth_intrin.width;
+        _msg_pointcloud.height = depth_intrin.height;
+        _msg_pointcloud.is_dense = false;
+    }
 
     vertex = pc.get_vertices();
     size_t valid_count(0);
@@ -2331,13 +2338,7 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t,
     }
     _msg_pointcloud.header.stamp = t;
     _msg_pointcloud.header.frame_id = _optical_frame_id[DEPTH];
-    if (_ordered_pc)
-    {
-        _msg_pointcloud.width = depth_intrin.width;
-        _msg_pointcloud.height = depth_intrin.height;
-        _msg_pointcloud.is_dense = false;
-    }
-    else
+    if (!_ordered_pc)
     {
         _msg_pointcloud.width = valid_count;
         _msg_pointcloud.height = 1;
@@ -2438,6 +2439,8 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     ++(seq[stream]);
     auto& info_publisher = info_publishers.at(stream);
     auto& image_publisher = image_publishers.at(stream);
+    ROS_WARN_STREAM("info_publisher->get_subscription_count(): " << info_publisher->get_subscription_count());
+
     if(0 != info_publisher->get_subscription_count() ||
        0 != image_publisher.getNumSubscribers())
     {
