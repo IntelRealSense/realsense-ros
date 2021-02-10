@@ -1734,7 +1734,6 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
 
                 if (f.is<rs2::points>())
                 {
-                    ROS_WARN_STREAM("_pointcloud_publisher->get_subscription_count(): " << _pointcloud_publisher->get_subscription_count());
                     if (0 != _pointcloud_publisher->get_subscription_count())
                     {
                         ROS_DEBUG("Publish pointscloud");
@@ -2439,8 +2438,6 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     ++(seq[stream]);
     auto& info_publisher = info_publishers.at(stream);
     auto& image_publisher = image_publishers.at(stream);
-    ROS_WARN_STREAM("info_publisher->get_subscription_count(): " << info_publisher->get_subscription_count());
-
     if(0 != info_publisher->get_subscription_count() ||
        0 != image_publisher.getNumSubscribers())
     {
