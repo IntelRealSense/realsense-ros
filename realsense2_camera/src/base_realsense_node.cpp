@@ -2217,6 +2217,12 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t,
     sensor_msgs::PointCloud2Modifier modifier(_msg_pointcloud);
     modifier.setPointCloud2FieldsByString(1, "xyz");    
     modifier.resize(pc.size());
+    if (_ordered_pc)
+    {
+        _msg_pointcloud.width = depth_intrin.width;
+        _msg_pointcloud.height = depth_intrin.height;
+        _msg_pointcloud.is_dense = false;
+    }
 
     vertex = pc.get_vertices();
     size_t valid_count(0);
@@ -2304,13 +2310,7 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t,
     }
     _msg_pointcloud.header.stamp = t;
     _msg_pointcloud.header.frame_id = _optical_frame_id[DEPTH];
-    if (_ordered_pc)
-    {
-        _msg_pointcloud.width = depth_intrin.width;
-        _msg_pointcloud.height = depth_intrin.height;
-        _msg_pointcloud.is_dense = false;
-    }
-    else
+    if (!_ordered_pc)
     {
         _msg_pointcloud.width = valid_count;
         _msg_pointcloud.height = 1;
