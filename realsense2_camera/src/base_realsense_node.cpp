@@ -148,8 +148,8 @@ void BaseRealSenseNode::setupErrorCallback(const rs2::sensor& sensor)
 
 void BaseRealSenseNode::publishTopics()
 {
-    setupFilters();
     getParameters();
+    setupFilters();
     setup();
     // setupDevice();
     // registerDynamicReconfigCb();

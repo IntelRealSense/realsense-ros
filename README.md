@@ -3,12 +3,6 @@ These are packages for using Intel RealSense cameras (D400 series SR300 camera a
 
 LibRealSense supported version: v2.38.1 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
-# NOTICE:
-The building of this version is still underway. 
-It is based on the the ROS1 version.
-As a wrapper for a different environment it bears no restrictions where interface to clients is concerned.
-Therefor, any comments as to incorrect or prefered topic names, parameters, usage or missed conventions are now very much welcome.
-
 ## Installation Instructions
 This version supports ROS2 eloquent on Ubuntu 18.04.
 

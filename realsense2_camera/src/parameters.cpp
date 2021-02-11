@@ -7,6 +7,7 @@ void BaseRealSenseNode::getParameters()
 {
     ROS_INFO("getParameters...");
     _parameters.setParamT(std::string("align_depth"), rclcpp::ParameterValue(ALIGN_DEPTH), _align_depth);
+    _camera_name = _node.declare_parameter("camera_name", rclcpp::ParameterValue("camera")).get<rclcpp::PARAMETER_STRING>();
 
     _publish_tf = _node.declare_parameter("publish_tf", rclcpp::ParameterValue(PUBLISH_TF)).get<rclcpp::PARAMETER_BOOL>();
     _tf_publish_rate = _node.declare_parameter("tf_publish_rate", rclcpp::ParameterValue(TF_PUBLISH_RATE)).get<rclcpp::PARAMETER_DOUBLE>();

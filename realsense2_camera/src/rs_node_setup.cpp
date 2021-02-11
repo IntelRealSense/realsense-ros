@@ -81,14 +81,14 @@ void BaseRealSenseNode::setAvailableSensors()
     else
         ROS_INFO("JSON file is not provided");
 
-    auto camera_name = _dev.get_info(RS2_CAMERA_INFO_NAME);
-    ROS_INFO_STREAM("Device Name: " << camera_name);
+    auto device_name = _dev.get_info(RS2_CAMERA_INFO_NAME);
+    ROS_INFO_STREAM("Device Name: " << device_name);
 
     ROS_INFO_STREAM("Device Serial No: " << _serial_no);
 
-    auto camera_id = _dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
+    auto device_port_id = _dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
 
-    ROS_INFO_STREAM("Device physical port: " << camera_id);
+    ROS_INFO_STREAM("Device physical port: " << device_port_id);
 
     auto fw_ver = _dev.get_info(RS2_CAMERA_INFO_FIRMWARE_VERSION);
     ROS_INFO_STREAM("Device FW version: " << fw_ver);
