@@ -953,7 +953,7 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
         auto frame = (*it);
         auto stream_type = frame.get_profile().stream_type();
 
-        if (RS2_STREAM_DEPTH == stream_type)
+        if (RS2_STREAM_DEPTH == stream_type || RS2_STREAM_CONFIDENCE == stream_type)
             continue;
 
         auto stream_index = frame.get_profile().stream_index();
