@@ -64,11 +64,7 @@ RealSenseNodeFactory::~RealSenseNodeFactory()
 	try
 	{
 		_realSenseNode.reset();
-		if (_device)
-		{
-			_device.hardware_reset();
-			_device = rs2::device();
-		}
+		_device = rs2::device();
 	}
 	catch (const rs2::error& e)
 	{
