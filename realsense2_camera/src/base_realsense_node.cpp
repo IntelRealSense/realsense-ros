@@ -1468,17 +1468,16 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
     bool placeholder_false(false);
     if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
     {
-        setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
+        _is_initialized_time_base = setBaseTime(frame_time, frame.get_frame_timestamp_domain());
     }
 
     seq += 1;
-    double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1e6;
 
     if (0 != _synced_imu_publisher->getNumSubscribers())
     {
         auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
         Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
-        CimuData imu_data(stream_index, v, elapsed_camera_ns);
+        CimuData imu_data(stream_index, v, frameSystemTimeSec(frame).nanoseconds());
         std::deque<sensor_msgs::msg::Imu> imu_msgs;
         switch (sync_method)
         {
@@ -1493,8 +1492,6 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
         while (imu_msgs.size())
         {
             sensor_msgs::msg::Imu imu_msg = imu_msgs.front();
-            rclcpp::Time t(_ros_time_base + rclcpp::Duration(imu_msg.header.stamp.sec, imu_msg.header.stamp.nanosec));
-            imu_msg.header.stamp = t;
             ImuMessage_AddDefaultValues(imu_msg);
             _synced_imu_publisher->Publish(imu_msg);
             ROS_DEBUG("Publish united %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
@@ -1511,7 +1508,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
     bool placeholder_false(false);
     if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
     {
-        setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
+        _is_initialized_time_base = setBaseTime(frame_time, frame.get_frame_timestamp_domain());
     }
 
     ROS_DEBUG("Frame arrived: stream: %s ; index: %d ; Timestamp Domain: %s",
@@ -1522,8 +1519,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
     auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
     if (0 != _imu_publishers[stream_index]->get_subscription_count())
     {
-        double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1e6;
-        rclcpp::Time t(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
+        rclcpp::Time t(frameSystemTimeSec(frame));
 
         auto imu_msg = sensor_msgs::msg::Imu();
         ImuMessage_AddDefaultValues(imu_msg);
@@ -1555,7 +1551,7 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
     bool placeholder_false(false);
     if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
     {
-        setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
+        _is_initialized_time_base = setBaseTime(frame_time, frame.get_frame_timestamp_domain());
     }
 
     ROS_DEBUG("Frame arrived: stream: %s ; index: %d ; Timestamp Domain: %s",
@@ -1564,8 +1560,7 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
     const auto& stream_index(POSE);
     rs2_pose pose = frame.as<rs2::pose_frame>().get_pose_data();
-    double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1e6;
-    rclcpp::Time t(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
+    rclcpp::Time t(frameSystemTimeSec(frame));
 
     geometry_msgs::msg::PoseStamped pose_msg;
     pose_msg.pose.position.x = -pose.translation.z;
@@ -1597,27 +1592,15 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         double cov_twist(_angular_velocity_cov * pow(10, 1-(int)pose.tracker_confidence));
 
         geometry_msgs::msg::Vector3Stamped v_msg;
-        // v_msg.vector.x = -pose.velocity.z;
-        // v_msg.vector.y = -pose.velocity.x;
-        // v_msg.vector.z = pose.velocity.y;
         tf2::Vector3 tfv(-pose.velocity.z, -pose.velocity.x, pose.velocity.y);
-        // tf2::vector3MsgToTF(v_msg.vector,tfv);
         tf2::Quaternion q(-msg.transform.rotation.x,-msg.transform.rotation.y,-msg.transform.rotation.z,msg.transform.rotation.w);
         tfv=tf2::quatRotate(q,tfv);
-        // tf2::vector3TFToMsg(tfv,v_msg.vector);
-        // v_msg.vector = tfv;
         v_msg.vector.x = tfv.x();
         v_msg.vector.y = tfv.y();
         v_msg.vector.z = tfv.z();
 	
-        // geometry_msgs::msg::Vector3Stamped om_msg;
-        // om_msg.vector.x = -pose.angular_velocity.z;
-        // om_msg.vector.y = -pose.angular_velocity.x;
-        // om_msg.vector.z = pose.angular_velocity.y;
         tfv = tf2::Vector3(-pose.angular_velocity.z, -pose.angular_velocity.x, pose.angular_velocity.y);
-        // tf2::vector3MsgToTF(om_msg.vector,tfv);
         tfv=tf2::quatRotate(q,tfv);
-        // tf2::vector3TFToMsg(tfv,om_msg.vector);
         geometry_msgs::msg::Vector3Stamped om_msg;
         om_msg.vector.x = tfv.x();
         om_msg.vector.y = tfv.y();
@@ -1662,20 +1645,10 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
         bool placeholder_false(false);
         if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
         {
-            setBaseTime(frame_time, RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME == frame.get_frame_timestamp_domain());
+            _is_initialized_time_base = setBaseTime(frame_time, frame.get_frame_timestamp_domain());
         }
 
-        rclcpp::Time t;
-        if (_sync_frames)
-        {
-            t = _node.now();
-        }
-        else
-        {
-            double elapsed_camera_ns = (/*ms*/ frame_time - /*ms*/ _camera_time_base) * 1e6;
-            t = rclcpp::Time(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
-        }
-
+        rclcpp::Time t(frameSystemTimeSec(frame));
         if (frame.is<rs2::frameset>())
         {
             ROS_DEBUG("Frameset arrived.");
@@ -1844,13 +1817,30 @@ void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_met
     }
 }
 
-void BaseRealSenseNode::setBaseTime(double frame_time, bool warn_no_metadata)
+bool BaseRealSenseNode::setBaseTime(double frame_time, rs2_timestamp_domain time_domain)
 {
-    ROS_WARN_COND(warn_no_metadata, "Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)");
+    ROS_WARN_ONCE(time_domain == RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME ? "Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)" : "");
+    if (time_domain == RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK)
+    {
+        ROS_WARN("frame's time domain is HARDWARE_CLOCK. Timestamps may reset periodically.");
+        _ros_time_base = _node.now();
+        _camera_time_base = frame_time;
+        return true;
+    }
+    return false;
+}
 
-    _ros_time_base = _node.now();
-    
-    _camera_time_base = frame_time;
+rclcpp::Time BaseRealSenseNode::frameSystemTimeSec(rs2::frame frame)
+{
+    if (frame.get_frame_timestamp_domain() == RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK)
+    {
+        double elapsed_camera_ns = (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) * 1e6;
+        return rclcpp::Time(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
+    }
+    else
+    {
+        return rclcpp::Time(frame.get_timestamp() * 1e6);
+    }
 }
 
 void BaseRealSenseNode::setupStreams()
