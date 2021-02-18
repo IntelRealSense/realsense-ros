@@ -2,6 +2,17 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add reset service.
+* fix timestamp domain issues
+  - Add offset to ros_time only if device uses hardware-clock. Otherwise use device time - either system_time or global_time.
+  - Warn of a hardware timestamp possible loop.
+* Choose the default profile in case of an invalid request.
+* Avoid aligning confidence image.
+* Add an option for an Ordered PointCloud.
+* Contributors: Isaac I.Y. Saito, Itamar Eliakim, Marc Alban, doronhi
+
 2.2.21 (2020-12-31)
 -------------------
 * Publish depth confidence image for supporting devices (L515)
