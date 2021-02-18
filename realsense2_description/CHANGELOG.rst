@@ -2,8 +2,8 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.22 (2021-02-18)
+-------------------
 * Fix mass of d415
 * Consistent add_plug in xacros and launch files
 * Contributors: Manuel Stahl, Tim Übelhör, doronhi

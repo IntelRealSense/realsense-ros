@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.22 (2021-02-18)
+-------------------
 * Add reset service.
 * fix timestamp domain issues
   - Add offset to ros_time only if device uses hardware-clock. Otherwise use device time - either system_time or global_time.
