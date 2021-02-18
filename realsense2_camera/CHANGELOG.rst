@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.1.4 (2021-02-18)
+------------------
 * fix reading json file with device other than D400 series.
 * Publish depth confidence image for supporting devices (L515)
 * Add selecting QoS option

@@ -2,8 +2,8 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.1.4 (2021-02-18)
+------------------
 * d415 add plug
 * fix d415 mass in _d415.urdf.xacro.
   import tests for xacro files.
