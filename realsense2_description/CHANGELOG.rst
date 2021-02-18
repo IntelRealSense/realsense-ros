@@ -7,7 +7,7 @@ Forthcoming
 * d415 add plug
 * fix d415 mass in _d415.urdf.xacro.
   import tests for xacro files.
-* Contributors: Manuel Stahl, Tim Übelhör, doronhi
+* Contributors: Manuel Stahl, Tim ÃœbelhÃ¶r, doronhi
 
 3.1.3 (2020-12-28)
 ------------------
