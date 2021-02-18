@@ -2,6 +2,9 @@
 Changelog for package realsense2_camera_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 3.1.3 (2020-12-28)
 ------------------
 

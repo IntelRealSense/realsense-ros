@@ -2,6 +2,20 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix reading json file with device other than D400 series.
+* Publish depth confidence image for supporting devices (L515)
+* Add selecting QoS option
+* Import unit-tests
+* fix timestamp domain issues
+  - Add offset to ros_time only if device uses hardware-clock. Otherwise use device time - either system_time or global_time.
+  - Warn of a hardware timestamp possible loop.
+* Choose the default profile in case of an invalid request.
+* Avoid aligning confidence image.
+* Add an option for an Ordered PointCloud.
+* Contributors: Gabriel Urbain, Isaac I.Y. Saito, Itamar Eliakim, Marc Alban, doronhi
+
 3.1.3 (2020-12-28)
 ------------------
 * Publish depth confidence image for supporting devices (L515)
