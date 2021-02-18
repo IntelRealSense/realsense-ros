@@ -22,6 +22,7 @@
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>message_runtime</depend>
   <depend>tf</depend>
   <depend>ddynamic_reconfigure</depend>
