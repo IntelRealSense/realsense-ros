@@ -646,17 +646,17 @@ void BaseRealSenseNode::getParameters()
     for (auto& stream : IMAGE_STREAMS)
     {
         std::string param_name(_stream_name[stream.first] + "_width");
-        ROS_DEBUG_STREAM("reading parameter:" << param_name);
         _pnh.param(param_name, _width[stream], IMAGE_WIDTH);
+        ROS_DEBUG_STREAM("parameter:" << param_name << " = " << _width[stream]);
         param_name = _stream_name[stream.first] + "_height";
-        ROS_DEBUG_STREAM("reading parameter:" << param_name);
         _pnh.param(param_name, _height[stream], IMAGE_HEIGHT);
+        ROS_DEBUG_STREAM("parameter:" << param_name << " = " << _height[stream]);
         param_name = _stream_name[stream.first] + "_fps";
-        ROS_DEBUG_STREAM("reading parameter:" << param_name);
         _pnh.param(param_name, _fps[stream], IMAGE_FPS);
+        ROS_DEBUG_STREAM("parameter:" << param_name << " = " << _fps[stream]);
         param_name = "enable_" + STREAM_NAME(stream);
-        ROS_DEBUG_STREAM("reading parameter:" << param_name);
         _pnh.param(param_name, _enable[stream], true);
+        ROS_DEBUG_STREAM("parameter:" << param_name << " = " << _enable[stream]);
     }
 
     for (auto& stream : HID_STREAMS)
@@ -1201,7 +1201,7 @@ void BaseRealSenseNode::setupFilters()
 
         _width[DEPTH] = _width[COLOR];
         _height[DEPTH] = _height[COLOR];
-        _image[DEPTH] = cv::Mat(_height[DEPTH], _width[DEPTH], _image_format[DEPTH.first], cv::Scalar(0, 0, 0));
+        _image[DEPTH] = cv::Mat(std::max(0, _height[DEPTH]), std::max(0, _width[DEPTH]), _image_format[DEPTH.first], cv::Scalar(0, 0, 0));
     }
     if (_pointcloud)
     {
