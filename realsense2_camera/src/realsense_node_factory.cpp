@@ -60,16 +60,6 @@ RealSenseNodeFactory::~RealSenseNodeFactory()
 	{
 		_query_thread.join();
 	}
-
-	try
-	{
-		_realSenseNode.reset();
-		_device = rs2::device();
-	}
-	catch (const rs2::error& e)
-	{
-		ROS_ERROR_STREAM("Exception: " << e.what());
-	}
 }
 
 std::string RealSenseNodeFactory::parse_usb_port(std::string line)
