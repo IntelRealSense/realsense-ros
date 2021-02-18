@@ -150,18 +150,19 @@ BaseRealSenseNode::~BaseRealSenseNode()
     std::set<std::string> module_names;
     for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
     {
-        std::string module_name = _sensors[profile.first].get_info(RS2_CAMERA_INFO_NAME);
-        std::pair< std::set<std::string>::iterator, bool> res = module_names.insert(module_name);
-        if (res.second)
+        try
         {
-            try
+            std::string module_name = _sensors[profile.first].get_info(RS2_CAMERA_INFO_NAME);
+            std::pair< std::set<std::string>::iterator, bool> res = module_names.insert(module_name);
+            if (res.second)
             {
                 _sensors[profile.first].stop();
                 _sensors[profile.first].close();
             }
-            catch(const rs2::wrong_api_call_sequence_error& e)
-            {
-            }
+        }
+        catch (const rs2::error& e)
+        {
+            ROS_ERROR_STREAM("Exception: " << e.what());
         }
     }
 }
