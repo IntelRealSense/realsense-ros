@@ -28,11 +28,6 @@ install:
   - sudo rosdep init
   - rosdep update
   - echo "source /opt/ros/$_ros_dist/setup.bash" >> ~/.bashrc
-  - sudo apt-get install ros-$_ros_dist-cv-bridge -y
-  - sudo apt-get install ros-$_ros_dist-image-transport
-  - sudo apt-get install ros-$_ros_dist-tf -y
-  - sudo apt-get install ros-$_ros_dist-diagnostic-updater -y
-  - sudo apt-get install ros-$_ros_dist-ddynamic-reconfigure -y
   - if [[ $(lsb_release -sc) == "bionic" ]] || [[ $(lsb_release -sc) == "focal" ]]; then
     sudo apt-get install libeigen3-dev;
     fi
