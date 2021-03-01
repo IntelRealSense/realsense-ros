@@ -1019,7 +1019,7 @@ void BaseRealSenseNode::enable_devices()
                                     ", Height: " << video_profile.height() <<
                                     ", FPS: " << video_profile.fps());
 
-                if (profile.stream_type() == elem.first)
+                if (profile.stream_type() == elem.first && profile.stream_index() == elem.second)
                 {
                     if (profile.is_default())
                     {
@@ -1028,8 +1028,7 @@ void BaseRealSenseNode::enable_devices()
                     if ((_width[elem] == 0 || video_profile.width() == _width[elem]) &&
                         (_height[elem] == 0 || video_profile.height() == _height[elem]) &&
                         (_fps[elem] == 0 || video_profile.fps() == _fps[elem]) &&
-                        (_format.find(elem.first) == _format.end() || video_profile.format() == _format[elem.first] ) &&
-                        video_profile.stream_index() == elem.second)
+                        (_format.find(elem.first) == _format.end() || video_profile.format() == _format[elem.first] ))
                     {
                         selected_profile = profile;
                         break;
