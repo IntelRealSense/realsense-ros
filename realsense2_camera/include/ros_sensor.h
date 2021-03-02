@@ -18,28 +18,18 @@ namespace realsense2_camera
             RosSensor(rs2::sensor sensor,
                       rclcpp::Node& node, 
                       std::function<void(rs2::frame)> frame_callback,
-                      std::function<void()> update_sensor_func): 
-                rs2::sensor(sensor),
-                _node(node),
-                _logger(rclcpp::get_logger("RealSenseCameraNode")),
-                _frame_callback(frame_callback),
-                _params(node, _logger),
-                _update_sensor_func(update_sensor_func)
-                {
-                    setParameters();
-                };
-            virtual void getUpdatedSensorParameters() = 0;
+                      std::function<void()> update_sensor_func);
             virtual void getUpdatedProfileParameters(const rs2::stream_profile& profile) = 0;
             virtual bool isWantedProfile(const rs2::stream_profile& profile) = 0;
-            virtual void registerProfileParameters() = 0;
+            virtual void registerSensorParameters() = 0;
             
             ////////////////////////////////////////////////////////////
             // updateProfiles():
             // return: a vector of profiles matching the updated parameters of an empty one if active profiles matches parameters.
             //
             bool getUpdatedProfiles(std::vector<rs2::stream_profile>& wanted_profiles);
-            
-            bool start(const std::vector<rs2::stream_profile>& profiles);
+            void runFirstFrameInitialization();
+            virtual bool start(const std::vector<rs2::stream_profile>& profiles);
             void stop();
             template<class T>
             void registerSensorUpdateParam(std::string template_name, T value);
@@ -57,14 +47,16 @@ namespace realsense2_camera
         protected:
             rclcpp::Node& _node;
             rclcpp::Logger _logger;
+            std::function<void(rs2::frame)> _origin_frame_callback;
             std::function<void(rs2::frame)> _frame_callback;
             SensorParams _params;
             std::function<void()> _update_sensor_func;
             // std::condition_variable _cv_update;
             // std::mutex _m_update;
             std::shared_ptr<std::thread> _check_update_t;
-
             std::map<stream_index_pair, bool> _enabled_profiles;
+            bool _is_first_frame;
+            std::vector<std::function<void()> > _first_frame_functions_stack;
     };
 
     class VideoSensor : public RosSensor
@@ -73,17 +65,22 @@ namespace realsense2_camera
             VideoSensor(rs2::sensor sensor, rclcpp::Node& node,
                         std::function<void(rs2::frame)> frame_callback,
                         std::function<void()> update_sensor_func);
-            void getUpdatedSensorParameters() override;
+            bool start(const std::vector<rs2::stream_profile>& profiles) override;
             void getUpdatedProfileParameters(const rs2::stream_profile& profile) override;        
             bool isWantedProfile(const rs2::stream_profile& profile) override;
-            void registerProfileParameters() override;
+            void registerSensorParameters() override;
             // template<class T>
             // rcl_interfaces::msg::SetParametersResult set_sensor_general_param(std::string option_name, const std::vector<rclcpp::Parameter> & parameters);
+
+        private:
+            void set_sensor_auto_exposure_roi();
+            void registerAutoExposureROIOptions();
 
         private:
             std::map<rs2_stream, rs2_format>  _allowed_formats;
             double      _fps;
             int _width, _height;
+            rs2::region_of_interest _auto_exposure_roi;
     };
 
     class ImuSensor : public RosSensor
@@ -92,10 +89,9 @@ namespace realsense2_camera
             ImuSensor(rs2::sensor sensor, rclcpp::Node& node,
                       std::function<void(rs2::frame)> frame_callback,
                       std::function<void()> update_sensor_func);
-            void getUpdatedSensorParameters() override;
             void getUpdatedProfileParameters(const rs2::stream_profile& profile) override;        
             bool isWantedProfile(const rs2::stream_profile& profile) override;
-            void registerProfileParameters() override;
+            void registerSensorParameters() override;
 
         private:
             std::map<stream_index_pair, double> _fps;
@@ -111,11 +107,10 @@ namespace realsense2_camera
     //         {
     //             _stream_name[RS2_STREAM_POSE] = "pose";
     //         };
-    //         void getUpdatedSensorParameters() override;
     //         void getUpdatedProfileParameters(const rs2::stream_profile& profile) override;        
     //         rs2::stream_profile getWantedProfile(const stream_index_pair& sip) override;
     //         bool isWantedProfile(const rs2::stream_profile& profile) override;
     //         void registerSensorParameters();
-    //         void registerProfileParameters();
+    //         void registerSensorParameters();
 // };
 }

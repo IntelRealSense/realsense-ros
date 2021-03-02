@@ -26,10 +26,50 @@ void RosSensor::setupErrorCallback()
     });
 }
 
+RosSensor::RosSensor(rs2::sensor sensor,
+    rclcpp::Node& node, 
+    std::function<void(rs2::frame)> frame_callback,
+    std::function<void()> update_sensor_func): 
+    rs2::sensor(sensor),
+    _node(node),
+    _logger(rclcpp::get_logger("RealSenseCameraNode")),
+    _origin_frame_callback(frame_callback),
+    _params(node, _logger),
+    _update_sensor_func(update_sensor_func)
+{
+    _frame_callback = [this](rs2::frame frame)
+        {
+            runFirstFrameInitialization();
+            _origin_frame_callback(frame);
+        };
+    setParameters();
+}
+
 void RosSensor::setParameters()
 {
     std::string module_name = create_graph_resource_name(get_info(RS2_CAMERA_INFO_NAME));
     _params.registerDynamicOptions(*this, module_name);
+}
+
+void RosSensor::runFirstFrameInitialization()
+{
+    if (_is_first_frame)
+    {
+        ROS_DEBUG_STREAM("runFirstFrameInitialization: " << _first_frame_functions_stack.size());
+        _is_first_frame = false;
+        if (!_first_frame_functions_stack.empty())
+        {
+            std::thread t = std::thread([=]()
+            {
+                while (!_first_frame_functions_stack.empty())
+                {
+                    _first_frame_functions_stack.back()();
+                    _first_frame_functions_stack.pop_back();
+                }
+            });
+            t.detach();
+        }
+    }
 }
 
 bool RosSensor::start(const std::vector<stream_profile>& profiles)
@@ -66,6 +106,7 @@ void RosSensor::stop()
 {
     if (get_active_streams().size() == 0)
         return;
+    ROS_INFO_STREAM("Stop Sensor: " << get_info(RS2_CAMERA_INFO_NAME));
     rs2::sensor::stop();
     close();
 }
@@ -110,7 +151,6 @@ bool compare_profiles_lists(const std::vector<stream_profile>& active_profiles, 
 bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
 {
     wanted_profiles.clear();
-    getUpdatedSensorParameters();   // read user parameters (_width, _height, _fps)
     std::vector<stream_profile> active_profiles = get_active_streams();
     std::set<stream_index_pair> checked_sips, found_sips;
     for (auto& profile : get_stream_profiles())
@@ -175,7 +215,7 @@ void RosSensor::registerSensorUpdateParam(std::string template_name, T value)
 
         _params.getParameters().setParam(std::string(param_name), rclcpp::ParameterValue(value), [this](const rclcpp::Parameter& parameter)
                 {
-                    ROS_INFO_STREAM("callback for: " << parameter.get_name() << " with value: ");
+                    ROS_DEBUG_STREAM("callback for: " << parameter.get_name());
                     _update_sensor_func();                    
                 });
     }

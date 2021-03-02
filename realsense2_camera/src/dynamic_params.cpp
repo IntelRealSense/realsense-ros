@@ -66,6 +66,7 @@ namespace realsense2_camera
     template <class T>
     void Parameters::setParamT(std::string param_name, rclcpp::ParameterValue initial_value, 
                               T& param, 
+                              std::function<void(const rclcpp::Parameter&)> func,
                               rcl_interfaces::msg::ParameterDescriptor descriptor)
     {
         if (!_node.has_parameter(param_name))
@@ -74,10 +75,11 @@ namespace realsense2_camera
         {
             param = _node.get_parameter(param_name).get_parameter_value().get<T>();
         }        
-        _param_functions[param_name] = [&param](const rclcpp::Parameter& parameter)
+        _param_functions[param_name] = [&param, func](const rclcpp::Parameter& parameter)
             {
                 std::cout << "parameter: " << parameter.get_name() << " = " << parameter.get_value<T>() << std::endl;
                 param = parameter.get_value<T>();
+                if (func) func(parameter);
             };
     }
 
@@ -87,5 +89,7 @@ namespace realsense2_camera
         _param_functions.erase(param_name);
     }
 
-    template void Parameters::setParamT<bool>(std::string param_name, rclcpp::ParameterValue initial_value, bool& param, rcl_interfaces::msg::ParameterDescriptor descriptor);    
+    template void Parameters::setParamT<bool>(std::string param_name, rclcpp::ParameterValue initial_value, bool& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template void Parameters::setParamT<int>(std::string param_name, rclcpp::ParameterValue initial_value, int& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template void Parameters::setParamT<double>(std::string param_name, rclcpp::ParameterValue initial_value, double& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
 }

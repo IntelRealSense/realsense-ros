@@ -10,11 +10,7 @@ ImuSensor::ImuSensor(rs2::sensor sensor, rclcpp::Node& node,
                      std::function<void()> update_sensor_func): 
     RosSensor(sensor, node, frame_callback, update_sensor_func) 
 {
-    registerProfileParameters();
-}
-
-void ImuSensor::getUpdatedSensorParameters()
-{
+    registerSensorParameters();
 }
 
 void ImuSensor::getUpdatedProfileParameters(const rs2::stream_profile& profile)
@@ -39,7 +35,7 @@ bool ImuSensor::isWantedProfile(const rs2::stream_profile& profile)
     return (profile.fps() == _fps[stream]);
 }
 
-void ImuSensor::registerProfileParameters()
+void ImuSensor::registerSensorParameters()
 {
     registerSensorUpdateParam("enable_%s", true);
     registerSensorUpdateParam("%s_fps", 0.0);

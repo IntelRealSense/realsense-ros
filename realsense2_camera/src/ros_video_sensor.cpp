@@ -9,35 +9,18 @@ VideoSensor::VideoSensor(rs2::sensor sensor, rclcpp::Node& node,
                          std::function<void()> update_sensor_func): 
     RosSensor(sensor, node, frame_callback, update_sensor_func) 
 {
-    registerProfileParameters();
+    registerSensorParameters();
     _allowed_formats[RS2_STREAM_DEPTH] = RS2_FORMAT_Z16;
     _allowed_formats[RS2_STREAM_INFRARED] = RS2_FORMAT_Y8;
 }
 
-void VideoSensor::getUpdatedSensorParameters()
+bool VideoSensor::start(const std::vector<stream_profile>& profiles)
 {
-    const std::string module_name(create_graph_resource_name(get_info(RS2_CAMERA_INFO_NAME)));
-
-    std::string param_name(module_name + ".width");
-    ROS_DEBUG_STREAM("reading parameter:" << param_name);
-    _width = _params.getParameters().setParam(param_name, rclcpp::ParameterValue(IMAGE_WIDTH), [this](const rclcpp::Parameter& )
-            {
-                ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
-            }).get<rclcpp::PARAMETER_INTEGER>();
-    param_name = module_name + ".height";
-    ROS_DEBUG_STREAM("reading parameter:" << param_name);
-    _height = _params.getParameters().setParam(param_name, rclcpp::ParameterValue(IMAGE_HEIGHT), [this](const rclcpp::Parameter& )
-            {
-                ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
-            }).get<rclcpp::PARAMETER_INTEGER>();
-    param_name = module_name + ".fps";
-    ROS_DEBUG_STREAM("reading parameter:" << param_name);
-    _fps = _params.getParameters().setParam(param_name, rclcpp::ParameterValue(IMAGE_FPS), [this](const rclcpp::Parameter& )
-            {
-                ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
-            }).get<rclcpp::PARAMETER_DOUBLE>();
-    ROS_DEBUG_STREAM(param_name << " = " << _fps);
-
+    if (!RosSensor::start(profiles))
+        return false;
+    _is_first_frame = true;
+    _first_frame_functions_stack.push_back([this](){set_sensor_auto_exposure_roi();});
+    return true;
 }
 
 void VideoSensor::getUpdatedProfileParameters(const rs2::stream_profile& profile)
@@ -65,7 +48,65 @@ bool VideoSensor::isWantedProfile(const rs2::stream_profile& profile)
             (_allowed_formats.find(video_profile.stream_type()) == _allowed_formats.end() || video_profile.format() == _allowed_formats[video_profile.stream_type()] ));
 }
 
-void VideoSensor::registerProfileParameters()
+void VideoSensor::registerSensorParameters()
 {
     registerSensorUpdateParam("enable_%s", true);
+
+    const std::string module_name(create_graph_resource_name(get_info(RS2_CAMERA_INFO_NAME)));
+
+    std::string param_name(module_name + ".width");
+    ROS_DEBUG_STREAM("reading parameter:" << param_name);
+    _params.getParameters().setParamT(param_name, rclcpp::ParameterValue(IMAGE_WIDTH), _width, [this](const rclcpp::Parameter& )
+            {
+                ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
+            });
+    param_name = module_name + ".height";
+    ROS_DEBUG_STREAM("reading parameter:" << param_name);
+    _params.getParameters().setParamT(param_name, rclcpp::ParameterValue(IMAGE_HEIGHT), _height, [this](const rclcpp::Parameter& )
+            {
+                ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
+            });
+    param_name = module_name + ".fps";
+    ROS_DEBUG_STREAM("reading parameter:" << param_name);
+    _params.getParameters().setParamT(param_name, rclcpp::ParameterValue(IMAGE_FPS), _fps, [this](const rclcpp::Parameter& )
+            {
+                ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
+            });
+    registerAutoExposureROIOptions();
+}
+
+void VideoSensor::set_sensor_auto_exposure_roi()
+{
+    try
+    {
+        ROS_DEBUG_STREAM("setting ROI to:" << _auto_exposure_roi.min_x << ", "
+                                           << _auto_exposure_roi.min_y << ", "
+                                           << _auto_exposure_roi.max_x << ", "
+                                           << _auto_exposure_roi.max_y);
+        this->as<rs2::roi_sensor>().set_region_of_interest(_auto_exposure_roi);
+    }
+    catch(const std::runtime_error& e)
+    {
+        ROS_ERROR_STREAM(e.what());
+    }
+}
+
+void VideoSensor::registerAutoExposureROIOptions()
+{
+    std::string module_base_name(get_info(RS2_CAMERA_INFO_NAME));
+
+    if (this->rs2::sensor::is<rs2::roi_sensor>())
+    {
+        int max_x(_width-1);
+        int max_y(_height-1);
+
+        std::string module_name = create_graph_resource_name(module_base_name) +".auto_exposure_roi";
+        _auto_exposure_roi = {0, 0, max_x, max_y};
+
+        ROS_DEBUG_STREAM("Publish roi for " << module_name);
+        _params.getParameters().setParamT(module_name + ".min_x", rclcpp::ParameterValue(0),     _auto_exposure_roi.min_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters().setParamT(module_name + ".max_x", rclcpp::ParameterValue(max_x), _auto_exposure_roi.max_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters().setParamT(module_name + ".min_y", rclcpp::ParameterValue(0),     _auto_exposure_roi.min_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters().setParamT(module_name + ".max_y", rclcpp::ParameterValue(max_y), _auto_exposure_roi.max_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+    }
 }

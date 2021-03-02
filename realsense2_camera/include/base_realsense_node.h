@@ -235,7 +235,6 @@ namespace realsense2_camera
         void publishStaticTransforms(std::vector<rs2::stream_profile> profiles);
         void publishDynamicTransforms();
         void publishIntrinsics();
-        void runFirstFrameInitialization(rs2_stream stream_type);
         void publishPointCloud(rs2::points f, const rclcpp::Time& t, const rs2::frameset& frameset);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
 
@@ -259,8 +258,6 @@ namespace realsense2_camera
         void multiple_message_callback(rs2::frame frame, imu_sync_method sync_method);
         void frame_callback(rs2::frame frame);
         
-        // void readAndSetDynamicParam(ros::NodeHandle& nh1, std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec, const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, int* option_value);
-        // void registerAutoExposureROIOptions(ros::NodeHandle& nh);
         void set_auto_exposure_roi(const std::string option_name, rs2::sensor sensor, int new_value);
         void set_sensor_auto_exposure_roi(rs2::sensor sensor);
         void startMonitoring();
@@ -269,7 +266,7 @@ namespace realsense2_camera
         void setupFiltersPublishers();
         void setAvailableSensors();
         void setCallbackFunctions();
-        void getUpdatedSensorParameters(const rs2::sensor& sensor);
+        // void getUpdatedSensorParameters(const rs2::sensor& sensor);
         void updateSensors();
         void startPublishers(const std::vector<rs2::stream_profile>& profiles, const RosSensor& sensor);
         void stopPublishers(const std::vector<rs2::stream_profile>& profiles);

@@ -46,7 +46,7 @@ void BaseRealSenseNode::monitoringProfileChanges()
             _cv_mpc.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return (!_is_running || _is_profile_changed);});
             if (_is_running && _is_profile_changed)
             {
-                ROS_WARN("Profile has changed");
+                ROS_DEBUG("Profile has changed");
                 updateSensors();
                 _is_profile_changed = false;
             }
@@ -161,7 +161,6 @@ void BaseRealSenseNode::setCallbackFunctions()
 
 void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profiles)
 {
-    ROS_WARN("stopPublishers");
     for (auto& profile : profiles)
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
@@ -253,7 +252,6 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 void BaseRealSenseNode::updateSensors()
 {
     try{
-        ROS_INFO_STREAM("Device Sensors: ");
         for(auto&& sensor : _available_ros_sensors)
         {
             std::string module_name(sensor->get_info(RS2_CAMERA_INFO_NAME));
@@ -264,7 +262,6 @@ void BaseRealSenseNode::updateSensors()
             if (is_changed)
             {
                 std::vector<stream_profile> active_profiles = sensor->get_active_streams();
-                ROS_INFO_STREAM("Stop Sensor: " << module_name);
                 sensor->stop();
                 stopPublishers(active_profiles);
 
@@ -280,7 +277,7 @@ void BaseRealSenseNode::updateSensors()
                     }
 
                     sensor->start(wanted_profiles);
-                    if (sensor->is<rs2::depth_sensor>())
+                    if (sensor->rs2::sensor::is<rs2::depth_sensor>())
                     {
                         _depth_scale_meters = sensor->as<rs2::depth_sensor>().get_depth_scale();
                     }
