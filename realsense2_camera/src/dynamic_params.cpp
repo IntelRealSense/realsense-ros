@@ -28,6 +28,19 @@ namespace realsense2_camera
                 });
     }
 
+    Parameters::~Parameters()
+    {
+        for (auto const& param : _param_functions)
+        {
+            _node.undeclare_parameter(param.first);
+        }
+        if (_ros_callback)
+        {
+            _node.remove_on_set_parameters_callback(_ros_callback.get());
+            _ros_callback.reset();
+        }
+    }
+
     rclcpp::ParameterValue Parameters::setParam(std::string param_name, rclcpp::ParameterValue initial_value, 
                               std::function<void(const rclcpp::Parameter&)> func, 
                               rcl_interfaces::msg::ParameterDescriptor descriptor)
@@ -38,8 +51,14 @@ namespace realsense2_camera
         else
         {
             result_value = _node.get_parameter(param_name).get_parameter_value();
-        }        
-        _param_functions[param_name] = func;
+        }
+        if (func)
+            _param_functions[param_name] = func;
+        else
+            _param_functions[param_name] = [this](const rclcpp::Parameter& )
+            {
+                ROS_WARN_STREAM("Parameter can not be changed in runtime.");
+            };
         return result_value;
     }
 
@@ -64,6 +83,7 @@ namespace realsense2_camera
 
     void Parameters::removeParam(std::string param_name)
     {
+        _node.undeclare_parameter(param_name);
         _param_functions.erase(param_name);
     }
 

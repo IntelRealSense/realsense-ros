@@ -93,9 +93,9 @@ void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const s
         range.to_value = int(op_range.max);
         crnt_descriptor.integer_range.push_back(range);
         if (std::is_same<T, bool>::value)
-            ROS_INFO_STREAM("Declare: BOOL::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
+            ROS_DEBUG_STREAM("Declare: BOOL::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
         else
-            ROS_INFO_STREAM("Declare: INT::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
+            ROS_DEBUG_STREAM("Declare: INT::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
     }
     else
     {

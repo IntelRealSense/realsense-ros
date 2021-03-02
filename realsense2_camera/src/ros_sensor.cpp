@@ -38,6 +38,26 @@ bool RosSensor::start(const std::vector<stream_profile>& profiles)
         return false;
     setupErrorCallback();
     open(profiles);
+
+    for (auto& profile : profiles)
+    if (profile.is<rs2::video_stream_profile>())
+    {
+        auto video_profile = profile.as<rs2::video_stream_profile>();
+        ROS_INFO_STREAM("Open profile: " <<
+                            "stream_type: " << rs2_stream_to_string(video_profile.stream_type()) << "(" << video_profile.stream_index() << ")" <<
+                            "Format: " << video_profile.format() <<
+                            ", Width: " << video_profile.width() <<
+                            ", Height: " << video_profile.height() <<
+                            ", FPS: " << video_profile.fps());
+    }
+    else
+    {
+        ROS_INFO_STREAM("Open profile: " <<
+                            "stream_type: " << rs2_stream_to_string(profile.stream_type()) << "(" << profile.stream_index() << ")" <<
+                            "Format: " << profile.format() <<
+                            ", FPS: " << profile.fps());
+    }
+
     rs2::sensor::start(_frame_callback);
     return true;
 }
@@ -50,35 +70,41 @@ void RosSensor::stop()
     close();
 }
 
-bool compare_profile(stream_profile a, stream_profile b)
+bool profiles_equal(const rs2::stream_profile& a, const rs2::stream_profile& b)
 {
-    return (a.unique_id() < b.unique_id());
-    // if ((a.stream_type() < b.stream_type()) ||
-    //     (a.stream_index() < b.stream_index()) ||
-    //     (a.fps() < b.fps())
-    //     return true;
-    // if (a.is<rs2::video_stream_profile>) && (b.is<rs2::video_stream_profile>)
-    // {
-    //     auto va = a.as<rs2::video_stream_profile>();
-    //     auto vb = b.as<rs2::video_stream_profile>();
-    //     if ((a.format() < b.format()) ||
-    //         (a.width() < b.width()) ||
-    //         (a.height() < b.height())
-    //         return true;
-    // }
-    // else if (a.is<rs2::motion_stream_profile>) && (b.is<rs2::video_stream_profile>)
-    // else
-    // {
-    //     return true;
-    // }
-    
-    //     (a.stream_index() < b.stream_index()) ||
-    //     (a.stream_index() < b.stream_index()) ||
-    //     (a.stream_index() < b.stream_index()) ||
+    if (a.is<rs2::video_stream_profile>() && b.is<rs2::video_stream_profile>())
+    {
+        auto va = a.as<rs2::video_stream_profile>();
+        auto vb = b.as<rs2::video_stream_profile>();
+        return (va == vb && va.width() == vb.width() && va.height() == vb.height());
+    }
+    return (a == b);
+}
 
-    //    ()
-    //     return true;
-    // if ()
+bool is_profiles_in_profiles(const std::vector<stream_profile>& sub_profiles, const std::vector<stream_profile>& all_profiles)
+{
+    for (auto& a : sub_profiles)
+    {
+        bool found_profile(false);
+        for (auto& b : all_profiles)
+        {
+            if (profiles_equal(a, b))
+            {
+                found_profile = true;
+                break;
+            }
+        }
+        if (!found_profile)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool compare_profiles_lists(const std::vector<stream_profile>& active_profiles, const std::vector<stream_profile>& wanted_profiles)
+{
+    return (is_profiles_in_profiles(active_profiles, wanted_profiles) && is_profiles_in_profiles(wanted_profiles, active_profiles));
 }
 
 bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
@@ -94,7 +120,6 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
             getUpdatedProfileParameters(profile);
         if (!_enabled_profiles[sip])
             continue;
-        ROS_DEBUG_STREAM_ONCE("Looking for wanted profile: " << rs2_stream_to_string(sip.first) << ":" << sip.second);
         if (found_sips.find(sip) == found_sips.end() && isWantedProfile(profile))
         {
             wanted_profiles.push_back(profile);
@@ -103,9 +128,8 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
         }
     }
 
-    std::set<stream_profile, bool(*)(stream_profile,stream_profile)> set_active_profiles(active_profiles.begin(), active_profiles.end(), compare_profile);
-    ROS_DEBUG_STREAM("set_active_profiles.size() = " << set_active_profiles.size());
-    for (auto& profile : set_active_profiles)
+    ROS_DEBUG_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "active_profiles.size() = " << active_profiles.size());
+    for (auto& profile : active_profiles)
     {
         auto video_profile = profile.as<rs2::video_stream_profile>();
         ROS_DEBUG_STREAM("Sensor profile: " <<
@@ -117,9 +141,8 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
                             ", FPS: " << video_profile.fps());
     }
 
-    std::set<stream_profile, bool(*)(stream_profile,stream_profile)> set_wanted_profiles(wanted_profiles.begin(), wanted_profiles.end(), compare_profile);
-    ROS_DEBUG_STREAM("wanted_profiles");
-    for (auto& profile : set_wanted_profiles)
+    ROS_DEBUG_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "wanted_profiles");
+    for (auto& profile : wanted_profiles)
     {
         auto video_profile = profile.as<rs2::video_stream_profile>();
         ROS_DEBUG_STREAM("Sensor profile: " <<
@@ -130,8 +153,7 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
                             ", unique_id: " << video_profile.unique_id() <<
                             ", FPS: " << video_profile.fps());
     }
-
-    if (set_active_profiles == set_wanted_profiles)
+    if (compare_profiles_lists(active_profiles, wanted_profiles))
     {
         return false;
     }
@@ -160,21 +182,3 @@ void RosSensor::registerSensorUpdateParam(std::string template_name, T value)
 }
 template void RosSensor::registerSensorUpdateParam<bool>(std::string template_name, bool value);
 template void RosSensor::registerSensorUpdateParam<double>(std::string template_name, double value);
-
-// void RosSensor::startWaitingUpdates()
-// {
-//     int time_interval(1000);
-//     std::function<void()> func = [this, time_interval](){
-//         std::mutex mu;
-//         std::unique_lock<std::mutex> lock(mu);
-//         while(_is_running) {
-//             _cv.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return !_is_running;});
-//             if (_is_running)
-//             {
-//                 publish_temperature();
-//             }
-//         }
-//     };
-//     _monitoring_t = std::make_shared<std::thread>(func);
-// }
-

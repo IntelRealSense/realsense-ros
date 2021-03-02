@@ -20,13 +20,24 @@ void VideoSensor::getUpdatedSensorParameters()
 
     std::string param_name(module_name + ".width");
     ROS_DEBUG_STREAM("reading parameter:" << param_name);
-    _width  = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : _node.declare_parameter(param_name, rclcpp::ParameterValue(IMAGE_WIDTH))).get<rclcpp::PARAMETER_INTEGER>();
+    _width = _params.getParameters().setParam(param_name, rclcpp::ParameterValue(IMAGE_WIDTH), [this](const rclcpp::Parameter& )
+            {
+                ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
+            }).get<rclcpp::PARAMETER_INTEGER>();
     param_name = module_name + ".height";
     ROS_DEBUG_STREAM("reading parameter:" << param_name);
-    _height = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : _node.declare_parameter(param_name, rclcpp::ParameterValue(IMAGE_HEIGHT))).get<rclcpp::PARAMETER_INTEGER>();        
+    _height = _params.getParameters().setParam(param_name, rclcpp::ParameterValue(IMAGE_HEIGHT), [this](const rclcpp::Parameter& )
+            {
+                ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
+            }).get<rclcpp::PARAMETER_INTEGER>();
     param_name = module_name + ".fps";
     ROS_DEBUG_STREAM("reading parameter:" << param_name);
-    _fps   = (_node.has_parameter(param_name) ? _node.get_parameter(param_name).get_parameter_value() : _node.declare_parameter(param_name, rclcpp::ParameterValue(IMAGE_FPS))).get<rclcpp::PARAMETER_DOUBLE>();
+    _fps = _params.getParameters().setParam(param_name, rclcpp::ParameterValue(IMAGE_FPS), [this](const rclcpp::Parameter& )
+            {
+                ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
+            }).get<rclcpp::PARAMETER_DOUBLE>();
+    ROS_DEBUG_STREAM(param_name << " = " << _fps);
+
 }
 
 void VideoSensor::getUpdatedProfileParameters(const rs2::stream_profile& profile)
