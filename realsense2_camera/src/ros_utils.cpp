@@ -40,6 +40,25 @@ std::string create_graph_resource_name(const std::string &original_name)
     return fixed_name;
 }
 
+const rmw_qos_profile_t qos_string_to_qos(std::string str)
+{
+    if (str == "UNKNOWN")
+        return rmw_qos_profile_unknown;
+    if (str == "SYSTEM_DEFAULT")
+        return rmw_qos_profile_system_default;
+    if (str == "PARAMETER_EVENTS")
+        return rmw_qos_profile_parameter_events;
+    if (str == "SERVICES_DEFAULT")
+        return rmw_qos_profile_services_default;
+    if (str == "PARAMETERS")
+        return rmw_qos_profile_parameters;
+    if (str == "DEFAULT")
+        return rmw_qos_profile_default;
+    if (str == "SENSOR_DATA")
+        return rmw_qos_profile_sensor_data;
+    throw std::runtime_error("Unknown QoS string " + str);
+}
+
 rs2_stream rs2_string_to_stream(std::string str)
 {
     if (str == "RS2_STREAM_ANY")

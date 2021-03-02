@@ -30,23 +30,10 @@ namespace realsense2_camera
     bool isValidCharInName(char c);
 
     std::string create_graph_resource_name(const std::string &original_name);
+    const rmw_qos_profile_t qos_string_to_qos(std::string str);
 
     rs2_stream rs2_string_to_stream(std::string str);
 
     stream_index_pair rs2_string_to_sip(const std::string& str);
 }
-// template<class T>
-// rcl_interfaces::msg::SetParametersResult set_param(T* variable, std::string option_name, const std::vector<rclcpp::Parameter> & parameters);
-// { 
-//     rcl_interfaces::msg::SetParametersResult result;
-//     result.successful = true;
-//     for (const auto & parameter : parameters) {
-//         if (option_name == parameter.get_name())
-//         {
-//             // std::cout << "set_option: " << option_name << " = " << parameter.get_value<T>() << std::endl;
-//             variable = parameter.get_value<T>();
-//         }
-//     }
-//     return result;
-// }
 #endif //___REALSENSE_ROS_UTILS_HEADER___

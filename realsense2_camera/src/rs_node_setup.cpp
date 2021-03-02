@@ -189,6 +189,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 {
     if (sensor.is<VideoSensor>())
     {
+        const std::string module_name(create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME)));
         for (auto& profile : profiles)
         {
             stream_index_pair sip(profile.stream_type(), profile.stream_index());
@@ -204,7 +205,13 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             // double fps(profile.fps());
             // _rs_diagnostic_updater.Add(stream_name, diagnostic_updater::FrequencyStatusParam(&fps, &fps));
             
-            _image_publishers[sip] = {image_transport::create_publisher(&_node, image_raw.str(), rmw_qos_profile_sensor_data), stream_name}; // TODO: remove "stream_name"
+            std::string param_name(module_name + "." + create_graph_resource_name(rs2_stream_to_string(sip.first)) + ".qos");
+            std::string qos_str = _parameters.setParam(param_name, rclcpp::ParameterValue(IMAGE_QOS), [this](const rclcpp::Parameter& )
+                    {
+                        ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
+                    }).get<rclcpp::PARAMETER_STRING>();
+            
+            _image_publishers[sip] = {image_transport::create_publisher(&_node, image_raw.str(), qos_string_to_qos(qos_str)), stream_name}; // TODO: remove "stream_name"
             _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);
 
             if ((sip != DEPTH) && sip.second < 2)
@@ -215,7 +222,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
                 // _rs_diagnostic_updater.Add(aligned_stream_name, diagnostic_updater::FrequencyStatusParam(&fps, &fps));
-                _depth_aligned_image_publishers[sip] = {image_transport::create_publisher(&_node, aligned_image_raw.str(), rmw_qos_profile_sensor_data), aligned_stream_name};
+                _depth_aligned_image_publishers[sip] = {image_transport::create_publisher(&_node, aligned_image_raw.str(), qos_string_to_qos(qos_str)), aligned_stream_name};
                 _depth_aligned_info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(), 1);
             }
         }
