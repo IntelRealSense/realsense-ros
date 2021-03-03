@@ -11,7 +11,7 @@ namespace realsense2_camera
     {
         if (_ros_callback)
         {
-            _node.remove_on_set_parameters_callback(_ros_callback.get());
+            _node.remove_on_set_parameters_callback((rclcpp::node_interfaces::OnSetParametersCallbackHandle*)(_ros_callback.get()));
             _ros_callback.reset();
         }
     }

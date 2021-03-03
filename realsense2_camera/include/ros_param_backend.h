@@ -16,6 +16,6 @@ namespace realsense2_camera
         private:
             rclcpp::Node& _node;
             rclcpp::Logger _logger;
-            rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr _ros_callback;
+            std::shared_ptr<void> _ros_callback;
     };
 }
