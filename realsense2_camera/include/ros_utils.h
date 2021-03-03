@@ -2,8 +2,6 @@
 #ifndef ___REALSENSE_ROS_UTILS_HEADER___
 #define ___REALSENSE_ROS_UTILS_HEADER___
 
-
-
 #include <iostream>
 #include <vector>
 #include <rclcpp/rclcpp.hpp>

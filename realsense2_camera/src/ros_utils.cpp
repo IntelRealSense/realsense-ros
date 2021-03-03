@@ -42,8 +42,10 @@ std::string create_graph_resource_name(const std::string &original_name)
 
 const rmw_qos_profile_t qos_string_to_qos(std::string str)
 {
+#ifndef DASHING
     if (str == "UNKNOWN")
         return rmw_qos_profile_unknown;
+#endif
     if (str == "SYSTEM_DEFAULT")
         return rmw_qos_profile_system_default;
     if (str == "PARAMETER_EVENTS")
