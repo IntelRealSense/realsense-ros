@@ -1,6 +1,7 @@
 #pragma once
 #include <ros_utils.h>
 #include "constants.h"
+#include "ros_param_backend.h"
 
 namespace realsense2_camera
 {
@@ -18,6 +19,8 @@ namespace realsense2_camera
                            T& param,
                            std::function<void(const rclcpp::Parameter&)> func = std::function<void(const rclcpp::Parameter&)>(),
                            rcl_interfaces::msg::ParameterDescriptor descriptor=rcl_interfaces::msg::ParameterDescriptor());
+            template <class T>
+            void setParamValue(T& param, const T& value); // function updates the parameter value both locally and in the parameters server
             void removeParam(std::string param_name);
 
         private:
@@ -26,6 +29,7 @@ namespace realsense2_camera
             rclcpp::Node& _node;
             rclcpp::Logger _logger;
             std::map<std::string, std::function<void(const rclcpp::Parameter&)> > _param_functions;
-            rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr _ros_callback;
+            std::map<void*, std::string> _param_names;
+            ParametersBackend _params_backend;
     };
 }

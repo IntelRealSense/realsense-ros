@@ -118,6 +118,7 @@ add_library(${PROJECT_NAME} SHARED
     include/dynamic_params.h
     include/sensor_params.h
     include/named_filter.h
+    include/ros_param_backend.h
     
 #    include/t265_realsense_node.h
     src/realsense_node_factory.cpp
@@ -131,6 +132,7 @@ add_library(${PROJECT_NAME} SHARED
     src/dynamic_params.cpp
     src/sensor_params.cpp
     src/named_filter.cpp
+    src/ros_param_backend_foxy.cpp
 #    src/t265_realsense_node.cpp
     )
 

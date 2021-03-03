@@ -79,10 +79,21 @@ void VideoSensor::set_sensor_auto_exposure_roi()
 {
     try
     {
-        ROS_DEBUG_STREAM("setting ROI to:" << _auto_exposure_roi.min_x << ", "
-                                           << _auto_exposure_roi.min_y << ", "
-                                           << _auto_exposure_roi.max_x << ", "
-                                           << _auto_exposure_roi.max_y);
+        bool update_roi_range(false);
+        if (_auto_exposure_roi.max_x > _width)
+        {
+            _params.getParameters().setParamValue(_auto_exposure_roi.max_x, _width-1);
+            update_roi_range = true;
+        }
+        if (_auto_exposure_roi.max_y > _height)
+        {
+            _params.getParameters().setParamValue(_auto_exposure_roi.max_y, _height-1);
+            update_roi_range = true;
+        }
+        if (update_roi_range)
+        {
+            registerAutoExposureROIOptions();
+        }
         this->as<rs2::roi_sensor>().set_region_of_interest(_auto_exposure_roi);
     }
     catch(const std::runtime_error& e)

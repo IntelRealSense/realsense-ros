@@ -136,7 +136,6 @@ void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const s
 
 void SensorParams::registerDynamicOptions(rs2::options sensor, const std::string& module_name)
 {
-    rclcpp::Parameter node_param;
     for (auto i = 0; i < RS2_OPTION_COUNT; i++)
     {
         rs2_option option = static_cast<rs2_option>(i);
