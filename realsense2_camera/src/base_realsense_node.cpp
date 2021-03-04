@@ -939,15 +939,14 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
     Q = quaternion_optical * Q * quaternion_optical.inverse();
 
     float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
-    std::string base_frame_id = FRAME_ID(base_sip);
-    publish_static_tf(transform_ts_, trans, Q, base_frame_id, FRAME_ID(sip));
+    publish_static_tf(transform_ts_, trans, Q, _base_frame_id, FRAME_ID(sip));
 
     // Transform stream frame to stream optical frame
     publish_static_tf(transform_ts_, zero_trans, quaternion_optical, FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
 
     if (profile.is<rs2::video_stream_profile>() && profile.stream_type() != RS2_STREAM_DEPTH && profile.stream_index() == 1)
     {
-        publish_static_tf(transform_ts_, trans, Q, base_frame_id, ALIGNED_DEPTH_TO_FRAME_ID(sip));
+        publish_static_tf(transform_ts_, trans, Q, _base_frame_id, ALIGNED_DEPTH_TO_FRAME_ID(sip));
         publish_static_tf(transform_ts_, zero_trans, quaternion_optical, ALIGNED_DEPTH_TO_FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
     }
 }

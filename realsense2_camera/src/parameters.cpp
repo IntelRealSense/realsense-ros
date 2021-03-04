@@ -31,6 +31,7 @@ void BaseRealSenseNode::getParameters()
    
     _hold_back_imu_for_frames = _parameters->setParam("hold_back_imu_for_frames", rclcpp::ParameterValue(HOLD_BACK_IMU_FOR_FRAMES)).get<rclcpp::PARAMETER_BOOL>();
     _publish_odom_tf = _parameters->setParam("publish_odom_tf", rclcpp::ParameterValue(PUBLISH_ODOM_TF)).get<rclcpp::PARAMETER_BOOL>();
+    _base_frame_id = _parameters->setParam("base_frame_id", rclcpp::ParameterValue(DEFAULT_BASE_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
 }
 
 void BaseRealSenseNode::set_auto_exposure_roi(const std::string option_name, rs2::sensor sensor, int new_value)

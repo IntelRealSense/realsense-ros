@@ -98,6 +98,7 @@ namespace realsense2_camera
     const bool PUBLISH_ODOM_TF = true;
 
 
+    const std::string DEFAULT_BASE_FRAME_ID            = "camera_link";
     const std::string DEFAULT_ODOM_FRAME_ID            = "odom_frame";
     const std::string DEFAULT_IMU_OPTICAL_FRAME_ID     = "camera_imu_optical_frame";
 
