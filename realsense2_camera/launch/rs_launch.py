@@ -79,7 +79,7 @@ def set_configurable_parameters(parameters):
     return dict([(param['name'], LaunchConfiguration(param['name'])) for param in parameters])
 
 def generate_launch_description():
-    if (os.getenv('ROS_DISTRO', "dashing")):
+    if (os.getenv('ROS_DISTRO') == "dashing"):
         return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
             # Realsense
             launch_ros.actions.Node(
@@ -110,7 +110,7 @@ def generate_launch_description():
         return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
             # Realsense
             launch_ros.actions.Node(
-                condition=IfCondition(PythonExpression(["'", LaunchConfiguration('config_file'), "' == ''"])),
+                condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " == ''"])),
                 package='realsense2_camera', 
                 namespace=LaunchConfiguration("camera_name"),
                 name=LaunchConfiguration("camera_name"),
@@ -121,7 +121,7 @@ def generate_launch_description():
                 emulate_tty=True,
                 ),
             launch_ros.actions.Node(
-                condition=IfCondition(PythonExpression(["'", LaunchConfiguration('config_file'), "' != ''"])),
+                condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " != ''"])),
                 package='realsense2_camera', 
                 namespace=LaunchConfiguration("camera_name"),
                 name=LaunchConfiguration("camera_name"),
