@@ -19,8 +19,8 @@ namespace realsense2_camera
             SensorParams _params;
 
         public:
-            NamedFilter(std::string name, std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, rclcpp::Logger logger, bool is_enabled=false):
-            _name(name), _filter(filter), _is_enabled(is_enabled), _logger(logger), _params(node, logger)
+            NamedFilter(std::string name, std::shared_ptr<rs2::filter> filter, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled=false):
+            _name(name), _filter(filter), _is_enabled(is_enabled), _logger(logger), _params(parameters, logger)
             {
                 setParameters();
             }
@@ -39,7 +39,7 @@ namespace realsense2_camera
     class PointcloudFilter : public NamedFilter
     {
         public:
-            PointcloudFilter(std::string name, std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, rclcpp::Logger logger, bool is_enabled=false);
+            PointcloudFilter(std::string name, std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled=false);
         
             void set(const bool is_enabled) override;
             void Publish(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset, const std::string& frame_id);

@@ -109,7 +109,7 @@ void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const s
     T new_val;
     try
     {
-        rclcpp::ParameterValue pValue = (_parameters.setParam(option_name, rclcpp::ParameterValue(option_value), [option, sensor, option_name](const rclcpp::Parameter& parameter)
+        rclcpp::ParameterValue pValue = (_parameters->setParam(option_name, rclcpp::ParameterValue(option_value), [option, sensor, option_name](const rclcpp::Parameter& parameter)
                     {
                         param_set_option<T>(sensor, option, option_name, parameter);
                     }, crnt_descriptor));

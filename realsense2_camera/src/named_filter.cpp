@@ -15,17 +15,17 @@ void NamedFilter::setParameters()
     _params.registerDynamicOptions(*(_filter.get()), module_name_str.str());
     module_name_str << ".enable";
 
-    _params.getParameters().setParam(module_name_str.str(), rclcpp::ParameterValue(_is_enabled), [this](const rclcpp::Parameter& parameter)
+    _params.getParameters()->setParam(module_name_str.str(), rclcpp::ParameterValue(_is_enabled), [this](const rclcpp::Parameter& parameter)
             {
                 set(parameter.get_value<bool>());
             });
 }
 
-PointcloudFilter::PointcloudFilter(std::string name, std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, rclcpp::Logger logger, bool is_enabled):
-    NamedFilter(name, filter, node, logger, is_enabled),
+PointcloudFilter::PointcloudFilter(std::string name, std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled):
+    NamedFilter(name, filter, parameters, logger, is_enabled),
     _node(node)
     {
-        _params.getParameters().setParamT(std::string("allow_no_texture_points"), rclcpp::ParameterValue(ALLOW_NO_TEXTURE_POINTS), _allow_no_texture_points);
+        _params.getParameters()->setParamT(std::string("allow_no_texture_points"), rclcpp::ParameterValue(ALLOW_NO_TEXTURE_POINTS), _allow_no_texture_points);
     }
 
 void PointcloudFilter::set(const bool is_enabled)

@@ -66,20 +66,19 @@ size_t SyncedImuPublisher::getNumSubscribers()
     return _publisher->get_subscription_count();
 }
 
-
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
-                                    rs2::device dev, const std::string& serial_no) :
+                                     rs2::device dev,
+                                     std::shared_ptr<Parameters> parameters) :
     _is_running(true),
     _node(node),
     _logger(rclcpp::get_logger("RealSenseCameraNode")),
     // _rs_diagnostic_updater(diagnostic_updater, serial_no),
     _dev(dev),
     _json_file_path(""),
-    _serial_no(serial_no),
     _static_tf_broadcaster(node),
     _is_initialized_time_base(false),
     _is_profile_changed(false),
-    _parameters(node)
+    _parameters(parameters)
 {
     _image_format[1] = CV_8UC1;    // CVBridge type
     _image_format[2] = CV_16UC1;    // CVBridge type
@@ -209,14 +208,14 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
 
 void BaseRealSenseNode::setupFilters()
 {
-    _filters.push_back(std::make_shared<NamedFilter>("decimation", std::make_shared<rs2::decimation_filter>(), _node, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("disparity_start", std::make_shared<rs2::disparity_transform>(), _node, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("spatial", std::make_shared<rs2::spatial_filter>(), _node, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("temporal", std::make_shared<rs2::temporal_filter>(), _node, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("hole_filling", std::make_shared<rs2::hole_filling_filter>(), _node, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("disparity_end", std::make_shared<rs2::disparity_transform>(false), _node, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("colorizer", std::make_shared<rs2::colorizer>(), _node, _logger)); // TODO: Callback must take care of depth image_format, encoding etc.
-    _filters.push_back(std::make_shared<PointcloudFilter>("pointcloud", std::make_shared<rs2::pointcloud>(), _node, _logger, false));
+    _filters.push_back(std::make_shared<NamedFilter>("decimation", std::make_shared<rs2::decimation_filter>(), _parameters, _logger));
+    _filters.push_back(std::make_shared<NamedFilter>("disparity_start", std::make_shared<rs2::disparity_transform>(), _parameters, _logger));
+    _filters.push_back(std::make_shared<NamedFilter>("spatial", std::make_shared<rs2::spatial_filter>(), _parameters, _logger));
+    _filters.push_back(std::make_shared<NamedFilter>("temporal", std::make_shared<rs2::temporal_filter>(), _parameters, _logger));
+    _filters.push_back(std::make_shared<NamedFilter>("hole_filling", std::make_shared<rs2::hole_filling_filter>(), _parameters, _logger));
+    _filters.push_back(std::make_shared<NamedFilter>("disparity_end", std::make_shared<rs2::disparity_transform>(false), _parameters, _logger));
+    _filters.push_back(std::make_shared<NamedFilter>("colorizer", std::make_shared<rs2::colorizer>(), _parameters, _logger)); // TODO: Callback must take care of depth image_format, encoding etc.
+    _filters.push_back(std::make_shared<PointcloudFilter>("pointcloud", std::make_shared<rs2::pointcloud>(), _node, _parameters, _logger));
 }
 
 cv::Mat& BaseRealSenseNode::fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image)

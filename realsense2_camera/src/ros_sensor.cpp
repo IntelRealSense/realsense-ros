@@ -27,14 +27,13 @@ void RosSensor::setupErrorCallback()
 }
 
 RosSensor::RosSensor(rs2::sensor sensor,
-    rclcpp::Node& node, 
+    std::shared_ptr<Parameters> parameters, 
     std::function<void(rs2::frame)> frame_callback,
     std::function<void()> update_sensor_func): 
     rs2::sensor(sensor),
-    _node(node),
     _logger(rclcpp::get_logger("RealSenseCameraNode")),
     _origin_frame_callback(frame_callback),
-    _params(node, _logger),
+    _params(parameters, _logger),
     _update_sensor_func(update_sensor_func)
 {
     _frame_callback = [this](rs2::frame frame)
@@ -152,12 +151,10 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
 {
     wanted_profiles.clear();
     std::vector<stream_profile> active_profiles = get_active_streams();
-    std::set<stream_index_pair> checked_sips, found_sips;
+    std::set<stream_index_pair> found_sips;
     for (auto& profile : get_stream_profiles())
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
-        if (checked_sips.insert(sip).second == true)
-            getUpdatedProfileParameters(profile);
         if (!_enabled_profiles[sip])
             continue;
         if (found_sips.find(sip) == found_sips.end() && isWantedProfile(profile))
@@ -201,8 +198,10 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
 }
 
 template<class T>
-void RosSensor::registerSensorUpdateParam(std::string template_name, T value)
+void RosSensor::registerSensorUpdateParam(std::string template_name, std::map<stream_index_pair, T>& params, T value)
 {
+    // For each pair of stream-index, Function add a parameter to <params> and advertise it by <template_name>.
+    // parameters in <params> are dynamically being updated.
     std::set<stream_index_pair> checked_sips, found_sips;
     for (auto& profile : get_stream_profiles())
     {
@@ -213,12 +212,12 @@ void RosSensor::registerSensorUpdateParam(std::string template_name, T value)
         char* param_name = new char[template_name.size() + stream_name.size()];
         sprintf(param_name, template_name.c_str(), stream_name.c_str());
 
-        _params.getParameters().setParam(std::string(param_name), rclcpp::ParameterValue(value), [this](const rclcpp::Parameter& parameter)
+        _params.getParameters()->setParamT(std::string(param_name), rclcpp::ParameterValue(value), params[sip], [this](const rclcpp::Parameter& parameter)
                 {
                     ROS_DEBUG_STREAM("callback for: " << parameter.get_name());
                     _update_sensor_func();                    
                 });
     }
 }
-template void RosSensor::registerSensorUpdateParam<bool>(std::string template_name, bool value);
-template void RosSensor::registerSensorUpdateParam<double>(std::string template_name, double value);
+template void RosSensor::registerSensorUpdateParam<bool>(std::string template_name, std::map<stream_index_pair, bool>& params, bool value);
+template void RosSensor::registerSensorUpdateParam<double>(std::string template_name, std::map<stream_index_pair, double>& params, double value);

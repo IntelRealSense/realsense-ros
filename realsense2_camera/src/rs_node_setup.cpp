@@ -84,7 +84,8 @@ void BaseRealSenseNode::setAvailableSensors()
     auto device_name = _dev.get_info(RS2_CAMERA_INFO_NAME);
     ROS_INFO_STREAM("Device Name: " << device_name);
 
-    ROS_INFO_STREAM("Device Serial No: " << _serial_no);
+    auto serial_no = _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+    ROS_INFO_STREAM("Device Serial No: " << serial_no);
 
     auto device_port_id = _dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
 
@@ -128,17 +129,17 @@ void BaseRealSenseNode::setAvailableSensors()
             sensor.is<rs2::fisheye_sensor>())
         {
             ROS_INFO_STREAM("Set " << module_name << " as VideoSensor.");
-            rosSensor = std::make_shared<VideoSensor>(sensor, _node, frame_callback_function, update_sensor_func);
+            rosSensor = std::make_shared<VideoSensor>(sensor, _parameters, frame_callback_function, update_sensor_func);
         }
         else if (sensor.is<rs2::motion_sensor>())
         {
             ROS_INFO_STREAM("Set " << module_name << " as ImuSensor.");
-            rosSensor = std::make_shared<ImuSensor>(sensor, _node, imu_callback_function, update_sensor_func);
+            rosSensor = std::make_shared<ImuSensor>(sensor, _parameters, imu_callback_function, update_sensor_func);
         }
         // else if (sensor.is<rs2::pose_sensor>())
         // {
         //     ROS_INFO_STREAM("Set " << module_name << " as PoseSensor.");
-        //     rosSensor = std::make_shared<PoseSensor>(sensor, _node, multiple_message_callback_function, update_sensor_func);
+        //     rosSensor = std::make_shared<PoseSensor>(sensor, _parameters, multiple_message_callback_function, update_sensor_func);
         // }
         else
         {
@@ -205,7 +206,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             // _rs_diagnostic_updater.Add(stream_name, diagnostic_updater::FrequencyStatusParam(&fps, &fps));
             
             std::string param_name(module_name + "." + create_graph_resource_name(rs2_stream_to_string(sip.first)) + ".qos");
-            std::string qos_str = _parameters.setParam(param_name, rclcpp::ParameterValue(IMAGE_QOS), [this](const rclcpp::Parameter& )
+            std::string qos_str = _parameters->setParam(param_name, rclcpp::ParameterValue(IMAGE_QOS), [this](const rclcpp::Parameter& )
                     {
                         ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
                     }).get<rclcpp::PARAMETER_STRING>();

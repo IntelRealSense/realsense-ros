@@ -8,12 +8,11 @@ namespace realsense2_camera
     class SensorParams
     {
         public:
-            SensorParams(rclcpp::Node& node, rclcpp::Logger logger):
+            SensorParams(std::shared_ptr<Parameters> parameters, rclcpp::Logger logger):
                 _logger(logger),
-                _node(node),
-                _parameters(_node) {};
+                _parameters(parameters) {};
             void registerDynamicOptions(rs2::options sensor, const std::string& module_name);
-            Parameters& getParameters() {return _parameters;};
+            std::shared_ptr<Parameters> getParameters() {return _parameters;};
 
         public:
             rclcpp::Logger _logger;
@@ -23,8 +22,6 @@ namespace realsense2_camera
             void set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name, const std::string& description_addition="");
 
         private:
-            rclcpp::Node& _node;
-            Parameters _parameters;
-
+            std::shared_ptr<Parameters> _parameters;
     };
 }

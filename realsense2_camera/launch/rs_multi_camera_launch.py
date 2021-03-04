@@ -20,7 +20,7 @@
 # For each device, the parameter name was changed to include an index.
 # For example: to set camera_name for device1 set parameter camera_name1.
 # command line example:
-# ros2 launch realsense2_camera rs_multi_camera.launch.py camera_name1:=D400 config_file1:='d435i.yaml' device_type2:=l5. device_type1:=d4..
+# ros2 launch realsense2_camera rs_multi_camera_launch.py camera_name1:=D400 device_type2:=l5. device_type1:=d4..
 
 """Launch realsense2_camera node."""
 import copy

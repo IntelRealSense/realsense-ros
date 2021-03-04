@@ -160,7 +160,8 @@ namespace realsense2_camera
     {
     public:
         BaseRealSenseNode(rclcpp::Node& node,
-                          rs2::device dev, const std::string& serial_no);
+                          rs2::device dev,
+                          std::shared_ptr<Parameters> parameters);
         ~BaseRealSenseNode();
 
     public:
@@ -280,7 +281,6 @@ namespace realsense2_camera
         std::map<std::string, std::function<void(rs2::frame)>> _sensors_callback;
 
         std::string _json_file_path;
-        std::string _serial_no;
         float _depth_scale_meters;
         float _clipping_distance;
 
@@ -347,7 +347,7 @@ namespace realsense2_camera
 
         rs2::stream_profile _base_profile;
 
-        Parameters _parameters;
+        std::shared_ptr<Parameters> _parameters;
     };//end class
 }
 #endif //___BASE_REALSENSE_NODE_HEADER___
