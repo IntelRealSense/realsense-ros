@@ -115,12 +115,11 @@ set(SOURCES
     src/parameters.cpp
     src/rs_node_setup.cpp
     src/ros_sensor.cpp
-    src/ros_video_sensor.cpp
-    src/ros_imu_sensor.cpp
     src/ros_utils.cpp
     src/dynamic_params.cpp
     src/sensor_params.cpp
     src/named_filter.cpp
+    src/profile_manager.cpp
   )
 
 if(NOT DEFINED ENV{ROS_DISTRO})
@@ -149,6 +148,7 @@ add_library(${PROJECT_NAME} SHARED
     include/sensor_params.h
     include/named_filter.h
     include/ros_param_backend.h
+    include/profile_manager.h
     
     ${SOURCES}
     )

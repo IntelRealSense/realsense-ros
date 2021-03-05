@@ -129,18 +129,18 @@ void BaseRealSenseNode::setAvailableSensors()
             sensor.is<rs2::fisheye_sensor>())
         {
             ROS_INFO_STREAM("Set " << module_name << " as VideoSensor.");
-            rosSensor = std::make_shared<VideoSensor>(sensor, _parameters, frame_callback_function, update_sensor_func);
+            rosSensor = std::make_shared<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func);
         }
         else if (sensor.is<rs2::motion_sensor>())
         {
             ROS_INFO_STREAM("Set " << module_name << " as ImuSensor.");
-            rosSensor = std::make_shared<ImuSensor>(sensor, _parameters, imu_callback_function, update_sensor_func);
+            rosSensor = std::make_shared<RosSensor>(sensor, _parameters, imu_callback_function, update_sensor_func);
         }
-        // else if (sensor.is<rs2::pose_sensor>())
-        // {
-        //     ROS_INFO_STREAM("Set " << module_name << " as PoseSensor.");
-        //     rosSensor = std::make_shared<PoseSensor>(sensor, _parameters, multiple_message_callback_function, update_sensor_func);
-        // }
+        else if (sensor.is<rs2::pose_sensor>())
+        {
+            ROS_INFO_STREAM("Set " << module_name << " as PoseSensor.");
+            rosSensor = std::make_shared<RosSensor>(sensor, _parameters, multiple_message_callback_function, update_sensor_func);
+        }
         else
         {
             ROS_ERROR_STREAM("Module Name \"" << module_name << "\" does not define a callback.");
@@ -187,12 +187,12 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
 
 void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profiles, const RosSensor& sensor)
 {
-    if (sensor.is<VideoSensor>())
+    const std::string module_name(create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME)));
+    for (auto& profile : profiles)
     {
-        const std::string module_name(create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME)));
-        for (auto& profile : profiles)
+        stream_index_pair sip(profile.stream_type(), profile.stream_index());
+        if (profile.is<rs2::video_stream_profile>())
         {
-            stream_index_pair sip(profile.stream_type(), profile.stream_index());
             std::stringstream image_raw, camera_info;
             bool rectified_image = false;
             if (sensor.rs2::sensor::is<rs2::depth_sensor>())
@@ -225,14 +225,10 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                 _depth_aligned_image_publishers[sip] = {image_transport::create_publisher(&_node, aligned_image_raw.str(), qos_string_to_qos(qos_str)), aligned_stream_name};
                 _depth_aligned_info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(), 1);
             }
+            continue;
         }
-    }
-    else if (sensor.is<ImuSensor>())
-    {
-        // _synced_imu_publisher = std::make_shared<SyncedImuPublisher>();
-        for (auto& profile : profiles)
+        if (profile.is<rs2::motion_stream_profile>())
         {
-            stream_index_pair sip(profile.stream_type(), profile.stream_index());
             std::stringstream data_topic_name, info_topic_name;
             std::string stream_name(STREAM_NAME(sip));
             data_topic_name << stream_name << "/sample";
@@ -242,12 +238,17 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             _imu_info_publisher[sip] = _node.create_publisher<IMUInfo>(info_topic_name.str(), 1);
             IMUInfo info_msg = getImuInfo(profile);
             _imu_info_publisher[sip]->publish(info_msg);
+            continue;
         }
-        // ROS_INFO("Start publisher IMU");
-        // _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
-        _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
+        if (profile.is<rs2::pose_stream_profile>())
+        {
+            std::stringstream data_topic_name, info_topic_name;
+            std::string stream_name(STREAM_NAME(sip));
+            data_topic_name << stream_name << "/sample";
+            _odom_publisher = _node.create_publisher<nav_msgs::msg::Odometry>(data_topic_name.str(), 100);
+            continue;
+        }
     }
-    // else if (sensor.is<PoseSensor>())
 }
 
 void BaseRealSenseNode::updateSensors()

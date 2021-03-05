@@ -42,12 +42,44 @@ RosSensor::RosSensor(rs2::sensor sensor,
             _origin_frame_callback(frame);
         };
     setParameters();
+    registerSensorParameters();
+}
+
+RosSensor::~RosSensor()
+{
+    stop();
 }
 
 void RosSensor::setParameters()
 {
     std::string module_name = create_graph_resource_name(get_info(RS2_CAMERA_INFO_NAME));
     _params.registerDynamicOptions(*this, module_name);
+}
+
+void RosSensor::registerSensorParameters()
+{
+    std::vector<stream_profile> all_profiles = get_stream_profiles();
+    const std::string module_name(create_graph_resource_name(get_info(RS2_CAMERA_INFO_NAME)));
+
+    std::shared_ptr<ProfilesManager> profile_manager = std::make_shared<VideoProfilesManager>(_params.getParameters(), module_name);
+    profile_manager->registerProfileParameters(all_profiles, _update_sensor_func);
+    if (profile_manager->isTypeExist())
+    {
+        _profile_managers.push_back(profile_manager);
+        registerAutoExposureROIOptions();
+    }
+    profile_manager = std::make_shared<MotionProfilesManager>(_params.getParameters());
+    profile_manager->registerProfileParameters(all_profiles, _update_sensor_func);
+    if (profile_manager->isTypeExist())
+    {
+        _profile_managers.push_back(profile_manager);
+    }
+    profile_manager = std::make_shared<PoseProfilesManager>(_params.getParameters());
+    profile_manager->registerProfileParameters(all_profiles, _update_sensor_func);
+    if (profile_manager->isTypeExist())
+    {
+        _profile_managers.push_back(profile_manager);
+    }
 }
 
 void RosSensor::runFirstFrameInitialization()
@@ -151,18 +183,9 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
 {
     wanted_profiles.clear();
     std::vector<stream_profile> active_profiles = get_active_streams();
-    std::set<stream_index_pair> found_sips;
-    for (auto& profile : get_stream_profiles())
+    for (auto profile_manager : _profile_managers)
     {
-        stream_index_pair sip(profile.stream_type(), profile.stream_index());
-        if (!_enabled_profiles[sip])
-            continue;
-        if (found_sips.find(sip) == found_sips.end() && isWantedProfile(profile))
-        {
-            wanted_profiles.push_back(profile);
-            found_sips.insert(sip);
-            ROS_DEBUG_STREAM("Found profile for " << rs2_stream_to_string(sip.first) << ":" << sip.second);
-        }
+        profile_manager->addWantedProfiles(wanted_profiles);        
     }
 
     ROS_DEBUG_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "active_profiles.size() = " << active_profiles.size());
@@ -197,27 +220,55 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
     return true;
 }
 
-template<class T>
-void RosSensor::registerSensorUpdateParam(std::string template_name, std::map<stream_index_pair, T>& params, T value)
+void RosSensor::set_sensor_auto_exposure_roi()
 {
-    // For each pair of stream-index, Function add a parameter to <params> and advertise it by <template_name>.
-    // parameters in <params> are dynamically being updated.
-    std::set<stream_index_pair> checked_sips, found_sips;
-    for (auto& profile : get_stream_profiles())
+    try
     {
-        stream_index_pair sip(profile.stream_type(), profile.stream_index());
-        if (checked_sips.insert(sip).second == false)
-            continue;
-        const std::string stream_name(create_graph_resource_name(STREAM_NAME(sip)));
-        char* param_name = new char[template_name.size() + stream_name.size()];
-        sprintf(param_name, template_name.c_str(), stream_name.c_str());
+        int width = std::dynamic_pointer_cast<VideoProfilesManager>(_profile_managers[0])->getWidth();
+        int height = std::dynamic_pointer_cast<VideoProfilesManager>(_profile_managers[0])->getWidth();
 
-        _params.getParameters()->setParamT(std::string(param_name), rclcpp::ParameterValue(value), params[sip], [this](const rclcpp::Parameter& parameter)
-                {
-                    ROS_DEBUG_STREAM("callback for: " << parameter.get_name());
-                    _update_sensor_func();                    
-                });
+        bool update_roi_range(false);
+        if (_auto_exposure_roi.max_x > width)
+        {
+            _params.getParameters()->setParamValue(_auto_exposure_roi.max_x, width-1);
+            update_roi_range = true;
+        }
+        if (_auto_exposure_roi.max_y > height)
+        {
+            _params.getParameters()->setParamValue(_auto_exposure_roi.max_y, height-1);
+            update_roi_range = true;
+        }
+        if (update_roi_range)
+        {
+            registerAutoExposureROIOptions();
+        }
+        this->as<rs2::roi_sensor>().set_region_of_interest(_auto_exposure_roi);
+    }
+    catch(const std::runtime_error& e)
+    {
+        ROS_ERROR_STREAM(e.what());
     }
 }
-template void RosSensor::registerSensorUpdateParam<bool>(std::string template_name, std::map<stream_index_pair, bool>& params, bool value);
-template void RosSensor::registerSensorUpdateParam<double>(std::string template_name, std::map<stream_index_pair, double>& params, double value);
+
+void RosSensor::registerAutoExposureROIOptions()
+{
+    std::string module_base_name(get_info(RS2_CAMERA_INFO_NAME));
+
+    if (this->rs2::sensor::is<rs2::roi_sensor>())
+    {
+        int width = std::dynamic_pointer_cast<VideoProfilesManager>(_profile_managers[0])->getWidth();
+        int height = std::dynamic_pointer_cast<VideoProfilesManager>(_profile_managers[0])->getWidth();
+
+        int max_x(width-1);
+        int max_y(height-1);
+
+        std::string module_name = create_graph_resource_name(module_base_name) +".auto_exposure_roi";
+        _auto_exposure_roi = {0, 0, max_x, max_y};
+
+        ROS_DEBUG_STREAM("Publish roi for " << module_name);
+        _params.getParameters()->setParamT(module_name + ".min_x", rclcpp::ParameterValue(0),     _auto_exposure_roi.min_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters()->setParamT(module_name + ".max_x", rclcpp::ParameterValue(max_x), _auto_exposure_roi.max_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters()->setParamT(module_name + ".min_y", rclcpp::ParameterValue(0),     _auto_exposure_roi.min_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters()->setParamT(module_name + ".max_y", rclcpp::ParameterValue(max_y), _auto_exposure_roi.max_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+    }
+}
