@@ -47,6 +47,7 @@ script:
 
     # install packages for tests:
   - sudo apt-get install python3-pip
+  - pip3 install numpy --upgrade
   - pip3 install numpy-quaternion tqdm
   # Run test:
   - python3 src/realsense-ros/realsense2_camera/scripts/rs2_test.py --all
