@@ -65,7 +65,7 @@ void ProfilesManager::addWantedProfiles(std::vector<rs2::stream_profile>& wanted
         {
             wanted_profiles.push_back(profile);
             found_sips[sip] = true;
-            ROS_DEBUG_STREAM("Found profile for " << rs2_stream_to_string(sip.first) << ":" << sip.second);
+            ROS_DEBUG_STREAM("Found profile for " << ros_stream_to_string(sip.first) << ":" << sip.second);
         }
     }
     // Print warning if any enabled profile found no match:
@@ -96,7 +96,7 @@ std::string ProfilesManager::profile_string(const rs2::stream_profile& profile)
     if (profile.is<rs2::video_stream_profile>())
     {
         auto video_profile = profile.as<rs2::video_stream_profile>();
-        profile_str << "stream_type: " << rs2_stream_to_string(video_profile.stream_type()) << "(" << video_profile.stream_index() << ")" <<
+        profile_str << "stream_type: " << ros_stream_to_string(video_profile.stream_type()) << "(" << video_profile.stream_index() << ")" <<
                        ", Format: " << video_profile.format() <<
                        ", Width: " << video_profile.width() <<
                        ", Height: " << video_profile.height() <<
@@ -104,7 +104,7 @@ std::string ProfilesManager::profile_string(const rs2::stream_profile& profile)
     }
     else
     {
-        profile_str << "stream_type: " << rs2_stream_to_string(profile.stream_type()) << "(" << profile.stream_index() << ")" <<
+        profile_str << "stream_type: " << ros_stream_to_string(profile.stream_type()) << "(" << profile.stream_index() << ")" <<
                        "Format: " << profile.format() <<
                        ", FPS: " << profile.fps();
     }
@@ -151,6 +151,7 @@ void VideoProfilesManager::registerProfileParameters(std::vector<stream_profile>
     for (auto& profile : all_profiles)
     {
         if (!profile.is<video_stream_profile>()) continue;
+        ROS_DEBUG_STREAM("Register profile: " << profile_string(profile));
         _all_profiles.push_back(profile);
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
         checked_sips.insert(sip);
@@ -199,6 +200,7 @@ void MotionProfilesManager::registerProfileParameters(std::vector<stream_profile
     for (auto& profile : all_profiles)
     {
         if (!profile.is<motion_stream_profile>()) continue;
+        ROS_DEBUG_STREAM("Register profile: " << profile_string(profile));
         _all_profiles.push_back(profile);
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
         checked_sips.insert(sip);

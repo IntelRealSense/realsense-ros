@@ -11,11 +11,11 @@ void NamedFilter::setParameters()
         return; // parameters for disparity are set in the disparity_start filter.
     std::stringstream module_name_str;
     std::string module_name = create_graph_resource_name(_filter->get_info(RS2_CAMERA_INFO_NAME));
-    module_name_str << "post_processing_block." << module_name;
+    module_name_str << module_name;
     _params.registerDynamicOptions(*(_filter.get()), module_name_str.str());
     module_name_str << ".enable";
 
-    _params.getParameters()->setParam(module_name_str.str(), rclcpp::ParameterValue(_is_enabled), [this](const rclcpp::Parameter& parameter)
+    _params.getParameters()->setParamT(module_name_str.str(), rclcpp::ParameterValue(_is_enabled), _is_enabled, [this](const rclcpp::Parameter& parameter)
             {
                 set(parameter.get_value<bool>());
             });

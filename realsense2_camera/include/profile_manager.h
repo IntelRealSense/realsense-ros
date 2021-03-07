@@ -1,7 +1,7 @@
 #include <librealsense2/rs.hpp>
 #include <sensor_params.h>
 
-#define STREAM_NAME(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << create_graph_resource_name(rs2_stream_to_string(sip.first)) << ((sip.second>0) ? std::to_string(sip.second) : ""))).str()
+#define STREAM_NAME(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << create_graph_resource_name(ros_stream_to_string(sip.first)) << ((sip.second>0) ? std::to_string(sip.second) : ""))).str()
 
 using namespace rs2;
 namespace realsense2_camera

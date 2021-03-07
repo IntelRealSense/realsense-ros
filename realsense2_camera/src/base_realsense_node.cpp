@@ -180,7 +180,7 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
             }
             catch(const std::out_of_range& e)
             {
-                ROS_DEBUG_STREAM("Allocate align filter for:" << rs2_stream_to_string(sip.first) << sip.second);
+                ROS_DEBUG_STREAM("Allocate align filter for:" << ros_stream_to_string(sip.first) << sip.second);
                 align = (_align[stream_type] = std::make_shared<rs2::align>(stream_type));
             }
             rs2::frameset processed = frames.apply_filter(*align);
@@ -406,7 +406,7 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
             imu_msg.header.stamp = t;
             ImuMessage_AddDefaultValues(imu_msg);
             _synced_imu_publisher->Publish(imu_msg);
-            ROS_DEBUG("Publish united %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
+            ROS_DEBUG("Publish united %s stream", ros_stream_to_string(frame.get_profile().stream_type()));
             imu_msgs.pop_front();
         }
     }
@@ -424,7 +424,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
     }
 
     ROS_DEBUG("Frame arrived: stream: %s ; index: %d ; Timestamp Domain: %s",
-                rs2_stream_to_string(frame.get_profile().stream_type()),
+                ros_stream_to_string(frame.get_profile().stream_type()),
                 frame.get_profile().stream_index(),
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
 
@@ -453,7 +453,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         }
         imu_msg.header.stamp = t;
         _imu_publishers[stream_index]->publish(imu_msg);
-        ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
+        ROS_DEBUG("Publish %s stream", ros_stream_to_string(frame.get_profile().stream_type()));
     }
 }
 

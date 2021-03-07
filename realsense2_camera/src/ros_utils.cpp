@@ -30,6 +30,20 @@ bool isValidCharInName(char c)
  * so we replace them here with underscores.
  */
 
+std::string ros_stream_to_string(rs2_stream stream)
+{
+    static std::map<std::string, std::string> libname_to_rosname = {
+        {"Infrared", "Infra"}
+    };
+
+    std::string librealsense2_name = rs2_stream_to_string(stream);
+    auto name_iter = libname_to_rosname.find(librealsense2_name);
+    if (name_iter == libname_to_rosname.end())
+        return librealsense2_name;
+    else
+        return name_iter->second;
+}
+
 std::string create_graph_resource_name(const std::string &original_name)
 {
     std::string fixed_name = original_name;
