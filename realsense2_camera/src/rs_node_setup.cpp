@@ -128,17 +128,17 @@ void BaseRealSenseNode::setAvailableSensors()
             sensor.is<rs2::color_sensor>() ||
             sensor.is<rs2::fisheye_sensor>())
         {
-            ROS_INFO_STREAM("Set " << module_name << " as VideoSensor.");
+            ROS_DEBUG_STREAM("Set " << module_name << " as VideoSensor.");
             rosSensor = std::make_shared<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func);
         }
         else if (sensor.is<rs2::motion_sensor>())
         {
-            ROS_INFO_STREAM("Set " << module_name << " as ImuSensor.");
+            ROS_DEBUG_STREAM("Set " << module_name << " as ImuSensor.");
             rosSensor = std::make_shared<RosSensor>(sensor, _parameters, imu_callback_function, update_sensor_func);
         }
         else if (sensor.is<rs2::pose_sensor>())
         {
-            ROS_INFO_STREAM("Set " << module_name << " as PoseSensor.");
+            ROS_DEBUG_STREAM("Set " << module_name << " as PoseSensor.");
             rosSensor = std::make_shared<RosSensor>(sensor, _parameters, multiple_message_callback_function, update_sensor_func);
         }
         else

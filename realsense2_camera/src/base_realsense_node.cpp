@@ -964,7 +964,7 @@ void BaseRealSenseNode::SetBaseStream()
     {
         throw std::runtime_error("No known base_stream found for transformations.");
     }
-    ROS_INFO_STREAM("SELECTED BASE:" << base_stream->first << ", " << base_stream->second);
+    ROS_DEBUG_STREAM("SELECTED BASE:" << base_stream->first << ", " << base_stream->second);
 
     _base_profile = available_profiles[*base_stream];
 }

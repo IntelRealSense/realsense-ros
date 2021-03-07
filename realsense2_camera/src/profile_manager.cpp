@@ -43,19 +43,72 @@ bool ProfilesManager::isTypeExist()
 
 void ProfilesManager::addWantedProfiles(std::vector<rs2::stream_profile>& wanted_profiles)
 {    
-    std::set<stream_index_pair> found_sips;
+    std::map<stream_index_pair, bool> found_sips;
+    std::map<stream_index_pair, rs2::stream_profile> default_profiles;
     for (auto profile : _all_profiles)
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
-        if (!_enabled_profiles[sip])
-            continue;
-        if (found_sips.find(sip) == found_sips.end() && isWantedProfile(profile))
+        if (!_enabled_profiles[sip]) continue;
+        try
+        {
+            if (found_sips.at(sip) == true) continue;
+        }
+        catch(const std::out_of_range& e)
+        {
+            found_sips.emplace(std::make_pair(sip, false));
+        }
+        if (profile.is_default())
+        {
+            default_profiles[sip] = profile;
+        }
+        if (isWantedProfile(profile))
         {
             wanted_profiles.push_back(profile);
-            found_sips.insert(sip);
+            found_sips[sip] = true;
             ROS_DEBUG_STREAM("Found profile for " << rs2_stream_to_string(sip.first) << ":" << sip.second);
         }
     }
+    // Print warning if any enabled profile found no match:
+    for (auto found_sip : found_sips)
+    {
+        if (!found_sip.second)
+        {
+            std::stringstream msg;
+            msg << "Could not find a match for profile: " << wanted_profile_string(found_sip.first);
+            try
+            {
+                wanted_profiles.push_back(default_profiles[found_sip.first]);
+                msg << " : Using Default: " << profile_string(default_profiles[found_sip.first]);
+            }
+            catch(const std::out_of_range& e)
+            {
+                msg << " : No default.";
+            }
+            ROS_WARN_STREAM(msg.str());
+        }
+    }
+
+}
+
+std::string ProfilesManager::profile_string(const rs2::stream_profile& profile)
+{
+    std::stringstream profile_str;
+    if (profile.is<rs2::video_stream_profile>())
+    {
+        auto video_profile = profile.as<rs2::video_stream_profile>();
+        profile_str << "stream_type: " << rs2_stream_to_string(video_profile.stream_type()) << "(" << video_profile.stream_index() << ")" <<
+                       ", Format: " << video_profile.format() <<
+                       ", Width: " << video_profile.width() <<
+                       ", Height: " << video_profile.height() <<
+                       ", FPS: " << video_profile.fps();
+    }
+    else
+    {
+        profile_str << "stream_type: " << rs2_stream_to_string(profile.stream_type()) << "(" << profile.stream_index() << ")" <<
+                       "Format: " << profile.format() <<
+                       ", FPS: " << profile.fps();
+    }
+    return profile_str.str();
 }
 
 VideoProfilesManager::VideoProfilesManager(std::shared_ptr<Parameters> parameters,
@@ -72,17 +125,19 @@ bool VideoProfilesManager::isTypeExist()
     return _is_profile_exist;
 }
 
+std::string VideoProfilesManager::wanted_profile_string(stream_index_pair sip)
+{
+    std::stringstream str;
+    str << STREAM_NAME(sip) << " with width: " << _width << ", " << "height: " << _height << ", fps: " << _fps;
+    return str.str();
+}
+
 bool VideoProfilesManager::isWantedProfile(const rs2::stream_profile& profile)
 {
     if (!profile.is<rs2::video_stream_profile>())
         return false;
     auto video_profile = profile.as<rs2::video_stream_profile>();
-    ROS_DEBUG_STREAM("Sensor profile: " <<
-                        "stream_type: " << rs2_stream_to_string(video_profile.stream_type()) << "(" << video_profile.stream_index() << ")" <<
-                        "Format: " << video_profile.format() <<
-                        ", Width: " << video_profile.width() <<
-                        ", Height: " << video_profile.height() <<
-                        ", FPS: " << video_profile.fps());
+    ROS_DEBUG_STREAM("Sensor profile: " << profile_string(profile));
 
     return ((video_profile.width() == _width) &&
             (video_profile.height() == _height) &&
@@ -135,7 +190,6 @@ void VideoProfilesManager::registerVideoSensorParams()
 bool MotionProfilesManager::isWantedProfile(const rs2::stream_profile& profile)
 {
     stream_index_pair stream(profile.stream_type(), profile.stream_index());
-    ROS_WARN_STREAM("profile.fps(): " << profile.fps() << " ?? " << "_fps[stream]:" << _fps[stream]);
     return (profile.fps() == _fps[stream]);
 }
 
@@ -151,6 +205,13 @@ void MotionProfilesManager::registerProfileParameters(std::vector<stream_profile
     }
     registerSensorUpdateParam("enable_%s", checked_sips, _enabled_profiles, true, update_sensor_func);
     registerSensorUpdateParam("%s_fps", checked_sips, _fps, 0.0, update_sensor_func);
+}
+
+std::string MotionProfilesManager::wanted_profile_string(stream_index_pair sip)
+{
+    std::stringstream str;
+    str << STREAM_NAME(sip) << " with fps: " << _fps[sip];
+    return str.str();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

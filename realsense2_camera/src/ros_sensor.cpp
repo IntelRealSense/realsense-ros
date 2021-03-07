@@ -111,23 +111,7 @@ bool RosSensor::start(const std::vector<stream_profile>& profiles)
     open(profiles);
 
     for (auto& profile : profiles)
-    if (profile.is<rs2::video_stream_profile>())
-    {
-        auto video_profile = profile.as<rs2::video_stream_profile>();
-        ROS_INFO_STREAM("Open profile: " <<
-                            "stream_type: " << rs2_stream_to_string(video_profile.stream_type()) << "(" << video_profile.stream_index() << ")" <<
-                            "Format: " << video_profile.format() <<
-                            ", Width: " << video_profile.width() <<
-                            ", Height: " << video_profile.height() <<
-                            ", FPS: " << video_profile.fps());
-    }
-    else
-    {
-        ROS_INFO_STREAM("Open profile: " <<
-                            "stream_type: " << rs2_stream_to_string(profile.stream_type()) << "(" << profile.stream_index() << ")" <<
-                            "Format: " << profile.format() <<
-                            ", FPS: " << profile.fps());
-    }
+    ROS_INFO_STREAM("Open profile: " << ProfilesManager::profile_string(profile));
 
     rs2::sensor::start(_frame_callback);
     return true;
@@ -191,27 +175,13 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
     ROS_DEBUG_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "active_profiles.size() = " << active_profiles.size());
     for (auto& profile : active_profiles)
     {
-        auto video_profile = profile.as<rs2::video_stream_profile>();
-        ROS_DEBUG_STREAM("Sensor profile: " <<
-                            "stream_type: " << rs2_stream_to_string(video_profile.stream_type()) << "(" << video_profile.stream_index() << ")" <<
-                            "Format: " << video_profile.format() <<
-                            ", Width: " << video_profile.width() <<
-                            ", Height: " << video_profile.height() <<
-                            ", unique_id: " << video_profile.unique_id() <<
-                            ", FPS: " << video_profile.fps());
+        ROS_DEBUG_STREAM("Sensor profile: " << ProfilesManager::profile_string(profile));
     }
 
     ROS_DEBUG_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "wanted_profiles");
     for (auto& profile : wanted_profiles)
     {
-        auto video_profile = profile.as<rs2::video_stream_profile>();
-        ROS_DEBUG_STREAM("Sensor profile: " <<
-                            "stream_type: " << rs2_stream_to_string(video_profile.stream_type()) << "(" << video_profile.stream_index() << ")" <<
-                            "Format: " << video_profile.format() <<
-                            ", Width: " << video_profile.width() <<
-                            ", Height: " << video_profile.height() <<
-                            ", unique_id: " << video_profile.unique_id() <<
-                            ", FPS: " << video_profile.fps());
+        ROS_DEBUG_STREAM("Sensor profile: " << ProfilesManager::profile_string(profile));
     }
     if (compare_profiles_lists(active_profiles, wanted_profiles))
     {

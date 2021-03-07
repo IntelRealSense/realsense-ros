@@ -15,6 +15,9 @@ namespace realsense2_camera
             virtual bool isWantedProfile(const rs2::stream_profile& profile) = 0;
             virtual void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) = 0;
             bool isTypeExist();
+            virtual std::string wanted_profile_string(stream_index_pair sip) = 0;
+            static std::string profile_string(const rs2::stream_profile& profile);
+            
             template<class T>
             void registerSensorUpdateParam(std::string template_name, 
                                            std::set<stream_index_pair> unique_sips, 
@@ -37,6 +40,7 @@ namespace realsense2_camera
             bool isWantedProfile(const rs2::stream_profile& profile) override;
             void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) override;
             bool isTypeExist();
+            std::string wanted_profile_string(stream_index_pair sip);
             int getHeight() {return _height;};
             int getWidth() {return _width;};
             double getFPS() {return _fps;};
@@ -58,7 +62,7 @@ namespace realsense2_camera
             using ProfilesManager::ProfilesManager;
             bool isWantedProfile(const rs2::stream_profile& profile) override;
             void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) override;
-            bool isTypeExist();
+            std::string wanted_profile_string(stream_index_pair sip);
 
         protected:
             std::map<stream_index_pair, double> _fps;
