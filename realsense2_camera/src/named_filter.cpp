@@ -26,6 +26,7 @@ PointcloudFilter::PointcloudFilter(std::string name, std::shared_ptr<rs2::filter
     _node(node)
     {
         _params.getParameters()->setParamT(std::string("allow_no_texture_points"), rclcpp::ParameterValue(ALLOW_NO_TEXTURE_POINTS), _allow_no_texture_points);
+        set(_is_enabled);
     }
 
 void PointcloudFilter::set(const bool is_enabled)
@@ -57,17 +58,12 @@ void reverse_memcpy(unsigned char* dst, const unsigned char* src, size_t n)
 
 void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset, const std::string& frame_id)
 {
-    ROS_INFO("Publish pointscloudXXX");
     bool _ordered_pc(false);
     {
-        ROS_WARN_STREAM("(!_pointcloud_publisher): " << (!_pointcloud_publisher));
-        if (_pointcloud_publisher)
-            ROS_WARN_STREAM("_pointcloud_publisher->get_subscription_count(): " << _pointcloud_publisher->get_subscription_count());
         std::lock_guard<std::mutex> lock_guard(_mutex_publisher);
         if ((!_pointcloud_publisher) || (!(_pointcloud_publisher->get_subscription_count())))
             return;
     }
-    ROS_INFO("Publish pointscloud");
     rs2_stream texture_source_id = static_cast<rs2_stream>(_filter->get_option(rs2_option::RS2_OPTION_STREAM_FILTER));
     bool use_texture = texture_source_id != RS2_STREAM_ANY;
     static int warn_count(0);

@@ -41,14 +41,36 @@ namespace realsense2_camera
                               std::function<void(const rclcpp::Parameter&)> func, 
                               rcl_interfaces::msg::ParameterDescriptor descriptor)
     {
-        // NOTICE: callback function is set AFTER the parameter is declared!!!
         rclcpp::ParameterValue result_value(initial_value);
-        if (!_node.has_parameter(param_name))
-            result_value = _node.declare_parameter(param_name, initial_value, descriptor);
-        else
+        try
         {
-            result_value = _node.get_parameter(param_name).get_parameter_value();
+            if (!_node.has_parameter(param_name))
+            {
+                result_value = _node.declare_parameter(param_name, initial_value, descriptor);
+            }
+            else
+            {
+                result_value = _node.get_parameter(param_name).get_parameter_value();
+            }
         }
+        catch(const std::exception& e)
+        {
+            std::stringstream range;
+            for (auto val : descriptor.floating_point_range)
+            {
+                range << val.from_value << ", " << val.to_value;
+            }
+            for (auto val : descriptor.integer_range)
+            {
+                range << val.from_value << ", " << val.to_value;
+            }
+            ROS_WARN_STREAM("Could not set param: " << param_name << " with " << 
+                             rclcpp::Parameter(param_name, initial_value).value_to_string() << 
+                            " Range: [" << range.str() << "]" <<
+                             ": " << e.what());
+            return initial_value;
+        }
+        
         if (func)
             _param_functions[param_name] = func;
         else
@@ -56,6 +78,10 @@ namespace realsense2_camera
             {
                 ROS_WARN_STREAM("Parameter can not be changed in runtime.");
             };
+        if (result_value != initial_value && func)
+        {
+            func(rclcpp::Parameter(param_name, result_value));
+        }
         return result_value;
     }
 
