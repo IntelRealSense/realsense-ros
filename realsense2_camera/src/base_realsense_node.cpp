@@ -898,7 +898,6 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
 {
     // Transform base to stream
     stream_index_pair sip(profile.stream_type(), profile.stream_index());
-    stream_index_pair base_sip(base_profile.stream_type(), base_profile.stream_index());
     tf2::Quaternion quaternion_optical;
     quaternion_optical.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
     float3 zero_trans{0, 0, 0};

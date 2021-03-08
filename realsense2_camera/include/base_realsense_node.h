@@ -197,6 +197,7 @@ namespace realsense2_camera
         std::string _camera_name;
         std::vector<rs2_option> _monitor_options;
         rclcpp::Logger _logger;
+        std::shared_ptr<Parameters> _parameters;
         // Diagnostics _rs_diagnostic_updater;
 
         virtual void calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile);
@@ -346,7 +347,6 @@ namespace realsense2_camera
 
         rs2::stream_profile _base_profile;
 
-        std::shared_ptr<Parameters> _parameters;
     };//end class
 }
 #endif //___BASE_REALSENSE_NODE_HEADER___

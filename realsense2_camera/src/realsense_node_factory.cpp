@@ -3,7 +3,7 @@
 
 #include "../include/realsense_node_factory.h"
 #include "../include/base_realsense_node.h"
-// #include "../include/t265_realsense_node.h"
+#include "../include/t265_realsense_node.h"
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -356,12 +356,11 @@ void RealSenseNodeFactory::startDevice()
 		case RS_USB2_PID:
 		case RS_L515_PID_PRE_PRQ:
 		case RS_L515_PID:
-		case RS_T265_PID:
 			_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(*this, _device, _parameters));
 			break;
-		// case RS_T265_PID:
-		// 	_realSenseNode = std::unique_ptr<T265RealsenseNode>(new T265RealsenseNode(nh, privateNh, _device));
-		// 	break;
+		case RS_T265_PID:
+			_realSenseNode = std::unique_ptr<T265RealsenseNode>(new T265RealsenseNode(*this, _device, _parameters));
+			break;
 		default:
 			ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);
 			rclcpp::shutdown();
