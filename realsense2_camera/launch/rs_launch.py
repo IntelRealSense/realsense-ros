@@ -75,6 +75,7 @@ def set_configurable_parameters(parameters):
     return dict([(param['name'], LaunchConfiguration(param['name'])) for param in parameters])
 
 def generate_launch_description():
+    log_level = 'info'
     if (os.getenv('ROS_DISTRO') == "dashing"):
         return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
             # Realsense
@@ -88,6 +89,7 @@ def generate_launch_description():
                 parameters = [set_configurable_parameters(configurable_parameters)
                             ],
                 output='screen',
+                arguments=['--ros-args', '--log-level', log_level],
                 ),
             launch_ros.actions.Node(
                 condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " != ''"])),
@@ -100,6 +102,7 @@ def generate_launch_description():
                             ,{LaunchConfiguration("config_file")}
                             ],
                 output='screen',
+                arguments=['--ros-args', '--log-level', log_level],
                 ),
             ])
     else:
@@ -114,6 +117,7 @@ def generate_launch_description():
                 parameters = [set_configurable_parameters(configurable_parameters)
                             ],
                 output='screen',
+                arguments=['--ros-args', '--log-level', log_level],
                 emulate_tty=True,
                 ),
             launch_ros.actions.Node(
@@ -126,6 +130,7 @@ def generate_launch_description():
                             ,{LaunchConfiguration("config_file")}
                             ],
                 output='screen',
+                arguments=['--ros-args', '--log-level', log_level],
                 emulate_tty=True,
                 ),
         ])

@@ -11,8 +11,11 @@ import numpy as np
 import inspect
 import ctypes
 import struct
-import tf2_ros
 import quaternion
+import os
+if (os.getenv('ROS_DISTRO') != "dashing"):
+    import tf2_ros
+
 
 try:
     from theora_image_transport.msg import Packet as msg_theora
@@ -200,8 +203,9 @@ class CWaitForMessage:
             node.get_logger().info('Subscribing %s on topic: %s' % (theme_name, theme['topic']))
             self.func_data[theme_name]['sub'] = node.create_subscription(theme['msg_type'], theme['topic'], theme['callback'](theme_name), qos.qos_profile_sensor_data)
 
-        self.tfBuffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, node)
+        if (os.getenv('ROS_DISTRO') != "dashing"):
+            self.tfBuffer = tf2_ros.Buffer()
+            self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, node)
 
         self.prev_time = time.time()
         break_timeout = False
