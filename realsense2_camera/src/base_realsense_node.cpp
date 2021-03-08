@@ -569,8 +569,10 @@ void BaseRealSenseNode::registerDynamicReconfigCb()
 
 const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
 {
+#ifndef DASHING
     if (str == "UNKNOWN")
         return rmw_qos_profile_unknown;
+#endif
     if (str == "SYSTEM_DEFAULT")
         return rmw_qos_profile_system_default;
     if (str == "PARAMETER_EVENTS")

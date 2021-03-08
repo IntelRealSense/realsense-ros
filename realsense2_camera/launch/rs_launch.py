@@ -22,13 +22,13 @@ from launch.conditions import IfCondition
 
 
 configurable_parameters = [{'name': 'camera_name',                  'default': 'camera', 'description': 'camera unique name'},
-                           {'name': 'serial_no',                    'default': '', 'description': 'choose device by serial number'},
-                           {'name': 'usb_port_id',                  'default': '', 'description': 'choose device by usb port id'},
-                           {'name': 'device_type',                  'default': '', 'description': 'choose device by type'},
-                           {'name': 'config_file',                  'default': '', 'description': 'yaml config file'},
+                           {'name': 'serial_no',                    'default': "''", 'description': 'choose device by serial number'},
+                           {'name': 'usb_port_id',                  'default': "''", 'description': 'choose device by usb port id'},
+                           {'name': 'device_type',                  'default': "''", 'description': 'choose device by type'},
+                           {'name': 'config_file',                  'default': "''", 'description': 'yaml config file'},
                            {'name': 'enable_pointcloud',            'default': 'false', 'description': 'enable pointcloud'},
-                           {'name': 'unite_imu_method',             'default': '', 'description': '[copy|linear_interpolation]'},                           
-                           {'name': 'json_file_path',               'default': '', 'description': 'allows advanced configuration'},                           
+                           {'name': 'unite_imu_method',             'default': "''", 'description': '[copy|linear_interpolation]'},                           
+                           {'name': 'json_file_path',               'default': "''", 'description': 'allows advanced configuration'},                           
                            {'name': 'output',                       'default': 'screen', 'description': 'pipe node output [screen|log]'},                           
                            {'name': 'depth_width',                  'default': '-1', 'description': 'depth image width'},                           
                            {'name': 'depth_height',                 'default': '-1', 'description': 'depth image height'},                           
@@ -66,16 +66,16 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'pointcloud_texture_index',     'default': '0', 'description': 'testure stream index for pointcloud'},                           
                            {'name': 'enable_sync',                  'default': 'false', 'description': ''},                           
                            {'name': 'align_depth',                  'default': 'false', 'description': ''},                           
-                           {'name': 'filters',                      'default': '', 'description': ''},                           
+                           {'name': 'filters',                      'default': "''", 'description': ''},                           
                            {'name': 'clip_distance',                'default': '-2.', 'description': ''},                           
                            {'name': 'linear_accel_cov',             'default': '0.01', 'description': ''},                           
                            {'name': 'initial_reset',                'default': 'false', 'description': ''},                           
                            {'name': 'allow_no_texture_points',      'default': 'false', 'description': ''},                           
                            {'name': 'ordered_pc',                   'default': 'false', 'description': ''},                           
-                           {'name': 'calib_odom_file',              'default': '', 'description': ''},                           
-                           {'name': 'topic_odom_in',                'default': '', 'description': 'topic for T265 wheel odometry'},
+                           {'name': 'calib_odom_file',              'default': "''", 'description': "''"},                           
+                           {'name': 'topic_odom_in',                'default': "''", 'description': 'topic for T265 wheel odometry'},
                            {'name': 'tf_publish_rate',              'default': '0.0', 'description': 'Rate of publishing static_tf'},
-                           {'name': 'rosbag_filename',              'default': '', 'description': 'A realsense bagfile to run from as a device'},
+                           {'name': 'rosbag_filename',              'default': "''", 'description': 'A realsense bagfile to run from as a device'},
                            {'name': 'temporal.holes_fill',          'default': '0', 'description': 'Persistency mode'},
                           ]
 
@@ -91,7 +91,7 @@ def generate_launch_description():
         return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
             # Realsense
             launch_ros.actions.Node(
-                condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), "' == ''"])),
+                condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " == ''"])),
                 package='realsense2_camera', 
                 node_namespace=LaunchConfiguration("camera_name"),
                 node_name=LaunchConfiguration("camera_name"),
@@ -103,7 +103,7 @@ def generate_launch_description():
                 arguments=['--ros-args', '--log-level', log_level],
                 ),
             launch_ros.actions.Node(
-                condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), "' == ''"])),
+                condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " != ''"])),
                 package='realsense2_camera', 
                 node_namespace=LaunchConfiguration("camera_name"),
                 node_name=LaunchConfiguration("camera_name"),
@@ -120,7 +120,7 @@ def generate_launch_description():
         return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
             # Realsense
             launch_ros.actions.Node(
-                condition=IfCondition(PythonExpression(["'", LaunchConfiguration('config_file'), "' == ''"])),
+                condition=IfCondition(PythonExpression(["'", LaunchConfiguration('config_file'), " == ''"])),
                 package='realsense2_camera', 
                 namespace=LaunchConfiguration("camera_name"),
                 name=LaunchConfiguration("camera_name"),
@@ -132,7 +132,7 @@ def generate_launch_description():
                 emulate_tty=True,
                 ),
             launch_ros.actions.Node(
-                condition=IfCondition(PythonExpression(["'", LaunchConfiguration('config_file'), "' != ''"])),
+                condition=IfCondition(PythonExpression(["'", LaunchConfiguration('config_file'), " != ''"])),
                 package='realsense2_camera', 
                 namespace=LaunchConfiguration("camera_name"),
                 name=LaunchConfiguration("camera_name"),
