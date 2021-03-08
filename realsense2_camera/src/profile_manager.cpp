@@ -49,13 +49,13 @@ void ProfilesManager::addWantedProfiles(std::vector<rs2::stream_profile>& wanted
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
         if (!_enabled_profiles[sip]) continue;
-        try
+        if (found_sips.find(sip) == found_sips.end())
+        {
+            found_sips[sip] = false;
+        }
+        else
         {
             if (found_sips.at(sip) == true) continue;
-        }
-        catch(const std::out_of_range& e)
-        {
-            found_sips.emplace(std::make_pair(sip, false));
         }
         if (profile.is_default())
         {
@@ -75,19 +75,27 @@ void ProfilesManager::addWantedProfiles(std::vector<rs2::stream_profile>& wanted
         {
             std::stringstream msg;
             msg << "Could not find a match for profile: " << wanted_profile_string(found_sip.first);
-            try
+            if (default_profiles.find(found_sip.first) != default_profiles.end())
             {
-                wanted_profiles.push_back(default_profiles[found_sip.first]);
                 msg << " : Using Default: " << profile_string(default_profiles[found_sip.first]);
+                if (set_to_defaults(default_profiles))
+                {
+                    wanted_profiles.clear();
+                    ROS_WARN_STREAM(msg.str());
+                    return addWantedProfiles(wanted_profiles);
+                }
+                else
+                {
+                    wanted_profiles.push_back(default_profiles[found_sip.first]);
+                }
             }
-            catch(const std::out_of_range& e)
+            else
             {
                 msg << " : No default.";
             }
             ROS_WARN_STREAM(msg.str());
         }
     }
-
 }
 
 std::string ProfilesManager::profile_string(const rs2::stream_profile& profile)
@@ -124,6 +132,18 @@ bool VideoProfilesManager::isTypeExist()
 {
     return _is_profile_exist;
 }
+
+bool VideoProfilesManager::set_to_defaults(std::map<stream_index_pair, rs2::stream_profile>& default_profiles)
+{
+    rs2::stream_profile default_profile = default_profiles.begin()->second;
+    auto video_profile = default_profile.as<rs2::video_stream_profile>();
+
+    _params.getParameters()->setParamValue(_width, video_profile.width());
+    _params.getParameters()->setParamValue(_height, video_profile.height());
+    _params.getParameters()->setParamValue(_fps, video_profile.fps());
+    return true;
+}
+
 
 std::string VideoProfilesManager::wanted_profile_string(stream_index_pair sip)
 {
@@ -216,6 +236,10 @@ std::string MotionProfilesManager::wanted_profile_string(stream_index_pair sip)
     return str.str();
 }
 
+bool MotionProfilesManager::set_to_defaults(std::map<stream_index_pair, rs2::stream_profile>&)
+{
+    return false;
+}
 ///////////////////////////////////////////////////////////////////////////////////////
 
 void PoseProfilesManager::registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func)

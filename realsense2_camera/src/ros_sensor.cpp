@@ -52,14 +52,14 @@ RosSensor::~RosSensor()
 
 void RosSensor::setParameters()
 {
-    std::string module_name = create_graph_resource_name(get_info(RS2_CAMERA_INFO_NAME));
+    std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
     _params.registerDynamicOptions(*this, module_name);
 }
 
 void RosSensor::registerSensorParameters()
 {
     std::vector<stream_profile> all_profiles = get_stream_profiles();
-    const std::string module_name(create_graph_resource_name(get_info(RS2_CAMERA_INFO_NAME)));
+    const std::string module_name(create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME))));
 
     std::shared_ptr<ProfilesManager> profile_manager = std::make_shared<VideoProfilesManager>(_params.getParameters(), module_name);
     profile_manager->registerProfileParameters(all_profiles, _update_sensor_func);
@@ -222,7 +222,7 @@ void RosSensor::set_sensor_auto_exposure_roi()
 
 void RosSensor::registerAutoExposureROIOptions()
 {
-    std::string module_base_name(get_info(RS2_CAMERA_INFO_NAME));
+    std::string module_base_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
 
     if (this->rs2::sensor::is<rs2::roi_sensor>())
     {

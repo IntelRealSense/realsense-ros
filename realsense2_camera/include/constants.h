@@ -82,7 +82,7 @@ namespace realsense2_camera
 
     const int IMAGE_WIDTH          = 640;
     const int IMAGE_HEIGHT         = 480;
-    const double IMAGE_FPS         = 30;
+    const int IMAGE_FPS         = 30;
     const std::string IMAGE_QOS    = "SYSTEM_DEFAULT";
 
     const double IMU_FPS      = 0;

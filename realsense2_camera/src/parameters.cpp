@@ -34,36 +34,4 @@ void BaseRealSenseNode::getParameters()
     _base_frame_id = _parameters->setParam("base_frame_id", rclcpp::ParameterValue(DEFAULT_BASE_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
 }
 
-void BaseRealSenseNode::set_auto_exposure_roi(const std::string option_name, rs2::sensor sensor, int new_value)
-{
-    rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
-    if (option_name == "left")
-        auto_exposure_roi.min_x = new_value;
-    else if (option_name == "right")
-        auto_exposure_roi.max_x = new_value;
-    else if (option_name == "top")
-        auto_exposure_roi.min_y = new_value;
-    else if (option_name == "bottom")
-        auto_exposure_roi.max_y = new_value;
-    else
-    {
-        ROS_WARN_STREAM("Invalid option_name: " << option_name << " while setting auto exposure ROI.");
-        return;
-    }
-    set_sensor_auto_exposure_roi(sensor);
-}
-
-void BaseRealSenseNode::set_sensor_auto_exposure_roi(rs2::sensor sensor)
-{
-    const rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
-    try
-    {
-        sensor.as<rs2::roi_sensor>().set_region_of_interest(auto_exposure_roi);
-    }
-    catch(const std::runtime_error& e)
-    {
-        ROS_ERROR_STREAM(e.what());
-    }
-}
-
 

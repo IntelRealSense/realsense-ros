@@ -27,6 +27,7 @@ namespace realsense2_camera
 
     bool isValidCharInName(char c);
 
+    std::string rs2_to_ros(std::string rs2_name);
     std::string ros_stream_to_string(rs2_stream stream);
     std::string create_graph_resource_name(const std::string &original_name);
     const rmw_qos_profile_t qos_string_to_qos(std::string str);
