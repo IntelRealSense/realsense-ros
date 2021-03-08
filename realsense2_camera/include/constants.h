@@ -18,17 +18,31 @@
 #define ROS_INFO(...) RCLCPP_INFO(_logger, __VA_ARGS__)
 #define ROS_WARN(...) RCLCPP_WARN(_logger, __VA_ARGS__)
 #define ROS_ERROR(...) RCLCPP_ERROR(_logger, __VA_ARGS__)
+
+#ifdef DASHING
+// Based on: https://docs.ros2.org/dashing/api/rclcpp/logging_8hpp.html
+#define MSG(msg) (static_cast<std::ostringstream&&>(std::ostringstream() << msg)).str()
+#define ROS_DEBUG_STREAM(msg) RCLCPP_DEBUG(_logger, MSG(msg))
+#define ROS_INFO_STREAM(msg) RCLCPP_INFO(_logger, MSG(msg))
+#define ROS_WARN_STREAM(msg) RCLCPP_WARN(_logger, MSG(msg))
+#define ROS_ERROR_STREAM(msg) RCLCPP_ERROR(_logger, MSG(msg))
+#define ROS_FATAL_STREAM(msg) RCLCPP_FATAL(_logger, MSG(msg))
+#define ROS_DEBUG_STREAM_ONCE(msg) RCLCPP_DEBUG_ONCE(_logger, MSG(msg))
+#define ROS_INFO_STREAM_ONCE(msg) RCLCPP_INFO_ONCE(_logger, MSG(msg))
+#define ROS_WARN_STREAM_COND(cond, msg) RCLCPP_WARN_EXPRESSION(_logger, cond, MSG(msg))
+#else
+// Based on: https://docs.ros2.org/foxy/api/rclcpp/logging_8hpp.html
 #define ROS_DEBUG_STREAM(msg) RCLCPP_DEBUG_STREAM(_logger, msg)
 #define ROS_INFO_STREAM(msg) RCLCPP_INFO_STREAM(_logger, msg)
 #define ROS_WARN_STREAM(msg) RCLCPP_WARN_STREAM(_logger, msg)
 #define ROS_ERROR_STREAM(msg) RCLCPP_ERROR_STREAM(_logger, msg)
 #define ROS_FATAL_STREAM(msg) RCLCPP_FATAL_STREAM(_logger, msg)
-
-#define ROS_WARN_COND(cond, ...) RCLCPP_WARN_EXPRESSION(_logger, cond, __VA_ARGS__)
+#define ROS_DEBUG_STREAM_ONCE(msg) RCLCPP_DEBUG_STREAM_ONCE(_logger, msg)
+#define ROS_INFO_STREAM_ONCE(msg) RCLCPP_INFO_STREAM_ONCE(_logger, msg)
 #define ROS_WARN_STREAM_COND(cond, msg) RCLCPP_WARN_STREAM_EXPRESSION(_logger, cond, msg)
+#endif
 
 #define ROS_WARN_ONCE(msg) RCLCPP_WARN_ONCE(_logger, msg)
-#define ROS_INFO_STREAM_ONCE(msg) RCLCPP_INFO_STREAM_ONCE(_logger, msg)
 
 namespace realsense2_camera
 {
