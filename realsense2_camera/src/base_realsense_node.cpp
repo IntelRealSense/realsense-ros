@@ -1,4 +1,4 @@
-#include "realsense2_camera/base_realsense_node.h"
+#include "base_realsense_node.h"
 #include "assert.h"
 #include <algorithm>
 #include <cctype>

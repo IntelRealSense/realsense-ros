@@ -54,11 +54,11 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'color_fps',                    'default': '-1.', 'description': ''},                           
                            {'name': 'gyro_fps',                     'default': '-1.', 'description': ''},                           
                            {'name': 'accel_fps',                    'default': '-1.', 'description': ''},    
-                           {'name': 'color_qos',                    'default': 'SENSOR_DATA', 'description': 'QoS profile name'},    
-                           {'name': 'confidence_qos',               'default': 'SENSOR_DATA', 'description': 'QoS profile name'},    
-                           {'name': 'depth_qos',                    'default': 'SENSOR_DATA', 'description': 'QoS profile name'},    
-                           {'name': 'fisheye_qos',                  'default': 'SENSOR_DATA', 'description': 'QoS profile name'},    
-                           {'name': 'infra_qos',                    'default': 'SENSOR_DATA', 'description': 'QoS profile name'},    
+                           {'name': 'color_qos',                    'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},    
+                           {'name': 'confidence_qos',               'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},    
+                           {'name': 'depth_qos',                    'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},    
+                           {'name': 'fisheye_qos',                  'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},    
+                           {'name': 'infra_qos',                    'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},    
                            {'name': 'enable_gyro',                  'default': 'false', 'description': ''},                           
                            {'name': 'enable_accel',                 'default': 'false', 'description': ''},                           
                            {'name': 'pointcloud_texture_stream',    'default': 'RS2_STREAM_COLOR', 'description': 'testure stream for pointcloud'},                           
@@ -75,6 +75,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'topic_odom_in',                'default': '', 'description': 'topic for T265 wheel odometry'},
                            {'name': 'tf_publish_rate',              'default': '0.0', 'description': 'Rate of publishing static_tf'},
                            {'name': 'rosbag_filename',              'default': '', 'description': 'A realsense bagfile to run from as a device'},
+                           {'name': 'temporal.holes_fill',          'default': '0', 'description': 'Persistency mode'},
                           ]
 
 def declare_configurable_parameters(parameters):
