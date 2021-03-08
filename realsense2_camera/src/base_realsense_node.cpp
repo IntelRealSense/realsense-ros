@@ -87,16 +87,16 @@ size_t SyncedImuPublisher::getNumSubscribers()
 }
 
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
-                                    rs2::device dev, const std::string& serial_no) :
+                                    rs2::device dev, std::shared_ptr<Parameters> parameters) :
     _base_frame_id(""),
     _node(node),
     _logger(rclcpp::get_logger("RealSenseCameraNode")),
     _dev(dev),
     _json_file_path(""),
-    _serial_no(serial_no),
     _static_tf_broadcaster(node),
     _dynamic_tf_broadcaster(node),
-    _is_initialized_time_base(false)
+    _is_initialized_time_base(false),
+    _parameters(parameters)
 {
     // Types for depth stream
     _format[RS2_STREAM_DEPTH] = RS2_FORMAT_Z16;    
@@ -161,10 +161,6 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
 void BaseRealSenseNode::clean()
 {
     // Kill dynamic transform thread
-    for (auto& name : _variable_names)
-    {
-        _node.undeclare_parameter(name);        
-    }
     if (_tf_t)
         _tf_t->join();
 
@@ -193,23 +189,6 @@ BaseRealSenseNode::~BaseRealSenseNode()
     ROS_WARN("BaseRealSenseNode::~BaseRealSenseNode()");
     clean();
     ROS_WARN("BaseRealSenseNode::~BaseRealSenseNode() - Done");
-}
-
-const rclcpp::ParameterValue BaseRealSenseNode::declareParameter(const std::string &name, 
-                                                           const rclcpp::ParameterValue &default_value, 
-                                                           const rcl_interfaces::msg::ParameterDescriptor &parameter_descriptor)
-{
-    rclcpp::ParameterValue value;
-    _variable_names.insert(name);
-    if (_node.has_parameter(name))
-    {
-        value = _node.get_parameter(name).get_parameter_value();
-    }
-    else
-    {
-        value = _node.declare_parameter(name, default_value, parameter_descriptor);
-    }
-    return value;
 }
 
 void BaseRealSenseNode::setupErrorCallback()
@@ -359,41 +338,35 @@ std::string create_graph_resource_name(const std::string &original_name)
   return fixed_name;
 }
 
-void BaseRealSenseNode::set_auto_exposure_roi(const std::string variable_name, rs2::sensor sensor, const std::vector<rclcpp::Parameter> & parameters)
+void BaseRealSenseNode::set_auto_exposure_roi(const std::string variable_name, rs2::sensor sensor, const rclcpp::Parameter& parameter)
 {
-    for (const auto & parameter : parameters) {
-        if (variable_name == parameter.get_name())
-        {
-            int new_value(parameter.get_value<int>());
-            ROS_INFO_STREAM("set_option: " << variable_name << " = " << new_value);
-            try
-            {
-                std::vector<std::string> option_parts;
-                option_parts = split(variable_name, '.');
-                const std::string& option_name(option_parts[option_parts.size()-1]);
+    int new_value(parameter.get_value<int>());
+    ROS_INFO_STREAM("set_option: " << variable_name << " = " << new_value);
+    try
+    {
+        std::vector<std::string> option_parts;
+        option_parts = split(variable_name, '.');
+        const std::string& option_name(option_parts[option_parts.size()-1]);
 
-                rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
-                if (option_name == "left")
-                    auto_exposure_roi.min_x = new_value;
-                else if (option_name == "right")
-                    auto_exposure_roi.max_x = new_value;
-                else if (option_name == "top")
-                    auto_exposure_roi.min_y = new_value;
-                else if (option_name == "bottom")
-                    auto_exposure_roi.max_y = new_value;
-                else
-                {
-                    ROS_WARN_STREAM("Invalid option_name: " << option_name << " while setting auto exposure ROI.");
-                    return;
-                }
-                set_sensor_auto_exposure_roi(sensor);
-            }
-            catch(const rs2::invalid_value_error& e)
-            {
-                ROS_WARN_STREAM("Failed to set value: " << e.what());
-            }
-            break;
+        rs2::region_of_interest& auto_exposure_roi(_auto_exposure_roi[sensor.get_info(RS2_CAMERA_INFO_NAME)]);
+        if (option_name == "left")
+            auto_exposure_roi.min_x = new_value;
+        else if (option_name == "right")
+            auto_exposure_roi.max_x = new_value;
+        else if (option_name == "top")
+            auto_exposure_roi.min_y = new_value;
+        else if (option_name == "bottom")
+            auto_exposure_roi.max_y = new_value;
+        else
+        {
+            ROS_WARN_STREAM("Invalid option_name: " << option_name << " while setting auto exposure ROI.");
+            return;
         }
+        set_sensor_auto_exposure_roi(sensor);
+    }
+    catch(const rs2::invalid_value_error& e)
+    {
+        ROS_WARN_STREAM("Failed to set value: " << e.what());
     }
 }
 
@@ -426,25 +399,10 @@ void BaseRealSenseNode::registerAutoExposureROIOption(const std::string option_n
     std::string variable_name(module_name + "." + option_name);
     ROS_DEBUG_STREAM("Declare ROI: INT::" << variable_name << " = " << *option_value << "[" << range.from_value << ", " << range.to_value << "]");
     
-    try
-    {
-        setNgetNodeParameter(*option_value, variable_name, *option_value);
-    }
-    catch(const rclcpp::exceptions::InvalidParameterValueException& e)
-    {
-        ROS_WARN_STREAM("Failed to set ROI parameter:" << variable_name << " = " << *option_value << "[" << range.from_value << ", " << range.to_value << "]\n" << e.what());
-        return;
-    }
-
-    _callback_handlers.push_back(
-        _node.add_on_set_parameters_callback(
-            [this, sensor, variable_name](const std::vector<rclcpp::Parameter> & parameters) 
+    _parameters->setParam(variable_name, rclcpp::ParameterValue(*option_value), [this, sensor, variable_name](const rclcpp::Parameter& parameter) 
                 { 
-                    rcl_interfaces::msg::SetParametersResult result;
-                    result.successful = true;
-                    set_auto_exposure_roi(variable_name, sensor, parameters);
-                    return result;
-                }));
+                    set_auto_exposure_roi(variable_name, sensor, parameter);
+                }, crnt_descriptor);
 }
 
 void BaseRealSenseNode::registerAutoExposureROIOptions()
@@ -476,22 +434,16 @@ void BaseRealSenseNode::registerAutoExposureROIOptions()
 }
 
 template<class T>
-void param_set_option(rs2::options sensor, rs2_option option, std::string option_name, const std::vector<rclcpp::Parameter> & parameters)
+void param_set_option(rs2::options sensor, rs2_option option, std::string option_name, const rclcpp::Parameter& parameter)
 { 
-    for (const auto & parameter : parameters) {
-        if (option_name == parameter.get_name())
-        {
-            std::cout << "set_option: " << option_name << " = " << parameter.get_value<T>() << std::endl;
-            try
-            {
-                sensor.set_option(option, parameter.get_value<T>());
-            }
-            catch(const rs2::invalid_value_error& e)
-            {
-                std::cout << "Failed to set value: " << e.what() << std::endl;
-            }
-            break;
-        }
+    std::cout << "set_option: " << option_name << " = " << parameter.get_value<T>() << std::endl;
+    try
+    {
+        sensor.set_option(option, parameter.get_value<T>());
+    }
+    catch(const rs2::invalid_value_error& e)
+    {
+        std::cout << "Failed to set value: " << e.what() << std::endl;
     }
 }
 
@@ -524,37 +476,10 @@ void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, co
         crnt_descriptor.floating_point_range.push_back(range);
         ROS_DEBUG_STREAM("Declare: DOUBLE::" << option_name << " = " << option_value);
     }
-    T new_val;
-    try
-    {
-        setNgetNodeParameter(new_val, option_name, option_value, crnt_descriptor);
-    }
-    catch(const rclcpp::exceptions::InvalidParameterValueException& e)
-    {
-        ROS_WARN_STREAM("Failed to set parameter:" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]\n" << e.what());
-        return;
-    }
-    
-    if (new_val != option_value)
-    {
-        try
-        {
-            sensor.set_option(option, new_val);
-        }
-        catch(const rs2::invalid_value_error& e)
-        {
-            ROS_WARN_STREAM("Failed to set value to sensor: " << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]\n" << e.what());            
-        }
-    }
-    _callback_handlers.push_back(
-        _node.add_on_set_parameters_callback(
-            [option, sensor, option_name](const std::vector<rclcpp::Parameter> & parameters) 
+    _parameters->setParam(option_name, rclcpp::ParameterValue(option_value), [option, sensor, option_name](const rclcpp::Parameter& parameter) 
                 { 
-                    rcl_interfaces::msg::SetParametersResult result;
-                    result.successful = true;
-                    param_set_option<T>(sensor, option, option_name, parameters);
-                    return result;
-                }));
+                    param_set_option<T>(sensor, option, option_name, parameter);
+                }, crnt_descriptor);
 }
 
 void BaseRealSenseNode::registerDynamicOption(rs2::options sensor, std::string& module_name)
@@ -678,7 +603,7 @@ template<class T>
 void BaseRealSenseNode::setNgetNodeParameter(T& param, const std::string& param_name, const T& default_value, const rcl_interfaces::msg::ParameterDescriptor &parameter_descriptor)
 {
     try {
-        param =  declareParameter(param_name, rclcpp::ParameterValue(default_value), parameter_descriptor).get<T>();
+        param =  _parameters->setParam(param_name, rclcpp::ParameterValue(default_value), std::function<void(const rclcpp::Parameter&)>(), parameter_descriptor).get<T>();
     }
     catch(const rclcpp::ParameterTypeException& ex)
     {
@@ -822,7 +747,8 @@ void BaseRealSenseNode::setupDevice()
         auto camera_name = _dev.get_info(RS2_CAMERA_INFO_NAME);
         ROS_INFO_STREAM("Device Name: " << camera_name);
 
-        ROS_INFO_STREAM("Device Serial No: " << _serial_no);
+        std::string serial_no = _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+        ROS_INFO_STREAM("Device Serial No: " << serial_no);
 
         auto camera_id = _dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
 

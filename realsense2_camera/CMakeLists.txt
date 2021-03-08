@@ -109,10 +109,36 @@ include_directories(include)
 
 set(node_plugins "")
 
-add_library(${PROJECT_NAME} SHARED
+set(SOURCES 
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
     src/t265_realsense_node.cpp
+    src/dynamic_params.cpp
+  )
+
+if(NOT DEFINED ENV{ROS_DISTRO})
+  message(FATAL_ERROR "ROS_DISTRO is not defined." )
+endif()
+if("$ENV{ROS_DISTRO}" STREQUAL "dashing")
+  message(STATUS "Build for ROS2 Dashing")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDASHING")
+  set(SOURCES "${SOURCES}" src/ros_param_backend_dashing.cpp)
+elseif("$ENV{ROS_DISTRO}" STREQUAL "foxy")
+  message(STATUS "Build for ROS2 Dashing")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFOXY")
+  set(SOURCES "${SOURCES}" src/ros_param_backend_foxy.cpp)
+else()
+  message(FATAL_ERROR "Unsupported ROS Distribution: " "$ENV{ROS_DISTRO}")
+endif()
+
+
+add_library(${PROJECT_NAME} SHARED
+    include/constants.h
+    include/realsense_node_factory.h
+    include/base_realsense_node.h
+    include/dynamic_params.h
+    include/ros_param_backend.h
+    ${SOURCES}
 )
 
 target_link_libraries(${PROJECT_NAME}

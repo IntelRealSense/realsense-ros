@@ -8,6 +8,7 @@
 #include <librealsense2/rs.hpp>
 #include <librealsense2/rsutil.h>
 #include "constants.h"
+#include "dynamic_params.h"
 #include <cv_bridge/cv_bridge.h>
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
@@ -118,7 +119,7 @@ namespace realsense2_camera
     {
     public:
         BaseRealSenseNode(rclcpp::Node& node,
-                          rs2::device dev, const std::string& serial_no);
+                          rs2::device dev, std::shared_ptr<Parameters> parameters);
         ~BaseRealSenseNode();
 
     public:
@@ -166,7 +167,6 @@ namespace realsense2_camera
                                const tf2::Quaternion& q,
                                const std::string& from,
                                const std::string& to);
-        const rclcpp::ParameterValue declareParameter(const std::string &name, const rclcpp::ParameterValue &default_value=rclcpp::ParameterValue(), const rcl_interfaces::msg::ParameterDescriptor &parameter_descriptor=rcl_interfaces::msg::ParameterDescriptor());
         template<class T>
         void setNgetNodeParameter(T& param, const std::string& param_name, const T& default_value, const rcl_interfaces::msg::ParameterDescriptor &parameter_descriptor=rcl_interfaces::msg::ParameterDescriptor());
 
@@ -238,7 +238,7 @@ namespace realsense2_camera
         void registerDynamicReconfigCb();
         void registerAutoExposureROIOption(const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, int* option_value);
         void registerAutoExposureROIOptions();
-        void set_auto_exposure_roi(const std::string variable_name, rs2::sensor sensor, const std::vector<rclcpp::Parameter> & parameters);
+        void set_auto_exposure_roi(const std::string variable_name, rs2::sensor sensor, const rclcpp::Parameter& parameter);
         void set_sensor_auto_exposure_roi(rs2::sensor sensor);
         const rmw_qos_profile_t qos_string_to_qos(std::string str);
         rs2_stream rs2_string_to_stream(std::string str);
@@ -249,7 +249,6 @@ namespace realsense2_camera
         std::map<std::string, std::function<void(rs2::frame)>> _sensors_callback;
 
         std::string _json_file_path;
-        std::string _serial_no;
         float _depth_scale_meters;
         float _clipping_distance;
         bool _allow_no_texture_points;
@@ -322,8 +321,7 @@ namespace realsense2_camera
 
         sensor_msgs::msg::PointCloud2 _msg_pointcloud;
         std::vector< unsigned int > _valid_pc_indices;
-        std::vector<rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr> _callback_handlers;
-        std::set<std::string> _variable_names;
+        std::shared_ptr<Parameters> _parameters;
 
     };//end class
 }

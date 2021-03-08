@@ -4,8 +4,8 @@
 using namespace realsense2_camera;
 
 T265RealsenseNode::T265RealsenseNode(rclcpp::Node& node,
-                                     rs2::device dev, const std::string& serial_no) : 
-                                     BaseRealSenseNode(node, dev, serial_no),
+                                     rs2::device dev, std::shared_ptr<Parameters> parameters) : 
+                                     BaseRealSenseNode(node, dev, parameters),
                                      _wo_snr(dev.first<rs2::wheel_odometer>()),
                                      _use_odom_in(false) 
                                      {

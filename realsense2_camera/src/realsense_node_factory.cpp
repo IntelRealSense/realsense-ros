@@ -234,6 +234,7 @@ void RealSenseNodeFactory::init()
 	try
 	{
 		_is_alive = true;
+		_parameters = std::make_shared<Parameters>(*this);
 
 		rs2_error* e = nullptr;
 		std::string running_librealsense_version(api_version_to_string(rs2_get_api_version(&e)));
@@ -349,10 +350,10 @@ void RealSenseNodeFactory::startDevice()
 		case RS_USB2_PID:
 		case RS_L515_PID_PRE_PRQ:
 		case RS_L515_PID:
-			_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(*this, _device, _serial_no));
+			_realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(*this, _device, _parameters));
 			break;
 		case RS_T265_PID:
-			_realSenseNode = std::unique_ptr<T265RealsenseNode>(new T265RealsenseNode(*this, _device, _serial_no));
+			_realSenseNode = std::unique_ptr<T265RealsenseNode>(new T265RealsenseNode(*this, _device, _parameters));
 			break;
 		default:
 			ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);
