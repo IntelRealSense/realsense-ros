@@ -72,13 +72,13 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _is_running(true),
     _node(node),
     _logger(rclcpp::get_logger("RealSenseCameraNode")),
+    _parameters(parameters),
     // _rs_diagnostic_updater(diagnostic_updater, serial_no),
     _dev(dev),
     _json_file_path(""),
     _static_tf_broadcaster(node),
     _is_initialized_time_base(false),
-    _is_profile_changed(false),
-    _parameters(parameters)
+    _is_profile_changed(false)
 {
     _image_format[1] = CV_8UC1;    // CVBridge type
     _image_format[2] = CV_16UC1;    // CVBridge type

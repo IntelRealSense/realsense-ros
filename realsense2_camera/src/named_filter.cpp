@@ -26,6 +26,7 @@ PointcloudFilter::PointcloudFilter(std::string name, std::shared_ptr<rs2::filter
     _node(node)
     {
         _params.getParameters()->setParamT(std::string("allow_no_texture_points"), rclcpp::ParameterValue(ALLOW_NO_TEXTURE_POINTS), _allow_no_texture_points);
+        _params.getParameters()->setParamT(std::string("ordered_pc"), rclcpp::ParameterValue(ORDERED_PC), _ordered_pc);
         set(_is_enabled);
     }
 
@@ -58,7 +59,6 @@ void reverse_memcpy(unsigned char* dst, const unsigned char* src, size_t n)
 
 void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset, const std::string& frame_id)
 {
-    bool _ordered_pc(false);
     {
         std::lock_guard<std::mutex> lock_guard(_mutex_publisher);
         if ((!_pointcloud_publisher) || (!(_pointcloud_publisher->get_subscription_count())))
