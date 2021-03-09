@@ -138,17 +138,6 @@ void BaseRealSenseNode::publishTopics()
     getParameters();
     setupFilters();
     setup();
-    // setupDevice();
-    // registerDynamicReconfigCb();
-    // setupErrorCallback();
-    // enable_devices();
-    // setupPublishers();
-    // setupStreams();
-    // SetBaseStream();
-//    registerAutoExposureROIOptions(_node_handle);
-    // publishStaticTransforms();
-    // publishIntrinsics();
-    // startMonitoring();   TODO: do
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
@@ -211,7 +200,7 @@ void BaseRealSenseNode::setupFilters()
     _filters.push_back(std::make_shared<NamedFilter>("temporal", std::make_shared<rs2::temporal_filter>(), _parameters, _logger));
     _filters.push_back(std::make_shared<NamedFilter>("hole_filling", std::make_shared<rs2::hole_filling_filter>(), _parameters, _logger));
     _filters.push_back(std::make_shared<NamedFilter>("disparity_end", std::make_shared<rs2::disparity_transform>(false), _parameters, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("colorizer", std::make_shared<rs2::colorizer>(), _parameters, _logger)); // TODO: Callback must take care of depth image_format, encoding etc.
+    _filters.push_back(std::make_shared<NamedFilter>("colorizer", std::make_shared<rs2::colorizer>(), _parameters, _logger));
     _filters.push_back(std::make_shared<PointcloudFilter>("pointcloud", std::make_shared<rs2::pointcloud>(), _node, _parameters, _logger));
 }
 
@@ -1018,23 +1007,6 @@ void BaseRealSenseNode::publishDynamicTransforms()
         loop_rate.sleep();
     }
 }
-
-// void BaseRealSenseNode::publishIntrinsics()
-// {
-//     if (_enable[GYRO])
-//     {
-//         _imu_info_publisher[GYRO] = _node.create_publisher<IMUInfo>("gyro/imu_info", 1);
-//         IMUInfo info_msg = getImuInfo(GYRO);
-//         _imu_info_publisher[GYRO]->publish(info_msg);
-//     }
-
-//     if (_enable[ACCEL])
-//     {
-//         _imu_info_publisher[ACCEL] = _node.create_publisher<IMUInfo>("accel/imu_info", 1);
-//         IMUInfo info_msg = getImuInfo(ACCEL);
-//         _imu_info_publisher[ACCEL]->publish(info_msg);
-//     }
-// }
 
 void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset)
 {

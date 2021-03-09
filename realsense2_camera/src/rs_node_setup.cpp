@@ -6,7 +6,6 @@ using namespace rs2;
 
 void BaseRealSenseNode::setup()
 {
-    // getParameters();
     setAvailableSensors();
     SetBaseStream();
     setupFiltersPublishers();
@@ -19,21 +18,6 @@ void BaseRealSenseNode::setup()
 void BaseRealSenseNode::setupFiltersPublishers()
 {
     _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
-    //_synced_imu_publisher = std::make_shared<SyncedImuPublisher>();
-    // for(auto&& sensor : _available_ros_sensors)
-    // {
-    //     if (sensor->is<VideoSensor>() && !_pointcloud_publisher)
-    //     {
-    //         ROS_INFO("Start pointcloud publisher.");
-    //         _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 1);
-    //     }
-    //     else if (sensor->is<ImuSensor>())
-    //     {
-    //         ROS_INFO("Start imu publisher.");
-    //         _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
-    //         _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
-    //     }
-    // }
 }
 
 void BaseRealSenseNode::monitoringProfileChanges()

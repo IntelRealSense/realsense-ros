@@ -13,7 +13,7 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <diagnostic_updater/update_functions.hpp>
 #include <diagnostic_updater/publisher.hpp>
-// #include <nav_msgs/Odometry.h>
+
 #ifdef DASHING
 #include <image_transport/image_transport.h>
 #else
@@ -55,19 +55,6 @@ using realsense2_camera_msgs::msg::IMUInfo;
 namespace realsense2_camera
 {
     typedef std::pair<rs2_stream, int> stream_index_pair;
-
-    // const stream_index_pair COLOR{RS2_STREAM_COLOR, 0};
-    // const stream_index_pair DEPTH{RS2_STREAM_DEPTH, 0};
-    // const stream_index_pair INFRA0{RS2_STREAM_INFRARED, 0};
-    // const stream_index_pair INFRA1{RS2_STREAM_INFRARED, 1};
-    // const stream_index_pair INFRA2{RS2_STREAM_INFRARED, 2};
-    // const stream_index_pair FISHEYE{RS2_STREAM_FISHEYE, 0};
-    // const stream_index_pair FISHEYE1{RS2_STREAM_FISHEYE, 1};
-    // const stream_index_pair FISHEYE2{RS2_STREAM_FISHEYE, 2};
-    // const stream_index_pair GYRO{RS2_STREAM_GYRO, 0};
-    // const stream_index_pair ACCEL{RS2_STREAM_ACCEL, 0};
-    // const stream_index_pair POSE{RS2_STREAM_POSE, 0};
-    
 
     const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA0, INFRA1, INFRA2,
                                                           COLOR,
@@ -241,7 +228,6 @@ namespace realsense2_camera
         void SetBaseStream();
         void publishStaticTransforms(std::vector<rs2::stream_profile> profiles);
         void publishDynamicTransforms();
-        void publishIntrinsics();
         void publishPointCloud(rs2::points f, const rclcpp::Time& t, const rs2::frameset& frameset);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
 
@@ -271,7 +257,6 @@ namespace realsense2_camera
         void setupFiltersPublishers();
         void setAvailableSensors();
         void setCallbackFunctions();
-        // void getUpdatedSensorParameters(const rs2::sensor& sensor);
         void updateSensors();
         void startPublishers(const std::vector<rs2::stream_profile>& profiles, const RosSensor& sensor);
         void stopPublishers(const std::vector<rs2::stream_profile>& profiles);
@@ -334,11 +319,8 @@ namespace realsense2_camera
         std::map<stream_index_pair, cv::Mat> _depth_scaled_image;
         std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr> _depth_aligned_info_publisher;
         std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics> _depth_aligned_image_publishers;
-        // std::map<stream_index_pair, rclcpp::Publisher<Extrinsics>::SharedPtr> _depth_to_other_extrinsics_publishers;
-        std::map<stream_index_pair, rs2_extrinsics> _depth_to_other_extrinsics;
         std::map<std::string, rs2::region_of_interest> _auto_exposure_roi;
         std::map<rs2_stream, bool> _is_first_frame;
-        std::map<rs2_stream, std::vector<std::function<void()> > > _video_functions_stack;
 
         std::shared_ptr<std::thread> _monitoring_t;
         std::shared_ptr<std::thread> _monitoring_pc;   //pc = profile changes
