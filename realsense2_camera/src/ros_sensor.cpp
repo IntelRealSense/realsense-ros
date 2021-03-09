@@ -122,8 +122,15 @@ void RosSensor::stop()
     if (get_active_streams().size() == 0)
         return;
     ROS_INFO_STREAM("Stop Sensor: " << get_info(RS2_CAMERA_INFO_NAME));
-    rs2::sensor::stop();
-    close();
+    try
+    {
+        rs2::sensor::stop();
+        close();
+    }
+    catch (const rs2::error& e)
+    {
+        ROS_ERROR_STREAM("Exception: " << e.what());
+    }
 }
 
 bool profiles_equal(const rs2::stream_profile& a, const rs2::stream_profile& b)
