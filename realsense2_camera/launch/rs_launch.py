@@ -76,7 +76,7 @@ def set_configurable_parameters(parameters):
 
 def generate_launch_description():
     log_level = 'info'
-    if (os.getenv('ROS_DISTRO') == "dashing"):
+    if (os.getenv('ROS_DISTRO') == "dashing") or (os.getenv('ROS_DISTRO') == "eloquent"):
         return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
             # Realsense
             launch_ros.actions.Node(

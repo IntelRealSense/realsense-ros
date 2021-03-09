@@ -14,7 +14,7 @@
 #include <diagnostic_updater/update_functions.hpp>
 #include <diagnostic_updater/publisher.hpp>
 
-#ifdef DASHING
+#if defined(DASHING) || defined(ELOQUENT)
 #include <image_transport/image_transport.h>
 #else
 #include <image_transport/image_transport.hpp>

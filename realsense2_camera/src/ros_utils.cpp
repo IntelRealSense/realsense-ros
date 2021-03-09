@@ -63,7 +63,7 @@ std::string create_graph_resource_name(const std::string &original_name)
 
 const rmw_qos_profile_t qos_string_to_qos(std::string str)
 {
-#ifndef DASHING
+#ifdef FOXY
     if (str == "UNKNOWN")
         return rmw_qos_profile_unknown;
 #endif
