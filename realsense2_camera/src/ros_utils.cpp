@@ -36,7 +36,13 @@ std::string rs2_to_ros(std::string rs2_name)
         {"Infrared", "Infra"},
         {"Stereo Module", "Depth Module"},
         {"L500 Depth Sensor", "Depth Module"} ,
-        {"Pointcloud (SSE3)", "Pointcloud"}
+        {"Pointcloud (SSE3)", "Pointcloud"},
+        {"Decimation Filter", "decimation"},
+        {"Depth to Disparity", "disparity"},
+        {"Spatial Filter", "spatial"},
+        {"Temporal Filter", "temporal"},
+        {"Hole Filling Filter", "hole_filling"},
+        {"Depth Visualization", "colorizer"}
     };
     // std::cout << "rs2_name: " << rs2_name << std::endl;
     auto name_iter = libname_to_rosname.find(rs2_name);

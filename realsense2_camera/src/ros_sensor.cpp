@@ -243,9 +243,9 @@ void RosSensor::registerAutoExposureROIOptions()
         _auto_exposure_roi = {0, 0, max_x, max_y};
 
         ROS_DEBUG_STREAM("Publish roi for " << module_name);
-        _params.getParameters()->setParamT(module_name + ".min_x", rclcpp::ParameterValue(0),     _auto_exposure_roi.min_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
-        _params.getParameters()->setParamT(module_name + ".max_x", rclcpp::ParameterValue(max_x), _auto_exposure_roi.max_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
-        _params.getParameters()->setParamT(module_name + ".min_y", rclcpp::ParameterValue(0),     _auto_exposure_roi.min_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
-        _params.getParameters()->setParamT(module_name + ".max_y", rclcpp::ParameterValue(max_y), _auto_exposure_roi.max_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters()->setParamT(module_name + ".left", rclcpp::ParameterValue(0),     _auto_exposure_roi.min_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters()->setParamT(module_name + ".right", rclcpp::ParameterValue(max_x), _auto_exposure_roi.max_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters()->setParamT(module_name + ".top", rclcpp::ParameterValue(0),     _auto_exposure_roi.min_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters()->setParamT(module_name + ".bottom", rclcpp::ParameterValue(max_y), _auto_exposure_roi.max_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
     }
 }

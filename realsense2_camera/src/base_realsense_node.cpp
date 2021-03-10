@@ -98,10 +98,11 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
 BaseRealSenseNode::~BaseRealSenseNode()
 {
     // Kill dynamic transform thread
-    if (_tf_t)
+    _is_running = false;
+    _cv_tf.notify_one();
+    if (_tf_t && _tf_t->joinable())
         _tf_t->join();
 
-    _is_running = false;
     _cv_temp.notify_one();
     _cv_mpc.notify_one();
     if (_monitoring_t && _monitoring_t->joinable())
@@ -975,27 +976,44 @@ void BaseRealSenseNode::publishStaticTransforms(std::vector<rs2::stream_profile>
         {
             calcAndPublishStaticTransform(profile, _base_profile);
         }
-        // Static transform for non-positive values
-        if (_tf_publish_rate > 0)
+        _static_tf_broadcaster.sendTransform(_static_tf_msgs);
+    }
+}
+
+void BaseRealSenseNode::startDynamicTf()
+{
+    if (_tf_publish_rate > 0)
+    {
+        ROS_WARN("Publishing dynamic camera transforms (/tf) at %g Hz", _tf_publish_rate);
+        if (!_tf_t)
+        {
+            _dynamic_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(_node);
             _tf_t = std::make_shared<std::thread>([this]()
             {
                 publishDynamicTransforms();
             });
-        else
-            _static_tf_broadcaster.sendTransform(_static_tf_msgs);
+        }
+    }
+    else
+    {
+        if (_tf_t && _tf_t->joinable())
+        {
+            _tf_t->join();
+            _tf_t.reset();
+            _dynamic_tf_broadcaster.reset();
+        }
     }
 }
 
 void BaseRealSenseNode::publishDynamicTransforms()
 {
     // Publish transforms for the cameras
-    ROS_WARN("Publishing dynamic camera transforms (/tf) at %g Hz", _tf_publish_rate);
 
-    rclcpp::Rate loop_rate(_tf_publish_rate);
-
-    while (rclcpp::ok())
+    std::mutex mu;
+    std::unique_lock<std::mutex> lock(mu);
+    while (rclcpp::ok() && _is_running && _tf_publish_rate > 0)
     {
-        // Update the time stamp for publication
+        _cv_tf.wait_for(lock, std::chrono::milliseconds((int)(1000.0/_tf_publish_rate)), [&]{return (!(_is_running && _tf_publish_rate > 0));});
         {
             std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
             rclcpp::Time t = _node.now();        
@@ -1003,8 +1021,6 @@ void BaseRealSenseNode::publishDynamicTransforms()
                 msg.header.stamp = t;
             _dynamic_tf_broadcaster->sendTransform(_static_tf_msgs);
         }
-
-        loop_rate.sleep();
     }
 }
 

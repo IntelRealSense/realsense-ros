@@ -227,6 +227,7 @@ namespace realsense2_camera
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         void SetBaseStream();
         void publishStaticTransforms(std::vector<rs2::stream_profile> profiles);
+        void startDynamicTf();
         void publishDynamicTransforms();
         void publishPointCloud(rs2::points f, const rclcpp::Time& t, const rs2::frameset& frameset);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
@@ -281,7 +282,7 @@ namespace realsense2_camera
         std::mutex _publish_tf_mutex;
 
         tf2_ros::StaticTransformBroadcaster _static_tf_broadcaster;
-        std::shared_ptr<tf2_ros::StaticTransformBroadcaster> _dynamic_tf_broadcaster;
+        std::shared_ptr<tf2_ros::TransformBroadcaster> _dynamic_tf_broadcaster;
         std::vector<geometry_msgs::msg::TransformStamped> _static_tf_msgs;
         std::shared_ptr<std::thread> _tf_t;
 
@@ -324,7 +325,7 @@ namespace realsense2_camera
 
         std::shared_ptr<std::thread> _monitoring_t;
         std::shared_ptr<std::thread> _monitoring_pc;   //pc = profile changes
-        mutable std::condition_variable _cv_temp, _cv_mpc;
+        mutable std::condition_variable _cv_temp, _cv_mpc, _cv_tf;
         bool _is_profile_changed;
 
         rs2::stream_profile _base_profile;

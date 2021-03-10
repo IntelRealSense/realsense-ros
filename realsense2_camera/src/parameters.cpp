@@ -10,7 +10,11 @@ void BaseRealSenseNode::getParameters()
     _camera_name = _parameters->setParam("camera_name", rclcpp::ParameterValue("camera")).get<rclcpp::PARAMETER_STRING>();
 
     _publish_tf = _parameters->setParam("publish_tf", rclcpp::ParameterValue(PUBLISH_TF)).get<rclcpp::PARAMETER_BOOL>();
-    _tf_publish_rate = _parameters->setParam("tf_publish_rate", rclcpp::ParameterValue(TF_PUBLISH_RATE)).get<rclcpp::PARAMETER_DOUBLE>();
+    _parameters->setParamT("tf_publish_rate", rclcpp::ParameterValue(TF_PUBLISH_RATE), _tf_publish_rate, [this](const rclcpp::Parameter& )
+            {
+                startDynamicTf();
+            });
+    startDynamicTf();
 
     _parameters->setParamT(std::string("enable_sync"), rclcpp::ParameterValue(SYNC_FRAMES || _align_depth), _sync_frames);
 

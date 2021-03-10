@@ -189,7 +189,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             // double fps(profile.fps());
             // _rs_diagnostic_updater.Add(stream_name, diagnostic_updater::FrequencyStatusParam(&fps, &fps));
             
-            std::string param_name(module_name + "." + create_graph_resource_name(ros_stream_to_string(sip.first)) + ".qos");
+            std::string param_name(create_graph_resource_name(ros_stream_to_string(sip.first)) + "_qos");
             std::string qos_str = _parameters->setParam(param_name, rclcpp::ParameterValue(IMAGE_QOS), [this](const rclcpp::Parameter& )
                     {
                         ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
