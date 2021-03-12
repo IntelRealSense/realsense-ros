@@ -93,11 +93,9 @@ find_package(rclcpp_components REQUIRED)
 find_package(realsense2_camera_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(diagnostic_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2 REQUIRED)
-find_package(diagnostic_updater REQUIRED)
 
 find_package(realsense2 2.42.0)
 if(NOT realsense2_FOUND)
@@ -127,10 +125,8 @@ set(dependencies
   realsense2_camera_msgs
   std_msgs
   sensor_msgs
-  diagnostic_msgs
   nav_msgs
   tf2
-  diagnostic_updater
   realsense2
   tf2_ros
 )
@@ -183,7 +179,6 @@ if(BUILD_TESTING)
     OpenCV
     rclcpp
     sensor_msgs
-    diagnostic_msgs
     nav_msgs
     tf2
     tf2_ros)
