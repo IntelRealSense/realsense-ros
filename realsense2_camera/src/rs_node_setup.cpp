@@ -273,12 +273,12 @@ void BaseRealSenseNode::updateSensors()
     }
     catch(const std::exception& ex)
     {
-        ROS_ERROR_STREAM("An exception has been thrown: " << ex.what());
+        ROS_ERROR_STREAM(__FILE__ << ":" << __LINE__ << ":" << "An exception has been thrown: " << ex.what());
         throw;
     }
     catch(...)
     {
-        ROS_ERROR_STREAM("Unknown exception has occured!");
+        ROS_ERROR_STREAM(__FILE__ << ":" << __LINE__ << ":" << "Unknown exception has occured!");
         throw;
     }
 }

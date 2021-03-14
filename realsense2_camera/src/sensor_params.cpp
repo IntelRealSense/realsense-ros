@@ -61,7 +61,7 @@ void param_set_option(rs2::options sensor, rs2_option option, std::string option
     {
         sensor.set_option(option, parameter.get_value<T>());
     }
-    catch(const rs2::invalid_value_error& e)
+    catch(const std::exception& e)
     {
         std::cout << "Failed to set value: " << e.what() << std::endl;
     }
@@ -76,9 +76,9 @@ void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const s
     {
         option_value = static_cast<T>(sensor.get_option(option));
     }
-    catch(const rs2::invalid_value_error& e)
+    catch(const std::exception& ex)
     {
-        ROS_WARN_STREAM("Failed to get value for " << option_name << " : " << e.what());
+        ROS_ERROR_STREAM("An error has occurred while calling sensor for: " << option_name << ":" << ex.what());
         return;
     }
     rs2::option_range op_range = sensor.get_option_range(option);
@@ -127,7 +127,7 @@ void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const s
         {
             sensor.set_option(option, new_val);
         }
-        catch(const rs2::invalid_value_error& e)
+        catch(std::exception& e)
         {
             ROS_WARN_STREAM("Failed to set value to sensor: " << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]\n" << e.what());            
         }
@@ -167,7 +167,7 @@ void SensorParams::registerDynamicOptions(rs2::options sensor, const std::string
                         {
                             sensor.set_option(option, ROS_DEPTH_SCALE);
                         }
-                        catch(const rs2::invalid_value_error& e)
+                        catch(const std::exception& e)
                         {
                             std::cout << "Failed to set value: " << e.what() << std::endl;
                         }

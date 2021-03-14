@@ -53,7 +53,7 @@ script:
   - wget $bag_filename -P "records/"
 
     # install packages for tests:
-  - sudo apt-get install python3-pip
+  - sudo apt-get install python3-pip -y
   - pip3 install numpy --upgrade
   - pip3 install numpy-quaternion tqdm
   # Run test:

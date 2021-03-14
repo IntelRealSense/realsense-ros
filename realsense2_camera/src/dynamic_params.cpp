@@ -37,7 +37,7 @@ namespace realsense2_camera
         }
     }
 
-    rclcpp::ParameterValue Parameters::setParam(std::string param_name, rclcpp::ParameterValue initial_value, 
+    rclcpp::ParameterValue Parameters::setParam(std::string param_name, const rclcpp::ParameterValue& initial_value, 
                               std::function<void(const rclcpp::Parameter&)> func, 
                               rcl_interfaces::msg::ParameterDescriptor descriptor)
     {
@@ -87,7 +87,7 @@ namespace realsense2_camera
 
 
     template <class T>
-    void Parameters::setParamT(std::string param_name, rclcpp::ParameterValue initial_value, 
+    void Parameters::setParamT(std::string param_name, const rclcpp::ParameterValue& initial_value, 
                               T& param, 
                               std::function<void(const rclcpp::Parameter&)> func,
                               rcl_interfaces::msg::ParameterDescriptor descriptor)
@@ -132,7 +132,7 @@ namespace realsense2_camera
         }
         catch(const std::exception& e)
         {
-            ROS_ERROR_STREAM(e.what());
+            ROS_ERROR_STREAM(__FILE__ << ":" << __LINE__ << ":" << e.what());
         }                            
     }
 
@@ -142,9 +142,9 @@ namespace realsense2_camera
         _param_functions.erase(param_name);
     }
 
-    template void Parameters::setParamT<bool>(std::string param_name, rclcpp::ParameterValue initial_value, bool& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
-    template void Parameters::setParamT<int>(std::string param_name, rclcpp::ParameterValue initial_value, int& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
-    template void Parameters::setParamT<double>(std::string param_name, rclcpp::ParameterValue initial_value, double& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template void Parameters::setParamT<bool>(std::string param_name, const rclcpp::ParameterValue& initial_value, bool& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template void Parameters::setParamT<int>(std::string param_name, const rclcpp::ParameterValue& initial_value, int& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template void Parameters::setParamT<double>(std::string param_name, const rclcpp::ParameterValue& initial_value, double& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
 
     template void Parameters::setParamValue<int>(int& param, const int& value);
     template void Parameters::setParamValue<bool>(bool& param, const bool& value);

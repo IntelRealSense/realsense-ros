@@ -150,6 +150,7 @@ namespace realsense2_camera
                           rs2::device dev,
                           std::shared_ptr<Parameters> parameters);
         ~BaseRealSenseNode();
+        void publishTopics();
 
     public:
         enum imu_sync_method{NONE, COPY, LINEAR_INTERPOLATION};
@@ -188,7 +189,6 @@ namespace realsense2_camera
         // Diagnostics _rs_diagnostic_updater;
 
         virtual void calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile);
-        void publishTopics();
         tf2::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
         void publish_static_tf(const rclcpp::Time& t,
                                const float3& trans,

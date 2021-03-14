@@ -44,7 +44,6 @@ namespace realsense2_camera
             std::function<void(rs2::frame)> _frame_callback;
             SensorParams _params;
             std::function<void()> _update_sensor_func;
-            std::shared_ptr<std::thread> _check_update_t;
             std::map<stream_index_pair, bool> _enabled_profiles;
             bool _is_first_frame;
             std::vector<std::function<void()> > _first_frame_functions_stack;

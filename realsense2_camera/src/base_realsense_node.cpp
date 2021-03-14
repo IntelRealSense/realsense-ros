@@ -91,8 +91,6 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _format[RS2_STREAM_INFRARED] = RS2_FORMAT_Y8;
 
     _monitor_options = {RS2_OPTION_ASIC_TEMPERATURE, RS2_OPTION_PROJECTOR_TEMPERATURE};
-
-    publishTopics();
 }
 
 BaseRealSenseNode::~BaseRealSenseNode()
