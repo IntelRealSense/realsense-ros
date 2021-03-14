@@ -11,9 +11,6 @@
 #include "dynamic_params.h"
 #include <cv_bridge/cv_bridge.h>
 
-#include <diagnostic_updater/diagnostic_updater.hpp>
-#include <diagnostic_updater/update_functions.hpp>
-#include <diagnostic_updater/publisher.hpp>
 // #include <nav_msgs/Odometry.h>
 #ifdef DASHING
 #include <image_transport/image_transport.h>
