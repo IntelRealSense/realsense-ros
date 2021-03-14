@@ -10,9 +10,6 @@
 #include "realsense2_camera/constants.h"
 #include <cv_bridge/cv_bridge.h>
 
-#include <diagnostic_updater/diagnostic_updater.hpp>
-#include <diagnostic_updater/update_functions.hpp>
-#include <diagnostic_updater/publisher.hpp>
 // #include <nav_msgs/Odometry.h>
 #include <image_transport/image_transport.hpp>
 #include "realsense2_camera_msgs/msg/imu_info.hpp"
