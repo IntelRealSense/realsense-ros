@@ -175,20 +175,26 @@ void BaseRealSenseNode::clean()
             {
                 _sensors[profile.first].stop();
             }
-            catch(const rs2::wrong_api_call_sequence_error& e)
+            catch(const std::exception& e)
             {
-                std::cerr << e.what() << '\n';
+                ROS_WARN_STREAM("Error while stopping sensor: " << e.what());
             }
-            _sensors[profile.first].close();
+
+            try
+            {
+                _sensors[profile.first].close();
+            }
+            catch(const std::exception& e)
+            {
+                ROS_WARN_STREAM("Error while closing sensor: " << e.what());
+            }
         }
     }
     _synced_imu_publisher.reset();
 }
 BaseRealSenseNode::~BaseRealSenseNode()
 {
-    ROS_WARN("BaseRealSenseNode::~BaseRealSenseNode()");
     clean();
-    ROS_WARN("BaseRealSenseNode::~BaseRealSenseNode() - Done");
 }
 
 void BaseRealSenseNode::setupErrorCallback()
@@ -451,7 +457,17 @@ template<class T>
 void BaseRealSenseNode::set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name, const std::string& description_addition)
 {
     const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
-    T option_value = static_cast<T>(sensor.get_option(option));
+    T option_value;
+    try
+    {
+        option_value = static_cast<T>(sensor.get_option(option));
+    }
+    catch(const std::exception& e)
+    {
+        ROS_WARN_STREAM("Error getting sensor's option: " << option_name << " : " << e.what());
+        return;
+    }
+    
     rs2::option_range op_range = sensor.get_option_range(option);
     rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
     std::stringstream desc;
