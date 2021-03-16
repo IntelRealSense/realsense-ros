@@ -4,31 +4,35 @@ These are packages for using Intel RealSense cameras (D400 and L500 series, SR30
 LibRealSense supported version: v2.42.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
 ## Installation Instructions
-This version supports ROS2 foxy on Ubuntu 20.04.
+This version supports ROS2 Dashing, Eloquent AND Foxy.
 
    ### Step 1: Install the ROS2 distribution
-   - #### Install [ROS2 foxy](https://index.ros.org/doc/ros2/Installation/Foxy/Linux-Install-Debians/), on Ubuntu 20.04.
+   - #### Install [ROS2 Dashing](https://index.ros.org/doc/ros2/Installation/dashing/Linux-Install-Debians/), on Ubuntu 18.04 or [ROS2 Foxy](https://index.ros.org/doc/ros2/Installation/foxy/Linux-Install-Debians/), on Ubuntu 20.04
 
-   ```bash
-  ROS_DISTRO=foxy
-  sudo apt update && sudo apt install curl gnupg2 lsb-release
-  curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
-  sudo sh -c 'echo "deb [arch=$(dpkg --print-architecture)] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
-  sudo apt update
-  sudo apt install ros-$ROS_DISTRO-ros-base
+### There are 2 sources to install realsense2_camera from:
 
-  #Environment setup
-  echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc
-  source ~/.bashrc
+* ### Method 1: The ROS distribution:
 
-  sudo apt install python3-colcon-common-extensions -y
+  *Ubuntu*
 
-  #Install argcomplete (optional)
-  sudo apt install python3-argcomplete
-   ```
+    realsense2_camera is available as a debian package of ROS distribution. It can be installed by typing:
+    
+    ```sudo apt-get install ros-$ROS_DISTRO-realsense2-camera```
+
+    This will install both realsense2_camera and its dependents, including librealsense2 library.
+
+    Notice:
+    * The version of librealsense2 is almost always behind the one availeable in RealSense&trade; official repository.
+    * librealsense2 is not built to use native v4l2 driver but the less stable RS-USB protocol. That is because the last is more general and operational on a larger variety of platforms. This have limitations when running multiple cameras and when using T265.
+    * realsense2_description is available as a separate debian package of ROS distribution. It includes the 3D-models of the devices and is necessary for running launch files that include these models (i.e. view_model.launch.py). It can be installed by typing:
+    `sudo apt-get install ros-$ROS_DISTRO-realsense2-description`
+
+* ### Method 2: The RealSense&trade; distribution:
+     > This option is demonstrated in the [.travis.yml](https://github.com/IntelRealSense/realsense-ros/blob/foxy/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
 
 
-  ### Step 2: Install librealsense2:
+   ### Step 1: Install the latest Intel&reg; RealSense&trade; SDK 2.0
+
    ### Install the latest Intel&reg; RealSense&trade; SDK 2.0
    - #### Install from [Debian Package](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages) - In that case treat yourself as a developer. Make sure you follow the instructions to also install librealsense2-dev and librealsense-dkms packages.
 
@@ -42,7 +46,7 @@ This version supports ROS2 foxy on Ubuntu 20.04.
    mkdir -p ~/ros2_ws/src
    cd ~/ros2_ws/src/
    ```
-   - Clone the latest Foxy Intel&reg; RealSense&trade;  wrapper from [here](https://github.com/IntelRealSense/realsense-ros.git) into '~/ros2_ws/src/'
+   - Clone the latest ROS2 Intel&reg; RealSense&trade;  wrapper from [here](https://github.com/IntelRealSense/realsense-ros.git) into '~/ros2_ws/src/'
    ```bashrc
    git clone https://github.com/IntelRealSense/realsense-ros.git -b foxy
    cd ~/ros2_ws
@@ -54,6 +58,7 @@ This version supports ROS2 foxy on Ubuntu 20.04.
   sudo rosdep init
   rosdep update
   rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y
+  sudo apt purge ros-$ROS_DISTRO-librealsense2 -y
   ```
 
   ### Step 5: Build:
