@@ -149,6 +149,7 @@ namespace realsense2_camera
                 }
         };
 
+        bool _is_running;
         std::string _base_frame_id;
         std::string _odom_frame_id;
         std::map<stream_index_pair, std::string> _frame_id;
@@ -237,6 +238,9 @@ namespace realsense2_camera
 
         void registerDynamicOption(rs2::options sensor, std::string& module_name);
         void registerDynamicReconfigCb();
+        void registerHDRoptions();
+        void set_sensor_parameter_to_ros(rs2::sensor sensor, rs2_option option);
+        void monitor_update_functions();
         void registerAutoExposureROIOption(const std::string option_name, const int min_val, const int max_val, rs2::sensor sensor, int* option_value);
         void registerAutoExposureROIOptions();
         void set_auto_exposure_roi(const std::string variable_name, rs2::sensor sensor, const rclcpp::Parameter& parameter);
@@ -272,7 +276,9 @@ namespace realsense2_camera
         tf2_ros::StaticTransformBroadcaster _static_tf_broadcaster;
         tf2_ros::TransformBroadcaster _dynamic_tf_broadcaster;
         std::vector<geometry_msgs::msg::TransformStamped> _static_tf_msgs;
-        std::shared_ptr<std::thread> _tf_t;
+        std::shared_ptr<std::thread> _tf_t, _update_functions_t;
+        std::vector<std::function<void()> > _update_functions_v;
+        std::condition_variable _cv_tf, _update_functions_cv;
 
         std::map<stream_index_pair, image_transport::Publisher> _image_publishers;
         
