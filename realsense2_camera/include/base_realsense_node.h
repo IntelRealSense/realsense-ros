@@ -12,7 +12,7 @@
 #include <cv_bridge/cv_bridge.h>
 
 // #include <nav_msgs/Odometry.h>
-#ifdef DASHING
+#if defined(DASHING) || defined(ELOQUENT)
 #include <image_transport/image_transport.h>
 #else
 #include <image_transport/image_transport.hpp>
