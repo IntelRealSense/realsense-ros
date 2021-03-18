@@ -183,6 +183,9 @@ The topics are of the form: ```/camera/aligned_depth_to_color/image_raw``` etc.
     * The texture of the pointcloud can be modified in rqt_reconfigure (see below) or using the parameters: `pointcloud_texture_stream` and `pointcloud_texture_index`. Run rqt_reconfigure to see available values for these parameters.</br>
     * The depth FOV and the texture FOV are not similar. By default, pointcloud is limited to the section of depth containing the texture. You can have a full depth to pointcloud, coloring the regions beyond the texture with zeros, by setting `allow_no_texture_points` to true.
     * pointcloud is of an unordered format by default. This can be changed by setting `ordered_pc` to true.
+- ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values. The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using rqt_reconfigure `stereo_module/sequence_id` parameter and then modifying the `stereo_module/gain`, and `stereo_module/exposure`.</br> To view the effect on the infrared image for each sequence id use the `sequence_id_filter/sequence_id` parameter.</br> To initialize these parameters in start time use the following parameters:</br>
+  `stereo_module/exposure/1`, `stereo_module/gain/1`, `stereo_module/exposure/2`, `stereo_module/gain/2`</br>
+  \* For in-depth review of the subject please read the accompanying [white paper](https://dev.intelrealsense.com/docs/high-dynamic-range-with-stereoscopic-depth-cameras).
 
  - The following filters have detailed descriptions in : https://github.com/IntelRealSense/librealsense/blob/master/doc/post-processing-filters.md
    - ```disparity``` - convert depth to disparity before applying other filters and back.

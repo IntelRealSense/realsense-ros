@@ -93,6 +93,12 @@
   <arg name="topic_odom_in"            default="$(arg tf_prefix)/odom_in"/>
   <arg name="calib_odom_file"          default=""/>
   <arg name="publish_odom_tf"          default="true"/>
+
+  <arg name="stereo_module/exposure/1" default="7500"/>
+  <arg name="stereo_module/gain/1"     default="16"/>
+  <arg name="stereo_module/exposure/2" default="1"/>
+  <arg name="stereo_module/gain/2"     default="16"/>
+
   <arg name="filters"                  default=""/>
   <arg name="clip_distance"            default="-1"/>
   <arg name="linear_accel_cov"         default="0.01"/>
@@ -192,6 +198,11 @@
     <param name="topic_odom_in"            type="str"  value="$(arg topic_odom_in)"/>
     <param name="calib_odom_file"          type="str"    value="$(arg calib_odom_file)"/>
     <param name="publish_odom_tf"          type="bool" value="$(arg publish_odom_tf)"/>
+    <param name="stereo_module/exposure/1" type="int"  value="$(arg stereo_module/exposure/1)"/>
+    <param name="stereo_module/gain/1"     type="int"  value="$(arg stereo_module/gain/1)"/>
+    <param name="stereo_module/exposure/2" type="int"  value="$(arg stereo_module/exposure/2)"/>
+    <param name="stereo_module/gain/2"     type="int"  value="$(arg stereo_module/gain/2)"/>
+
     <param name="filters"                  type="str"    value="$(arg filters)"/>
     <param name="clip_distance"            type="double" value="$(arg clip_distance)"/>
     <param name="linear_accel_cov"         type="double" value="$(arg linear_accel_cov)"/>
