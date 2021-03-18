@@ -630,9 +630,6 @@ void BaseRealSenseNode::registerHDRoptions()
         // Add functions to param_name - to update ros params.
         _parameters->setParam(param_name, rclcpp::ParameterValue(0), [this, sensor](const rclcpp::Parameter& ) 
                     { 
-                        std::string module_name = create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
-                        rs2_option option(RS2_OPTION_EXPOSURE);
-                        const std::string param_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
                         _update_functions_v.push_back([this, sensor]()
                             {set_sensor_parameter_to_ros(sensor, RS2_OPTION_EXPOSURE);});
                         _update_functions_v.push_back([this, sensor]()
