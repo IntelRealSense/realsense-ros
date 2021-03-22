@@ -40,7 +40,7 @@ install:
   - catkin_init_workspace
   - cd ..
   - rosdep install --from-paths src --ignore-src -r -y
-  - sudo apt purge ros-$_ros_dist-librealsense2
+  - sudo apt purge ros-$_ros_dist-librealsense2 -y
   - catkin_make clean
   - catkin_make -DCATKIN_ENABLE_TESTING=False -DCMAKE_BUILD_TYPE=Release
   - catkin_make install
