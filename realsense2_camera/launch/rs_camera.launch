@@ -62,6 +62,12 @@
   <arg name="topic_odom_in"             default="odom_in"/>
   <arg name="calib_odom_file"           default=""/>
   <arg name="publish_odom_tf"           default="true"/>
+
+  <arg name="stereo_module/exposure/1"  default="7500"/>
+  <arg name="stereo_module/gain/1"      default="16"/>
+  <arg name="stereo_module/exposure/2"  default="1"/>
+  <arg name="stereo_module/gain/2"      default="16"/>
+  
   
 
   <group ns="$(arg camera)">
@@ -125,6 +131,11 @@
       <arg name="topic_odom_in"            value="$(arg topic_odom_in)"/>
       <arg name="calib_odom_file"          value="$(arg calib_odom_file)"/>
       <arg name="publish_odom_tf"          value="$(arg publish_odom_tf)"/>
+      <arg name="stereo_module/exposure/1" value="$(arg stereo_module/exposure/1)"/>
+      <arg name="stereo_module/gain/1"     value="$(arg stereo_module/gain/1)"/>
+      <arg name="stereo_module/exposure/2" value="$(arg stereo_module/exposure/2)"/>
+      <arg name="stereo_module/gain/2"     value="$(arg stereo_module/gain/2)"/>
+
       <arg name="allow_no_texture_points"  value="$(arg allow_no_texture_points)"/>
       <arg name="ordered_pc"               value="$(arg ordered_pc)"/>
       
