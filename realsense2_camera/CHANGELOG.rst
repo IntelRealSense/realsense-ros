@@ -2,6 +2,15 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Remove the following tests for known playback issue with librealsense2 version 2.43.0: points_cloud_1, align_depth_color_1, align_depth_ir1_1, align_depth_ir1_decimation_1.
+* Add filter: HDR_merge
+* add default values to infra stream in rs_camera.launch as non are defined in librealsense2.
+* fix bug: selection of profile disregarded stream index.
+* fix initialization of colorizer inner image
+* Contributors: doronhi
+
 2.2.22 (2021-02-18)
 -------------------
 * Add reset service.
