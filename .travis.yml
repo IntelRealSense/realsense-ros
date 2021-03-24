@@ -13,7 +13,7 @@ before_install:
   - echo _python:$_python
   - echo _ros_dist:$_ros_dist
   - sudo apt-key adv --keyserver hkp://keys.gnupg.net:80 --recv-key C8B3A55A6F3EFCDE
-  - sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo $(lsb_release -sc) main"
+  - sudo add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main"
   - sudo apt-get update -qq
   - sudo apt-get install librealsense2-dkms --allow-unauthenticated -y
   - sudo apt-get install librealsense2-dev --allow-unauthenticated -y
@@ -48,9 +48,9 @@ install:
   - source ~/.bashrc
 
     # download data:
-  - bag_filename="http://realsense-hw-public.s3.amazonaws.com/rs-tests/TestData/outdoors_1color.bag";
+  - bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
   - wget $bag_filename -P "records/"
-  - bag_filename="http://realsense-hw-public.s3-eu-west-1.amazonaws.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
+  - bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
   - wget $bag_filename -P "records/"
   
   # Run test:
