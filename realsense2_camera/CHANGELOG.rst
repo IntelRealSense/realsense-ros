@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.1.5 (2021-03-24)
+------------------
 * Support Eloquent and Dashing.
 * Add filter: HDR_merge
 * fix initialization of colorizer image if user specified negative image size (as is in default launch file)
