@@ -2,6 +2,18 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Support Eloquent and Dashing.
+* Add filter: HDR_merge
+* fix initialization of colorizer image if user specified negative image size (as is in default launch file)
+* Remove the following tests for known playback issue with librealsense2 version 2.43.0: align_depth_color_1, align_depth_ir1_1, align_depth_ir1_decimation_1.
+* Remove wrong dependency
+* changed default image QOS to SYSTEM_DEFAULT
+* Add missing librealsense2 dependency from package.xml
+* fix bug: selection of profile disregarded stream index.
+* Contributors: changseung.yu, doronhi
+
 3.1.4 (2021-02-18)
 ------------------
 * fix reading json file with device other than D400 series.
