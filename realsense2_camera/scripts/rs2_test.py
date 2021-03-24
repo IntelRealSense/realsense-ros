@@ -357,10 +357,10 @@ def main():
                  {'name': 'depth_avg_1', 'type': 'depth_avg', 'params': {'rosbag_filename': outdoors_filename}},
                  {'name': 'depth_w_cloud_1', 'type': 'depth_avg', 'params': {'rosbag_filename': outdoors_filename, 'enable_pointcloud': 'true'}},
                 #  {'name': 'points_cloud_1', 'type': 'pointscloud_avg', 'params': {'rosbag_filename': outdoors_filename, 'enable_pointcloud': 'true'}},
-                 {'name': 'align_depth_color_1', 'type': 'align_depth_color', 'params': {'rosbag_filename': outdoors_filename, 'align_depth': 'true'}},
-                 {'name': 'align_depth_ir1_1', 'type': 'align_depth_ir1', 'params': {'rosbag_filename': outdoors_filename, 'align_depth': 'true'}},
+                #  {'name': 'align_depth_color_1', 'type': 'align_depth_color', 'params': {'rosbag_filename': outdoors_filename, 'align_depth': 'true'}},
+                #  {'name': 'align_depth_ir1_1', 'type': 'align_depth_ir1', 'params': {'rosbag_filename': outdoors_filename, 'align_depth': 'true'}},
                  {'name': 'depth_avg_decimation_1', 'type': 'depth_avg_decimation', 'params': {'rosbag_filename': outdoors_filename, 'filters': 'decimation'}},
-                 {'name': 'align_depth_ir1_decimation_1', 'type': 'align_depth_ir1_decimation', 'params': {'rosbag_filename': outdoors_filename, 'filters': 'decimation', 'align_depth': 'true'}},
+                #  {'name': 'align_depth_ir1_decimation_1', 'type': 'align_depth_ir1_decimation', 'params': {'rosbag_filename': outdoors_filename, 'filters': 'decimation', 'align_depth': 'true'}},
                  ]
     if (os.getenv('ROS_DISTRO') != "dashing"):
         all_tests.extend([
