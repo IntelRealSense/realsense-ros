@@ -88,6 +88,7 @@ size_t SyncedImuPublisher::getNumSubscribers()
 
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
                                     rs2::device dev, std::shared_ptr<Parameters> parameters) :
+    _is_running(true),
     _base_frame_id(""),
     _node(node),
     _logger(rclcpp::get_logger("RealSenseCameraNode")),
@@ -161,8 +162,12 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
 void BaseRealSenseNode::clean()
 {
     // Kill dynamic transform thread
-    if (_tf_t)
+    _is_running = false;
+    _cv_tf.notify_one();
+    if (_tf_t && _tf_t->joinable())
         _tf_t->join();
+    if (_update_functions_t && _update_functions_t->joinable())
+        _update_functions_t->join();
 
     std::set<std::string> module_names;
     for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
@@ -224,6 +229,7 @@ void BaseRealSenseNode::publishTopics()
     getParameters();
     setupDevice();
     setupFilters();
+    registerHDRoptions();
     registerDynamicReconfigCb();
     setupErrorCallback();
     enable_devices();
@@ -565,7 +571,6 @@ void BaseRealSenseNode::registerDynamicOption(rs2::options sensor, std::string& 
 void BaseRealSenseNode::registerDynamicReconfigCb()
 {
     ROS_INFO("Setting Dynamic reconfig parameters.");
-
     for(rs2::sensor sensor : _dev_sensors)
     {
         std::string module_name = create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
@@ -581,6 +586,99 @@ void BaseRealSenseNode::registerDynamicReconfigCb()
         registerDynamicOption(sensor, module_name);
     }
     ROS_INFO("Done Setting Dynamic reconfig parameters.");
+}
+
+void BaseRealSenseNode::registerHDRoptions()
+{
+    if (std::find_if(std::begin(_filters), std::end(_filters), [](NamedFilter f){return f._name == "hdr_merge";}) == std::end(_filters))
+        return;
+
+    std::string module_name;
+    std::vector<rs2_option> options{RS2_OPTION_EXPOSURE, RS2_OPTION_GAIN};
+    for(rs2::sensor sensor : _dev_sensors)
+    {
+        if (!sensor.is<rs2::depth_sensor>()) continue;
+        std::string module_name = create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
+        // Read initialization parameters and initialize hdr_merge filter:
+        unsigned int seq_size = sensor.get_option(RS2_OPTION_SEQUENCE_SIZE);
+        for (unsigned int seq_id = 1; seq_id <= seq_size; seq_id++ )
+        {
+            sensor.set_option(RS2_OPTION_SEQUENCE_ID, seq_id);
+            for (rs2_option& option : options)
+            {
+                std::stringstream param_name_str;
+                param_name_str << module_name << "." << create_graph_resource_name(rs2_option_to_string(option)) << "." << seq_id;
+                std::string param_name(param_name_str.str());
+                ROS_INFO_STREAM("Reading option: " << param_name);
+                int option_value = sensor.get_option(option);
+                int user_set_option_value = _node.declare_parameter(param_name, rclcpp::ParameterValue(option_value)).get<rclcpp::PARAMETER_INTEGER>();
+                _node.undeclare_parameter(param_name);
+                if (option_value != user_set_option_value)
+                {
+                    ROS_INFO_STREAM("Set " << rs2_option_to_string(option) << " to " << user_set_option_value);
+                    sensor.set_option(option, user_set_option_value);
+                }
+            }
+        }
+        sensor.set_option(RS2_OPTION_SEQUENCE_ID, 0);   // Set back to default.
+        sensor.set_option(RS2_OPTION_HDR_ENABLED, true);
+
+        monitor_update_functions(); // Start parameters update thread
+
+        rs2_option option = RS2_OPTION_SEQUENCE_ID;
+        const std::string param_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
+        // Add functions to param_name - to update ros params.
+        _parameters->setParam(param_name, rclcpp::ParameterValue(0), [this, sensor](const rclcpp::Parameter& ) 
+                    { 
+                        _update_functions_v.push_back([this, sensor]()
+                            {set_sensor_parameter_to_ros(sensor, RS2_OPTION_EXPOSURE);});
+                        _update_functions_v.push_back([this, sensor]()
+                            {set_sensor_parameter_to_ros(sensor, RS2_OPTION_GAIN);});
+                        _update_functions_cv.notify_one();
+                    });
+        break;
+    }
+}
+
+void BaseRealSenseNode::set_sensor_parameter_to_ros(rs2::sensor sensor, rs2_option option)
+{
+    std::string module_name = create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
+    const std::string param_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
+    auto value = sensor.get_option(option);
+    rclcpp::ParameterType param_type = _node.get_parameter(param_name).get_type();
+    ROS_INFO_STREAM("Set " << param_name << " to " << value);
+    switch(param_type)
+    {
+        case rclcpp::PARAMETER_BOOL:
+            _node.set_parameter(rclcpp::Parameter(param_name, static_cast<bool>(value)));
+            break;
+        case rclcpp::PARAMETER_INTEGER:
+            _node.set_parameter(rclcpp::Parameter(param_name, static_cast<int>(value)));
+            break;
+        case rclcpp::PARAMETER_DOUBLE:
+            _node.set_parameter(rclcpp::Parameter(param_name, static_cast<double>(value)));
+            break;
+        default:
+            ROS_ERROR_STREAM("Setting parameter of type " <<  _node.get_parameter(param_name).get_type_name() << " is not implemented.");
+    }
+}
+
+void BaseRealSenseNode::monitor_update_functions()
+{
+    int time_interval(1000);
+    std::function<void()> func = [this, time_interval](){
+        std::mutex mu;
+        std::unique_lock<std::mutex> lock(mu);
+        while(_is_running) {
+            _update_functions_cv.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return !_is_running || !_update_functions_v.empty();});
+            while (!_update_functions_v.empty())
+            {
+                _update_functions_v.back()();
+                _update_functions_v.pop_back();                
+            }
+        }
+    };
+    _update_functions_t = std::make_shared<std::thread>(func);
 }
 
 const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
@@ -1162,6 +1260,7 @@ void BaseRealSenseNode::setupFilters()
     bool use_disparity_filter(false);
     bool use_colorizer_filter(false);
     bool use_decimation_filter(false);
+    bool use_hdr_filter(false);
     for (std::vector<std::string>::const_iterator s_iter=filters_str.begin(); s_iter!=filters_str.end(); s_iter++)
     {
         if ((*s_iter) == "colorizer")
@@ -1195,6 +1294,10 @@ void BaseRealSenseNode::setupFilters()
         {
             assert(_pointcloud); // For now, it is set in getParameters()..
         }
+        else if ((*s_iter) == "hdr_merge")
+        {
+            use_hdr_filter = true;
+        }
         else if ((*s_iter).size() > 0)
         {
             ROS_ERROR_STREAM("Unknown Filter: " << (*s_iter));
@@ -1208,6 +1311,13 @@ void BaseRealSenseNode::setupFilters()
         _filters.push_back(NamedFilter("disparity_end", std::make_shared<rs2::disparity_transform>(false)));
         ROS_INFO("Done Add Filter: disparity");
     }
+    if (use_hdr_filter)
+    {
+      ROS_INFO("Add Filter: hdr_merge");
+      _filters.insert(_filters.begin(),NamedFilter("hdr_merge", std::make_shared<rs2::hdr_merge>()));
+      ROS_INFO("Add Filter: sequence_id_filter");
+      _filters.insert(_filters.begin(),NamedFilter("sequence_id_filter", std::make_shared<rs2::sequence_id_filter>()));
+    }
     if (use_decimation_filter)
     {
       ROS_INFO("Add Filter: decimation");
@@ -1217,7 +1327,6 @@ void BaseRealSenseNode::setupFilters()
     {
         ROS_INFO("Add Filter: colorizer");
         _filters.push_back(NamedFilter("colorizer", std::make_shared<rs2::colorizer>()));
-
         // Types for depth stream
         _image_format[DEPTH.first] = _image_format[COLOR.first];    // CVBridge type
         _encoding[DEPTH.first] = _encoding[COLOR.first]; // ROS message type
@@ -1228,7 +1337,7 @@ void BaseRealSenseNode::setupFilters()
 
         _width[DEPTH] = _width[COLOR];
         _height[DEPTH] = _height[COLOR];
-        _image[DEPTH] = cv::Mat(_height[DEPTH], _width[DEPTH], _image_format[DEPTH.first], cv::Scalar(0, 0, 0));
+        _image[DEPTH] = cv::Mat(std::max(0, _height[DEPTH]), std::max(0, _width[DEPTH]), _image_format[DEPTH.first], cv::Scalar(0, 0, 0));
     }
     if (_pointcloud)
     {
@@ -2137,17 +2246,17 @@ void BaseRealSenseNode::publishDynamicTransforms()
     // Publish transforms for the cameras
     ROS_WARN("Publishing dynamic camera transforms (/tf) at %g Hz", _tf_publish_rate);
 
-    rclcpp::Rate loop_rate(_tf_publish_rate);
-
-    while (rclcpp::ok())
+    std::mutex mu;
+    std::unique_lock<std::mutex> lock(mu);
+    while (rclcpp::ok() && _is_running)
     {
-        // Update the time stamp for publication
-        rclcpp::Time t = _node.now();
-        for(auto& msg : _static_tf_msgs)
-            msg.header.stamp = t;
-
-        _dynamic_tf_broadcaster.sendTransform(_static_tf_msgs);
-        loop_rate.sleep();
+        _cv_tf.wait_for(lock, std::chrono::milliseconds((int)(1000.0/_tf_publish_rate)), [&]{return (!(_is_running));});
+        {
+            rclcpp::Time t = _node.now();        
+            for(auto& msg : _static_tf_msgs)
+                msg.header.stamp = t;
+            _dynamic_tf_broadcaster.sendTransform(_static_tf_msgs);
+        }
     }
 }
 

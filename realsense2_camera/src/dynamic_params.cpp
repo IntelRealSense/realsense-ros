@@ -12,16 +12,21 @@ namespace realsense2_camera
                 { 
                     for (const auto & parameter : parameters) 
                     {
-                        try
+                        if (_param_functions.find(parameter.get_name()) != _param_functions.end())
                         {
-                            (_param_functions.at(parameter.get_name()))(parameter);
+                            auto functions = _param_functions[parameter.get_name()];
+                            if (functions.empty())
+                            {
+                                ROS_WARN_STREAM("Parameter " << parameter.get_name() << " can not be changed in runtime.");
+                            }
+                            else
+                            {
+                                for (auto func : _param_functions[parameter.get_name()])
+                                {
+                                    func(parameter);
+                                }
+                            }
                         }
-                        catch(const std::out_of_range& e)
-                        {}
-                        catch(const std::exception& e)
-                        {
-                            std::cerr << e.what() << '\n';
-                        }                            
                     }
                     rcl_interfaces::msg::SetParametersResult result;
                     result.successful = true;
@@ -72,12 +77,13 @@ namespace realsense2_camera
         }
         
         if (func)
-            _param_functions[param_name] = func;
+        {
+            _param_functions[param_name].push_back(func);
+        }
         else
-            _param_functions[param_name] = [this](const rclcpp::Parameter& )
-            {
-                ROS_WARN_STREAM("Parameter can not be changed in runtime.");
-            };
+        {
+            _param_functions[param_name] = std::vector<std::function<void(const rclcpp::Parameter&)> >();
+        }
         if (result_value != initial_value && func)
         {
             func(rclcpp::Parameter(param_name, result_value));
@@ -99,11 +105,14 @@ namespace realsense2_camera
         {
             param = _node.get_parameter(param_name).get_parameter_value().get<T>();
         }        
-        _param_functions[param_name] = [&param, func](const rclcpp::Parameter& parameter)
+        _param_functions[param_name].push_back([&param, func](const rclcpp::Parameter& parameter)
             {
                 param = parameter.get_value<T>();
-                if (func) func(parameter);
-            };
+            });
+        if (func) 
+        {
+            _param_functions[param_name].push_back(func);
+        }
         _param_names[&param] = param_name;
     }
 

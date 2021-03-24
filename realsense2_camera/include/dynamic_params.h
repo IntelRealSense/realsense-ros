@@ -27,7 +27,7 @@ namespace realsense2_camera
         private:
             rclcpp::Node& _node;
             rclcpp::Logger _logger;
-            std::map<std::string, std::function<void(const rclcpp::Parameter&)> > _param_functions;
+            std::map<std::string, std::vector<std::function<void(const rclcpp::Parameter&)> > > _param_functions;
             std::map<void*, std::string> _param_names;
             ParametersBackend _params_backend;
     };
