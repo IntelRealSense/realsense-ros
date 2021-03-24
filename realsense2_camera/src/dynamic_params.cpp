@@ -21,7 +21,7 @@ namespace realsense2_camera
                             }
                             else
                             {
-                                for (auto func : functions])
+                                for (auto func : _param_functions[parameter.get_name()])
                                 {
                                     func(parameter);
                                 }
