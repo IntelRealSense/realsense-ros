@@ -88,10 +88,10 @@ LibRealSense supported version: v2.43.0 (see [realsense2_camera release notes](h
    ```
 
    - Clone the latest Intel&reg; RealSense&trade; ROS from [here](https://github.com/intel-ros/realsense/releases) into 'catkin_ws/src/'
-   ```bashrc
+   ```bash
    git clone https://github.com/IntelRealSense/realsense-ros.git
    cd realsense-ros/
-   git checkout `git tag | sort -V | grep -P "^2.\d+\.\d+" | tail -1`
+   git checkout `git tag | sort -V | grep -P "^\d+\.\d+" | tail -1`
    cd ..
    ```
    - Make sure all dependent packages are installed. You can check .travis.yml file for reference.
