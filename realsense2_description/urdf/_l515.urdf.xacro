@@ -13,7 +13,7 @@ aluminum peripherial evaluation case.
   <xacro:include filename="$(find realsense2_description)/urdf/_materials.urdf.xacro" />
   <xacro:include filename="$(find realsense2_description)/urdf/_usb_plug.urdf.xacro" /> <!-- this specific plug does not apply to L515 -->
 
-  <xacro:macro name="sensor_l515" params="parent *origin name:=camera use_nominal_extrinsics:=false add_plug:=false">
+  <xacro:macro name="sensor_l515" params="parent *origin name:=camera use_nominal_extrinsics:=false add_plug:=false use_mesh:=true">
     <xacro:property name="M_PI" value="3.1415926535897931" />
 
     <!-- The following values are approximate, and the camera node
@@ -61,10 +61,19 @@ aluminum peripherial evaluation case.
     <link name="${name}_link">
       <visual>
         <!-- the mesh origin is in the middle of the front plate -->
-        <origin xyz="${l515_zero_depth_to_glass} 0 ${-l515_cam_center_to_depth_pz}" rpy="${M_PI/2} 0 ${M_PI/2}"/>
-        <geometry>
-	        <mesh filename="package://realsense2_description/meshes/l515.dae" />
-        </geometry>
+        <xacro:if value="${use_mesh}">
+          <origin xyz="${l515_zero_depth_to_glass} 0 ${-l515_cam_center_to_depth_pz}" rpy="${M_PI/2} 0 ${M_PI/2}"/>
+          <geometry>
+              <mesh filename="package://realsense2_description/meshes/l515.dae" />
+          </geometry>
+        </xacro:if>
+        <xacro:unless value="${use_mesh}">
+          <origin xyz="${-l515_cam_depth_px+l515_cam_mount_from_glass_offset-l515_cam_depth/2} 0 ${-l515_cam_center_to_depth_pz}" rpy="${M_PI/2} 0 ${M_PI/2}"/>
+          <geometry>
+            <cylinder radius="${l515_cam_width/2.0}" length="${l515_cam_depth}"/>
+          </geometry>
+          <material name="aluminum"/>
+        </xacro:unless>
       </visual>
       <collision>
         <origin xyz="${-l515_cam_depth_px+l515_cam_mount_from_glass_offset-l515_cam_depth/2} 0 ${-l515_cam_center_to_depth_pz}" rpy="${M_PI/2} 0 ${M_PI/2}"/>
