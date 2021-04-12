@@ -809,10 +809,8 @@ void BaseRealSenseNode::getParameters()
         setNgetNodeParameter(_optical_frame_id[GYRO], "imu_optical_frame_id", DEFAULT_IMU_OPTICAL_FRAME_ID);
     }
 
-    for (auto& stream : IMAGE_STREAMS)
     {
-        if (stream == DEPTH || stream == CONFIDENCE) continue;
-        if (stream.second > 1) continue;
+        stream_index_pair stream(COLOR);
         std::string param_name(static_cast<std::ostringstream&&>(std::ostringstream() << "aligned_depth_to_" << STREAM_NAME(stream) << "_frame_id").str());
         setNgetNodeParameter(_depth_aligned_frame_id[stream], param_name, ALIGNED_DEPTH_TO_FRAME_ID(stream));
     }
@@ -1000,7 +998,7 @@ void BaseRealSenseNode::setupPublishers()
             _image_publishers[stream] = {image_transport::create_publisher(&_node, image_raw.str(), qos_string_to_qos(_qos[stream]))};
             _info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);
 
-            if (_align_depth && (stream != DEPTH) && (stream != CONFIDENCE) && stream.second < 2)
+            if (_align_depth && stream == COLOR)
             {
                 std::stringstream aligned_image_raw, aligned_camera_info;
                 aligned_image_raw << "aligned_depth_to_" << stream_name << "/image_raw";
