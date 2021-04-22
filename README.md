@@ -5,7 +5,7 @@ This version supports Kinetic, Melodic and Noetic distributions.
 
 For running in ROS2 environment please switch to the [ros2 branch](https://github.com/IntelRealSense/realsense-ros/tree/ros2). </br>
 
-LibRealSense supported version: v2.44.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
+LibRealSense2 supported version: v2.44.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
 ## Installation Instructions
 
@@ -63,7 +63,7 @@ LibRealSense supported version: v2.44.0 (see [realsense2_camera release notes](h
     *Ubuntu*
 
     * Install from [Debian Package](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages)
-      - In that case treat yourself as a developer. Make sure you follow the instructions to also install librealsense2-dev and librealsense-dkms packages.
+      - In that case treat yourself as a developer. Make sure you follow the instructions to also install librealsense2-dev and librealsense2-dkms packages.
 
     *Windows* 
     Install using vcpkg
