@@ -1655,6 +1655,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             }
             // Clip depth_frame for max range:
             rs2::depth_frame original_depth_frame = frameset.get_depth_frame();
+            bool is_color_frame(frameset.get_color_frame());
             if (original_depth_frame && _clipping_distance > 0)
             {
                 clip_depth(original_depth_frame, _clipping_distance);
@@ -1665,6 +1666,8 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             {
                 ROS_DEBUG("Applying filter: %s", filter_it->_name.c_str());
                 if ((filter_it->_name == "pointcloud") && (!original_depth_frame))
+                    continue;
+                if ((filter_it->_name == "align_to_color") && (!is_color_frame))
                     continue;
                 frameset = filter_it->_filter->process(frameset);
             }
@@ -1693,7 +1696,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                 {
                     if (sent_depth_frame) continue;
                     sent_depth_frame = true;
-                    if (_align_depth)
+                    if (_align_depth && is_color_frame)
                     {
                         publishFrame(f, t, COLOR,
                                     _depth_aligned_image,
