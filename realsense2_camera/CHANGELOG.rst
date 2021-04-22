@@ -2,6 +2,12 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Enabling pointcloud while align_depth is set to true creates a pointcloud aligned to color image.
+* Removed option to align depth to other streams other then color.
+* Contributors: doronhi
+
 2.2.23 (2021-03-24)
 -------------------
 * Remove the following tests for known playback issue with librealsense2 version 2.43.0: points_cloud_1, align_depth_color_1, align_depth_ir1_1, align_depth_ir1_decimation_1.
