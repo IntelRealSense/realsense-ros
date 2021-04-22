@@ -3,7 +3,6 @@
   <name>realsense2_description</name>
   <version>2.2.23</version>
   <description>RealSense Camera description package for Intel 3D D400 cameras</description>
-  <maintainer email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</maintainer>
   <maintainer email="doron.hirshberg@intel.com">Doron Hirshberg</maintainer>
   <license>Apache 2.0</license>
 
