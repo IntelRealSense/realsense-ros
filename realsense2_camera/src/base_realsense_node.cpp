@@ -149,6 +149,13 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     try
     {
         publishTopics();
+        _toggle_sensors_srv = _node.create_service<std_srvs::srv::SetBool>(
+              "enable",
+              std::bind(
+                &BaseRealSenseNode::toggle_sensor_callback,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2));
     }
     catch(const std::exception& e)
     {
@@ -200,6 +207,64 @@ void BaseRealSenseNode::clean()
 BaseRealSenseNode::~BaseRealSenseNode()
 {
     clean();
+}
+
+bool BaseRealSenseNode::toggle_sensor_callback(std_srvs::srv::SetBool::Request::SharedPtr req, std_srvs::srv::SetBool::Response::SharedPtr res)
+{
+  if (req->data) {
+    ROS_INFO_STREAM("toggling sensor : ON");
+  }
+  else {
+    ROS_INFO_STREAM("toggling sensor : OFF");
+  }
+  toggleSensors(req->data);
+  res->success = true;
+  return true;
+}
+
+void BaseRealSenseNode::toggleSensors(bool enabled)
+{
+  if(enabled)
+  {
+    std::map<std::string, std::vector<rs2::stream_profile> > profiles;
+    std::map<std::string, rs2::sensor> active_sensors;
+    for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
+    {
+        std::string module_name = _sensors[profile.first].get_info(RS2_CAMERA_INFO_NAME);
+        ROS_INFO_STREAM("insert " << rs2_stream_to_string(profile.second.begin()->stream_type())
+          << " to " << module_name);
+        profiles[module_name].insert(profiles[module_name].begin(),
+                                        profile.second.begin(),
+                                        profile.second.end());
+        active_sensors[module_name] = _sensors[profile.first];
+    }
+
+    for (const std::pair<std::string, std::vector<rs2::stream_profile> >& sensor_profile : profiles)
+    {
+        std::string module_name = sensor_profile.first;
+        rs2::sensor sensor = active_sensors[module_name];
+        sensor.open(sensor_profile.second);
+        sensor.start(_sensors_callback[module_name]);
+        if (sensor.is<rs2::depth_sensor>())
+        {
+            _depth_scale_meters = sensor.as<rs2::depth_sensor>().get_depth_scale();
+        }
+    }
+  }
+  else
+  {
+    std::set<std::string> module_names;
+    for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
+    {
+        std::string module_name = _sensors[profile.first].get_info(RS2_CAMERA_INFO_NAME);
+        std::pair< std::set<std::string>::iterator, bool> res = module_names.insert(module_name);
+        if (res.second)
+        {
+            _sensors[profile.first].stop();
+            _sensors[profile.first].close();
+        }
+    }
+  }
 }
 
 void BaseRealSenseNode::setupErrorCallback()
