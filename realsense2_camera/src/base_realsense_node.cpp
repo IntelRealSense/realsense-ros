@@ -1952,10 +1952,10 @@ void BaseRealSenseNode::updateExtrinsicsCalibData(const rs2::video_stream_profil
     stream_index_pair right{right_video_profile.stream_type(), right_video_profile.stream_index()};
 
     // Get the relative extrinsics between the left and right camera
-    auto LEFT_T_RIGHT = right_video_profile.get_extrinsics_to(left_video_profile);
+    auto RIGHT_T_LEFT = left_video_profile.get_extrinsics_to(right_video_profile);
 
-    auto R = Eigen::Map<Eigen::Matrix<float,3,3,Eigen::RowMajor>>(LEFT_T_RIGHT.rotation);
-    auto T = Eigen::Map<Eigen::Matrix<float,3,1>>(LEFT_T_RIGHT.translation);
+    auto R = Eigen::Map<Eigen::Matrix<float,3,3,Eigen::RowMajor>>(RIGHT_T_LEFT.rotation);
+    auto T = Eigen::Map<Eigen::Matrix<float,3,1>>(RIGHT_T_LEFT.translation);
 
     // force y- and z-axis components to be 0   (but do we also need to force P(0,3) and P(1,3) to be 0?)
     T[1] = 0;
@@ -1972,15 +1972,15 @@ void BaseRealSenseNode::updateExtrinsicsCalibData(const rs2::video_stream_profil
     // Note that all matrices are stored in row-major format
     // 1. Leave the left rotation matrix as identity
     // 2. Set the right rotation matrix
-    _camera_info[right].R.at(0) = LEFT_T_RIGHT.rotation[0];
-    _camera_info[right].R.at(1) = LEFT_T_RIGHT.rotation[1];
-    _camera_info[right].R.at(2) = LEFT_T_RIGHT.rotation[2];
-    _camera_info[right].R.at(3) = LEFT_T_RIGHT.rotation[3];
-    _camera_info[right].R.at(4) = LEFT_T_RIGHT.rotation[4];
-    _camera_info[right].R.at(5) = LEFT_T_RIGHT.rotation[5];
-    _camera_info[right].R.at(6) = LEFT_T_RIGHT.rotation[6];
-    _camera_info[right].R.at(7) = LEFT_T_RIGHT.rotation[7];
-    _camera_info[right].R.at(8) = LEFT_T_RIGHT.rotation[8];
+    _camera_info[right].R.at(0) = RIGHT_T_LEFT.rotation[0];
+    _camera_info[right].R.at(1) = RIGHT_T_LEFT.rotation[1];
+    _camera_info[right].R.at(2) = RIGHT_T_LEFT.rotation[2];
+    _camera_info[right].R.at(3) = RIGHT_T_LEFT.rotation[3];
+    _camera_info[right].R.at(4) = RIGHT_T_LEFT.rotation[4];
+    _camera_info[right].R.at(5) = RIGHT_T_LEFT.rotation[5];
+    _camera_info[right].R.at(6) = RIGHT_T_LEFT.rotation[6];
+    _camera_info[right].R.at(7) = RIGHT_T_LEFT.rotation[7];
+    _camera_info[right].R.at(8) = RIGHT_T_LEFT.rotation[8];
 
     // 3. Leave the left projection matrix
     // 4. Set the right projection matrix
