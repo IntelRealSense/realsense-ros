@@ -776,6 +776,12 @@ const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
         profile.depth = 1;
         return profile;
     }
+    if (str == "HID_DEFAULT")
+    {
+        rmw_qos_profile_t profile = rmw_qos_profile_system_default;
+        profile.depth = 100;
+        return profile;
+    }
     if (str == "PARAMETER_EVENTS")
         return rmw_qos_profile_parameter_events;
     if (str == "SERVICES_DEFAULT")
@@ -874,6 +880,8 @@ void BaseRealSenseNode::getParameters()
     {
         std::string param_name(_stream_name[stream.first] + "_fps");
         setNgetNodeParameter(_fps[stream], param_name, IMU_FPS);
+        param_name = _stream_name[stream.first] + "_qos";
+        setNgetNodeParameter(_qos[stream], param_name, HID_QOS);
         param_name = "enable_" + STREAM_NAME(stream);
         setNgetNodeParameter(_enable[stream], param_name, ENABLE_IMU);
     }
@@ -1128,17 +1136,29 @@ void BaseRealSenseNode::setupPublishers()
     {
         if (_enable[GYRO])
         {
-            _imu_publishers[GYRO] = _node.create_publisher<sensor_msgs::msg::Imu>("gyro/sample", 100);
+            _imu_publishers[GYRO] = _node.create_publisher<sensor_msgs::msg::Imu>(
+                  "gyro/sample",
+                  rclcpp::QoS(
+                    rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_qos[GYRO])),
+                    qos_string_to_qos(_qos[GYRO])));
         }
 
         if (_enable[ACCEL])
         {
-            _imu_publishers[ACCEL] = _node.create_publisher<sensor_msgs::msg::Imu>("accel/sample", 100);
+            _imu_publishers[ACCEL] = _node.create_publisher<sensor_msgs::msg::Imu>(
+                  "accel/sample",
+                  rclcpp::QoS(
+                    rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_qos[ACCEL])),
+                    qos_string_to_qos(_qos[ACCEL])));
         }
     }
     if (_enable[POSE])
     {
-        _odom_publisher = _node.create_publisher<nav_msgs::msg::Odometry>("odom/sample", 100);
+        _odom_publisher = _node.create_publisher<nav_msgs::msg::Odometry>(
+              "odom/sample",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_qos[POSE])),
+                qos_string_to_qos(_qos[POSE])));
     }
 
     if (_enable[FISHEYE] &&
