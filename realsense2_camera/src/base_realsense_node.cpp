@@ -772,19 +772,19 @@ const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
         return rmw_qos_profile_system_default;
     if (str == "POINTCLOUD_DEFAULT")
     {
-        rmw_qos_profile_t profile = rmw_qos_profile_system_default;
+        rmw_qos_profile_t profile = rmw_qos_profile_default;
         profile.depth = 1;
         return profile;
     }
     if (str == "HID_DEFAULT")
     {
-        rmw_qos_profile_t profile = rmw_qos_profile_system_default;
+        rmw_qos_profile_t profile = rmw_qos_profile_default;
         profile.depth = 100;
         return profile;
     }
     if (str == "IMU_DEFAULT")
     {
-        rmw_qos_profile_t profile = rmw_qos_profile_system_default;
+        rmw_qos_profile_t profile = rmw_qos_profile_default;
         profile.depth = 5;
         return profile;
     }
