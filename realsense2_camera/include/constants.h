@@ -89,6 +89,7 @@ namespace realsense2_camera
     const std::string HID_QOS         = "HID_DEFAULT";
     const std::string IMU_QOS         = "IMU_DEFAULT";
     const std::string INFO_QOS        = "INFO_DEFAULT";
+    const std::string EXTRINSICS_QOS  = "EXTRINSICS_DEFAULT";
 
     const double IMU_FPS      = 0;
 

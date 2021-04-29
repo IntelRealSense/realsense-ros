@@ -794,6 +794,8 @@ const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
         profile.depth = 1;
         return profile;
     }
+    if (str == "EXTRINSICS_DEFAULT")
+        return rmw_qos_profile_latched;
     if (str == "PARAMETER_EVENTS")
         return rmw_qos_profile_parameter_events;
     if (str == "SERVICES_DEFAULT")
@@ -885,9 +887,35 @@ void BaseRealSenseNode::getParameters()
         setNgetNodeParameter(_enable[stream], param_name, true);
     }
 
-    if (_enable[DEPTH] && _pointcloud)
-    {
-      setNgetNodeParameter(_pointcloud_qos, "pointcloud_qos", POINTCLOUD_QOS);
+    if (_enable[DEPTH]) {
+      if(_pointcloud)
+      {
+        setNgetNodeParameter(_pointcloud_qos, "pointcloud_qos", POINTCLOUD_QOS);
+      }
+      if (_enable[POSE])
+      {
+        setNgetNodeParameter(_extrinsics_qos[POSE], "pose_extrinsics_qos", EXTRINSICS_QOS);
+      }
+
+      if (_enable[FISHEYE])
+      {
+        setNgetNodeParameter(_extrinsics_qos[FISHEYE], "fisheye_extrinsics_qos", EXTRINSICS_QOS);
+      }
+
+      if (_enable[COLOR])
+      {
+        setNgetNodeParameter(_extrinsics_qos[COLOR], "color_extrinsics_qos", EXTRINSICS_QOS);
+      }
+
+      if (_enable[INFRA1])
+      {
+        setNgetNodeParameter(_extrinsics_qos[INFRA1], "infra1_extrinsics_qos", EXTRINSICS_QOS);
+      }
+
+      if (_enable[INFRA2])
+      {
+        setNgetNodeParameter(_extrinsics_qos[INFRA2], "infra2_extrinsics_qos", EXTRINSICS_QOS);
+      }
     }
 
     for (auto& stream : HID_STREAMS)
@@ -1089,20 +1117,6 @@ void BaseRealSenseNode::setupDevice()
     }
 }
 
-static const rmw_qos_profile_t rmw_qos_profile_latched =
-{
-    RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-    1,
-    RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-    RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-    RMW_QOS_DEADLINE_DEFAULT,
-    RMW_QOS_LIFESPAN_DEFAULT,
-    RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-    RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-    false
-};
-static const rclcpp::QoS qos_profile_latched(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_latched));
-
 void BaseRealSenseNode::setupPublishers()
 {
     ROS_INFO("setupPublishers...");
@@ -1197,25 +1211,41 @@ void BaseRealSenseNode::setupPublishers()
     if (_enable[FISHEYE] &&
         _enable[DEPTH])
     {
-        _depth_to_other_extrinsics_publishers[FISHEYE] = _node.create_publisher<Extrinsics>("extrinsics/depth_to_fisheye", qos_profile_latched);
+        _depth_to_other_extrinsics_publishers[FISHEYE] = _node.create_publisher<Extrinsics>(
+              "extrinsics/depth_to_fisheye",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_extrinsics_qos[FISHEYE])),
+                qos_string_to_qos(_extrinsics_qos[FISHEYE])));
     }
 
     if (_enable[COLOR] &&
         _enable[DEPTH])
     {
-        _depth_to_other_extrinsics_publishers[COLOR] = _node.create_publisher<Extrinsics>("extrinsics/depth_to_color", qos_profile_latched);
+        _depth_to_other_extrinsics_publishers[COLOR] = _node.create_publisher<Extrinsics>(
+              "extrinsics/depth_to_color",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_extrinsics_qos[COLOR])),
+                qos_string_to_qos(_extrinsics_qos[COLOR])));
     }
 
     if (_enable[INFRA1] &&
         _enable[DEPTH])
     {
-        _depth_to_other_extrinsics_publishers[INFRA1] = _node.create_publisher<Extrinsics>("extrinsics/depth_to_infra1", qos_profile_latched);
+        _depth_to_other_extrinsics_publishers[INFRA1] = _node.create_publisher<Extrinsics>(
+              "extrinsics/depth_to_infra1",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_extrinsics_qos[INFRA1])),
+                qos_string_to_qos(_extrinsics_qos[INFRA1])));
     }
 
     if (_enable[INFRA2] &&
         _enable[DEPTH])
     {
-        _depth_to_other_extrinsics_publishers[INFRA2] = _node.create_publisher<Extrinsics>("extrinsics/depth_to_infra2", qos_profile_latched);
+        _depth_to_other_extrinsics_publishers[INFRA2] = _node.create_publisher<Extrinsics>(
+              "extrinsics/depth_to_infra2",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_extrinsics_qos[INFRA2])),
+                qos_string_to_qos(_extrinsics_qos[INFRA2])));
     }
 }
 
