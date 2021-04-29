@@ -788,6 +788,12 @@ const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
         profile.depth = 5;
         return profile;
     }
+    if (str == "INFO_DEFAULT")
+    {
+        rmw_qos_profile_t profile = rmw_qos_profile_default;
+        profile.depth = 1;
+        return profile;
+    }
     if (str == "PARAMETER_EVENTS")
         return rmw_qos_profile_parameter_events;
     if (str == "SERVICES_DEFAULT")
@@ -873,6 +879,8 @@ void BaseRealSenseNode::getParameters()
         setNgetNodeParameter(_fps[stream], param_name, IMAGE_FPS);
         param_name = _stream_name[stream.first] + "_qos";
         setNgetNodeParameter(_qos[stream], param_name, IMAGE_QOS);
+        param_name = _stream_name[stream.first] + "_info_qos";
+        setNgetNodeParameter(_info_qos[stream], param_name, INFO_QOS);
         param_name = "enable_" + STREAM_NAME(stream);
         setNgetNodeParameter(_enable[stream], param_name, true);
     }
@@ -888,6 +896,8 @@ void BaseRealSenseNode::getParameters()
         setNgetNodeParameter(_fps[stream], param_name, IMU_FPS);
         param_name = _stream_name[stream.first] + "_qos";
         setNgetNodeParameter(_qos[stream], param_name, HID_QOS);
+        param_name = _stream_name[stream.first] + "_info_qos";
+        setNgetNodeParameter(_info_qos[stream], param_name, INFO_QOS);
         param_name = "enable_" + STREAM_NAME(stream);
         setNgetNodeParameter(_enable[stream], param_name, ENABLE_IMU);
     }
@@ -1110,7 +1120,11 @@ void BaseRealSenseNode::setupPublishers()
             camera_info << stream_name << "/camera_info";
 
             _image_publishers[stream] = {image_transport::create_publisher(&_node, image_raw.str(), qos_string_to_qos(_qos[stream]))};
-            _info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);
+            _info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(
+                  camera_info.str(),
+                  rclcpp::QoS(
+                    rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[stream])),
+                    qos_string_to_qos(_info_qos[stream])));
 
             if (_align_depth && stream == COLOR)
             {
@@ -1121,7 +1135,11 @@ void BaseRealSenseNode::setupPublishers()
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
                 _depth_aligned_image_publishers[stream] = {image_transport::create_publisher(&_node, aligned_image_raw.str(),
                                                            qos_string_to_qos(_qos[stream]))};
-                _depth_aligned_info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(), 1);
+                _depth_aligned_info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(
+                      aligned_camera_info.str(),
+                      rclcpp::QoS(
+                        rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[stream])),
+                        qos_string_to_qos(_info_qos[stream])));
             }
 
             if (stream == DEPTH && _pointcloud)
@@ -2268,14 +2286,22 @@ void BaseRealSenseNode::publishIntrinsics()
 {
     if (_enable[GYRO])
     {
-        _imu_info_publisher[GYRO] = _node.create_publisher<IMUInfo>("gyro/imu_info", 1);
+        _imu_info_publisher[GYRO] = _node.create_publisher<IMUInfo>(
+              "gyro/imu_info",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[GYRO])),
+                qos_string_to_qos(_info_qos[GYRO])));
         IMUInfo info_msg = getImuInfo(GYRO);
         _imu_info_publisher[GYRO]->publish(info_msg);
     }
 
     if (_enable[ACCEL])
     {
-        _imu_info_publisher[ACCEL] = _node.create_publisher<IMUInfo>("accel/imu_info", 1);
+        _imu_info_publisher[ACCEL] = _node.create_publisher<IMUInfo>(
+              "accel/imu_info",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[GYRO])),
+                qos_string_to_qos(_info_qos[GYRO])));
         IMUInfo info_msg = getImuInfo(ACCEL);
         _imu_info_publisher[ACCEL]->publish(info_msg);
     }
