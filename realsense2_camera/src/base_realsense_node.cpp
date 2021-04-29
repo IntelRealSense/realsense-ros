@@ -782,6 +782,12 @@ const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
         profile.depth = 100;
         return profile;
     }
+    if (str == "IMU_DEFAULT")
+    {
+        rmw_qos_profile_t profile = rmw_qos_profile_system_default;
+        profile.depth = 5;
+        return profile;
+    }
     if (str == "PARAMETER_EVENTS")
         return rmw_qos_profile_parameter_events;
     if (str == "SERVICES_DEFAULT")
@@ -911,6 +917,10 @@ void BaseRealSenseNode::getParameters()
     if (_imu_sync_method > imu_sync_method::NONE)
     {
         setNgetNodeParameter(_optical_frame_id[GYRO], "imu_optical_frame_id", DEFAULT_IMU_OPTICAL_FRAME_ID);
+        if (_enable[GYRO] && _enable[ACCEL])
+        {
+          setNgetNodeParameter(_imu_qos, "imu_qos", IMU_QOS);
+        }
     }
 
     {
@@ -1129,7 +1139,12 @@ void BaseRealSenseNode::setupPublishers()
     if (_imu_sync_method > imu_sync_method::NONE && _enable[GYRO] && _enable[ACCEL])
     {
         ROS_INFO("Start publisher IMU");
-        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
+        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(
+              _node.create_publisher<sensor_msgs::msg::Imu>(
+                "imu",
+                rclcpp::QoS(
+                  rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_imu_qos)),
+                  qos_string_to_qos(_imu_qos))));
         _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
     }
     else
