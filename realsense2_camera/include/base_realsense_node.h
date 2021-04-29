@@ -307,6 +307,7 @@ namespace realsense2_camera
         imu_sync_method _imu_sync_method;
         std::string _filters_str;
         stream_index_pair _pointcloud_texture;
+        std::string _pointcloud_qos;
         PipelineSyncer _syncer;
         std::vector<NamedFilter> _filters;
         std::shared_ptr<rs2::filter> _colorizer, _pointcloud_filter;

@@ -770,6 +770,12 @@ const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
 #endif
     if (str == "SYSTEM_DEFAULT")
         return rmw_qos_profile_system_default;
+    if (str == "POINTCLOUD_DEFAULT")
+    {
+        rmw_qos_profile_t profile = rmw_qos_profile_system_default;
+        profile.depth = 1;
+        return profile;
+    }
     if (str == "PARAMETER_EVENTS")
         return rmw_qos_profile_parameter_events;
     if (str == "SERVICES_DEFAULT")
@@ -857,6 +863,11 @@ void BaseRealSenseNode::getParameters()
         setNgetNodeParameter(_qos[stream], param_name, IMAGE_QOS);
         param_name = "enable_" + STREAM_NAME(stream);
         setNgetNodeParameter(_enable[stream], param_name, true);
+    }
+
+    if (_enable[DEPTH] && _pointcloud)
+    {
+      setNgetNodeParameter(_pointcloud_qos, "pointcloud_qos", POINTCLOUD_QOS);
     }
 
     for (auto& stream : HID_STREAMS)
@@ -1097,7 +1108,11 @@ void BaseRealSenseNode::setupPublishers()
 
             if (stream == DEPTH && _pointcloud)
             {
-                _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 1);
+                _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>(
+                      "depth/color/points",
+                      rclcpp::QoS(
+                        rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_pointcloud_qos)),
+                        qos_string_to_qos(_pointcloud_qos)));
             }
         }
     }
