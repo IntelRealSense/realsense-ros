@@ -1952,13 +1952,13 @@ void BaseRealSenseNode::updateExtrinsicsCalibData(const rs2::video_stream_profil
     stream_index_pair right{right_video_profile.stream_type(), right_video_profile.stream_index()};
 
     // Get the relative extrinsics between the left and right camera
-    auto LEFT_T_RIGHT = right_video_profile.get_extrinsics_to(left_video_profile);
+    auto LEFT_T_RIGHT = right_video_profile.get_extrinsics_to(left_video_profile); // transformation to transform a point in RIGHT frame to LEFT frame
+    auto RIGHT_T_LEFT = left_video_profile.get_extrinsics_to(right_video_profile); // transformation to transform a point in LEFT frame to RIGHT frame
 
-    auto R = Eigen::Map<Eigen::Matrix<float,3,3,Eigen::RowMajor>>(LEFT_T_RIGHT.rotation);
-    auto T = Eigen::Map<Eigen::Matrix<float,3,1>>(LEFT_T_RIGHT.translation);
+    auto R = Eigen::Map<Eigen::Matrix<float,3,3,Eigen::RowMajor>>(RIGHT_T_LEFT.rotation);
+    auto T = Eigen::Map<Eigen::Matrix<float,3,1>>(RIGHT_T_LEFT.translation);
 
-    // force y- and z-axis components to be 0   (but do we also need to force P(0,3) and P(1,3) to be 0?)
-    T[1] = 0;
+    // force and z-axis components to be 0 (if it wasn't already)    
     T[2] = 0;
 
     Eigen::Matrix<float,3,4,Eigen::RowMajor> RT;
