@@ -1812,9 +1812,6 @@ void BaseRealSenseNode::setupStreams()
 {
 	ROS_INFO("setupStreams...");
     try{
-        std::shared_ptr<rs2::video_stream_profile> left_profile;
-        std::shared_ptr<rs2::video_stream_profile> right_profile;
-
 		// Publish image stream info
         for (auto& profiles : _enabled_profiles)
         {
@@ -1826,14 +1823,14 @@ void BaseRealSenseNode::setupStreams()
                     updateStreamCalibData(video_profile);
 
                     // stream index: 1=left, 2=right
-                    if (video_profile.stream_index() == 1) { left_profile = std::make_shared<rs2::video_stream_profile>(video_profile); }
-                    if (video_profile.stream_index() == 2) { right_profile = std::make_shared<rs2::video_stream_profile>(video_profile);  }
+                    if (video_profile.stream_index() == 1) { _left_stereo_profile = std::make_shared<rs2::video_stream_profile>(std::move(video_profile)); }
+                    if (video_profile.stream_index() == 2) { _right_stereo_profile = std::make_shared<rs2::video_stream_profile>(std::move(video_profile));  }
                 }
             }
         }
 
-        if (left_profile && right_profile) {
-            updateExtrinsicsCalibData(*left_profile, *right_profile);
+        if (_left_stereo_profile && _right_stereo_profile) {
+            updateExtrinsicsCalibData(*_left_stereo_profile, *_right_stereo_profile);
         }
 
         // Streaming IMAGES
@@ -2453,8 +2450,18 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
         auto& cam_info = camera_info.at(stream);
         if (cam_info.width != width)
         {
-            updateStreamCalibData(f.get_profile().as<rs2::video_stream_profile>());
+            auto video_profile = f.get_profile().as<rs2::video_stream_profile>();
+            updateStreamCalibData(video_profile);
+
+            // stream index: 1=left, 2=right
+            if (video_profile.stream_index() == 1) { _left_stereo_profile = std::make_shared<rs2::video_stream_profile>(std::move(video_profile)); }
+            if (video_profile.stream_index() == 2) { _right_stereo_profile = std::make_shared<rs2::video_stream_profile>(std::move(video_profile));  }
         }
+
+        if (_left_stereo_profile && _right_stereo_profile) {
+            updateExtrinsicsCalibData(*_left_stereo_profile, *_right_stereo_profile);
+        }
+
         cam_info.header.stamp = t;
         cam_info.header.seq = seq[stream];
         info_publisher.publish(cam_info);

@@ -294,6 +294,8 @@ namespace realsense2_camera
         std::atomic_bool _is_initialized_time_base;
         double _camera_time_base;
         std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
+        std::shared_ptr<rs2::video_stream_profile> _left_stereo_profile{};
+        std::shared_ptr<rs2::video_stream_profile> _right_stereo_profile{};
 
         ros::Publisher _pointcloud_publisher;
         ros::Time _ros_time_base;
