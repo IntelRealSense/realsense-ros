@@ -1902,6 +1902,14 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     _camera_info[stream_index].P.at(10) = 1;
     _camera_info[stream_index].P.at(11) = 0;
 
+    // Set Tx, Ty for right camera
+    if (stream_index == INFRA2 && _enable[INFRA1])
+    {
+        const auto& ex = getAProfile(INFRA2).get_extrinsics_to(getAProfile(INFRA1));
+        _camera_info[stream_index].P.at(3) = -intrinsic.fx * ex.translation[0]; // Tx
+        _camera_info[stream_index].P.at(7) = -intrinsic.fy * ex.translation[1]; // Ty
+    }
+
     if (intrinsic.model == RS2_DISTORTION_KANNALA_BRANDT4)
     {
         _camera_info[stream_index].distortion_model = "equidistant";
