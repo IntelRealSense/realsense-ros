@@ -219,7 +219,6 @@ namespace realsense2_camera
                           const std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics>& image_publishers,
                           std::map<stream_index_pair, int>& seq,
                           std::map<stream_index_pair, sensor_msgs::CameraInfo>& camera_info,
-                          const std::map<stream_index_pair, std::string>& optical_frame_id,
                           const std::map<rs2_stream, std::string>& encoding,
                           bool copy_data_from_frame = true);
         bool getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile);

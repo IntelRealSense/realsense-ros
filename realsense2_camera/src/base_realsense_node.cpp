@@ -1702,7 +1702,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                                     _depth_aligned_image,
                                     _depth_aligned_info_publisher,
                                     _depth_aligned_image_publishers, _depth_aligned_seq,
-                                    _depth_aligned_camera_info, _optical_frame_id,
+                                    _depth_aligned_camera_info,
                                     _depth_aligned_encoding);
                         continue;
                     }
@@ -1712,7 +1712,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                                 _image,
                                 _info_publisher,
                                 _image_publishers, _seq,
-                                _camera_info, _optical_frame_id,
+                                _camera_info,
                                 _encoding);
             }
             if (original_depth_frame && _align_depth)
@@ -1728,7 +1728,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                                 _image,
                                 _info_publisher,
                                 _image_publishers, _seq,
-                                _camera_info, _optical_frame_id,
+                                _camera_info,
                                 _encoding);
             }
         }
@@ -1753,7 +1753,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                             _image,
                             _info_publisher,
                             _image_publishers, _seq,
-                            _camera_info, _optical_frame_id,
+                            _camera_info,
                             _encoding);
         }
     }
@@ -1898,6 +1898,7 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
         if (_enable[sip1])
         {
             const auto& ex = getAProfile(stream_index).get_extrinsics_to(getAProfile(sip1));
+            _camera_info[stream_index].header.frame_id = _optical_frame_id[sip1];
             _camera_info[stream_index].P.at(3) = -intrinsic.fx * ex.translation[0] + 0.0; // Tx - avoid -0.0 values.
             _camera_info[stream_index].P.at(7) = -intrinsic.fy * ex.translation[1] + 0.0; // Ty - avoid -0.0 values.
         }
@@ -2350,7 +2351,6 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
                                      const std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics>& image_publishers,
                                      std::map<stream_index_pair, int>& seq,
                                      std::map<stream_index_pair, sensor_msgs::CameraInfo>& camera_info,
-                                     const std::map<stream_index_pair, std::string>& optical_frame_id,
                                      const std::map<rs2_stream, std::string>& encoding,
                                      bool copy_data_from_frame)
 {
@@ -2388,16 +2388,6 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
     if(0 != info_publisher.getNumSubscribers() ||
        0 != image_publisher.first.getNumSubscribers())
     {
-        sensor_msgs::ImagePtr img;
-        img = cv_bridge::CvImage(std_msgs::Header(), encoding.at(stream.first), image).toImageMsg();
-        img->width = width;
-        img->height = height;
-        img->is_bigendian = false;
-        img->step = width * bpp;
-        img->header.frame_id = optical_frame_id.at(stream);
-        img->header.stamp = t;
-        img->header.seq = seq[stream];
-
         auto& cam_info = camera_info.at(stream);
         if (cam_info.width != width)
         {
@@ -2406,6 +2396,16 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const ros::Time& t,
         cam_info.header.stamp = t;
         cam_info.header.seq = seq[stream];
         info_publisher.publish(cam_info);
+
+        sensor_msgs::ImagePtr img;
+        img = cv_bridge::CvImage(std_msgs::Header(), encoding.at(stream.first), image).toImageMsg();
+        img->width = width;
+        img->height = height;
+        img->is_bigendian = false;
+        img->step = width * bpp;
+        img->header.frame_id = cam_info.header.frame_id;
+        img->header.stamp = t;
+        img->header.seq = seq[stream];
 
         image_publisher.first.publish(img);
         // ROS_INFO_STREAM("fid: " << cam_info.header.seq << ", time: " << std::setprecision (20) << t.toSec());
