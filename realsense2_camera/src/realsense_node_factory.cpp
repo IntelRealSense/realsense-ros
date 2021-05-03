@@ -317,7 +317,7 @@ void RealSenseNodeFactory::init()
 	}
 	catch(...)
 	{
-		ROS_ERROR_STREAM("Unknown exception has occured!");
+		ROS_ERROR_STREAM(__FILE__ << ":" << __LINE__ << ":" << "Unknown exception has occured!");
 		exit(1);
 	}
 }
@@ -366,8 +366,10 @@ void RealSenseNodeFactory::startDevice()
 			rclcpp::shutdown();
 			exit(1);
 		}
+		_realSenseNode->publishTopics();
+
 	}
-	catch(const rs2::backend_error& e)
+	catch(const std::exception& e)
 	{
 		std::cerr << "Failed to start device: " << e.what() << '\n';
 		_device.hardware_reset();

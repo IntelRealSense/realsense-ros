@@ -111,25 +111,17 @@ BaseRealSenseNode::~BaseRealSenseNode()
     {
         _monitoring_pc->join();
     }
+    clearParameters();
+    for(auto&& sensor : _available_ros_sensors)
+    {
+        sensor->stop();
+    }
 }
 
-void BaseRealSenseNode::setupErrorCallback(const rs2::sensor& sensor)
+void BaseRealSenseNode::hardwareResetRequest()
 {
-    sensor.set_notifications_callback([&](const rs2::notification& n)
-    {
-        std::vector<std::string> error_strings({"RT IC2 Config error",
-                                                "Left IC2 Config error"});
-        if (n.get_severity() >= RS2_LOG_SEVERITY_ERROR)
-        {
-            ROS_WARN_STREAM("Hardware Notification:" << n.get_description() << "," << n.get_timestamp() << "," << n.get_severity() << "," << n.get_category());
-        }
-        if (error_strings.end() != find_if(error_strings.begin(), error_strings.end(), [&n] (std::string err) 
-                                    {return (n.get_description().find(err) != std::string::npos); }))
-        {
-            ROS_ERROR_STREAM("Performing Hardware Reset.");
-            _dev.hardware_reset();
-        }
-    });
+    ROS_ERROR_STREAM("Performing Hardware Reset.");
+    _dev.hardware_reset();
 }
 
 void BaseRealSenseNode::publishTopics()
@@ -174,13 +166,10 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
             rs2::frameset processed = frames.apply_filter(*align);
             std::vector<rs2::frame> frames_to_publish;
             frames_to_publish.push_back(processed.get_depth_frame());   // push_back(aligned_depth_frame)
-            for (auto filter : _filters)
+            if (_colorizer_filter->is_enabled())
             {
-                if (filter->_name == "colorizer" && filter->_is_enabled)
-                {
-                    frames_to_publish.push_back(filter->_filter->process(frames_to_publish.back()));  //push_back(colorized)
-                    break;
-                }
+                frames_to_publish.push_back(_colorizer_filter->_filter->process(frames_to_publish.back()));  //push_back(colorized)
+                break;
             }
 
             publishFrame(frames_to_publish.back(), t, sip,
@@ -193,14 +182,23 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
 
 void BaseRealSenseNode::setupFilters()
 {
-    _filters.push_back(std::make_shared<NamedFilter>("decimation", std::make_shared<rs2::decimation_filter>(), _parameters, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("disparity_start", std::make_shared<rs2::disparity_transform>(), _parameters, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("spatial", std::make_shared<rs2::spatial_filter>(), _parameters, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("temporal", std::make_shared<rs2::temporal_filter>(), _parameters, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("hole_filling", std::make_shared<rs2::hole_filling_filter>(), _parameters, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("disparity_end", std::make_shared<rs2::disparity_transform>(false), _parameters, _logger));
-    _filters.push_back(std::make_shared<NamedFilter>("colorizer", std::make_shared<rs2::colorizer>(), _parameters, _logger));
-    _filters.push_back(std::make_shared<PointcloudFilter>("pointcloud", std::make_shared<rs2::pointcloud>(), _node, _parameters, _logger));
+    _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::decimation_filter>(), _parameters, _logger));
+    _filters.back()->setParameters();
+    _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::disparity_transform>(), _parameters, _logger));
+    _filters.back()->setParameters();
+    _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::spatial_filter>(), _parameters, _logger));
+    _filters.back()->setParameters();
+    _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::temporal_filter>(), _parameters, _logger));
+    _filters.back()->setParameters();
+    _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::hole_filling_filter>(), _parameters, _logger));
+    _filters.back()->setParameters();
+    _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::disparity_transform>(false), _parameters, _logger));
+    _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::colorizer>(), _parameters, _logger); 
+    _colorizer_filter->setParameters();
+    _filters.push_back(_colorizer_filter);
+    _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::pointcloud>(), _node, _parameters, _logger);
+    _pc_filter->setParameters();
+    // _filters.push_back(_pc_filter);
 }
 
 cv::Mat& BaseRealSenseNode::fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image)
@@ -583,12 +581,10 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             ROS_DEBUG("num_filters: %d", static_cast<int>(_filters.size()));
             for (auto filter_it : _filters)
             {
-                if (filter_it->_is_enabled)
-                {
-                    ROS_DEBUG("Applying filter: %s", filter_it->_name.c_str());
-                    frameset = filter_it->_filter->process(frameset);
-                }
+                frameset = filter_it->Process(frameset);
+
             }
+            _pc_filter->Process(frameset);
 
             ROS_DEBUG("List of frameset after applying filters: size: %d", static_cast<int>(frameset.size()));
             for (auto it = frameset.begin(); it != frameset.end(); ++it)
@@ -1024,10 +1020,7 @@ void BaseRealSenseNode::publishDynamicTransforms()
 
 void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset)
 {
-    std::vector<std::shared_ptr<NamedFilter>>::iterator pc_filter_ = find_if(_filters.begin(), _filters.end(), [] (std::shared_ptr<NamedFilter> s) { return s->is<PointcloudFilter>(); } );
-    std::shared_ptr<PointcloudFilter> pc_filter = std::static_pointer_cast<PointcloudFilter>(*pc_filter_);
-
-    pc_filter->Publish(pc, t, frameset, OPTICAL_FRAME_ID(DEPTH));
+    _pc_filter->Publish(pc, t, frameset, OPTICAL_FRAME_ID(DEPTH));
 }
 
 
@@ -1134,19 +1127,6 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     }
 }
 
-bool BaseRealSenseNode::getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile)
-    {
-        // Assuming that all D400 SKUs have depth sensor
-        auto profiles = _enabled_profiles[stream_index];
-        auto it = std::find_if(profiles.begin(), profiles.end(),
-                               [&](const rs2::stream_profile& profile)
-                               { return (profile.stream_type() == stream_index.first); });
-        if (it == profiles.end())
-            return false;
-
-        profile =  *it;
-        return true;
-    }
 
 void BaseRealSenseNode::startMonitoring()
 {

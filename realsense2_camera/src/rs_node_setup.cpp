@@ -85,7 +85,8 @@ void BaseRealSenseNode::setAvailableSensors()
     ROS_INFO_STREAM("Sync Mode: " << ((_sync_frames)?"On":"Off"));
 
     std::function<void(rs2::frame)> frame_callback_function = [this](rs2::frame frame){
-        bool is_filter(_filters.end() != find_if(_filters.begin(), _filters.end(), [](std::shared_ptr<NamedFilter> f){return (f->_is_enabled); }));
+        bool is_filter(_filters.end() != find_if(_filters.begin(), _filters.end(), [](std::shared_ptr<NamedFilter> f){return (f->is_enabled()); }));
+        is_filter |= _pc_filter->is_enabled();
         if (_sync_frames || _align_depth || is_filter)
             this->_asyncer.invoke(frame);
         else 
@@ -103,35 +104,37 @@ void BaseRealSenseNode::setAvailableSensors()
 
     std::function<void()> update_sensor_func = [this](){_is_profile_changed = true; _cv_mpc.notify_one();};
 
+    std::function<void()> hardware_reset_func = [this](){hardwareResetRequest();};
+
     _dev_sensors = _dev.query_sensors();
+
     for(auto&& sensor : _dev_sensors)
     {
         const std::string module_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
-        std::shared_ptr<RosSensor> rosSensor;
+        std::unique_ptr<RosSensor> rosSensor;
         if (sensor.is<rs2::depth_sensor>() || 
             sensor.is<rs2::color_sensor>() ||
             sensor.is<rs2::fisheye_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as VideoSensor.");
-            rosSensor = std::make_shared<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func);
+            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func, hardware_reset_func);
         }
         else if (sensor.is<rs2::motion_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as ImuSensor.");
-            rosSensor = std::make_shared<RosSensor>(sensor, _parameters, imu_callback_function, update_sensor_func);
+            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, imu_callback_function, update_sensor_func, hardware_reset_func);
         }
         else if (sensor.is<rs2::pose_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as PoseSensor.");
-            rosSensor = std::make_shared<RosSensor>(sensor, _parameters, multiple_message_callback_function, update_sensor_func);
+            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, multiple_message_callback_function, update_sensor_func, hardware_reset_func);
         }
         else
         {
             ROS_ERROR_STREAM("Module Name \"" << module_name << "\" does not define a callback.");
             throw("Error: Module not supported");
         }
-
-        _available_ros_sensors.push_back(rosSensor);
+        _available_ros_sensors.push_back(std::move(rosSensor));
     }
 
 }
@@ -194,6 +197,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                     {
                         ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
                     }).get<rclcpp::PARAMETER_STRING>();
+            _parameters_names.push_back(param_name);
             
             _image_publishers[sip] = {image_transport::create_publisher(&_node, image_raw.str(), qos_string_to_qos(qos_str)), stream_name}; // TODO: remove "stream_name"
             _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);

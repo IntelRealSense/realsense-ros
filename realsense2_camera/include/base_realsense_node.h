@@ -186,6 +186,7 @@ namespace realsense2_camera
         std::vector<rs2_option> _monitor_options;
         rclcpp::Logger _logger;
         std::shared_ptr<Parameters> _parameters;
+        std::vector<std::string> _parameters_names;
         // Diagnostics _rs_diagnostic_updater;
 
         virtual void calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile);
@@ -214,8 +215,9 @@ namespace realsense2_camera
         };
 
         void getParameters();
+        void clearParameters();
         void setupDevice();
-        void setupErrorCallback(const rs2::sensor& sensor);
+        void hardwareResetRequest();
         void setupPublishers();
         void enable_devices();
         void setupFilters();
@@ -238,7 +240,6 @@ namespace realsense2_camera
                           std::map<stream_index_pair, cv::Mat>& images,
                           const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
                           const std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics>& image_publishers);
-        bool getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile);
 
         void publishAlignedDepthToOthers(rs2::frameset frames, const rclcpp::Time& t);
         sensor_msgs::msg::Imu CreateUnitedMessage(const CimuData accel_data, const CimuData gyro_data);
@@ -300,7 +301,6 @@ namespace realsense2_camera
         std::map<stream_index_pair, sensor_msgs::msg::CameraInfo> _camera_info;
         std::atomic_bool _is_initialized_time_base;
         double _camera_time_base;
-        std::map<stream_index_pair, std::vector<rs2::stream_profile>> _enabled_profiles;
 
         rclcpp::Time _ros_time_base;
         bool _sync_frames;
@@ -310,9 +310,11 @@ namespace realsense2_camera
         stream_index_pair _pointcloud_texture;
         PipelineSyncer _syncer;
         rs2::asynchronous_syncer _asyncer;
+        std::shared_ptr<NamedFilter> _colorizer_filter;
+        std::shared_ptr<PointcloudFilter> _pc_filter;
         std::vector<std::shared_ptr<NamedFilter>> _filters;
         std::vector<rs2::sensor> _dev_sensors;
-        std::vector<std::shared_ptr<RosSensor>> _available_ros_sensors;
+        std::vector<std::unique_ptr<RosSensor>> _available_ros_sensors;
 
         std::map<rs2_stream, std::shared_ptr<rs2::align>> _align;
 

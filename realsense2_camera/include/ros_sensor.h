@@ -18,7 +18,8 @@ namespace realsense2_camera
             RosSensor(rs2::sensor sensor,
                       std::shared_ptr<Parameters> parameters, 
                       std::function<void(rs2::frame)> frame_callback,
-                      std::function<void()> update_sensor_func);
+                      std::function<void()> update_sensor_func,
+                      std::function<void()> hardware_reset_func);
             ~RosSensor();
             void registerSensorParameters();
             bool getUpdatedProfiles(std::vector<rs2::stream_profile>& wanted_profiles);
@@ -35,6 +36,7 @@ namespace realsense2_camera
         private:
             void setupErrorCallback();
             void setParameters();
+            void clearParameters();
             void set_sensor_auto_exposure_roi();
             void registerAutoExposureROIOptions();
 
@@ -43,11 +45,11 @@ namespace realsense2_camera
             std::function<void(rs2::frame)> _origin_frame_callback;
             std::function<void(rs2::frame)> _frame_callback;
             SensorParams _params;
-            std::function<void()> _update_sensor_func;
-            std::map<stream_index_pair, bool> _enabled_profiles;
+            std::function<void()> _update_sensor_func, _hardware_reset_func;
             bool _is_first_frame;
             std::vector<std::function<void()> > _first_frame_functions_stack;
             std::vector<std::shared_ptr<ProfilesManager> > _profile_managers;
             rs2::region_of_interest _auto_exposure_roi;
+            std::vector<std::string> _parameters_names;
     };
 }
