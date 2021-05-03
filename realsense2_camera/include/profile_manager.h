@@ -22,16 +22,18 @@ namespace realsense2_camera
             template<class T>
             void registerSensorUpdateParam(std::string template_name, 
                                            std::set<stream_index_pair> unique_sips, 
-                                           std::map<stream_index_pair, T>& params, 
+                                           std::map<stream_index_pair, std::shared_ptr<T> >& params, 
                                            T value, 
                                            std::function<void()> update_sensor_func);
             void addWantedProfiles(std::vector<rs2::stream_profile>& wanted_profiles);
+            void clearParameters();
 
         protected:
             rclcpp::Logger _logger;
             SensorParams _params;
-            std::map<stream_index_pair, bool> _enabled_profiles;
+            std::map<stream_index_pair, std::shared_ptr<bool>> _enabled_profiles;
             std::vector<rs2::stream_profile> _all_profiles;
+            std::vector<std::string> _parameters_names;
     };
 
     class VideoProfilesManager : public ProfilesManager
@@ -41,7 +43,7 @@ namespace realsense2_camera
             bool isWantedProfile(const rs2::stream_profile& profile) override;
             void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) override;
             bool set_to_defaults(std::map<stream_index_pair, rs2::stream_profile>& default_profiles);
-            bool isTypeExist();
+            // bool isTypeExist();
             std::string wanted_profile_string(stream_index_pair sip);
             int getHeight() {return _height;};
             int getWidth() {return _width;};
@@ -68,7 +70,7 @@ namespace realsense2_camera
             std::string wanted_profile_string(stream_index_pair sip);
 
         protected:
-            std::map<stream_index_pair, double> _fps;
+            std::map<stream_index_pair, std::shared_ptr<double> > _fps;
     };
 
     class PoseProfilesManager : public MotionProfilesManager

@@ -35,6 +35,7 @@ namespace realsense2_camera
         {
             _node.undeclare_parameter(param.first);
         }
+        // remove_on_set_parameters_callback(_params_backend);
     }
 
     rclcpp::ParameterValue Parameters::setParam(std::string param_name, const rclcpp::ParameterValue& initial_value, 
@@ -138,7 +139,10 @@ namespace realsense2_camera
 
     void Parameters::removeParam(std::string param_name)
     {
-        _node.undeclare_parameter(param_name);
+        if (!_node.has_parameter(param_name))
+        {
+            _node.undeclare_parameter(param_name);
+        }
         _param_functions.erase(param_name);
     }
 

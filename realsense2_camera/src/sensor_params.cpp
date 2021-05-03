@@ -67,6 +67,21 @@ void param_set_option(rs2::options sensor, rs2_option option, std::string option
     }
 }
 
+void SensorParams::clearParameters()
+{
+    while ( !_parameters_names.empty() )
+    {
+        auto name = _parameters_names.back();
+        _parameters->removeParam(name);
+        _parameters_names.pop_back();        
+    }
+}
+
+SensorParams::~SensorParams()
+{
+    clearParameters();
+}
+
 template<class T>
 void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name, const std::string& description_addition)
 {
@@ -114,6 +129,7 @@ void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const s
                         param_set_option<T>(sensor, option, option_name, parameter);
                     }, crnt_descriptor));
         new_val = pValue.get<T>();
+        _parameters_names.push_back(option_name);
     }
     catch(const rclcpp::exceptions::InvalidParameterValueException& e)
     {

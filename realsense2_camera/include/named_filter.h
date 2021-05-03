@@ -7,44 +7,60 @@
 
 namespace realsense2_camera
 {
+    // class FiletrInterface
+    // {
+    //     public:
+    //         virtual bool is_enabled() = 0;
+    //         virtual void setParameters() = 0;
+    //         virtual rs2::frameset Process(rs2::frameset) = 0;
+    // };
+
     class NamedFilter
     {
         public:
-            std::string _name;
+            NamedFilter(std::shared_ptr<rs2::filter> filter, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled=false);
+            void setParameters();
+            bool is_enabled() {return _is_enabled;};
+            rs2::frameset Process(rs2::frameset frameset);
+
+        private:
+            void clearParameters();
+
+        public:
             std::shared_ptr<rs2::filter> _filter;
+
+        private:
             bool _is_enabled;
             rclcpp::Logger _logger;
-
-        protected:
             SensorParams _params;
+            std::vector<std::string> _parameters_names;
 
-        public:
-            NamedFilter(std::string name, std::shared_ptr<rs2::filter> filter, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled=false):
-            _name(name), _filter(filter), _is_enabled(is_enabled), _logger(logger), _params(parameters, logger)
-            {
-                setParameters();
-            }
-            virtual void set(const bool is_enabled) {_is_enabled = is_enabled;};
-
-            template<class T> 
-            bool is() const
-            {
-                return (dynamic_cast<const T*> (&(*this)));
-            }
-        
-        private:
-            void setParameters();
     };
 
-    class PointcloudFilter : public NamedFilter
+    class PointcloudFilter
     {
         public:
-            PointcloudFilter(std::string name, std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled=false);
+            PointcloudFilter(std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled=false);
+            void setParameters();
+            bool is_enabled() {return _is_enabled;};
+            rs2::frameset Process(rs2::frameset frameset);
         
-            void set(const bool is_enabled) override;
+            void set();
             void Publish(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset, const std::string& frame_id);
 
         private:
+            void clearParameters();
+
+        public:
+            std::shared_ptr<rs2::filter> _filter;
+
+        private:
+            bool _is_enabled;
+            rclcpp::Logger _logger;
+            SensorParams _params;
+            std::vector<std::string> _parameters_names;
+
+            bool _is_enabled_pc;
             rclcpp::Node& _node;
             bool _allow_no_texture_points;
             bool _ordered_pc;

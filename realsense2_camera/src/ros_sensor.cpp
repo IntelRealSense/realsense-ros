@@ -8,7 +8,9 @@ void RosSensor::setupErrorCallback()
     set_notifications_callback([&](const rs2::notification& n)
     {
         std::vector<std::string> error_strings({"RT IC2 Config error",
-                                                "Left IC2 Config error"});
+                                                "Left IC2 Config error",
+                                                "Motion Module failure"});
+        ROS_WARN_STREAM("XXX Hardware Notification:" << n.get_description() << "," << n.get_timestamp() << "," << n.get_severity() << "," << n.get_category());            
         if (n.get_severity() >= RS2_LOG_SEVERITY_ERROR)
         {
             ROS_WARN_STREAM("Hardware Notification:" << n.get_description() << "," << n.get_timestamp() << "," << n.get_severity() << "," << n.get_category());
@@ -16,12 +18,7 @@ void RosSensor::setupErrorCallback()
         if (error_strings.end() != find_if(error_strings.begin(), error_strings.end(), [&n] (std::string err) 
                                     {return (n.get_description().find(err) != std::string::npos); }))
         {
-            ROS_ERROR_STREAM("Performing Hardware Reset.");
-            // _sensor.get().get()->parent.hardware_reset();
-            // rs2_error* e = nullptr;
-
-            // rs2_create_device_from_sensor(_sensor.get().get(), &e);
-            // rs2::get_sensor_parent(_sensor).hardware_reset();
+            _hardware_reset_func();
         }
     });
 }
@@ -29,12 +26,14 @@ void RosSensor::setupErrorCallback()
 RosSensor::RosSensor(rs2::sensor sensor,
     std::shared_ptr<Parameters> parameters, 
     std::function<void(rs2::frame)> frame_callback,
-    std::function<void()> update_sensor_func): 
+    std::function<void()> update_sensor_func,
+    std::function<void()> hardware_reset_func):
     rs2::sensor(sensor),
     _logger(rclcpp::get_logger("RealSenseCameraNode")),
     _origin_frame_callback(frame_callback),
     _params(parameters, _logger),
-    _update_sensor_func(update_sensor_func)
+    _update_sensor_func(update_sensor_func),
+    _hardware_reset_func(hardware_reset_func)
 {
     _frame_callback = [this](rs2::frame frame)
         {
@@ -42,11 +41,11 @@ RosSensor::RosSensor(rs2::sensor sensor,
             _origin_frame_callback(frame);
         };
     setParameters();
-    registerSensorParameters();
 }
 
 RosSensor::~RosSensor()
 {
+    clearParameters();
     stop();
 }
 
@@ -54,7 +53,9 @@ void RosSensor::setParameters()
 {
     std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
     _params.registerDynamicOptions(*this, module_name);
+    registerSensorParameters();
 }
+
 
 void RosSensor::registerSensorParameters()
 {
@@ -92,11 +93,25 @@ void RosSensor::runFirstFrameInitialization()
         {
             std::thread t = std::thread([=]()
             {
-                while (!_first_frame_functions_stack.empty())
+                try
                 {
-                    _first_frame_functions_stack.back()();
-                    _first_frame_functions_stack.pop_back();
+                    while (!_first_frame_functions_stack.empty())
+                    {
+                        _first_frame_functions_stack.back()();
+                        _first_frame_functions_stack.pop_back();
+                    }
                 }
+                catch(const std::exception& e)
+                {
+                    std::cerr << "runFirstFrameInitialization(): " << e.what() << '\n';
+                    throw e;
+                }
+                catch(...)
+                {
+                    std::cerr << "runFirstFrameInitialization()!!!" << std::endl;
+                    throw;
+                }                
+
             });
             t.detach();
         }
@@ -108,7 +123,7 @@ bool RosSensor::start(const std::vector<stream_profile>& profiles)
     if (get_active_streams().size() > 0)
         return false;
     setupErrorCallback();
-    open(profiles);
+    rs2::sensor::open(profiles);
 
     for (auto& profile : profiles)
     ROS_INFO_STREAM("Open profile: " << ProfilesManager::profile_string(profile));
@@ -125,12 +140,21 @@ void RosSensor::stop()
     try
     {
         rs2::sensor::stop();
+    }
+    catch (const std::exception& e)
+    {
+        ROS_ERROR_STREAM("Exception: " << __FILE__ << ":" << __LINE__ << ":" << e.what());
+    }
+    ROS_INFO_STREAM("Close Sensor. ");
+    try
+    {
         close();
     }
-    catch (const rs2::error& e)
+    catch (const std::exception& e)
     {
-        ROS_ERROR_STREAM("Exception: " << e.what());
+        ROS_ERROR_STREAM("Exception: " << __FILE__ << ":" << __LINE__ << ":" << e.what());
     }
+    ROS_INFO_STREAM("Close Sensor - Done. ");
 }
 
 bool profiles_equal(const rs2::stream_profile& a, const rs2::stream_profile& b)
@@ -174,21 +198,22 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
 {
     wanted_profiles.clear();
     std::vector<stream_profile> active_profiles = get_active_streams();
+    ROS_WARN_STREAM("*** _profile_managers.size(): " << _profile_managers.size());
     for (auto profile_manager : _profile_managers)
     {
         profile_manager->addWantedProfiles(wanted_profiles);        
     }
 
-    ROS_DEBUG_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "active_profiles.size() = " << active_profiles.size());
+    ROS_WARN_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "active_profiles.size() = " << active_profiles.size());
     for (auto& profile : active_profiles)
     {
-        ROS_DEBUG_STREAM("Sensor profile: " << ProfilesManager::profile_string(profile));
+        ROS_WARN_STREAM("Sensor profile: " << ProfilesManager::profile_string(profile));
     }
 
-    ROS_DEBUG_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "wanted_profiles");
+    ROS_WARN_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "wanted_profiles");
     for (auto& profile : wanted_profiles)
     {
-        ROS_DEBUG_STREAM("Sensor profile: " << ProfilesManager::profile_string(profile));
+        ROS_WARN_STREAM("Sensor profile: " << ProfilesManager::profile_string(profile));
     }
     if (compare_profiles_lists(active_profiles, wanted_profiles))
     {
@@ -223,7 +248,7 @@ void RosSensor::set_sensor_auto_exposure_roi()
     }
     catch(const std::runtime_error& e)
     {
-        ROS_ERROR_STREAM(e.what());
+        ROS_ERROR_STREAM(__FILE__ << ":" << __LINE__ << ":" << e.what());
     }
 }
 
@@ -243,9 +268,37 @@ void RosSensor::registerAutoExposureROIOptions()
         _auto_exposure_roi = {0, 0, max_x, max_y};
 
         ROS_DEBUG_STREAM("Publish roi for " << module_name);
-        _params.getParameters()->setParamT(module_name + ".left", rclcpp::ParameterValue(0),     _auto_exposure_roi.min_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        std::string param_name(module_name + ".left");
+        _params.getParameters()->setParamT(param_name, rclcpp::ParameterValue(0),     _auto_exposure_roi.min_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _parameters_names.push_back(param_name);
+
+        param_name = std::string(module_name + ".right");
         _params.getParameters()->setParamT(module_name + ".right", rclcpp::ParameterValue(max_x), _auto_exposure_roi.max_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _parameters_names.push_back(param_name);
+
+        param_name = std::string(module_name + ".top");
         _params.getParameters()->setParamT(module_name + ".top", rclcpp::ParameterValue(0),     _auto_exposure_roi.min_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _parameters_names.push_back(param_name);
+
+        param_name = std::string(module_name + ".bottom");
         _params.getParameters()->setParamT(module_name + ".bottom", rclcpp::ParameterValue(max_y), _auto_exposure_roi.max_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _parameters_names.push_back(param_name);
+    }
+}
+
+void RosSensor::clearParameters()
+{
+    for (auto profile_manager : _profile_managers)
+    {
+        profile_manager->clearParameters();
+    }
+
+    _params.clearParameters();
+
+    while ( !_parameters_names.empty() )
+    {
+        auto name = _parameters_names.back();
+        _params.getParameters()->removeParam(name);
+        _parameters_names.pop_back();        
     }
 }

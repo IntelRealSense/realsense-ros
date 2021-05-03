@@ -5,33 +5,119 @@
 
 using namespace realsense2_camera;
 
+NamedFilter::NamedFilter(std::shared_ptr<rs2::filter> filter, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled):
+    _filter(filter), _is_enabled(is_enabled), _logger(logger), _params(parameters, logger)
+{
+    // setParameters();
+}
+
 void NamedFilter::setParameters()
 {
-    if (_name == "disparity_end")
-        return; // parameters for disparity are set in the disparity_start filter.
     std::stringstream module_name_str;
     std::string module_name = create_graph_resource_name(rs2_to_ros(_filter->get_info(RS2_CAMERA_INFO_NAME)));
     module_name_str << module_name;
     _params.registerDynamicOptions(*(_filter.get()), module_name_str.str());
+    // exit(1);
     module_name_str << ".enable";
 
-    _params.getParameters()->setParamT(module_name_str.str(), rclcpp::ParameterValue(_is_enabled), _is_enabled, [this](const rclcpp::Parameter& parameter)
-            {
-                set(parameter.get_value<bool>());
-            });
+    _params.getParameters()->setParamT(module_name_str.str(), rclcpp::ParameterValue(_is_enabled), _is_enabled);
+    _parameters_names.push_back(module_name_str.str());
+    std::cerr << "NamedFilter::setParameters().exit()" << std::endl;
+    // exit(1);
 }
 
-PointcloudFilter::PointcloudFilter(std::string name, std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled):
-    NamedFilter(name, filter, parameters, logger, is_enabled),
+void NamedFilter::clearParameters()
+{
+    while ( !_parameters_names.empty() )
+    {
+        auto name = _parameters_names.back();
+        _params.getParameters()->removeParam(name);
+        _parameters_names.pop_back();        
+    }
+}
+
+rs2::frameset NamedFilter::Process(rs2::frameset frameset)
+{
+    if (_is_enabled)
+    {
+        return _filter->process(frameset);
+    }
+    else
+    {
+        return frameset;
+    }
+}
+
+
+PointcloudFilter::PointcloudFilter(std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled):
+    _filter(filter), _is_enabled(is_enabled), _logger(logger), _params(parameters, logger),
     _node(node)
     {
-        _params.getParameters()->setParamT(std::string("allow_no_texture_points"), rclcpp::ParameterValue(ALLOW_NO_TEXTURE_POINTS), _allow_no_texture_points);
-        _params.getParameters()->setParamT(std::string("ordered_pc"), rclcpp::ParameterValue(ORDERED_PC), _ordered_pc);
-        set(_is_enabled);
     }
 
-void PointcloudFilter::set(const bool is_enabled)
+void PointcloudFilter::setParameters()
 {
+    std::string param_name("allow_no_texture_points");
+    _params.getParameters()->setParamT(param_name, rclcpp::ParameterValue(ALLOW_NO_TEXTURE_POINTS), _allow_no_texture_points);
+    _parameters_names.push_back(param_name);
+
+    param_name = std::string("ordered_pc");
+    _params.getParameters()->setParamT(param_name, rclcpp::ParameterValue(ORDERED_PC), _ordered_pc);
+    _parameters_names.push_back(param_name);
+
+    std::stringstream module_name_str;
+    std::string module_name = create_graph_resource_name(rs2_to_ros(_filter->get_info(RS2_CAMERA_INFO_NAME)));
+    module_name_str << module_name;
+    _params.registerDynamicOptions(*(_filter.get()), module_name_str.str());
+    // std::cerr << "PointcloudFilter::setParameters().exit()" << std::endl;
+    // exit(1);
+
+    module_name_str << ".enable";
+
+    // _params.getParameters()->setParam(module_name_str.str(), rclcpp::ParameterValue(_is_enabled_pc),[this](const rclcpp::Parameter& parameter)
+    //         {
+    //             _is_enabled_pc = parameter.get_value<bool>();
+    //             set();
+    //         });
+
+    _params.getParameters()->setParamT(module_name_str.str(), rclcpp::ParameterValue(_is_enabled), _is_enabled, [this](const rclcpp::Parameter& )
+            {
+                set();
+            });
+    _parameters_names.push_back(module_name_str.str());
+    set();
+}
+
+void PointcloudFilter::clearParameters()
+{
+    while ( !_parameters_names.empty() )
+    {
+        auto name = _parameters_names.back();
+        _params.getParameters()->removeParam(name);
+        _parameters_names.pop_back();        
+    }
+}
+
+rs2::frameset PointcloudFilter::Process(rs2::frameset frameset)
+{
+    if (_is_enabled)
+    {
+        return _filter->process(frameset);
+    }
+    else
+    {
+        return frameset;
+    }
+}
+
+
+void PointcloudFilter::set() 
+{   
+    std::cerr << "PointcloudFilter::set()" << std::endl;
+    bool is_enabled(_is_enabled);
+    // _is_enabled = parameter.get_value<rclcpp::PARAMETER_BOOL>();
+
+    ROS_WARN_STREAM("is_enabled: " << is_enabled);
     std::lock_guard<std::mutex> lock_guard(_mutex_publisher);
     if ((is_enabled) && (!_pointcloud_publisher))
     {
@@ -45,7 +131,7 @@ void PointcloudFilter::set(const bool is_enabled)
         _pointcloud_publisher.reset();
         ROS_INFO_STREAM("Done." << __LINE__);
     }
-    NamedFilter::set(is_enabled);
+    // NamedFilter::set(is_enabled);
 }
 
 void reverse_memcpy(unsigned char* dst, const unsigned char* src, size_t n)

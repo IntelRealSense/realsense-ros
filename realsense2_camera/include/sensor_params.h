@@ -11,7 +11,9 @@ namespace realsense2_camera
             SensorParams(std::shared_ptr<Parameters> parameters, rclcpp::Logger logger):
                 _logger(logger),
                 _parameters(parameters) {};
+            ~SensorParams();
             void registerDynamicOptions(rs2::options sensor, const std::string& module_name);
+            void clearParameters();
             std::shared_ptr<Parameters> getParameters() {return _parameters;};
 
         public:
@@ -23,5 +25,6 @@ namespace realsense2_camera
 
         private:
             std::shared_ptr<Parameters> _parameters;
+            std::vector<std::string> _parameters_names;
     };
 }

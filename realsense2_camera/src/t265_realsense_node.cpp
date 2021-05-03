@@ -17,12 +17,15 @@ T265RealsenseNode::T265RealsenseNode(rclcpp::Node& node,
 void T265RealsenseNode::initializeOdometryInput()
 {
     std::string calib_odom_file;
-    calib_odom_file = _parameters->setParam("calib_odom_file", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
+    std::string param_name("calib_odom_file");
+    calib_odom_file = _parameters->setParam(param_name, rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
     if (calib_odom_file.empty())
     {
         ROS_INFO("No calib_odom_file. No input odometry accepted.");
         return;
     }
+    _parameters_names.push_back(param_name);
+
     std::ifstream calibrationFile(calib_odom_file);
     if (!calibrationFile)
     {
