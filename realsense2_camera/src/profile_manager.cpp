@@ -54,7 +54,6 @@ template void ProfilesManager::registerSensorUpdateParam<double>(std::string tem
 
 bool ProfilesManager::isTypeExist()
 {
-    ROS_WARN_STREAM(__LINE__ << "_enabled_profiles.size(): " << _enabled_profiles.size());
     return (!_enabled_profiles.empty());
 }
 
@@ -189,7 +188,7 @@ void VideoProfilesManager::registerProfileParameters(std::vector<stream_profile>
     for (auto& profile : all_profiles)
     {
         if (!profile.is<video_stream_profile>()) continue;
-        ROS_WARN_STREAM("Register profile: " << profile_string(profile));
+        ROS_DEBUG_STREAM("Register profile: " << profile_string(profile));
         _all_profiles.push_back(profile);
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
         checked_sips.insert(sip);

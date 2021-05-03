@@ -281,6 +281,7 @@ namespace realsense2_camera
         bool _publish_tf;
         double _tf_publish_rate;
         std::mutex _publish_tf_mutex;
+        std::mutex _update_sensor_mutex;
 
         tf2_ros::StaticTransformBroadcaster _static_tf_broadcaster;
         std::shared_ptr<tf2_ros::TransformBroadcaster> _dynamic_tf_broadcaster;

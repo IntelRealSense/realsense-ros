@@ -240,7 +240,8 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 }
 
 void BaseRealSenseNode::updateSensors()
-{
+{    
+    std::lock_guard<std::mutex> lock_guard(_update_sensor_mutex);
     try{
         for(auto&& sensor : _available_ros_sensors)
         {
