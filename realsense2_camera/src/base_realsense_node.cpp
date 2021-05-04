@@ -584,7 +584,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                 frameset = filter_it->Process(frameset);
 
             }
-            _pc_filter->Process(frameset);
+            frameset = _pc_filter->Process(frameset);
 
             ROS_DEBUG("List of frameset after applying filters: size: %d", static_cast<int>(frameset.size()));
             for (auto it = frameset.begin(); it != frameset.end(); ++it)
