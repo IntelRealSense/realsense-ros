@@ -163,7 +163,7 @@ namespace realsense2_camera
         rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr _toggle_sensors_srv;
 
         virtual void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile);
-        virtual void toggleSensors(bool enabled);
+        virtual bool toggleSensors(bool enabled, std::string& msg);
         bool toggle_sensor_callback(std_srvs::srv::SetBool::Request::SharedPtr req, std_srvs::srv::SetBool::Response::SharedPtr res);
         virtual void publishTopics();
         rs2::stream_profile getAProfile(const stream_index_pair& stream);

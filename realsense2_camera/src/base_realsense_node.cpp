@@ -213,12 +213,12 @@ bool BaseRealSenseNode::toggle_sensor_callback(std_srvs::srv::SetBool::Request::
   else {
     ROS_INFO_STREAM("toggling sensor : OFF");
   }
-  toggleSensors(req->data);
-  res->success = true;
+  std::string msg;
+  res->success = toggleSensors(req->data, res->message);
   return true;
 }
 
-void BaseRealSenseNode::toggleSensors(bool enabled)
+bool BaseRealSenseNode::toggleSensors(bool enabled, std::string& msg)
 {
   if(enabled)
   {
@@ -239,11 +239,21 @@ void BaseRealSenseNode::toggleSensors(bool enabled)
     {
         std::string module_name = sensor_profile.first;
         rs2::sensor sensor = active_sensors[module_name];
-        sensor.open(sensor_profile.second);
-        sensor.start(_sensors_callback[module_name]);
-        if (sensor.is<rs2::depth_sensor>())
+        try
         {
-            _depth_scale_meters = sensor.as<rs2::depth_sensor>().get_depth_scale();
+            sensor.open(sensor_profile.second);
+            sensor.start(_sensors_callback[module_name]);
+
+            if (sensor.is<rs2::depth_sensor>())
+            {
+                _depth_scale_meters = sensor.as<rs2::depth_sensor>().get_depth_scale();
+            }
+        }
+        catch(const rs2::wrong_api_call_sequence_error& e)
+        {
+            msg = "Device is already ON.";
+            ROS_WARN(msg);
+            return false;
         }
     }
   }
@@ -256,11 +266,21 @@ void BaseRealSenseNode::toggleSensors(bool enabled)
         std::pair< std::set<std::string>::iterator, bool> res = module_names.insert(module_name);
         if (res.second)
         {
-            _sensors[profile.first].stop();
-            _sensors[profile.first].close();
+            try
+            {
+                _sensors[profile.first].stop();
+                _sensors[profile.first].close();
+            }
+            catch(const rs2::wrong_api_call_sequence_error& e)
+            {
+                msg = "Device is already OFF.";
+                ROS_WARN(msg);
+                return false;
+            }
         }
     }
   }
+  return true;
 }
 
 void BaseRealSenseNode::setupErrorCallback()
