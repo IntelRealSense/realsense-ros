@@ -221,7 +221,6 @@ namespace realsense2_camera
                           const std::map<rs2_stream, std::string>& encoding);
         bool getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile);
 
-        void publishAlignedDepthToOthers(rs2::frameset frames, const rclcpp::Time& t);
         sensor_msgs::msg::Imu CreateUnitedMessage(const CimuData accel_data, const CimuData gyro_data);
 
         void FillImuData_Copy(const CimuData imu_data, std::deque<sensor_msgs::msg::Imu>& imu_msgs);
@@ -308,8 +307,8 @@ namespace realsense2_camera
         stream_index_pair _pointcloud_texture;
         PipelineSyncer _syncer;
         std::vector<NamedFilter> _filters;
+        std::shared_ptr<rs2::filter> _colorizer, _pointcloud_filter;
         std::vector<rs2::sensor> _dev_sensors;
-        std::map<rs2_stream, std::shared_ptr<rs2::align>> _align;
 
         std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
         std::map<stream_index_pair, cv::Mat> _depth_scaled_image;
@@ -329,7 +328,6 @@ namespace realsense2_camera
         sensor_msgs::msg::PointCloud2 _msg_pointcloud;
         std::vector< unsigned int > _valid_pc_indices;
         std::shared_ptr<Parameters> _parameters;
-
     };//end class
 }
 #endif //___BASE_REALSENSE_NODE_HEADER___
