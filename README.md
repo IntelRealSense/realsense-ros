@@ -4,7 +4,7 @@ These are packages for using Intel RealSense cameras (D400 and L500 series, SR30
 LibRealSense supported version: v2.43.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
 ## Installation Instructions
-This version supports ROS2 Dashing, Eloquent AND Foxy.
+This version supports ROS2 Dashing, Eloquent and Foxy.
 
    ### Step 1: Install the ROS2 distribution
    - #### Install [ROS2 Dashing](https://index.ros.org/doc/ros2/Installation/dashing/Linux-Install-Debians/), on Ubuntu 18.04 or [ROS2 Foxy](https://index.ros.org/doc/ros2/Installation/foxy/Linux-Install-Debians/), on Ubuntu 20.04
@@ -28,7 +28,7 @@ This version supports ROS2 Dashing, Eloquent AND Foxy.
     `sudo apt-get install ros-$ROS_DISTRO-realsense2-description`
 
 * ### Method 2: The RealSense&trade; distribution:
-     > This option is demonstrated in the [.travis.yml](https://github.com/IntelRealSense/realsense-ros/blob/foxy/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
+     > This option is demonstrated in the [.travis.yml](https://github.com/IntelRealSense/realsense-ros/blob/ros2/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
 
 
    ### Step 1: Install the latest Intel&reg; RealSense&trade; SDK 2.0
@@ -48,7 +48,7 @@ This version supports ROS2 Dashing, Eloquent AND Foxy.
    ```
    - Clone the latest ROS2 Intel&reg; RealSense&trade;  wrapper from [here](https://github.com/IntelRealSense/realsense-ros.git) into '~/ros2_ws/src/'
    ```bashrc
-   git clone https://github.com/IntelRealSense/realsense-ros.git -b foxy
+   git clone --depth 1 --branch `git ls-remote --tags https://github.com/IntelRealSense/realsense-ros.git | grep -Po "(?<=tags/)3.\d+\.\d+" | sort -V | tail -1` https://github.com/IntelRealSense/realsense-ros.git
    cd ~/ros2_ws
    ```
 
