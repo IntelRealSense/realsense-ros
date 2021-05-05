@@ -2,6 +2,13 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix pointcloud message size when no texture is added.
+* Added filling correct Tx, Ty values in projection matrix of right camera.
+* Fixed frame_id of right sensor to match left sensor in a stereo pair.pair
+* Contributors: Pavlo Kolomiiets, doronhi
+
 2.2.24 (2021-04-21)
 -------------------
 * Enabling pointcloud while align_depth is set to true creates a pointcloud aligned to color image.
