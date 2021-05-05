@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.1.6 (2021-05-05)
+------------------
 * Fix pointcloud message size when no texture is added.
 * migration toggle_sensors feature to ros2
 * Add option for aligning pointcloud to color image.
