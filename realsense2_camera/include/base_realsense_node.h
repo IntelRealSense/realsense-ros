@@ -30,6 +30,7 @@
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -159,9 +160,12 @@ namespace realsense2_camera
         bool _align_depth;
         std::vector<rs2_option> _monitor_options;
         rclcpp::Logger _logger;
+        rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr _toggle_sensors_srv;
 
         virtual void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile);
-        void publishTopics();
+        virtual void toggleSensors(bool enabled);
+        bool toggle_sensor_callback(std_srvs::srv::SetBool::Request::SharedPtr req, std_srvs::srv::SetBool::Response::SharedPtr res);
+        virtual void publishTopics();
         rs2::stream_profile getAProfile(const stream_index_pair& stream);
         tf2::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
         void publish_static_tf(const rclcpp::Time& t,
