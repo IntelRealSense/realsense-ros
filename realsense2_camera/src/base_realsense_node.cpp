@@ -2398,7 +2398,6 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t,
     else
     {
         std::string format_str = "intensity";
-        _msg_pointcloud.point_step = addPointField(_msg_pointcloud, format_str.c_str(), 1, sensor_msgs::msg::PointField::FLOAT32, _msg_pointcloud.point_step);
         _msg_pointcloud.row_step = _msg_pointcloud.width * _msg_pointcloud.point_step;
         _msg_pointcloud.data.resize(_msg_pointcloud.height * _msg_pointcloud.row_step);
 
