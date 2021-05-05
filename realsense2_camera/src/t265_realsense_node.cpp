@@ -40,7 +40,7 @@ void T265RealsenseNode::initializeOdometryInput()
     _use_odom_in = true;
 }
 
-void T265RealsenseNode::toggleSensors(bool enabled)
+void T265RealsenseNode::toggleSensors(bool /*enabled*/)
 {
   ROS_WARN_STREAM("toggleSensors method not implemented for T265");
 }
