@@ -1673,7 +1673,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             for (std::vector<NamedFilter>::const_iterator filter_it = _filters.begin(); filter_it != _filters.end(); filter_it++)
             {
                 ROS_DEBUG("Applying filter: %s", filter_it->_name.c_str());
-                if ((filter_it->_name == "pointcloud") && (!frameset.get_depth_frame()))
+                if ((filter_it->_name == "pointcloud") && (!original_depth_frame))
                     continue;
                 frameset = filter_it->_filter->process(frameset);
             }
