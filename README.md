@@ -150,6 +150,7 @@ If using D435 or D415, the gyro and accel topics wont be available. Likewise, ot
 
 ### Available services:
 - reset : Cause a hardware reset of the device. Usage: `rosservice call /camera/realsense2_camera/reset`
+- enable : Start/Stop all streaming sensors. Usage example: `rosservice call /camera/enable False"`
 
 ### Launch parameters
 The following parameters are available by the wrapper:

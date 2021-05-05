@@ -932,7 +932,7 @@ void BaseRealSenseNode::setupDevice()
                 ros::shutdown();
                 exit(1);
             }
-            ROS_INFO_STREAM(std::string(sensor.get_info(RS2_CAMERA_INFO_NAME)) << " was found.");
+            ROS_INFO_STREAM(module_name << " was found.");
         }
 
         // Update "enable" map
