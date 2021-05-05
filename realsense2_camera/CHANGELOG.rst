@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.2.0 (2021-05-05)
+------------------
 * Added filling correct Tx, Ty values in projection matrix of right camera.
 * Fixed frame_id of right sensor to match left sensor in a stereo pair.pair
 * Contributors: Pavlo Kolomiiets, doronhi
