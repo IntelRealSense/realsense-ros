@@ -2,6 +2,14 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix pointcloud message size when no texture is added.
+* migration toggle_sensors feature to ros2
+* Add option for aligning pointcloud to color image.
+* removed option to align to other streams other then color.
+* Contributors: anaelle, doronhi
+
 3.1.5 (2021-03-24)
 ------------------
 * Support Eloquent and Dashing.
