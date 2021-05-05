@@ -10,7 +10,8 @@ namespace realsense2_camera
         public:
             T265RealsenseNode(rclcpp::Node& node,
                           rs2::device dev, std::shared_ptr<Parameters> parameters);
-            void publishTopics();
+            virtual bool toggleSensors(bool enabled, std::string& msg) override;
+            virtual void publishTopics() override;
 
         protected:
             void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile) override;

@@ -183,6 +183,9 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
   - **NOTE** To enable the Infrared stream, you should enable `enable_infra:=true` NOT `enable_infra1:=true` nor `enable_infra2:=true`
   - **NOTE** This feature is only supported by Realsense sensors with RGB streams available from the `infra` cameras, which can be checked by observing the output of `rs-enumerate-devices`
 
+### Available services:
+- enable : Start/Stop all streaming sensors. Usage example: `ros2 service call /camera/enable std_srvs/srv/SetBool "{data: False}"`
+
 ## Using T265 ##
 
 ### Start the camera node
