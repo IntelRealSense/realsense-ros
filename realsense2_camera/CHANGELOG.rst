@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.0 (2021-05-05)
+------------------
 * Fix pointcloud message size when no texture is added.
 * Added filling correct Tx, Ty values in projection matrix of right camera.
 * Fixed frame_id of right sensor to match left sensor in a stereo pair.pair
