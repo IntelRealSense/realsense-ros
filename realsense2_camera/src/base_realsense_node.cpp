@@ -226,6 +226,8 @@ void BaseRealSenseNode::setupErrorCallback()
             if (n.get_severity() >= RS2_LOG_SEVERITY_ERROR)
             {
                 ROS_WARN_STREAM("Hardware Notification:" << n.get_description() << "," << n.get_timestamp() << "," << n.get_severity() << "," << n.get_category());
+                ROS_WARN_STREAM("Performing Hardware Reset.");
+                _dev.hardware_reset();
             }
             if (error_strings.end() != find_if(error_strings.begin(), error_strings.end(), [&n] (std::string err) 
                                         {return (n.get_description().find(err) != std::string::npos); }))
