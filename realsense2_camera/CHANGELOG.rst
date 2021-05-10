@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.2.1 (2021-05-10)
+------------------
 * Add build dependency **ros_environment**
 * Contributors: doronhi
 
