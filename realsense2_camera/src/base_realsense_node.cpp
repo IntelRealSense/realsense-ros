@@ -791,12 +791,6 @@ const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
         profile.depth = 100;
         return profile;
     }
-    if (str == "IMU_DEFAULT")
-    {
-        rmw_qos_profile_t profile = rmw_qos_profile_default;
-        profile.depth = 5;
-        return profile;
-    }
     if (str == "EXTRINSICS_DEFAULT")
         return rmw_qos_profile_latched;
     if (str == "PARAMETER_EVENTS")
@@ -958,7 +952,7 @@ void BaseRealSenseNode::getParameters()
         setNgetNodeParameter(_optical_frame_id[GYRO], "imu_optical_frame_id", DEFAULT_IMU_OPTICAL_FRAME_ID);
         if (_enable[GYRO] && _enable[ACCEL])
         {
-          setNgetNodeParameter(_imu_qos, "imu_qos", IMU_QOS);
+          setNgetNodeParameter(_imu_qos, "imu_qos", HID_QOS);
         }
     }
 
