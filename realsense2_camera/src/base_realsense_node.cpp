@@ -783,12 +783,8 @@ const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
 #endif
     if (str == "SYSTEM_DEFAULT")
         return rmw_qos_profile_system_default;
-    if (str == "POINTCLOUD_DEFAULT")
-    {
-        rmw_qos_profile_t profile = rmw_qos_profile_default;
-        profile.depth = 1;
-        return profile;
-    }
+    if (str == "DEFAULT")
+        return rmw_qos_profile_default;
     if (str == "HID_DEFAULT")
     {
         rmw_qos_profile_t profile = rmw_qos_profile_default;
@@ -801,12 +797,6 @@ const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
         profile.depth = 5;
         return profile;
     }
-    if (str == "INFO_DEFAULT")
-    {
-        rmw_qos_profile_t profile = rmw_qos_profile_default;
-        profile.depth = 1;
-        return profile;
-    }
     if (str == "EXTRINSICS_DEFAULT")
         return rmw_qos_profile_latched;
     if (str == "PARAMETER_EVENTS")
@@ -815,8 +805,6 @@ const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
         return rmw_qos_profile_services_default;
     if (str == "PARAMETERS")
         return rmw_qos_profile_parameters;
-    if (str == "DEFAULT")
-        return rmw_qos_profile_default;
     if (str == "SENSOR_DATA")
         return rmw_qos_profile_sensor_data;
     throw std::runtime_error("Unknown QoS string " + str);
@@ -895,7 +883,7 @@ void BaseRealSenseNode::getParameters()
         param_name = _stream_name[stream.first] + "_qos";
         setNgetNodeParameter(_qos[stream], param_name, IMAGE_QOS);
         param_name = _stream_name[stream.first] + "_info_qos";
-        setNgetNodeParameter(_info_qos[stream], param_name, INFO_QOS);
+        setNgetNodeParameter(_info_qos[stream], param_name, DEFAULT_QOS);
         param_name = "enable_" + STREAM_NAME(stream);
         setNgetNodeParameter(_enable[stream], param_name, true);
     }
@@ -903,7 +891,7 @@ void BaseRealSenseNode::getParameters()
     if (_enable[DEPTH]) {
       if(_pointcloud)
       {
-        setNgetNodeParameter(_pointcloud_qos, "pointcloud_qos", POINTCLOUD_QOS);
+        setNgetNodeParameter(_pointcloud_qos, "pointcloud_qos", DEFAULT_QOS);
       }
       if (_enable[POSE])
       {
@@ -938,7 +926,7 @@ void BaseRealSenseNode::getParameters()
         param_name = _stream_name[stream.first] + "_qos";
         setNgetNodeParameter(_qos[stream], param_name, HID_QOS);
         param_name = _stream_name[stream.first] + "_info_qos";
-        setNgetNodeParameter(_info_qos[stream], param_name, INFO_QOS);
+        setNgetNodeParameter(_info_qos[stream], param_name, DEFAULT_QOS);
         param_name = "enable_" + STREAM_NAME(stream);
         setNgetNodeParameter(_enable[stream], param_name, ENABLE_IMU);
     }

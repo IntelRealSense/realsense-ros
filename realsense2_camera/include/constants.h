@@ -85,10 +85,9 @@ namespace realsense2_camera
     const double IMAGE_FPS            = 30;
 
     const std::string IMAGE_QOS       = "SYSTEM_DEFAULT";
-    const std::string POINTCLOUD_QOS  = "POINTCLOUD_DEFAULT";
+    const std::string DEFAULT_QOS     = "DEFAULT";
     const std::string HID_QOS         = "HID_DEFAULT";
     const std::string IMU_QOS         = "IMU_DEFAULT";
-    const std::string INFO_QOS        = "INFO_DEFAULT";
     const std::string EXTRINSICS_QOS  = "EXTRINSICS_DEFAULT";
 
     const double IMU_FPS      = 0;
