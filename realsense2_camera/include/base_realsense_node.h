@@ -71,19 +71,6 @@ namespace realsense2_camera
 
     const std::vector<stream_index_pair> HID_STREAMS = {GYRO, ACCEL, POSE};
 
-    static const rmw_qos_profile_t rmw_qos_profile_latched =
-    {
-        RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-        1,
-        RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-        RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-        RMW_QOS_DEADLINE_DEFAULT,
-        RMW_QOS_LIFESPAN_DEFAULT,
-        RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-        RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-        false
-    };
-
     class NamedFilter
     {
         public:

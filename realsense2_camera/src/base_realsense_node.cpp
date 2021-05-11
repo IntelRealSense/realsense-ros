@@ -86,6 +86,19 @@ size_t SyncedImuPublisher::getNumSubscribers()
     return _publisher->get_subscription_count();
 }
 
+static const rmw_qos_profile_t rmw_qos_profile_latched =
+{
+    RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+    1,
+    RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+    RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+    RMW_QOS_DEADLINE_DEFAULT,
+    RMW_QOS_LIFESPAN_DEFAULT,
+    RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+    RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+    false
+};
+
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
                                     rs2::device dev, std::shared_ptr<Parameters> parameters) :
     _is_running(true),
