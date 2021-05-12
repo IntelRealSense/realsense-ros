@@ -293,8 +293,8 @@ roslaunch realsense2_description view_d415_model.launch
 Unit-tests are based on bag files saved on S3 server. These can be downloaded using the following commands:
 ```bash
 cd catkin_ws
-wget "http://realsense-hw-public.s3.amazonaws.com/rs-tests/TestData/outdoors.bag" -P "records/"
-wget "http://realsense-hw-public.s3-eu-west-1.amazonaws.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag" -P "records/"
+wget "https://librealsense.intel.com/rs-tests/TestData/outdoors.bag" -P "records/"
+wget "https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag" -P "records/"
 ```
 Then, unit-tests can be run using the following command (use either python or python3):
 ```bash
