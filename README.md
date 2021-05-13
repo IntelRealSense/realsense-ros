@@ -19,7 +19,7 @@ This version supports ROS2 Dashing, Eloquent and Foxy.
     
     ```sudo apt-get install ros-$ROS_DISTRO-realsense2-camera```
 
-    This will install both realsense2_camera and its dependents, including librealsense2 library.
+    This will install both realsense2_camera and its dependents, including librealsense2 library and matching udev-rules.
 
     Notice:
     * The version of librealsense2 is almost always behind the one availeable in RealSense&trade; official repository.
