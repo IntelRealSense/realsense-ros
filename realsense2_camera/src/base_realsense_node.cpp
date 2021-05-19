@@ -2472,9 +2472,11 @@ void BaseRealSenseNode::publish_temperature()
 
 void BaseRealSenseNode::publish_frequency_update()
 {
+    std::chrono::milliseconds timespan(1);
     for (auto &image_publisher : _image_publishers)
     {
         image_publisher.second.second->update();
+        std::this_thread::sleep_for(timespan);
     }
 }
 
