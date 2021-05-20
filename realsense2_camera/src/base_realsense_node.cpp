@@ -86,6 +86,19 @@ size_t SyncedImuPublisher::getNumSubscribers()
     return _publisher->get_subscription_count();
 }
 
+static const rmw_qos_profile_t rmw_qos_profile_latched =
+{
+    RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+    1,
+    RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+    RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+    RMW_QOS_DEADLINE_DEFAULT,
+    RMW_QOS_LIFESPAN_DEFAULT,
+    RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+    RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+    false
+};
+
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
                                     rs2::device dev, std::shared_ptr<Parameters> parameters) :
     _is_running(true),
@@ -770,14 +783,22 @@ const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
 #endif
     if (str == "SYSTEM_DEFAULT")
         return rmw_qos_profile_system_default;
+    if (str == "DEFAULT")
+        return rmw_qos_profile_default;
+    if (str == "HID_DEFAULT")
+    {
+        rmw_qos_profile_t profile = rmw_qos_profile_default;
+        profile.depth = 100;
+        return profile;
+    }
+    if (str == "EXTRINSICS_DEFAULT")
+        return rmw_qos_profile_latched;
     if (str == "PARAMETER_EVENTS")
         return rmw_qos_profile_parameter_events;
     if (str == "SERVICES_DEFAULT")
         return rmw_qos_profile_services_default;
     if (str == "PARAMETERS")
         return rmw_qos_profile_parameters;
-    if (str == "DEFAULT")
-        return rmw_qos_profile_default;
     if (str == "SENSOR_DATA")
         return rmw_qos_profile_sensor_data;
     throw std::runtime_error("Unknown QoS string " + str);
@@ -855,14 +876,51 @@ void BaseRealSenseNode::getParameters()
         setNgetNodeParameter(_fps[stream], param_name, IMAGE_FPS);
         param_name = _stream_name[stream.first] + "_qos";
         setNgetNodeParameter(_qos[stream], param_name, IMAGE_QOS);
+        param_name = _stream_name[stream.first] + "_info_qos";
+        setNgetNodeParameter(_info_qos[stream], param_name, DEFAULT_QOS);
         param_name = "enable_" + STREAM_NAME(stream);
         setNgetNodeParameter(_enable[stream], param_name, true);
+    }
+
+    if (_enable[DEPTH]) {
+      if(_pointcloud)
+      {
+        setNgetNodeParameter(_pointcloud_qos, "pointcloud_qos", DEFAULT_QOS);
+      }
+      if (_enable[POSE])
+      {
+        setNgetNodeParameter(_extrinsics_qos[POSE], "pose_extrinsics_qos", EXTRINSICS_QOS);
+      }
+
+      if (_enable[FISHEYE])
+      {
+        setNgetNodeParameter(_extrinsics_qos[FISHEYE], "fisheye_extrinsics_qos", EXTRINSICS_QOS);
+      }
+
+      if (_enable[COLOR])
+      {
+        setNgetNodeParameter(_extrinsics_qos[COLOR], "color_extrinsics_qos", EXTRINSICS_QOS);
+      }
+
+      if (_enable[INFRA1])
+      {
+        setNgetNodeParameter(_extrinsics_qos[INFRA1], "infra1_extrinsics_qos", EXTRINSICS_QOS);
+      }
+
+      if (_enable[INFRA2])
+      {
+        setNgetNodeParameter(_extrinsics_qos[INFRA2], "infra2_extrinsics_qos", EXTRINSICS_QOS);
+      }
     }
 
     for (auto& stream : HID_STREAMS)
     {
         std::string param_name(_stream_name[stream.first] + "_fps");
         setNgetNodeParameter(_fps[stream], param_name, IMU_FPS);
+        param_name = _stream_name[stream.first] + "_qos";
+        setNgetNodeParameter(_qos[stream], param_name, HID_QOS);
+        param_name = _stream_name[stream.first] + "_info_qos";
+        setNgetNodeParameter(_info_qos[stream], param_name, DEFAULT_QOS);
         param_name = "enable_" + STREAM_NAME(stream);
         setNgetNodeParameter(_enable[stream], param_name, ENABLE_IMU);
     }
@@ -892,6 +950,10 @@ void BaseRealSenseNode::getParameters()
     if (_imu_sync_method > imu_sync_method::NONE)
     {
         setNgetNodeParameter(_optical_frame_id[GYRO], "imu_optical_frame_id", DEFAULT_IMU_OPTICAL_FRAME_ID);
+        if (_enable[GYRO] && _enable[ACCEL])
+        {
+          setNgetNodeParameter(_imu_qos, "imu_qos", HID_QOS);
+        }
     }
 
     {
@@ -1050,20 +1112,6 @@ void BaseRealSenseNode::setupDevice()
     }
 }
 
-static const rmw_qos_profile_t rmw_qos_profile_latched =
-{
-    RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-    1,
-    RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-    RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-    RMW_QOS_DEADLINE_DEFAULT,
-    RMW_QOS_LIFESPAN_DEFAULT,
-    RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-    RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-    false
-};
-static const rclcpp::QoS qos_profile_latched(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_latched));
-
 void BaseRealSenseNode::setupPublishers()
 {
     ROS_INFO("setupPublishers...");
@@ -1081,7 +1129,11 @@ void BaseRealSenseNode::setupPublishers()
             camera_info << stream_name << "/camera_info";
 
             _image_publishers[stream] = {image_transport::create_publisher(&_node, image_raw.str(), qos_string_to_qos(_qos[stream]))};
-            _info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);
+            _info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(
+                  camera_info.str(),
+                  rclcpp::QoS(
+                    rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[stream])),
+                    qos_string_to_qos(_info_qos[stream])));
 
             if (_align_depth && stream == COLOR)
             {
@@ -1092,12 +1144,20 @@ void BaseRealSenseNode::setupPublishers()
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
                 _depth_aligned_image_publishers[stream] = {image_transport::create_publisher(&_node, aligned_image_raw.str(),
                                                            qos_string_to_qos(_qos[stream]))};
-                _depth_aligned_info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(), 1);
+                _depth_aligned_info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(
+                      aligned_camera_info.str(),
+                      rclcpp::QoS(
+                        rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[stream])),
+                        qos_string_to_qos(_info_qos[stream])));
             }
 
             if (stream == DEPTH && _pointcloud)
             {
-                _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 1);
+                _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>(
+                      "depth/color/points",
+                      rclcpp::QoS(
+                        rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_pointcloud_qos)),
+                        qos_string_to_qos(_pointcloud_qos)));
             }
         }
     }
@@ -1106,48 +1166,81 @@ void BaseRealSenseNode::setupPublishers()
     if (_imu_sync_method > imu_sync_method::NONE && _enable[GYRO] && _enable[ACCEL])
     {
         ROS_INFO("Start publisher IMU");
-        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
+        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(
+              _node.create_publisher<sensor_msgs::msg::Imu>(
+                "imu",
+                rclcpp::QoS(
+                  rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_imu_qos)),
+                  qos_string_to_qos(_imu_qos))));
         _synced_imu_publisher->Enable(_hold_back_imu_for_frames);
     }
     else
     {
         if (_enable[GYRO])
         {
-            _imu_publishers[GYRO] = _node.create_publisher<sensor_msgs::msg::Imu>("gyro/sample", 100);
+            _imu_publishers[GYRO] = _node.create_publisher<sensor_msgs::msg::Imu>(
+                  "gyro/sample",
+                  rclcpp::QoS(
+                    rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_qos[GYRO])),
+                    qos_string_to_qos(_qos[GYRO])));
         }
 
         if (_enable[ACCEL])
         {
-            _imu_publishers[ACCEL] = _node.create_publisher<sensor_msgs::msg::Imu>("accel/sample", 100);
+            _imu_publishers[ACCEL] = _node.create_publisher<sensor_msgs::msg::Imu>(
+                  "accel/sample",
+                  rclcpp::QoS(
+                    rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_qos[ACCEL])),
+                    qos_string_to_qos(_qos[ACCEL])));
         }
     }
     if (_enable[POSE])
     {
-        _odom_publisher = _node.create_publisher<nav_msgs::msg::Odometry>("odom/sample", 100);
+        _odom_publisher = _node.create_publisher<nav_msgs::msg::Odometry>(
+              "odom/sample",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_qos[POSE])),
+                qos_string_to_qos(_qos[POSE])));
     }
 
     if (_enable[FISHEYE] &&
         _enable[DEPTH])
     {
-        _depth_to_other_extrinsics_publishers[FISHEYE] = _node.create_publisher<Extrinsics>("extrinsics/depth_to_fisheye", qos_profile_latched);
+        _depth_to_other_extrinsics_publishers[FISHEYE] = _node.create_publisher<Extrinsics>(
+              "extrinsics/depth_to_fisheye",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_extrinsics_qos[FISHEYE])),
+                qos_string_to_qos(_extrinsics_qos[FISHEYE])));
     }
 
     if (_enable[COLOR] &&
         _enable[DEPTH])
     {
-        _depth_to_other_extrinsics_publishers[COLOR] = _node.create_publisher<Extrinsics>("extrinsics/depth_to_color", qos_profile_latched);
+        _depth_to_other_extrinsics_publishers[COLOR] = _node.create_publisher<Extrinsics>(
+              "extrinsics/depth_to_color",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_extrinsics_qos[COLOR])),
+                qos_string_to_qos(_extrinsics_qos[COLOR])));
     }
 
     if (_enable[INFRA1] &&
         _enable[DEPTH])
     {
-        _depth_to_other_extrinsics_publishers[INFRA1] = _node.create_publisher<Extrinsics>("extrinsics/depth_to_infra1", qos_profile_latched);
+        _depth_to_other_extrinsics_publishers[INFRA1] = _node.create_publisher<Extrinsics>(
+              "extrinsics/depth_to_infra1",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_extrinsics_qos[INFRA1])),
+                qos_string_to_qos(_extrinsics_qos[INFRA1])));
     }
 
     if (_enable[INFRA2] &&
         _enable[DEPTH])
     {
-        _depth_to_other_extrinsics_publishers[INFRA2] = _node.create_publisher<Extrinsics>("extrinsics/depth_to_infra2", qos_profile_latched);
+        _depth_to_other_extrinsics_publishers[INFRA2] = _node.create_publisher<Extrinsics>(
+              "extrinsics/depth_to_infra2",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_extrinsics_qos[INFRA2])),
+                qos_string_to_qos(_extrinsics_qos[INFRA2])));
     }
 }
 
@@ -2218,14 +2311,22 @@ void BaseRealSenseNode::publishIntrinsics()
 {
     if (_enable[GYRO])
     {
-        _imu_info_publisher[GYRO] = _node.create_publisher<IMUInfo>("gyro/imu_info", 1);
+        _imu_info_publisher[GYRO] = _node.create_publisher<IMUInfo>(
+              "gyro/imu_info",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[GYRO])),
+                qos_string_to_qos(_info_qos[GYRO])));
         IMUInfo info_msg = getImuInfo(GYRO);
         _imu_info_publisher[GYRO]->publish(info_msg);
     }
 
     if (_enable[ACCEL])
     {
-        _imu_info_publisher[ACCEL] = _node.create_publisher<IMUInfo>("accel/imu_info", 1);
+        _imu_info_publisher[ACCEL] = _node.create_publisher<IMUInfo>(
+              "accel/imu_info",
+              rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[GYRO])),
+                qos_string_to_qos(_info_qos[GYRO])));
         IMUInfo info_msg = getImuInfo(ACCEL);
         _imu_info_publisher[ACCEL]->publish(info_msg);
     }
