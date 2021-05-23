@@ -7,7 +7,7 @@ LibRealSense supported version: v2.45.0 (see [realsense2_camera release notes](h
 This version supports ROS2 Dashing, Eloquent and Foxy.
 
    ### Step 1: Install the ROS2 distribution
-   - #### Install [ROS2 Dashing](https://index.ros.org/doc/ros2/Installation/dashing/Linux-Install-Debians/), on Ubuntu 18.04 or [ROS2 Foxy](https://index.ros.org/doc/ros2/Installation/foxy/Linux-Install-Debians/), on Ubuntu 20.04
+   - #### Install [ROS2 Dashing](https://docs.ros.org/en/dashing/Installation/Ubuntu-Install-Debians.html/), on Ubuntu 18.04 or [ROS2 Foxy](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html/), on Ubuntu 20.04
 
 ### There are 2 sources to install realsense2_camera from:
 
