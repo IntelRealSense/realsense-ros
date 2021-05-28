@@ -107,11 +107,15 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _logger(rclcpp::get_logger("RealSenseCameraNode")),
     _dev(dev),
     _json_file_path(""),
-    _static_tf_broadcaster(node),
     _dynamic_tf_broadcaster(node),
     _is_initialized_time_base(false),
     _parameters(parameters)
 {
+    setNgetNodeParameter(_publish_tf, "publish_tf", PUBLISH_TF);
+    if (_publish_tf) {
+      _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node);
+    }
+
     // Types for depth stream
     _format[RS2_STREAM_DEPTH] = RS2_FORMAT_Z16;    
     _image_format[RS2_STREAM_DEPTH] = CV_16UC1;    // CVBridge type
@@ -858,7 +862,6 @@ void BaseRealSenseNode::getParameters()
     setNgetNodeParameter(_filters_str, "filters", DEFAULT_FILTERS);
     _pointcloud |= (_filters_str.find("pointcloud") != std::string::npos);
 
-    setNgetNodeParameter(_publish_tf, "publish_tf", PUBLISH_TF);
     setNgetNodeParameter(_tf_publish_rate, "tf_publish_rate", TF_PUBLISH_RATE);
     setNgetNodeParameter(_sync_frames, "enable_sync", SYNC_FRAMES);
     if (_pointcloud || _align_depth || _filters_str.size() > 0)
@@ -2245,7 +2248,7 @@ void BaseRealSenseNode::publishStaticTransforms()
                 publishDynamicTransforms();
             });
         else
-            _static_tf_broadcaster.sendTransform(_static_tf_msgs);
+            _static_tf_broadcaster->sendTransform(_static_tf_msgs);
     }
 
     // Publish Extrinsics Topics:

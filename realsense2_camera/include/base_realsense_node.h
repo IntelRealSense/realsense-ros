@@ -275,7 +275,7 @@ namespace realsense2_camera
         std::map<rs2_stream, std::string> _stream_name;
         bool _publish_tf;
         double _tf_publish_rate;
-        tf2_ros::StaticTransformBroadcaster _static_tf_broadcaster;
+        std::shared_ptr<tf2_ros::StaticTransformBroadcaster> _static_tf_broadcaster;
         tf2_ros::TransformBroadcaster _dynamic_tf_broadcaster;
         std::vector<geometry_msgs::msg::TransformStamped> _static_tf_msgs;
         std::shared_ptr<std::thread> _tf_t, _update_functions_t;
