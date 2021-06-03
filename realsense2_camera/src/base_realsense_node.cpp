@@ -183,22 +183,15 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
 void BaseRealSenseNode::setupFilters()
 {
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::decimation_filter>(), _parameters, _logger));
-    _filters.back()->setParameters();
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::disparity_transform>(), _parameters, _logger));
-    _filters.back()->setParameters();
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::spatial_filter>(), _parameters, _logger));
-    _filters.back()->setParameters();
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::temporal_filter>(), _parameters, _logger));
-    _filters.back()->setParameters();
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::hole_filling_filter>(), _parameters, _logger));
-    _filters.back()->setParameters();
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::disparity_transform>(false), _parameters, _logger));
     _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::colorizer>(), _parameters, _logger); 
-    _colorizer_filter->setParameters();
     _filters.push_back(_colorizer_filter);
     _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::pointcloud>(), _node, _parameters, _logger);
-    _pc_filter->setParameters();
-    // _filters.push_back(_pc_filter);
+    _filters.push_back(_pc_filter);
 }
 
 cv::Mat& BaseRealSenseNode::fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image)
@@ -584,7 +577,6 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                 frameset = filter_it->Process(frameset);
 
             }
-            frameset = _pc_filter->Process(frameset);
 
             ROS_DEBUG("List of frameset after applying filters: size: %d", static_cast<int>(frameset.size()));
             for (auto it = frameset.begin(); it != frameset.end(); ++it)
