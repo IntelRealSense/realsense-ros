@@ -81,9 +81,9 @@ namespace realsense2_camera
     const bool PUBLISH_TF     = true;
     const double TF_PUBLISH_RATE = 0; // Static transform
 
-    const int IMAGE_WIDTH          = 640;
-    const int IMAGE_HEIGHT         = 480;
-    const int IMAGE_FPS         = 30;
+    const int IMAGE_WIDTH          = -1;
+    const int IMAGE_HEIGHT         = -1;
+    const int IMAGE_FPS         = -1;
     const std::string IMAGE_QOS    = "SYSTEM_DEFAULT";
 
     const double IMU_FPS      = 0;

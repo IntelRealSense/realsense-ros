@@ -259,7 +259,7 @@ void MotionProfilesManager::registerProfileParameters(std::vector<stream_profile
 std::string MotionProfilesManager::wanted_profile_string(stream_index_pair sip)
 {
     std::stringstream str;
-    str << STREAM_NAME(sip) << " with fps: " << _fps[sip];
+    str << STREAM_NAME(sip) << " with fps: " << *(_fps[sip]);
     return str.str();
 }
 
