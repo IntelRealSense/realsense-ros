@@ -7,6 +7,7 @@ T265RealsenseNode::T265RealsenseNode(ros::NodeHandle& nodeHandle,
                                      rs2::device dev,
                                      const std::string& serial_no) : 
                                      BaseRealSenseNode(nodeHandle, privateNodeHandle, dev, serial_no),
+                                     _pose_sensor(dev.first<rs2::pose_sensor>()),
                                      _wo_snr(dev.first<rs2::wheel_odometer>()),
                                      _use_odom_in(false) 
                                      {
@@ -143,4 +144,38 @@ void T265RealsenseNode::calcAndPublishStaticTransform(const stream_index_pair& s
 void T265RealsenseNode::warningDiagnostic(diagnostic_updater::DiagnosticStatusWrapper& status)
 {
   status.summary(diagnostic_msgs::DiagnosticStatus::WARN, _T265_fault);
+}
+
+void T265RealsenseNode::importLocalizationMap(const std::string &localization_file)
+{
+    try {
+      _pose_sensor.import_localization_map(this->bytes_from_raw_file(localization_file));
+      ROS_INFO_STREAM("Localization map loaded from " << localization_file);
+    }
+    catch (std::runtime_error e)
+    {
+      ROS_WARN_STREAM("Error loading map from " << localization_file << ": " << e.what());
+    }
+}
+
+std::vector<uint8_t> T265RealsenseNode::bytesFromRawFile(const std::string &filename)
+{
+    std::ifstream file(filename.c_str(), std::ios::binary);
+    if (!file.good())
+        throw std::runtime_error("Invalid binary file specified. Verify the source path and location permissions");
+
+    // Determine the file length
+    file.seekg(0, std::ios_base::end);
+    std::size_t size = file.tellg();
+    if (!size)
+        throw std::runtime_error("Invalid binary file -zero-size");
+    file.seekg(0, std::ios_base::beg);
+
+    // Create a vector to store the data
+    std::vector<uint8_t> v(size);
+
+    // Load the data
+    file.read((char*)&v[0], size);
+
+    return v;
 }
