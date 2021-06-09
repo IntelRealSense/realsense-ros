@@ -13,6 +13,7 @@ T265RealsenseNode::T265RealsenseNode(ros::NodeHandle& nodeHandle,
                                      {
                                          _monitor_options = {RS2_OPTION_ASIC_TEMPERATURE, RS2_OPTION_MOTION_MODULE_TEMPERATURE};
                                          initializeOdometryInput();
+                                         setupMapReutilization();
                                          handleWarning();
                                      }
 
@@ -41,6 +42,28 @@ void T265RealsenseNode::initializeOdometryInput()
         throw std::runtime_error("Format error in calibration_odometry file" );
     }
     _use_odom_in = true;
+}
+
+void T265RealsenseNode::setupMapReutilization() {
+    // Load map if configured in the launch file
+    std::string localization_map_filepath;
+    _pnh.param("localization_map_filepath", localization_map_filepath, std::string(""));
+    if (localization_map_filepath.empty())
+    {
+        ROS_INFO("No [map_in] specified. No localization data loaded.");
+    }
+    else
+    {
+        this->importLocalizationMap(localization_map_filepath);
+    }
+
+    // Setup services to load/save maps at runtime
+    std::string service_load_map;
+    std::string service_save_map;
+    _pnh.param("service_load_map", service_load_map, DEFAULT_SERVICE_LOAD_MAP);
+    _pnh.param("service_save_map", service_save_map, DEFAULT_SERVICE_SAVE_MAP);
+    _load_map_srv = _pnh.advertiseService(service_load_map, &T265RealsenseNode::LoadRelocalizationMapSrv, this);
+    _save_map_srv = _pnh.advertiseService(service_save_map, &T265RealsenseNode::SaveRelocalizationMapSrv, this);
 }
 
 void T265RealsenseNode::toggleSensors(bool enabled)
@@ -146,16 +169,34 @@ void T265RealsenseNode::warningDiagnostic(diagnostic_updater::DiagnosticStatusWr
   status.summary(diagnostic_msgs::DiagnosticStatus::WARN, _T265_fault);
 }
 
-void T265RealsenseNode::importLocalizationMap(const std::string &localization_file)
+bool T265RealsenseNode::importLocalizationMap(const std::string &localization_file)
 {
-    try {
-      _pose_sensor.import_localization_map(this->bytes_from_raw_file(localization_file));
+    try
+    {
+      _pose_sensor.import_localization_map(this->bytesFromRawFile(localization_file));
       ROS_INFO_STREAM("Localization map loaded from " << localization_file);
     }
-    catch (std::runtime_error e)
+    catch (std::runtime_error& e)
     {
       ROS_WARN_STREAM("Error loading map from " << localization_file << ": " << e.what());
+      return false;
     }
+    return true;
+}
+
+bool T265RealsenseNode::exportLocalizationMap(const std::string &localization_file)
+{
+    try
+    {
+        this->rawFileFromBytes(localization_file, _pose_sensor.export_localization_map());
+        ROS_INFO_STREAM("Saved map to " << localization_file);
+    }
+    catch (std::runtime_error& e)
+    {
+        ROS_WARN_STREAM("Error loading map from " << localization_file << ": " << e.what());
+        return false;
+    }
+    return true;
 }
 
 std::vector<uint8_t> T265RealsenseNode::bytesFromRawFile(const std::string &filename)
@@ -178,4 +219,24 @@ std::vector<uint8_t> T265RealsenseNode::bytesFromRawFile(const std::string &file
     file.read((char*)&v[0], size);
 
     return v;
+}
+
+void T265RealsenseNode::rawFileFromBytes(const std::string &filename, const std::vector<uint8_t> &bytes)
+{
+    std::ofstream file(filename, std::ios::binary | std::ios::trunc);
+    if (!file.good())
+        throw std::runtime_error("Invalid binary file specified. Verify the target path and location permissions");
+    file.write((char*)bytes.data(), bytes.size());
+}
+
+bool T265RealsenseNode::LoadRelocalizationMapSrv(realsense2_camera::MapPathString::Request &req,
+                                                 realsense2_camera::MapPathString::Response &res) {
+    res.success = this->importLocalizationMap(req.filepath);
+    return true;
+}
+
+bool T265RealsenseNode::SaveRelocalizationMapSrv(realsense2_camera::MapPathString::Request &req,
+                                                 realsense2_camera::MapPathString::Response &res) {
+    res.success = this->exportLocalizationMap(req.filepath);
+    return true;
 }

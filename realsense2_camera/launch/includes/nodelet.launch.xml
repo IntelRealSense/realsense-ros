@@ -86,13 +86,18 @@
   <arg name="aligned_depth_to_fisheye1_frame_id" default="$(arg tf_prefix)_aligned_depth_to_fisheye1_frame"/>
   <arg name="aligned_depth_to_fisheye2_frame_id" default="$(arg tf_prefix)_aligned_depth_to_fisheye2_frame"/>
 
-  <arg name="publish_tf"               default="true"/>
-  <arg name="tf_publish_rate"          default="0"/> <!-- 0 - static transform -->
+  <arg name="publish_tf"                default="true"/>
+  <arg name="tf_publish_rate"           default="0"/> <!-- 0 - static transform -->
 
-  <arg name="odom_frame_id"            default="$(arg tf_prefix)_odom_frame"/>
-  <arg name="topic_odom_in"            default="$(arg tf_prefix)/odom_in"/>
-  <arg name="calib_odom_file"          default=""/>
-  <arg name="publish_odom_tf"          default="true"/>
+  <arg name="odom_frame_id"             default="$(arg tf_prefix)_odom_frame"/>
+  <arg name="topic_odom_in"             default="$(arg tf_prefix)/odom_in"/>
+  <arg name="calib_odom_file"           default=""/>
+  <arg name="publish_odom_tf"           default="true"/>
+
+  <!-- Parameters for loading/saving maps on the T265 -->
+  <arg name="localization_map_filepath" default=""/> <!-- If non-empty, we try to load a T265 map at node startup -->
+  <arg name="service_load_map"          default="$(arg tf_prefix)/load_map_from_path"/>
+  <arg name="service_save_map"          default="$(arg tf_prefix)/save_map_to_path"/>
 
   <arg name="stereo_module/exposure/1" default="7500"/>
   <arg name="stereo_module/gain/1"     default="16"/>
@@ -196,12 +201,16 @@
 
     <param name="odom_frame_id"            type="str"  value="$(arg odom_frame_id)"/>
     <param name="topic_odom_in"            type="str"  value="$(arg topic_odom_in)"/>
-    <param name="calib_odom_file"          type="str"    value="$(arg calib_odom_file)"/>
+    <param name="calib_odom_file"          type="str"  value="$(arg calib_odom_file)"/>
     <param name="publish_odom_tf"          type="bool" value="$(arg publish_odom_tf)"/>
     <param name="stereo_module/exposure/1" type="int"  value="$(arg stereo_module/exposure/1)"/>
     <param name="stereo_module/gain/1"     type="int"  value="$(arg stereo_module/gain/1)"/>
     <param name="stereo_module/exposure/2" type="int"  value="$(arg stereo_module/exposure/2)"/>
     <param name="stereo_module/gain/2"     type="int"  value="$(arg stereo_module/gain/2)"/>
+
+    <param name="localization_map_filepath" type="str"  value="$(arg localization_map_filepath)"/>
+    <param name="service_load_map"          type="str"  value="$(arg service_load_map)"/>
+    <param name="service_save_map"          type="str"  value="$(arg service_save_map)"/>
 
     <param name="filters"                  type="str"    value="$(arg filters)"/>
     <param name="clip_distance"            type="double" value="$(arg clip_distance)"/>
