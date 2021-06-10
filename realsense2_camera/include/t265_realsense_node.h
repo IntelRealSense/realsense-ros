@@ -29,6 +29,10 @@ namespace realsense2_camera
             bool exportLocalizationMap(const std::string &localization_file);
             std::vector<uint8_t> bytesFromRawFile(const std::string &filename);
             void rawFileFromBytes(const std::string &filename, const std::vector<uint8_t> &bytes);
+            void initMapFrame(bool relocalizing);
+            ros::Timer _timer;
+            bool relocalization_pose_initialized;
+            tf2_ros::TransformBroadcaster _dynamic_tf_broadcaster;
             diagnostic_updater::Updater callback_updater;
 
             // Service callbacks

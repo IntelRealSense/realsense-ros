@@ -95,7 +95,7 @@
   <arg name="publish_odom_tf"           default="true"/>
 
   <!-- Parameters for loading/saving maps on the T265 -->
-  <arg name="localization_map_filepath" default=""/> <!-- If non-empty, we try to load a T265 map at node startup -->
+  <arg name="localization_map_filepath" default="/home/marcelino/Downloads/map.bin"/> <!-- If non-empty, we try to load a T265 map at node startup -->
   <arg name="service_load_map"          default="$(arg tf_prefix)/load_map_from_path"/>
   <arg name="service_save_map"          default="$(arg tf_prefix)/save_map_to_path"/>
 
