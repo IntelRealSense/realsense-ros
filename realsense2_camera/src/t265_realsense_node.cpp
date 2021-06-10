@@ -193,7 +193,7 @@ bool T265RealsenseNode::exportLocalizationMap(const std::string &localization_fi
     }
     catch (std::runtime_error& e)
     {
-        ROS_WARN_STREAM("Error loading map from " << localization_file << ": " << e.what());
+        ROS_WARN_STREAM("Error saving map to " << localization_file << ": " << e.what());
         return false;
     }
     return true;
