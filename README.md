@@ -186,6 +186,62 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 ### Available services:
 - enable : Start/Stop all streaming sensors. Usage example: `ros2 service call /camera/enable std_srvs/srv/SetBool "{data: False}"`
 
+### Point Cloud
+Here is an example of how to start the camera node and make it publish the point cloud using the pointcloud option.
+```bash
+ros2 launch realsense2_camera rs_launch.py filters:=pointcloud
+```
+Then open rviz2 to watch the pointcloud:
+<p align="center"><img src="https://user-images.githubusercontent.com/40540281/122672460-42dd3f80-d1d4-11eb-8767-4e61a64ced5b.gif" /></p>
+
+
+### Aligned Depth Frames
+Here is an example of how to start the camera node and make it publish the aligned depth stream to color stream.
+```bash
+ros2 launch realsense2_camera rs_launch.py align_depth:=true
+```
+Looking at the published topics:
+
+```bash
+ros2 topic list
+```
+
+#### **/camera/aligned_depth_to_color/camera_info**
+#### **/camera/aligned_depth_to_color/image_raw**
+#### /camera/color/camera_info
+#### /camera/color/image_raw
+#### /camera/depth/camera_info
+#### /camera/depth/image_rect_raw
+#### /camera/extrinsics/depth_to_color
+#### /parameter_events
+#### /rosout
+#### /tf
+#### /tf_static
+
+
+### View and Modify Camera Controls Params in runtime:
+The following command allow to change camera control values.
+```bash
+ros2 run rqt_reconfigure rqt_reconfigure
+```
+<p align="center"><img src="https://user-images.githubusercontent.com/40540281/122672659-6f458b80-d1d5-11eb-9262-545d2073e1da.png" /></p>
+
+### Work with multiple cameras
+Every realsense2_camera node is an independent process. One can 2 nodes using a dedicated launch file:
+```bash
+ros2 launch realsense2_camera rs_multi_camera_launch.py camera_name1:=my_D435 device_type1:=d435 camera_name2:=my_d415 device_type2:=d415
+```
+or launch each from a separate terminal:
+```bash
+ros2 launch realsense2_camera rs_launch.py camera_name:=my_d415 serial_no:=_036522070660
+```
+and 
+```bash
+ros2 launch realsense2_camera rs_launch.py camera_name:=my_d435 serial_no:=_725112060349
+```
+Notice the importance of defining a different camera_name for each node as this is the header of the topics.
+
+
 ## Using T265 ##
 
 ### Start the camera node
@@ -200,7 +256,7 @@ ros2 launch realsense2_camera rs_d400_and_t265_launch.py enable_fisheye12:=true 
 ```
 - note: the parameters are called `enable_fisheye12` and `enable_fisheye22`. The node knows them as `enable_fisheye1` and `enable_fisheye2` but launch file runs 2 nodes and these parameters refer to the second one.
 
-## Still on the pipelie:
+## Still on the pipeline:
 * Support ROS2 life cycle.
 * Enable and disable sensors and filters.
 
