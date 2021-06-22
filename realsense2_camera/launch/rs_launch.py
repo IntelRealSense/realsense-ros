@@ -95,8 +95,8 @@ def generate_launch_description():
     realsense_parameters = [set_configurable_parameters(configurable_parameters)]
     if (LaunchConfiguration('config_file') != ''):
         realsense_parameters=[set_configurable_parameters(configurable_parameters)
-								             , PythonExpression(["'", config, "/' + ", LaunchConfiguration("config_file")])
-								             ]
+                             , PythonExpression(["'", config, "/' + ", LaunchConfiguration("config_file")])
+                             ]
 
     if (os.getenv('ROS_DISTRO') == "dashing") or (os.getenv('ROS_DISTRO') == "eloquent"):
         return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
