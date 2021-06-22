@@ -1,4 +1,4 @@
-camera1:
+camera:
     camera:
       ros__parameters:
         device_type: ''
