@@ -192,9 +192,9 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 ### Point Cloud
 Here is an example of how to start the camera node and make it publish the point cloud using the pointcloud option.
 ```bash
-ros2 launch realsense2_camera rs_launch.py filters:=pointcloud
+ros2 launch realsense2_camera demo_pointcloud_launch.py
 ```
-Then open rviz2 to watch the pointcloud:
+An rviz2 node opens to watch the pointcloud:
 <p align="center"><img src="https://user-images.githubusercontent.com/40540281/122672460-42dd3f80-d1d4-11eb-8767-4e61a64ced5b.gif" /></p>
 
 

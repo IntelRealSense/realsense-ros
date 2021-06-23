@@ -29,7 +29,7 @@ def generate_launch_description():
         print ('ros2 launch realsense2_description view_model.launch.py model:=<model>')
         print ('Available argumants for <model> are as follows:')
         print ('\n'.join(available_urdf_files))
-        return []
+        exit(-1)
 
     rviz_config_dir = os.path.join(get_package_share_directory('realsense2_description'), 'rviz', 'urdf.rviz')
     xacro_path = os.path.join(get_package_share_directory('realsense2_description'), 'urdf', params['model'])
