@@ -263,6 +263,11 @@ ros2 launch realsense2_camera rs_d400_and_t265_launch.py enable_fisheye12:=true 
 ```
 - note: the parameters are called `enable_fisheye12` and `enable_fisheye22`. The node knows them as `enable_fisheye1` and `enable_fisheye2` but launch file runs 2 nodes and these parameters refer to the second one.
 
+To visualize the pose output and frames in RViz, start:
+```bash
+ros2 launch realsense2_camera demo_t265_launch.py
+```
+
 ## Still on the pipeline:
 * Support ROS2 life cycle.
 * Enable and disable sensors and filters.

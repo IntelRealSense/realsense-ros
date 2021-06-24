@@ -41,14 +41,6 @@ local_parameters = [{'name': 'enable_pointcloud', 'default': 'true', 'descriptio
 def set_configurable_parameters(local_params):
     return dict([(param['original_name'], LaunchConfiguration(param['name'])) for param in local_params])
 
-def duplicate_params(general_params, posix):
-    local_params = copy.deepcopy(general_params)
-    for param in local_params:
-        param['original_name'] = param['name']
-        param['name'] += posix
-    return local_params
-    
-
 def generate_launch_description():
     rviz_config_dir = os.path.join(get_package_share_directory('realsense2_camera'), 'rviz', 'pointcloud.rviz')
     rviz_node = Node(

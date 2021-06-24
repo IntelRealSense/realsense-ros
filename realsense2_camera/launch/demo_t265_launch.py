@@ -15,38 +15,41 @@
 
 # DESCRIPTION #
 # ----------- #
-# Use this launch file to launch a t265 device.
+# Use this launch file to launch realsense2_camera node with t265 device and rviz2 to view the its movement.
 # command line example:
-# ros2 launch realsense2_camera rs_t265_launch.py
-
-# The Parameters available for definition in the command line are described in rs_launch.configurable_parameters
-# For example: to disable fisheye sensors:
-# ros2 launch realsense2_camera rs_t265_launch.py enable_fisheye1:=false enable_fisheye2:=false
-
+# ros2 launch realsense2_camera demo_t265_launch.py 
 
 """Launch realsense2_camera node."""
 import copy
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
+from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration, ThisLaunchFileDir
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from ament_index_python.packages import get_package_share_directory
+import os
 import sys
 import pathlib
 sys.path.append(str(pathlib.Path(__file__).parent.absolute()))
 import rs_launch
 
-local_parameters = [{'name': 'device_type', 'default': 't265', 'description': 'choose device by type'},
-                    {'name': 'enable_pose', 'default': 'true', 'description': 'enable pose stream'},
-                    {'name': 'enable_fisheye1',              'default': 'true', 'description': 'enable fisheye1 stream'},
-                    {'name': 'enable_fisheye2',              'default': 'true', 'description': 'enable fisheye2 stream'},
-                   ]
 
 def generate_launch_description():
+    rviz_config_dir = os.path.join(get_package_share_directory('realsense2_camera'), 'rviz', 't265.rviz')
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output = 'screen',
+        arguments=['-d', rviz_config_dir],
+        parameters=[{'use_sim_time': False}]
+        )
+
+
     return LaunchDescription(
-        rs_launch.declare_configurable_parameters(local_parameters) + 
         [
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/rs_launch.py']),
-            launch_arguments=rs_launch.set_configurable_parameters(local_parameters).items(),
-        ),
-    ])
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/rs_t265_launch.py']),
+                ),
+            rviz_node
+        ])
