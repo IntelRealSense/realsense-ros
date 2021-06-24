@@ -268,6 +268,16 @@ To visualize the pose output and frames in RViz, start:
 ros2 launch realsense2_camera demo_t265_launch.py
 ```
 
+### realsense2_description package:
+For viewing included models, a separate package, realsense2_description, is included. For example:
+```bash
+ros2 launch realsense2_description view_model.launch.py model:=test_d415_camera.urdf.xacro
+```
+or, to list available models:
+```
+ros2 launch realsense2_description view_model.launch.py
+```
+
 ## Still on the pipeline:
 * Support ROS2 life cycle.
 * Enable and disable sensors and filters.
