@@ -33,6 +33,10 @@ import pathlib
 sys.path.append(str(pathlib.Path(__file__).parent.absolute()))
 import rs_launch
 
+local_parameters = [{'name': 'camera_name1', 'default': 'camera1', 'description': 'camera unique name'},
+                    {'name': 'camera_name2', 'default': 'camera2', 'description': 'camera unique name'},
+                   ]
+
 def set_configurable_parameters(local_params):
     return dict([(param['original_name'], LaunchConfiguration(param['name'])) for param in local_params])
 
@@ -48,6 +52,7 @@ def generate_launch_description():
     params1 = duplicate_params(rs_launch.configurable_parameters, '1')
     params2 = duplicate_params(rs_launch.configurable_parameters, '2')
     return LaunchDescription(
+        rs_launch.declare_configurable_parameters(local_parameters) +
         rs_launch.declare_configurable_parameters(params1) + 
         rs_launch.declare_configurable_parameters(params2) + 
         [
