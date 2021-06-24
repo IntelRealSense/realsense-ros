@@ -15,10 +15,9 @@
 
 # DESCRIPTION #
 # ----------- #
-# Use this launch file to launch realsense2_camera node and rviz2 to view the published pointcloud.
-# The Parameters available for definition in the command line for each camera are described in rs_launch.configurable_parameters
+# Use this launch file to launch realsense2_camera node with t265 device and rviz2 to view the its movement.
 # command line example:
-# ros2 launch realsense2_camera demo_pointcloud_launch.py 
+# ros2 launch realsense2_camera demo_t265_launch.py 
 
 """Launch realsense2_camera node."""
 import copy
@@ -35,14 +34,8 @@ sys.path.append(str(pathlib.Path(__file__).parent.absolute()))
 import rs_launch
 
 
-local_parameters = [{'name': 'enable_pointcloud', 'default': 'true', 'description': 'enable pointcloud'},
-                   ]
-
-def set_configurable_parameters(local_params):
-    return dict([(param['original_name'], LaunchConfiguration(param['name'])) for param in local_params])
-
 def generate_launch_description():
-    rviz_config_dir = os.path.join(get_package_share_directory('realsense2_camera'), 'rviz', 'pointcloud.rviz')
+    rviz_config_dir = os.path.join(get_package_share_directory('realsense2_camera'), 'rviz', 't265.rviz')
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -54,11 +47,9 @@ def generate_launch_description():
 
 
     return LaunchDescription(
-        rs_launch.declare_configurable_parameters(local_parameters) + 
         [
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/rs_launch.py']),
-                launch_arguments=rs_launch.set_configurable_parameters(local_parameters).items(),
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/rs_t265_launch.py']),
                 ),
             rviz_node
         ])
