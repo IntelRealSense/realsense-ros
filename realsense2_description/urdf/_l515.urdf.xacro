@@ -32,7 +32,7 @@ aluminum peripherial evaluation case.
     <!-- convenience precomputation to avoid clutter-->
     <xacro:property name="l515_depth_x_offset_from_mount" value="${l515_cam_mount_from_glass_offset-l515_zero_depth_to_glass}"/>
 
-    <!-- The following offset is relative the the physical D435 camera peripherial
+    <!-- The following offset is relative the the physical L515 camera peripherial
   	camera tripod mount -->
     <xacro:property name="l515_cam_depth_px" value="${l515_depth_x_offset_from_mount}"/>
     <xacro:property name="l515_cam_depth_py" value="0.0"/>
@@ -43,6 +43,16 @@ aluminum peripherial evaluation case.
     <xacro:property name="l515_cam_depth_pz" value="${l515_cam_center+l515_cam_center_to_transmitter_pz+l515_cam_transmitter_to_depth_pz}"/>
     <xacro:property name="l515_cam_center_to_depth_pz" value="${l515_cam_center_to_transmitter_pz+l515_cam_transmitter_to_depth_pz}"/>
     <xacro:property name="abs_mount_from_center"   value="0.020"/>
+
+    
+    <!-- IMU position (p) and rotation (r) offsets from the camera color frame -->
+    <!-- These values are approximate and depend on the actual calibrated camera extrinsic values -->
+    <xacro:property name="l515_cam_color_to_imu_px" value="-0.00410137791186571"/>
+    <xacro:property name="l515_cam_color_to_imu_py" value="-0.0129784867167473"/>
+    <xacro:property name="l515_cam_color_to_imu_pz" value="0.00256138201802969"/>
+    <xacro:property name="l515_cam_color_to_imu_rx" value="-0.006161012"/>
+    <xacro:property name="l515_cam_color_to_imu_ry" value="0.020193459"/>
+    <xacro:property name="l515_cam_color_to_imu_rz" value="0.016301375"/>
 
     <!-- camera body, with origin at bottom screw mount -->
     <joint name="${name}_joint" type="fixed">
@@ -150,6 +160,36 @@ aluminum peripherial evaluation case.
         <child link="${name}_color_optical_frame" />
       </joint>
       <link name="${name}_color_optical_frame"/>
+
+      <!-- camera IMU joints and links -->
+      <link name="${name}_gyro_frame" />
+      <link name="${name}_gyro_optical_frame" />
+      <link name="${name}_accel_frame" />
+      <link name="${name}_accel_optical_frame" />
+
+      <joint name="${name}_gyro_joint" type="fixed">
+        <origin xyz = "${l515_cam_color_to_imu_px} ${l515_cam_color_to_imu_py} ${l515_cam_color_to_imu_pz}" rpy = "${l515_cam_color_to_imu_rx} ${l515_cam_color_to_imu_ry} ${l515_cam_color_to_imu_rz}" />
+        <parent link="${name}_color_frame" />
+        <child link="${name}_gyro_frame" />
+      </joint>
+
+      <joint name="${name}_gyro_optical_joint" type="fixed">
+        <origin xyz = "0 0 0" rpy = "${-M_PI/2} 0 ${-M_PI/2}" />
+        <parent link="${name}_gyro_frame" />
+        <child link="${name}_gyro_optical_frame" />
+      </joint>
+      
+      <joint name="${name}_accel_joint" type="fixed">
+        <origin xyz = "${l515_cam_color_to_imu_px} ${l515_cam_color_to_imu_py} ${l515_cam_color_to_imu_pz}" rpy = "${l515_cam_color_to_imu_rx} ${l515_cam_color_to_imu_ry} ${l515_cam_color_to_imu_rz}" />
+        <parent link="${name}_color_frame" />
+        <child link="${name}_accel_frame" />
+      </joint>
+
+      <joint name="${name}_accel_optical_joint" type="fixed">
+        <origin xyz = "0 0 0" rpy = "${-M_PI/2} 0 ${-M_PI/2}" />
+        <parent link="${name}_accel_frame" />
+        <child link="${name}_accel_optical_frame" />
+      </joint>
     </xacro:if>
     <xacro:if value="${add_plug}">
       <xacro:usb_plug parent="${name}_bottom_screw_frame" name="${name}_usb_plug">
