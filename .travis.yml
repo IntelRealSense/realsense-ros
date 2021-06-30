@@ -2,13 +2,17 @@ sudo: required
 matrix:
     include:
         - dist: bionic
+          env: _ros_dist=dashing
         - dist: focal
+          env: _ros_dist=foxy
+        - dist: focal
+          env: _ros_dist=galactic
 
 env:
   # - git clone -v --progress https://github.com/doronhi/realsense.git  # This is Done automatically by TravisCI
 before_install:
-  - if [[ $(lsb_release -sc) == "bionic" ]]; then _python=python; _ros_dist=dashing;
-    elif [[ $(lsb_release -sc) == "focal" ]]; then _python=python3; _ros_dist=foxy; fi
+  - if [[ $(lsb_release -sc) == "bionic" ]]; then _python=python;
+    elif [[ $(lsb_release -sc) == "focal" ]]; then _python=python3; fi
   - echo _python:$_python
   - echo _ros_dist:$_ros_dist
 
