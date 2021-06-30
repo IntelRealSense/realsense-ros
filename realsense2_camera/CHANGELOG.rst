@@ -2,6 +2,20 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Support Galactic and Rolling
+* Fix reading yaml config file
+* No tf broadcaster object if publish_tf is set to false
+* Add udev-rules installation to debian
+* update ros2 launch examples (demo_t265_launch.py, rs_t265_launch.py, demo_pointcloud_launch.py)
+* fix rs_multi_camera_launch.py to include default separate node names.
+* Add support for L535
+* QoS parameters to be applied for all publishers
+* Imu_default QoS changed to hid_default
+* Pointcloud_default and info_default QoS changed to qos_default
+* Contributors: Guillaume Doisy, TSC21, anaelle, doronhi
+
 3.2.1 (2021-05-10)
 ------------------
 * Add build dependency **ros_environment**

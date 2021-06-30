@@ -2,6 +2,13 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added imu frames to _l515.urdf.xacro
+* Add conditional param use_mesh
+* Add demo_pointcloud_launch.py
+* Contributors: Simon Honigmann, doronhi
+
 3.2.1 (2021-05-10)
 ------------------
 
