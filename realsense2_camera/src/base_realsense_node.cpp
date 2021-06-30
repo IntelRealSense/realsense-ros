@@ -1987,7 +1987,12 @@ rclcpp::Time BaseRealSenseNode::frameSystemTimeSec(rs2::frame frame)
     if (frame.get_frame_timestamp_domain() == RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK)
     {
         double elapsed_camera_ns = (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) * 1e6;
-        return rclcpp::Time(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
+#ifdef GALACTIC
+        rclcpp::Duration elapsed_camera(rclcpp::Duration::from_nanoseconds(elapsed_camera_ns));
+#else
+        rclcpp::Duration elapsed_camera(elapsed_camera_ns);
+#endif        
+        return rclcpp::Time(_ros_time_base + elapsed_camera);
     }
     else
     {
