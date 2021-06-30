@@ -92,10 +92,6 @@ def set_configurable_parameters(parameters):
 
 def generate_launch_description():
     log_level = 'info'
-    config = os.path.join(
-        get_package_share_directory('realsense2_camera'),
-        'config'
-        )
     if (os.getenv('ROS_DISTRO') == "dashing") or (os.getenv('ROS_DISTRO') == "eloquent"):
         return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
             # Realsense
@@ -119,7 +115,7 @@ def generate_launch_description():
                 node_executable='realsense2_camera_node',
                 prefix=['stdbuf -o L'],
                 parameters=[set_configurable_parameters(configurable_parameters)
-                            , PythonExpression(["'", config, "/' + ", LaunchConfiguration("config_file")])
+                            , PythonExpression([LaunchConfiguration("config_file")])
                             ],
                 output='screen',
                 arguments=['--ros-args', '--log-level', log_level],
@@ -147,7 +143,7 @@ def generate_launch_description():
                 name=LaunchConfiguration("camera_name"),
                 executable='realsense2_camera_node',
                 parameters=[set_configurable_parameters(configurable_parameters)
-                            , PythonExpression(["'", config, "/' + ", LaunchConfiguration("config_file")])
+                            , PythonExpression([LaunchConfiguration("config_file")])
                             ],
                 output='screen',
                 arguments=['--ros-args', '--log-level', log_level],
