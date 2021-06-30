@@ -15,6 +15,7 @@
 """Launch realsense2_camera node."""
 import os
 from launch import LaunchDescription
+from ament_index_python.packages import get_package_share_directory
 import launch_ros.actions
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PythonExpression
@@ -27,14 +28,14 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'device_type',                  'default': "''", 'description': 'choose device by type'},
                            {'name': 'config_file',                  'default': "''", 'description': 'yaml config file'},
                            {'name': 'enable_pointcloud',            'default': 'false', 'description': 'enable pointcloud'},
-                           {'name': 'unite_imu_method',             'default': "''", 'description': '[copy|linear_interpolation]'},                           
-                           {'name': 'json_file_path',               'default': "''", 'description': 'allows advanced configuration'},                           
-                           {'name': 'output',                       'default': 'screen', 'description': 'pipe node output [screen|log]'},                           
-                           {'name': 'depth_width',                  'default': '-1', 'description': 'depth image width'},                           
-                           {'name': 'depth_height',                 'default': '-1', 'description': 'depth image height'},                           
+                           {'name': 'unite_imu_method',             'default': "''", 'description': '[copy|linear_interpolation]'},
+                           {'name': 'json_file_path',               'default': "''", 'description': 'allows advanced configuration'},
+                           {'name': 'output',                       'default': 'screen', 'description': 'pipe node output [screen|log]'},
+                           {'name': 'depth_width',                  'default': '-1', 'description': 'depth image width'},
+                           {'name': 'depth_height',                 'default': '-1', 'description': 'depth image height'},
                            {'name': 'enable_depth',                 'default': 'true', 'description': 'enable depth stream'},
-                           {'name': 'color_width',                  'default': '-1', 'description': 'color image width'},                           
-                           {'name': 'color_height',                 'default': '-1', 'description': 'color image height'},                           
+                           {'name': 'color_width',                  'default': '-1', 'description': 'color image width'},
+                           {'name': 'color_height',                 'default': '-1', 'description': 'color image height'},
                            {'name': 'enable_color',                 'default': 'true', 'description': 'enable color stream'},
                            {'name': 'infra_width',                  'default': '-1', 'description': 'infra width'},
                            {'name': 'infra_height',                 'default': '-1', 'description': 'infra width'},
@@ -45,34 +46,34 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'fisheye_height',               'default': '-1', 'description': 'fisheye width'},
                            {'name': 'enable_fisheye1',              'default': 'true', 'description': 'enable fisheye1 stream'},
                            {'name': 'enable_fisheye2',              'default': 'true', 'description': 'enable fisheye2 stream'},
-                           {'name': 'confidence_width',             'default': '-1', 'description': 'depth image width'},                           
-                           {'name': 'confidence_height',            'default': '-1', 'description': 'depth image height'},                           
+                           {'name': 'confidence_width',             'default': '-1', 'description': 'depth image width'},
+                           {'name': 'confidence_height',            'default': '-1', 'description': 'depth image height'},
                            {'name': 'enable_confidence',            'default': 'true', 'description': 'enable depth stream'},
-                           {'name': 'fisheye_fps',                  'default': '-1.', 'description': ''},                           
-                           {'name': 'depth_fps',                    'default': '-1.', 'description': ''},                           
-                           {'name': 'confidence_fps',               'default': '-1.', 'description': ''},                           
-                           {'name': 'infra_fps',                    'default': '-1.', 'description': ''},                           
-                           {'name': 'color_fps',                    'default': '-1.', 'description': ''},                           
-                           {'name': 'gyro_fps',                     'default': '-1.', 'description': ''},                           
-                           {'name': 'accel_fps',                    'default': '-1.', 'description': ''},    
-                           {'name': 'color_qos',                    'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},    
-                           {'name': 'confidence_qos',               'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},    
-                           {'name': 'depth_qos',                    'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},    
-                           {'name': 'fisheye_qos',                  'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},    
-                           {'name': 'infra_qos',                    'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},    
-                           {'name': 'enable_gyro',                  'default': 'false', 'description': ''},                           
-                           {'name': 'enable_accel',                 'default': 'false', 'description': ''},                           
-                           {'name': 'pointcloud_texture_stream',    'default': 'RS2_STREAM_COLOR', 'description': 'testure stream for pointcloud'},                           
-                           {'name': 'pointcloud_texture_index',     'default': '0', 'description': 'testure stream index for pointcloud'},                           
-                           {'name': 'enable_sync',                  'default': 'false', 'description': ''},                           
-                           {'name': 'align_depth',                  'default': 'false', 'description': ''},                           
-                           {'name': 'filters',                      'default': "''", 'description': ''},                           
-                           {'name': 'clip_distance',                'default': '-2.', 'description': ''},                           
-                           {'name': 'linear_accel_cov',             'default': '0.01', 'description': ''},                           
-                           {'name': 'initial_reset',                'default': 'false', 'description': ''},                           
-                           {'name': 'allow_no_texture_points',      'default': 'false', 'description': ''},                           
-                           {'name': 'ordered_pc',                   'default': 'false', 'description': ''},                           
-                           {'name': 'calib_odom_file',              'default': "''", 'description': "''"},                           
+                           {'name': 'fisheye_fps',                  'default': '-1.', 'description': ''},
+                           {'name': 'depth_fps',                    'default': '-1.', 'description': ''},
+                           {'name': 'confidence_fps',               'default': '-1.', 'description': ''},
+                           {'name': 'infra_fps',                    'default': '-1.', 'description': ''},
+                           {'name': 'color_fps',                    'default': '-1.', 'description': ''},
+                           {'name': 'gyro_fps',                     'default': '-1.', 'description': ''},
+                           {'name': 'accel_fps',                    'default': '-1.', 'description': ''},
+                           {'name': 'color_qos',                    'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},
+                           {'name': 'confidence_qos',               'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},
+                           {'name': 'depth_qos',                    'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},
+                           {'name': 'fisheye_qos',                  'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},
+                           {'name': 'infra_qos',                    'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},
+                           {'name': 'enable_gyro',                  'default': 'false', 'description': ''},
+                           {'name': 'enable_accel',                 'default': 'false', 'description': ''},
+                           {'name': 'pointcloud_texture_stream',    'default': 'RS2_STREAM_COLOR', 'description': 'testure stream for pointcloud'},
+                           {'name': 'pointcloud_texture_index',     'default': '0', 'description': 'testure stream index for pointcloud'},
+                           {'name': 'enable_sync',                  'default': 'false', 'description': ''},
+                           {'name': 'align_depth',                  'default': 'false', 'description': ''},
+                           {'name': 'filters',                      'default': "''", 'description': ''},
+                           {'name': 'clip_distance',                'default': '-2.', 'description': ''},
+                           {'name': 'linear_accel_cov',             'default': '0.01', 'description': ''},
+                           {'name': 'initial_reset',                'default': 'false', 'description': ''},
+                           {'name': 'allow_no_texture_points',      'default': 'false', 'description': ''},
+                           {'name': 'ordered_pc',                   'default': 'false', 'description': ''},
+                           {'name': 'calib_odom_file',              'default': "''", 'description': "''"},
                            {'name': 'topic_odom_in',                'default': "''", 'description': 'topic for T265 wheel odometry'},
                            {'name': 'tf_publish_rate',              'default': '0.0', 'description': 'Rate of publishing static_tf'},
                            {'name': 'rosbag_filename',              'default': "''", 'description': 'A realsense bagfile to run from as a device'},
@@ -91,30 +92,34 @@ def set_configurable_parameters(parameters):
 
 def generate_launch_description():
     log_level = 'info'
+    config = os.path.join(
+        get_package_share_directory('realsense2_camera'),
+        'config'
+        )
     if (os.getenv('ROS_DISTRO') == "dashing") or (os.getenv('ROS_DISTRO') == "eloquent"):
         return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
             # Realsense
             launch_ros.actions.Node(
                 condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " == ''"])),
-                package='realsense2_camera', 
+                package='realsense2_camera',
                 node_namespace=LaunchConfiguration("camera_name"),
                 node_name=LaunchConfiguration("camera_name"),
                 node_executable='realsense2_camera_node',
                 prefix=['stdbuf -o L'],
-                parameters = [set_configurable_parameters(configurable_parameters)
+                parameters=[set_configurable_parameters(configurable_parameters)
                             ],
                 output='screen',
                 arguments=['--ros-args', '--log-level', log_level],
                 ),
             launch_ros.actions.Node(
                 condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " != ''"])),
-                package='realsense2_camera', 
+                package='realsense2_camera',
                 node_namespace=LaunchConfiguration("camera_name"),
                 node_name=LaunchConfiguration("camera_name"),
                 node_executable='realsense2_camera_node',
                 prefix=['stdbuf -o L'],
-                parameters = [set_configurable_parameters(configurable_parameters)
-                            ,{LaunchConfiguration("config_file")}
+                parameters=[set_configurable_parameters(configurable_parameters)
+                            , PythonExpression(["'", config, "/' + ", LaunchConfiguration("config_file")])
                             ],
                 output='screen',
                 arguments=['--ros-args', '--log-level', log_level],
@@ -125,11 +130,11 @@ def generate_launch_description():
             # Realsense
             launch_ros.actions.Node(
                 condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " == ''"])),
-                package='realsense2_camera', 
+                package='realsense2_camera',
                 namespace=LaunchConfiguration("camera_name"),
                 name=LaunchConfiguration("camera_name"),
                 executable='realsense2_camera_node',
-                parameters = [set_configurable_parameters(configurable_parameters)
+                parameters=[set_configurable_parameters(configurable_parameters)
                             ],
                 output='screen',
                 arguments=['--ros-args', '--log-level', log_level],
@@ -137,12 +142,12 @@ def generate_launch_description():
                 ),
             launch_ros.actions.Node(
                 condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " != ''"])),
-                package='realsense2_camera', 
+                package='realsense2_camera',
                 namespace=LaunchConfiguration("camera_name"),
                 name=LaunchConfiguration("camera_name"),
                 executable='realsense2_camera_node',
-                parameters = [set_configurable_parameters(configurable_parameters)
-                            ,{LaunchConfiguration("config_file")}
+                parameters=[set_configurable_parameters(configurable_parameters)
+                            , PythonExpression(["'", config, "/' + ", LaunchConfiguration("config_file")])
                             ],
                 output='screen',
                 arguments=['--ros-args', '--log-level', log_level],
