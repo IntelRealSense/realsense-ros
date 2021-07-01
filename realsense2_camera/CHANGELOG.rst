@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.2.2 (2021-07-01)
+------------------
 * Support Galactic and Rolling
 * Fix reading yaml config file
 * No tf broadcaster object if publish_tf is set to false
