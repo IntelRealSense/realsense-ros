@@ -2,8 +2,8 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.1 (2021-07-01)
+------------------
 * add imu frames to _l515.urdf.xacro
 * Contributors: Simon Honigmann, doronhi
 

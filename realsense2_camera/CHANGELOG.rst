@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.1 (2021-07-01)
+------------------
 * add respawn option
 * add udev rules to debian installation
 * Add support for L535
