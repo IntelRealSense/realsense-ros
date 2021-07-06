@@ -196,6 +196,12 @@ bool T265RealsenseNode::exportLocalizationMap(const std::string &localization_fi
     return true;
 }
 
+bool T265RealsenseNode::saveRelocalizationMapSrv(realsense2_camera::MapPathString::Request &req,
+                                                 realsense2_camera::MapPathString::Response &res) {
+    res.success = this->exportLocalizationMap(req.filepath);
+    return true;
+}
+
 std::vector<uint8_t> T265RealsenseNode::bytesFromRawFile(const std::string &filename)
 {
     std::ifstream file(filename.c_str(), std::ios::binary);
@@ -224,10 +230,4 @@ void T265RealsenseNode::rawFileFromBytes(const std::string &filename, const std:
     if (!file.good())
         throw std::runtime_error("Invalid binary file specified. Verify the target path and location permissions");
     file.write((char*)bytes.data(), bytes.size());
-}
-
-bool T265RealsenseNode::saveRelocalizationMapSrv(realsense2_camera::MapPathString::Request &req,
-                                                 realsense2_camera::MapPathString::Response &res) {
-    res.success = this->exportLocalizationMap(req.filepath);
-    return true;
 }

@@ -27,13 +27,15 @@ namespace realsense2_camera
             void warningDiagnostic (diagnostic_updater::DiagnosticStatusWrapper &stat);
             bool importLocalizationMap(const std::string &localization_file);
             bool exportLocalizationMap(const std::string &localization_file);
-            std::vector<uint8_t> bytesFromRawFile(const std::string &filename);
-            void rawFileFromBytes(const std::string &filename, const std::vector<uint8_t> &bytes);
             diagnostic_updater::Updater callback_updater;
 
             // Service callbacks
             bool saveRelocalizationMapSrv(realsense2_camera::MapPathString::Request &req,
                                           realsense2_camera::MapPathString::Response &res);
+
+            // Helper functions to import/export binary map files
+            std::vector<uint8_t> bytesFromRawFile(const std::string &filename);
+            void rawFileFromBytes(const std::string &filename, const std::vector<uint8_t> &bytes);
 
             ros::Subscriber _odom_subscriber;
             ros::ServiceServer _save_map_srv;
