@@ -2,6 +2,14 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.3.1 (2021-07-01)
+------------------
+* add respawn option
+* add udev rules to debian installation
+* Add support for L535
+* Fix occasional missing diagnostic messages
+* Contributors: Alex Fernandes Neves, doronhi
+
 2.3.0 (2021-05-05)
 ------------------
 * Fix pointcloud message size when no texture is added.
