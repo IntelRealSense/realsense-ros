@@ -29,20 +29,13 @@ namespace realsense2_camera
             bool exportLocalizationMap(const std::string &localization_file);
             std::vector<uint8_t> bytesFromRawFile(const std::string &filename);
             void rawFileFromBytes(const std::string &filename, const std::vector<uint8_t> &bytes);
-            void initMapFrame(bool relocalizing);
-            ros::Timer _timer;
-            bool relocalization_pose_initialized;
-            tf2_ros::TransformBroadcaster _dynamic_tf_broadcaster;
             diagnostic_updater::Updater callback_updater;
 
             // Service callbacks
-            bool LoadRelocalizationMapSrv(realsense2_camera::MapPathString::Request &req,
-                                          realsense2_camera::MapPathString::Response &res);
-            bool SaveRelocalizationMapSrv(realsense2_camera::MapPathString::Request &req,
+            bool saveRelocalizationMapSrv(realsense2_camera::MapPathString::Request &req,
                                           realsense2_camera::MapPathString::Response &res);
 
             ros::Subscriber _odom_subscriber;
-            ros::ServiceServer _load_map_srv;
             ros::ServiceServer _save_map_srv;
             rs2::pose_sensor _pose_sensor;
             rs2::wheel_odometer _wo_snr;
