@@ -32,6 +32,9 @@ https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/lib
   <arg name="unite_imu_method"      default=""/>
 
   <arg name="publish_odom_tf"     default="true"/>
+
+  <!-- If the parameter below is non-empty, the T265 node will attempt to load a saved map from the given path -->
+  <arg name="localization_map_filepath" default=""/>
   
   <group ns="$(arg camera)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
@@ -60,6 +63,8 @@ https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/lib
       <arg name="unite_imu_method"         value="$(arg unite_imu_method)"/>
 
       <arg name="publish_odom_tf"          value="$(arg publish_odom_tf)"/>
+
+      <arg name="localization_map_filepath" value="$(arg localization_map_filepath)"/>
     </include>
   </group>
 </launch>
