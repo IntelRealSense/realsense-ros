@@ -50,7 +50,7 @@ void T265RealsenseNode::setupMapReutilization() {
     _pnh.param("localization_map_filepath", localization_map_filepath, std::string(""));
     if (localization_map_filepath.empty())
     {
-        ROS_INFO("No [map_in] specified. No localization data loaded.");
+        ROS_INFO("No [localization_map_filepath] specified. No localization data loaded.");
     }
     else
     {
