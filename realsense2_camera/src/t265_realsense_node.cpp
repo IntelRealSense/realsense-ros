@@ -171,11 +171,11 @@ bool T265RealsenseNode::importLocalizationMap(const std::string &localization_fi
     try
     {
       _pose_sensor.import_localization_map(this->bytesFromRawFile(localization_file));
-      ROS_INFO_STREAM("Localization map loaded from " << localization_file);
+      ROS_INFO_STREAM("T265 Localization map loaded from " << localization_file);
     }
     catch (std::runtime_error& e)
     {
-      ROS_WARN_STREAM("Error loading map from " << localization_file << ": " << e.what());
+      ROS_WARN_STREAM("Error loading T265 map from " << localization_file << ": " << e.what());
       return false;
     }
     return true;
@@ -186,11 +186,11 @@ bool T265RealsenseNode::exportLocalizationMap(const std::string &localization_fi
     try
     {
         this->rawFileFromBytes(localization_file, _pose_sensor.export_localization_map());
-        ROS_INFO_STREAM("Saved map to " << localization_file);
+        ROS_INFO_STREAM("Saved T265 map to " << localization_file);
     }
     catch (std::runtime_error& e)
     {
-        ROS_WARN_STREAM("Error saving map to " << localization_file << ": " << e.what());
+        ROS_WARN_STREAM("Error saving T265 map to " << localization_file << ": " << e.what());
         return false;
     }
     return true;
