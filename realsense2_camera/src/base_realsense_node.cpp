@@ -1147,7 +1147,7 @@ void BaseRealSenseNode::setupPublishers()
     {
         if (_enable[stream])
         {
-            std::stringstream image_raw, camera_info;
+            std::stringstream image_raw, camera_info, topic_metadata;
             bool rectified_image = false;
             if (stream == DEPTH || stream == CONFIDENCE || stream == INFRA1 || stream == INFRA2)
                 rectified_image = true;
@@ -1155,10 +1155,16 @@ void BaseRealSenseNode::setupPublishers()
             std::string stream_name(STREAM_NAME(stream));
             image_raw << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << stream_name << "/camera_info";
+            topic_metadata << stream_name << "/metadata";
 
             _image_publishers[stream] = {image_transport::create_publisher(&_node, image_raw.str(), qos_string_to_qos(_qos[stream]))};
             _info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(
                   camera_info.str(),
+                  rclcpp::QoS(
+                    rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[stream])),
+                    qos_string_to_qos(_info_qos[stream])));
+            _metadata_publishers[stream] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(
+                  topic_metadata.str(),
                   rclcpp::QoS(
                     rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[stream])),
                     qos_string_to_qos(_info_qos[stream])));
@@ -1913,7 +1919,9 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                         publishFrame(f, t, COLOR,
                                     _depth_aligned_image,
                                     _depth_aligned_info_publisher,
-                                    _depth_aligned_image_publishers, _depth_aligned_seq,
+                                    _depth_aligned_image_publishers, 
+                                    std::map<stream_index_pair, rclcpp::Publisher<realsense2_camera_msgs::msg::Metadata>::SharedPtr>(),
+                                    _depth_aligned_seq,
                                     _depth_aligned_camera_info,
                                     _depth_aligned_encoding);
                         continue;
@@ -1923,7 +1931,9 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                                 sip,
                                 _image,
                                 _info_publisher,
-                                _image_publishers, _seq,
+                                _image_publishers, 
+                                _metadata_publishers,
+                                _seq,
                                 _camera_info,
                                 _encoding);
             }
@@ -1939,7 +1949,9 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                                 DEPTH,
                                 _image,
                                 _info_publisher,
-                                _image_publishers, _seq,
+                                _image_publishers,
+                                _metadata_publishers,
+                                _seq,
                                 _camera_info,
                                 _encoding);
             }
@@ -1964,7 +1976,9 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                             sip,
                             _image,
                             _info_publisher,
-                            _image_publishers, _seq,
+                            _image_publishers,
+                            _metadata_publishers,
+                            _seq,
                             _camera_info,
                             _encoding);
         }
@@ -2575,6 +2589,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
                                      std::map<stream_index_pair, cv::Mat>& images,
                                      const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
                                      const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
+                                     const std::map<stream_index_pair, rclcpp::Publisher<realsense2_camera_msgs::msg::Metadata>::SharedPtr> metadata_publishers,
                                      std::map<stream_index_pair, int>& seq,
                                      std::map<stream_index_pair, sensor_msgs::msg::CameraInfo>& camera_info,
                                      const std::map<rs2_stream, std::string>& encoding)
@@ -2628,6 +2643,19 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
 
         image_publisher.publish(img);
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
+    }
+    if (metadata_publishers.find(stream) != metadata_publishers.end())
+    {
+        auto& md_publisher = metadata_publishers.at(stream);
+        if (0 != info_publisher->get_subscription_count())
+        {
+            auto& cam_info = camera_info.at(stream);
+            realsense2_camera_msgs::msg::Metadata msg;
+            msg.header.frame_id = cam_info.header.frame_id;
+            msg.header.stamp = t;
+            msg.json_data = "doron";
+            md_publisher->publish(msg);
+        }
     }
 }
 
