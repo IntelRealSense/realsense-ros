@@ -21,6 +21,7 @@ set(msg_files
 )
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
+  "srv/DeviceInfo.srv"
   DEPENDENCIES builtin_interfaces std_msgs
   ADD_LINTER_TESTS
 )

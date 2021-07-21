@@ -28,6 +28,95 @@ std::vector<std::string> split(const std::string& s, char delimiter) // Thanks t
    }
    return tokens;
 }
+
+bool is_checkbox(rs2::options sensor, rs2_option option)
+{
+    rs2::option_range op_range = sensor.get_option_range(option);
+    return op_range.max == 1.0f &&
+        op_range.min == 0.0f &&
+        op_range.step == 1.0f;
+}
+
+bool is_enum_option(rs2::options sensor, rs2_option option)
+{
+    static const int MAX_ENUM_OPTION_VALUES(100);
+    static const float EPSILON(0.05);
+
+    rs2::option_range op_range = sensor.get_option_range(option);
+    if (abs((op_range.step - 1)) > EPSILON || (op_range.max > MAX_ENUM_OPTION_VALUES)) return false;
+    for (auto i = op_range.min; i <= op_range.max; i += op_range.step)
+    {
+        if (sensor.get_option_value_description(option, i) == nullptr)
+            continue;
+        return true;
+    }
+    return false;
+}
+
+bool is_int_option(rs2::options sensor, rs2_option option)
+{
+    rs2::option_range op_range = sensor.get_option_range(option);
+    return (op_range.step == 1.0);
+}
+
+std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option option)
+{
+    std::map<std::string, int> dict; // An enum to set size
+    if (is_enum_option(sensor, option))
+    {
+        rs2::option_range op_range = sensor.get_option_range(option);
+        const auto op_range_min = int(op_range.min);
+        const auto op_range_max = int(op_range.max);
+        const auto op_range_step = int(op_range.step);
+        for (auto val = op_range_min; val <= op_range_max; val += op_range_step)
+        {
+            if (sensor.get_option_value_description(option, val) == nullptr)
+                continue;
+            dict[sensor.get_option_value_description(option, val)] = val;
+        }
+    }
+    return dict;
+}
+
+namespace realsense2_camera
+{
+
+template <typename K, typename V>
+std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m)
+{
+    os << '{';
+    for (const auto& kv : m)
+    {
+        os << " {" << kv.first << ": " << kv.second << '}';
+    }
+    os << " }";
+    return os;
+}
+
+}
+
+/**
+ * Same as ros::names::isValidCharInName, but re-implemented here because it's not exposed.
+ */
+bool isValidCharInName(char c)
+{
+    return std::isalnum(c) || c == '/' || c == '_';
+}
+
+/**
+ * ROS Graph Resource names don't allow spaces and hyphens (see http://wiki.ros.org/Names),
+ * so we replace them here with underscores.
+ */
+std::string create_graph_resource_name(const std::string &original_name)
+{
+  std::string fixed_name = original_name;
+  std::transform(fixed_name.begin(), fixed_name.end(), fixed_name.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  std::replace_if(fixed_name.begin(), fixed_name.end(), [](const char c) { return !isValidCharInName(c); },
+                  '_');
+  return fixed_name;
+}
+
 SyncedImuPublisher::SyncedImuPublisher(rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher,
                                        std::size_t waiting_list_size):
             _publisher(imu_publisher), _pause_mode(false),
@@ -163,12 +252,17 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     {
         publishTopics();
         _toggle_sensors_srv = _node.create_service<std_srvs::srv::SetBool>(
-              "enable",
-              std::bind(
-                &BaseRealSenseNode::toggle_sensor_callback,
-                this,
-                std::placeholders::_1,
-                std::placeholders::_2));
+                "enable",
+                [&](std_srvs::srv::SetBool::Request::SharedPtr req, 
+                    std_srvs::srv::SetBool::Response::SharedPtr res)
+                    {toggle_sensor_callback(req, res);});
+
+        _device_info_srv = _node.create_service<realsense2_camera_msgs::srv::DeviceInfo>(
+                "device_info",
+                [&](const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr req,
+                          realsense2_camera_msgs::srv::DeviceInfo::Response::SharedPtr res)
+                          {getDeviceInfo(req, res);});
+
     }
     catch(const std::exception& e)
     {
@@ -221,6 +315,25 @@ BaseRealSenseNode::~BaseRealSenseNode()
 {
     clean();
 }
+
+void BaseRealSenseNode::getDeviceInfo(const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr,
+                                            realsense2_camera_msgs::srv::DeviceInfo::Response::SharedPtr res)
+{
+    res->device_name = _dev.supports(RS2_CAMERA_INFO_NAME) ? create_graph_resource_name(_dev.get_info(RS2_CAMERA_INFO_NAME)) : "";
+    res->serial_number = _dev.supports(RS2_CAMERA_INFO_SERIAL_NUMBER) ? _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER) : "";
+    res->firmware_version = _dev.supports(RS2_CAMERA_INFO_FIRMWARE_VERSION) ? _dev.get_info(RS2_CAMERA_INFO_FIRMWARE_VERSION) : "";
+    res->usb_type_descriptor = _dev.supports(RS2_CAMERA_INFO_USB_TYPE_DESCRIPTOR) ? _dev.get_info(RS2_CAMERA_INFO_USB_TYPE_DESCRIPTOR) : "";
+    res->firmware_update_id = _dev.supports(RS2_CAMERA_INFO_FIRMWARE_UPDATE_ID) ? _dev.get_info(RS2_CAMERA_INFO_FIRMWARE_UPDATE_ID) : "";
+
+    std::stringstream sensors_names;
+    for(auto&& sensor : _dev_sensors)
+    {
+        sensors_names << create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME)) << ",";
+    }
+
+    res->sensors = sensors_names.str().substr(0, sensors_names.str().size()-1);
+}
+
 
 bool BaseRealSenseNode::toggle_sensor_callback(std_srvs::srv::SetBool::Request::SharedPtr req, std_srvs::srv::SetBool::Response::SharedPtr res)
 {
@@ -359,93 +472,6 @@ void BaseRealSenseNode::runFirstFrameInitialization(rs2_stream stream_type)
             t.detach();
         }
     }
-}
-bool is_checkbox(rs2::options sensor, rs2_option option)
-{
-    rs2::option_range op_range = sensor.get_option_range(option);
-    return op_range.max == 1.0f &&
-        op_range.min == 0.0f &&
-        op_range.step == 1.0f;
-}
-
-bool is_enum_option(rs2::options sensor, rs2_option option)
-{
-    static const int MAX_ENUM_OPTION_VALUES(100);
-    static const float EPSILON(0.05);
-
-    rs2::option_range op_range = sensor.get_option_range(option);
-    if (abs((op_range.step - 1)) > EPSILON || (op_range.max > MAX_ENUM_OPTION_VALUES)) return false;
-    for (auto i = op_range.min; i <= op_range.max; i += op_range.step)
-    {
-        if (sensor.get_option_value_description(option, i) == nullptr)
-            continue;
-        return true;
-    }
-    return false;
-}
-
-bool is_int_option(rs2::options sensor, rs2_option option)
-{
-    rs2::option_range op_range = sensor.get_option_range(option);
-    return (op_range.step == 1.0);
-}
-
-std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option option)
-{
-    std::map<std::string, int> dict; // An enum to set size
-    if (is_enum_option(sensor, option))
-    {
-        rs2::option_range op_range = sensor.get_option_range(option);
-        const auto op_range_min = int(op_range.min);
-        const auto op_range_max = int(op_range.max);
-        const auto op_range_step = int(op_range.step);
-        for (auto val = op_range_min; val <= op_range_max; val += op_range_step)
-        {
-            if (sensor.get_option_value_description(option, val) == nullptr)
-                continue;
-            dict[sensor.get_option_value_description(option, val)] = val;
-        }
-    }
-    return dict;
-}
-
-namespace realsense2_camera
-{
-
-template <typename K, typename V>
-std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m)
-{
-    os << '{';
-    for (const auto& kv : m)
-    {
-        os << " {" << kv.first << ": " << kv.second << '}';
-    }
-    os << " }";
-    return os;
-}
-
-}
-
-/**
- * Same as ros::names::isValidCharInName, but re-implemented here because it's not exposed.
- */
-bool isValidCharInName(char c)
-{
-    return std::isalnum(c) || c == '/' || c == '_';
-}
-
-/**
- * ROS Graph Resource names don't allow spaces and hyphens (see http://wiki.ros.org/Names),
- * so we replace them here with underscores.
- */
-std::string create_graph_resource_name(const std::string &original_name)
-{
-  std::string fixed_name = original_name;
-  std::transform(fixed_name.begin(), fixed_name.end(), fixed_name.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  std::replace_if(fixed_name.begin(), fixed_name.end(), [](const char c) { return !isValidCharInName(c); },
-                  '_');
-  return fixed_name;
 }
 
 void BaseRealSenseNode::set_auto_exposure_roi(const std::string variable_name, rs2::sensor sensor, const rclcpp::Parameter& parameter)
