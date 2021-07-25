@@ -223,10 +223,12 @@ namespace realsense2_camera
                           std::map<stream_index_pair, cv::Mat>& images,
                           const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
                           const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
-                          const std::map<stream_index_pair, rclcpp::Publisher<realsense2_camera_msgs::msg::Metadata>::SharedPtr> metadata_publishers,
+                          const bool is_publishMetadata,
                           std::map<stream_index_pair, int>& seq,
                           std::map<stream_index_pair, sensor_msgs::msg::CameraInfo>& camera_info,
                           const std::map<rs2_stream, std::string>& encoding);
+        void publishMetadata(rs2::frame f, const std::string& frame_id);
+        
         bool getEnabledProfile(const stream_index_pair& stream_index, rs2::stream_profile& profile);
 
         sensor_msgs::msg::Imu CreateUnitedMessage(const CimuData accel_data, const CimuData gyro_data);
