@@ -1148,7 +1148,7 @@ void BaseRealSenseNode::setupPublishers()
     {
         if (_enable[stream])
         {
-            std::stringstream image_raw, camera_info;
+            std::stringstream image_raw, camera_info, topic_metadata;
             bool rectified_image = false;
             if (stream == DEPTH || stream == CONFIDENCE || stream == INFRA1 || stream == INFRA2)
                 rectified_image = true;
@@ -1156,10 +1156,16 @@ void BaseRealSenseNode::setupPublishers()
             std::string stream_name(STREAM_NAME(stream));
             image_raw << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << stream_name << "/camera_info";
+            topic_metadata << stream_name << "/metadata";
 
             _image_publishers[stream] = {image_transport::create_publisher(&_node, image_raw.str(), qos_string_to_qos(_qos[stream]))};
             _info_publisher[stream] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(
                   camera_info.str(),
+                  rclcpp::QoS(
+                    rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[stream])),
+                    qos_string_to_qos(_info_qos[stream])));
+            _metadata_publishers[stream] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(
+                  topic_metadata.str(),
                   rclcpp::QoS(
                     rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[stream])),
                     qos_string_to_qos(_info_qos[stream])));
@@ -1212,6 +1218,13 @@ void BaseRealSenseNode::setupPublishers()
                   rclcpp::QoS(
                     rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_qos[GYRO])),
                     qos_string_to_qos(_qos[GYRO])));
+
+            auto stream(GYRO);
+            _metadata_publishers[stream] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(
+                  "gyro/metadata",
+                  rclcpp::QoS(
+                    rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[stream])),
+                    qos_string_to_qos(_info_qos[stream])));
         }
 
         if (_enable[ACCEL])
@@ -1221,6 +1234,13 @@ void BaseRealSenseNode::setupPublishers()
                   rclcpp::QoS(
                     rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_qos[ACCEL])),
                     qos_string_to_qos(_qos[ACCEL])));
+
+            auto stream(ACCEL);
+            _metadata_publishers[stream] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(
+                  "accel/metadata",
+                  rclcpp::QoS(
+                    rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_info_qos[stream])),
+                    qos_string_to_qos(_info_qos[stream])));
         }
     }
     if (_enable[POSE])
@@ -1230,6 +1250,13 @@ void BaseRealSenseNode::setupPublishers()
               rclcpp::QoS(
                 rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_qos[POSE])),
                 qos_string_to_qos(_qos[POSE])));
+
+        auto stream(POSE);
+        _metadata_publishers[stream] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(
+                "odom/metadata",
+                rclcpp::QoS(
+                rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_qos[stream])),
+                qos_string_to_qos(_qos[stream])));
     }
 
     if (_enable[FISHEYE] &&
@@ -1720,10 +1747,9 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
 
     auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
+    rclcpp::Time t(frameSystemTimeSec(frame));
     if (0 != _imu_publishers[stream_index]->get_subscription_count())
     {
-        rclcpp::Time t(frameSystemTimeSec(frame));
-
         auto imu_msg = sensor_msgs::msg::Imu();
         ImuMessage_AddDefaultValues(imu_msg);
         imu_msg.header.frame_id = _optical_frame_id[stream_index];
@@ -1746,6 +1772,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         _imu_publishers[stream_index]->publish(imu_msg);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
     }
+    publishMetadata(frame, _optical_frame_id[stream_index]);
 }
 
 void BaseRealSenseNode::pose_callback(rs2::frame frame)
@@ -1833,6 +1860,7 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         _odom_publisher->publish(odom_msg);
         ROS_DEBUG("Publish %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
     }
+    publishMetadata(frame, _frame_id[POSE]);
 }
 
 void BaseRealSenseNode::frame_callback(rs2::frame frame)
@@ -1914,7 +1942,9 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                         publishFrame(f, t, COLOR,
                                     _depth_aligned_image,
                                     _depth_aligned_info_publisher,
-                                    _depth_aligned_image_publishers, _depth_aligned_seq,
+                                    _depth_aligned_image_publishers, 
+                                    false,
+                                    _depth_aligned_seq,
                                     _depth_aligned_camera_info,
                                     _depth_aligned_encoding);
                         continue;
@@ -1924,7 +1954,9 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                                 sip,
                                 _image,
                                 _info_publisher,
-                                _image_publishers, _seq,
+                                _image_publishers, 
+                                true,
+                                _seq,
                                 _camera_info,
                                 _encoding);
             }
@@ -1940,7 +1972,9 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                                 DEPTH,
                                 _image,
                                 _info_publisher,
-                                _image_publishers, _seq,
+                                _image_publishers,
+                                true,
+                                _seq,
                                 _camera_info,
                                 _encoding);
             }
@@ -1965,7 +1999,9 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                             sip,
                             _image,
                             _info_publisher,
-                            _image_publishers, _seq,
+                            _image_publishers,
+                            true,
+                            _seq,
                             _camera_info,
                             _encoding);
         }
@@ -2576,6 +2612,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
                                      std::map<stream_index_pair, cv::Mat>& images,
                                      const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
                                      const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
+                                     const bool is_publishMetadata,
                                      std::map<stream_index_pair, int>& seq,
                                      std::map<stream_index_pair, sensor_msgs::msg::CameraInfo>& camera_info,
                                      const std::map<rs2_stream, std::string>& encoding)
@@ -2629,6 +2666,52 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
 
         image_publisher.publish(img);
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
+    }
+    if (is_publishMetadata)
+    {
+        auto& cam_info = camera_info.at(stream);
+        publishMetadata(f, cam_info.header.frame_id);
+    }
+}
+
+void BaseRealSenseNode::publishMetadata(rs2::frame f, const std::string& frame_id)
+{
+    stream_index_pair stream = {f.get_profile().stream_type(), f.get_profile().stream_index()};    
+    if (_metadata_publishers.find(stream) != _metadata_publishers.end())
+    {
+        rclcpp::Time t(frameSystemTimeSec(f));    
+        auto& md_publisher = _metadata_publishers.at(stream);
+        if (0 != md_publisher->get_subscription_count())
+        {
+            realsense2_camera_msgs::msg::Metadata msg;
+            msg.header.frame_id = frame_id;
+            msg.header.stamp = t;
+            std::stringstream json_data;
+            const char* separator = ",";
+            json_data << "{";
+            // Add additional fields:
+            json_data << "\"" << "frame_number" << "\":" << f.get_frame_number();
+            json_data << separator << "\"" << "clock_domain" << "\":" << "\"" << create_graph_resource_name(rs2_timestamp_domain_to_string(f.get_frame_timestamp_domain())) << "\"";
+            json_data << separator << "\"" << "frame_timestamp" << "\":" << std::fixed << f.get_timestamp();
+
+            for (auto i = 0; i < RS2_FRAME_METADATA_COUNT; i++)
+            {
+                if (f.supports_frame_metadata((rs2_frame_metadata_value)i))
+                {
+                    rs2_frame_metadata_value mparam = (rs2_frame_metadata_value)i;
+                    std::string name = create_graph_resource_name(rs2_frame_metadata_to_string(mparam));
+                    if (RS2_FRAME_METADATA_FRAME_TIMESTAMP == i)
+                    {
+                        name = "hw_timestamp";
+                    }
+                    rs2_metadata_type val = f.get_frame_metadata(mparam);
+                    json_data << separator << "\"" << name << "\":" << val;
+                }
+            }
+            json_data << "}";
+            msg.json_data = json_data.str();
+            md_publisher->publish(msg);
+        }
     }
 }
 
