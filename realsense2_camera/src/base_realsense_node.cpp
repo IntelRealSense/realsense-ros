@@ -1435,8 +1435,9 @@ void BaseRealSenseNode::setupFilters()
     bool use_colorizer_filter(false);
     bool use_decimation_filter(false);
     bool use_hdr_filter(false);
-    for (std::vector<std::string>::const_iterator s_iter=filters_str.begin(); s_iter!=filters_str.end(); s_iter++)
+    for (std::vector<std::string>::iterator s_iter=filters_str.begin(); s_iter!=filters_str.end(); s_iter++)
     {
+        (*s_iter).erase(std::remove_if((*s_iter).begin(), (*s_iter).end(), isspace), (*s_iter).end()); // Remove spaces
         if ((*s_iter) == "colorizer")
         {
             use_colorizer_filter = true;
