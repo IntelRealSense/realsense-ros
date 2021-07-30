@@ -6,8 +6,8 @@
 #include <string>
 
 #define REALSENSE_ROS_MAJOR_VERSION    2
-#define REALSENSE_ROS_MINOR_VERSION    2
-#define REALSENSE_ROS_PATCH_VERSION    20
+#define REALSENSE_ROS_MINOR_VERSION    3
+#define REALSENSE_ROS_PATCH_VERSION    1
 
 #define STRINGIFY(arg) #arg
 #define VAR_ARG_STRING(arg) STRINGIFY(arg)
@@ -39,12 +39,14 @@ namespace realsense2_camera
     const uint16_t RS_T265_PID      = 0x0b37; // 
     const uint16_t RS_L515_PID_PRE_PRQ = 0x0B3D; // 
     const uint16_t RS_L515_PID      = 0x0B64; // 
+    const uint16_t RS_L535_PID      = 0x0b68;
     
 
-    const bool ALIGN_DEPTH    = false;
-    const bool POINTCLOUD     = false;
+    const bool ALIGN_DEPTH             = false;
+    const bool POINTCLOUD              = false;
     const bool ALLOW_NO_TEXTURE_POINTS = false;
-    const bool SYNC_FRAMES    = false;
+    const bool ORDERED_POINTCLOUD      = false;
+    const bool SYNC_FRAMES             = false;
 
     const bool PUBLISH_TF        = true;
     const double TF_PUBLISH_RATE = 0; // Static transform

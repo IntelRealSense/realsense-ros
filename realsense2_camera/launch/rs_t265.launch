@@ -12,15 +12,15 @@ https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/lib
   <arg name="camera"              default="camera"/>
   <arg name="tf_prefix"           default="$(arg camera)"/>
 
-  <arg name="fisheye_width"       default="848"/> 
-  <arg name="fisheye_height"      default="800"/>
+  <arg name="fisheye_width"       default="-1"/> 
+  <arg name="fisheye_height"      default="-1"/>
   <arg name="enable_fisheye1"     default="false"/>
   <arg name="enable_fisheye2"     default="false"/>
 
-  <arg name="fisheye_fps"         default="30"/>
+  <arg name="fisheye_fps"         default="-1"/>
 
-  <arg name="gyro_fps"            default="200"/>
-  <arg name="accel_fps"           default="62"/>
+  <arg name="gyro_fps"            default="-1"/>
+  <arg name="accel_fps"           default="-1"/>
   <arg name="enable_gyro"         default="true"/>
   <arg name="enable_accel"        default="true"/>
   <arg name="enable_pose"         default="true"/>

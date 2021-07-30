@@ -2,6 +2,31 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.3.1 (2021-07-01)
+------------------
+* add imu frames to _l515.urdf.xacro
+* Contributors: Simon Honigmann, doronhi
+
+2.3.0 (2021-05-05)
+------------------
+
+2.2.24 (2021-04-21)
+-------------------
+* Add conditional param use_mesh.
+* Contributors: Teo Cardoso
+
+2.2.23 (2021-03-24)
+-------------------
+
+2.2.22 (2021-02-18)
+-------------------
+* Fix mass of d415
+* Consistent add_plug in xacros and launch files
+* Contributors: Manuel Stahl, Tim Übelhör, doronhi
+
+2.2.21 (2020-12-31)
+-------------------
+
 2.2.20 (2020-11-19)
 -------------------
 * Add urdf file for l515

@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp
     sensor_msgs
     std_msgs
+    std_srvs
     nodelet
     cv_bridge
     image_transport
@@ -40,7 +41,7 @@ endif()
 if (WIN32)
 find_package(realsense2 CONFIG REQUIRED)
 else()
-find_package(realsense2 2.40.0)
+find_package(realsense2 2.48.0)
 endif()
 
 if(NOT realsense2_FOUND)
