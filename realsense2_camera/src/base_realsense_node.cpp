@@ -1924,8 +1924,9 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     _camera_info[stream_index].R.at(7) = 0.0;
     _camera_info[stream_index].R.at(8) = 1.0;
 
-    _camera_info[stream_index].D.resize(5);
-    for (int i = 0; i < 5; i++)
+    int coeff_size = (intrinsic.model == RS2_DISTORTION_KANNALA_BRANDT4) ? 4 : 5;
+    _camera_info[stream_index].D.resize(coeff_size);
+    for (int i = 0; i < coeff_size; i++)
     {
         _camera_info[stream_index].D.at(i) = intrinsic.coeffs[i];
     }
