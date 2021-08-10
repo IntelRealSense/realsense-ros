@@ -290,9 +290,9 @@ void RealSenseNodeFactory::initialize(const ros::WallTimerEvent &ignored)
 			_is_alive = true;
 			_query_thread = std::thread([=]()
 						{
-              int reconnect_timeout;
-              privateNh.param("reconnect_timeout", reconnect_timeout, 6);
-              std::chrono::seconds timespan(reconnect_timeout);
+							int reconnect_timeout;
+							privateNh.param("reconnect_timeout", reconnect_timeout, 6);
+							std::chrono::seconds timespan(reconnect_timeout);
 							while (_is_alive && !_device)
 							{
 								getDevice(_ctx.query_devices());
