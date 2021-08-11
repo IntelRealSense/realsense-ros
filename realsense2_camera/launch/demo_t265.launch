@@ -1,4 +1,10 @@
 <launch>
   <include file="$(find realsense2_camera)/launch/rs_t265.launch"/>
+  <!-- drone and realsense2_camera rviz file combined into t265.rviz -->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find realsense2_camera)/rviz/t265.rviz" required="true" />
+  <!-- add drone urdf file -->
+  <arg default="$(find drone)/urdf/Rex_D.xacro" name="model"/>
+  <param command="$(find xacro)/xacro $(arg model)" name="robot_description"/>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 </launch>

@@ -1,0 +1,9 @@
+<launch>
+
+<rosparam file="$(find drone)/launch/controller.yaml" command="load"/>
+<node args="joint_state_controller " name="controller_spawner" ns="Rex_D" output="screen" pkg="controller_manager" respawn="false" type="spawner"/>
+<node name="robot_state_publisher" output="screen" pkg="robot_state_publisher" respawn="false" type="robot_state_publisher">
+  <remap from="/joint_states" to="/Assembly/joint_states"/>
+</node>
+
+</launch>

@@ -1,0 +1,4 @@
+<?xml version="1.0" ?>
+<robot name="drone" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+</robot>
