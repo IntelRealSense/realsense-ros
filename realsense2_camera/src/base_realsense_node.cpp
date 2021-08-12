@@ -1312,15 +1312,14 @@ void BaseRealSenseNode::enable_devices()
             for (auto& profile : profiles)
             {
                 auto video_profile = profile.as<rs2::video_stream_profile>();
-                ROS_DEBUG_STREAM("Sensor profile: " <<
-                                    "stream_type: " << rs2_stream_to_string(video_profile.stream_type()) << "(" << video_profile.stream_index() << ")" <<
-                                    "Format: " << video_profile.format() <<
-                                    ", Width: " << video_profile.width() <<
-                                    ", Height: " << video_profile.height() <<
-                                    ", FPS: " << video_profile.fps());
-
                 if (profile.stream_type() == elem.first && profile.stream_index() == elem.second)
                 {
+                    ROS_DEBUG_STREAM("Sensor profile: " <<
+                                        "stream_type: " << rs2_stream_to_string(video_profile.stream_type()) << "(" << video_profile.stream_index() << ")" <<
+                                        "Format: " << video_profile.format() <<
+                                        ", Width: " << video_profile.width() <<
+                                        ", Height: " << video_profile.height() <<
+                                        ", FPS: " << video_profile.fps());
                     if (profile.is_default())
                     {
                         default_profile = profile;
@@ -1338,7 +1337,7 @@ void BaseRealSenseNode::enable_devices()
             }
             if (!selected_profile)
             {
-                ROS_WARN_STREAM_COND((_width[elem]!=-1 && _height[elem]!=-1 && _fps[elem]!=-1), "Given stream configuration is not supported by the device! " <<
+                ROS_WARN_STREAM_COND((_width[elem]!=-1 || _height[elem]!=-1 || _fps[elem]!=-1), "Given stream configuration is not supported by the device! " <<
                     " Stream: " << rs2_stream_to_string(elem.first) <<
                     ", Stream Index: " << elem.second <<
                     ", Width: " << _width[elem] <<
@@ -1347,7 +1346,7 @@ void BaseRealSenseNode::enable_devices()
                     ", Format: " << ((_format.find(elem.first) == _format.end())? "None":rs2_format_to_string(rs2_format(_format[elem.first]))));
                 if (default_profile)
                 {
-                    ROS_WARN_STREAM_COND((_width[elem]!=-1 && _height[elem]!=-1 && _fps[elem]!=-1), "Using default profile instead.");
+                    ROS_WARN_STREAM_COND((_width[elem]!=-1 || _height[elem]!=-1 || _fps[elem]!=-1), "Using default profile instead.");
                     selected_profile = default_profile;
                 }
             }
