@@ -152,4 +152,7 @@ install(DIRECTORY rviz/
 install(FILES nodelet_plugins.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
-
+add_executable(tf_broadcaster src/broadcaster.cpp)
+add_executable(tf_listener src/listener.cpp)
+target_link_libraries(tf_broadcaster ${catkin_LIBRARIES})
+target_link_libraries(tf_listener ${catkin_LIBRARIES})
