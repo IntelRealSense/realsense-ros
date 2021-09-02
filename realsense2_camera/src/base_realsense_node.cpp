@@ -243,12 +243,12 @@ void BaseRealSenseNode::publishTopics()
     setupDevice();
     setupFilters();
     registerHDRoptions();
-    registerDynamicReconfigCb(_node_handle);
     setupErrorCallback();
     enable_devices();
     setupPublishers();
     setupStreams();
     SetBaseStream();
+    registerDynamicReconfigCb(_node_handle);
     registerAutoExposureROIOptions(_node_handle);
     publishStaticTransforms();
     publishIntrinsics();
