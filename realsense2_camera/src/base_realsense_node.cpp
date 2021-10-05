@@ -198,6 +198,7 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _json_file_path(""),
     _dynamic_tf_broadcaster(node),
     _is_initialized_time_base(false),
+    _temperature_updater(&node),
     _parameters(parameters)
 {
     setNgetNodeParameter(_publish_tf, "publish_tf", PUBLISH_TF);
@@ -450,6 +451,7 @@ void BaseRealSenseNode::publishTopics()
     registerAutoExposureROIOptions();
     publishStaticTransforms();
     publishIntrinsics();
+    startMonitoring();
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
@@ -1031,9 +1033,6 @@ void BaseRealSenseNode::setupDevice()
 
         auto camera_name = _dev.get_info(RS2_CAMERA_INFO_NAME);
         ROS_INFO_STREAM("Device Name: " << camera_name);
-
-        std::string serial_no = _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
-        ROS_INFO_STREAM("Device Serial No: " << serial_no);
 
         auto camera_id = _dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
 
@@ -2728,4 +2727,23 @@ bool BaseRealSenseNode::getEnabledProfile(const stream_index_pair& stream_index,
 
     profile =  *it;
     return true;
+}
+
+void BaseRealSenseNode::startMonitoring()
+{
+    std::string serial_no = _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+    ROS_INFO_STREAM("Device Serial No: " << serial_no);
+    _temperature_updater.setHardwareID(serial_no);
+    rs2::options base_sensor(_sensors[_base_stream]);
+    for (rs2_option option : _monitor_options)
+    {
+        if (base_sensor.supports(option))
+        {
+            _temperature_updater.add(rs2_option_to_string(option), [base_sensor, option](diagnostic_updater::DiagnosticStatusWrapper& status)
+                {
+                    status.summary(0, "OK");
+                    status.add("Index", base_sensor.get_option(option));
+                });
+        }
+    }
 }

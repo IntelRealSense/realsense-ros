@@ -28,6 +28,7 @@
   <depend>nav_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
+  <depend>diagnostic_updater</depend>
 
   <exec_depend>launch_ros</exec_depend>
   <test_depend>ament_cmake_gtest</test_depend>
