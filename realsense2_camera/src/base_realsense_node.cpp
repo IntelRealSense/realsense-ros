@@ -2735,15 +2735,17 @@ void BaseRealSenseNode::startMonitoring()
     ROS_INFO_STREAM("Device Serial No: " << serial_no);
     _temperature_updater.setHardwareID(serial_no);
     rs2::options base_sensor(_sensors[_base_stream]);
-    for (rs2_option option : _monitor_options)
-    {
-        if (base_sensor.supports(option))
+
+    _temperature_updater.add("Temperatures", [this](diagnostic_updater::DiagnosticStatusWrapper& status)
         {
-            _temperature_updater.add(rs2_option_to_string(option), [base_sensor, option](diagnostic_updater::DiagnosticStatusWrapper& status)
+            rs2::options base_sensor(_sensors[_base_stream]);
+            for (rs2_option option : _monitor_options)
+            {
+                if (base_sensor.supports(option))
                 {
-                    status.summary(0, "OK");
-                    status.add("Index", base_sensor.get_option(option));
-                });
-        }
-    }
+                    status.add(rs2_option_to_string(option), base_sensor.get_option(option));
+                }
+            }
+            status.summary(0, "OK");
+        });
 }
