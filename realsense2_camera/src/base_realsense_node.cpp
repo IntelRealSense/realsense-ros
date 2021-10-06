@@ -450,6 +450,7 @@ void BaseRealSenseNode::publishTopics()
     registerAutoExposureROIOptions();
     publishStaticTransforms();
     publishIntrinsics();
+    startMonitoring();
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
@@ -889,6 +890,8 @@ void BaseRealSenseNode::getParameters()
     _pointcloud |= (_filters_str.find("pointcloud") != std::string::npos);
 
     setNgetNodeParameter(_tf_publish_rate, "tf_publish_rate", TF_PUBLISH_RATE);
+    setNgetNodeParameter(_diagnostics_period, "diagnostics_period", DIAGNOSTICS_PERIOD);
+
     setNgetNodeParameter(_sync_frames, "enable_sync", SYNC_FRAMES);
     if (_pointcloud || _align_depth || _filters_str.size() > 0)
         _sync_frames = true;
@@ -1031,9 +1034,6 @@ void BaseRealSenseNode::setupDevice()
 
         auto camera_name = _dev.get_info(RS2_CAMERA_INFO_NAME);
         ROS_INFO_STREAM("Device Name: " << camera_name);
-
-        std::string serial_no = _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
-        ROS_INFO_STREAM("Device Serial No: " << serial_no);
 
         auto camera_id = _dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
 
@@ -2728,4 +2728,31 @@ bool BaseRealSenseNode::getEnabledProfile(const stream_index_pair& stream_index,
 
     profile =  *it;
     return true;
+}
+
+void BaseRealSenseNode::startMonitoring()
+{
+    std::string serial_no = _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+    ROS_INFO_STREAM("Device Serial No: " << serial_no);
+    if (_diagnostics_period > 0)
+    {
+        ROS_INFO_STREAM("Publish diagnostics every " << _diagnostics_period << " seconds.");
+        _temperature_updater = std::make_unique<diagnostic_updater::Updater>(&_node, _diagnostics_period);
+
+        _temperature_updater->setHardwareID(serial_no);
+        rs2::options base_sensor(_sensors[_base_stream]);
+
+        _temperature_updater->add("Temperatures", [this](diagnostic_updater::DiagnosticStatusWrapper& status)
+            {
+                rs2::options base_sensor(_sensors[_base_stream]);
+                for (rs2_option option : _monitor_options)
+                {
+                    if (base_sensor.supports(option))
+                    {
+                        status.add(rs2_option_to_string(option), base_sensor.get_option(option));
+                    }
+                }
+                status.summary(0, "OK");
+            });
+        }
 }

@@ -105,9 +105,11 @@ After running the above command with D435i attached, the following list of topic
 - /camera/accel/imu_info
 - /camera/color/camera_info
 - /camera/color/image_raw
+- /camera/color/metadata
 - /camera/depth/camera_info
 - /camera/depth/color/points
 - /camera/depth/image_rect_raw
+- /camera/depth/metadata
 - /camera/extrinsics/depth_to_color
 - /camera/extrinsics/depth_to_infra1
 - /camera/extrinsics/depth_to_infra2
@@ -119,6 +121,7 @@ After running the above command with D435i attached, the following list of topic
 - /camera/infra2/image_rect_raw
 - /camera/parameter_events
 - /camera/rosout
+- /diagnostics
 - /parameter_events
 - /rosout
 - /tf_static
@@ -185,6 +188,7 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 - **calib_odom_file**: For the T265 to include odometry input, it must be given a [configuration file](https://github.com/IntelRealSense/librealsense/blob/master/unit-tests/resources/calibration_odometry.json). Explanations can be found [here](https://github.com/IntelRealSense/librealsense/pull/3462). The calibration is done in ROS coordinates system.
 - **publish_tf**: boolean, publish or not TF at all. Defaults to True.
 - **tf_publish_rate**: double, positive values mean dynamic transform publication with specified rate, all other values mean static transform publication. Defaults to 0 
+- **diagnostics_period**: double, positive values set the period between diagnostics updates on the `/diagnostics` topic. 0 or negative values mean no diagnostics topic is published. Defaults to 0.
 - **publish_odom_tf**: If True (default) publish TF from odom_frame to pose_frame.
 - **infra_rgb**: When set to True (default: False), it configures the infrared camera to stream in RGB (color) mode, thus enabling the use of a RGB image in the same frame as the depth image, potentially avoiding frame transformation related errors. When this feature is required, you are additionally required to also enable `enable_infra:=true` for the infrared stream to be enabled.
   - **NOTE** The configuration required for `enable_infra` is independent of `enable_depth`
