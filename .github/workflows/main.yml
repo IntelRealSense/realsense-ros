@@ -25,10 +25,10 @@ jobs:
         include:
         - os: ubuntu-20.04
           ros_distro: 'noetic'
-          _python: 'python'
+          _python: 'python3'
         - os: ubuntu-18.04
           ros_distro: 'melodic'
-          _python: 'python3'
+          _python: 'python'
 
     steps:   
     - uses: ros-tooling/setup-ros@v0.2
