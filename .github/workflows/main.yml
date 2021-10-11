@@ -1,0 +1,46 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the development branch
+  push:
+    branches: [ development ]
+  pull_request:
+    branches: [ development ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    name: Build on ros ${{ matrix.ros_distro }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04]
+        include:
+        - os: ubuntu-20.04
+          ros_distro: 'noetic'
+          _python: 'python'
+        - os: ubuntu-18.04
+          ros_distro: 'melodic'
+          _python: 'python3'
+
+    steps:   
+    - uses: ros-tooling/setup-ros@v0.2
+      with:
+        required-ros-distributions: ${{ matrix.ros_distro }}
+    
+    - name: Install dependencies
+      run: |
+        echo _python:$_python
+        echo ros_distro:$ros_distro
+        sudo apt-get update
+        sudo apt-key adv --keyserver hkp://keys.gnupg.net:80 --recv-key C8B3A55A6F3EFCDE
+        sudo add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main"
+        sudo apt-get update -qq
+        sudo apt-get install librealsense2-dev --allow-unauthenticated -y
