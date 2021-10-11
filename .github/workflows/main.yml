@@ -37,10 +37,49 @@ jobs:
     
     - name: Install dependencies
       run: |
-        echo _python:$_python
-        echo ros_distro:$ros_distro
+        echo _python:${{ matrix._python }}
+        echo ros_distro:${{ matrix.ros_distro }}
         sudo apt-get update
-        sudo apt-key adv --keyserver hkp://keys.gnupg.net:80 --recv-key C8B3A55A6F3EFCDE
+        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-key C8B3A55A6F3EFCDE
         sudo add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main"
         sudo apt-get update -qq
         sudo apt-get install librealsense2-dev --allow-unauthenticated -y
+
+    - name: Setup catkin workspace
+      run: | 
+        echo "source /opt/ros/${{ matrix.ros_distro }}/setup.bash" >> ${{github.workspace}}/.bashrc
+        source ${{github.workspace}}/.bashrc
+        mkdir -p ${{github.workspace}}/catkin_ws/src
+        cd ${{github.workspace}}/catkin_ws/src
+        catkin_init_workspace
+        cd ..
+        
+    - uses: actions/checkout@v2
+      with:
+        path: 'catkin_ws/src/realsense-ros'
+
+    - name: Build
+      run: | 
+        source ${{github.workspace}}/.bashrc
+        cd ${{github.workspace}}/catkin_ws
+        rosdep update
+        rosdep install -i --from-path src --rosdistro ${{ matrix.ros_distro }} -y
+        
+        catkin_make -DCATKIN_ENABLE_TESTING=False -DCMAKE_BUILD_TYPE=Release
+        catkin_make install
+        echo "source ${{github.workspace}}/catkin_ws/devel/setup.bash" >> ${{github.workspace}}/.bashrc
+        source ${{github.workspace}}/.bashrc
+        
+    - name: Download data
+      run: |
+        bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
+        wget $bag_filename -P "records/"
+        bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
+        wget $bag_filename -P "records/"
+      
+    - name: Run tests
+      run: |
+        cd ${{github.workspace}}/catkin_ws
+        source ${{github.workspace}}/.bashrc
+        ${{ matrix._python }} src/realsense-ros/realsense2_camera/scripts/rs2_test.py --all
+      
