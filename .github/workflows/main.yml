@@ -20,6 +20,7 @@ jobs:
     name: Build on ros ${{ matrix.ros_distro }} and ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
         include:
@@ -72,6 +73,7 @@ jobs:
         
     - name: Download data
       run: |
+        cd ${{github.workspace}}/catkin_ws
         bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
         wget $bag_filename -P "records/"
         bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
