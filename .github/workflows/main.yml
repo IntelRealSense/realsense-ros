@@ -6,9 +6,9 @@ name: CI
 on:
   # Triggers the workflow on push or pull request events but only for the development branch
   push:
-    branches: [ development ]
+    branches: [ ros2 ]
   pull_request:
-    branches: [ development ]
+    branches: [ ros2 ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -61,13 +61,13 @@ jobs:
         
     - name: Download data
       run: |
-        cd ${{github.workspace}}/catkin_ws
+        cd ${{github.workspace}}/ros2
         bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
         wget $bag_filename -P "records/"
         bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
         wget $bag_filename -P "records/"
 
-    - name: Install packages for tests:
+    - name: Install packages for tests
       run: |
         sudo apt-get install python3-pip
         pip3 install numpy --upgrade
