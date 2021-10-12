@@ -83,5 +83,5 @@ jobs:
       run: |
         cd ${{github.workspace}}/catkin_ws
         source ${{github.workspace}}/.bashrc
-        ${{ matrix._python }} src/realsense-ros/realsense2_camera/scripts/rs2_test.py --all
+        ${{ matrix._python }} src/realsense-ros/realsense2_camera/scripts/rs2_test.py non_existent_file
       
