@@ -54,6 +54,9 @@ This version supports ROS2 foxy on Ubuntu 20.04.
   sudo rosdep init
   rosdep update
   rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y
+
+  # Install cv-bridge package
+  sudo apt install ros-foxy-cv-bridge
   ```
 
   ### Step 5: Build:
