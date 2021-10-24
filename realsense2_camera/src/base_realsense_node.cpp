@@ -1906,13 +1906,6 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
         }
     }
 
-    if (intrinsic.model == RS2_DISTORTION_KANNALA_BRANDT4)
-    {
-        _camera_info[stream_index].distortion_model = "equidistant";
-    } else {
-        _camera_info[stream_index].distortion_model = "plumb_bob";
-    }
-
     // set R (rotation matrix) values to identity matrix
     _camera_info[stream_index].R.at(0) = 1.0;
     _camera_info[stream_index].R.at(1) = 0.0;
@@ -1924,8 +1917,16 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     _camera_info[stream_index].R.at(7) = 0.0;
     _camera_info[stream_index].R.at(8) = 1.0;
 
-    _camera_info[stream_index].D.resize(5);
-    for (int i = 0; i < 5; i++)
+    int coeff_size(5);
+    if (intrinsic.model == RS2_DISTORTION_KANNALA_BRANDT4)
+    {
+        _camera_info[stream_index].distortion_model = "equidistant";
+        coeff_size = 4;
+    } else {
+        _camera_info[stream_index].distortion_model = "plumb_bob";
+    }
+    _camera_info[stream_index].D.resize(coeff_size);
+    for (int i = 0; i < coeff_size; i++)
     {
         _camera_info[stream_index].D.at(i) = intrinsic.coeffs[i];
     }
