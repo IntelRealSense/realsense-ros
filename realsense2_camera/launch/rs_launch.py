@@ -61,6 +61,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'depth_qos',                    'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},
                            {'name': 'fisheye_qos',                  'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},
                            {'name': 'infra_qos',                    'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},
+                           {'name': 'pointcloud_qos',               'default': 'SYSTEM_DEFAULT', 'description': 'QoS profile name'},
                            {'name': 'enable_gyro',                  'default': 'false', 'description': ''},
                            {'name': 'enable_accel',                 'default': 'false', 'description': ''},
                            {'name': 'pointcloud_texture_stream',    'default': 'RS2_STREAM_COLOR', 'description': 'testure stream for pointcloud'},
