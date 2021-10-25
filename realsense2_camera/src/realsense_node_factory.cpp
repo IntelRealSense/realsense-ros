@@ -264,7 +264,7 @@ void RealSenseNodeFactory::init()
 		_serial_no = declare_parameter("serial_no", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
 		_usb_port_id = declare_parameter("usb_port_id", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
 		_device_type = declare_parameter("device_type", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
-    _wait_for_device_timeout = declare_parameter("wait_for_device_timeout", rclcpp::ParameterValue(-1.0)).get<rclcpp::PARAMETER_DOUBLE>();
+    	_wait_for_device_timeout = declare_parameter("wait_for_device_timeout", rclcpp::ParameterValue(-1.0)).get<rclcpp::PARAMETER_DOUBLE>();
 
 		// A ROS2 hack: until a better way is found to avoid auto convertion of strings containing only digits to integers:
 		if (_serial_no.front() == '_') _serial_no = _serial_no.substr(1);	// remove '_' prefix
@@ -292,27 +292,39 @@ void RealSenseNodeFactory::init()
 			_initial_reset = declare_parameter("initial_reset", rclcpp::ParameterValue(false)).get<rclcpp::PARAMETER_BOOL>();
 
 			_query_thread = std::thread([=]()
+			{
+				std::chrono::milliseconds timespan(6000);
+				rclcpp::Time first_try_time = this->get_clock()->now();
+				while (_is_alive && !_device)
+				{
+					getDevice(_ctx.query_devices());
+					if (_device)
+					{
+						std::function<void(rs2::event_information&)> change_device_callback_function = [this](rs2::event_information& info){changeDeviceCallback(info);};
+						_ctx.set_devices_changed_callback(change_device_callback_function);
+						startDevice();
+					}
+					else
+					{
+						std::chrono::milliseconds actual_timespan(timespan);
+						if (_wait_for_device_timeout > 0)
 						{
-							std::chrono::milliseconds timespan(6000);
-              rclcpp::Time first_try_time = this->get_clock()->now();
-              while (_is_alive && !_device)
+							auto time_to_timeout(_wait_for_device_timeout - (this->get_clock()->now() - first_try_time).seconds());
+							if (time_to_timeout < 0)
 							{
-								getDevice(_ctx.query_devices());
-								if (_device)
-								{
-									std::function<void(rs2::event_information&)> change_device_callback_function = [this](rs2::event_information& info){changeDeviceCallback(info);};
-									_ctx.set_devices_changed_callback(change_device_callback_function);
-									startDevice();
-								}
-                else if (_wait_for_device_timeout > 0 && (this->get_clock()->now() - first_try_time).seconds() > _wait_for_device_timeout)
-								{
-                  ROS_ERROR_STREAM("wait for device timeout of " << _wait_for_device_timeout << " secs expired");
-                  exit(1);
-                } else {
-                  std::this_thread::sleep_for(timespan);
-                }
+								ROS_ERROR_STREAM("wait for device timeout of " << _wait_for_device_timeout << " secs expired");
+								exit(1);
 							}
-						});
+							else
+							{
+								double max_timespan_secs(std::chrono::duration_cast<std::chrono::seconds>(timespan).count());
+								actual_timespan = std::chrono::milliseconds (static_cast<int>(std::min(max_timespan_secs, time_to_timeout) * 1e3));
+							}
+						}
+						std::this_thread::sleep_for(actual_timespan);
+					}
+				}
+			});
 		}
 	}
 	catch(const std::exception& ex)

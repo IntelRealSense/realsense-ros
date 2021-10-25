@@ -58,7 +58,7 @@ This version supports ROS2 Dashing, Eloquent and Foxy.
   ### Step 4: Install dependencies:
    ```bash
   sudo apt-get install python3-rosdep -y
-  sudo rosdep init
+  sudo rosdep init # "sudo rosdep init --include-eol-distros" for Dashing
   rosdep update
   rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y
   sudo apt purge ros-$ROS_DISTRO-librealsense2 -y
@@ -105,9 +105,11 @@ After running the above command with D435i attached, the following list of topic
 - /camera/accel/imu_info
 - /camera/color/camera_info
 - /camera/color/image_raw
+- /camera/color/metadata
 - /camera/depth/camera_info
 - /camera/depth/color/points
 - /camera/depth/image_rect_raw
+- /camera/depth/metadata
 - /camera/extrinsics/depth_to_color
 - /camera/extrinsics/depth_to_infra1
 - /camera/extrinsics/depth_to_infra2
@@ -119,6 +121,7 @@ After running the above command with D435i attached, the following list of topic
 - /camera/infra2/image_rect_raw
 - /camera/parameter_events
 - /camera/rosout
+- /diagnostics
 - /parameter_events
 - /rosout
 - /tf_static
@@ -141,7 +144,7 @@ For the entire list of parameters type `ros2 param list`.
   - Note: serial number can also be defined with "_" prefix. For instance, serial number 831612073525 can be set in command line as `serial_no:=_831612073525`. That is a workaround until a better method will be found to ROS2's auto conversion of strings containing only digits into integers.
 - **usb_port_id**: will attach to the device with the given USB port (*usb_port_id*). i.e 4-1, 4-2 etc. Default, ignore USB port when choosing a device.
 - **device_type**: will attach to a device whose name includes the given *device_type* regular expression pattern. Default, ignore device type. For example, device_type:=d435 will match d435 and d435i. device_type=d435(?!i) will match d435 but not d435i.
-
+- **wait_for_device_timeout**: If the specified device is not found, will wait *wait_for_device_timeout* seconds before exits. Defualt, *wait_for_device_timeout < 0*, will wait indefinitely.
 - **rosbag_filename**: Will publish topics from rosbag file.
 - **initial_reset**: On occasions the device was not closed properly and due to firmware issues needs to reset. If set to true, the device will reset prior to usage.
 - **align_depth**: If set to true, will publish additional topics for the "aligned depth to color" image.: ```/camera/aligned_depth_to_color/image_raw```, ```/camera/aligned_depth_to_color/camera_info```.</br>
@@ -185,6 +188,7 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 - **calib_odom_file**: For the T265 to include odometry input, it must be given a [configuration file](https://github.com/IntelRealSense/librealsense/blob/master/unit-tests/resources/calibration_odometry.json). Explanations can be found [here](https://github.com/IntelRealSense/librealsense/pull/3462). The calibration is done in ROS coordinates system.
 - **publish_tf**: boolean, publish or not TF at all. Defaults to True.
 - **tf_publish_rate**: double, positive values mean dynamic transform publication with specified rate, all other values mean static transform publication. Defaults to 0 
+- **diagnostics_period**: double, positive values set the period between diagnostics updates on the `/diagnostics` topic. 0 or negative values mean no diagnostics topic is published. Defaults to 0.
 - **publish_odom_tf**: If True (default) publish TF from odom_frame to pose_frame.
 - **infra_rgb**: When set to True (default: False), it configures the infrared camera to stream in RGB (color) mode, thus enabling the use of a RGB image in the same frame as the depth image, potentially avoiding frame transformation related errors. When this feature is required, you are additionally required to also enable `enable_infra:=true` for the infrared stream to be enabled.
   - **NOTE** The configuration required for `enable_infra` is independent of `enable_depth`

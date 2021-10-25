@@ -40,6 +40,8 @@
 #include <eigen3/Eigen/Geometry>
 #include <condition_variable>
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+
 #include <queue>
 #include <mutex>
 #include <atomic>
@@ -256,6 +258,7 @@ namespace realsense2_camera
         void set_sensor_auto_exposure_roi(rs2::sensor sensor);
         const rmw_qos_profile_t qos_string_to_qos(std::string str);
         rs2_stream rs2_string_to_stream(std::string str);
+        void startMonitoring();
         void clean();
 
         rs2::device _dev;
@@ -282,7 +285,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, bool> _enable;
         std::map<rs2_stream, std::string> _stream_name;
         bool _publish_tf;
-        double _tf_publish_rate;
+        double _tf_publish_rate, _diagnostics_period;
         std::shared_ptr<tf2_ros::StaticTransformBroadcaster> _static_tf_broadcaster;
         tf2_ros::TransformBroadcaster _dynamic_tf_broadcaster;
         std::vector<geometry_msgs::msg::TransformStamped> _static_tf_msgs;
@@ -337,6 +340,8 @@ namespace realsense2_camera
         std::map<std::string, rs2::region_of_interest> _auto_exposure_roi;
         std::map<rs2_stream, bool> _is_first_frame;
         std::map<rs2_stream, std::vector<std::function<void()> > > _video_functions_stack;
+
+        std::unique_ptr<diagnostic_updater::Updater> _temperature_updater;
 
         stream_index_pair _base_stream;
 
