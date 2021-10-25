@@ -29,7 +29,7 @@ https://github.com/IntelRealSense/librealsense/blob/master/third-party/libtm/lib
 
   <arg name="linear_accel_cov"      default="0.01"/>
   <arg name="initial_reset"         default="false"/>
-  <arg name="reconnect_timeout"     default="6"/>
+  <arg name="reconnect_timeout"     default="6.0"/>
   <arg name="unite_imu_method"      default=""/>
 
   <arg name="publish_odom_tf"     default="true"/>

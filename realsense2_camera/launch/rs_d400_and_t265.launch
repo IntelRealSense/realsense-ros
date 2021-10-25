@@ -8,7 +8,7 @@
   <arg name="tf_prefix_camera1"         default="$(arg camera1)"/>
   <arg name="tf_prefix_camera2"         default="$(arg camera2)"/>
   <arg name="initial_reset"             default="false"/>
-  <arg name="reconnect_timeout"         default="6"/>
+  <arg name="reconnect_timeout"         default="6.0"/>
   <arg name="enable_fisheye"            default="false"/>
   <arg name="color_width"               default="640"/>
   <arg name="color_height"              default="480"/>
