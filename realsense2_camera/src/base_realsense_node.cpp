@@ -180,7 +180,6 @@ size_t SyncedImuPublisher::getNumSubscribers()
 std::string BaseRealSenseNode::getNamespaceStr()
 {
     auto ns = _node.get_namespace();
-    //ns.erase(std::remove(ns.begin(), ns.end(), '/'), ns.end());
     return ns;
 }
 
