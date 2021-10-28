@@ -60,8 +60,7 @@ This version supports ROS2 Dashing, Eloquent and Foxy.
   sudo apt-get install python3-rosdep -y
   sudo rosdep init # "sudo rosdep init --include-eol-distros" for Dashing
   rosdep update
-  rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y
-  sudo apt purge ros-$ROS_DISTRO-librealsense2 -y
+  rosdep install -i --from-path src --rosdistro $_ros_dist --skip-keys=librealsense2 -y
   ```
 
   ### Step 5: Build:
