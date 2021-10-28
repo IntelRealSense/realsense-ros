@@ -2,6 +2,12 @@
 Changelog for package realsense2_camera_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* publish metadata
+* Add service: device_info
+* Contributors: doronhi
+
 3.2.2 (2021-07-01)
 ------------------
 
