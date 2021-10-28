@@ -43,8 +43,7 @@ install:
   - cd ~/ros2_ws
   - sudo rosdep init
   - rosdep update
-  - rosdep install -i --from-path src --rosdistro $_ros_dist -y
-  - sudo apt purge ros-$_ros_dist-librealsense2 -y
+  - rosdep install -i --from-path src --rosdistro $_ros_dist --skip-keys=librealsense2 -y
   - colcon build
 
   - . install/local_setup.bash
