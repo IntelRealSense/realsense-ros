@@ -38,7 +38,7 @@ class CWaitForMessage:
         self.result = None
 
         self.break_timeout = False
-        self.timeout = params.get('timeout_secs', -1)
+        self.timeout = params.get('timeout_secs', -1) * 1e-3
         self.seq = params.get('seq', -1)
         self.time = params.get('time', None)
         self.node_name = params.get('node_name', 'rs2_listener')
@@ -216,7 +216,8 @@ class CWaitForMessage:
         self.prev_msg_data = data
 
         self.prev_time = time.time()
-        if any([self.seq > 0 and data.header.seq >= self.seq,
+        if any([self.seq < 0 and self.time is None, 
+                self.seq > 0 and data.header.seq >= self.seq,
                 self.time and data.header.stamp.secs == self.time['secs'] and data.header.stamp.nsecs == self.time['nsecs']]):
             self.result = data
             self.sub.unregister()
