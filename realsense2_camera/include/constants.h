@@ -94,6 +94,7 @@ namespace realsense2_camera
     const std::string DEFAULT_UNITE_IMU_METHOD         = "";
     const std::string DEFAULT_FILTERS                  = "";
     const std::string DEFAULT_TOPIC_ODOM_IN            = "";
+    const std::string DEFAULT_SERVICE_SAVE_MAP         = "";
 
     const float ROS_DEPTH_SCALE = 0.001;
     using stream_index_pair = std::pair<rs2_stream, int>;
