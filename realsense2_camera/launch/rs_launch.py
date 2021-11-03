@@ -15,6 +15,7 @@
 """Launch realsense2_camera node."""
 import os
 from launch import LaunchDescription
+from ament_index_python.packages import get_package_share_directory
 import launch_ros.actions
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PythonExpression
@@ -26,9 +27,9 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'usb_port_id',                  'default': "''", 'description': 'choose device by usb port id'},
                            {'name': 'device_type',                  'default': "''", 'description': 'choose device by type'},
                            {'name': 'config_file',                  'default': "''", 'description': 'yaml config file'},
-                           {'name': 'unite_imu_method',             'default': "''", 'description': '[copy|linear_interpolation]'},                           
-                           {'name': 'json_file_path',               'default': "''", 'description': 'allows advanced configuration'},                           
-                           {'name': 'output',                       'default': 'screen', 'description': 'pipe node output [screen|log]'},                           
+                           {'name': 'unite_imu_method',             'default': "''", 'description': '[copy|linear_interpolation]'},
+                           {'name': 'json_file_path',               'default': "''", 'description': 'allows advanced configuration'},
+                           {'name': 'output',                       'default': 'screen', 'description': 'pipe node output [screen|log]'},
                            {'name': 'depth_module.width',           'default': '-1', 'description': 'depth image width'},                           
                            {'name': 'depth_module.height',          'default': '-1', 'description': 'depth image height'},                           
                            {'name': 'depth_module.fps',             'default': '-1', 'description': "''"},                           
@@ -61,14 +62,17 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'linear_accel_cov',             'default': '0.01', 'description': "''"},                           
                            {'name': 'initial_reset',                'default': 'false', 'description': "''"},                           
                            {'name': 'allow_no_texture_points',      'default': 'false', 'description': "''"},                           
-                           {'name': 'calib_odom_file',              'default': "''", 'description': "''"},                           
+                           {'name': 'ordered_pc',                   'default': 'false', 'description': ''},
+                           {'name': 'calib_odom_file',              'default': "''", 'description': "''"},
                            {'name': 'topic_odom_in',                'default': "''", 'description': 'topic for T265 wheel odometry'},
                            {'name': 'tf_publish_rate',              'default': '0.0', 'description': 'Rate of publishing static_tf'},
                            {'name': 'decimation_filter.enable',     'default': 'false', 'description': 'Rate of publishing static_tf'},
                            {'name': 'rosbag_filename',              'default': "''", 'description': 'A realsense bagfile to run from as a device'},
                            {'name': 'depth_module.global_time_enabled',              'default': "false", 'description': ''},
-                           {'name': 'motion_module.global_time_enabled',              'default': "false", 'description': ''},
-                           {'name': 'rgb_camera.global_time_enabled',              'default': "false", 'description': ''},
+                           {'name': 'depth_module.exposure.1',     'default': '7500', 'description': 'Initial value for hdr_merge filter'},
+                           {'name': 'depth_module.gain.1',         'default': '16', 'description': 'Initial value for hdr_merge filter'},
+                           {'name': 'depth_module.exposure.2',     'default': '1', 'description': 'Initial value for hdr_merge filter'},
+                           {'name': 'depth_module.gain.2',         'default': '16', 'description': 'Initial value for hdr_merge filter'},
                            
                           ]
 
@@ -85,25 +89,25 @@ def generate_launch_description():
             # Realsense
             launch_ros.actions.Node(
                 condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " == ''"])),
-                package='realsense2_camera', 
+                package='realsense2_camera',
                 node_namespace=LaunchConfiguration("camera_name"),
                 node_name=LaunchConfiguration("camera_name"),
                 node_executable='realsense2_camera_node',
                 prefix=['stdbuf -o L'],
-                parameters = [set_configurable_parameters(configurable_parameters)
+                parameters=[set_configurable_parameters(configurable_parameters)
                             ],
                 output='screen',
                 arguments=['--ros-args', '--log-level', log_level],
                 ),
             launch_ros.actions.Node(
                 condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " != ''"])),
-                package='realsense2_camera', 
+                package='realsense2_camera',
                 node_namespace=LaunchConfiguration("camera_name"),
                 node_name=LaunchConfiguration("camera_name"),
                 node_executable='realsense2_camera_node',
                 prefix=['stdbuf -o L'],
-                parameters = [set_configurable_parameters(configurable_parameters)
-                            ,{LaunchConfiguration("config_file")}
+                parameters=[set_configurable_parameters(configurable_parameters)
+                            , PythonExpression([LaunchConfiguration("config_file")])
                             ],
                 output='screen',
                 arguments=['--ros-args', '--log-level', log_level],
@@ -114,11 +118,11 @@ def generate_launch_description():
             # Realsense
             launch_ros.actions.Node(
                 condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " == ''"])),
-                package='realsense2_camera', 
+                package='realsense2_camera',
                 namespace=LaunchConfiguration("camera_name"),
                 name=LaunchConfiguration("camera_name"),
                 executable='realsense2_camera_node',
-                parameters = [set_configurable_parameters(configurable_parameters)
+                parameters=[set_configurable_parameters(configurable_parameters)
                             ],
                 output='screen',
                 arguments=['--ros-args', '--log-level', log_level],
@@ -126,12 +130,12 @@ def generate_launch_description():
                 ),
             launch_ros.actions.Node(
                 condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " != ''"])),
-                package='realsense2_camera', 
+                package='realsense2_camera',
                 namespace=LaunchConfiguration("camera_name"),
                 name=LaunchConfiguration("camera_name"),
                 executable='realsense2_camera_node',
-                parameters = [set_configurable_parameters(configurable_parameters)
-                            ,{LaunchConfiguration("config_file")}
+                parameters=[set_configurable_parameters(configurable_parameters)
+                            , PythonExpression([LaunchConfiguration("config_file")])
                             ],
                 output='screen',
                 arguments=['--ros-args', '--log-level', log_level],
