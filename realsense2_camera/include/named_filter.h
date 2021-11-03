@@ -4,13 +4,14 @@
 #include <librealsense2/rs.hpp>
 #include <sensor_params.h>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <ros_sensor.h>
 
 namespace realsense2_camera
 {
     class NamedFilter
     {
         public:
-            NamedFilter(std::shared_ptr<rs2::filter> filter, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled=false);
+            NamedFilter(std::shared_ptr<rs2::filter> filter, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled=false, bool is_set_parameters=true);
             bool is_enabled() {return _is_enabled;};
             rs2::frameset Process(rs2::frameset frameset);
 

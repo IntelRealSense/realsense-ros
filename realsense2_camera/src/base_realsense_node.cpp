@@ -127,7 +127,6 @@ void BaseRealSenseNode::hardwareResetRequest()
 void BaseRealSenseNode::publishTopics()
 {
     getParameters();
-    setupFilters();
     setup();
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
@@ -183,6 +182,8 @@ void BaseRealSenseNode::publishAlignedDepthToOthers(rs2::frameset frames, const 
 void BaseRealSenseNode::setupFilters()
 {
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::decimation_filter>(), _parameters, _logger));
+    _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::hdr_merge>(), _parameters, _logger));
+    _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::sequence_id_filter>(), _parameters, _logger));
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::disparity_transform>(), _parameters, _logger));
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::spatial_filter>(), _parameters, _logger));
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::temporal_filter>(), _parameters, _logger));

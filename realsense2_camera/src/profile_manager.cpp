@@ -36,9 +36,7 @@ void ProfilesManager::registerSensorUpdateParam(std::string template_name,
         sprintf(param_name, template_name.c_str(), stream_name.c_str());
 
         params[sip] = std::make_shared<T>(value);
-        ROS_WARN_STREAM("Set: " << param_name << ":" << value << " == " << *(params[sip]));
         std::shared_ptr<T> param = params[sip];
-        // Calling setParam and modify (*param) and not setParamT that modifies param.
         rclcpp::ParameterValue aa = _params.getParameters()->setParam(std::string(param_name), rclcpp::ParameterValue(value), [param, update_sensor_func](const rclcpp::Parameter& parameter)
                 {
                     *param = parameter.get_value<T>();
@@ -195,12 +193,12 @@ void VideoProfilesManager::registerProfileParameters(std::vector<stream_profile>
     }
     if (!checked_sips.empty())
     {
-        ROS_WARN_STREAM(__LINE__ << ": _enabled_profiles.size(): " << _enabled_profiles.size());
+        ROS_DEBUG_STREAM(__LINE__ << ": _enabled_profiles.size(): " << _enabled_profiles.size());
         registerSensorUpdateParam("enable_%s", checked_sips, _enabled_profiles, true, update_sensor_func);
         
         for (auto& sip : checked_sips)
         {
-            ROS_WARN_STREAM(__LINE__ << ": _enabled_profiles[" << ros_stream_to_string(sip.first) << ":" << sip.second << "]: " << *(_enabled_profiles[sip]));
+            ROS_DEBUG_STREAM(__LINE__ << ": _enabled_profiles[" << ros_stream_to_string(sip.first) << ":" << sip.second << "]: " << *(_enabled_profiles[sip]));
         }
 
         registerVideoSensorParams();

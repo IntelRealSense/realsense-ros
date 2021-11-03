@@ -54,9 +54,8 @@ std::map<std::string, int> get_enum_method(rs2::options sensor, rs2_option optio
 }
 
 template<class T>
-void param_set_option(rs2::options sensor, rs2_option option, std::string option_name, const rclcpp::Parameter& parameter)
+void param_set_option(rs2::options sensor, rs2_option option, const rclcpp::Parameter& parameter)
 { 
-    std::cout << "set_option: " << option_name << " = " << parameter.get_value<T>() << std::endl;
     try
     {
         sensor.set_option(option, parameter.get_value<T>());
@@ -124,9 +123,9 @@ void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const s
     T new_val;
     try
     {
-        rclcpp::ParameterValue pValue = (_parameters->setParam(option_name, rclcpp::ParameterValue(option_value), [option, sensor, option_name](const rclcpp::Parameter& parameter)
+        rclcpp::ParameterValue pValue = (_parameters->setParam(option_name, rclcpp::ParameterValue(option_value), [option, sensor](const rclcpp::Parameter& parameter)
                     {
-                        param_set_option<T>(sensor, option, option_name, parameter);
+                        param_set_option<T>(sensor, option, parameter);
                     }, crnt_descriptor));
         new_val = pValue.get<T>();
         _parameters_names.push_back(option_name);

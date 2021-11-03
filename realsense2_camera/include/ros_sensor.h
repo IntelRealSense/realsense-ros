@@ -1,3 +1,6 @@
+#ifndef ___ROS_SENSOR_HEADER_FILE___
+#define ___ROS_SENSOR_HEADER_FILE___
+
 #include <librealsense2/rs.hpp>
 #include <librealsense2/rsutil.h>
 #include "constants.h"
@@ -39,6 +42,8 @@ namespace realsense2_camera
             void clearParameters();
             void set_sensor_auto_exposure_roi();
             void registerAutoExposureROIOptions();
+            void UpdateSequenceIdCallback();
+            void set_sensor_parameter_to_ros(rs2_option option);
 
         private:
             rclcpp::Logger _logger;
@@ -53,3 +58,4 @@ namespace realsense2_camera
             std::vector<std::string> _parameters_names;
     };
 }
+#endif //___ROS_SENSOR_HEADER_FILE___

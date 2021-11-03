@@ -35,7 +35,7 @@ void BaseRealSenseNode::getParameters()
     _json_file_path = _parameters->setParam(param_name, rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
     _parameters_names.push_back(param_name);
 
-    param_name = std::string("json_file_path");
+    param_name = std::string("unite_imu_method");
     std::string unite_imu_method_str = _parameters->setParam(param_name, rclcpp::ParameterValue(DEFAULT_UNITE_IMU_METHOD)).get<rclcpp::PARAMETER_STRING>();
     _parameters_names.push_back(param_name);
 

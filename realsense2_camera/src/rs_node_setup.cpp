@@ -8,6 +8,7 @@ void BaseRealSenseNode::setup()
 {
     setAvailableSensors();
     SetBaseStream();
+    setupFilters();
     setupFiltersPublishers();
     setCallbackFunctions();
     startMonitoring();
@@ -169,6 +170,9 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
             _imu_publishers.erase(sip);
             _imu_info_publisher.erase(sip);
         }
+        std::string param_name(create_graph_resource_name(ros_stream_to_string(sip.first)) + "_qos");
+        _parameters->removeParam(param_name);
+        _parameters_names.remove(param_name);
     }
 }
 

@@ -53,7 +53,68 @@ void RosSensor::setParameters()
 {
     std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
     _params.registerDynamicOptions(*this, module_name);
+    UpdateSequenceIdCallback();
     registerSensorParameters();
+}
+
+void RosSensor::UpdateSequenceIdCallback()
+{
+    // Function replaces the trivial parameter callback with one that 
+    // also updates ros server about the gain and exposure of the selected sequence id.
+    if (!supports(RS2_OPTION_SEQUENCE_ID))
+        return;
+
+    std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
+    // Read initialization parameters and set to sensor:
+    std::vector<rs2_option> options{RS2_OPTION_EXPOSURE, RS2_OPTION_GAIN};
+    unsigned int seq_size = get_option(RS2_OPTION_SEQUENCE_SIZE);
+    for (unsigned int seq_id = 1; seq_id <= seq_size; seq_id++ )
+    {
+        set_option(RS2_OPTION_SEQUENCE_ID, seq_id);
+        for (rs2_option& option : options)
+        {
+            std::stringstream param_name_str;
+            param_name_str << module_name << "." << create_graph_resource_name(rs2_option_to_string(option)) << "." << seq_id;
+            int option_value = get_option(option);
+            int user_set_option_value = _params.getParameters()->readAndDeleteParam(param_name_str.str(), rclcpp::ParameterValue(option_value)).get<rclcpp::PARAMETER_INTEGER>();
+            if (option_value != user_set_option_value)
+            {
+                ROS_INFO_STREAM("Set " << rs2_option_to_string(option) << "." << seq_id << " to " << user_set_option_value);
+                set_option(option, user_set_option_value);
+            }
+        }
+    }
+    set_option(RS2_OPTION_SEQUENCE_ID, 0);   // Set back to default.
+    set_option(RS2_OPTION_HDR_ENABLED, true);
+
+    const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(RS2_OPTION_SEQUENCE_ID)));
+    try
+    {
+        int option_value = static_cast<int>(get_option(RS2_OPTION_SEQUENCE_ID));
+        _params.getParameters()->setParam(option_name, rclcpp::ParameterValue(option_value), 
+            [this](const rclcpp::Parameter& parameter)
+            {
+                set_option(RS2_OPTION_SEQUENCE_ID, parameter.get_value<int>());
+                std::vector<std::function<void()> > funcs;
+                funcs.push_back([this](){set_sensor_parameter_to_ros(RS2_OPTION_GAIN);});
+                funcs.push_back([this](){set_sensor_parameter_to_ros(RS2_OPTION_EXPOSURE);});
+                _params.getParameters()->pushUpdateFunctions(funcs);
+            });
+    }
+    catch(const rclcpp::exceptions::InvalidParameterValueException& e)
+    {
+        ROS_WARN_STREAM("Setting alternative callback: Failed to set parameter:" << option_name << " : " << e.what());
+        return;
+    }
+
+}
+
+void RosSensor::set_sensor_parameter_to_ros(rs2_option option)
+{
+    std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
+    const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
+    float value = get_option(option);
+    _params.getParameters()->setRosParamValue(option_name, value);
 }
 
 
@@ -198,22 +259,21 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
 {
     wanted_profiles.clear();
     std::vector<stream_profile> active_profiles = get_active_streams();
-    ROS_WARN_STREAM("*** _profile_managers.size(): " << _profile_managers.size());
     for (auto profile_manager : _profile_managers)
     {
         profile_manager->addWantedProfiles(wanted_profiles);        
     }
 
-    ROS_WARN_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "active_profiles.size() = " << active_profiles.size());
+    ROS_DEBUG_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "active_profiles.size() = " << active_profiles.size());
     for (auto& profile : active_profiles)
     {
-        ROS_WARN_STREAM("Sensor profile: " << ProfilesManager::profile_string(profile));
+        ROS_DEBUG_STREAM("Sensor profile: " << ProfilesManager::profile_string(profile));
     }
 
-    ROS_WARN_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "wanted_profiles");
+    ROS_DEBUG_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "wanted_profiles");
     for (auto& profile : wanted_profiles)
     {
-        ROS_WARN_STREAM("Sensor profile: " << ProfilesManager::profile_string(profile));
+        ROS_DEBUG_STREAM("Sensor profile: " << ProfilesManager::profile_string(profile));
     }
     if (compare_profiles_lists(active_profiles, wanted_profiles))
     {
