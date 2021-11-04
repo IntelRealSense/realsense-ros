@@ -64,7 +64,9 @@ void RosSensor::UpdateSequenceIdCallback()
     if (!supports(RS2_OPTION_SEQUENCE_ID))
         return;
 
+    int original_seq_id = static_cast<int>(get_option(RS2_OPTION_SEQUENCE_ID));   // To Set back to default.
     std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
+    
     // Read initialization parameters and set to sensor:
     std::vector<rs2_option> options{RS2_OPTION_EXPOSURE, RS2_OPTION_GAIN};
     unsigned int seq_size = get_option(RS2_OPTION_SEQUENCE_SIZE);
@@ -84,9 +86,9 @@ void RosSensor::UpdateSequenceIdCallback()
             }
         }
     }
-    set_option(RS2_OPTION_SEQUENCE_ID, 0);   // Set back to default.
-    set_option(RS2_OPTION_HDR_ENABLED, true);
+    set_option(RS2_OPTION_SEQUENCE_ID, original_seq_id);   // Set back to default.
 
+    // Set callback to update ros parameters to gain and exposure matching the selected sequence_id:
     const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(RS2_OPTION_SEQUENCE_ID)));
     try
     {
