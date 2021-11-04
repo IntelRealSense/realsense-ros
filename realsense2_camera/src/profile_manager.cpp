@@ -19,6 +19,43 @@ void ProfilesManager::clearParameters()
     }
 }
 
+std::string applyTemplateName(std::string template_name, stream_index_pair sip)
+{
+    const std::string stream_name(create_graph_resource_name(STREAM_NAME(sip)));
+    char* param_name = new char[template_name.size() + stream_name.size()];
+    sprintf(param_name, template_name.c_str(), stream_name.c_str());
+    return std::string(param_name);
+}
+
+void ProfilesManager::registerSensorQOSParam(std::string template_name, 
+                                          std::set<stream_index_pair> unique_sips, 
+                                          std::map<stream_index_pair, std::shared_ptr<std::string> >& params, 
+                                          std::string value)
+{
+    // For each pair of stream-index, Function add a QOS parameter to <params> and advertise it by <template_name>.
+    // parameters in <params> are dynamically being updated. If invalid they are reverted.
+    for (auto& sip : unique_sips)
+    {
+        std::string param_name = applyTemplateName(template_name, sip);
+        params[sip] = std::make_shared<std::string>(value);
+        std::shared_ptr<std::string> param = params[sip];
+        rclcpp::ParameterValue aa = _params.getParameters()->setParam(param_name, rclcpp::ParameterValue(value), [this, param](const rclcpp::Parameter& parameter)
+                {
+                    try
+                    {
+                        qos_string_to_qos(parameter.get_value<std::string>());
+                        *param = parameter.get_value<std::string>();
+                    }
+                    catch(const std::exception& e)
+                    {
+                        ROS_ERROR_STREAM("Given value, " << parameter.get_value<std::string>() << " is unknown. Set ROS param back to: " << *param);
+                        setRosToQosDefault(parameter.get_name(), *param);
+                    }
+                });
+        _parameters_names.push_back(param_name);
+    }
+}
+
 template<class T>
 void ProfilesManager::registerSensorUpdateParam(std::string template_name, 
                                                 std::set<stream_index_pair> unique_sips, 
@@ -31,18 +68,15 @@ void ProfilesManager::registerSensorUpdateParam(std::string template_name,
     // parameters in <params> are dynamically being updated.
     for (auto& sip : unique_sips)
     {
-        const std::string stream_name(create_graph_resource_name(STREAM_NAME(sip)));
-        char* param_name = new char[template_name.size() + stream_name.size()];
-        sprintf(param_name, template_name.c_str(), stream_name.c_str());
-
+        std::string param_name = applyTemplateName(template_name, sip);
         params[sip] = std::make_shared<T>(value);
         std::shared_ptr<T> param = params[sip];
-        rclcpp::ParameterValue aa = _params.getParameters()->setParam(std::string(param_name), rclcpp::ParameterValue(value), [param, update_sensor_func](const rclcpp::Parameter& parameter)
+        rclcpp::ParameterValue aa = _params.getParameters()->setParam(param_name, rclcpp::ParameterValue(value), [param, update_sensor_func](const rclcpp::Parameter& parameter)
                 {
                     *param = parameter.get_value<T>();
                     update_sensor_func();
                 });
-        _parameters_names.push_back(std::string(param_name));
+        _parameters_names.push_back(param_name);
     }
 }
 
@@ -134,6 +168,23 @@ std::string ProfilesManager::profile_string(const rs2::stream_profile& profile)
     return profile_str.str();
 }
 
+bool ProfilesManager::hasSIP(const stream_index_pair& sip) const
+{
+    return (_enabled_profiles.find(sip) != _enabled_profiles.end());
+}
+
+rmw_qos_profile_t ProfilesManager::getQOS(const stream_index_pair& sip) const
+{
+    return qos_string_to_qos(*(_profiles_qos_str.at(sip)));
+}
+
+void ProfilesManager::setRosToQosDefault(const std::string& param_name, std::string qos_str)
+{
+    std::vector<std::function<void()> > funcs;
+    funcs.push_back([this, param_name, qos_str](){_params.getParameters()->setRosParamValue(param_name, &qos_str);});
+    _params.getParameters()->pushUpdateFunctions(funcs);
+}
+
 VideoProfilesManager::VideoProfilesManager(std::shared_ptr<Parameters> parameters,
                                            const std::string& module_name):
     ProfilesManager(parameters),
@@ -195,7 +246,7 @@ void VideoProfilesManager::registerProfileParameters(std::vector<stream_profile>
     {
         ROS_DEBUG_STREAM(__LINE__ << ": _enabled_profiles.size(): " << _enabled_profiles.size());
         registerSensorUpdateParam("enable_%s", checked_sips, _enabled_profiles, true, update_sensor_func);
-        
+        registerSensorQOSParam("%s_qos", checked_sips, _profiles_qos_str, IMAGE_QOS);
         for (auto& sip : checked_sips)
         {
             ROS_DEBUG_STREAM(__LINE__ << ": _enabled_profiles[" << ros_stream_to_string(sip.first) << ":" << sip.second << "]: " << *(_enabled_profiles[sip]));
@@ -252,6 +303,7 @@ void MotionProfilesManager::registerProfileParameters(std::vector<stream_profile
     }
     registerSensorUpdateParam("enable_%s", checked_sips, _enabled_profiles, true, update_sensor_func);
     registerSensorUpdateParam("%s_fps", checked_sips, _fps, 0.0, update_sensor_func);
+    registerSensorQOSParam("%s_qos", checked_sips, _profiles_qos_str, HID_QOS);
 }
 
 std::string MotionProfilesManager::wanted_profile_string(stream_index_pair sip)
@@ -279,4 +331,5 @@ void PoseProfilesManager::registerProfileParameters(std::vector<stream_profile> 
     }
     registerSensorUpdateParam("enable_%s", checked_sips, _enabled_profiles, true, update_sensor_func);
     registerSensorUpdateParam("%s_fps", checked_sips, _fps, 0.0, update_sensor_func);
+    registerSensorQOSParam("%s_qos", checked_sips, _profiles_qos_str, HID_QOS);
 }

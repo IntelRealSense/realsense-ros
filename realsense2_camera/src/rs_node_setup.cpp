@@ -82,13 +82,11 @@ void BaseRealSenseNode::setAvailableSensors()
     auto pid = _dev.get_info(RS2_CAMERA_INFO_PRODUCT_ID);
     ROS_INFO_STREAM("Device Product ID: 0x" << pid);
 
-    ROS_INFO_STREAM("Align Depth: " << ((_align_depth)?"On":"Off"));
     ROS_INFO_STREAM("Sync Mode: " << ((_sync_frames)?"On":"Off"));
 
     std::function<void(rs2::frame)> frame_callback_function = [this](rs2::frame frame){
         bool is_filter(_filters.end() != find_if(_filters.begin(), _filters.end(), [](std::shared_ptr<NamedFilter> f){return (f->is_enabled()); }));
-        is_filter |= _pc_filter->is_enabled();
-        if (_sync_frames || _align_depth || is_filter)
+        if (_sync_frames || is_filter)
             this->_asyncer.invoke(frame);
         else 
             frame_callback(frame);
@@ -170,9 +168,6 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
             _imu_publishers.erase(sip);
             _imu_info_publisher.erase(sip);
         }
-        std::string param_name(create_graph_resource_name(ros_stream_to_string(sip.first)) + "_qos");
-        _parameters->removeParam(param_name);
-        _parameters_names.remove(param_name);
     }
 }
 
@@ -196,14 +191,9 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             // double fps(profile.fps());
             // _rs_diagnostic_updater.Add(stream_name, diagnostic_updater::FrequencyStatusParam(&fps, &fps));
             
-            std::string param_name(create_graph_resource_name(ros_stream_to_string(sip.first)) + "_qos");
-            std::string qos_str = _parameters->setParam(param_name, rclcpp::ParameterValue(IMAGE_QOS), [this](const rclcpp::Parameter& )
-                    {
-                        ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
-                    }).get<rclcpp::PARAMETER_STRING>();
-            _parameters_names.push_back(param_name);
+            rmw_qos_profile_t qos = sensor.getQOS(sip);
+            _image_publishers[sip] = {image_transport::create_publisher(&_node, image_raw.str(), qos), stream_name}; // TODO: remove "stream_name"
             
-            _image_publishers[sip] = {image_transport::create_publisher(&_node, image_raw.str(), qos_string_to_qos(qos_str)), stream_name}; // TODO: remove "stream_name"
             _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);
 
             if ((sip != DEPTH) && sip.second < 2)
@@ -214,7 +204,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
                 // _rs_diagnostic_updater.Add(aligned_stream_name, diagnostic_updater::FrequencyStatusParam(&fps, &fps));
-                _depth_aligned_image_publishers[sip] = {image_transport::create_publisher(&_node, aligned_image_raw.str(), qos_string_to_qos(qos_str)), aligned_stream_name};
+                _depth_aligned_image_publishers[sip] = {image_transport::create_publisher(&_node, aligned_image_raw.str(), qos), aligned_stream_name};
                 _depth_aligned_info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(), 1);
             }
             continue;

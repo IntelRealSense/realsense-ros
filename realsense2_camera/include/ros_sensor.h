@@ -29,6 +29,7 @@ namespace realsense2_camera
             void runFirstFrameInitialization();
             virtual bool start(const std::vector<rs2::stream_profile>& profiles);
             void stop();
+            rmw_qos_profile_t getQOS(const stream_index_pair& sip) const;
 
             template<class T> 
             bool is() const

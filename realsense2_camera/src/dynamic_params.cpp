@@ -192,22 +192,28 @@ namespace realsense2_camera
         }                            
     }
 
-    void Parameters::setRosParamValue(const std::string param_name, const float& value)
+    void Parameters::setRosParamValue(const std::string param_name, void const* const value)
     {
         // setRosParamValue sets a value to a parameter in the parameters server.
         rclcpp::ParameterType param_type = _node.get_parameter(param_name).get_type();
-        ROS_INFO_STREAM("Set " << param_name << " to " << value);
         rcl_interfaces::msg::SetParametersResult results;
         switch(param_type)
         {
             case rclcpp::PARAMETER_BOOL:
-                results = _node.set_parameter(rclcpp::Parameter(param_name, static_cast<bool>(value)));
+                ROS_INFO_STREAM("Set " << param_name << " to " << *(bool*)value);
+                results = _node.set_parameter(rclcpp::Parameter(param_name, *(bool*)value));
                 break;
             case rclcpp::PARAMETER_INTEGER:
-                results = _node.set_parameter(rclcpp::Parameter(param_name, static_cast<int>(value)));
+                ROS_INFO_STREAM("Set " << param_name << " to " << *(int*)value);
+                results = _node.set_parameter(rclcpp::Parameter(param_name, *(int*)value));
                 break;
             case rclcpp::PARAMETER_DOUBLE:
-                results = _node.set_parameter(rclcpp::Parameter(param_name, static_cast<double>(value)));
+                ROS_INFO_STREAM("Set " << param_name << " to " << *(double*)value);
+                results = _node.set_parameter(rclcpp::Parameter(param_name, *(double*)value));
+                break;
+            case rclcpp::PARAMETER_STRING:
+                ROS_INFO_STREAM("Set " << param_name << " to " << *(std::string*)value);
+                results = _node.set_parameter(rclcpp::Parameter(param_name, *(std::string*)value));
                 break;
             default:
                 ROS_ERROR_STREAM("Setting parameter of type " <<  _node.get_parameter(param_name).get_type_name() << " is not implemented.");

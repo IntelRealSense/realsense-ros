@@ -181,7 +181,6 @@ namespace realsense2_camera
         std::string _base_frame_id;
         bool _is_running;
         rclcpp::Node& _node;
-        bool _align_depth;
         std::string _camera_name;
         std::vector<rs2_option> _monitor_options;
         rclcpp::Logger _logger;

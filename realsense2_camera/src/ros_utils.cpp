@@ -68,22 +68,43 @@ std::string create_graph_resource_name(const std::string &original_name)
     return fixed_name;
 }
 
+static const rmw_qos_profile_t rmw_qos_profile_latched =
+{
+    RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+    1,
+    RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+    RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+    RMW_QOS_DEADLINE_DEFAULT,
+    RMW_QOS_LIFESPAN_DEFAULT,
+    RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+    RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+    false
+};
+
 const rmw_qos_profile_t qos_string_to_qos(std::string str)
 {
-#ifdef FOXY
+#ifndef DASHING
     if (str == "UNKNOWN")
         return rmw_qos_profile_unknown;
 #endif
     if (str == "SYSTEM_DEFAULT")
         return rmw_qos_profile_system_default;
+    if (str == "DEFAULT")
+        return rmw_qos_profile_default;
+    if (str == "HID_DEFAULT")
+    {
+        rmw_qos_profile_t profile = rmw_qos_profile_default;
+        profile.depth = 100;
+        return profile;
+    }
+    if (str == "EXTRINSICS_DEFAULT")
+        return rmw_qos_profile_latched;
     if (str == "PARAMETER_EVENTS")
         return rmw_qos_profile_parameter_events;
     if (str == "SERVICES_DEFAULT")
         return rmw_qos_profile_services_default;
     if (str == "PARAMETERS")
         return rmw_qos_profile_parameters;
-    if (str == "DEFAULT")
-        return rmw_qos_profile_default;
     if (str == "SENSOR_DATA")
         return rmw_qos_profile_sensor_data;
     throw std::runtime_error("Unknown QoS string " + str);

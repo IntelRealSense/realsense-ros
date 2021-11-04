@@ -19,6 +19,11 @@ namespace realsense2_camera
             virtual std::string wanted_profile_string(stream_index_pair sip) = 0;
             static std::string profile_string(const rs2::stream_profile& profile);
             
+            void registerSensorQOSParam(std::string template_name, 
+                                        std::set<stream_index_pair> unique_sips, 
+                                        std::map<stream_index_pair, std::shared_ptr<std::string> >& params, 
+                                        std::string value);
+
             template<class T>
             void registerSensorUpdateParam(std::string template_name, 
                                            std::set<stream_index_pair> unique_sips, 
@@ -27,11 +32,17 @@ namespace realsense2_camera
                                            std::function<void()> update_sensor_func);
             void addWantedProfiles(std::vector<rs2::stream_profile>& wanted_profiles);
             void clearParameters();
+            bool hasSIP(const stream_index_pair& sip) const;
+            rmw_qos_profile_t getQOS(const stream_index_pair& sip) const;
 
+        private:
+            void setRosToQosDefault(const std::string& param_name, std::string qos_str);
+            
         protected:
             rclcpp::Logger _logger;
             SensorParams _params;
             std::map<stream_index_pair, std::shared_ptr<bool>> _enabled_profiles;
+            std::map<stream_index_pair, std::shared_ptr<std::string>> _profiles_qos_str;
             std::vector<rs2::stream_profile> _all_profiles;
             std::vector<std::string> _parameters_names;
     };

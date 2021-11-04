@@ -116,7 +116,7 @@ void RosSensor::set_sensor_parameter_to_ros(rs2_option option)
     std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
     const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
     float value = get_option(option);
-    _params.getParameters()->setRosParamValue(option_name, value);
+    _params.getParameters()->setRosParamValue(option_name, &value);
 }
 
 
@@ -218,6 +218,18 @@ void RosSensor::stop()
         ROS_ERROR_STREAM("Exception: " << __FILE__ << ":" << __LINE__ << ":" << e.what());
     }
     ROS_INFO_STREAM("Close Sensor - Done. ");
+}
+
+rmw_qos_profile_t RosSensor::getQOS(const stream_index_pair& sip) const
+{
+    for(auto& profile_manager : _profile_managers)
+    {
+        if (profile_manager->hasSIP(sip))
+        {
+            return profile_manager->getQOS(sip);
+        }
+    }
+    throw std::runtime_error("Given stream has no profile manager: " + std::string(rs2_stream_to_string(sip.first)) + "." + std::to_string(sip.second));
 }
 
 bool profiles_equal(const rs2::stream_profile& a, const rs2::stream_profile& b)
