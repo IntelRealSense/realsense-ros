@@ -42,7 +42,7 @@
 #define ROS_WARN_STREAM_COND(cond, msg) RCLCPP_WARN_STREAM_EXPRESSION(_logger, cond, msg)
 #endif
 
-
+#define ROS_WARN_ONCE(msg) RCLCPP_WARN_ONCE(_logger, msg)
 #define ROS_WARN_COND(cond, ...) RCLCPP_WARN_EXPRESSION(_logger, cond, __VA_ARGS__)
 
 namespace realsense2_camera
