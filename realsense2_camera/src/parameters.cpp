@@ -7,10 +7,7 @@ void BaseRealSenseNode::getParameters()
 {
     ROS_INFO("getParameters...");
 
-    std::string param_name("align_depth");
-    _parameters->setParamT(param_name, rclcpp::ParameterValue(ALIGN_DEPTH), _align_depth);
-    _parameters_names.push_back(param_name);
-
+    std::string param_name;
     param_name = std::string("camera_name");
     _camera_name = _parameters->setParam(param_name, rclcpp::ParameterValue("camera")).get<rclcpp::PARAMETER_STRING>();
     _parameters_names.push_back(param_name);
@@ -28,7 +25,7 @@ void BaseRealSenseNode::getParameters()
     startDynamicTf();
 
     param_name = std::string("enable_sync");
-    _parameters->setParamT(param_name, rclcpp::ParameterValue(SYNC_FRAMES || _align_depth), _sync_frames);
+    _parameters->setParamT(param_name, rclcpp::ParameterValue(SYNC_FRAMES), _sync_frames);
     _parameters_names.push_back(param_name);
 
     param_name = std::string("json_file_path");
@@ -46,7 +43,6 @@ void BaseRealSenseNode::getParameters()
     else
         _imu_sync_method = imu_sync_method::NONE;
 
-    // _allow_no_texture_points = _node.declare_parameter("allow_no_texture_points", rclcpp::ParameterValue(ALLOW_NO_TEXTURE_POINTS)).get<rclcpp::PARAMETER_BOOL>();
     param_name = std::string("clip_distance");
     _clipping_distance = _parameters->setParam(param_name, rclcpp::ParameterValue(-1.0)).get<rclcpp::PARAMETER_DOUBLE>();
     _parameters_names.push_back(param_name);

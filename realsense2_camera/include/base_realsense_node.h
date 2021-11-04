@@ -242,7 +242,6 @@ namespace realsense2_camera
                           const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
                           const std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics>& image_publishers);
 
-        void publishAlignedDepthToOthers(rs2::frameset frames, const rclcpp::Time& t);
         sensor_msgs::msg::Imu CreateUnitedMessage(const CimuData accel_data, const CimuData gyro_data);
 
         void FillImuData_Copy(const CimuData imu_data, std::deque<sensor_msgs::msg::Imu>& imu_msgs);
@@ -312,7 +311,7 @@ namespace realsense2_camera
         stream_index_pair _pointcloud_texture;
         PipelineSyncer _syncer;
         rs2::asynchronous_syncer _asyncer;
-        std::shared_ptr<NamedFilter> _colorizer_filter;
+        std::shared_ptr<NamedFilter> _align_depth_filter, _colorizer_filter;
         std::shared_ptr<PointcloudFilter> _pc_filter;
         std::vector<std::shared_ptr<NamedFilter>> _filters;
         std::vector<rs2::sensor> _dev_sensors;

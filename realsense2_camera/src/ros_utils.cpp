@@ -37,6 +37,7 @@ std::string rs2_to_ros(std::string rs2_name)
         {"Stereo Module", "Depth Module"},
         {"L500 Depth Sensor", "Depth Module"} ,
         {"Pointcloud (SSE3)", "Pointcloud"},
+        {"Align (SSE3)", "Align Depth"},
         {"Decimation Filter", "decimation"},
         {"Depth to Disparity", "disparity"},
         {"Spatial Filter", "spatial"},
