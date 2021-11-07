@@ -63,52 +63,6 @@ namespace realsense2_camera
 
     const std::vector<stream_index_pair> HID_STREAMS = {GYRO, ACCEL, POSE};
 
-
-    class Diagnostics
-    {
-        public:
-            Diagnostics(std::shared_ptr<diagnostic_updater::Updater> diagnostic_updater, std::string serial_no):
-                _updater(diagnostic_updater)
-            {
-                _updater->removeByName(serial_no);
-                _updater->add(serial_no, this, &Diagnostics::update_temperatures);
-            }
-            void update_temperatures(diagnostic_updater::DiagnosticStatusWrapper& status)
-            {
-                for (auto entry : _crnt_temp)
-                {
-                    status.add(entry.first, entry.second);
-                }
-                status.summary(0, "OK");
-            }
-            void Add(const std::string& name, 
-                const diagnostic_updater::FrequencyStatusParam& param)
-            {
-                frequency_status_[name] = std::make_shared<diagnostic_updater::HeaderlessTopicDiagnostic>(name, *_updater, param);
-            }
-            void Remove(const std::string& name)
-            {
-                frequency_status_.erase(name);
-            }
-            void Tick(const std::string& name)
-            {
-                frequency_status_[name]->tick();
-                _updater->force_update();
-            }
-            void update_temperatue(const std::string& name, double crnt_temperaure)
-            {
-                _crnt_temp[name] = crnt_temperaure;
-                _updater->force_update();
-            }
-
-        private:
-            std::map<std::string, std::shared_ptr<diagnostic_updater::HeaderlessTopicDiagnostic> > frequency_status_;
-            std::map<std::string, double> _crnt_temp;
-            std::shared_ptr<diagnostic_updater::Updater> _updater;
-    };
-
-    typedef std::pair<image_transport::Publisher, std::string> ImagePublisherWithFrequencyDiagnostics;
-
 	class PipelineSyncer : public rs2::asynchronous_syncer
 	{
 	public: 
@@ -186,7 +140,6 @@ namespace realsense2_camera
         rclcpp::Logger _logger;
         std::shared_ptr<Parameters> _parameters;
         std::list<std::string> _parameters_names;
-        // Diagnostics _rs_diagnostic_updater;
 
         virtual void calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile);
         tf2::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
@@ -239,7 +192,7 @@ namespace realsense2_camera
                           const stream_index_pair& stream,
                           std::map<stream_index_pair, cv::Mat>& images,
                           const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
-                          const std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics>& image_publishers);
+                          const std::map<stream_index_pair, image_transport::Publisher>& image_publishers);
 
         sensor_msgs::msg::Imu CreateUnitedMessage(const CimuData accel_data, const CimuData gyro_data);
 
@@ -278,7 +231,7 @@ namespace realsense2_camera
         std::map<rs2_stream, rs2_format>  _format;
         std::map<stream_index_pair, bool> _enable;
         bool _publish_tf;
-        double _tf_publish_rate;
+        double _tf_publish_rate, _diagnostics_period;
         std::mutex _publish_tf_mutex;
         std::mutex _update_sensor_mutex;
 
@@ -287,7 +240,7 @@ namespace realsense2_camera
         std::vector<geometry_msgs::msg::TransformStamped> _static_tf_msgs;
         std::shared_ptr<std::thread> _tf_t;
 
-        std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics> _image_publishers;
+        std::map<stream_index_pair, image_transport::Publisher> _image_publishers;
         
         std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr> _imu_publishers;
         std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> _odom_publisher;
@@ -321,7 +274,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
         std::map<stream_index_pair, cv::Mat> _depth_scaled_image;
         std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr> _depth_aligned_info_publisher;
-        std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics> _depth_aligned_image_publishers;
+        std::map<stream_index_pair, image_transport::Publisher> _depth_aligned_image_publishers;
         std::map<std::string, rs2::region_of_interest> _auto_exposure_roi;
         std::map<rs2_stream, bool> _is_first_frame;
 
@@ -330,7 +283,9 @@ namespace realsense2_camera
         mutable std::condition_variable _cv_temp, _cv_mpc, _cv_tf;
         bool _is_profile_changed;
 
+        std::unique_ptr<diagnostic_updater::Updater> _temperature_updater;
         rs2::stream_profile _base_profile;
+
 
     };//end class
 }

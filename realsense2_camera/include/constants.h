@@ -80,6 +80,7 @@ namespace realsense2_camera
 
     const bool PUBLISH_TF     = true;
     const double TF_PUBLISH_RATE = 0; // Static transform
+    const double DIAGNOSTICS_PERIOD = 0.0;
 
     const int IMAGE_WIDTH          = -1;
     const int IMAGE_HEIGHT         = -1;

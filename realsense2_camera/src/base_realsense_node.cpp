@@ -960,7 +960,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
                                      const stream_index_pair& stream,
                                      std::map<stream_index_pair, cv::Mat>& images,
                                      const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
-                                     const std::map<stream_index_pair, ImagePublisherWithFrequencyDiagnostics>& image_publishers)
+                                     const std::map<stream_index_pair, image_transport::Publisher>& image_publishers)
 {
     ROS_DEBUG("publishFrame(...)");
     unsigned int width = 0;
@@ -989,7 +989,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     auto& info_publisher = info_publishers.at(stream);
     auto& image_publisher = image_publishers.at(stream);
     if(0 != info_publisher->get_subscription_count() ||
-       0 != image_publisher.first.getNumSubscribers())
+       0 != image_publisher.getNumSubscribers())
     {
         sensor_msgs::msg::Image::SharedPtr img;
         img = cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(bpp), image).toImageMsg();
@@ -1008,8 +1008,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         cam_info.header.stamp = t;
         info_publisher->publish(cam_info);
 
-        image_publisher.first.publish(img);
-        // _rs_diagnostic_updater.Tick(image_publisher.second);
+        image_publisher.publish(img);
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
     }
 }
@@ -1017,38 +1016,30 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
 
 void BaseRealSenseNode::startMonitoring()
 {
-    int time_interval(10000);
-    std::function<void()> func = [this, time_interval](){
-        std::mutex mu;
-        std::unique_lock<std::mutex> lock(mu);
-        while(_is_running) {
-            _cv_temp.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return !_is_running;});
-            if (_is_running)
-            {
-                publish_temperature();
-            }
-        }
-    };
-    _monitoring_t = std::make_shared<std::thread>(func);
-}
+    std::string serial_no = _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+    if (_diagnostics_period > 0)
+    {
+        ROS_INFO_STREAM("Publish diagnostics every " << _diagnostics_period << " seconds.");
+        _temperature_updater = std::make_unique<diagnostic_updater::Updater>(&_node, _diagnostics_period);
 
-void BaseRealSenseNode::publish_temperature()
-{
-    // rs2::options sensor(*_available_ros_sensors[0]);
-    // for (rs2_option option : _monitor_options)
-    // {
-    //     if (sensor.supports(option))
-    //     {
-    //         std::string name(rs2_option_to_string(option));
-    //         try
-    //         {
-    //             auto option_value = sensor.get_option(option);
-    //             _rs_diagnostic_updater.update_temperatue(name, option_value);
-    //         }
-    //         catch(const std::exception& e)
-    //         {
-    //             ROS_DEBUG_STREAM("Failed checking for temperature - " << name << std::endl << e.what());
-    //         }
-    //     }
-    // }
+        _temperature_updater->setHardwareID(serial_no);
+
+        _temperature_updater->add("Temperatures", [this](diagnostic_updater::DiagnosticStatusWrapper& status)
+        {
+            bool got_temperature(false);
+            for(auto&& sensor : _available_ros_sensors)
+            {
+                for (rs2_option option : _monitor_options)
+                {
+                    if (sensor->supports(option))
+                    {
+                        status.add(rs2_option_to_string(option), sensor->get_option(option));
+                        got_temperature = true;
+                    }
+                }
+                if (got_temperature) break;
+            }
+            status.summary(0, "OK");
+        });
+    }
 }

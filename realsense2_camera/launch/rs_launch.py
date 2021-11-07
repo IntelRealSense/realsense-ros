@@ -66,6 +66,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'calib_odom_file',              'default': "''", 'description': "''"},
                            {'name': 'topic_odom_in',                'default': "''", 'description': 'topic for T265 wheel odometry'},
                            {'name': 'tf_publish_rate',              'default': '0.0', 'description': 'Rate of publishing static_tf'},
+                           {'name': 'diagnostics_period',           'default': '0.0', 'description': 'Rate of publishing diagnostics. 0=Disabled'},
                            {'name': 'decimation_filter.enable',     'default': 'false', 'description': 'Rate of publishing static_tf'},
                            {'name': 'rosbag_filename',              'default': "''", 'description': 'A realsense bagfile to run from as a device'},
                            {'name': 'depth_module.global_time_enabled',              'default': "false", 'description': ''},

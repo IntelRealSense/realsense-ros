@@ -327,12 +327,6 @@ void RealSenseNodeFactory::startDevice()
 	if (_realSenseNode) _realSenseNode.reset();
 	std::string pid_str(_device.get_info(RS2_CAMERA_INFO_PRODUCT_ID));
 	uint16_t pid = std::stoi(pid_str, 0, 16);
-	if (!_diagnostic_updater)
-	{
-		ROS_DEBUG("diagnostic_updater::Updater");
-		_diagnostic_updater = std::make_shared<diagnostic_updater::Updater>(this);
-		_diagnostic_updater->setHardwareID(_serial_no);
-	}
 	try
 	{
 		switch(pid)

@@ -24,6 +24,10 @@ void BaseRealSenseNode::getParameters()
     _parameters_names.push_back(param_name);
     startDynamicTf();
 
+    param_name = std::string("diagnostics_period");
+    _diagnostics_period = _parameters->setParam(param_name, rclcpp::ParameterValue(DIAGNOSTICS_PERIOD)).get<rclcpp::PARAMETER_DOUBLE>();
+    _parameters_names.push_back(param_name);
+
     param_name = std::string("enable_sync");
     _parameters->setParamT(param_name, rclcpp::ParameterValue(SYNC_FRAMES), _sync_frames);
     _parameters_names.push_back(param_name);
