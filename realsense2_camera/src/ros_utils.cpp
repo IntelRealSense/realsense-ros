@@ -91,14 +91,6 @@ const rmw_qos_profile_t qos_string_to_qos(std::string str)
         return rmw_qos_profile_system_default;
     if (str == "DEFAULT")
         return rmw_qos_profile_default;
-    if (str == "HID_DEFAULT")
-    {
-        rmw_qos_profile_t profile = rmw_qos_profile_default;
-        profile.depth = 100;
-        return profile;
-    }
-    if (str == "EXTRINSICS_DEFAULT")
-        return rmw_qos_profile_latched;
     if (str == "PARAMETER_EVENTS")
         return rmw_qos_profile_parameter_events;
     if (str == "SERVICES_DEFAULT")
