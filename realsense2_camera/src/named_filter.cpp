@@ -61,14 +61,33 @@ void PointcloudFilter::setParameters()
             setPublisher();
         });
 
-    std::string param_name("allow_no_texture_points");
+    std::string module_name = create_graph_resource_name(rs2_to_ros(_filter->get_info(RS2_CAMERA_INFO_NAME)));
+    std::string param_name(module_name + "." + "allow_no_texture_points");
     _params.getParameters()->setParamT(param_name, rclcpp::ParameterValue(ALLOW_NO_TEXTURE_POINTS), _allow_no_texture_points);
     _parameters_names.push_back(param_name);
 
-    param_name = std::string("ordered_pc");
+    param_name = module_name + "." + std::string("ordered_pc");
     _params.getParameters()->setParamT(param_name, rclcpp::ParameterValue(ORDERED_PC), _ordered_pc);
     _parameters_names.push_back(param_name);
 
+    param_name = module_name + "." + std::string("pointcloud_qos");
+    rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
+    crnt_descriptor.description = "Available options are:\n" + list_available_qos_strings();
+    _pointcloud_qos = _params.getParameters()->setParam(param_name, rclcpp::ParameterValue(DEFAULT_QOS), [this](const rclcpp::Parameter& parameter)
+            {
+                try
+                {
+                    qos_string_to_qos(parameter.get_value<std::string>());
+                    _pointcloud_qos = parameter.get_value<std::string>();
+                    ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
+                }
+                catch(const std::exception& e)
+                {
+                    ROS_ERROR_STREAM("Given value, " << parameter.get_value<std::string>() << " is unknown. Set ROS param back to: " << _pointcloud_qos);
+                    _params.getParameters()->queueSetRosValue(parameter.get_name(), _pointcloud_qos);
+                }
+            }, crnt_descriptor).get<rclcpp::PARAMETER_STRING>();
+    _parameters_names.push_back(param_name);
     setPublisher();
 }
 
@@ -77,7 +96,9 @@ void PointcloudFilter::setPublisher()
     std::lock_guard<std::mutex> lock_guard(_mutex_publisher);
     if ((_is_enabled) && (!_pointcloud_publisher))
     {
-        _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 1);
+        _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 
+                                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_pointcloud_qos)),
+                                            qos_string_to_qos(_pointcloud_qos)));
     }
     else if ((!_is_enabled) && (_pointcloud_publisher))
     {

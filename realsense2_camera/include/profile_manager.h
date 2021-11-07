@@ -35,9 +35,6 @@ namespace realsense2_camera
             bool hasSIP(const stream_index_pair& sip) const;
             rmw_qos_profile_t getQOS(const stream_index_pair& sip) const;
 
-        private:
-            void setRosToQosDefault(const std::string& param_name, std::string qos_str);
-            
         protected:
             rclcpp::Logger _logger;
             SensorParams _params;

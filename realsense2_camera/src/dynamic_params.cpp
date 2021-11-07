@@ -224,6 +224,15 @@ namespace realsense2_camera
         }
     }
 
+    template <class T>
+    void Parameters::queueSetRosValue(const std::string& param_name, const T value)
+    {
+        std::vector<std::function<void()> > funcs;
+        funcs.push_back([this, param_name, value](){setRosParamValue(param_name, &value);});
+        pushUpdateFunctions(funcs);
+    }
+
+
     void Parameters::removeParam(std::string param_name)
     {
         if (_node.has_parameter(param_name))
@@ -240,4 +249,6 @@ namespace realsense2_camera
     template void Parameters::setParamValue<int>(int& param, const int& value);
     template void Parameters::setParamValue<bool>(bool& param, const bool& value);
     template void Parameters::setParamValue<double>(double& param, const double& value);
+
+    template void Parameters::queueSetRosValue<std::string>(const std::string& param_name, const std::string value);
 }

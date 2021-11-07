@@ -26,7 +26,9 @@ namespace realsense2_camera
             void setRosParamValue(const std::string param_name, void const* const value); // function updates the parameters server
             void removeParam(std::string param_name);
             void pushUpdateFunctions(std::vector<std::function<void()> > funcs);
-
+            template <class T>
+            void queueSetRosValue(const std::string& param_name, const T value);
+            
         private:
             void monitor_update_functions();
 

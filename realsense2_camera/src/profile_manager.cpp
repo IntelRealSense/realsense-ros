@@ -39,19 +39,22 @@ void ProfilesManager::registerSensorQOSParam(std::string template_name,
         std::string param_name = applyTemplateName(template_name, sip);
         params[sip] = std::make_shared<std::string>(value);
         std::shared_ptr<std::string> param = params[sip];
+        rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
+        crnt_descriptor.description = "Available options are:\n" + list_available_qos_strings();
         rclcpp::ParameterValue aa = _params.getParameters()->setParam(param_name, rclcpp::ParameterValue(value), [this, param](const rclcpp::Parameter& parameter)
                 {
                     try
                     {
                         qos_string_to_qos(parameter.get_value<std::string>());
                         *param = parameter.get_value<std::string>();
+                        ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
                     }
                     catch(const std::exception& e)
                     {
                         ROS_ERROR_STREAM("Given value, " << parameter.get_value<std::string>() << " is unknown. Set ROS param back to: " << *param);
-                        setRosToQosDefault(parameter.get_name(), *param);
+                        _params.getParameters()->queueSetRosValue(parameter.get_name(), *param);
                     }
-                });
+                }, crnt_descriptor);
         _parameters_names.push_back(param_name);
     }
 }
@@ -178,13 +181,6 @@ rmw_qos_profile_t ProfilesManager::getQOS(const stream_index_pair& sip) const
     return qos_string_to_qos(*(_profiles_qos_str.at(sip)));
 }
 
-void ProfilesManager::setRosToQosDefault(const std::string& param_name, std::string qos_str)
-{
-    std::vector<std::function<void()> > funcs;
-    funcs.push_back([this, param_name, qos_str](){_params.getParameters()->setRosParamValue(param_name, &qos_str);});
-    _params.getParameters()->pushUpdateFunctions(funcs);
-}
-
 VideoProfilesManager::VideoProfilesManager(std::shared_ptr<Parameters> parameters,
                                            const std::string& module_name):
     ProfilesManager(parameters),
@@ -193,11 +189,6 @@ VideoProfilesManager::VideoProfilesManager(std::shared_ptr<Parameters> parameter
     _allowed_formats[RS2_STREAM_DEPTH] = RS2_FORMAT_Z16;
     _allowed_formats[RS2_STREAM_INFRARED] = RS2_FORMAT_Y8;
 }
-
-// bool VideoProfilesManager::isTypeExist()
-// {
-//     return _is_profile_exist;
-// }
 
 bool VideoProfilesManager::set_to_defaults(std::map<stream_index_pair, rs2::stream_profile>& default_profiles)
 {

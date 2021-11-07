@@ -102,6 +102,21 @@ const rmw_qos_profile_t qos_string_to_qos(std::string str)
     throw std::runtime_error("Unknown QoS string " + str);
 }
 
+const std::string list_available_qos_strings()
+{
+    std::stringstream res;
+#ifndef DASHING
+    res << "UNKNOWN" << "\n";
+#endif
+    res << "SYSTEM_DEFAULT" << "\n"
+        << "DEFAULT" << "\n"
+        << "PARAMETER_EVENTS" << "\n"
+        << "SERVICES_DEFAULT" << "\n"
+        << "PARAMETERS" << "\n"
+        << "SENSOR_DATA";
+    return res.str();
+}
+
 rs2_stream rs2_string_to_stream(std::string str)
 {
     if (str == "RS2_STREAM_ANY")
