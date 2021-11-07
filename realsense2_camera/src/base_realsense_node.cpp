@@ -695,13 +695,6 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     _camera_info[stream_index].p.at(10) = 1;
     _camera_info[stream_index].p.at(11) = 0;
 
-    if (intrinsic.model == RS2_DISTORTION_KANNALA_BRANDT4)
-    {
-        _camera_info[stream_index].distortion_model = "equidistant";
-    } else {
-        _camera_info[stream_index].distortion_model = "plumb_bob";
-    }
-
     // set R (rotation matrix) values to identity matrix
     _camera_info[stream_index].r.at(0) = 1.0;
     _camera_info[stream_index].r.at(1) = 0.0;
@@ -713,8 +706,17 @@ void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& v
     _camera_info[stream_index].r.at(7) = 0.0;
     _camera_info[stream_index].r.at(8) = 1.0;
 
-    _camera_info[stream_index].d.resize(5);
-    for (int i = 0; i < 5; i++)
+    int coeff_size(5);
+    if (intrinsic.model == RS2_DISTORTION_KANNALA_BRANDT4)
+    {
+        _camera_info[stream_index].distortion_model = "equidistant";
+        coeff_size = 4;
+    } else {
+        _camera_info[stream_index].distortion_model = "plumb_bob";
+    }
+
+    _camera_info[stream_index].d.resize(coeff_size);
+    for (int i = 0; i < coeff_size; i++)
     {
         _camera_info[stream_index].d.at(i) = intrinsic.coeffs[i];
     }
@@ -731,51 +733,12 @@ void BaseRealSenseNode::updateExtrinsicsCalibData(const rs2::video_stream_profil
     stream_index_pair left{left_video_profile.stream_type(), left_video_profile.stream_index()};
     stream_index_pair right{right_video_profile.stream_type(), right_video_profile.stream_index()};
 
-    // Get the relative extrinsics between the left and right camera
-    auto LEFT_T_RIGHT = right_video_profile.get_extrinsics_to(left_video_profile);
-
-    auto R = Eigen::Map<Eigen::Matrix<float,3,3,Eigen::RowMajor>>(LEFT_T_RIGHT.rotation);
-    auto T = Eigen::Map<Eigen::Matrix<float,3,1>>(LEFT_T_RIGHT.translation);
-
-    // force y- and z-axis components to be 0   (but do we also need to force P(0,3) and P(1,3) to be 0?)
-    T[1] = 0;
-    T[2] = 0;
-
-    Eigen::Matrix<float,3,4,Eigen::RowMajor> RT;
-    RT << R, T;
-
-    auto K_right = Eigen::Map<Eigen::Matrix<double,3,3,Eigen::RowMajor>>(_camera_info[right].k.data());
-
-    // Compute Projection matrix for the right camera
-    auto P_right = K_right.cast<float>() * RT;
-
-    // Note that all matrices are stored in row-major format
-    // 1. Leave the left rotation matrix as identity
-    // 2. Set the right rotation matrix
-    _camera_info[right].r.at(0) = LEFT_T_RIGHT.rotation[0];
-    _camera_info[right].r.at(1) = LEFT_T_RIGHT.rotation[1];
-    _camera_info[right].r.at(2) = LEFT_T_RIGHT.rotation[2];
-    _camera_info[right].r.at(3) = LEFT_T_RIGHT.rotation[3];
-    _camera_info[right].r.at(4) = LEFT_T_RIGHT.rotation[4];
-    _camera_info[right].r.at(5) = LEFT_T_RIGHT.rotation[5];
-    _camera_info[right].r.at(6) = LEFT_T_RIGHT.rotation[6];
-    _camera_info[right].r.at(7) = LEFT_T_RIGHT.rotation[7];
-    _camera_info[right].r.at(8) = LEFT_T_RIGHT.rotation[8];
-
-    // 3. Leave the left projection matrix
-    // 4. Set the right projection matrix
-    _camera_info[right].p.at(0) = P_right(0,0);
-    _camera_info[right].p.at(1) = P_right(0,1);
-    _camera_info[right].p.at(2) = P_right(0,2);
-    _camera_info[right].p.at(3) = P_right(0,3);
-    _camera_info[right].p.at(4) = P_right(1,0);
-    _camera_info[right].p.at(5) = P_right(1,1);
-    _camera_info[right].p.at(6) = P_right(1,2);
-    _camera_info[right].p.at(7) = P_right(1,3);
-    _camera_info[right].p.at(8) = P_right(2,0);
-    _camera_info[right].p.at(9) = P_right(2,1);
-    _camera_info[right].p.at(10) = P_right(2,2);
-    _camera_info[right].p.at(11) = P_right(2,3);
+    float fx = _camera_info[right].k.at(0);
+    float fy = _camera_info[right].k.at(4);
+    const auto& ex = right_video_profile.get_extrinsics_to(left_video_profile);
+    _camera_info[right].header.frame_id = OPTICAL_FRAME_ID(left);
+    _camera_info[right].p.at(3) = -fx * ex.translation[0] + 0.0; // Tx - avoid -0.0 values.
+    _camera_info[right].p.at(7) = -fy * ex.translation[1] + 0.0; // Ty - avoid -0.0 values.
 }
 
 tf2::Quaternion BaseRealSenseNode::rotationMatrixToQuaternion(const float rotation[9]) const
