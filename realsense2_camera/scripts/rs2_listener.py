@@ -2,6 +2,7 @@ import sys
 import time
 import rospy
 from sensor_msgs.msg import Image as msg_Image
+from sensor_msgs.msg import CompressedImage as msg_CompressedImage
 from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
 import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import Imu as msg_Imu
@@ -257,6 +258,8 @@ def main():
         except NameError as e:
             print ('theora_image_transport is not installed. \nType "sudo apt-get install ros-kinetic-theora-image-transport" to enable registering on messages of type theora.')
             raise
+    elif 'compressed' in wanted_topic:
+        msg_type = msg_CompressedImage
     else:
         msg_type = msg_Image
 
@@ -275,6 +278,10 @@ def main():
         msg_params.setdefault('topic', wanted_topic)
         res = msg_retriever.wait_for_message(msg_params, msg_type)
         rospy.loginfo('Got message: %s' % res.header)
+        if (hasattr(res, 'encoding')):
+            print ('res.encoding:', res.encoding)
+        if (hasattr(res, 'format')):
+            print ('res.format:', res.format)
     else:
         themes = [wanted_topic]
         res = msg_retriever.wait_for_messages(themes)
