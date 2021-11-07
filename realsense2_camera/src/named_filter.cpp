@@ -150,7 +150,6 @@ void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2:
     const rs2::vertex* vertex = pc.get_vertices();
     const rs2::texture_coordinate* color_point = pc.get_texture_coordinates();
 
-    _valid_pc_indices.clear();
     rs2_intrinsics depth_intrin = pc.get_profile().as<rs2::video_stream_profile>().get_intrinsics();
 
     sensor_msgs::PointCloud2Modifier modifier(_msg_pointcloud);
@@ -225,7 +224,6 @@ void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2:
     else
     {
         std::string format_str = "intensity";
-        _msg_pointcloud.point_step = addPointField(_msg_pointcloud, format_str.c_str(), 1, sensor_msgs::msg::PointField::FLOAT32, _msg_pointcloud.point_step);
         _msg_pointcloud.row_step = _msg_pointcloud.width * _msg_pointcloud.point_step;
         _msg_pointcloud.data.resize(_msg_pointcloud.height * _msg_pointcloud.row_step);
 

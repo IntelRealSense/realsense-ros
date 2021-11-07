@@ -906,7 +906,8 @@ void BaseRealSenseNode::publishDynamicTransforms()
 
 void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset)
 {
-    _pc_filter->Publish(pc, t, frameset, OPTICAL_FRAME_ID(DEPTH));
+    std::string frame_id = (_align_depth_filter->is_enabled() ? OPTICAL_FRAME_ID(COLOR) : OPTICAL_FRAME_ID(DEPTH));
+    _pc_filter->Publish(pc, t, frameset, frame_id);
 }
 
 
