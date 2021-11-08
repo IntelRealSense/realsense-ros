@@ -29,6 +29,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'config_file',                  'default': "''", 'description': 'yaml config file'},
                            {'name': 'unite_imu_method',             'default': "''", 'description': '[copy|linear_interpolation]'},
                            {'name': 'json_file_path',               'default': "''", 'description': 'allows advanced configuration'},
+                           {'name': 'log_level',                    'default': 'info', 'description': 'debug log level [DEBUG|INFO|WARN|ERROR|FATAL]'},
                            {'name': 'output',                       'default': 'screen', 'description': 'pipe node output [screen|log]'},
                            {'name': 'depth_module.width',           'default': '-1', 'description': 'depth image width'},                           
                            {'name': 'depth_module.height',          'default': '-1', 'description': 'depth image height'},                           
@@ -74,7 +75,8 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'depth_module.gain.1',         'default': '16', 'description': 'Initial value for hdr_merge filter'},
                            {'name': 'depth_module.exposure.2',     'default': '1', 'description': 'Initial value for hdr_merge filter'},
                            {'name': 'depth_module.gain.2',         'default': '16', 'description': 'Initial value for hdr_merge filter'},
-                           
+                           {'name': 'wait_for_device_timeout',      'default': '-1.', 'description': 'Timeout for waiting for device to connect (Seconds)'},
+                           {'name': 'reconnect_timeout',            'default': '6.', 'description': 'Timeout(seconds) between consequtive reconnection attempts'},
                           ]
 
 def declare_configurable_parameters(parameters):
@@ -98,7 +100,7 @@ def generate_launch_description():
                 parameters=[set_configurable_parameters(configurable_parameters)
                             ],
                 output='screen',
-                arguments=['--ros-args', '--log-level', log_level],
+                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
                 ),
             launch_ros.actions.Node(
                 condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " != ''"])),
@@ -111,7 +113,7 @@ def generate_launch_description():
                             , PythonExpression([LaunchConfiguration("config_file")])
                             ],
                 output='screen',
-                arguments=['--ros-args', '--log-level', log_level],
+                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
                 ),
             ])
     else:
@@ -126,7 +128,7 @@ def generate_launch_description():
                 parameters=[set_configurable_parameters(configurable_parameters)
                             ],
                 output='screen',
-                arguments=['--ros-args', '--log-level', log_level],
+                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
                 emulate_tty=True,
                 ),
             launch_ros.actions.Node(
@@ -139,7 +141,7 @@ def generate_launch_description():
                             , PythonExpression([LaunchConfiguration("config_file")])
                             ],
                 output='screen',
-                arguments=['--ros-args', '--log-level', log_level],
+                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
                 emulate_tty=True,
                 ),
         ])

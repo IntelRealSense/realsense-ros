@@ -50,6 +50,8 @@ namespace realsense2_camera
         std::string _serial_no;
         std::string _usb_port_id;
         std::string _device_type;
+        double _wait_for_device_timeout;
+        double _reconnect_timeout;
         bool _initial_reset;
         std::thread _query_thread;
         bool _is_alive;
