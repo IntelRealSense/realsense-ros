@@ -34,12 +34,13 @@ namespace realsense2_camera
             void clearParameters();
             bool hasSIP(const stream_index_pair& sip) const;
             rmw_qos_profile_t getQOS(const stream_index_pair& sip) const;
+            rmw_qos_profile_t getInfoQOS(const stream_index_pair& sip) const;
 
         protected:
             rclcpp::Logger _logger;
             SensorParams _params;
             std::map<stream_index_pair, std::shared_ptr<bool>> _enabled_profiles;
-            std::map<stream_index_pair, std::shared_ptr<std::string>> _profiles_qos_str;
+            std::map<stream_index_pair, std::shared_ptr<std::string>> _profiles_image_qos_str, _profiles_info_qos_str;
             std::vector<rs2::stream_profile> _all_profiles;
             std::vector<std::string> _parameters_names;
     };

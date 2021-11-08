@@ -171,12 +171,11 @@ set(dependencies
   realsense2_camera_msgs
   std_msgs
   sensor_msgs
-  diagnostic_msgs
   nav_msgs
   tf2
-  diagnostic_updater
   realsense2
   tf2_ros
+  diagnostic_updater
 )
 
 ament_target_dependencies(${PROJECT_NAME}
@@ -226,7 +225,6 @@ if(BUILD_TESTING)
     OpenCV
     rclcpp
     sensor_msgs
-    diagnostic_msgs
     nav_msgs
     tf2
     tf2_ros)

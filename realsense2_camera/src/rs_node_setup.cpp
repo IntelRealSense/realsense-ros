@@ -172,6 +172,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
     for (auto& profile : profiles)
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
+        std::string stream_name(STREAM_NAME(sip));
         if (profile.is<rs2::video_stream_profile>())
         {
             std::stringstream image_raw, camera_info;
@@ -179,14 +180,15 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             if (sensor.rs2::sensor::is<rs2::depth_sensor>())
                 rectified_image = true;
 
-            std::string stream_name(STREAM_NAME(sip));
             image_raw << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << stream_name << "/camera_info";
             
             rmw_qos_profile_t qos = sensor.getQOS(sip);
             _image_publishers[sip] = image_transport::create_publisher(&_node, image_raw.str(), qos);
             
-            _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 1);
+            qos = sensor.getInfoQOS(sip);
+            _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 
+                                    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
 
             if ((sip != DEPTH) && sip.second < 2)
             {
@@ -194,33 +196,41 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                 aligned_image_raw << "aligned_depth_to_" << stream_name << "/image_raw";
                 aligned_camera_info << "aligned_depth_to_" << stream_name << "/camera_info";
 
+                rmw_qos_profile_t qos = sensor.getQOS(sip);
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
                 _depth_aligned_image_publishers[sip] = image_transport::create_publisher(&_node, aligned_image_raw.str(), qos);
-                _depth_aligned_info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(), 1);
+                qos = sensor.getInfoQOS(sip);
+                _depth_aligned_info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(),
+                                                      rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
             }
-            continue;
         }
-        if (profile.is<rs2::motion_stream_profile>())
+        else if (profile.is<rs2::motion_stream_profile>())
         {
             std::stringstream data_topic_name, info_topic_name;
-            std::string stream_name(STREAM_NAME(sip));
             data_topic_name << stream_name << "/sample";
-            _imu_publishers[sip] = _node.create_publisher<sensor_msgs::msg::Imu>(data_topic_name.str(), 100);
+            rmw_qos_profile_t qos = sensor.getQOS(sip);
+            _imu_publishers[sip] = _node.create_publisher<sensor_msgs::msg::Imu>(data_topic_name.str(),
+                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
             // Publish Intrinsics:
             info_topic_name << stream_name << "/imu_info";
-            _imu_info_publisher[sip] = _node.create_publisher<IMUInfo>(info_topic_name.str(), 1);
+            qos = sensor.getInfoQOS(sip);
+            _imu_info_publisher[sip] = _node.create_publisher<IMUInfo>(info_topic_name.str(), 
+                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
             IMUInfo info_msg = getImuInfo(profile);
             _imu_info_publisher[sip]->publish(info_msg);
-            continue;
         }
-        if (profile.is<rs2::pose_stream_profile>())
+        else if (profile.is<rs2::pose_stream_profile>())
         {
             std::stringstream data_topic_name, info_topic_name;
-            std::string stream_name(STREAM_NAME(sip));
             data_topic_name << stream_name << "/sample";
-            _odom_publisher = _node.create_publisher<nav_msgs::msg::Odometry>(data_topic_name.str(), 100);
-            continue;
+            rmw_qos_profile_t qos = sensor.getQOS(sip);
+            _odom_publisher = _node.create_publisher<nav_msgs::msg::Odometry>(data_topic_name.str(),
+                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
         }
+        std::string topic_metadata(stream_name + "/metadata");
+        rmw_qos_profile_t qos = sensor.getInfoQOS(sip);
+        _metadata_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(topic_metadata, 
+                                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
     }
 }
 

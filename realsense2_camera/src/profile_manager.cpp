@@ -178,7 +178,12 @@ bool ProfilesManager::hasSIP(const stream_index_pair& sip) const
 
 rmw_qos_profile_t ProfilesManager::getQOS(const stream_index_pair& sip) const
 {
-    return qos_string_to_qos(*(_profiles_qos_str.at(sip)));
+    return qos_string_to_qos(*(_profiles_image_qos_str.at(sip)));
+}
+
+rmw_qos_profile_t ProfilesManager::getInfoQOS(const stream_index_pair& sip) const
+{
+    return qos_string_to_qos(*(_profiles_info_qos_str.at(sip)));
 }
 
 VideoProfilesManager::VideoProfilesManager(std::shared_ptr<Parameters> parameters,
@@ -237,7 +242,8 @@ void VideoProfilesManager::registerProfileParameters(std::vector<stream_profile>
     {
         ROS_DEBUG_STREAM(__LINE__ << ": _enabled_profiles.size(): " << _enabled_profiles.size());
         registerSensorUpdateParam("enable_%s", checked_sips, _enabled_profiles, true, update_sensor_func);
-        registerSensorQOSParam("%s_qos", checked_sips, _profiles_qos_str, IMAGE_QOS);
+        registerSensorQOSParam("%s_qos", checked_sips, _profiles_image_qos_str, IMAGE_QOS);
+        registerSensorQOSParam("%s_info_qos", checked_sips, _profiles_info_qos_str, DEFAULT_QOS);
         for (auto& sip : checked_sips)
         {
             ROS_DEBUG_STREAM(__LINE__ << ": _enabled_profiles[" << ros_stream_to_string(sip.first) << ":" << sip.second << "]: " << *(_enabled_profiles[sip]));
@@ -294,7 +300,8 @@ void MotionProfilesManager::registerProfileParameters(std::vector<stream_profile
     }
     registerSensorUpdateParam("enable_%s", checked_sips, _enabled_profiles, true, update_sensor_func);
     registerSensorUpdateParam("%s_fps", checked_sips, _fps, 0.0, update_sensor_func);
-    registerSensorQOSParam("%s_qos", checked_sips, _profiles_qos_str, HID_QOS);
+    registerSensorQOSParam("%s_qos", checked_sips, _profiles_image_qos_str, HID_QOS);
+    registerSensorQOSParam("%s_info_qos", checked_sips, _profiles_info_qos_str, DEFAULT_QOS);
 }
 
 std::string MotionProfilesManager::wanted_profile_string(stream_index_pair sip)
@@ -322,5 +329,6 @@ void PoseProfilesManager::registerProfileParameters(std::vector<stream_profile> 
     }
     registerSensorUpdateParam("enable_%s", checked_sips, _enabled_profiles, true, update_sensor_func);
     registerSensorUpdateParam("%s_fps", checked_sips, _fps, 0.0, update_sensor_func);
-    registerSensorQOSParam("%s_qos", checked_sips, _profiles_qos_str, HID_QOS);
+    registerSensorQOSParam("%s_qos", checked_sips, _profiles_image_qos_str, HID_QOS);
+    registerSensorQOSParam("%s_info_qos", checked_sips, _profiles_info_qos_str, DEFAULT_QOS);
 }

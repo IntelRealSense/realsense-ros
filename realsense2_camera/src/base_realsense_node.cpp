@@ -393,6 +393,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         _imu_publishers[stream_index]->publish(imu_msg);
         ROS_DEBUG("Publish %s stream", ros_stream_to_string(frame.get_profile().stream_type()));
     }
+    publishMetadata(frame, OPTICAL_FRAME_ID(stream_index));
 }
 
 void BaseRealSenseNode::pose_callback(rs2::frame frame)
@@ -554,7 +555,8 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                         publishFrame(f, t, COLOR,
                                     _depth_aligned_image,
                                     _depth_aligned_info_publisher,
-                                    _depth_aligned_image_publishers);
+                                    _depth_aligned_image_publishers,
+                                    false);
                         continue;
                     }
                 }
@@ -960,7 +962,8 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
                                      const stream_index_pair& stream,
                                      std::map<stream_index_pair, cv::Mat>& images,
                                      const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
-                                     const std::map<stream_index_pair, image_transport::Publisher>& image_publishers)
+                                     const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
+                                     const bool is_publishMetadata)
 {
     ROS_DEBUG("publishFrame(...)");
     unsigned int width = 0;
@@ -991,6 +994,14 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     if(0 != info_publisher->get_subscription_count() ||
        0 != image_publisher.getNumSubscribers())
     {
+        auto& cam_info = _camera_info.at(stream);
+        if (cam_info.width != width)
+        {
+            updateStreamCalibData(f.get_profile().as<rs2::video_stream_profile>());
+        }
+        cam_info.header.stamp = t;
+        info_publisher->publish(cam_info);
+
         sensor_msgs::msg::Image::SharedPtr img;
         img = cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(bpp), image).toImageMsg();
         img->width = width;
@@ -1000,19 +1011,55 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         img->header.frame_id = OPTICAL_FRAME_ID(stream);
         img->header.stamp = t;
 
-        auto& cam_info = _camera_info.at(stream);
-        if (cam_info.width != width)
-        {
-            updateStreamCalibData(f.get_profile().as<rs2::video_stream_profile>());
-        }
-        cam_info.header.stamp = t;
-        info_publisher->publish(cam_info);
-
         image_publisher.publish(img);
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
     }
+    if (is_publishMetadata)
+    {
+        publishMetadata(f, OPTICAL_FRAME_ID(stream));
+    }
 }
 
+void BaseRealSenseNode::publishMetadata(rs2::frame f, const std::string& frame_id)
+{
+    stream_index_pair stream = {f.get_profile().stream_type(), f.get_profile().stream_index()};    
+    if (_metadata_publishers.find(stream) != _metadata_publishers.end())
+    {
+        rclcpp::Time t(frameSystemTimeSec(f));    
+        auto& md_publisher = _metadata_publishers.at(stream);
+        if (0 != md_publisher->get_subscription_count())
+        {
+            realsense2_camera_msgs::msg::Metadata msg;
+            msg.header.frame_id = frame_id;
+            msg.header.stamp = t;
+            std::stringstream json_data;
+            const char* separator = ",";
+            json_data << "{";
+            // Add additional fields:
+            json_data << "\"" << "frame_number" << "\":" << f.get_frame_number();
+            json_data << separator << "\"" << "clock_domain" << "\":" << "\"" << create_graph_resource_name(rs2_timestamp_domain_to_string(f.get_frame_timestamp_domain())) << "\"";
+            json_data << separator << "\"" << "frame_timestamp" << "\":" << std::fixed << f.get_timestamp();
+
+            for (auto i = 0; i < RS2_FRAME_METADATA_COUNT; i++)
+            {
+                if (f.supports_frame_metadata((rs2_frame_metadata_value)i))
+                {
+                    rs2_frame_metadata_value mparam = (rs2_frame_metadata_value)i;
+                    std::string name = create_graph_resource_name(rs2_frame_metadata_to_string(mparam));
+                    if (RS2_FRAME_METADATA_FRAME_TIMESTAMP == i)
+                    {
+                        name = "hw_timestamp";
+                    }
+                    rs2_metadata_type val = f.get_frame_metadata(mparam);
+                    json_data << separator << "\"" << name << "\":" << val;
+                }
+            }
+            json_data << "}";
+            msg.json_data = json_data.str();
+            md_publisher->publish(msg);
+        }
+    }
+}
 
 void BaseRealSenseNode::startMonitoring()
 {
