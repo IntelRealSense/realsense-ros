@@ -8,8 +8,8 @@ void RosSensor::setupErrorCallback()
     set_notifications_callback([&](const rs2::notification& n)
     {
         std::vector<std::string> error_strings({"RT IC2 Config error",
-                                                "Left IC2 Config error",
-                                                "Motion Module failure"});
+                                                "Left IC2 Config error"
+                                                });
         ROS_WARN_STREAM("XXX Hardware Notification:" << n.get_description() << "," << n.get_timestamp() << "," << n.get_severity() << "," << n.get_category());            
         if (n.get_severity() >= RS2_LOG_SEVERITY_ERROR)
         {
@@ -252,7 +252,7 @@ bool profiles_equal(const rs2::stream_profile& a, const rs2::stream_profile& b)
         auto vb = b.as<rs2::video_stream_profile>();
         return (va == vb && va.width() == vb.width() && va.height() == vb.height());
     }
-    return (a == b);
+    return ((rs2::stream_profile)a==(rs2::stream_profile)b);
 }
 
 bool is_profiles_in_profiles(const std::vector<stream_profile>& sub_profiles, const std::vector<stream_profile>& all_profiles)

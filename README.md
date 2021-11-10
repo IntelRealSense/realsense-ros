@@ -3,31 +3,20 @@ These are packages for using Intel RealSense cameras (D400 and L500 series, SR30
 
 LibRealSense supported version: v2.50.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
+## Beta Version
+This version is meant to ne more dynamic than the 3.x.x versions in controlling the camera parameters. It allows starting and stopping separate sensors and separate postprocessing blocks in runtime. This makes it much simpler to find out the best configuration. All parameters can also be defined at start-up by modifying the launch files, as is in the 3.x.x version.
+While many of the parameter names remain as they were, many were slightly modified to match the new hirarchy. For instance, in the D400 series, the depth, infrared1 and infrared2 streams belong to one stereo sensor. Therefore, there are no longer `infra1_width`, `infra2_width` and `depth_width` parameters, which should have always been set to the same value, but a single, `depth_module.width` parameter that can also be changed in runtime.
+The parameters `enable_infra1`, `enable_infra2` and `enable_depth` can now be set in runtime.
+
 ## Installation Instructions
-This version supports ROS2 Dashing, Eloquent and Foxy.
+This version supports ROS2 Dashing, Foxy and Rolling.
 
    ### Step 1: Install the ROS2 distribution
    - #### Install [ROS2 Dashing](https://index.ros.org/doc/ros2/Installation/dashing/Linux-Install-Debians/), on Ubuntu 18.04 or [ROS2 Foxy](https://index.ros.org/doc/ros2/Installation/foxy/Linux-Install-Debians/), on Ubuntu 20.04
 
-### There are 2 sources to install realsense2_camera from:
+  ### Install realsense-ros fromsource:
+  * Currently this version is still not available as a debian package. Install from source:
 
-* ### Method 1: The ROS distribution:
-
-  *Ubuntu*
-
-    realsense2_camera is available as a debian package of ROS distribution. It can be installed by typing:
-    
-    ```sudo apt-get install ros-$ROS_DISTRO-realsense2-camera```
-
-    This will install both realsense2_camera and its dependents, including librealsense2 library.
-
-    Notice:
-    * The version of librealsense2 is almost always behind the one availeable in RealSense&trade; official repository.
-    * librealsense2 is not built to use native v4l2 driver but the less stable RS-USB protocol. That is because the RS-USB protocol is more general and operational on a larger variety of platforms. This have limitations when running multiple cameras and when using T265.
-    * realsense2_description is available as a separate debian package of ROS distribution. It includes the 3D-models of the devices and is necessary for running launch files that include these models (i.e. view_model.launch.py). It can be installed by typing:
-    `sudo apt-get install ros-$ROS_DISTRO-realsense2-description`
-
-* ### Method 2: The RealSense&trade; distribution:
      > This option is demonstrated in the [.travis.yml](https://github.com/IntelRealSense/realsense-ros/blob/foxy/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
 
 
@@ -50,7 +39,7 @@ This version supports ROS2 Dashing, Eloquent and Foxy.
    ```
    - Clone the latest ROS2 Intel&reg; RealSense&trade;  wrapper from [here](https://github.com/IntelRealSense/realsense-ros.git) into '~/ros2_ws/src/'
    ```bashrc
-   git clone https://github.com/IntelRealSense/realsense-ros.git -b foxy-future
+   git clone https://github.com/IntelRealSense/realsense-ros.git -b ros2-beta
    cd ~/ros2_ws
    ```
 
@@ -97,28 +86,35 @@ This will stream all camera sensors and publish on the appropriate ROS topics.
 ### Published Topics
 The published topics differ according to the device and parameters.
 After running the above command with D435i attached, the following list of topics will be available (This is a partial list. For full one type `ros2 topic list`):
-- /camera/accel/imu_info
-- /camera/accel/sample
 - /camera/aligned_depth_to_color/camera_info
 - /camera/aligned_depth_to_color/image_raw
-- /camera/aligned_depth_to_infra1/camera_info
-- /camera/aligned_depth_to_infra1/image_raw
 - /camera/color/camera_info
 - /camera/color/image_raw
 - /camera/depth/camera_info
 - /camera/depth/color/points
 - /camera/depth/image_rect_raw
-- /camera/gyro/imu_info
-- /camera/gyro/sample
 - /camera/imu
-- /camera/infra1/camera_info
-- /camera/infra1/image_rect_raw
-- /camera/infra2/camera_info
-- /camera/infra2/image_rect_raw
 - /diagnostics
 - /parameter_events
 - /rosout
 - /tf_static
+
+
+Enabling accel and gyro is achieved either by adding the following parameters to the command line:</br>
+`ros2 launch realsense2_camera rs_launch.py pointcloud.enable:=true enable_gyro:=true enable_accel:=true` </br>
+or in runtime using the following commands:
+```
+ros2 param set /camera/camera enable_accel true
+ros2 param set /camera/camera enable_gyro true
+```
+This will add the following topics:
+- /camera/accel/imu_info
+- /camera/accel/metadata
+- /camera/accel/sample
+- /camera/gyro/imu_info
+- /camera/gyro/metadata
+- /camera/gyro/sample
+
 
 >Using an L515 device the list differs a little by adding a 4-bit confidence grade (published as a mono8 image):
 >- /camera/confidence/camera_info
