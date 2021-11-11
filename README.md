@@ -124,14 +124,60 @@ This will add the following topics:
 >- /camera/infra/camera_info
 >- /camera/infra/image_raw
 
+To turn them off: `ros2 param set /camera/camera enable_infra false`
 The "/camera" prefix is the namesapce specified in the given launch file.
 When using D435 or D415, the gyro and accel topics wont be available. Likewise, other topics will be available when using T265 (see below).
+
+### Post processing blocks - i.e. filters:
+The following processing blocks are available:
+ - ```align_depth```: If enabled, will publish the depth image aligned to the color image on the topic `/camera/aligned_depth_to_color/image_raw`.</br> The pointcloud, if created, will be based on the aligned depth image.
+
+ - ```colorizer```: will color the depth image. On the depth topic an RGB image will be published, instead of the 16bit depth values .
+ - ```pointcloud```: will add a pointcloud topic `/camera/depth/color/points`.
+    * The texture of the pointcloud can be modified using the `pointcloud.stream_filter` parameter.</br>
+    * The depth FOV and the texture FOV are not similar. By default, pointcloud is limited to the section of depth containing the texture. You can have a full depth to pointcloud, coloring the regions beyond the texture with zeros, by setting `pointcloud.allow_no_texture_points` to true.
+    * pointcloud is of an unordered format by default. This can be changed by setting `pointcloud.ordered_pc` to true.
+
+ - ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values. The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.</br> To view the effect on the infrared image for each sequence id use the `sequence_id_filter.sequence_id` parameter.</br> To initialize these parameters in start time use the following parameters:</br>
+  `depth_module.exposure.1`, `depth_module.gain.1`, `depth_module.exposure.2`, `depth_module.gain.2`</br>
+  \* For in-depth review of the subject please read the accompanying [white paper](https://dev.intelrealsense.com/docs/high-dynamic-range-with-stereoscopic-depth-cameras).
+
+ - The following filters have detailed descriptions in : https://github.com/IntelRealSense/librealsense/blob/master/doc/post-processing-filters.md
+   - ```disparity_filter``` - convert depth to disparity before applying other filters and back.
+   - ```spatial_filter``` - filter the depth image spatially.
+   - ```temporal_filter``` - filter the depth image temporally.
+   - ```hole_filling_filter``` - apply hole-filling filter.
+   - ```decimation_filter``` - reduces depth scene complexity.
+
+Each of the above filters have it's own parameters, following the naming convention of `<filter_name>.<parameter_name>` including a `<filter_name>.enable` parameter to enable/disable it. 
+
+### Sensor Parameters:
+Each sensor has a unique set of parameters.
+Video sensors, such as depth_module or rgb_camera have, at least, the following parameter:
+  - fps
+  - height
+  - width
+
+Since infra1, infra2 and depth are all streams of the depth_module, their width, height and fps are defined by their common sensor.
+The same rule applies in L515 for the depth, infra and confidence streams which all share the parameters of their common depth_module.
+If the specified combination of parameters is not available by the device, the default configuration will be used.</br>
 
 ### Available Parameters:
 For the entire list of parameters type `ros2 param list`.
 For reading a parameter value use `ros2 param get <node> <parameter_name>` for instance: `ros2 param get /camera/camera depth_module.emitter_on_off`
 For setting a new value for a parameter use `ros2 param set <node> <parameter_name> <value>` i.e. `ros2 param set /camera/camera depth_module.emitter_on_off true`
 
+#### Parameters that can be modified during runtime:
+- All of the filters and sensors inner parameters.
+- **enable_*<stream_name>***: Choose whether to enable a specified stream or not. Default is true for images and false for orientation streams. <stream_name> can be any of *infra1, infra2, color, depth, fisheye, fisheye1, fisheye2, gyro, accel, pose*.
+- **enable_sync**: gathers closest frames of different sensors, infra red, color and depth, to be sent with the same timetag. This happens automatically when such filters as pointcloud are enabled.
+- ***<stream_type>*_qos**: <stream_type> can be any of *infra, color, fisheye, depth, gyro, accel, pose*. Sets the QoS by which the topic is published. Available values are the following strings: SYSTEM_DEFAULT, DEFAULT, PARAMETER_EVENTS, SERVICES_DEFAULT, PARAMETERS, SENSOR_DATA.
+- **Notice:** ***<stream_type>*_info_qos** refers to both camera_info topics and metadata topics.
+- **tf_publish_rate**: double, positive values mean dynamic transform publication with specified rate, all other values mean static transform publication. Defaults to 0 
+
+
+
+#### Parameters that cannot be changed in runtime:
 - **serial_no**: will attach to the device with the given serial number (*serial_no*) number. Default, attach to the first (in an inner list) RealSense device.
   - Note: serial number can also be defined with "_" prefix. For instance, serial number 831612073525 can be set in command line as `serial_no:=_831612073525`. That is a workaround until a better method will be found to ROS2's auto conversion of strings containing only digits into integers.
 - **usb_port_id**: will attach to the device with the given USB port (*usb_port_id*). i.e 4-1, 4-2 etc. Default, ignore USB port when choosing a device.
@@ -140,34 +186,6 @@ For setting a new value for a parameter use `ros2 param set <node> <parameter_na
 - **wait_for_device_timeout**: If the specified device is not found, will wait *wait_for_device_timeout* seconds before exits. Defualt, *wait_for_device_timeout < 0*, will wait indefinitely.
 - **rosbag_filename**: Will publish topics from rosbag file.
 - **initial_reset**: On occasions the device was not closed properly and due to firmware issues needs to reset. If set to true, the device will reset prior to usage.
-- **align_depth**: If set to true, will publish additional topics with the all the images aligned to the depth image.</br>
-The topics are of the form: ```/camera/aligned_depth_to_color/image_raw``` etc.
-
-- ***<stream_type>*.enable**
-
-- **filters**: any of the following options, separated by commas:</br>
- - ```colorizer```: will color the depth image. On the depth topic an RGB image will be published, instead of the 16bit depth values .
- - ```pointcloud```: will add a pointcloud topic `/camera/depth/color/points`.
-    * The texture of the pointcloud can be modified in rqt_reconfigure (see below) or using the parameters: `pointcloud_texture_stream` and `pointcloud_texture_index`. Run rqt_reconfigure to see available values for these parameters.</br>
-    * The depth FOV and the texture FOV are not similar. By default, pointcloud is limited to the section of depth containing the texture. You can have a full depth to pointcloud, coloring the regions beyond the texture with zeros, by setting `allow_no_texture_points` to true.
-    * pointcloud is of an unordered format by default. This can be changed by setting `ordered_pc` to true.
-
- - ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values. The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.</br> To view the effect on the infrared image for each sequence id use the `sequence_id_filter.sequence_id` parameter.</br> To initialize these parameters in start time use the following parameters:</br>
-  `depth_module.exposure.1`, `depth_module.gain.1`, `depth_module.exposure.2`, `depth_module.gain.2`</br>
-  \* For in-depth review of the subject please read the accompanying [white paper](https://dev.intelrealsense.com/docs/high-dynamic-range-with-stereoscopic-depth-cameras).
-
- - The following filters have detailed descriptions in : https://github.com/IntelRealSense/librealsense/blob/master/doc/post-processing-filters.md
-   - ```disparity``` - convert depth to disparity before applying other filters and back.
-   - ```spatial``` - filter the depth image spatially.
-   - ```temporal``` - filter the depth image temporally.
-   - ```hole_filling``` - apply hole-filling filter.
-   - ```decimation``` - reduces depth scene complexity.
-- **enable_sync**: gathers closest frames of different sensors, infra red, color and depth, to be sent with the same timetag. This happens automatically when such filters as pointcloud are enabled.
-- ***<stream_type>*_width**, ***<stream_type>*_height**, ***<stream_type>*_fps**: <stream_type> can be any of *infra, color, fisheye, depth, gyro, accel, pose*. Sets the required format of the device. If the specified combination of parameters is not available by the device, the stream will be replaced with the default for that stream. Setting a value to 0, will choose the first format in the inner list. (i.e. consistent between runs but not defined).</br>*Note: for gyro accel and pose, only _fps option is meaningful.
-- ***<stream_type>*_qos**: <stream_type> can be any of *infra, color, fisheye, depth, gyro, accel, pose*. Sets the QoS by which the topic is published. Available values are the following strings: SYSTEM_DEFAULT, DEFAULT, PARAMETER_EVENTS, SERVICES_DEFAULT, PARAMETERS, SENSOR_DATA.
-- **Notice:** ***<stream_type>*_info_qos** refers to both camera_info topics and metadata topics.
-
-- **enable_*<stream_name>***: Choose whether to enable a specified stream or not. Default is true for images and false for orientation streams. <stream_name> can be any of *infra1, infra2, color, depth, fisheye, fisheye1, fisheye2, gyro, accel, pose*.
 
 - ***<stream_name>*_frame_id**, ***<stream_name>*_optical_frame_id**, **aligned_depth_to_*<stream_name>*_frame_id**: Specify the different frame_id for the different frames. Especially important when using multiple cameras.
 
@@ -184,13 +202,8 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 - **topic_odom_in**: For T265, add wheel odometry information through this topic. The code refers only to the *twist.linear* field in the message.
 - **calib_odom_file**: For the T265 to include odometry input, it must be given a [configuration file](https://github.com/IntelRealSense/librealsense/blob/master/unit-tests/resources/calibration_odometry.json). Explanations can be found [here](https://github.com/IntelRealSense/librealsense/pull/3462). The calibration is done in ROS coordinates system.
 - **publish_tf**: boolean, publish or not TF at all. Defaults to True.
-- **tf_publish_rate**: double, positive values mean dynamic transform publication with specified rate, all other values mean static transform publication. Defaults to 0 
 - **diagnostics_period**: double, positive values set the period between diagnostics updates on the `/diagnostics` topic. 0 or negative values mean no diagnostics topic is published. Defaults to 0.
 - **publish_odom_tf**: If True (default) publish TF from odom_frame to pose_frame.
-- **infra_rgb**: When set to True (default: False), it configures the infrared camera to stream in RGB (color) mode, thus enabling the use of a RGB image in the same frame as the depth image, potentially avoiding frame transformation related errors. When this feature is required, you are additionally required to also enable `enable_infra:=true` for the infrared stream to be enabled.
-  - **NOTE** The configuration required for `enable_infra` is independent of `enable_depth`
-  - **NOTE** To enable the Infrared stream, you should enable `enable_infra:=true` NOT `enable_infra1:=true` nor `enable_infra2:=true`
-  - **NOTE** This feature is only supported by Realsense sensors with RGB streams available from the `infra` cameras, which can be checked by observing the output of `rs-enumerate-devices`
 
 ### Available services:
 - device_info : retrieve information about the device - serial_number, firmware_version etc. Type `ros2 interface show realsense2_camera_msgs/srv/DeviceInfo` for the full list. Call example: `ros2 service call /camera/device_info realsense2_camera_msgs/srv/DeviceInfo`
@@ -209,8 +222,7 @@ ros2 launch realsense2_camera rs_d400_and_t265_launch.py enable_fisheye12:=true 
 - note: the parameters are called `enable_fisheye12` and `enable_fisheye22`. The node knows them as `enable_fisheye1` and `enable_fisheye2` but launch file runs 2 nodes and these parameters refer to the second one.
 
 ## Still on the pipelie:
-* Support ROS2 life cycle.
-* Enable and disable sensors and filters.
+* Migrate infra_rgb option.
 
 ### Unit tests:
 Unit-tests are based on bag files saved on S3 server. These can be downloaded using the following commands:

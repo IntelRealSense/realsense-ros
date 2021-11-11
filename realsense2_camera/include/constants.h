@@ -73,8 +73,6 @@ namespace realsense2_camera
     const uint16_t RS_L535_PID      = 0x0b68;
     
 
-    const bool ALIGN_DEPTH    = false;
-    const bool POINTCLOUD     = false;
     const bool ALLOW_NO_TEXTURE_POINTS = false;
     const bool ORDERED_PC     = false;
     const bool SYNC_FRAMES    = false;
