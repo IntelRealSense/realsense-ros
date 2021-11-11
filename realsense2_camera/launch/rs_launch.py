@@ -30,6 +30,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'enable_pointcloud',            'default': 'false', 'description': 'enable pointcloud'},
                            {'name': 'unite_imu_method',             'default': "''", 'description': '[copy|linear_interpolation]'},
                            {'name': 'json_file_path',               'default': "''", 'description': 'allows advanced configuration'},
+                           {'name': 'log_level',                    'default': 'info', 'description': 'debug log level [DEBUG|INFO|WARN|ERROR|FATAL]'},
                            {'name': 'output',                       'default': 'screen', 'description': 'pipe node output [screen|log]'},
                            {'name': 'depth_width',                  'default': '-1', 'description': 'depth image width'},
                            {'name': 'depth_height',                 'default': '-1', 'description': 'depth image height'},
@@ -109,7 +110,7 @@ def generate_launch_description():
                 parameters=[set_configurable_parameters(configurable_parameters)
                             ],
                 output='screen',
-                arguments=['--ros-args', '--log-level', log_level],
+                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
                 ),
             launch_ros.actions.Node(
                 condition=IfCondition(PythonExpression([LaunchConfiguration('config_file'), " != ''"])),
@@ -122,7 +123,7 @@ def generate_launch_description():
                             , PythonExpression([LaunchConfiguration("config_file")])
                             ],
                 output='screen',
-                arguments=['--ros-args', '--log-level', log_level],
+                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
                 ),
             ])
     else:
@@ -137,7 +138,7 @@ def generate_launch_description():
                 parameters=[set_configurable_parameters(configurable_parameters)
                             ],
                 output='screen',
-                arguments=['--ros-args', '--log-level', log_level],
+                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
                 emulate_tty=True,
                 ),
             launch_ros.actions.Node(
@@ -150,7 +151,7 @@ def generate_launch_description():
                             , PythonExpression([LaunchConfiguration("config_file")])
                             ],
                 output='screen',
-                arguments=['--ros-args', '--log-level', log_level],
+                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
                 emulate_tty=True,
                 ),
         ])
