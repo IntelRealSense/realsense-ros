@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.2.3 (2021-11-11)
+------------------
 * add parameter reconnect_timeout
 * default frame_id includes namespace.
 * Added dummy transformation for multi camera example

@@ -2,8 +2,8 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.2.3 (2021-11-11)
+------------------
 * Add D455 description
 * Add missing aluminum material to d415 model.
 * Contributors: Gilad Bretter, doronhi
