@@ -10,7 +10,6 @@
 #include <condition_variable>
 #include <signal.h>
 #include <thread>
-#include <sys/time.h>
 #include <regex>
 
 using namespace realsense2_camera;
