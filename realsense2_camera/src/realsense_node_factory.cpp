@@ -292,7 +292,10 @@ void RealSenseNodeFactory::initialize(const ros::WallTimerEvent &ignored)
 						{
 							double reconnect_timeout;
 							privateNh.param("reconnect_timeout", reconnect_timeout, 6.0);
-							std::chrono::duration<double> timespan(reconnect_timeout);
+							double wait_for_device_timeout;
+							privateNh.param("wait_for_device_timeout", wait_for_device_timeout, -1.0);
+							std::chrono::milliseconds timespan(static_cast<int>(reconnect_timeout*1e3));
+							ros::Time first_try_time = ros::Time::now();
 							while (_is_alive && !_device)
 							{
 								getDevice(_ctx.query_devices());
@@ -304,7 +307,22 @@ void RealSenseNodeFactory::initialize(const ros::WallTimerEvent &ignored)
 								}
 								else
 								{
-									std::this_thread::sleep_for(timespan);
+									std::chrono::milliseconds actual_timespan(timespan);
+									if (wait_for_device_timeout > 0)
+									{
+										auto time_to_timeout(wait_for_device_timeout - (ros::Time::now() - first_try_time).toSec());
+										if (time_to_timeout < 0)
+										{
+											ROS_ERROR_STREAM("wait for device timeout of " << wait_for_device_timeout << " secs expired");
+											exit(1);
+										}
+										else
+										{
+											double max_timespan_secs(std::chrono::duration_cast<std::chrono::seconds>(timespan).count());
+											actual_timespan = std::chrono::milliseconds (static_cast<int>(std::min(max_timespan_secs, time_to_timeout) * 1e3));
+										}
+									}
+									std::this_thread::sleep_for(actual_timespan);
 								}
 							}
 						});
