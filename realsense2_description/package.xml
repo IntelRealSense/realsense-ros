@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>realsense2_description</name>
-  <version>2.3.1</version>
+  <version>2.3.2</version>
   <description>RealSense Camera description package for Intel 3D D400 cameras</description>
   <maintainer email="doron.hirshberg@intel.com">Doron Hirshberg</maintainer>
   <license>Apache 2.0</license>

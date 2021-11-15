@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.2 (2021-11-15)
+------------------
 * publish metadata
 * Add service: device_info
 * add wait_for_device_timeout parameter
