@@ -1,16 +1,17 @@
 import os
 import sys
+import signal
+import shlex
 from rs2_listener import CWaitForMessage
-
-import rosbag
-from cv_bridge import CvBridge, CvBridgeError
+import rclpy
+from rclpy.node import Node
+from importRosbag.importRosbag import importRosbag
 import numpy as np
-import tf
+if (os.getenv('ROS_DISTRO') != "dashing"):
+    import tf2_ros
 import itertools
 import subprocess
-import rospy
 import time
-import rosservice
 
 global tf_timeout
 tf_timeout = 5
@@ -19,18 +20,12 @@ def ImuGetData(rec_filename, topic):
     # res['value'] = first value of topic.
     # res['max_diff'] = max difference between returned value and all other values of topic in recording.
 
-    bag = rosbag.Bag(rec_filename)
     res = dict()
     res['value'] = None
     res['max_diff'] = [0,0,0]
-    for topic, msg, t in bag.read_messages(topics=topic):
-        value = np.array([msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z])
-        if res['value'] is None:
-            res['value'] = value
-        else:
-            diff = abs(value - res['value'])
-            res['max_diff'] = [max(diff[x], res['max_diff'][x]) for x in range(len(diff))]
-    res['max_diff'] = np.array(res['max_diff'])
+    data = importRosbag(rec_filename, importTopics=[topic], log='ERROR', disable_bar=True)[topic]
+    res['value'] = data['acc'][0,:]
+    res['max_diff'] = data['acc'].max(0) - data['acc'].min(0)
     return res
 
 def AccelGetData(rec_filename):
@@ -39,7 +34,7 @@ def AccelGetData(rec_filename):
 def AccelGetDataDeviceStandStraight(rec_filename):
     gt_data = AccelGetData(rec_filename)
     gt_data['ros_value'] = np.array([0.63839424, 0.05380408, 9.85343552])
-    gt_data['ros_max_diff'] = np.array([1.97013582e-02, 4.65862500e-09, 4.06165277e-02])
+    gt_data['ros_max_diff'] = np.array([0.06940174, 0.04032778, 0.05982018])
     return gt_data
 
 def ImuTest(data, gt_data):
@@ -51,50 +46,44 @@ def ImuTest(data, gt_data):
         diff = v_data - v_gt_data
         max_diff = abs(diff).max()
         msg = 'original accel: Expect max diff of %.3f. Got %.3f.' % (gt_data['max_diff'].max(), max_diff)
-        print msg
+        print (msg)
         if max_diff > gt_data['max_diff'].max():
             return False, msg
 
-        v_data = data['ros_value'][0]
+        v_data = np.array(data['ros_value']).mean(0)
         v_gt_data = gt_data['ros_value']
         diff = v_data - v_gt_data
         max_diff = abs(diff).max()
         msg = 'rotated to ROS: Expect max diff of %.3f. Got %.3f.' % (gt_data['ros_max_diff'].max(), max_diff)
-        print msg
+        print (msg)
         if max_diff > gt_data['ros_max_diff'].max():
             return False, msg
     except Exception as e:
         msg = '%s' % e
-        print 'Test Failed: %s' % msg
+        print ('Test Failed: %s' % msg)
         return False, msg
     return True, ''
 
 def ImageGetData(rec_filename, topic):
-    bag = rosbag.Bag(rec_filename)
-    bridge = CvBridge()
     all_avg = []
     ok_percent = []
     res = dict()
 
-    for topic, msg, t in bag.read_messages(topics=topic):
-        try:
-            cv_image = bridge.imgmsg_to_cv2(msg, msg.encoding)
-        except CvBridgeError as e:
-            print(e)
-            continue
-        pyimg = np.asarray(cv_image)
+    data = importRosbag(rec_filename, importTopics=[topic], log='ERROR', disable_bar=True)[topic]
+    for pyimg in data['frames']:
         ok_number = (pyimg != 0).sum()
         ok_percent.append(float(ok_number) / (pyimg.shape[0] * pyimg.shape[1]))
         all_avg.append(pyimg.sum() / ok_number)
 
     all_avg = np.array(all_avg)
-    channels = cv_image.shape[2] if len(cv_image.shape) > 2 else 1
+
+    channels = pyimg.shape[2] if len(pyimg.shape) > 2 else 1
     res['num_channels'] = channels
-    res['shape'] = cv_image.shape
+    res['shape'] = pyimg.shape
     res['avg'] = all_avg.mean()
     res['ok_percent'] = {'value': (np.array(ok_percent).mean()) / channels, 'epsilon': 0.01}
     res['epsilon'] = max(all_avg.max() - res['avg'], res['avg'] - all_avg.min())
-    res['reported_size'] = [msg.width, msg.height, msg.step]
+    res['reported_size'] = [pyimg.shape[1], pyimg.shape[0], pyimg.shape[1]*pyimg.dtype.itemsize*channels]
 
     return res
 
@@ -127,36 +116,39 @@ def ImageColorTest(data, gt_data):
     # check that all data['num_channels'] are the same as gt_data['num_channels'] and that avg value of all
     # images are within epsilon of gt_data['avg']
     try:
+        if ('num_channels' not in data):
+            msg = 'No data received'
+            return False, msg
         channels = list(set(data['num_channels']))
         msg = 'Expect %d channels. Got %d channels.' % (gt_data['num_channels'], channels[0])
-        print msg
+        print (msg)
         if len(channels) > 1 or channels[0] != gt_data['num_channels']:
             return False, msg
         msg = 'Expected all received images to be the same shape. Got %s' % str(set(data['shape']))
-        print msg
+        print (msg)
         if len(set(data['shape'])) > 1:
             return False, msg
         msg = 'Expected shape to be %s. Got %s' % (gt_data['shape'], list(set(data['shape']))[0])
-        print msg
+        print (msg)
         if (np.array(list(set(data['shape']))[0]) != np.array(gt_data['shape'])).any():
             return False, msg
         msg = 'Expected header [width, height, step] to be %s. Got %s' % (gt_data['reported_size'], list(set(data['reported_size']))[0])
-        print msg
+        print (msg)
         if (np.array(list(set(data['reported_size']))[0]) != np.array(gt_data['reported_size'])).any():
             return False, msg
         msg = 'Expect average of %.3f (+-%.3f). Got average of %.3f.' % (gt_data['avg'].mean(), gt_data['epsilon'], np.array(data['avg']).mean())
-        print msg
+        print (msg)
         if abs(np.array(data['avg']).mean() - gt_data['avg'].mean()) > gt_data['epsilon']:
             return False, msg
 
         msg = 'Expect no holes percent > %.3f. Got %.3f.' % (gt_data['ok_percent']['value']-gt_data['ok_percent']['epsilon'], np.array(data['ok_percent']).mean())
-        print msg
+        print (msg)
         if np.array(data['ok_percent']).mean() < gt_data['ok_percent']['value']-gt_data['ok_percent']['epsilon']:
             return False, msg
 
     except Exception as e:
         msg = '%s' % e
-        print 'Test Failed: %s' % msg
+        print ('Test Failed: %s' % msg)
         return False, msg
     return True, ''
 
@@ -173,17 +165,17 @@ def PointCloudTest(data, gt_data):
     width = np.array(data['width']).mean()
     height = np.array(data['height']).mean()
     msg = 'Expect image size %d(+-%d), %d. Got %d, %d.' % (gt_data['width'][0], gt_data['width'][1], gt_data['height'][0], width, height)
-    print msg
+    print (msg)
     if abs(width - gt_data['width'][0]) > gt_data['width'][1] or height != gt_data['height'][0]:
         return False, msg
     mean_pos = np.array([xx[:3] for xx in data['avg']]).mean(0)
     msg = 'Expect average position of %s (+-%.3f). Got average of %s.' % (gt_data['avg'][0][:3], gt_data['epsilon'][0], mean_pos)
-    print msg
+    print (msg)
     if abs(mean_pos - gt_data['avg'][0][:3]).max() > gt_data['epsilon'][0]:
         return False, msg
     mean_col = np.array([xx[3:] for xx in data['avg']]).mean(0)
     msg = 'Expect average color of %s (+-%.3f). Got average of %s.' % (gt_data['avg'][0][3:], gt_data['epsilon'][1], mean_col)
-    print msg
+    print (msg)
     if abs(mean_col - gt_data['avg'][0][3:]).max() > gt_data['epsilon'][1]:
         return False, msg
 
@@ -195,8 +187,12 @@ def staticTFTest(data, gt_data):
         if data[couple] is None:
             msg = 'Tf is None for couple %s' % '->'.join(couple)
             return False, msg
-        if any(abs((np.array(data[couple][0]) - np.array(gt_data[couple][0]))) > 1e-5) or \
-           any(abs((np.array(data[couple][1]) - np.array(gt_data[couple][1]))) > 1e-5):
+        temp = data[couple].translation
+        np_trans = np.array([temp.x, temp.y, temp.z])
+        temp = data[couple].rotation
+        np_rot = np.array([temp.x, temp.y, temp.z, temp.w])
+        if any(abs(np_trans - gt_data[couple][0]) > 1e-5) or \
+           any(abs(np_rot - gt_data[couple][1]) > 1e-5):
            msg = 'Tf is changed for couple %s' % '->'.join(couple)
            return False, msg
     return True, ''
@@ -257,88 +253,102 @@ def print_results(results):
     col_3_width = max([len(headers[3])] + [len(test[1][1]) for test in results]) + 1
     total_width = col_0_width + col_1_width + col_2_width + col_3_width
     print
-    print ('{:^%ds}'%total_width).format(title)
-    print '-'*total_width
-    print ('{:<%ds}{:<%ds}{:>%ds} : {:<%ds}' % (col_0_width, col_1_width, col_2_width, col_3_width)).format(*headers)
-    print '-'*(col_0_width-1) + ' '*1 + '-'*(col_1_width-1) + ' '*2 + '-'*(col_2_width-1) + ' '*3 + '-'*(col_3_width-1)
-    print '\n'.join([('{:<%dd}{:<%ds}{:>%ds} : {:<s}' % (col_0_width, col_1_width, col_2_width)).format(idx, test[0], 'OK' if test[1][0] else 'FAILED', test[1][1]) for idx, test in enumerate(results)])
+    print (('{:^%ds}'%total_width).format(title))
+    print ('-'*total_width)
+    print (('{:<%ds}{:<%ds}{:>%ds} : {:<%ds}' % (col_0_width, col_1_width, col_2_width, col_3_width)).format(*headers))
+    print ('-'*(col_0_width-1) + ' '*1 + '-'*(col_1_width-1) + ' '*2 + '-'*(col_2_width-1) + ' '*3 + '-'*(col_3_width-1))
+    print ('\n'.join([('{:<%dd}{:<%ds}{:>%ds} : {:<s}' % (col_0_width, col_1_width, col_2_width)).format(idx, test[0], 'OK' if test[1][0] else 'FAILED', test[1][1]) for idx, test in enumerate(results)]))
     print
 
 
-def get_tf(tf_listener, from_id, to_id):
-    global tf_timeout
-    try:
-        start_time = time.time()
-        # print 'Waiting for transform: %s -> %s for %.2f(sec)' % (from_id, to_id, tf_timeout)
-        tf_listener.waitForTransform(from_id, to_id, rospy.Time(), rospy.Duration(tf_timeout))
-        res = tf_listener.lookupTransform(from_id, to_id, rospy.Time())
-    except Exception as e:
-        res = None
-    finally:
-        waited_for = time.time() - start_time
-        tf_timeout = max(0.0, tf_timeout - waited_for)
-        return res
+def get_tfs(coupled_frame_ids):
+    res = dict()
+    if (os.getenv('ROS_DISTRO') == "dashing"):
+        for couple in coupled_frame_ids:
+            res[couple] = None
+    else:
+        tfBuffer = tf2_ros.Buffer()
+        node = Node('tf_listener')
+        listener = tf2_ros.TransformListener(tfBuffer, node)
+        rclpy.spin_once(node)
+        for couple in coupled_frame_ids:
+            from_id, to_id = couple
+            if (tfBuffer.can_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6))):
+                res[couple] = tfBuffer.lookup_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=1e6)).transform
+            else:
+                res[couple] = None
+    return res
 
+def kill_realsense2_camera_node():
+    cmd = "kill -s INT $(ps aux | grep '[r]ealsense2_camera_node' | awk '{print $2}')"
+    os.system(cmd)
 
 def run_tests(tests):
     msg_params = {'timeout_secs': 5}
     results = []
     params_strs = set([test['params_str'] for test in tests])
     for params_str in params_strs:
+        rclpy.init()
         rec_tests = [test for test in tests if test['params_str'] == params_str]
         themes = [test_types[test['type']]['listener_theme'] for test in rec_tests]
         msg_retriever = CWaitForMessage(msg_params)
-        print '*'*30
-        print 'Running the following tests: %s' % ('\n' + '\n'.join([test['name'] for test in rec_tests]))
-        print '*'*30
+        print ('*'*30)
+        print ('Running the following tests: %s' % ('\n' + '\n'.join([test['name'] for test in rec_tests])))
+        print ('*'*30)
         num_of_startups = 5
         is_node_up = False
         for run_no in range(num_of_startups):
             print 
-            print '*'*8 + ' Starting ROS ' + '*'*8
-            print 'running node (%d/%d)' % (run_no, num_of_startups)
-            cmd_params = ['roslaunch', 'realsense2_camera', 'rs_from_file.launch'] + params_str.split(' ')
-            print 'running command: ' + ' '.join(cmd_params)
+            print ('*'*8 + ' Starting ROS ' + '*'*8)
+            print ('running node (%d/%d)' % (run_no, num_of_startups))
+            cmd_params = ['ros2', 'launch', 'realsense2_camera', 'rs_launch.py'] + params_str.split(' ')
+            print ('running command: ' + ' '.join(cmd_params))
             p_wrapper = subprocess.Popen(cmd_params, stdout=None, stderr=None)
             time.sleep(2)
-            service_list = rosservice.get_service_list()
-            is_node_up = len([service for service in service_list if 'realsense2_camera/' in service]) > 0
+            service_list = subprocess.check_output(['ros2', 'node', 'list']).decode("utf-8")
+            is_node_up = '/camera/camera' in service_list
             if is_node_up:
-                print 'Node is UP'
+                print ('Node is UP')
                 break
-            print 'Node is NOT UP'
-            print '*'*8 + ' Killing ROS ' + '*'*9
-            p_wrapper.terminate()
-            p_wrapper.wait()
-            print 'DONE'
+
+            print ('Node is NOT UP')
+            print ('*'*8 + ' Killing ROS ' + '*'*9)
+            try:
+                p_wrapper.terminate()
+                p_wrapper.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                kill_realsense2_camera_node()
+            print ('DONE')
 
         if is_node_up:
             listener_res = msg_retriever.wait_for_messages(themes)
             if 'static_tf' in [test['type'] for test in rec_tests]:
-                print 'Gathering static transforms'
+                print ('Gathering static transforms')
                 frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame', 'camera_fisheye_frame', 'camera_pose']
-                tf_listener = tf.TransformListener()
-                listener_res['static_tf'] = dict([(xx, get_tf(tf_listener, xx[0], xx[1])) for xx in itertools.combinations(frame_ids, 2)])
-            print '*'*8 + ' Killing ROS ' + '*'*9
-            p_wrapper.terminate()
+                coupled_frame_ids = [xx for xx in itertools.combinations(frame_ids, 2)]
+                listener_res['static_tf'] = get_tfs(coupled_frame_ids)
+
+            print ('*'*8 + ' Killing ROS ' + '*'*9)
+            kill_realsense2_camera_node()
             p_wrapper.wait()
+            print ('*'*8 + ' Killed ' + '*'*9)
         else:
             listener_res = dict([[theme_name, {}] for theme_name in themes])
 
-        print '*'*30
-        print 'DONE run'
-        print '*'*30
+        rclpy.shutdown()
+        print ('*'*30)
+        print ('DONE run')
+        print ('*'*30)
 
         for test in rec_tests:
             try:
                 res = run_test(test, listener_res)
             except Exception as e:
-                print 'Test %s Failed: %s' % (test['name'], e)
+                print ('Test %s Failed: %s' % (test['name'], e))
                 res = False, '%s' % e
             results.append([test['name'], res])
 
     return results
-
 
 def main():
     outdoors_filename = './records/outdoors_1color.bag'
@@ -346,27 +356,36 @@ def main():
                  {'name': 'vis_avg_2', 'type': 'vis_avg', 'params': {'rosbag_filename': outdoors_filename}},
                  {'name': 'depth_avg_1', 'type': 'depth_avg', 'params': {'rosbag_filename': outdoors_filename}},
                  {'name': 'depth_w_cloud_1', 'type': 'depth_avg', 'params': {'rosbag_filename': outdoors_filename, 'enable_pointcloud': 'true'}},
-                 {'name': 'points_cloud_1', 'type': 'pointscloud_avg', 'params': {'rosbag_filename': outdoors_filename, 'enable_pointcloud': 'true'}},
-                 {'name': 'align_depth_color_1', 'type': 'align_depth_color', 'params': {'rosbag_filename': outdoors_filename, 'align_depth': 'true'}},
-                 {'name': 'align_depth_ir1_1', 'type': 'align_depth_ir1', 'params': {'rosbag_filename': outdoors_filename, 'align_depth': 'true'}},
+                #  {'name': 'points_cloud_1', 'type': 'pointscloud_avg', 'params': {'rosbag_filename': outdoors_filename, 'enable_pointcloud': 'true'}},
+                #  {'name': 'align_depth_color_1', 'type': 'align_depth_color', 'params': {'rosbag_filename': outdoors_filename, 'align_depth': 'true'}},
+                #  {'name': 'align_depth_ir1_1', 'type': 'align_depth_ir1', 'params': {'rosbag_filename': outdoors_filename, 'align_depth': 'true'}},
                  {'name': 'depth_avg_decimation_1', 'type': 'depth_avg_decimation', 'params': {'rosbag_filename': outdoors_filename, 'filters': 'decimation'}},
-                 {'name': 'align_depth_ir1_decimation_1', 'type': 'align_depth_ir1_decimation', 'params': {'rosbag_filename': outdoors_filename, 'filters': 'decimation', 'align_depth': 'true'}},
-                #  {'name': 'static_tf_1', 'type': 'static_tf', 'params': {'rosbag_filename': outdoors_filename}},   # Not working in Travis...
-                 {'name': 'accel_up_1', 'type': 'accel_up', 'params': {'rosbag_filename': './records/D435i_Depth_and_IMU_Stands_still.bag'}},
+                #  {'name': 'align_depth_ir1_decimation_1', 'type': 'align_depth_ir1_decimation', 'params': {'rosbag_filename': outdoors_filename, 'filters': 'decimation', 'align_depth': 'true'}},
                  ]
+    if (os.getenv('ROS_DISTRO') != "dashing"):
+        all_tests.extend([
+                    {'name': 'static_tf_1', 'type': 'static_tf', 'params': {'rosbag_filename': outdoors_filename}},   # Not working in Travis...
+                    {'name': 'accel_up_1', 'type': 'accel_up', 'params': {'rosbag_filename': './records/D435i_Depth_and_IMU_Stands_still.bag', 'enable_accel': 'true', 'accel_fps': '0.0'}},
+        ])
 
     # Normalize parameters:
     for test in all_tests:
         test['params']['rosbag_filename'] = os.path.abspath(test['params']['rosbag_filename'])
+        test['params']['color_width'] = '0'
+        test['params']['color_height'] = '0'
+        test['params']['depth_width'] = '0'
+        test['params']['depth_height'] = '0'
+        test['params']['infra_width'] = '0'
+        test['params']['infra_height'] = '0'
         test['params_str'] = ' '.join([key + ':=' + test['params'][key] for key in sorted(test['params'].keys())])
 
     if len(sys.argv) < 2 or '--help' in sys.argv or '/?' in sys.argv:
-        print 'USAGE:'
-        print '------'
-        print 'rs2_test.py --all | <test_name> [<test_name> [...]]'
+        print ('USAGE:')
+        print ('------')
+        print ('rs2_test.py --all | <test_name> [<test_name> [...]]')
         print
-        print 'Available tests are:'
-        print '\n'.join([test['name'] for test in all_tests])
+        print ('Available tests are:')
+        print ('\n'.join([test['name'] for test in all_tests]))
         exit(-1)
 
     if '--all' in sys.argv[1:]:
@@ -378,7 +397,7 @@ def main():
     print_results(results)
 
     res = int(all([result[1][0] for result in results])) - 1
-    print 'exit (%d)' % res
+    print ('exit (%d)' % res)
     exit(res)
 
 if __name__ == '__main__':

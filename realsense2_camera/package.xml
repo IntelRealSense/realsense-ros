@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>realsense2_camera</name>
-  <version>2.2.13</version>
-  <description>RealSense Camera package allowing access to Intel T265 Tracking module and SR300 and D400 3D cameras</description>
-  <maintainer email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</maintainer>
+  <version>3.2.3</version>
+  <description>RealSense Camera package allowing access to Intel SR300, D400 and L500 3D cameras</description>
   <maintainer email="doron.hirshberg@intel.com">Doron Hirshberg</maintainer>
   <license>Apache 2.0</license>
   
@@ -12,22 +12,32 @@
 
   <author email="sergey.dorodnicov@intel.com">Sergey Dorodnicov</author>
   <author email="doron.hirshberg@intel.com">Doron Hirshberg</author>
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>eigen</depend>
-  <depend>image_transport</depend>
+  <depend>builtin_interfaces</depend>
   <depend>cv_bridge</depend>
-  <depend>nav_msgs</depend>
-  <depend>nodelet</depend>  
-  <depend>genmsg</depend>
-  <depend>roscpp</depend>
-  <depend>sensor_msgs</depend>
-  <depend>std_msgs</depend>
-  <depend>message_runtime</depend>
-  <depend>tf</depend>
-  <depend>ddynamic_reconfigure</depend>
-  <depend>diagnostic_updater</depend>
+  <depend>image_transport</depend>
   <depend>librealsense2</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>realsense2_camera_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>nav_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>diagnostic_updater</depend>
+
+  <exec_depend>launch_ros</exec_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>libopencv-dev</test_depend>
+  <build_depend>ros_environment</build_depend>
+
   <export>
-    <nodelet plugin="${prefix}/nodelet_plugins.xml" />
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

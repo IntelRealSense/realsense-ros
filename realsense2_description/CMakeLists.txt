@@ -1,18 +1,14 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(realsense2_description)
 
-find_package(catkin REQUIRED COMPONENTS
-    )
-
-# RealSense description
-catkin_package(
-    )
+find_package(ament_cmake REQUIRED)
 
 # Install files
-install(DIRECTORY launch meshes rviz urdf
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(DIRECTORY 
+        launch 
+        meshes 
+        rviz 
+        urdf
+        DESTINATION share/${PROJECT_NAME})
 
-# Tests
-if (CATKIN_ENABLE_TESTING)
-  catkin_add_nosetests(tests)
-endif()
+ament_package()
