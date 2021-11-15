@@ -71,6 +71,11 @@ add_message_files(
     Extrinsics.msg
     )
 
+add_service_files(
+    FILES
+    DeviceInfo.srv
+)
+
 generate_messages(
     DEPENDENCIES
     sensor_msgs

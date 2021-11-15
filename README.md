@@ -150,10 +150,6 @@ After running the above command with D435i attached, the following list of topic
 The "/camera" prefix is the default and can be changed. Check the rs_multiple_devices.launch file for an example.
 If using D435 or D415, the gyro and accel topics wont be available. Likewise, other topics will be available when using T265 (see below).
 
-### Available services:
-- reset : Cause a hardware reset of the device. Usage: `rosservice call /camera/realsense2_camera/reset`
-- enable : Start/Stop all streaming sensors. Usage example: `rosservice call /camera/enable False"`
-
 ### Launch parameters
 The following parameters are available by the wrapper:
 - **serial_no**: will attach to the device with the given serial number (*serial_no*) number. Default, attach to available RealSense device in random.
@@ -206,6 +202,10 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
   - **NOTE** To enable the Infrared stream, you should enable `enable_infra:=true` NOT `enable_infra1:=true` nor `enable_infra2:=true`
   - **NOTE** This feature is only supported by Realsense sensors with RGB streams available from the `infra` cameras, which can be checked by observing the output of `rs-enumerate-devices`
 
+### Available services:
+- reset : Cause a hardware reset of the device. Usage: `rosservice call /camera/realsense2_camera/reset`
+- enable : Start/Stop all streaming sensors. Usage example: `rosservice call /camera/enable False"`
+- device_info : retrieve information about the device - serial_number, firmware_version etc. Type `osservice type /camera/realsense2_camera/device_info | rossrv show` for the full list. Call example: `rosservice call /camera/realsense2_camera/device_info`
 
 ### Point Cloud
 Here is an example of how to start the camera node and make it publish the point cloud using the pointcloud option.

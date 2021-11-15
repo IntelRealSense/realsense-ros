@@ -253,6 +253,7 @@ void BaseRealSenseNode::publishTopics()
     publishStaticTransforms();
     publishIntrinsics();
     startMonitoring();
+    publishServices();
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
@@ -2493,4 +2494,28 @@ void TemperatureDiagnostics::diagnostics(diagnostic_updater::DiagnosticStatusWra
 {
         status.summary(0, "OK");
         status.add("Index", _crnt_temp);
+}
+
+void BaseRealSenseNode::publishServices()
+{
+    _device_info_srv = std::make_shared<ros::ServiceServer>(_pnh.advertiseService("device_info", &BaseRealSenseNode::getDeviceInfo, this));
+}
+
+bool BaseRealSenseNode::getDeviceInfo(realsense2_camera::DeviceInfo::Request&,
+                                      realsense2_camera::DeviceInfo::Response& res)
+{
+    res.device_name = _dev.supports(RS2_CAMERA_INFO_NAME) ? create_graph_resource_name(_dev.get_info(RS2_CAMERA_INFO_NAME)) : "";
+    res.serial_number = _dev.supports(RS2_CAMERA_INFO_SERIAL_NUMBER) ? _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER) : "";
+    res.firmware_version = _dev.supports(RS2_CAMERA_INFO_FIRMWARE_VERSION) ? _dev.get_info(RS2_CAMERA_INFO_FIRMWARE_VERSION) : "";
+    res.usb_type_descriptor = _dev.supports(RS2_CAMERA_INFO_USB_TYPE_DESCRIPTOR) ? _dev.get_info(RS2_CAMERA_INFO_USB_TYPE_DESCRIPTOR) : "";
+    res.firmware_update_id = _dev.supports(RS2_CAMERA_INFO_FIRMWARE_UPDATE_ID) ? _dev.get_info(RS2_CAMERA_INFO_FIRMWARE_UPDATE_ID) : "";
+
+    std::stringstream sensors_names;
+    for(auto&& sensor : _dev_sensors)
+    {
+        sensors_names << create_graph_resource_name(sensor.get_info(RS2_CAMERA_INFO_NAME)) << ",";
+    }
+
+    res.sensors = sensors_names.str().substr(0, sensors_names.str().size()-1);
+    return true;
 }
