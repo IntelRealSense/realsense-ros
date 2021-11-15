@@ -2,6 +2,18 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* publish metadata
+* Add service: device_info
+* add wait_for_device_timeout parameter
+* Add reconnect_timeout parameter
+* show warning when requested profile cannot be selected.
+* send only 4 distortion coeffs when using equidistant
+* fixed missing std namespace
+* Removing spaces when iterating filters
+* Contributors: Collin Avidano, Gintaras, Jacco van der Spek, doronhi
+
 2.3.1 (2021-07-01)
 ------------------
 * add respawn option
