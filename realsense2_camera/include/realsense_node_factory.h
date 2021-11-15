@@ -2,78 +2,62 @@
 // Copyright(c) 2018 Intel Corporation. All Rights Reserved
 
 #pragma once
+#ifndef ___REALSENSE_NODE_FACTORY_HEADER___
+#define ___REALSENSE_NODE_FACTORY_HEADER___
 
-#include <pluginlib/class_list_macros.h>
-#include <nodelet/nodelet.h>
-#include <image_transport/image_transport.h>
-#include <ros/ros.h>
-#include <ros/package.h>
-#include <librealsense2/rs.hpp>
-#include <librealsense2/rsutil.h>
-#include <librealsense2/hpp/rs_processing.hpp>
-#include <librealsense2/rs_advanced_mode.hpp>
-#include <cv_bridge/cv_bridge.h>
-#include <constants.h>
-#include <realsense2_camera/Extrinsics.h>
-#include <realsense2_camera/IMUInfo.h>
+// cpplint: c system headers
+#include "constants.h"
+#include "base_realsense_node.h"
+#include <builtin_interfaces/msg/time.hpp>
+#include <console_bridge/console.h>
+#include <rclcpp/rclcpp.hpp>
+#include "rclcpp_components/register_node_macro.hpp"
+#include <algorithm>
 #include <csignal>
-#include <eigen3/Eigen/Geometry>
-#include <fstream>
+#include <iostream>
+#include <limits>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 #include <thread>
+#include "dynamic_params.h"
 
 namespace realsense2_camera
 {
-    const stream_index_pair COLOR{RS2_STREAM_COLOR, 0};
-    const stream_index_pair DEPTH{RS2_STREAM_DEPTH, 0};
-    const stream_index_pair INFRA1{RS2_STREAM_INFRARED, 1};
-    const stream_index_pair INFRA2{RS2_STREAM_INFRARED, 2};
-    const stream_index_pair FISHEYE{RS2_STREAM_FISHEYE, 0};
-    const stream_index_pair FISHEYE1{RS2_STREAM_FISHEYE, 1};
-    const stream_index_pair FISHEYE2{RS2_STREAM_FISHEYE, 2};
-    const stream_index_pair GYRO{RS2_STREAM_GYRO, 0};
-    const stream_index_pair ACCEL{RS2_STREAM_ACCEL, 0};
-    const stream_index_pair POSE{RS2_STREAM_POSE, 0};
-    
-
-    const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA1, INFRA2,
-                                                          COLOR,
-                                                          FISHEYE,
-                                                          FISHEYE1, FISHEYE2};
-
-    const std::vector<stream_index_pair> HID_STREAMS = {GYRO, ACCEL, POSE};
-
-    class InterfaceRealSenseNode
+    class RealSenseNodeFactory : public rclcpp::Node
     {
     public:
-        virtual void publishTopics() = 0;
-        virtual void registerDynamicReconfigCb(ros::NodeHandle& nh) = 0;
-        virtual ~InterfaceRealSenseNode() = default;
-    };
-
-    class RealSenseNodeFactory : public nodelet::Nodelet
-    {
-    public:
-        RealSenseNodeFactory();
+        explicit RealSenseNodeFactory(const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
+        RealSenseNodeFactory(
+            const std::string & node_name, const std::string & ns,
+            const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
         virtual ~RealSenseNodeFactory();
 
     private:
+        void init();
         void closeDevice();
-        void StartDevice();
-        void change_device_callback(rs2::event_information& info);
+        void startDevice();
+        void changeDeviceCallback(rs2::event_information& info);
         void getDevice(rs2::device_list list);
-        virtual void onInit() override;
         void tryGetLogSeverity(rs2_log_severity& severity) const;
-        static std::string parse_usb_port(std::string line);
+        static std::string parseUsbPort(std::string line);
 
+        rclcpp::Node::SharedPtr _node;
         rs2::device _device;
-        std::unique_ptr<InterfaceRealSenseNode> _realSenseNode;
+        std::unique_ptr<BaseRealSenseNode> _realSenseNode;
         rs2::context _ctx;
         std::string _serial_no;
         std::string _usb_port_id;
         std::string _device_type;
+        double _wait_for_device_timeout;
+        double _reconnect_timeout;
         bool _initial_reset;
         std::thread _query_thread;
         bool _is_alive;
-
+        rclcpp::Logger _logger;
+        std::shared_ptr<Parameters> _parameters;
     };
 }//end namespace
+#endif //___REALSENSE_NODE_FACTORY_HEADER___

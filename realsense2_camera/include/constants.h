@@ -5,14 +5,44 @@
 
 #include <string>
 
-#define REALSENSE_ROS_MAJOR_VERSION    2
+#define REALSENSE_ROS_MAJOR_VERSION    3
 #define REALSENSE_ROS_MINOR_VERSION    2
-#define REALSENSE_ROS_PATCH_VERSION    13
+#define REALSENSE_ROS_PATCH_VERSION    3
 
 #define STRINGIFY(arg) #arg
 #define VAR_ARG_STRING(arg) STRINGIFY(arg)
 /* Return version in "X.Y.Z" format */
 #define REALSENSE_ROS_VERSION_STR (VAR_ARG_STRING(REALSENSE_ROS_MAJOR_VERSION.REALSENSE_ROS_MINOR_VERSION.REALSENSE_ROS_PATCH_VERSION))
+
+#define ROS_DEBUG(...) RCLCPP_DEBUG(_logger, __VA_ARGS__)
+#define ROS_INFO(...) RCLCPP_INFO(_logger, __VA_ARGS__)
+#define ROS_WARN(...) RCLCPP_WARN(_logger, __VA_ARGS__)
+#define ROS_ERROR(...) RCLCPP_ERROR(_logger, __VA_ARGS__)
+
+#ifdef DASHING
+// Based on: https://docs.ros2.org/dashing/api/rclcpp/logging_8hpp.html
+#define MSG(msg) (static_cast<std::ostringstream&&>(std::ostringstream() << msg)).str()
+#define ROS_DEBUG_STREAM(msg) RCLCPP_DEBUG(_logger, MSG(msg))
+#define ROS_INFO_STREAM(msg) RCLCPP_INFO(_logger, MSG(msg))
+#define ROS_WARN_STREAM(msg) RCLCPP_WARN(_logger, MSG(msg))
+#define ROS_ERROR_STREAM(msg) RCLCPP_ERROR(_logger, MSG(msg))
+#define ROS_FATAL_STREAM(msg) RCLCPP_FATAL(_logger, MSG(msg))
+#define ROS_DEBUG_STREAM_ONCE(msg) RCLCPP_DEBUG_ONCE(_logger, MSG(msg))
+#define ROS_INFO_STREAM_ONCE(msg) RCLCPP_INFO_ONCE(_logger, MSG(msg))
+#define ROS_WARN_STREAM_COND(cond, msg) RCLCPP_WARN_EXPRESSION(_logger, cond, MSG(msg))
+#else
+// Based on: https://docs.ros2.org/foxy/api/rclcpp/logging_8hpp.html
+#define ROS_DEBUG_STREAM(msg) RCLCPP_DEBUG_STREAM(_logger, msg)
+#define ROS_INFO_STREAM(msg) RCLCPP_INFO_STREAM(_logger, msg)
+#define ROS_WARN_STREAM(msg) RCLCPP_WARN_STREAM(_logger, msg)
+#define ROS_ERROR_STREAM(msg) RCLCPP_ERROR_STREAM(_logger, msg)
+#define ROS_FATAL_STREAM(msg) RCLCPP_FATAL_STREAM(_logger, msg)
+#define ROS_DEBUG_STREAM_ONCE(msg) RCLCPP_DEBUG_STREAM_ONCE(_logger, msg)
+#define ROS_INFO_STREAM_ONCE(msg) RCLCPP_INFO_STREAM_ONCE(_logger, msg)
+#define ROS_WARN_STREAM_COND(cond, msg) RCLCPP_WARN_STREAM_EXPRESSION(_logger, cond, msg)
+#endif
+
+#define ROS_WARN_ONCE(msg) RCLCPP_WARN_ONCE(_logger, msg)
 
 namespace realsense2_camera
 {
@@ -32,24 +62,36 @@ namespace realsense2_camera
     const uint16_t RS460_PID        = 0x0b03; // DS5U
     const uint16_t RS435_RGB_PID    = 0x0b07; // AWGC
     const uint16_t RS435i_RGB_PID   = 0x0B3A; // AWGC_MM
+    const uint16_t RS465_PID        = 0x0b4d; // D465
+    const uint16_t RS416_RGB_PID    = 0x0B52; // F416 RGB
     const uint16_t RS405_PID        = 0x0b0c; // DS5U
+    const uint16_t RS455_PID        = 0x0B5C; // D455
     const uint16_t RS_T265_PID      = 0x0b37; // 
-    const uint16_t RS_L515_PID      = 0x0B3D; // 
+    const uint16_t RS_L515_PID_PRE_PRQ = 0x0B3D; // 
+    const uint16_t RS_L515_PID      = 0x0B64; // 
+    const uint16_t RS_L535_PID      = 0x0b68;
     
 
-    const bool ALIGN_DEPTH    = false;
-    const bool POINTCLOUD     = false;
+    const bool ALIGN_DEPTH             = false;
+    const bool POINTCLOUD              = false;
     const bool ALLOW_NO_TEXTURE_POINTS = false;
-    const bool SYNC_FRAMES    = false;
+    const bool SYNC_FRAMES             = false;
+    const bool ORDERED_POINTCLOUD      = false;
 
     const bool PUBLISH_TF        = true;
     const double TF_PUBLISH_RATE = 0; // Static transform
+    const double DIAGNOSTICS_PERIOD = 0; // Static transform
 
-    const int IMAGE_WIDTH     = 640;
-    const int IMAGE_HEIGHT    = 480;
-    const int IMAGE_FPS       = 30;
+    const int IMAGE_WIDTH             = 640;
+    const int IMAGE_HEIGHT            = 480;
+    const double IMAGE_FPS            = 30;
 
-    const int IMU_FPS         = 0;
+    const std::string IMAGE_QOS       = "SYSTEM_DEFAULT";
+    const std::string DEFAULT_QOS     = "DEFAULT";
+    const std::string HID_QOS         = "HID_DEFAULT";
+    const std::string EXTRINSICS_QOS  = "EXTRINSICS_DEFAULT";
+
+    const double IMU_FPS      = 0;
 
 
     const bool ENABLE_DEPTH   = true;
@@ -90,5 +132,4 @@ namespace realsense2_camera
     const std::string DEFAULT_TOPIC_ODOM_IN            = "";
 
     const float ROS_DEPTH_SCALE = 0.001;
-    using stream_index_pair = std::pair<rs2_stream, int>;
 }  // namespace realsense2_camera

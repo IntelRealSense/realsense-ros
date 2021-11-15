@@ -1,16 +1,22 @@
 import sys
 import time
-import rospy
+import rclpy
+from rclpy.node import Node
+from rclpy import qos
 from sensor_msgs.msg import Image as msg_Image
-from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
-import sensor_msgs.point_cloud2 as pc2
+# from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
+# import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import Imu as msg_Imu
 import numpy as np
-from cv_bridge import CvBridge, CvBridgeError
 import inspect
 import ctypes
 import struct
-import tf
+import quaternion
+import os
+if (os.getenv('ROS_DISTRO') != "dashing"):
+    import tf2_ros
+
+
 try:
     from theora_image_transport.msg import Packet as msg_theora
 except Exception:
@@ -32,6 +38,25 @@ def pc2_to_xyzrgb(point):
     b = (pack & 0x000000FF)
     return x, y, z, r, g, b
 
+def image_msg_to_numpy(data):
+    fmtString = data.encoding
+    if fmtString in ['mono8', '8UC1', 'bgr8', 'rgb8', 'bgra8', 'rgba8']:
+        img = np.frombuffer(data.data, np.uint8)
+    elif fmtString in ['mono16', '16UC1', '16SC1']:
+        img = np.frombuffer(data.data, np.uint16)
+    elif fmtString == '32FC1':
+        img = np.frombuffer(data.data, np.float32)
+    else:
+        print('image format not supported:' + fmtString)
+        return None
+
+    depth = data.step / (data.width * img.dtype.itemsize)
+    if depth > 1:
+        img = img.reshape(data.height, data.width, int(depth))
+    else:
+        img = img.reshape(data.height, data.width)
+    return img
+
 
 class CWaitForMessage:
     def __init__(self, params={}):
@@ -39,18 +64,16 @@ class CWaitForMessage:
 
         self.break_timeout = False
         self.timeout = params.get('timeout_secs', -1)
-        self.seq = params.get('seq', -1)
         self.time = params.get('time', None)
         self.node_name = params.get('node_name', 'rs2_listener')
-        self.bridge = CvBridge()
         self.listener = None
         self.prev_msg_time = 0
         self.fout = None
-        
+        print ('connect to ROS with name: %s' % self.node_name)
 
         self.themes = {'depthStream': {'topic': '/camera/depth/image_rect_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
                        'colorStream': {'topic': '/camera/color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
-                       'pointscloud': {'topic': '/camera/depth/color/points', 'callback': self.pointscloudCallback, 'msg_type': msg_PointCloud2},
+                    #    'pointscloud': {'topic': '/camera/depth/color/points', 'callback': self.pointscloudCallback, 'msg_type': msg_PointCloud2},
                        'alignedDepthInfra1': {'topic': '/camera/aligned_depth_to_infra1/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
                        'alignedDepthColor': {'topic': '/camera/aligned_depth_to_color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
                        'static_tf': {'topic': '/camera/color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
@@ -61,27 +84,25 @@ class CWaitForMessage:
 
     def imuCallback(self, theme_name):
         def _imuCallback(data):
-            if self.listener is None:
-                self.listener = tf.TransformListener()
             self.prev_time = time.time()
             self.func_data[theme_name].setdefault('value', [])
             self.func_data[theme_name].setdefault('ros_value', [])
             try:
                 frame_id = data.header.frame_id
                 value = data.linear_acceleration
+                self.func_data[theme_name]['value'].append(value)
 
-                (trans,rot) = self.listener.lookupTransform('/camera_link', frame_id, rospy.Time(0))
-                quat = tf.transformations.quaternion_matrix(rot)
-                point = np.matrix([value.x, value.y, value.z, 1], dtype='float32')
-                point.resize((4, 1))
-                rotated = quat*point
-                rotated.resize(1,4)
-                rotated = np.array(rotated)[0][:3]
+                if (self.tfBuffer.can_transform('camera_link', frame_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6))):
+                    msg = self.tfBuffer.lookup_transform('camera_link', frame_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6)).transform
+                    quat = np.quaternion(msg.rotation.x, msg.rotation.y, msg.rotation.z, msg.rotation.w)
+                    point = np.matrix([value.x, value.y, value.z], dtype='float32')
+                    point.resize((3, 1))
+                    rotated = quaternion.as_rotation_matrix(quat) * point
+                    rotated.resize(1,3)
+                    self.func_data[theme_name]['ros_value'].append(rotated)
             except Exception as e:
                 print(e)
                 return
-            self.func_data[theme_name]['value'].append(value)
-            self.func_data[theme_name]['ros_value'].append(rotated)
         return _imuCallback            
 
     def imageColorCallback(self, theme_name):
@@ -93,20 +114,14 @@ class CWaitForMessage:
             self.func_data[theme_name].setdefault('shape', [])
             self.func_data[theme_name].setdefault('reported_size', [])
 
-            try:
-                cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
-            except CvBridgeError as e:
-                print(e)
-                return
-            channels = cv_image.shape[2] if len(cv_image.shape) > 2 else 1
-            pyimg = np.asarray(cv_image)
-
+            pyimg = image_msg_to_numpy(data)
+            channels = pyimg.shape[2] if len(pyimg.shape) > 2 else 1
             ok_number = (pyimg != 0).sum()
 
             self.func_data[theme_name]['avg'].append(pyimg.sum() / ok_number)
             self.func_data[theme_name]['ok_percent'].append(float(ok_number) / (pyimg.shape[0] * pyimg.shape[1]) / channels)
             self.func_data[theme_name]['num_channels'].append(channels)
-            self.func_data[theme_name]['shape'].append(cv_image.shape)
+            self.func_data[theme_name]['shape'].append(pyimg.shape)
             self.func_data[theme_name]['reported_size'].append((data.width, data.height, data.step))
         return _imageColorCallback
 
@@ -116,7 +131,7 @@ class CWaitForMessage:
     def pointscloudCallback(self, theme_name):
         def _pointscloudCallback(data):
             self.prev_time = time.time()
-            print 'Got pointcloud: %d, %d' % (data.width, data.height)
+            print ('Got pointcloud: %d, %d' % (data.width, data.height))
 
             self.func_data[theme_name].setdefault('frame_counter', 0)
             self.func_data[theme_name].setdefault('avg', [])
@@ -143,71 +158,76 @@ class CWaitForMessage:
 
     def wait_for_message(self, params, msg_type=msg_Image):
         topic = params['topic']
-        print 'connect to ROS with name: %s' % self.node_name
-        rospy.init_node(self.node_name, anonymous=True)
+        print ('connect to ROS with name: %s' % self.node_name)
+        rclpy.init()
+        node = Node(self.node_name)
 
         out_filename = params.get('filename', None)
         if (out_filename):
             self.fout = open(out_filename, 'w')
             if msg_type is msg_Imu:
                 col_w = 20
-                print 'Writing to file: %s' % out_filename
+                print ('Writing to file: %s' % out_filename)
                 columns = ['frame_number', 'frame_time(sec)', 'accel.x', 'accel.y', 'accel.z', 'gyro.x', 'gyro.y', 'gyro.z']
                 line = ('{:<%d}'*len(columns) % (col_w, col_w, col_w, col_w, col_w, col_w, col_w, col_w)).format(*columns) + '\n'
                 sys.stdout.write(line)
                 self.fout.write(line)
 
-        rospy.loginfo('Subscribing on topic: %s' % topic)
-        self.sub = rospy.Subscriber(topic, msg_type, self.callback)
+        node.get_logger().info('Subscribing on topic: %s' % topic)
+        sub = node.create_subscription(msg_type, topic, self.callback, qos.qos_profile_sensor_data)
 
         self.prev_time = time.time()
         break_timeout = False
-        while not any([rospy.core.is_shutdown(), break_timeout, self.result]):
-            rospy.rostime.wallsleep(0.5)
+        while not any([(not rclpy.ok()), break_timeout, self.result]):
+            rclpy.spin_once(node)
             if self.timeout > 0 and time.time() - self.prev_time > self.timeout:
                 break_timeout = True
-                self.sub.unregister()
+                node.destroy_subscription(sub)
 
         return self.result
 
     @staticmethod
-    def unregister_all(registers):
+    def unregister_all(node, registers):
         for test_name in registers:
-            rospy.loginfo('Un-Subscribing test %s' % test_name)
-            registers[test_name]['sub'].unregister()
+            node.get_logger().info('Un-Subscribing test %s' % test_name)
+            node.destroy_subscription(registers[test_name]['sub'])
+            registers[test_name]['sub'] = None  # unregisters.
 
     def wait_for_messages(self, themes):
         # tests_params = {<name>: {'callback', 'topic', 'msg_type', 'internal_params'}}
         self.func_data = dict([[theme_name, {}] for theme_name in themes])
 
-        print 'connect to ROS with name: %s' % self.node_name
-        rospy.init_node(self.node_name, anonymous=True)
+        node = Node('wait_for_messages')
         for theme_name in themes:
             theme = self.themes[theme_name]
-            rospy.loginfo('Subscribing %s on topic: %s' % (theme_name, theme['topic']))
-            self.func_data[theme_name]['sub'] = rospy.Subscriber(theme['topic'], theme['msg_type'], theme['callback'](theme_name))
+            node.get_logger().info('Subscribing %s on topic: %s' % (theme_name, theme['topic']))
+            self.func_data[theme_name]['sub'] = node.create_subscription(theme['msg_type'], theme['topic'], theme['callback'](theme_name), qos.qos_profile_sensor_data)
+
+        if (os.getenv('ROS_DISTRO') != "dashing"):
+            self.tfBuffer = tf2_ros.Buffer()
+            self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, node)
 
         self.prev_time = time.time()
         break_timeout = False
-        while not any([rospy.core.is_shutdown(), break_timeout]):
-            rospy.rostime.wallsleep(0.5)
+        while not break_timeout:
+            rclpy.spin_once(node, timeout_sec=1)
             if self.timeout > 0 and time.time() - self.prev_time > self.timeout:
                 break_timeout = True
-                self.unregister_all(self.func_data)
+                self.unregister_all(node, self.func_data)
 
+        node.destroy_node()
         return self.func_data
 
     def callback(self, data):
-        msg_time = data.header.stamp.secs + 1e-9 * data.header.stamp.nsecs
+        msg_time = data.header.stamp.sec + 1e-9 * data.header.stamp.nanosec
 
         if (self.prev_msg_time > msg_time):
             rospy.loginfo('Out of order: %.9f > %.9f' % (self.prev_msg_time, msg_time))
         if type(data) == msg_Imu:
             col_w = 20
-            frame_number = data.header.seq
             accel = data.linear_acceleration
             gyro = data.angular_velocity
-            line = ('\n{:<%d}{:<%d.6f}{:<%d.4f}{:<%d.4f}{:<%d.4f}{:<%d.4f}{:<%d.4f}{:<%d.4f}' % (col_w, col_w, col_w, col_w, col_w, col_w, col_w, col_w)).format(frame_number, msg_time, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z)
+            line = ('\n{:<%d.6f}{:<%d.4f}{:<%d.4f}{:<%d.4f}{:<%d.4f}{:<%d.4f}{:<%d.4f}' % (col_w, col_w, col_w, col_w, col_w, col_w, col_w)).format(msg_time, accel.x, accel.y, accel.z, gyro.x, gyro.y, gyro.z)
             sys.stdout.write(line)
             if self.fout:
                 self.fout.write(line)
@@ -216,29 +236,27 @@ class CWaitForMessage:
         self.prev_msg_data = data
 
         self.prev_time = time.time()
-        if any([self.seq > 0 and data.header.seq >= self.seq,
-                self.time and data.header.stamp.secs == self.time['secs'] and data.header.stamp.nsecs == self.time['nsecs']]):
+        if ((not self.time) or (data.header.stamp.sec == self.time['secs'] and data.header.stamp.nanosec == self.time['nsecs'])):
             self.result = data
-            self.sub.unregister()
 
 
 
 def main():
     if len(sys.argv) < 2 or '--help' in sys.argv or '/?' in sys.argv:
-        print 'USAGE:'
-        print '------'
-        print 'rs2_listener.py <topic | theme> [Options]'
-        print 'example: rs2_listener.py /camera/color/image_raw --time 1532423022.044515610 --timeout 3'
-        print 'example: rs2_listener.py pointscloud'
-        print ''
-        print 'Application subscribes on <topic>, wait for the first message matching [Options].'
-        print 'When found, prints the timestamp.'
+        print ('USAGE:')
+        print ('------')
+        print ('rs2_listener.py <topic | theme> [Options]')
+        print ('example: rs2_listener.py /camera/color/image_raw --time 1532423022.044515610 --timeout 3')
+        print ('example: rs2_listener.py pointscloud')
+        print ('')
+        print ('Application subscribes on <topic>, wait for the first message matching [Options].')
+        print ('When found, prints the timestamp.')
         print
-        print '[Options:]'
-        print '-s <sequential number>'
-        print '--time <secs.nsecs>'
-        print '--timeout <secs>'
-        print '--filename <filename> : write output to file'
+        print ('[Options:]')
+        print ('-s <sequential number>')
+        print ('--time <secs.nsecs>')
+        print ('--timeout <secs>')
+        print ('--filename <filename> : write output to file')
         exit(-1)
 
     # wanted_topic = '/device_0/sensor_0/Depth_0/image/data'
@@ -260,8 +278,6 @@ def main():
         msg_type = msg_Image
 
     for idx in range(2, len(sys.argv)):
-        if sys.argv[idx] == '-s':
-            msg_params['seq'] = int(sys.argv[idx + 1])
         if sys.argv[idx] == '--time':
             msg_params['time'] = dict(zip(['secs', 'nsecs'], [int(part) for part in sys.argv[idx + 1].split('.')]))
         if sys.argv[idx] == '--timeout':
@@ -273,11 +289,11 @@ def main():
     if '/' in wanted_topic:
         msg_params.setdefault('topic', wanted_topic)
         res = msg_retriever.wait_for_message(msg_params, msg_type)
-        rospy.loginfo('Got message: %s' % res.header)
+        print('Got message: %s' % res.header)
     else:
         themes = [wanted_topic]
         res = msg_retriever.wait_for_messages(themes)
-        print res
+        print (res)
 
 
 if __name__ == '__main__':

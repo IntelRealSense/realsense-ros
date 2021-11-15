@@ -1,0 +1,42 @@
+camera:
+    camera:
+      ros__parameters:
+        device_type: ''
+        serial_no: ''
+        usb_port_id: ''
+
+        color_fps: 30.0
+        color_height: 480
+        color_width: 640
+        color_qos: "SENSOR_DATA"
+
+        depth_fps: 30.0
+        depth_height: 720
+        depth_width: 1280
+        depth_qos: "SENSOR_DATA"
+
+        infra_height: 720
+        infra_width: 1280
+        infra_qos: "SENSOR_DATA"
+
+        gyro_fps: 0.0
+
+        enable_accel: true
+        enable_color: true
+        enable_depth: true
+        enable_gyro: true
+        enable_infra1: true
+        enable_infra2: true
+
+        enable_pointcloud: false
+        filters: ''
+
+
+        pointcloud_texture_index: 0
+        pointcloud_texture_stream: RS2_STREAM_COLOR
+
+        stereo_module:
+          emitter_enabled: 1
+        unite_imu_method: ''
+
+        rosbag_filename: ''
