@@ -123,8 +123,10 @@ The published topics differ according to the device and parameters.
 After running the above command with D435i attached, the following list of topics will be available (This is a partial list. For full one type `rostopic list`):
 - /camera/color/camera_info
 - /camera/color/image_raw
+- /camera/color/metadata
 - /camera/depth/camera_info
 - /camera/depth/image_rect_raw
+- /camera/depth/metadata
 - /camera/extrinsics/depth_to_color
 - /camera/extrinsics/depth_to_infra1
 - /camera/extrinsics/depth_to_infra2
@@ -133,8 +135,10 @@ After running the above command with D435i attached, the following list of topic
 - /camera/infra2/camera_info
 - /camera/infra2/image_rect_raw
 - /camera/gyro/imu_info
+- /camera/gyro/metadata
 - /camera/gyro/sample
 - /camera/accel/imu_info
+- /camera/accel/metadata
 - /camera/accel/sample
 - /diagnostics
 
