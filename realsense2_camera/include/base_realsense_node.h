@@ -164,12 +164,14 @@ namespace realsense2_camera
         bool _align_depth;
         std::vector<rs2_option> _monitor_options;
         rclcpp::Logger _logger;
-        rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr _toggle_sensors_srv;
+        rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr _toggle_sensors_srv, _pause_sensors_srv;
         rclcpp::Service<realsense2_camera_msgs::srv::DeviceInfo>::SharedPtr _device_info_srv;
 
         virtual void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile);
         virtual bool toggleSensors(bool enabled, std::string& msg);
+        virtual bool pauseSensors(bool pause, std::string& msg);
         bool toggle_sensor_callback(std_srvs::srv::SetBool::Request::SharedPtr req, std_srvs::srv::SetBool::Response::SharedPtr res);
+        bool pause_sensor_callback(std_srvs::srv::SetBool::Request::SharedPtr req, std_srvs::srv::SetBool::Response::SharedPtr res);
         void getDeviceInfo(const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr req,
                                  realsense2_camera_msgs::srv::DeviceInfo::Response::SharedPtr res);
         virtual void publishTopics();

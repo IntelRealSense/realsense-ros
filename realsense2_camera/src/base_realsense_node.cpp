@@ -266,6 +266,12 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
                     std_srvs::srv::SetBool::Response::SharedPtr res)
                     {toggle_sensor_callback(req, res);});
 
+        _pause_sensors_srv = _node.create_service<std_srvs::srv::SetBool>(
+                "pause",
+                [&](std_srvs::srv::SetBool::Request::SharedPtr req, 
+                    std_srvs::srv::SetBool::Response::SharedPtr res)
+                    {pause_sensor_callback(req, res);});
+
         _device_info_srv = _node.create_service<realsense2_camera_msgs::srv::DeviceInfo>(
                 "device_info",
                 [&](const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr req,
@@ -420,6 +426,48 @@ bool BaseRealSenseNode::toggleSensors(bool enabled, std::string& msg)
     }
   }
   return true;
+}
+
+bool BaseRealSenseNode::pause_sensor_callback(std_srvs::srv::SetBool::Request::SharedPtr req, std_srvs::srv::SetBool::Response::SharedPtr res)
+{
+  if (req->data) {
+    ROS_INFO_STREAM("toggling sensor : ON");
+  }
+  else {
+    ROS_INFO_STREAM("toggling sensor : OFF");
+  }
+  std::string msg;
+  res->success = pauseSensors(req->data, res->message);
+  return true;
+}
+
+bool BaseRealSenseNode::pauseSensors(bool pause, std::string& msg)
+{
+    for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
+    {
+        std::string module_name = _sensors[profile.first].get_info(RS2_CAMERA_INFO_NAME);
+        try
+        {
+            if(pause)
+            {
+                _sensors[profile.first].stop();
+            }else{
+                _sensors[profile.first].start(_sensors_callback[module_name]);
+            }
+        }
+        catch(const rs2::wrong_api_call_sequence_error& e)
+        {
+            if(pause)
+            {
+                msg = "Device " + module_name + " was already stopped.";
+            }else{
+                msg = "Device " + module_name + " was already started.";
+            }
+            ROS_WARN(msg.c_str());
+            return false;
+        }
+    }
+    return true;
 }
 
 void BaseRealSenseNode::setupErrorCallback()
