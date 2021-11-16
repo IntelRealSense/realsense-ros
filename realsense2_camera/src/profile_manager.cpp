@@ -96,7 +96,6 @@ void ProfilesManager::addWantedProfiles(std::vector<rs2::stream_profile>& wanted
 {    
     std::map<stream_index_pair, bool> found_sips;
     std::map<stream_index_pair, rs2::stream_profile> default_profiles;
-    ROS_INFO_STREAM("_all_profiles.size()" << _all_profiles.size());
     for (auto profile : _all_profiles)
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
