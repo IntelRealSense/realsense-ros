@@ -12,9 +12,11 @@ using namespace realsense2_camera;
 
 // stream_index_pair sip{stream_type, stream_index};
 #define STREAM_NAME(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << _stream_name[sip.first] << ((sip.second>0) ? std::to_string(sip.second) : ""))).str()
-#define FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_" << STREAM_NAME(sip) << "_frame")).str()
-#define OPTICAL_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_" << STREAM_NAME(sip) << "_optical_frame")).str()
-#define ALIGNED_DEPTH_TO_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << "camera_aligned_depth_to_" << STREAM_NAME(sip) << "_frame")).str()
+#define FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << getNamespaceStr() << "_" << STREAM_NAME(sip) << "_frame")).str()
+#define OPTICAL_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << getNamespaceStr() << "_" << STREAM_NAME(sip) << "_optical_frame")).str()
+#define ALIGNED_DEPTH_TO_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << getNamespaceStr() << "_aligned_depth_to_" << STREAM_NAME(sip) << "_frame")).str()
+#define BASE_FRAME_ID() (static_cast<std::ostringstream&&>(std::ostringstream() << getNamespaceStr() << "_link")).str()
+#define ODOM_FRAME_ID() (static_cast<std::ostringstream&&>(std::ostringstream() << getNamespaceStr() << "_odom_frame")).str()
 
 
 std::vector<std::string> split(const std::string& s, char delimiter) // Thanks to Jonathan Boccara (https://www.fluentcpp.com/2017/04/21/how-to-split-a-string-in-c/)
@@ -173,6 +175,13 @@ size_t SyncedImuPublisher::getNumSubscribers()
 {
     if (!_publisher) return 0;
     return _publisher->get_subscription_count();
+}
+
+std::string BaseRealSenseNode::getNamespaceStr()
+{
+    std::string ns(_node.get_namespace());
+    ns.erase (std::remove(ns.begin(), ns.end(), '/'), ns.end());
+    return ns;
 }
 
 static const rmw_qos_profile_t rmw_qos_profile_latched =
@@ -956,8 +965,8 @@ void BaseRealSenseNode::getParameters()
         param_name = "enable_" + STREAM_NAME(stream);
         setNgetNodeParameter(_enable[stream], param_name, ENABLE_IMU);
     }
-    setNgetNodeParameter(_base_frame_id, "base_frame_id", DEFAULT_BASE_FRAME_ID);
-    setNgetNodeParameter(_odom_frame_id, "odom_frame_id", DEFAULT_ODOM_FRAME_ID);
+    setNgetNodeParameter(_base_frame_id, "base_frame_id", BASE_FRAME_ID());
+    setNgetNodeParameter(_odom_frame_id, "odom_frame_id", ODOM_FRAME_ID());
 
     std::vector<stream_index_pair> streams(IMAGE_STREAMS);
     streams.insert(streams.end(), HID_STREAMS.begin(), HID_STREAMS.end());

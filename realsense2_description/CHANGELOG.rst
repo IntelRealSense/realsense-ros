@@ -2,6 +2,12 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+3.2.3 (2021-11-11)
+------------------
+* Add D455 description
+* Add missing aluminum material to d415 model.
+* Contributors: Gilad Bretter, doronhi
+
 3.2.2 (2021-07-01)
 ------------------
 * Added imu frames to _l515.urdf.xacro

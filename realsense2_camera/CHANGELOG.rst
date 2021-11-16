@@ -2,6 +2,29 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+3.2.3 (2021-11-11)
+------------------
+* add parameter reconnect_timeout
+* default frame_id includes namespace.
+* Added dummy transformation for multi camera example
+* add parameter wait_for_device_timeout
+* Fix deprecation warnings when building on Rolling
+* Make pointcloud_qos a configurable parameter
+* show warning when requested profile cannot be selected.
+* send only 4 distortion coeffs when using equidistant
+* fixed missing std namespace
+* Add ros2 github actions.
+* add temperature diagnostics
+* Add a parameter, diagnostics_period, to control if and how often will messages be published on the diagnostic topic.
+* publish diagnostics topic for Asic and Projector temperature
+* Support spaces in the filters Parameter string.
+* publish metadata
+* Add echo_metadada.py - An example script for subscribing and parsing metadata topics.
+* Add service: device_info
+* fixed device_name value to snake case
+* Add device name.
+* Contributors: Guillaume Doisy, Marenix, Nathan Brooks, Jacco van der Spek, doronhi
+
 3.2.2 (2021-07-01)
 ------------------
 * Support Galactic and Rolling
