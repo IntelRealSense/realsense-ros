@@ -989,6 +989,12 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         image = fix_depth_scale(image, _depth_scaled_image[stream]);
     }
 
+    if (info_publishers.find(stream) == info_publishers.end() ||
+        image_publishers.find(stream) == image_publishers.end())
+        {
+            // Stream is already disabled.
+            return;
+        }
     auto& info_publisher = info_publishers.at(stream);
     auto& image_publisher = image_publishers.at(stream);
     if(0 != info_publisher->get_subscription_count() ||

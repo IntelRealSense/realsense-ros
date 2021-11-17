@@ -164,6 +164,7 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
             _imu_publishers.erase(sip);
             _imu_info_publisher.erase(sip);
         }
+        _metadata_publishers.erase(sip);
     }
 }
 
