@@ -298,31 +298,38 @@ void RealSenseNodeFactory::init()
 				rclcpp::Time first_try_time = this->get_clock()->now();
 				while (_is_alive && !_device)
 				{
-					getDevice(_ctx.query_devices());
-					if (_device)
+					try
 					{
-						std::function<void(rs2::event_information&)> change_device_callback_function = [this](rs2::event_information& info){changeDeviceCallback(info);};
-						_ctx.set_devices_changed_callback(change_device_callback_function);
-						startDevice();
-					}
-					else
-					{
-						std::chrono::milliseconds actual_timespan(timespan);
-						if (_wait_for_device_timeout > 0)
+						getDevice(_ctx.query_devices());
+						if (_device)
 						{
-							auto time_to_timeout(_wait_for_device_timeout - (this->get_clock()->now() - first_try_time).seconds());
-							if (time_to_timeout < 0)
-							{
-								ROS_ERROR_STREAM("wait for device timeout of " << _wait_for_device_timeout << " secs expired");
-								exit(1);
-							}
-							else
-							{
-								double max_timespan_secs(std::chrono::duration_cast<std::chrono::seconds>(timespan).count());
-								actual_timespan = std::chrono::milliseconds (static_cast<int>(std::min(max_timespan_secs, time_to_timeout) * 1e3));
-							}
+							std::function<void(rs2::event_information&)> change_device_callback_function = [this](rs2::event_information& info){changeDeviceCallback(info);};
+							_ctx.set_devices_changed_callback(change_device_callback_function);
+							startDevice();
 						}
-						std::this_thread::sleep_for(actual_timespan);
+						else
+						{
+							std::chrono::milliseconds actual_timespan(timespan);
+							if (_wait_for_device_timeout > 0)
+							{
+								auto time_to_timeout(_wait_for_device_timeout - (this->get_clock()->now() - first_try_time).seconds());
+								if (time_to_timeout < 0)
+								{
+									ROS_ERROR_STREAM("wait for device timeout of " << _wait_for_device_timeout << " secs expired");
+									exit(1);
+								}
+								else
+								{
+									double max_timespan_secs(std::chrono::duration_cast<std::chrono::seconds>(timespan).count());
+									actual_timespan = std::chrono::milliseconds (static_cast<int>(std::min(max_timespan_secs, time_to_timeout) * 1e3));
+								}
+							}
+							std::this_thread::sleep_for(actual_timespan);
+						}
+					}
+					catch(const std::exception& e)
+					{
+						ROS_ERROR_STREAM("Error starting device: " << e.what());
 					}
 				}
 			});
