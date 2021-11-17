@@ -14,7 +14,6 @@ namespace realsense2_camera
             ProfilesManager(std::shared_ptr<Parameters> parameters);
             virtual bool isWantedProfile(const rs2::stream_profile& profile) = 0;
             virtual void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) = 0;
-            virtual bool set_to_defaults(std::map<stream_index_pair, rs2::stream_profile>& default_profiles) = 0;
             bool isTypeExist();
             virtual std::string wanted_profile_string(stream_index_pair sip) = 0;
             static std::string profile_string(const rs2::stream_profile& profile);
@@ -37,6 +36,9 @@ namespace realsense2_camera
             rmw_qos_profile_t getInfoQOS(const stream_index_pair& sip) const;
 
         protected:
+            rs2::stream_profile getDefaultProfile();
+
+        protected:
             rclcpp::Logger _logger;
             SensorParams _params;
             std::map<stream_index_pair, std::shared_ptr<bool>> _enabled_profiles;
@@ -51,14 +53,13 @@ namespace realsense2_camera
             VideoProfilesManager(std::shared_ptr<Parameters> parameters, const std::string& module_name);
             bool isWantedProfile(const rs2::stream_profile& profile) override;
             void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) override;
-            bool set_to_defaults(std::map<stream_index_pair, rs2::stream_profile>& default_profiles);
-            // bool isTypeExist();
             std::string wanted_profile_string(stream_index_pair sip);
             int getHeight() {return _height;};
             int getWidth() {return _width;};
             int getFPS() {return _fps;};
 
         private:
+            bool isWantedProfile(const rs2::stream_profile& profile, const int width, const int height, const int fps);
             void registerVideoSensorParams();
 
         private:
@@ -75,7 +76,6 @@ namespace realsense2_camera
             using ProfilesManager::ProfilesManager;
             bool isWantedProfile(const rs2::stream_profile& profile) override;
             void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) override;
-            bool set_to_defaults(std::map<stream_index_pair, rs2::stream_profile>& default_profiles);
             std::string wanted_profile_string(stream_index_pair sip);
 
         protected:
