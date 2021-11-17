@@ -898,10 +898,18 @@ void BaseRealSenseNode::publishDynamicTransforms()
         _cv_tf.wait_for(lock, std::chrono::milliseconds((int)(1000.0/_tf_publish_rate)), [&]{return (!(_is_running && _tf_publish_rate > 0));});
         {
             std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
-            rclcpp::Time t = _node.now();        
-            for(auto& msg : _static_tf_msgs)
-                msg.header.stamp = t;
-            _dynamic_tf_broadcaster->sendTransform(_static_tf_msgs);
+            rclcpp::Time t = _node.now();
+            try
+            {
+                for(auto& msg : _static_tf_msgs)
+                    msg.header.stamp = t;
+                _dynamic_tf_broadcaster->sendTransform(_static_tf_msgs);
+            }
+            catch(const std::exception& e)
+            {
+                ROS_ERROR_STREAM("Error publishing dynamic transforms: " << e.what());
+            }
+                  
         }
     }
 }
