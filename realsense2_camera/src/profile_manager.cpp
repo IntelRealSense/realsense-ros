@@ -239,6 +239,26 @@ void VideoProfilesManager::registerProfileParameters(std::vector<stream_profile>
     }
 }
 
+std::string get_profiles_descriptions(const std::vector<rs2::stream_profile>& all_profiles)
+{
+    std::set<std::string> profiles_str;
+    for (auto& profile : all_profiles)
+    {
+        auto video_profile = profile.as<rs2::video_stream_profile>();
+        std::stringstream crnt_profile_str;
+        crnt_profile_str << video_profile.width() << "x" << video_profile.height() << "x" << video_profile.fps();
+        profiles_str.insert(crnt_profile_str.str());
+    }
+    std::stringstream descriptors_strm;
+    for (auto& profile_str : profiles_str)
+    {
+        descriptors_strm << profile_str << "\n";
+    }
+    std::string descriptors(descriptors_strm.str());
+    descriptors.pop_back();
+    return descriptors;
+}
+
 void VideoProfilesManager::registerVideoSensorParams()
 {
     // Set default values:
@@ -252,7 +272,7 @@ void VideoProfilesManager::registerVideoSensorParams()
     // Register ROS parameter:
     std::string param_name(_module_name + ".profile");
     rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
-    crnt_descriptor.description = "Available options are: DORON\n";
+    crnt_descriptor.description = "Available options are:\n" + get_profiles_descriptions(_all_profiles);
     std::stringstream crnt_profile_str;
     crnt_profile_str << _width << "x" << _height << "x" << _fps;
     rclcpp::ParameterValue aa = _params.getParameters()->setParam(param_name, rclcpp::ParameterValue(crnt_profile_str.str()), [this](const rclcpp::Parameter& parameter)
