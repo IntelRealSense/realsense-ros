@@ -33,7 +33,14 @@ void BaseRealSenseNode::monitoringProfileChanges()
             if (_is_running && _is_profile_changed)
             {
                 ROS_DEBUG("Profile has changed");
-                updateSensors();
+                try
+                {
+                    updateSensors();
+                }
+                catch(const std::exception& e)
+                {
+                    ROS_ERROR_STREAM("Error updating the sensors: " << e.what());
+                }
                 _is_profile_changed = false;
             }
         }
