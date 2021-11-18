@@ -48,7 +48,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'enable_accel',                 'default': 'false', 'description': "''"},                           
                            {'name': 'enable_pose',                  'default': 'true', 'description': "''"},                           
                            {'name': 'pose_fps',                     'default': '200.', 'description': "''"},                           
-                           {'name': 'pointcloud.enable',            'default': 'true', 'description': ''}, 
+                           {'name': 'pointcloud.enable',            'default': 'false', 'description': ''}, 
                            {'name': 'pointcloud.stream_filter',     'default': '2', 'description': 'texture stream for pointcloud'},
                            {'name': 'pointcloud.stream_index_filter','default': '0', 'description': 'texture stream index for pointcloud'},
                            {'name': 'enable_sync',                  'default': 'false', 'description': "''"},                           
