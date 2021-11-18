@@ -172,6 +172,7 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
             _imu_info_publisher.erase(sip);
         }
         _metadata_publishers.erase(sip);
+        _extrinsics_publishers.erase(sip);
     }
 }
 
@@ -240,6 +241,14 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
         rmw_qos_profile_t qos = sensor.getInfoQOS(sip);
         _metadata_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(topic_metadata, 
                                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
+        
+        if (!((rs2::stream_profile)profile==(rs2::stream_profile)_base_profile))
+        {
+            qos = rmw_qos_profile_latched;
+            std::string topic_extrinsics("extrinsics/" + create_graph_resource_name(ros_stream_to_string(_base_profile.stream_type()) + "_to_" + stream_name));
+            _extrinsics_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Extrinsics>(topic_extrinsics, 
+                                    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
+        }
     }
 }
 

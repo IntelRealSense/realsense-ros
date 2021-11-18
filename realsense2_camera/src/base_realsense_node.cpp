@@ -775,6 +775,15 @@ void BaseRealSenseNode::publish_static_tf(const rclcpp::Time& t,
     _static_tf_msgs.push_back(msg);
 }
 
+void BaseRealSenseNode::publishExtrinsicsTopic(const stream_index_pair& sip, const rs2_extrinsics& ex){
+    // Publish extrinsics topic:
+    Extrinsics msg = rsExtrinsicsToMsg(ex);
+    if (_extrinsics_publishers.find(sip) != _extrinsics_publishers.end())
+    {
+        _extrinsics_publishers[sip]->publish(msg);
+    }
+}
+
 void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile)
 {
     // Transform base to stream
@@ -817,6 +826,7 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
         publish_static_tf(transform_ts_, trans, Q, _base_frame_id, ALIGNED_DEPTH_TO_FRAME_ID(sip));
         publish_static_tf(transform_ts_, zero_trans, quaternion_optical, ALIGNED_DEPTH_TO_FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
     }
+    publishExtrinsicsTopic(sip, ex);
 }
 
 void BaseRealSenseNode::SetBaseStream()
@@ -921,7 +931,7 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t,
 }
 
 
-Extrinsics BaseRealSenseNode::rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const
+Extrinsics BaseRealSenseNode::rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics) const
 {
     Extrinsics extrinsicsMsg;
     for (int i = 0; i < 9; ++i)
@@ -930,8 +940,6 @@ Extrinsics BaseRealSenseNode::rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics
         if (i < 3)
             extrinsicsMsg.translation[i] = extrinsics.translation[i];
     }
-
-    extrinsicsMsg.header.frame_id = frame_id;
     return extrinsicsMsg;
 }
 
