@@ -251,4 +251,5 @@ namespace realsense2_camera
     template void Parameters::setParamValue<double>(double& param, const double& value);
 
     template void Parameters::queueSetRosValue<std::string>(const std::string& param_name, const std::string value);
+    template void Parameters::queueSetRosValue<int>(const std::string& param_name, const int value);
 }
