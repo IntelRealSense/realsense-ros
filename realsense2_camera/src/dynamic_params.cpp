@@ -215,19 +215,19 @@ namespace realsense2_camera
         switch(param_type)
         {
             case rclcpp::PARAMETER_BOOL:
-                ROS_INFO_STREAM("Set " << param_name << " to " << *(bool*)value);
+                ROS_DEBUG_STREAM("Set " << param_name << " to " << *(bool*)value);
                 results = _node.set_parameter(rclcpp::Parameter(param_name, *(bool*)value));
                 break;
             case rclcpp::PARAMETER_INTEGER:
-                ROS_INFO_STREAM("Set " << param_name << " to " << *(int*)value);
+                ROS_DEBUG_STREAM("Set " << param_name << " to " << *(int*)value);
                 results = _node.set_parameter(rclcpp::Parameter(param_name, *(int*)value));
                 break;
             case rclcpp::PARAMETER_DOUBLE:
-                ROS_INFO_STREAM("Set " << param_name << " to " << *(double*)value);
+                ROS_DEBUG_STREAM("Set " << param_name << " to " << *(double*)value);
                 results = _node.set_parameter(rclcpp::Parameter(param_name, *(double*)value));
                 break;
             case rclcpp::PARAMETER_STRING:
-                ROS_INFO_STREAM("Set " << param_name << " to " << *(std::string*)value);
+                ROS_DEBUG_STREAM("Set " << param_name << " to " << *(std::string*)value);
                 results = _node.set_parameter(rclcpp::Parameter(param_name, *(std::string*)value));
                 break;
             default:
