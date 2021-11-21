@@ -151,7 +151,7 @@ stream_index_pair rs2_string_to_sip(const std::string& str)
     if (str == "pose")
         return POSE;
     std::stringstream ss;
-    ss << "Unknown parameter name in" << __FILE__ << ":" << __LINE__;
+    ss << "Unknown parameter " << str << " in" << __FILE__ << ":" << __LINE__;
     throw std::runtime_error(ss.str());
 }
 

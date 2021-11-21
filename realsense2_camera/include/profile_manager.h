@@ -15,7 +15,6 @@ namespace realsense2_camera
             virtual bool isWantedProfile(const rs2::stream_profile& profile) = 0;
             virtual void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) = 0;
             bool isTypeExist();
-            virtual std::string wanted_profile_string(stream_index_pair sip) = 0;
             static std::string profile_string(const rs2::stream_profile& profile);
             
             void registerSensorQOSParam(std::string template_name, 
@@ -53,14 +52,14 @@ namespace realsense2_camera
             VideoProfilesManager(std::shared_ptr<Parameters> parameters, const std::string& module_name);
             bool isWantedProfile(const rs2::stream_profile& profile) override;
             void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) override;
-            std::string wanted_profile_string(stream_index_pair sip);
             int getHeight() {return _height;};
             int getWidth() {return _width;};
             int getFPS() {return _fps;};
 
         private:
-            bool isWantedProfile(const rs2::stream_profile& profile, const int width, const int height, const int fps);
+            bool isSameProfileValues(const rs2::stream_profile& profile, const int width, const int height, const int fps);
             void registerVideoSensorParams();
+            std::string get_profiles_descriptions();
 
         private:
             std::string _module_name;
@@ -76,10 +75,14 @@ namespace realsense2_camera
             using ProfilesManager::ProfilesManager;
             bool isWantedProfile(const rs2::stream_profile& profile) override;
             void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) override;
-            std::string wanted_profile_string(stream_index_pair sip);
+
+        private:
+            void registerFPSParams();
+            bool isSameProfileValues(const rs2::stream_profile& profile, const rs2_stream stype, const int fps);
+            std::map<stream_index_pair, std::vector<int>> getAvailableFPSValues();
 
         protected:
-            std::map<stream_index_pair, std::shared_ptr<double> > _fps;
+            std::map<stream_index_pair, std::shared_ptr<int> > _fps;
     };
 
     class PoseProfilesManager : public MotionProfilesManager

@@ -42,5 +42,6 @@ namespace realsense2_camera
             bool _is_running;
             std::shared_ptr<std::thread> _update_functions_t;
             std::deque<std::function<void()> > _update_functions_v;
+            std::list<std::string> self_set_parameters;
     };
 }

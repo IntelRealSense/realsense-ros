@@ -15,7 +15,19 @@ namespace realsense2_camera
                     {
                         try
                         {
-                            (_param_functions.at(parameter.get_name()))(parameter);
+                            const auto& func_iter = _param_functions.find(parameter.get_name());
+                            if (func_iter != _param_functions.end())
+                            {
+                                std::list<std::string>::iterator name_iter(std::find(self_set_parameters.begin(), self_set_parameters.end(), parameter.get_name()));
+                                if (name_iter != self_set_parameters.end())
+                                {
+                                    self_set_parameters.erase(name_iter);
+                                }
+                                else
+                                {
+                                    (func_iter->second)(parameter);
+                                }
+                            }
                         }
                         catch(const std::out_of_range& e)
                         {}
@@ -195,6 +207,9 @@ namespace realsense2_camera
     void Parameters::setRosParamValue(const std::string param_name, void const* const value)
     {
         // setRosParamValue sets a value to a parameter in the parameters server.
+        // The callback for the specified parameter is NOT called.
+        self_set_parameters.push_back(param_name);            
+
         rclcpp::ParameterType param_type = _node.get_parameter(param_name).get_type();
         rcl_interfaces::msg::SetParametersResult results;
         switch(param_type)
@@ -221,6 +236,7 @@ namespace realsense2_camera
         if (!results.successful)
         {
             ROS_WARN_STREAM("Parameter: " << param_name << " was not set:" << results.reason);
+            self_set_parameters.pop_back();
         }
     }
 
@@ -251,4 +267,5 @@ namespace realsense2_camera
     template void Parameters::setParamValue<double>(double& param, const double& value);
 
     template void Parameters::queueSetRosValue<std::string>(const std::string& param_name, const std::string value);
+    template void Parameters::queueSetRosValue<int>(const std::string& param_name, const int value);
 }
