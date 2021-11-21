@@ -4,6 +4,7 @@
 #pragma once
 
 #include <string>
+#include <rclcpp/rclcpp.hpp>
 
 #define REALSENSE_ROS_MAJOR_VERSION    4
 #define REALSENSE_ROS_MINOR_VERSION    0
@@ -110,4 +111,17 @@ namespace realsense2_camera
     const std::string DEFAULT_TOPIC_ODOM_IN            = "";
 
     const float ROS_DEPTH_SCALE = 0.001;
+
+    static const rmw_qos_profile_t rmw_qos_profile_latched =
+    {
+        RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+        1,
+        RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+        RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+        RMW_QOS_DEADLINE_DEFAULT,
+        RMW_QOS_LIFESPAN_DEFAULT,
+        RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+        RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+        false
+    };
 }  // namespace realsense2_camera

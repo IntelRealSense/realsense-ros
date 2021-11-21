@@ -144,6 +144,7 @@ namespace realsense2_camera
         std::shared_ptr<Parameters> _parameters;
         std::list<std::string> _parameters_names;
 
+        void publishExtrinsicsTopic(const stream_index_pair& sip, const rs2_extrinsics& ex);
         virtual void calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile);
         void getDeviceInfo(const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr req,
                                  realsense2_camera_msgs::srv::DeviceInfo::Response::SharedPtr res);
@@ -190,7 +191,7 @@ namespace realsense2_camera
         void startDynamicTf();
         void publishDynamicTransforms();
         void publishPointCloud(rs2::points f, const rclcpp::Time& t, const rs2::frameset& frameset);
-        Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics, const std::string& frame_id) const;
+        Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics) const;
 
         IMUInfo getImuInfo(const rs2::stream_profile& profile);
         void publishFrame(rs2::frame f, const rclcpp::Time& t,
@@ -257,6 +258,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr> _info_publisher;
         std::map<stream_index_pair, rclcpp::Publisher<realsense2_camera_msgs::msg::Metadata>::SharedPtr> _metadata_publishers;
         std::map<stream_index_pair, rclcpp::Publisher<IMUInfo>::SharedPtr> _imu_info_publisher;
+        std::map<stream_index_pair, rclcpp::Publisher<Extrinsics>::SharedPtr> _extrinsics_publishers;
         std::map<stream_index_pair, cv::Mat> _image;
         std::map<unsigned int, std::string> _encoding;
 

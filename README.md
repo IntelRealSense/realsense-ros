@@ -93,6 +93,7 @@ After running the above command with D435i attached, the following list of topic
 - /camera/depth/camera_info
 - /camera/depth/color/points
 - /camera/depth/image_rect_raw
+- /camera/extrinsics/depth_to_color
 - /camera/imu
 - /diagnostics
 - /parameter_events
@@ -107,10 +108,13 @@ or in runtime using the following commands:
 ros2 param set /camera/camera enable_accel true
 ros2 param set /camera/camera enable_gyro true
 ```
-This will add the following topics:
+
+Enabling stream adds matching topics. For instance, enabling the gyro and accel streams adds the following topics:
 - /camera/accel/imu_info
 - /camera/accel/metadata
 - /camera/accel/sample
+- /camera/extrinsics/depth_to_accel
+- /camera/extrinsics/depth_to_gyro
 - /camera/gyro/imu_info
 - /camera/gyro/metadata
 - /camera/gyro/sample
