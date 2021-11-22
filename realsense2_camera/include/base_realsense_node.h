@@ -109,7 +109,7 @@ namespace realsense2_camera
         void publishTopics();
 
     public:
-        enum imu_sync_method{NONE, COPY, LINEAR_INTERPOLATION};
+        enum class imu_sync_method{NONE, COPY, LINEAR_INTERPOLATION};
 
     protected:
         class float3
@@ -173,6 +173,7 @@ namespace realsense2_camera
         };
 
         void getParameters();
+        void setDynamicParams();
         void clearParameters();
         void setupDevice();
         void hardwareResetRequest();
