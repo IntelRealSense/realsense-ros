@@ -1,5 +1,6 @@
 #include "../include/base_realsense_node.h"
 #include <ros_utils.h>
+#include <iomanip>
 
 using namespace realsense2_camera;
 
@@ -36,17 +37,6 @@ void BaseRealSenseNode::getParameters()
     _json_file_path = _parameters->setParam(param_name, rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
     _parameters_names.push_back(param_name);
 
-    param_name = std::string("unite_imu_method");
-    std::string unite_imu_method_str = _parameters->setParam(param_name, rclcpp::ParameterValue(DEFAULT_UNITE_IMU_METHOD)).get<rclcpp::PARAMETER_STRING>();
-    _parameters_names.push_back(param_name);
-
-    if (unite_imu_method_str == "linear_interpolation")
-        _imu_sync_method = imu_sync_method::LINEAR_INTERPOLATION;
-    else if (unite_imu_method_str == "copy")
-        _imu_sync_method = imu_sync_method::COPY;
-    else
-        _imu_sync_method = imu_sync_method::NONE;
-
     param_name = std::string("clip_distance");
     _clipping_distance = _parameters->setParam(param_name, rclcpp::ParameterValue(-1.0)).get<rclcpp::PARAMETER_DOUBLE>();
     _parameters_names.push_back(param_name);
@@ -69,6 +59,58 @@ void BaseRealSenseNode::getParameters()
 
     param_name = std::string("base_frame_id");
     _base_frame_id = _parameters->setParam(param_name, rclcpp::ParameterValue(DEFAULT_BASE_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
+    _parameters_names.push_back(param_name);
+}
+
+void BaseRealSenseNode::setDynamicParams()
+{
+    // Set default values:
+    _imu_sync_method = imu_sync_method::NONE;
+
+    auto imu_sync_method_string = [](imu_sync_method value) 
+    { 
+        switch (value)
+        {
+        case imu_sync_method::COPY:
+            return "COPY";
+        case imu_sync_method::LINEAR_INTERPOLATION:
+            return "LINEAR_INTERPOLATION";
+        default:
+            return "NONE";
+        }
+    };
+
+    // Register ROS parameter:
+    std::string param_name("unite_imu_method");
+
+    std::vector<std::pair<std::string, int> > enum_vec;
+    size_t longest_desc(0);
+    for (int i=0; i<=int(imu_sync_method::LINEAR_INTERPOLATION); i++)
+    {
+        std::string enum_str(imu_sync_method_string(imu_sync_method(i)));
+        enum_vec.push_back(std::make_pair(enum_str, i));
+        longest_desc = std::max(longest_desc, enum_str.size());
+    }
+    sort(enum_vec.begin(), enum_vec.end(), [](std::pair<std::string, int> e1, std::pair<std::string, int> e2){return (e1.second < e2.second);});
+    std::stringstream enum_str_values;
+    for (auto vec_iter : enum_vec)
+    {
+        enum_str_values << std::setw(longest_desc+6) << std::left << vec_iter.first << " : " << vec_iter.second << std::endl;
+    }
+
+    rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
+    rcl_interfaces::msg::IntegerRange range;
+    range.from_value = int(imu_sync_method::NONE);
+    range.to_value = int(imu_sync_method::LINEAR_INTERPOLATION);
+    crnt_descriptor.integer_range.push_back(range);
+    std::stringstream desc;
+    desc << "Available options are:" << std::endl << enum_str_values.str();
+    crnt_descriptor.description = desc.str();
+    _parameters->setParam(param_name, rclcpp::ParameterValue(int(imu_sync_method::NONE)), 
+                            [this](const rclcpp::Parameter& parameter)
+                            {
+                                _imu_sync_method = imu_sync_method(parameter.get_value<int>());
+                            }, crnt_descriptor);
     _parameters_names.push_back(param_name);
 }
 

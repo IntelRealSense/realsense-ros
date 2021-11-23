@@ -332,12 +332,14 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
         std::deque<sensor_msgs::msg::Imu> imu_msgs;
         switch (sync_method)
         {
-            case NONE: //Cannot really be NONE. Just to avoid compilation warning.
-            case COPY:
+            case imu_sync_method::COPY:
                 FillImuData_Copy(imu_data, imu_msgs);
                 break;
-            case LINEAR_INTERPOLATION:
+            case imu_sync_method::LINEAR_INTERPOLATION:
                 FillImuData_LinearInterpolation(imu_data, imu_msgs);
+                break;
+            case imu_sync_method::NONE: //Cannot really be NONE. Just to avoid compilation warning.
+                throw std::runtime_error("sync_method in this section can be either COPY or LINEAR_INTERPOLATION");
                 break;
         }
         while (imu_msgs.size())

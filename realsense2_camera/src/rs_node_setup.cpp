@@ -6,6 +6,7 @@ using namespace rs2;
 
 void BaseRealSenseNode::setup()
 {
+    setDynamicParams();
     setAvailableSensors();
     SetBaseStream();
     setupFilters();
@@ -101,9 +102,8 @@ void BaseRealSenseNode::setAvailableSensors()
     };
 
     std::function<void(rs2::frame)> imu_callback_function = [this](rs2::frame frame){
-        if (_imu_sync_method == imu_sync_method::NONE)
-            imu_callback(frame);
-        else 
+        imu_callback(frame);
+        if (_imu_sync_method != imu_sync_method::NONE)
             imu_callback_sync(frame);
     };
 
