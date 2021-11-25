@@ -1,0 +1,92 @@
+  serial_no: ""
+  usb_port_id: ""
+  device_type: ""
+  rosbag_filename: ""
+  initial_reset: false
+
+  json_file_path: ""
+  rosbag_filename: ""
+  required: false
+
+  fisheye_width: 0
+  fisheye_height: 0
+  enable_fisheye: false
+  enable_fisheye1: false
+  enable_fisheye2: false
+
+  depth_width: 640
+  depth_height: 480
+  enable_depth: true
+
+  infra_width: 640
+  infra_height: 480
+  enable_infra1: false
+  enable_infra2: false
+
+  color_width: 640
+  color_height: 480
+  enable_color: true
+
+  fisheye_fps: 30
+  depth_fps: 30
+  infra_fps: 30
+  color_fps: 30
+  gyro_fps: 0
+  accel_fps: 0
+  enable_gyro: false
+  enable_accel: false
+
+  enable_pointcloud: true
+  pointcloud_texture_stream: "RS2_STREAM_COLOR" #use RS2_STREAM_ANY to avoid using texture
+  pointcloud_texture_index: 0
+
+  enable_sync: false
+  align_depth: false
+
+  base_frame_id: "camera1_link"
+  depth_frame_id: "camera1_depth_frame"
+  infra1_frame_id: "camera1_infra1_frame"
+  infra2_frame_id: "camera1_infra2_frame"
+  color_frame_id: "camera1_color_frame"
+  fisheye_frame_id: "camera1_fisheye_frame"
+  fisheye1_frame_id: "camera1_fisheye1_frame"
+  fisheye2_frame_id: "camera1_fisheye2_frame"
+  accel_frame_id: "camera1_accel_frame"
+  gyro_frame_id: "camera1_gyro_frame"
+  pose_frame_id: "camera1_pose_frame"
+
+  depth_optical_frame_id: "camera1_depth_optical_frame"
+  infra1_optical_frame_id: "camera1_infra1_optical_frame"
+  infra2_optical_frame_id: "camera1_infra2_optical_frame"
+  color_optical_frame_id: "camera1_color_optical_frame"
+  fisheye_optical_frame_id: "camera1_fisheye_optical_frame"
+  fisheye1_optical_frame_id: "camera1_fisheye1_optical_frame"
+  fisheye2_optical_frame_id: "camera1_fisheye2_optical_frame"
+  accel_optical_frame_id: "camera1_accel_optical_frame"
+  gyro_optical_frame_id: "camera1_gyro_optical_frame"
+  imu_optical_frame_id: "camera1_imu_optical_frame"
+  pose_optical_frame_id: "camera1_pose_optical_frame"
+
+  aligned_depth_to_color_frame_id: "camera1_aligned_depth_to_color_frame"
+  aligned_depth_to_infra1_frame_id: "camera1_aligned_depth_to_infra1_frame"
+  aligned_depth_to_infra2_frame_id: "camera1_aligned_depth_to_infra2_frame"
+  aligned_depth_to_fisheye_frame_id: "camera1_aligned_depth_to_fisheye_frame"
+  aligned_depth_to_fisheye1_frame_id: "camera1_aligned_depth_to_fisheye1_frame"
+  aligned_depth_to_fisheye2_frame_id: "camera1_aligned_depth_to_fisheye2_frame"
+
+  publish_tf: true
+  tf_publish_rate: 0
+
+  odom_frame_id: "camera1_odom_frame"
+  topic_odom_in: "camera1/odom_in"
+  calib_odom_file: ""
+  publish_odom_tf: true
+  filters: ""
+  clip_distance: -1
+  linear_accel_cov: 0.01
+  unite_imu_method: "none" #Options are: [none, copy, linear_interpolation]
+  allow_no_texture_points: false
+
+  stereo_module:
+    inter_cam_sync_mode: 259
+

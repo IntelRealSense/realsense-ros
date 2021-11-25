@@ -1,0 +1,17 @@
+<launch>
+  <arg name="namespace" default="camera"/>
+  <arg name="config_file" default="/config/my_config_file.yaml"/>
+  <arg name="external_manager"    default="false"/>
+  <arg name="manager"             default="realsense2_camera_manager"/>
+  <arg name="required"            default="false"/>
+
+  <group ns="$(arg namespace)">
+    <node unless="$(arg external_manager)" pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen" required="$(arg required)"/>
+    <node pkg="nodelet" type="nodelet" name="realsense2_camera" args="load realsense2_camera/RealSenseNodeFactory $(arg manager)" required="$(arg required)">
+      <param name="config_file"     type="str"  value="$(arg config_file)"/>
+
+      <rosparam file="$(find realsense2_camera)$(arg config_file)" command="load"/>
+
+    </node>
+  </group>
+</launch>
