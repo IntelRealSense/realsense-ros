@@ -1801,7 +1801,7 @@ void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_met
 
 bool BaseRealSenseNode::setBaseTime(double frame_time, rs2_timestamp_domain time_domain)
 {
-    ROS_WARN_ONCE(time_domain == RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME ? "Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)" : "");
+    ROS_WARN_STREAM_COND(time_domain == RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME, "Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)");
     if (time_domain == RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK)
     {
         ROS_WARN("frame's time domain is HARDWARE_CLOCK. Timestamps may reset periodically.");
