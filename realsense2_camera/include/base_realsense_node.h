@@ -199,7 +199,7 @@ namespace realsense2_camera
                 double          m_time_ns;
         };
 
-        std::string getNamespaceStr();
+        std::string getNodeNameStr();
         void getParameters();
         void setupDevice();
         void setupErrorCallback();
