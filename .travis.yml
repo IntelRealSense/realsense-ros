@@ -12,7 +12,7 @@ before_install:
   - echo _python:$_python
   - echo _ros_dist:$_ros_dist
 
-  - sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keys.gnupg.net:80 --recv-key C8B3A55A6F3EFCDE
+  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE
   - sudo add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main"
   - sudo apt-get update -qq
   - sudo apt-get install librealsense2-dkms --allow-unauthenticated -y
