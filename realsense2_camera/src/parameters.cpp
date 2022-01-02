@@ -59,6 +59,7 @@ void BaseRealSenseNode::getParameters()
 
     param_name = std::string("base_frame_id");
     _base_frame_id = _parameters->setParam(param_name, rclcpp::ParameterValue(DEFAULT_BASE_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
+    _base_frame_id = (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_" << _base_frame_id)).str();
     _parameters_names.push_back(param_name);
 }
 
