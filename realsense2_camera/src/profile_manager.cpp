@@ -4,8 +4,8 @@
 using namespace realsense2_camera;
 using namespace rs2;
 
-ProfilesManager::ProfilesManager(std::shared_ptr<Parameters> parameters):
-    _logger(rclcpp::get_logger("RealSenseCameraNode")),
+ProfilesManager::ProfilesManager(std::shared_ptr<Parameters> parameters, rclcpp::Logger logger):
+    _logger(logger),
     _params(parameters, _logger)
      {
      }
@@ -176,8 +176,8 @@ rmw_qos_profile_t ProfilesManager::getInfoQOS(const stream_index_pair& sip) cons
 }
 
 VideoProfilesManager::VideoProfilesManager(std::shared_ptr<Parameters> parameters,
-                                           const std::string& module_name):
-    ProfilesManager(parameters),
+                                           const std::string& module_name, rclcpp::Logger logger):
+    ProfilesManager(parameters, logger),
     _module_name(module_name)
 {
     _allowed_formats[RS2_STREAM_DEPTH] = RS2_FORMAT_Z16;
