@@ -27,9 +27,10 @@ RosSensor::RosSensor(rs2::sensor sensor,
     std::shared_ptr<Parameters> parameters, 
     std::function<void(rs2::frame)> frame_callback,
     std::function<void()> update_sensor_func,
-    std::function<void()> hardware_reset_func):
+    std::function<void()> hardware_reset_func, 
+    rclcpp::Logger logger):
     rs2::sensor(sensor),
-    _logger(rclcpp::get_logger("RealSenseCameraNode")),
+    _logger(logger),
     _origin_frame_callback(frame_callback),
     _params(parameters, _logger),
     _update_sensor_func(update_sensor_func),
@@ -125,20 +126,20 @@ void RosSensor::registerSensorParameters()
     std::vector<stream_profile> all_profiles = get_stream_profiles();
     const std::string module_name(create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME))));
 
-    std::shared_ptr<ProfilesManager> profile_manager = std::make_shared<VideoProfilesManager>(_params.getParameters(), module_name);
+    std::shared_ptr<ProfilesManager> profile_manager = std::make_shared<VideoProfilesManager>(_params.getParameters(), module_name, _logger);
     profile_manager->registerProfileParameters(all_profiles, _update_sensor_func);
     if (profile_manager->isTypeExist())
     {
         _profile_managers.push_back(profile_manager);
         registerAutoExposureROIOptions();
     }
-    profile_manager = std::make_shared<MotionProfilesManager>(_params.getParameters());
+    profile_manager = std::make_shared<MotionProfilesManager>(_params.getParameters(), _logger);
     profile_manager->registerProfileParameters(all_profiles, _update_sensor_func);
     if (profile_manager->isTypeExist())
     {
         _profile_managers.push_back(profile_manager);
     }
-    profile_manager = std::make_shared<PoseProfilesManager>(_params.getParameters());
+    profile_manager = std::make_shared<PoseProfilesManager>(_params.getParameters(), _logger);
     profile_manager->registerProfileParameters(all_profiles, _update_sensor_func);
     if (profile_manager->isTypeExist())
     {

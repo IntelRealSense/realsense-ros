@@ -11,7 +11,7 @@ namespace realsense2_camera
     class ProfilesManager
     {
         public:
-            ProfilesManager(std::shared_ptr<Parameters> parameters);
+            ProfilesManager(std::shared_ptr<Parameters> parameters, rclcpp::Logger logger);
             virtual bool isWantedProfile(const rs2::stream_profile& profile) = 0;
             virtual void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) = 0;
             bool isTypeExist();
@@ -49,7 +49,7 @@ namespace realsense2_camera
     class VideoProfilesManager : public ProfilesManager
     {
         public:
-            VideoProfilesManager(std::shared_ptr<Parameters> parameters, const std::string& module_name);
+            VideoProfilesManager(std::shared_ptr<Parameters> parameters, const std::string& module_name, rclcpp::Logger logger);
             bool isWantedProfile(const rs2::stream_profile& profile) override;
             void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) override;
             int getHeight() {return _height;};
