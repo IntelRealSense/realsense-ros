@@ -74,9 +74,9 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 		else
 		{
 			bool found = false;
+			rs2::device dev;
 			for (size_t count = 0; count < list.size(); count++)
 			{
-				rs2::device dev;
 				try
 				{
 					dev = list[count];
