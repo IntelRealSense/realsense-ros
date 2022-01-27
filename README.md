@@ -90,9 +90,11 @@ After running the above command with D435i attached, the following list of topic
 - /camera/aligned_depth_to_color/image_raw
 - /camera/color/camera_info
 - /camera/color/image_raw
+- /camera/color/metadata
 - /camera/depth/camera_info
 - /camera/depth/color/points
 - /camera/depth/image_rect_raw
+- /camera/depth/metadata
 - /camera/extrinsics/depth_to_color
 - /camera/imu
 - /diagnostics
@@ -131,6 +133,12 @@ Enabling stream adds matching topics. For instance, enabling the gyro and accel 
 To turn them off: `ros2 param set /camera/camera enable_infra false`
 The "/camera" prefix is the namesapce specified in the given launch file.
 When using D435 or D415, the gyro and accel topics wont be available. Likewise, other topics will be available when using T265 (see below).
+
+### The metadata topic:
+The metadata messages store the camera's available metadata in a *json* format. To learn more, a dedicated script for echoing a metadata topic in runtime is attached. For instance, use the following command to echo the camera/depth/metadata topic:
+```
+python3 src/realsense-ros/realsense2_camera/scripts/echo_metadada.py /camera/depth/metadata
+```
 
 ### Post processing blocks - i.e. filters:
 The following processing blocks are available:
@@ -212,7 +220,7 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 ## Using T265 ##
 
 ### Start the camera node
-To start the camera node in ROS:
+To start the camera node:
 
 ```bash
 ros2 run realsense2_camera realsense2_camera_node --ros-args -p enable_pose:=true -p device_type:=t265
