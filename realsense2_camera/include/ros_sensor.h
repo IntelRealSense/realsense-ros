@@ -22,7 +22,8 @@ namespace realsense2_camera
                       std::shared_ptr<Parameters> parameters, 
                       std::function<void(rs2::frame)> frame_callback,
                       std::function<void()> update_sensor_func,
-                      std::function<void()> hardware_reset_func);
+                      std::function<void()> hardware_reset_func, 
+                      rclcpp::Logger logger);
             ~RosSensor();
             void registerSensorParameters();
             bool getUpdatedProfiles(std::vector<rs2::stream_profile>& wanted_profiles);

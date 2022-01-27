@@ -71,7 +71,7 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
                                      std::shared_ptr<Parameters> parameters) :
     _is_running(true),
     _node(node),
-    _logger(rclcpp::get_logger("RealSenseCameraNode")),
+    _logger(node.get_logger()),
     _parameters(parameters),
     // _rs_diagnostic_updater(diagnostic_updater, serial_no),
     _dev(dev),
