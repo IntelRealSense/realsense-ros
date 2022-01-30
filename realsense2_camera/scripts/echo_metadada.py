@@ -8,6 +8,7 @@ import json
 def metadata_cb(msg):
     aa = json.loads(msg.json_data)
     os.system('clear')
+    print('header:', msg.header)
     print('\n'.join(['%10s:%-10s' % (key, str(value)) for key, value in aa.items()]))
 
 def main():
