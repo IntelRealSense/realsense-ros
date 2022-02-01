@@ -2,20 +2,30 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.2.14 (2020-06-18)
--------------------
-* Fix compatibility with Librealsense2 Version 2.35.2.
-* Fix support for L515.
-* Fix urdf issues.
-* Add noetic support: change state_publisher into robot_state_publisher
-* fix distortion correction model for T265 (equidistant)
-* fix stability issues. Stop sensors at program termination.
-* Contributors: Brice, Helen Oleynikova, doronhi
+Forthcoming
+-----------
+* fix reset issue when multiple devices are connected
+* fix /rosout issue
+* fix PID for D405 device
+* fix bug: frame_id is based on camera_name
+* unite_imu_method is now changeable in runtime.
+* fix motion module default values.
+* add missing extrinsics topics
+* fix crash when camera disconnects.
+* fix header timestamp for metadata messages.
 
-* upgrade version to 2.2.13
-* fix ctrl-C closing issues.
-* handle device creation exceptions.
-* support LiDAR camera L515.
-* optimize pointcloud. Contributors: Davide Faconti
-* fix usb port id parsing issues.
-* Add eigen dependency - missing for Melodic. Contributors: Antoine Hoarau
+* Contributors: nomumu, JamesChooWK, benlev, doronhi
+
+4.4.0 (2021-11-17)
+-------------------
+* changed parameters: 
+  - "stereo_module", "l500_depth_sensor" are replaced by "depth_module"
+  - for video streams: <module>.profile replaces <stream>_width, <stream>_height, <stream>_fps
+  - removed paramets <stream>_frame_id, <stream>_optical_frame_id. frame_ids are defined by camera_name
+  - "filters" is removed. All filters (or post-processing blocks) are enabled/disabled using "<filter>.enable"
+  - "align_depth" is replaced with "align_depth.enable"
+  - "allow_no_texture_points", "ordered_pc" replaced by "pointcloud.allow_no_texture_points", "pointcloud.ordered_pc"
+  - "pointcloud_texture_stream", "pointcloud_texture_index" are replaced by "pointcloud.stream_filter", "pointcloud.stream_index_filter"
+
+* Allow enable/disable of sensors in runtime.
+* Allow enable/disable of filters in runtime.

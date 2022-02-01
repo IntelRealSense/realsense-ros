@@ -2,13 +2,19 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add D455 urdf files
+
+* Contributors: nomumu, JamesChooWK, doronhi
+
 3.1.3 (2020-12-28)
 ------------------
 * fix realsense2_description's dependency to realsense2_camera_msgs
   remove boost dependency.
   rename node_namespace to namespace
   rename node_executable to executable
-* Contributors: doronhi
+* Contributors: benlev, Gilaadb, doronhi
 
 3.1.2 (2020-12-10)
 ------------------
