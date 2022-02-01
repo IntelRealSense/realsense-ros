@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.0.1 (2022-02-01)
+------------------
 * fix reset issue when multiple devices are connected
 * fix /rosout issue
 * fix PID for D405 device

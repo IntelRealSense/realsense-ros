@@ -2,8 +2,8 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.0.1 (2022-02-01)
+------------------
 * Add D455 urdf files
 
 * Contributors: nomumu, JamesChooWK, doronhi
