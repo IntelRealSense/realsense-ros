@@ -3,11 +3,6 @@ These are packages for using Intel RealSense cameras (D400 and L500 series, SR30
 
 LibRealSense supported version: v2.50.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
-## Beta Version
-This version is meant to ne more dynamic than the 3.x.x versions in controlling the camera parameters. It allows starting and stopping separate sensors and separate postprocessing blocks in runtime. This makes it much simpler to find out the best configuration. All parameters can also be defined at start-up by modifying the launch files, as is in the 3.x.x version.
-While many of the parameter names remain as they were, many were slightly modified to match the new hirarchy. For instance, in the D400 series, the depth, infrared1 and infrared2 streams belong to one stereo sensor. Therefore, there are no longer `infra1_width`, `infra2_width` and `depth_width` parameters, which should have always been set to the same value, but a single, `depth_module.profile` parameter that combines width, height and fps and can also be changed in runtime.
-The parameters `enable_infra1`, `enable_infra2` and `enable_depth` can now be set in runtime.
-
 ## Installation Instructions
 This version supports ROS2 Dashing, Foxy and Rolling.
 
@@ -78,7 +73,7 @@ ros2 run realsense2_camera realsense2_camera_node --ros-args -p enable_color:=fa
 or, with a launch file:
 ```bash
 ros2 launch realsense2_camera rs_launch.py
-ros2 launch realsense2_camera rs_launch.py pointcloud.enable:=true
+ros2 launch realsense2_camera rs_launch.py depth_module.profile:=1280x720x30 pointcloud.enable:=true
 ```
 
 This will stream all camera sensors and publish on the appropriate ROS topics.

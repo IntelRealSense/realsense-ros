@@ -370,10 +370,9 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
 
     auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
+    rclcpp::Time t(frameSystemTimeSec(frame));
     if (0 != _imu_publishers[stream_index]->get_subscription_count())
     {
-        rclcpp::Time t(frameSystemTimeSec(frame));
-
         auto imu_msg = sensor_msgs::msg::Imu();
         ImuMessage_AddDefaultValues(imu_msg);
         imu_msg.header.frame_id = OPTICAL_FRAME_ID(stream_index);
@@ -395,7 +394,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         _imu_publishers[stream_index]->publish(imu_msg);
         ROS_DEBUG("Publish %s stream", ros_stream_to_string(frame.get_profile().stream_type()));
     }
-    publishMetadata(frame, OPTICAL_FRAME_ID(stream_index));
+    publishMetadata(frame, t, OPTICAL_FRAME_ID(stream_index));
 }
 
 void BaseRealSenseNode::pose_callback(rs2::frame frame)
@@ -1040,22 +1039,21 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     }
     if (is_publishMetadata)
     {
-        publishMetadata(f, OPTICAL_FRAME_ID(stream));
+        publishMetadata(f, t, OPTICAL_FRAME_ID(stream));
     }
 }
 
-void BaseRealSenseNode::publishMetadata(rs2::frame f, const std::string& frame_id)
+void BaseRealSenseNode::publishMetadata(rs2::frame f, const rclcpp::Time& header_time, const std::string& frame_id)
 {
     stream_index_pair stream = {f.get_profile().stream_type(), f.get_profile().stream_index()};    
     if (_metadata_publishers.find(stream) != _metadata_publishers.end())
     {
-        rclcpp::Time t(frameSystemTimeSec(f));    
         auto& md_publisher = _metadata_publishers.at(stream);
         if (0 != md_publisher->get_subscription_count())
         {
             realsense2_camera_msgs::msg::Metadata msg;
             msg.header.frame_id = frame_id;
-            msg.header.stamp = t;
+            msg.header.stamp = header_time;
             std::stringstream json_data;
             const char* separator = ",";
             json_data << "{";
