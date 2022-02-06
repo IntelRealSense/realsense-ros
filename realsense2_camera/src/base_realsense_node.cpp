@@ -365,7 +365,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
     }
 
     ROS_DEBUG("Frame arrived: stream: %s ; index: %d ; Timestamp Domain: %s",
-                ros_stream_to_string(frame.get_profile().stream_type()),
+                ros_stream_to_string(frame.get_profile().stream_type()).c_str(),
                 frame.get_profile().stream_index(),
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
 
@@ -392,7 +392,7 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         }
         imu_msg.header.stamp = t;
         _imu_publishers[stream_index]->publish(imu_msg);
-        ROS_DEBUG("Publish %s stream", ros_stream_to_string(frame.get_profile().stream_type()));
+        ROS_DEBUG("Publish %s stream", ros_stream_to_string(frame.get_profile().stream_type()).c_str());
     }
     publishMetadata(frame, t, OPTICAL_FRAME_ID(stream_index));
 }
