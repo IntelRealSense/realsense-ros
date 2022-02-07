@@ -10,15 +10,15 @@ void BaseRealSenseNode::getParameters()
 
     std::string param_name;
     param_name = std::string("camera_name");
-    _camera_name = _parameters->setParam(param_name, rclcpp::ParameterValue("camera")).get<rclcpp::PARAMETER_STRING>();
+    _camera_name = _parameters->setParam<std::string>(param_name, "camera");
     _parameters_names.push_back(param_name);
 
     param_name = std::string("publish_tf");
-    _publish_tf = _parameters->setParam(param_name, rclcpp::ParameterValue(PUBLISH_TF)).get<rclcpp::PARAMETER_BOOL>();
+    _publish_tf = _parameters->setParam<bool>(param_name, PUBLISH_TF);
     _parameters_names.push_back(param_name);
 
     param_name = std::string("tf_publish_rate");
-    _parameters->setParamT(param_name, rclcpp::ParameterValue(TF_PUBLISH_RATE), _tf_publish_rate, [this](const rclcpp::Parameter& )
+    _parameters->setParamT(param_name, _tf_publish_rate, [this](const rclcpp::Parameter& )
             {
                 startDynamicTf();
             });
@@ -26,39 +26,39 @@ void BaseRealSenseNode::getParameters()
     startDynamicTf();
 
     param_name = std::string("diagnostics_period");
-    _diagnostics_period = _parameters->setParam(param_name, rclcpp::ParameterValue(DIAGNOSTICS_PERIOD)).get<rclcpp::PARAMETER_DOUBLE>();
+    _diagnostics_period = _parameters->setParam<double>(param_name, DIAGNOSTICS_PERIOD);
     _parameters_names.push_back(param_name);
 
     param_name = std::string("enable_sync");
-    _parameters->setParamT(param_name, rclcpp::ParameterValue(SYNC_FRAMES), _sync_frames);
+    _parameters->setParamT(param_name, _sync_frames);
     _parameters_names.push_back(param_name);
 
     param_name = std::string("json_file_path");
-    _json_file_path = _parameters->setParam(param_name, rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
+    _json_file_path = _parameters->setParam<std::string>(param_name, "");
     _parameters_names.push_back(param_name);
 
     param_name = std::string("clip_distance");
-    _clipping_distance = _parameters->setParam(param_name, rclcpp::ParameterValue(-1.0)).get<rclcpp::PARAMETER_DOUBLE>();
+    _clipping_distance = _parameters->setParam<double>(param_name, -1.0);
     _parameters_names.push_back(param_name);
 
     param_name = std::string("linear_accel_cov");
-    _linear_accel_cov = _parameters->setParam(param_name, rclcpp::ParameterValue(0.01)).get<rclcpp::PARAMETER_DOUBLE>();
+    _linear_accel_cov = _parameters->setParam<double>(param_name, 0.01);
     _parameters_names.push_back(param_name);
 
     param_name = std::string("angular_velocity_cov");
-    _angular_velocity_cov = _parameters->setParam(param_name, rclcpp::ParameterValue(0.01)).get<rclcpp::PARAMETER_DOUBLE>();
+    _angular_velocity_cov = _parameters->setParam<double>(param_name, 0.01);
     _parameters_names.push_back(param_name);
    
     param_name = std::string("hold_back_imu_for_frames");
-    _hold_back_imu_for_frames = _parameters->setParam(param_name, rclcpp::ParameterValue(HOLD_BACK_IMU_FOR_FRAMES)).get<rclcpp::PARAMETER_BOOL>();
+    _hold_back_imu_for_frames = _parameters->setParam<bool>(param_name, HOLD_BACK_IMU_FOR_FRAMES);
     _parameters_names.push_back(param_name);
 
     param_name = std::string("publish_odom_tf");
-    _publish_odom_tf = _parameters->setParam(param_name, rclcpp::ParameterValue(PUBLISH_ODOM_TF)).get<rclcpp::PARAMETER_BOOL>();
+    _publish_odom_tf = _parameters->setParam<bool>(param_name, PUBLISH_ODOM_TF);
     _parameters_names.push_back(param_name);
 
     param_name = std::string("base_frame_id");
-    _base_frame_id = _parameters->setParam(param_name, rclcpp::ParameterValue(DEFAULT_BASE_FRAME_ID)).get<rclcpp::PARAMETER_STRING>();
+    _base_frame_id = _parameters->setParam<std::string>(param_name, DEFAULT_BASE_FRAME_ID);
     _base_frame_id = (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_" << _base_frame_id)).str();
     _parameters_names.push_back(param_name);
 }
@@ -107,7 +107,7 @@ void BaseRealSenseNode::setDynamicParams()
     std::stringstream desc;
     desc << "Available options are:" << std::endl << enum_str_values.str();
     crnt_descriptor.description = desc.str();
-    _parameters->setParam(param_name, rclcpp::ParameterValue(int(imu_sync_method::NONE)), 
+    _parameters->setParam<int>(param_name, int(imu_sync_method::NONE), 
                             [this](const rclcpp::Parameter& parameter)
                             {
                                 _imu_sync_method = imu_sync_method(parameter.get_value<int>());

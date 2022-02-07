@@ -265,7 +265,7 @@ void RealSenseNodeFactory::init()
 		_usb_port_id = declare_parameter("usb_port_id", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
 		_device_type = declare_parameter("device_type", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
     	_wait_for_device_timeout = declare_parameter("wait_for_device_timeout", rclcpp::ParameterValue(-1.0)).get<rclcpp::PARAMETER_DOUBLE>();
-    	_reconnect_timeout = declare_parameter("reconnect_timeout", rclcpp::ParameterValue(6.0)).get<rclcpp::PARAMETER_DOUBLE>();
+    	_reconnect_timeout = declare_parameter("reconnect_timeout", 6.0);
 
 		// A ROS2 hack: until a better way is found to avoid auto convertion of strings containing only digits to integers:
 		if (_serial_no.front() == '_') _serial_no = _serial_no.substr(1);	// remove '_' prefix
