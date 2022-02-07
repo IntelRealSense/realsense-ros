@@ -99,8 +99,8 @@ namespace realsense2_camera
         T result_value(initial_value);
         try
         {
-            ROS_INFO_STREAM("setParam::Setting parameter: " << param_name);
-#ifdef GALACTIC            
+            ROS_DEBUG_STREAM("setParam::Setting parameter: " << param_name);
+#if defined(GALACTIC) || defined(ROLLING)
             descriptor.dynamic_typing=true;
 #endif
             if (!_node.get_parameter(param_name, result_value))

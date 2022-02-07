@@ -84,7 +84,6 @@ void PointcloudFilter::setParameters()
                     _params.getParameters()->queueSetRosValue(parameter.get_name(), _pointcloud_qos);
                 }
             }, crnt_descriptor);
-    ROS_WARN_STREAM("1._pointcloud_qos:" << _pointcloud_qos);
     _parameters_names.push_back(param_name);
     NamedFilter::setParameters([this](const rclcpp::Parameter& )
         {
@@ -97,11 +96,9 @@ void PointcloudFilter::setPublisher()
     std::lock_guard<std::mutex> lock_guard(_mutex_publisher);
     if ((_is_enabled) && (!_pointcloud_publisher))
     {
-        ROS_WARN_STREAM("_node.create_publisher");
         _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 
                                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_pointcloud_qos)),
                                             qos_string_to_qos(_pointcloud_qos)));
-        ROS_WARN_STREAM("_node.create_publisher - Done");
     }
     else if ((!_is_enabled) && (_pointcloud_publisher))
     {
