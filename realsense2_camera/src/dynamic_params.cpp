@@ -101,7 +101,7 @@ namespace realsense2_camera
         {
             ROS_DEBUG_STREAM("setParam::Setting parameter: " << param_name);
 #if defined(GALACTIC) || defined(ROLLING)
-            descriptor.dynamic_typing=true;
+            descriptor.dynamic_typing=true; // Without this, undeclare_parameter() throws in Galactic onward.
 #endif
             if (!_node.get_parameter(param_name, result_value))
             {
@@ -143,7 +143,9 @@ namespace realsense2_camera
         return result_value;
     }
 
-
+    // setParamT: Used to automatically update param based on its parallel ros parameter.
+    // Notice: param must remain alive as long as the callback is active - 
+    //      if param is destroyed the behavior of the callback is undefined.
     template <class T>
     void Parameters::setParamT(std::string param_name, T& param, 
                               std::function<void(const rclcpp::Parameter&)> func,
@@ -189,6 +191,7 @@ namespace realsense2_camera
         }                            
     }
 
+    // setRosParamValue - Used to set ROS parameter back to a valid value if an invalid value was set by user.
     void Parameters::setRosParamValue(const std::string param_name, void const* const value)
     {
         // setRosParamValue sets a value to a parameter in the parameters server.
@@ -225,6 +228,7 @@ namespace realsense2_camera
         }
     }
 
+    // queueSetRosValue - Set parameter in queue to be pushed to ROS parameter by monitor_update_functions
     template <class T>
     void Parameters::queueSetRosValue(const std::string& param_name, const T value)
     {
