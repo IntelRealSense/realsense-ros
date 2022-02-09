@@ -11,21 +11,25 @@ namespace realsense2_camera
         public:
             Parameters(rclcpp::Node& node);
             ~Parameters();
-            rclcpp::ParameterValue setParam(std::string param_name, const rclcpp::ParameterValue& initial_value, 
-                                            std::function<void(const rclcpp::Parameter&)> func = std::function<void(const rclcpp::Parameter&)>(),
-                                            rcl_interfaces::msg::ParameterDescriptor descriptor=rcl_interfaces::msg::ParameterDescriptor());
-
-            rclcpp::ParameterValue readAndDeleteParam(std::string param_name, const rclcpp::ParameterValue& initial_value);
             template <class T>
-            void setParamT(std::string param_name, const rclcpp::ParameterValue& initial_value, 
-                           T& param,
+            T setParam(std::string param_name, const T& initial_value, 
+                                    std::function<void(const rclcpp::Parameter&)> func = std::function<void(const rclcpp::Parameter&)>(), 
+                                    rcl_interfaces::msg::ParameterDescriptor descriptor=rcl_interfaces::msg::ParameterDescriptor());
+
+            template <class T>
+            T readAndDeleteParam(std::string param_name, const T& initial_value);
+
+            template <class T>
+            void setParamT(std::string param_name, T& param,
                            std::function<void(const rclcpp::Parameter&)> func = std::function<void(const rclcpp::Parameter&)>(),
                            rcl_interfaces::msg::ParameterDescriptor descriptor=rcl_interfaces::msg::ParameterDescriptor());
             template <class T>
             void setParamValue(T& param, const T& value); // function updates the parameter value both locally and in the parameters server
+
             void setRosParamValue(const std::string param_name, void const* const value); // function updates the parameters server
             void removeParam(std::string param_name);
             void pushUpdateFunctions(std::vector<std::function<void()> > funcs);
+
             template <class T>
             void queueSetRosValue(const std::string& param_name, const T value);
             

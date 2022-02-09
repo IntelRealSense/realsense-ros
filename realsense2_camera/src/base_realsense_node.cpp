@@ -76,8 +76,10 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     // _rs_diagnostic_updater(diagnostic_updater, serial_no),
     _dev(dev),
     _json_file_path(""),
+    _tf_publish_rate(TF_PUBLISH_RATE),
     _static_tf_broadcaster(node),
     _is_initialized_time_base(false),
+    _sync_frames(SYNC_FRAMES),
     _is_profile_changed(false)
 {
     _image_format[1] = CV_8UC1;    // CVBridge type

@@ -18,7 +18,7 @@ void T265RealsenseNode::initializeOdometryInput()
 {
     std::string calib_odom_file;
     std::string param_name("calib_odom_file");
-    calib_odom_file = _parameters->setParam(param_name, rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>();
+    calib_odom_file = _parameters->setParam<std::string>(param_name, "");
     if (calib_odom_file.empty())
     {
         ROS_INFO("No calib_odom_file. No input odometry accepted.");
@@ -54,7 +54,7 @@ void T265RealsenseNode::setupSubscribers()
 {
     if (!_use_odom_in) return;
 
-    std::string topic_odom_in = _parameters->setParam("topic_odom_in", rclcpp::ParameterValue(DEFAULT_TOPIC_ODOM_IN)).get<rclcpp::PARAMETER_STRING>();
+    std::string topic_odom_in = _parameters->setParam<std::string>("topic_odom_in", DEFAULT_TOPIC_ODOM_IN);
     ROS_INFO_STREAM("Subscribing to in_odom topic: " << topic_odom_in);
 
     _odom_subscriber = _node.create_subscription<nav_msgs::msg::Odometry>(topic_odom_in, 1, [this](const nav_msgs::msg::Odometry::SharedPtr msg){odom_in_callback(msg);});

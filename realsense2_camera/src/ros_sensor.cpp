@@ -79,7 +79,7 @@ void RosSensor::UpdateSequenceIdCallback()
             std::stringstream param_name_str;
             param_name_str << module_name << "." << create_graph_resource_name(rs2_option_to_string(option)) << "." << seq_id;
             int option_value = get_option(option);
-            int user_set_option_value = _params.getParameters()->readAndDeleteParam(param_name_str.str(), rclcpp::ParameterValue(option_value)).get<rclcpp::PARAMETER_INTEGER>();
+            int user_set_option_value = _params.getParameters()->readAndDeleteParam(param_name_str.str(), option_value);
             if (option_value != user_set_option_value)
             {
                 ROS_INFO_STREAM("Set " << rs2_option_to_string(option) << "." << seq_id << " to " << user_set_option_value);
@@ -94,7 +94,7 @@ void RosSensor::UpdateSequenceIdCallback()
     try
     {
         int option_value = static_cast<int>(get_option(RS2_OPTION_SEQUENCE_ID));
-        _params.getParameters()->setParam(option_name, rclcpp::ParameterValue(option_value), 
+        _params.getParameters()->setParam<int>(option_name, option_value, 
             [this](const rclcpp::Parameter& parameter)
             {
                 set_option(RS2_OPTION_SEQUENCE_ID, parameter.get_value<int>());
@@ -356,19 +356,19 @@ void RosSensor::registerAutoExposureROIOptions()
 
         ROS_DEBUG_STREAM("Publish roi for " << module_name);
         std::string param_name(module_name + ".left");
-        _params.getParameters()->setParamT(param_name, rclcpp::ParameterValue(0),     _auto_exposure_roi.min_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters()->setParamT(param_name, _auto_exposure_roi.min_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
         _parameters_names.push_back(param_name);
 
         param_name = std::string(module_name + ".right");
-        _params.getParameters()->setParamT(module_name + ".right", rclcpp::ParameterValue(max_x), _auto_exposure_roi.max_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters()->setParamT(module_name + ".right", _auto_exposure_roi.max_x, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
         _parameters_names.push_back(param_name);
 
         param_name = std::string(module_name + ".top");
-        _params.getParameters()->setParamT(module_name + ".top", rclcpp::ParameterValue(0),     _auto_exposure_roi.min_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters()->setParamT(module_name + ".top", _auto_exposure_roi.min_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
         _parameters_names.push_back(param_name);
 
         param_name = std::string(module_name + ".bottom");
-        _params.getParameters()->setParamT(module_name + ".bottom", rclcpp::ParameterValue(max_y), _auto_exposure_roi.max_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
+        _params.getParameters()->setParamT(module_name + ".bottom", _auto_exposure_roi.max_y, [this](const rclcpp::Parameter&){set_sensor_auto_exposure_roi();});
         _parameters_names.push_back(param_name);
     }
 }

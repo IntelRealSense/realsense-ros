@@ -82,38 +82,30 @@ namespace realsense2_camera
         // remove_on_set_parameters_callback(_params_backend);
     }
 
-
-    rclcpp::ParameterValue Parameters::readAndDeleteParam(std::string param_name, const rclcpp::ParameterValue& initial_value)
+    template <class T>
+    T Parameters::readAndDeleteParam(std::string param_name, const T& initial_value)
     {
         // Function is meant for reading parameters needed in initialization but should not be declared by the app.
-        rclcpp::ParameterValue result_value(initial_value);
-        if (!_node.has_parameter(param_name))
-        {
-            result_value = _node.declare_parameter(param_name, rclcpp::ParameterValue(initial_value));
-            _node.undeclare_parameter(param_name);
-        }
-        else
-        {
-            result_value = _node.get_parameter(param_name).get_parameter_value();
-        }
+        T result_value = setParam(param_name, initial_value);
+        removeParam(param_name);
         return result_value;
     }
 
-    rclcpp::ParameterValue Parameters::setParam(std::string param_name, const rclcpp::ParameterValue& initial_value, 
+    template <class T>
+    T Parameters::setParam(std::string param_name, const T& initial_value, 
                               std::function<void(const rclcpp::Parameter&)> func, 
                               rcl_interfaces::msg::ParameterDescriptor descriptor)
     {
-        rclcpp::ParameterValue result_value(initial_value);
+        T result_value(initial_value);
         try
         {
             ROS_DEBUG_STREAM("setParam::Setting parameter: " << param_name);
-            if (!_node.has_parameter(param_name))
+#if defined(GALACTIC) || defined(ROLLING)
+            descriptor.dynamic_typing=true; // Without this, undeclare_parameter() throws in Galactic onward.
+#endif
+            if (!_node.get_parameter(param_name, result_value))
             {
                 result_value = _node.declare_parameter(param_name, initial_value, descriptor);
-            }
-            else
-            {
-                result_value = _node.get_parameter(param_name).get_parameter_value();
             }
         }
         catch(const std::exception& e)
@@ -128,7 +120,7 @@ namespace realsense2_camera
                 range << val.from_value << ", " << val.to_value;
             }
             ROS_WARN_STREAM("Could not set param: " << param_name << " with " << 
-                             rclcpp::Parameter(param_name, initial_value).value_to_string() << 
+                             initial_value << 
                             " Range: [" << range.str() << "]" <<
                              ": " << e.what());
             return initial_value;
@@ -151,26 +143,21 @@ namespace realsense2_camera
         return result_value;
     }
 
-
+    // setParamT: Used to automatically update param based on its parallel ros parameter.
+    // Notice: param must remain alive as long as the callback is active - 
+    //      if param is destroyed the behavior of the callback is undefined.
     template <class T>
-    void Parameters::setParamT(std::string param_name, const rclcpp::ParameterValue& initial_value, 
-                              T& param, 
+    void Parameters::setParamT(std::string param_name, T& param, 
                               std::function<void(const rclcpp::Parameter&)> func,
                               rcl_interfaces::msg::ParameterDescriptor descriptor)
+
     {
-        // NOTICE: callback function is set AFTER the parameter is declared!!!
-        if (!_node.has_parameter(param_name))
-            param = _node.declare_parameter(param_name, initial_value, descriptor).get<T>();
-        else
-        {
-            param = _node.get_parameter(param_name).get_parameter_value().get<T>();
-        }        
-        _param_functions[param_name] = [&param, func](const rclcpp::Parameter& parameter)
-            {
-                param = parameter.get_value<T>();
-                if (func) func(parameter);
-            };
-        _param_names[&param] = param_name;
+    param = setParam<T>(param_name, param, 
+                          [&param, func](const rclcpp::Parameter& parameter)
+                                        {
+                                            param = parameter.get_value<T>();
+                                            if (func) func(parameter);
+                                        }, descriptor);
     }
 
     template <class T>
@@ -204,6 +191,7 @@ namespace realsense2_camera
         }                            
     }
 
+    // setRosParamValue - Used to set ROS parameter back to a valid value if an invalid value was set by user.
     void Parameters::setRosParamValue(const std::string param_name, void const* const value)
     {
         // setRosParamValue sets a value to a parameter in the parameters server.
@@ -240,6 +228,7 @@ namespace realsense2_camera
         }
     }
 
+    // queueSetRosValue - Set parameter in queue to be pushed to ROS parameter by monitor_update_functions
     template <class T>
     void Parameters::queueSetRosValue(const std::string& param_name, const T value)
     {
@@ -258,9 +247,14 @@ namespace realsense2_camera
         _param_functions.erase(param_name);
     }
 
-    template void Parameters::setParamT<bool>(std::string param_name, const rclcpp::ParameterValue& initial_value, bool& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
-    template void Parameters::setParamT<int>(std::string param_name, const rclcpp::ParameterValue& initial_value, int& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
-    template void Parameters::setParamT<double>(std::string param_name, const rclcpp::ParameterValue& initial_value, double& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template void Parameters::setParamT<bool>(std::string param_name, bool& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template void Parameters::setParamT<int>(std::string param_name, int& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template void Parameters::setParamT<double>(std::string param_name, double& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+
+    template bool Parameters::setParam<bool>(std::string param_name, const bool& initial_value, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template int Parameters::setParam<int>(std::string param_name, const int& initial_value, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template double Parameters::setParam<double>(std::string param_name, const double& initial_value, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template std::string Parameters::setParam<std::string>(std::string param_name, const std::string& initial_value, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
 
     template void Parameters::setParamValue<int>(int& param, const int& value);
     template void Parameters::setParamValue<bool>(bool& param, const bool& value);
@@ -268,4 +262,6 @@ namespace realsense2_camera
 
     template void Parameters::queueSetRosValue<std::string>(const std::string& param_name, const std::string value);
     template void Parameters::queueSetRosValue<int>(const std::string& param_name, const int value);
+
+    template int Parameters::readAndDeleteParam<int>(std::string param_name, const int& initial_value);
 }

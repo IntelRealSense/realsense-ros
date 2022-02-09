@@ -42,7 +42,7 @@ void ProfilesManager::registerSensorQOSParam(std::string template_name,
         std::shared_ptr<std::string> param = params[sip];
         rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
         crnt_descriptor.description = "Available options are:\n" + list_available_qos_strings();
-        rclcpp::ParameterValue aa = _params.getParameters()->setParam(param_name, rclcpp::ParameterValue(value), [this, param](const rclcpp::Parameter& parameter)
+        _params.getParameters()->setParam<std::string>(param_name, value, [this, param](const rclcpp::Parameter& parameter)
                 {
                     try
                     {
@@ -76,7 +76,7 @@ void ProfilesManager::registerSensorUpdateParam(std::string template_name,
         if (params.find(sip) == params.end())
             params[sip] = std::make_shared<T>(value);
         std::shared_ptr<T> param = params[sip];
-        rclcpp::ParameterValue aa = _params.getParameters()->setParam(param_name, rclcpp::ParameterValue(*(params[sip])), [param, update_sensor_func](const rclcpp::Parameter& parameter)
+        _params.getParameters()->setParam<T>(param_name, *(params[sip]), [param, update_sensor_func](const rclcpp::Parameter& parameter)
                 {
                     *param = parameter.get_value<T>();
                     update_sensor_func();
@@ -264,7 +264,7 @@ void VideoProfilesManager::registerVideoSensorParams()
     crnt_descriptor.description = "Available options are:\n" + get_profiles_descriptions();
     std::stringstream crnt_profile_str;
     crnt_profile_str << _width << "x" << _height << "x" << _fps;
-    rclcpp::ParameterValue aa = _params.getParameters()->setParam(param_name, rclcpp::ParameterValue(crnt_profile_str.str()), [this](const rclcpp::Parameter& parameter)
+    _params.getParameters()->setParam<std::string>(param_name, crnt_profile_str.str(), [this](const rclcpp::Parameter& parameter)
             {
                 std::regex self_regex("\\s*([0-9]+)\\s*[xX,]\\s*([0-9]+)\\s*[xX,]\\s*([0-9]+)\\s*", std::regex_constants::ECMAScript);
                 std::smatch match;
@@ -388,7 +388,7 @@ void MotionProfilesManager::registerFPSParams()
         crnt_descriptor.description = "Available options are:\n" + description;
         std::shared_ptr<int> param(_fps[sip]);
         std::vector<int> available_values(sips_fps_values[sip]);
-        rclcpp::ParameterValue aa = _params.getParameters()->setParam(param_name, rclcpp::ParameterValue(*(fps.second)), [this, sip](const rclcpp::Parameter& parameter)
+        _params.getParameters()->setParam<int>(param_name, *(fps.second), [this, sip](const rclcpp::Parameter& parameter)
             {
                 int next_fps(parameter.get_value<int>());
                 bool found(false);

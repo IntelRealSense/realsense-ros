@@ -20,7 +20,7 @@ void NamedFilter::setParameters(std::function<void(const rclcpp::Parameter&)> en
     _params.registerDynamicOptions(*(_filter.get()), module_name_str.str());
     module_name_str << ".enable";
 
-    _params.getParameters()->setParamT(module_name_str.str(), rclcpp::ParameterValue(_is_enabled), _is_enabled, enable_param_func);
+    _params.getParameters()->setParamT(module_name_str.str(), _is_enabled, enable_param_func);
     _parameters_names.push_back(module_name_str.str());
 }
 
@@ -49,31 +49,28 @@ rs2::frameset NamedFilter::Process(rs2::frameset frameset)
 
 PointcloudFilter::PointcloudFilter(std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled):
     NamedFilter(filter, parameters, logger, is_enabled, false),
-    _node(node)
+    _node(node),
+    _allow_no_texture_points(ALLOW_NO_TEXTURE_POINTS),
+    _ordered_pc(ORDERED_PC)
     {
         setParameters();
     }
 
 void PointcloudFilter::setParameters()
 {
-    NamedFilter::setParameters([this](const rclcpp::Parameter& )
-        {
-            setPublisher();
-        });
-
     std::string module_name = create_graph_resource_name(rs2_to_ros(_filter->get_info(RS2_CAMERA_INFO_NAME)));
     std::string param_name(module_name + "." + "allow_no_texture_points");
-    _params.getParameters()->setParamT(param_name, rclcpp::ParameterValue(ALLOW_NO_TEXTURE_POINTS), _allow_no_texture_points);
+    _params.getParameters()->setParamT(param_name, _allow_no_texture_points);
     _parameters_names.push_back(param_name);
 
     param_name = module_name + "." + std::string("ordered_pc");
-    _params.getParameters()->setParamT(param_name, rclcpp::ParameterValue(ORDERED_PC), _ordered_pc);
+    _params.getParameters()->setParamT(param_name, _ordered_pc);
     _parameters_names.push_back(param_name);
 
     param_name = module_name + "." + std::string("pointcloud_qos");
     rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
     crnt_descriptor.description = "Available options are:\n" + list_available_qos_strings();
-    _pointcloud_qos = _params.getParameters()->setParam(param_name, rclcpp::ParameterValue(DEFAULT_QOS), [this](const rclcpp::Parameter& parameter)
+    _pointcloud_qos = _params.getParameters()->setParam<std::string>(param_name, DEFAULT_QOS, [this](const rclcpp::Parameter& parameter)
             {
                 try
                 {
@@ -86,9 +83,12 @@ void PointcloudFilter::setParameters()
                     ROS_ERROR_STREAM("Given value, " << parameter.get_value<std::string>() << " is unknown. Set ROS param back to: " << _pointcloud_qos);
                     _params.getParameters()->queueSetRosValue(parameter.get_name(), _pointcloud_qos);
                 }
-            }, crnt_descriptor).get<rclcpp::PARAMETER_STRING>();
+            }, crnt_descriptor);
     _parameters_names.push_back(param_name);
-    setPublisher();
+    NamedFilter::setParameters([this](const rclcpp::Parameter& )
+        {
+            setPublisher();
+        });
 }
 
 void PointcloudFilter::setPublisher() 
