@@ -1,9 +1,9 @@
 // License: Apache 2.0. See LICENSE file in root directory.
 // Copyright(c) 2017 Intel Corporation. All Rights Reserved
 
-#include "../include/realsense_node_factory.h"
-#include "../include/base_realsense_node.h"
-#include "../include/t265_realsense_node.h"
+#include "realsense2_camera/realsense_node_factory.h"
+#include "realsense2_camera/base_realsense_node.h"
+#include "realsense2_camera/t265_realsense_node.h"
 #include <iostream>
 #include <map>
 #include <mutex>

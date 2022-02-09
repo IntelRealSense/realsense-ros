@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../include/realsense_node_factory.h"
+#include "realsense2_camera/realsense_node_factory.h"
 #include <realsense2_camera/DeviceInfo.h>
 #include "realsense2_camera/Metadata.h"
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>

@@ -14,7 +14,7 @@
 #include <librealsense2/hpp/rs_processing.hpp>
 #include <librealsense2/rs_advanced_mode.hpp>
 #include <cv_bridge/cv_bridge.h>
-#include <constants.h>
+#include <realsense2_camera/constants.h>
 #include <realsense2_camera/Extrinsics.h>
 #include <realsense2_camera/IMUInfo.h>
 #include <csignal>
