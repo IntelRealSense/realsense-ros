@@ -51,6 +51,7 @@ namespace realsense2_camera
         {
             if (!_node.has_parameter(param_name))
             {
+                descriptor.dynamic_typing=true;
                 result_value = _node.declare_parameter(param_name, initial_value, descriptor);
             }
             else
@@ -99,8 +100,9 @@ namespace realsense2_camera
                               rcl_interfaces::msg::ParameterDescriptor descriptor)
     {
         // NOTICE: callback function is set AFTER the parameter is declared!!!
-        if (!_node.has_parameter(param_name))
-            param = _node.declare_parameter(param_name, initial_value, descriptor).get<T>();
+        if (!_node.has_parameter(param_name)){
+            descriptor.dynamic_typing=true;
+            param = _node.declare_parameter(param_name, initial_value, descriptor).get<T>();}
         else
         {
             param = _node.get_parameter(param_name).get_parameter_value().get<T>();
