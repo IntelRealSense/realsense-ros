@@ -73,7 +73,6 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _node(node),
     _logger(node.get_logger()),
     _parameters(parameters),
-    // _rs_diagnostic_updater(diagnostic_updater, serial_no),
     _dev(dev),
     _json_file_path(""),
     _tf_publish_rate(TF_PUBLISH_RATE),
@@ -515,10 +514,6 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
 
                 ROS_DEBUG("Frameset contain (%s, %d, %s %d) frame. frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
                             rs2_stream_to_string(stream_type), stream_index, rs2_format_to_string(stream_format), stream_unique_id, frame.get_frame_number(), frame_time, t.nanoseconds());
-
-                stream_index_pair sip{stream_type,stream_index};
-                if (_frequency_diagnistics.find(sip) != _frequency_diagnistics.end())
-                    _frequency_diagnistics.at(sip).Tick();
             }
             // Clip depth_frame for max range:
             rs2::depth_frame original_depth_frame = frameset.get_depth_frame();
@@ -591,9 +586,6 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                         rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame_time, t.nanoseconds());
             
             stream_index_pair sip{stream_type,stream_index};
-            if (_frequency_diagnistics.find(sip) != _frequency_diagnistics.end())
-                _frequency_diagnistics.at(sip).Tick();
-
             if (frame.is<rs2::depth_frame>())
             {
                 if (_clipping_distance > 0)
@@ -1098,11 +1090,11 @@ void BaseRealSenseNode::startDiagnosticsUpdater()
     if (_diagnostics_period > 0)
     {
         ROS_INFO_STREAM("Publish diagnostics every " << _diagnostics_period << " seconds.");
-        _diagnostic_updater = std::make_shared<diagnostic_updater::Updater>(&_node, _diagnostics_period);
+        _diagnostics_updater = std::make_shared<diagnostic_updater::Updater>(&_node, _diagnostics_period);
 
-        _diagnostic_updater->setHardwareID(serial_no);
+        _diagnostics_updater->setHardwareID(serial_no);
 
-        _diagnostic_updater->add("Temperatures", [this](diagnostic_updater::DiagnosticStatusWrapper& status)
+        _diagnostics_updater->add("Temperatures", [this](diagnostic_updater::DiagnosticStatusWrapper& status)
         {
             bool got_temperature(false);
             for(auto&& sensor : _available_ros_sensors)

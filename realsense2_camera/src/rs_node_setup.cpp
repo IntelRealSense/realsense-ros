@@ -7,12 +7,12 @@ using namespace rs2;
 void BaseRealSenseNode::setup()
 {
     setDynamicParams();
+    startDiagnosticsUpdater();
     setAvailableSensors();
     SetBaseStream();
     setupFilters();
     setupFiltersPublishers();
     setCallbackFunctions();
-    startDiagnosticsUpdater();
     monitoringProfileChanges();
     updateSensors();
     publishServices();
@@ -124,17 +124,17 @@ void BaseRealSenseNode::setAvailableSensors()
             sensor.is<rs2::fisheye_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as VideoSensor.");
-            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func, hardware_reset_func, _logger);
+            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger);
         }
         else if (sensor.is<rs2::motion_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as ImuSensor.");
-            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, imu_callback_function, update_sensor_func, hardware_reset_func, _logger);
+            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, imu_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger);
         }
         else if (sensor.is<rs2::pose_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as PoseSensor.");
-            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, multiple_message_callback_function, update_sensor_func, hardware_reset_func, _logger);
+            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, multiple_message_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger);
         }
         else
         {
@@ -172,7 +172,6 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
             _imu_info_publisher.erase(sip);
         }
         _metadata_publishers.erase(sip);
-        _frequency_diagnistics.erase(sip);
         _extrinsics_publishers.erase(sip);
     }
 }
@@ -243,8 +242,6 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
         _metadata_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(topic_metadata, 
                                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
         
-        if (_diagnostic_updater)
-            _frequency_diagnistics.emplace(sip, FrequencyDiagnostics(stream_name, profile.fps(), _diagnostic_updater));
         if (!((rs2::stream_profile)profile==(rs2::stream_profile)_base_profile))
         {
             qos = rmw_qos_profile_latched;

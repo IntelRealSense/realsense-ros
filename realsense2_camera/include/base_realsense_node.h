@@ -11,7 +11,6 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
-#include <diagnostic_updater/update_functions.hpp>
 #include <diagnostic_updater/publisher.hpp>
 
 #if defined(DASHING) || defined(ELOQUENT)
@@ -97,47 +96,6 @@ namespace realsense2_camera
             std::queue<sensor_msgs::msg::Imu>                   _pending_messages;
             std::size_t                                         _waiting_list_size;
             bool                                                _is_enabled;
-    };
-
-    class FrequencyDiagnostics
-    {
-    public:
-    FrequencyDiagnostics(std::string name, int expected_frequency, std::shared_ptr<diagnostic_updater::Updater> updater):
-            _name(name),
-            _min_freq(expected_frequency), _max_freq(expected_frequency),
-            _freq_status_param(&_min_freq, &_max_freq, 0.1, 10),
-            _freq_status(_freq_status_param, _name),
-            _p_updater(updater)
-            {
-                _p_updater->add(_freq_status);
-            };
-
-    FrequencyDiagnostics (const FrequencyDiagnostics& other):
-            _name(other._name),
-            _min_freq(other._min_freq),
-            _max_freq(other._max_freq),
-            _freq_status_param(&_min_freq, &_max_freq, 0.1, 10),
-            _freq_status(_freq_status_param, _name),
-            _p_updater(other._p_updater)
-            {
-                _p_updater->add(_freq_status);
-            };
-    ~FrequencyDiagnostics()
-    {
-        _p_updater->removeByName(_name);    
-    }
-
-    void Tick()
-    {
-        _freq_status.tick();    
-    }
-    
-    private:
-        std::string _name;
-        double _min_freq, _max_freq;
-        diagnostic_updater::FrequencyStatusParam _freq_status_param;
-        diagnostic_updater::FrequencyStatus _freq_status;
-        std::shared_ptr<diagnostic_updater::Updater> _p_updater;
     };
 
     class BaseRealSenseNode
@@ -299,7 +257,6 @@ namespace realsense2_camera
         std::map<unsigned int, int> _image_format;
         std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr> _info_publisher;
         std::map<stream_index_pair, rclcpp::Publisher<realsense2_camera_msgs::msg::Metadata>::SharedPtr> _metadata_publishers;
-        std::map<stream_index_pair, FrequencyDiagnostics> _frequency_diagnistics;
         std::map<stream_index_pair, rclcpp::Publisher<IMUInfo>::SharedPtr> _imu_info_publisher;
         std::map<stream_index_pair, rclcpp::Publisher<Extrinsics>::SharedPtr> _extrinsics_publishers;
         std::map<stream_index_pair, cv::Mat> _image;
@@ -337,7 +294,7 @@ namespace realsense2_camera
         mutable std::condition_variable _cv_temp, _cv_mpc, _cv_tf;
         bool _is_profile_changed;
 
-        std::shared_ptr<diagnostic_updater::Updater> _diagnostic_updater;
+        std::shared_ptr<diagnostic_updater::Updater> _diagnostics_updater;
         rs2::stream_profile _base_profile;
 
 
