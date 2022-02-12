@@ -12,7 +12,7 @@ void BaseRealSenseNode::setup()
     setupFilters();
     setupFiltersPublishers();
     setCallbackFunctions();
-    startMonitoring();
+    startDiagnosticsUpdater();
     monitoringProfileChanges();
     updateSensors();
     publishServices();
@@ -172,6 +172,7 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
             _imu_info_publisher.erase(sip);
         }
         _metadata_publishers.erase(sip);
+        _frequency_diagnistics.erase(sip);
         _extrinsics_publishers.erase(sip);
     }
 }
@@ -242,6 +243,8 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
         _metadata_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(topic_metadata, 
                                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
         
+        if (_diagnostic_updater)
+            _frequency_diagnistics.emplace(sip, FrequencyDiagnostics(stream_name, profile.fps(), _diagnostic_updater));
         if (!((rs2::stream_profile)profile==(rs2::stream_profile)_base_profile))
         {
             qos = rmw_qos_profile_latched;
