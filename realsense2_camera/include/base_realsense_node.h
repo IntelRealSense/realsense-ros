@@ -41,6 +41,7 @@
 #include <condition_variable>
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
+#include <diagnostic_updater/update_functions.hpp>
 
 #include <queue>
 #include <mutex>
@@ -121,11 +122,54 @@ namespace realsense2_camera
             bool                                                _is_enabled;
     };
 
+    class FrequencyDiagnostics
+    {
+    public:
+    FrequencyDiagnostics(std::string name, int expected_frequency, std::shared_ptr<diagnostic_updater::Updater> updater):
+            _name(name),
+            _min_freq(expected_frequency), _max_freq(expected_frequency),
+            _freq_status_param(&_min_freq, &_max_freq, 0.1, 10),
+            _freq_status(_freq_status_param, _name),
+            _p_updater(updater)
+            {
+                _p_updater->add(_freq_status);
+            };
+
+    FrequencyDiagnostics (const FrequencyDiagnostics& other):
+            _name(other._name),
+            _min_freq(other._min_freq),
+            _max_freq(other._max_freq),
+            _freq_status_param(&_min_freq, &_max_freq, 0.1, 10),
+            _freq_status(_freq_status_param, _name),
+            _p_updater(other._p_updater)
+            {
+                _p_updater->add(_freq_status);
+            };
+    ~FrequencyDiagnostics()
+    {
+        _p_updater->removeByName(_name);    
+    }
+
+    void Tick()
+    {
+        _freq_status.tick();    
+    }
+
+    private:
+        std::string _name;
+        double _min_freq, _max_freq;
+        diagnostic_updater::FrequencyStatusParam _freq_status_param;
+        diagnostic_updater::FrequencyStatus _freq_status;
+        std::shared_ptr<diagnostic_updater::Updater> _p_updater;
+    };
+
+
     class BaseRealSenseNode
     {
     public:
         BaseRealSenseNode(rclcpp::Node& node,
-                          rs2::device dev, std::shared_ptr<Parameters> parameters);
+                          rs2::device dev, 
+                          std::shared_ptr<Parameters> parameters);
         ~BaseRealSenseNode();
 
     public:
@@ -259,7 +303,7 @@ namespace realsense2_camera
         void set_sensor_auto_exposure_roi(rs2::sensor sensor);
         const rmw_qos_profile_t qos_string_to_qos(std::string str);
         rs2_stream rs2_string_to_stream(std::string str);
-        void startMonitoring();
+        void startDiagnosticsUpdater();
         void clean();
 
         rs2::device _dev;
@@ -342,7 +386,8 @@ namespace realsense2_camera
         std::map<rs2_stream, bool> _is_first_frame;
         std::map<rs2_stream, std::vector<std::function<void()> > > _video_functions_stack;
 
-        std::unique_ptr<diagnostic_updater::Updater> _temperature_updater;
+        std::shared_ptr<diagnostic_updater::Updater> _diagnostics_updater;
+        std::map<stream_index_pair, FrequencyDiagnostics> _frequency_diagnostics;
 
         stream_index_pair _base_stream;
 

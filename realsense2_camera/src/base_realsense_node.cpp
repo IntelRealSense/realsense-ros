@@ -292,6 +292,8 @@ void BaseRealSenseNode::clean()
     if (_update_functions_t && _update_functions_t->joinable())
         _update_functions_t->join();
 
+    _frequency_diagnostics.clear();
+
     std::set<std::string> module_names;
     for (const std::pair<stream_index_pair, std::vector<rs2::stream_profile>>& profile : _enabled_profiles)
     {
@@ -387,6 +389,12 @@ bool BaseRealSenseNode::toggleSensors(bool enabled, std::string& msg)
             {
                 _depth_scale_meters = sensor.as<rs2::depth_sensor>().get_depth_scale();
             }
+            for (auto& profile : profiles)
+            {
+                stream_index_pair sip(profile.stream_type(), profile.stream_index());
+                if (_diagnostics_updater)
+                    _frequency_diagnostics.emplace(sip, FrequencyDiagnostics(STREAM_NAME(sip), profile.fps(), _diagnostics_updater));
+            }
         }
         catch(const rs2::wrong_api_call_sequence_error& e)
         {
@@ -448,6 +456,7 @@ void BaseRealSenseNode::publishTopics()
 {
     getParameters();
     setupDevice();
+    startDiagnosticsUpdater();
     setupFilters();
     registerHDRoptions();
     registerDynamicReconfigCb();
@@ -459,7 +468,6 @@ void BaseRealSenseNode::publishTopics()
     registerAutoExposureROIOptions();
     publishStaticTransforms();
     publishIntrinsics();
-    startMonitoring();
     ROS_INFO_STREAM("RealSense Node Is Up!");
 }
 
@@ -2740,29 +2748,29 @@ bool BaseRealSenseNode::getEnabledProfile(const stream_index_pair& stream_index,
     return true;
 }
 
-void BaseRealSenseNode::startMonitoring()
+void BaseRealSenseNode::startDiagnosticsUpdater()
 {
     std::string serial_no = _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
     ROS_INFO_STREAM("Device Serial No: " << serial_no);
     if (_diagnostics_period > 0)
     {
         ROS_INFO_STREAM("Publish diagnostics every " << _diagnostics_period << " seconds.");
-        _temperature_updater = std::make_unique<diagnostic_updater::Updater>(&_node, _diagnostics_period);
+        _diagnostics_updater = std::make_shared<diagnostic_updater::Updater>(&_node, _diagnostics_period);
 
-        _temperature_updater->setHardwareID(serial_no);
+        _diagnostics_updater->setHardwareID(serial_no);
         rs2::options base_sensor(_sensors[_base_stream]);
 
-        _temperature_updater->add("Temperatures", [this](diagnostic_updater::DiagnosticStatusWrapper& status)
+        _diagnostics_updater->add("Temperatures", [this](diagnostic_updater::DiagnosticStatusWrapper& status)
+        {
+            rs2::options base_sensor(_sensors[_base_stream]);
+            for (rs2_option option : _monitor_options)
             {
-                rs2::options base_sensor(_sensors[_base_stream]);
-                for (rs2_option option : _monitor_options)
+                if (base_sensor.supports(option))
                 {
-                    if (base_sensor.supports(option))
-                    {
-                        status.add(rs2_option_to_string(option), base_sensor.get_option(option));
-                    }
+                    status.add(rs2_option_to_string(option), base_sensor.get_option(option));
                 }
-                status.summary(0, "OK");
-            });
-        }
+            }
+            status.summary(0, "OK");
+        });
+    }
 }
