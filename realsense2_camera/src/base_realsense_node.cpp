@@ -389,7 +389,7 @@ bool BaseRealSenseNode::toggleSensors(bool enabled, std::string& msg)
             {
                 _depth_scale_meters = sensor.as<rs2::depth_sensor>().get_depth_scale();
             }
-            for (auto& profile : profiles)
+            for (auto& profile : profiles[module_name])
             {
                 stream_index_pair sip(profile.stream_type(), profile.stream_index());
                 if (_diagnostics_updater)
@@ -1708,6 +1708,9 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
 
     m_mutex.lock();
 
+    // calling the Tick api for the diagnostics topic
+    frequencyDiagnosticsTick(frame); 
+
     auto stream = frame.get_profile().stream_type();
     auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
     double frame_time = frame.get_timestamp();
@@ -1750,6 +1753,9 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
 
 void BaseRealSenseNode::imu_callback(rs2::frame frame)
 {
+    // calling the Tick api for the diagnostics topic
+    frequencyDiagnosticsTick(frame); 
+
     auto stream = frame.get_profile().stream_type();
     double frame_time = frame.get_timestamp();
     bool placeholder_false(false);
@@ -1794,6 +1800,9 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
 
 void BaseRealSenseNode::pose_callback(rs2::frame frame)
 {
+    // calling the Tick api for the diagnostics topic
+    frequencyDiagnosticsTick(frame); 
+    
     double frame_time = frame.get_timestamp();
     bool placeholder_false(false);
     if (_is_initialized_time_base.compare_exchange_strong(placeholder_false, true) )
@@ -1880,11 +1889,23 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
     publishMetadata(frame, _frame_id[POSE]);
 }
 
+void BaseRealSenseNode::frequencyDiagnosticsTick(const rs2::frame& frame)
+{
+    auto stream_type = frame.get_profile().stream_type();
+    auto stream_index = frame.get_profile().stream_index();
+    stream_index_pair sip{stream_type, stream_index};
+    if (_frequency_diagnostics.find(sip) != _frequency_diagnostics.end())
+        _frequency_diagnostics.at(sip).Tick();
+}
+
 void BaseRealSenseNode::frame_callback(rs2::frame frame)
 {
     _synced_imu_publisher->Pause();
 
     try{
+        // calling the Tick api for the diagnostics topic
+        frequencyDiagnosticsTick(frame);
+
         double frame_time = frame.get_timestamp();
 
         // We compute a ROS timestamp which is based on an initial ROS time at point of first frame,

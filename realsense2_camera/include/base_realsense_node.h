@@ -304,6 +304,7 @@ namespace realsense2_camera
         const rmw_qos_profile_t qos_string_to_qos(std::string str);
         rs2_stream rs2_string_to_stream(std::string str);
         void startDiagnosticsUpdater();
+        void frequencyDiagnosticsTick(const rs2::frame& frame);
         void clean();
 
         rs2::device _dev;
