@@ -389,12 +389,6 @@ bool BaseRealSenseNode::toggleSensors(bool enabled, std::string& msg)
             {
                 _depth_scale_meters = sensor.as<rs2::depth_sensor>().get_depth_scale();
             }
-            for (auto& profile : profiles[module_name])
-            {
-                stream_index_pair sip(profile.stream_type(), profile.stream_index());
-                if (_diagnostics_updater)
-                    _frequency_diagnostics.emplace(sip, FrequencyDiagnostics(STREAM_NAME(sip), profile.fps(), _diagnostics_updater));
-            }
         }
         catch(const rs2::wrong_api_call_sequence_error& e)
         {
@@ -2140,6 +2134,12 @@ void BaseRealSenseNode::setupStreams()
             if (sensor.is<rs2::depth_sensor>())
             {
                 _depth_scale_meters = sensor.as<rs2::depth_sensor>().get_depth_scale();
+            }
+            for (auto& profile : profiles[module_name])
+            {
+                stream_index_pair sip(profile.stream_type(), profile.stream_index());
+                if (_diagnostics_updater)
+                    _frequency_diagnostics.emplace(sip, FrequencyDiagnostics(STREAM_NAME(sip), profile.fps(), _diagnostics_updater));
             }
         }
     }
