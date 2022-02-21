@@ -28,17 +28,25 @@ RosSensor::RosSensor(rs2::sensor sensor,
     std::function<void(rs2::frame)> frame_callback,
     std::function<void()> update_sensor_func,
     std::function<void()> hardware_reset_func, 
+    std::shared_ptr<diagnostic_updater::Updater> diagnostics_updater,
     rclcpp::Logger logger):
     rs2::sensor(sensor),
     _logger(logger),
     _origin_frame_callback(frame_callback),
     _params(parameters, _logger),
     _update_sensor_func(update_sensor_func),
-    _hardware_reset_func(hardware_reset_func)
+    _hardware_reset_func(hardware_reset_func),
+    _diagnostics_updater(diagnostics_updater)
 {
     _frame_callback = [this](rs2::frame frame)
         {
             runFirstFrameInitialization();
+            auto stream_type = frame.get_profile().stream_type();
+            auto stream_index = frame.get_profile().stream_index();
+            stream_index_pair sip{stream_type, stream_index};
+            if (_frequency_diagnostics.find(sip) != _frequency_diagnostics.end())
+                _frequency_diagnostics.at(sip).Tick();
+
             _origin_frame_callback(frame);
         };
     setParameters();
@@ -193,6 +201,13 @@ bool RosSensor::start(const std::vector<stream_profile>& profiles)
     ROS_INFO_STREAM("Open profile: " << ProfilesManager::profile_string(profile));
 
     rs2::sensor::start(_frame_callback);
+
+    for (auto& profile : profiles)
+    {
+        stream_index_pair sip(profile.stream_type(), profile.stream_index());
+        if (_diagnostics_updater)
+            _frequency_diagnostics.emplace(sip, FrequencyDiagnostics(STREAM_NAME(sip), profile.fps(), _diagnostics_updater));
+    }
     return true;
 }
 
@@ -201,6 +216,8 @@ void RosSensor::stop()
     if (get_active_streams().size() == 0)
         return;
     ROS_INFO_STREAM("Stop Sensor: " << get_info(RS2_CAMERA_INFO_NAME));
+    _frequency_diagnostics.clear();
+
     try
     {
         rs2::sensor::stop();

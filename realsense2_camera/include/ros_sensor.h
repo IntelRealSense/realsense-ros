@@ -9,10 +9,53 @@
 #include <ros_utils.h>
 #include <sensor_params.h>
 #include <profile_manager.h>
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <diagnostic_updater/update_functions.hpp>
 
 namespace realsense2_camera
 {
     typedef std::pair<rs2_stream, int> stream_index_pair;
+
+    class FrequencyDiagnostics
+    {
+    public:
+    FrequencyDiagnostics(std::string name, int expected_frequency, std::shared_ptr<diagnostic_updater::Updater> updater):
+            _name(name),
+            _min_freq(expected_frequency), _max_freq(expected_frequency),
+            _freq_status_param(&_min_freq, &_max_freq, 0.1, 10),
+            _freq_status(_freq_status_param, _name),
+            _p_updater(updater)
+            {
+                _p_updater->add(_freq_status);
+            };
+
+    FrequencyDiagnostics (const FrequencyDiagnostics& other):
+            _name(other._name),
+            _min_freq(other._min_freq),
+            _max_freq(other._max_freq),
+            _freq_status_param(&_min_freq, &_max_freq, 0.1, 10),
+            _freq_status(_freq_status_param, _name),
+            _p_updater(other._p_updater)
+            {
+                _p_updater->add(_freq_status);
+            };
+    ~FrequencyDiagnostics()
+    {
+        _p_updater->removeByName(_name);    
+    }
+
+    void Tick()
+    {
+        _freq_status.tick();    
+    }
+    
+    private:
+        std::string _name;
+        double _min_freq, _max_freq;
+        diagnostic_updater::FrequencyStatusParam _freq_status_param;
+        diagnostic_updater::FrequencyStatus _freq_status;
+        std::shared_ptr<diagnostic_updater::Updater> _p_updater;
+    };
 
     class RosSensor : public rs2::sensor
     {
@@ -23,6 +66,7 @@ namespace realsense2_camera
                       std::function<void(rs2::frame)> frame_callback,
                       std::function<void()> update_sensor_func,
                       std::function<void()> hardware_reset_func, 
+                      std::shared_ptr<diagnostic_updater::Updater> diagnostics_updater,
                       rclcpp::Logger logger);
             ~RosSensor();
             void registerSensorParameters();
@@ -59,6 +103,8 @@ namespace realsense2_camera
             std::vector<std::shared_ptr<ProfilesManager> > _profile_managers;
             rs2::region_of_interest _auto_exposure_roi;
             std::vector<std::string> _parameters_names;
+            std::shared_ptr<diagnostic_updater::Updater> _diagnostics_updater;
+            std::map<stream_index_pair, FrequencyDiagnostics> _frequency_diagnostics;
     };
 }
 #endif //___ROS_SENSOR_HEADER_FILE___

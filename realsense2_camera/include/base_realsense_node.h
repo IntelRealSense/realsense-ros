@@ -11,7 +11,6 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
-#include <diagnostic_updater/update_functions.hpp>
 #include <diagnostic_updater/publisher.hpp>
 
 #if defined(DASHING) || defined(ELOQUENT)
@@ -214,7 +213,7 @@ namespace realsense2_camera
         void multiple_message_callback(rs2::frame frame, imu_sync_method sync_method);
         void frame_callback(rs2::frame frame);
         
-        void startMonitoring();
+        void startDiagnosticsUpdater();
         void monitoringProfileChanges();
         void publish_temperature();
         void setupFiltersPublishers();
@@ -295,7 +294,7 @@ namespace realsense2_camera
         mutable std::condition_variable _cv_temp, _cv_mpc, _cv_tf;
         bool _is_profile_changed;
 
-        std::unique_ptr<diagnostic_updater::Updater> _temperature_updater;
+        std::shared_ptr<diagnostic_updater::Updater> _diagnostics_updater;
         rs2::stream_profile _base_profile;
 
 

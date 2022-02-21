@@ -73,7 +73,6 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _node(node),
     _logger(node.get_logger()),
     _parameters(parameters),
-    // _rs_diagnostic_updater(diagnostic_updater, serial_no),
     _dev(dev),
     _json_file_path(""),
     _tf_publish_rate(TF_PUBLISH_RATE),
@@ -1085,17 +1084,17 @@ void BaseRealSenseNode::publishMetadata(rs2::frame f, const rclcpp::Time& header
     }
 }
 
-void BaseRealSenseNode::startMonitoring()
+void BaseRealSenseNode::startDiagnosticsUpdater()
 {
     std::string serial_no = _dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
     if (_diagnostics_period > 0)
     {
         ROS_INFO_STREAM("Publish diagnostics every " << _diagnostics_period << " seconds.");
-        _temperature_updater = std::make_unique<diagnostic_updater::Updater>(&_node, _diagnostics_period);
+        _diagnostics_updater = std::make_shared<diagnostic_updater::Updater>(&_node, _diagnostics_period);
 
-        _temperature_updater->setHardwareID(serial_no);
+        _diagnostics_updater->setHardwareID(serial_no);
 
-        _temperature_updater->add("Temperatures", [this](diagnostic_updater::DiagnosticStatusWrapper& status)
+        _diagnostics_updater->add("Temperatures", [this](diagnostic_updater::DiagnosticStatusWrapper& status)
         {
             bool got_temperature(false);
             for(auto&& sensor : _available_ros_sensors)
