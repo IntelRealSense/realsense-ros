@@ -104,7 +104,7 @@ namespace realsense2_camera
             rs2::region_of_interest _auto_exposure_roi;
             std::vector<std::string> _parameters_names;
             std::shared_ptr<diagnostic_updater::Updater> _diagnostics_updater;
-            std::map<stream_index_pair, FrequencyDiagnostics> _frequency_diagnistics;
+            std::map<stream_index_pair, FrequencyDiagnostics> _frequency_diagnostics;
     };
 }
 #endif //___ROS_SENSOR_HEADER_FILE___

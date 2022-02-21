@@ -44,8 +44,8 @@ RosSensor::RosSensor(rs2::sensor sensor,
             auto stream_type = frame.get_profile().stream_type();
             auto stream_index = frame.get_profile().stream_index();
             stream_index_pair sip{stream_type, stream_index};
-            if (_frequency_diagnistics.find(sip) != _frequency_diagnistics.end())
-                _frequency_diagnistics.at(sip).Tick();
+            if (_frequency_diagnostics.find(sip) != _frequency_diagnostics.end())
+                _frequency_diagnostics.at(sip).Tick();
 
             _origin_frame_callback(frame);
         };
@@ -206,7 +206,7 @@ bool RosSensor::start(const std::vector<stream_profile>& profiles)
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
         if (_diagnostics_updater)
-            _frequency_diagnistics.emplace(sip, FrequencyDiagnostics(STREAM_NAME(sip), profile.fps(), _diagnostics_updater));
+            _frequency_diagnostics.emplace(sip, FrequencyDiagnostics(STREAM_NAME(sip), profile.fps(), _diagnostics_updater));
     }
     return true;
 }
@@ -216,7 +216,7 @@ void RosSensor::stop()
     if (get_active_streams().size() == 0)
         return;
     ROS_INFO_STREAM("Stop Sensor: " << get_info(RS2_CAMERA_INFO_NAME));
-    _frequency_diagnistics.clear();
+    _frequency_diagnostics.clear();
 
     try
     {
