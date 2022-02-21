@@ -8,8 +8,12 @@ class ImageListener(Node):
     def __init__(self, topic):
         self.topic = topic
         super().__init__('topic_hz')
-        self.sub = self.create_subscription(sensor_msgs.msg.Image, topic, self.imageDepthCallback, 1)
-        self.sub = self.create_subscription(sensor_msgs.msg.PointCloud2, topic, self.imageDepthCallback, 1)
+        if 'points' in topic:
+            self.sub = self.create_subscription(sensor_msgs.msg.PointCloud2, topic, self.imageDepthCallback, 1)
+        elif 'image' in topic:
+            self.sub = self.create_subscription(sensor_msgs.msg.Image, topic, self.imageDepthCallback, 1)
+        else:
+            raise ('Unknown message type for topic ', topic)
         # self.sub # prevent unused variable warning
         self.message_times = []
         self.max_buffer_size = 100
