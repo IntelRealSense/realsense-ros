@@ -16,7 +16,7 @@ Changelog for package realsense2_camera
 
 * Contributors: nomumu, JamesChooWK, benlev, doronhi
 
-4.4.0 (2021-11-17)
+4.0.0 (2021-11-17)
 -------------------
 * changed parameters: 
   - "stereo_module", "l500_depth_sensor" are replaced by "depth_module"
