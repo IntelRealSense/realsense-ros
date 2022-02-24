@@ -2,6 +2,20 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* version 4.4.0 changed to 4.0.0 in CHANGELOG
+* add frequency monitoring to /diagnostics topic.
+* fix topic_hz.py to recognize message type from topic name. (Naive)
+* move diagnostic updater for stream frequencies into the RosSensor class.
+* add frequency monitoring to /diagnostics topic.
+* fix galactic issue with undeclaring parameters
+* fix to support Rolling.
+* fix dynamic_params syntax.
+* fix issue with Galactic parameters set by default to static which prevents them from being undeclared.
+
+* Contributors: Haowei Wen, doronhi, remibettan
+
 4.0.1 (2022-02-01)
 ------------------
 * fix reset issue when multiple devices are connected
