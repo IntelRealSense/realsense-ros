@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.0.2 (2022-02-24)
+------------------
 * version 4.4.0 changed to 4.0.0 in CHANGELOG
 * add frequency monitoring to /diagnostics topic.
 * fix topic_hz.py to recognize message type from topic name. (Naive)
