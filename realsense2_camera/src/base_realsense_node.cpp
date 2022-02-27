@@ -993,7 +993,8 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
                                      const stream_index_pair& stream,
                                      std::map<stream_index_pair, cv::Mat>& images,
                                      const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
-                                     const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
+                                                                         //  const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
+                                     const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr >& image_publishers,
                                      const bool is_publishMetadata)
 {
     ROS_DEBUG("publishFrame(...)");
@@ -1029,7 +1030,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     auto& info_publisher = info_publishers.at(stream);
     auto& image_publisher = image_publishers.at(stream);
     if(0 != info_publisher->get_subscription_count() ||
-       0 != image_publisher.getNumSubscribers())
+       0 != image_publisher->get_subscription_count())
     {
         auto& cam_info = _camera_info.at(stream);
         if (cam_info.width != width)
@@ -1046,9 +1047,10 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         img->is_bigendian = false;
         img->step = width * bpp;
         img->header.frame_id = OPTICAL_FRAME_ID(stream);
-        img->header.stamp = t;
+        //img->header.stamp = t;
+        img->header.stamp = _node.get_clock()->now();
 
-        image_publisher.publish(img);
+        image_publisher->publish(*img);
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
     }
     if (is_publishMetadata)

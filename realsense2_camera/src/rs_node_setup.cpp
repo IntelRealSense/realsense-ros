@@ -194,7 +194,9 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             camera_info << stream_name << "/camera_info";
             
             rmw_qos_profile_t qos = sensor.getQOS(sip);
-            _image_publishers[sip] = image_transport::create_publisher(&_node, image_raw.str(), qos);
+           // _image_publishers[sip] = image_transport::create_publisher(&_node, image_raw.str(), qos);
+           _image_publishers[sip] = _node.create_publisher<sensor_msgs::msg::Image>(image_raw.str(),
+                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
             
             qos = sensor.getInfoQOS(sip);
             _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 
@@ -208,7 +210,9 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 
                 rmw_qos_profile_t qos = sensor.getQOS(sip);
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
-                _depth_aligned_image_publishers[sip] = image_transport::create_publisher(&_node, aligned_image_raw.str(), qos);
+                //_depth_aligned_image_publishers[sip] = image_transport::create_publisher(&_node, aligned_image_raw.str(), qos);
+                _depth_aligned_image_publishers[sip] = _node.create_publisher<sensor_msgs::msg::Image>(aligned_image_raw.str(), 
+                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
                 qos = sensor.getInfoQOS(sip);
                 _depth_aligned_info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(),
                                                       rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));

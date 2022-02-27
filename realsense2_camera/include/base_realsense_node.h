@@ -198,7 +198,8 @@ namespace realsense2_camera
                           const stream_index_pair& stream,
                           std::map<stream_index_pair, cv::Mat>& images,
                           const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
-                          const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
+                          //const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
+                          const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr >& image_publishers,
                           const bool is_publishMetadata = true);
         void publishMetadata(rs2::frame f, const rclcpp::Time& header_time, const std::string& frame_id);
 
@@ -249,7 +250,8 @@ namespace realsense2_camera
         std::vector<geometry_msgs::msg::TransformStamped> _static_tf_msgs;
         std::shared_ptr<std::thread> _tf_t;
 
-        std::map<stream_index_pair, image_transport::Publisher> _image_publishers;
+        //std::map<stream_index_pair, image_transport::Publisher> _image_publishers;
+        std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr> _image_publishers;
         
         std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr> _imu_publishers;
         std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> _odom_publisher;
@@ -285,7 +287,8 @@ namespace realsense2_camera
         std::map<stream_index_pair, cv::Mat> _depth_aligned_image;
         std::map<stream_index_pair, cv::Mat> _depth_scaled_image;
         std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr> _depth_aligned_info_publisher;
-        std::map<stream_index_pair, image_transport::Publisher> _depth_aligned_image_publishers;
+         // std::map<stream_index_pair, image_transport::Publisher> _depth_aligned_image_publishers;
+        std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr> _depth_aligned_image_publishers;
         std::map<std::string, rs2::region_of_interest> _auto_exposure_roi;
         std::map<rs2_stream, bool> _is_first_frame;
 
