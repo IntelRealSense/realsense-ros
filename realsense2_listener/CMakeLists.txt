@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(realsense2_camera)
+project(realsense2_listener)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -90,37 +90,17 @@ find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
-find_package(realsense2_camera_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(diagnostic_updater REQUIRED)
 
-find_package(realsense2 2.50.0)
-if(NOT realsense2_FOUND)
-    message(FATAL_ERROR "\n\n Intel RealSense SDK 2.0 is missing, please install it from https://github.com/IntelRealSense/librealsense/releases\n\n")
-endif()
 
-#set(CMAKE_NO_SYSTEM_FROM_IMPORTED true)
 include_directories(include)
 
 set(node_plugins "")
 
 set(SOURCES
-    src/realsense_node_factory.cpp
-    src/base_realsense_node.cpp
-    src/t265_realsense_node.cpp
-    src/parameters.cpp
-    src/rs_node_setup.cpp
-    src/ros_sensor.cpp
-    src/ros_utils.cpp
-    src/dynamic_params.cpp
-    src/sensor_params.cpp
-    src/named_filter.cpp
-    src/profile_manager.cpp
+    src/realsense_zero_copy_listener.cpp
   )
 
 if(NOT DEFINED ENV{ROS_DISTRO})
@@ -129,47 +109,32 @@ endif()
 if("$ENV{ROS_DISTRO}" STREQUAL "dashing")
   message(STATUS "Build for ROS2 Dashing")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDASHING")
-  set(SOURCES "${SOURCES}" src/ros_param_backend_dashing.cpp)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "eloquent")
   message(STATUS "Build for ROS2 eloquent")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DELOQUENT")
-  set(SOURCES "${SOURCES}" src/ros_param_backend_foxy.cpp)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "foxy")
   message(STATUS "Build for ROS2 Foxy")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFOXY")
-  set(SOURCES "${SOURCES}" src/ros_param_backend_foxy.cpp)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "galactic")
   message(STATUS "Build for ROS2 Galactic")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGALACTIC")
-  set(SOURCES "${SOURCES}" src/ros_param_backend_foxy.cpp)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "rolling")
   message(STATUS "Build for ROS2 Rolling")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DROLLING")
-  set(SOURCES "${SOURCES}" src/ros_param_backend_foxy.cpp)
 else()
   message(FATAL_ERROR "Unsupported ROS Distribution: " "$ENV{ROS_DISTRO}")
 endif()
 
 
 add_library(${PROJECT_NAME} SHARED
-    include/constants.h
-    include/realsense_node_factory.h
-    include/base_realsense_node.h
-    include/t265_realsense_node.h
-    include/ros_sensor.h
-    include/ros_utils.h
-    include/dynamic_params.h
-    include/sensor_params.h
-    include/named_filter.h
-    include/ros_param_backend.h
-    include/profile_manager.h
+    src/constants.h
     
     ${SOURCES}
 )
 
-target_link_libraries(${PROJECT_NAME}
-    ${realsense2_LIBRARY}
-    )
+#target_link_libraries(${PROJECT_NAME}
+#    ${realsense2_LIBRARY}
+#    )
 
 set(dependencies
   cv_bridge
@@ -180,22 +145,22 @@ set(dependencies
   std_msgs
   std_srvs
   sensor_msgs
-  nav_msgs
-  tf2
-  realsense2
-  tf2_ros
-  diagnostic_updater
+  #nav_msgs
+  #tf2
+  #realsense2
+  #tf2_ros
+  #diagnostic_updater
 )
 
 ament_target_dependencies(${PROJECT_NAME}
   ${dependencies}
 )
 
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "realsense2_camera::RealSenseNodeFactory"
-  EXECUTABLE realsense2_camera_node
-)
 
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "realsense2_listener::ImageViewNode"
+  EXECUTABLE ImageViewNode
+)
 
 
 # Install binaries
@@ -205,42 +170,18 @@ install(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION bin
 )
 
-# Install headers
+#Install headers
 install(
   DIRECTORY include/
   DESTINATION include
 )
 
 # Install launch files
-install(DIRECTORY 
-    launch
-    DESTINATION share/${PROJECT_NAME}
-    )
+#install(DIRECTORY 
+#    launch
+#    DESTINATION share/${PROJECT_NAME}
+#    )
 
-# Test
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  find_package(OpenCV REQUIRED)
-
-  ament_lint_auto_find_test_dependencies()
-
-  set(REALSENSE_DEVICE_PLUGIN FALSE)
-  if(${REALSENSE_DEVICE_PLUGIN})
-    ament_add_gtest(test_api test/test_api.cpp)
-  endif()
-  if(TARGET test_api)
-    target_include_directories(test_api PUBLIC
-      ${${PROJECT_NAME}_INCLUDE_DIRS}
-    )
-  ament_target_dependencies(test_api
-    OpenCV
-    rclcpp
-    sensor_msgs
-    nav_msgs
-    tf2
-    tf2_ros)
-  endif()
-endif()
 
 # Ament exports
 ament_export_include_directories(include)
