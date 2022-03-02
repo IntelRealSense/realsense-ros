@@ -5,6 +5,7 @@
 #include <geometry_msgs/msg/vector3_stamped.hpp>
 #include <rclcpp/clock.hpp>
 #include <fstream>
+#include <inttypes.h>
 
 using namespace realsense2_camera;
 
@@ -1037,11 +1038,12 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         {
             updateStreamCalibData(f.get_profile().as<rs2::video_stream_profile>());
         }
-        cam_info.header.stamp = t;
+        cam_info.header.stamp = _node.get_clock()->now();
         info_publisher->publish(cam_info);
 
-        sensor_msgs::msg::Image::SharedPtr img;
-        img = cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(bpp), image).toImageMsg();
+        //sensor_msgs::msg::Image::SharedPtr img;
+        sensor_msgs::msg::Image::UniquePtr img(new sensor_msgs::msg::Image());
+        //img = cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(bpp), image).toImageMsg();
         img->width = width;
         img->height = height;
         img->is_bigendian = false;
@@ -1050,7 +1052,11 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         //img->header.stamp = t;
         img->header.stamp = _node.get_clock()->now();
 
-        image_publisher->publish(*img);
+        printf(
+          "Published message with value: %d, and address: 0x%" PRIXPTR "\n", img->data,
+          reinterpret_cast<std::uintptr_t>(img.get()));
+        image_publisher->publish(std::move(img));
+        //image_publisher->publish(*img);
         ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
     }
     if (is_publishMetadata)
