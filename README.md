@@ -4,11 +4,17 @@ These are packages for using Intel RealSense cameras (D400 and L500 series, SR30
 LibRealSense supported version: v2.50.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
 ## Installation Instructions
-This version supports ROS2 Dashing, Foxy and Rolling.
+This version supports ROS2 Dashing, Eloquent, Foxy, Galactic and Rolling.
 
    ### Step 1: Install the ROS2 distribution
-   - #### Install [ROS2 Dashing](https://index.ros.org/doc/ros2/Installation/dashing/Linux-Install-Debians/), on Ubuntu 18.04 or [ROS2 Foxy](https://index.ros.org/doc/ros2/Installation/foxy/Linux-Install-Debians/), on Ubuntu 20.04
-
+ - #### Ubuntu 18.04 : 
+	 - [ROS2 Dashing](https://docs.ros.org/en/dashing/Installation/Ubuntu-Install-Debians.html)
+	 - [ROS2 Eloquent](https://docs.ros.org/en/eloquent/Installation/Linux-Install-Debians.html)
+ - #### Ubuntu 20.04: 
+	  -	[ROS2 Foxy](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)
+	 - [ROS2 Galactic](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html)
+	  -	[ROS2 Rolling](https://docs.ros.org/en/rolling/Installation/Ubuntu-Install-Debians.html)
+  
   ### Install realsense-ros fromsource:
   * Currently this version is still not available as a debian package. Install from source:
 
