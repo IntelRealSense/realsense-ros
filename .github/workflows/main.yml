@@ -67,7 +67,8 @@ jobs:
         echo "================= ROSDEP INSTALL ===================="
         rosdep install -i --reinstall --from-path src --rosdistro ${{ matrix.ros_distro }} --skip-keys=librealsense2 -y
         echo "================== COLCON BUILD ======================"
-        colcon build >> tee colcon_build.log
+        colcon build | tee colcon_build.log
+
     
     - name: Check Build Packages
       run: |
