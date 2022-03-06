@@ -195,6 +195,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             
             rmw_qos_profile_t qos = sensor.getQOS(sip);
            // _image_publishers[sip] = image_transport::create_publisher(&_node, image_raw.str(), qos);
+           image_transport::create_publisher(&_node, image_raw.str(), qos);
            _image_publishers[sip] = _node.create_publisher<sensor_msgs::msg::Image>(image_raw.str(),
                                         rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
             

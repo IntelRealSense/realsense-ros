@@ -10,7 +10,8 @@ namespace realsense2_camera
         public:
             T265RealsenseNode(rclcpp::Node& node,
                           rs2::device dev,
-                          std::shared_ptr<Parameters> parameters);
+                          std::shared_ptr<Parameters> parameters,
+                          bool use_intra_process = false);
             void publishTopics();
 
         protected:

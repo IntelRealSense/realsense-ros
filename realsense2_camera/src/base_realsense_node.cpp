@@ -69,7 +69,8 @@ size_t SyncedImuPublisher::getNumSubscribers()
 
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
                                      rs2::device dev,
-                                     std::shared_ptr<Parameters> parameters) :
+                                     std::shared_ptr<Parameters> parameters,
+                                     bool use_intra_process) :
     _is_running(true),
     _node(node),
     _logger(node.get_logger()),
@@ -78,6 +79,7 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _json_file_path(""),
     _tf_publish_rate(TF_PUBLISH_RATE),
     _static_tf_broadcaster(node),
+    _use_intra_process(use_intra_process),
     _is_initialized_time_base(false),
     _sync_frames(SYNC_FRAMES),
     _is_profile_changed(false)
@@ -555,7 +557,8 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                     sent_depth_frame = true;
                     if (_align_depth_filter->is_enabled())
                     {
-                        publishFrame(f, t, COLOR,
+                        //publishFrame<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>(f, t, COLOR,
+                        publishFrame<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>(f, t, COLOR,
                                     _depth_aligned_image,
                                     _depth_aligned_info_publisher,
                                     _depth_aligned_image_publishers,
@@ -563,7 +566,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                         continue;
                     }
                 }
-                publishFrame(f, t, sip,
+                publishFrame<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>(f, t, sip,
                             _image,
                             _info_publisher,
                             _image_publishers);
@@ -572,7 +575,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             {
                 if (_colorizer_filter->is_enabled())
                     original_depth_frame = _colorizer_filter->Process(original_depth_frame);
-                publishFrame(original_depth_frame, t,
+                publishFrame<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>(original_depth_frame, t,
                                 DEPTH,
                                 _image,
                                 _info_publisher,
@@ -594,7 +597,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                     clip_depth(frame, _clipping_distance);
                 }
             }
-            publishFrame(frame, t,
+            publishFrame<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>(frame, t,
                             sip,
                             _image,
                             _info_publisher,
@@ -990,12 +993,15 @@ IMUInfo BaseRealSenseNode::getImuInfo(const rs2::stream_profile& profile)
     return info;
 }
 
+
+template <typename T>
 void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
                                      const stream_index_pair& stream,
                                      std::map<stream_index_pair, cv::Mat>& images,
                                      const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
-                                                                         //  const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
-                                     const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr >& image_publishers,
+                                     const std::map<stream_index_pair, T>& image_publishers,
+                                     //  const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
+                                     //  const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr >& image_publishers,
                                      const bool is_publishMetadata)
 {
     ROS_DEBUG("publishFrame(...)");
