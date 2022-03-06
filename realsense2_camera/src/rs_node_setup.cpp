@@ -2,6 +2,7 @@
 // Copyright(c) 2018 Intel Corporation. All Rights Reserved
 
 #include "../include/base_realsense_node.h"
+#include <image_publisher.h>
 #include <fstream>
 
 using namespace realsense2_camera;
@@ -197,11 +198,20 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             camera_info << stream_name << "/camera_info";
             
             rmw_qos_profile_t qos = sensor.getQOS(sip);
-           // _image_publishers[sip] = image_transport::create_publisher(&_node, image_raw.str(), qos);
-           image_transport::create_publisher(&_node, image_raw.str(), qos);
-           _image_publishers[sip] = _node.create_publisher<sensor_msgs::msg::Image>(image_raw.str(),
-                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
+
+            // We can use 2 types of publishers:
+            // Native RCL publisher that support intra-process zero-copy comunication
+            // image-transport package publisher that add's a commpressed image topic if package is found installed
             
+            if (_use_intra_process)
+                _image_publishers[sip] = std::make_shared<image_rcl_publisher>(_node, image_raw.str(), qos);
+            else
+            {
+                _image_publishers[sip] = std::make_shared<image_transport_publisher>(_node, image_raw.str(), qos);
+                ROS_INFO_STREAM("image transport publisher was created for topic" << image_raw.str());
+            }
+
+
             qos = sensor.getInfoQOS(sip);
             _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 
                                     rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
@@ -214,9 +224,18 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 
                 rmw_qos_profile_t qos = sensor.getQOS(sip);
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
-                //_depth_aligned_image_publishers[sip] = image_transport::create_publisher(&_node, aligned_image_raw.str(), qos);
-                _depth_aligned_image_publishers[sip] = _node.create_publisher<sensor_msgs::msg::Image>(aligned_image_raw.str(), 
-                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
+
+                // We can use 2 types of publishers:
+                // Native RCL publisher that support intra-process zero-copy comunication
+                // image-transport package publisher that add's a commpressed image topic if package is found installed
+                if (_use_intra_process)
+                    _depth_aligned_image_publishers[sip] = std::make_shared<image_rcl_publisher>(_node, aligned_image_raw.str(), qos);
+                else
+                {
+                    _depth_aligned_image_publishers[sip] = std::make_shared<image_transport_publisher>(_node, aligned_image_raw.str(), qos);
+                    ROS_INFO_STREAM("image transport publisher was created for topic" << image_raw.str());
+                }
+
                 qos = sensor.getInfoQOS(sip);
                 _depth_aligned_info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(),
                                                       rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));

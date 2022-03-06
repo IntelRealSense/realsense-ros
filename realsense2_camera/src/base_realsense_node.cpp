@@ -9,6 +9,7 @@
 #include <rclcpp/clock.hpp>
 #include <fstream>
 #include <inttypes.h>
+#include <image_publisher.h>
 
 using namespace realsense2_camera;
 
@@ -561,7 +562,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                     if (_align_depth_filter->is_enabled())
                     {
                         //publishFrame<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>(f, t, COLOR,
-                        publishFrame<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>(f, t, COLOR,
+                        publishFrame(f, t, COLOR,
                                     _depth_aligned_image,
                                     _depth_aligned_info_publisher,
                                     _depth_aligned_image_publishers,
@@ -569,7 +570,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                         continue;
                     }
                 }
-                publishFrame<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>(f, t, sip,
+                publishFrame(f, t, sip,
                             _image,
                             _info_publisher,
                             _image_publishers);
@@ -578,7 +579,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             {
                 if (_colorizer_filter->is_enabled())
                     original_depth_frame = _colorizer_filter->Process(original_depth_frame);
-                publishFrame<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>(original_depth_frame, t,
+                publishFrame(original_depth_frame, t,
                                 DEPTH,
                                 _image,
                                 _info_publisher,
@@ -600,7 +601,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                     clip_depth(frame, _clipping_distance);
                 }
             }
-            publishFrame<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>(frame, t,
+            publishFrame(frame, t,
                             sip,
                             _image,
                             _info_publisher,
@@ -997,14 +998,11 @@ IMUInfo BaseRealSenseNode::getImuInfo(const rs2::stream_profile& profile)
 }
 
 
-template <typename T>
 void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
                                      const stream_index_pair& stream,
                                      std::map<stream_index_pair, cv::Mat>& images,
                                      const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
-                                     const std::map<stream_index_pair, T>& image_publishers,
-                                     //  const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
-                                     //  const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr >& image_publishers,
+                                     const std::map<stream_index_pair, std::shared_ptr<image_publisher>>& image_publishers,
                                      const bool is_publishMetadata)
 {
     ROS_DEBUG("publishFrame(...)");

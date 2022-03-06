@@ -124,6 +124,7 @@ set(SOURCES
     src/sensor_params.cpp
     src/named_filter.cpp
     src/profile_manager.cpp
+    src/image_publisher.cpp
   )
 
 if(NOT DEFINED ENV{ROS_DISTRO})
@@ -166,6 +167,7 @@ add_library(${PROJECT_NAME} SHARED
     include/named_filter.h
     include/ros_param_backend.h
     include/profile_manager.h
+    include/image_publisher.h
     
     ${SOURCES}
 )
