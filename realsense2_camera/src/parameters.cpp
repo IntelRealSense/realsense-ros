@@ -1,3 +1,6 @@
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2018 Intel Corporation. All Rights Reserved
+
 #include "../include/base_realsense_node.h"
 #include <ros_utils.h>
 #include <iomanip>

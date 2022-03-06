@@ -1,5 +1,7 @@
-#ifndef ___ROS_SENSOR_HEADER_FILE___
-#define ___ROS_SENSOR_HEADER_FILE___
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2018 Intel Corporation. All Rights Reserved
+
+#pragma once
 
 #include <librealsense2/rs.hpp>
 #include <librealsense2/rsutil.h>
@@ -107,4 +109,3 @@ namespace realsense2_camera
             std::map<stream_index_pair, FrequencyDiagnostics> _frequency_diagnostics;
     };
 }
-#endif //___ROS_SENSOR_HEADER_FILE___
