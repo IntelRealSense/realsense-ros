@@ -1,10 +1,8 @@
-# This is a basic workflow to help you get started with Actions
-
 name: CI
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the development branch
+  # Triggers the workflow on push or pull request events but only for the ros2-beta branch
   push:
     branches:
       - ros2-beta
@@ -16,8 +14,9 @@ on:
   workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# This workflow contains a single job called "build"
+
 jobs:
-  # This workflow contains a single job called "build"
   build:
     name: Build on ROS2 ${{ matrix.ros_distro }} and ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -69,7 +68,7 @@ jobs:
         echo "================== COLCON BUILD ======================"
         colcon build
 
-    - name: Download data
+    - name: Download Data For Tests
       run: |
         cd ${{github.workspace}}/ros2
         bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
