@@ -643,7 +643,20 @@ rclcpp::Time BaseRealSenseNode::frameSystemTimeSec(rs2::frame frame)
     if (frame.get_frame_timestamp_domain() == RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK)
     {
         double elapsed_camera_ns = (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) * 1e6;
-        return rclcpp::Time(_ros_time_base + rclcpp::Duration(elapsed_camera_ns));
+
+        /*
+        Fixing deprecated-declarations compilation warning.
+        Duration(rcl_duration_value_t) is deprecated in favor of 
+        static Duration::from_nanoseconds(rcl_duration_value_t)
+        starting from GALAXY.
+        */
+#if defined(FOXY) || defined(ELOQUENT) || defined(DASHING)
+        auto duration = rclcpp::Duration(elapsed_camera_ns);
+#else
+        auto duration = rclcpp::Duration::from_nanoseconds(elapsed_camera_ns);
+#endif
+
+        return rclcpp::Time(_ros_time_base + duration);
     }
     else
     {
