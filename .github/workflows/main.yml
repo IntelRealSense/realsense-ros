@@ -1,0 +1,92 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the ros2-beta branch
+  push:
+    branches:
+      - ros2-beta
+  pull_request:
+    branches:
+      - ros2-beta
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# This workflow contains a single job called "build"
+
+jobs:
+  build:
+    name: Build on ROS2 ${{ matrix.ros_distro }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ros_distro: [foxy, galactic, eloquent, dashing]
+        include:
+        - ros_distro: 'foxy'
+          os: ubuntu-20.04
+        - ros_distro: 'galactic'
+          os: ubuntu-20.04
+        - ros_distro: 'eloquent'
+          os: ubuntu-18.04
+        - ros_distro: 'dashing'
+          os: ubuntu-18.04
+
+    steps:   
+    - uses: ros-tooling/setup-ros@v0.2
+      with:
+        required-ros-distributions: ${{ matrix.ros_distro }}
+    
+    - name: Install RealSense SDK 2.0 Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-key C8B3A55A6F3EFCDE
+        sudo add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main"
+        sudo apt-get update -qq
+        sudo apt-get install librealsense2-dev --allow-unauthenticated -y
+        sudo apt-get update
+
+    - name: Setup ROS2 Workspace
+      run: | 
+        mkdir -p ${{github.workspace}}/ros2/src
+        
+    - uses: actions/checkout@v2
+      with:
+        path: 'ros2/src/realsense-ros'
+
+    - name: Build
+      run: | 
+        echo "source /opt/ros/${{ matrix.ros_distro }}/setup.bash" >> ${{github.workspace}}/.bashrc
+        source ${{github.workspace}}/.bashrc
+        cd ${{github.workspace}}/ros2
+        echo "================= ROSDEP UPDATE ====================="
+        rosdep update --rosdistro ${{ matrix.ros_distro }}
+        echo "================= ROSDEP INSTALL ===================="
+        rosdep install -i --reinstall --from-path src --rosdistro ${{ matrix.ros_distro }} --skip-keys=librealsense2 -y
+        echo "================== COLCON BUILD ======================"
+        colcon build
+
+    ## This step is commented out since we don't use rosbag files in "Run Tests" step below.
+    ## Please uncomment when "Run Tests" step is fixed to run all tests.
+    #- name: Download Data For Tests
+    #  run: |
+    #    cd ${{github.workspace}}/ros2
+    #    bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
+    #    wget $bag_filename -P "records/"
+    #    bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
+    #    wget $bag_filename -P "records/"
+        
+    - name: Install Packages For Tests
+      run: |
+        sudo apt-get install python3-pip
+        pip3 install numpy --upgrade
+        pip3 install numpy-quaternion tqdm
+
+    - name: Run Tests
+      run: |
+        cd ${{github.workspace}}/ros2
+        source ${{github.workspace}}/.bashrc
+        . install/local_setup.bash
+        python3 src/realsense-ros/realsense2_camera/scripts/rs2_test.py non_existent_file 
