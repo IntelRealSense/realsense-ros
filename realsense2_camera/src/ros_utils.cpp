@@ -79,7 +79,7 @@ static const rmw_qos_profile_t rmw_qos_profile_latched =
 
 const rmw_qos_profile_t qos_string_to_qos(std::string str)
 {
-#ifndef DASHING
+#if !defined(DASHING) && !defined(ELOQUENT)
     if (str == "UNKNOWN")
         return rmw_qos_profile_unknown;
 #endif
