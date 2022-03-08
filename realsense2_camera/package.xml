@@ -4,13 +4,13 @@
   <name>realsense2_camera</name>
   <version>4.0.2</version>
   <description>RealSense Camera package allowing access to Intel T265 Tracking module and SR300 and D400 3D cameras</description>
-  <maintainer email="librs.ros@intel.com">LibRealSense ROS</maintainer>
+  <maintainer email="librs.ros@intel.com">LibRealSense ROS Team</maintainer>
   <license>Apache 2.0</license>
   
   <url type="website">http://www.ros.org/wiki/RealSense</url>
   <url type="bugtracker">https://github.com/intel-ros/realsense/issues</url>
 
-  <author email="librs.ros@intel.com">LibRealSense ROS</author>
+  <author email="librs.ros@intel.com">LibRealSense ROS Team</author>
  
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>eigen</depend>
