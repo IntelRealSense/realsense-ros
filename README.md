@@ -52,7 +52,7 @@ This version supports ROS2 Dashing, Eloquent, Foxy, Galactic and Rolling.
    colcon build
    ```
 
-### Step 6: Terminal environment:
+### Step 6: Terminal environment
    ```bash
    ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: galactic, foxy, eloquent, dashing
    source /opt/ros/$ROS_DISTRO/setup.bash
