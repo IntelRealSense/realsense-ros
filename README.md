@@ -14,54 +14,53 @@ This version supports ROS2 Dashing, Eloquent, Foxy, Galactic and Rolling.
    - [ROS2 Foxy](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)
    - [ROS2 Galactic](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html)
    - [ROS2 Rolling](https://docs.ros.org/en/rolling/Installation/Ubuntu-Install-Debians.html)
-  
-  ### Install realsense-ros from source:
-  * Currently this version is still not available as a debian package. Install from source:
-
-     > This option is demonstrated in the [.travis.yml](https://github.com/IntelRealSense/realsense-ros/blob/foxy/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
 
 
-   ### Step 1: Install the latest Intel&reg; RealSense&trade; SDK 2.0
+### Step 2: Install the latest Intel&reg; RealSense&trade; SDK 2.0
 
-    Install librealsense2 debian package:
-    * Jetson users - use the [Jetson Installation Guide](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation_jetson.md)
-    * Otherwise, install from [Linux Debian Installation Guide](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages)
-      - In that case treat yourself as a developer. Make sure you follow the instructions to also install librealsense2-dev and librealsense2-dkms packages.
+- #### Option 1: Install librealsense2 debian package
+   - Jetson users - use the [Jetson Installation Guide](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation_jetson.md)
+   - Otherwise, install from [Linux Debian Installation Guide](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages)
+      - In this case treat yourself as a developer: make sure to follow the instructions to also install librealsense2-dev and librealsense2-dkms packages
 
-   #### OR
-   - #### Build from sources by downloading the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/tag/v2.50.0) and follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md)
+- #### Option 2: Build from source
+  - Download the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/tag/v2.50.0)
+  - Follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md)
 
 
-   ### Step 3: Install Intel&reg; RealSense&trade; ROS2 wrapper from Sources
+### Step 3: Install Intel&reg; RealSense&trade; ROS2 wrapper from sources
    - Create a ROS2 workspace
-   ```bash
-   mkdir -p ~/ros2_ws/src
-   cd ~/ros2_ws/src/
-   ```
+      ```bash
+      mkdir -p ~/ros2_ws/src
+      cd ~/ros2_ws/src/
+      ```
    - Clone the latest ROS2 Intel&reg; RealSense&trade;  wrapper from [here](https://github.com/IntelRealSense/realsense-ros.git) into '~/ros2_ws/src/'
-   ```bashrc
-   git clone https://github.com/IntelRealSense/realsense-ros.git -b ros2-beta
-   cd ~/ros2_ws
+      ```bashrc
+      git clone https://github.com/IntelRealSense/realsense-ros.git -b ros2-beta
+      cd ~/ros2_ws
+      ```
+### Step 4: Install dependencies
+   ```bash
+   sudo apt-get install python3-rosdep -y
+   sudo rosdep init # "sudo rosdep init --include-eol-distros" for Dashing
+   rosdep update
+   rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys=librealsense2 -y
    ```
 
-  ### Step 4: Install dependencies:
+### Step 5: Build
    ```bash
-  sudo apt-get install python3-rosdep -y
-  sudo rosdep init # "sudo rosdep init --include-eol-distros" for Dashing
-  rosdep update
-  rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys=librealsense2 -y
-  ```
+   colcon build
+   ```
 
-  ### Step 5: Build:
-  ```bash
-  colcon build
-  ```
+### Step 6: Terminal environment
+   ```bash
+   ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: galactic, foxy, eloquent, dashing
+   source /opt/ros/$ROS_DISTRO/setup.bash
+   cd ~/ros2_ws
+   . install/local_setup.bash
+   ```
 
-  ### Step 6: Source (on each new terminal):
-  ```bash
-  . install/local_setup.bash
-  ```
-
+&nbsp;
 
 ## Usage Instructions
 
@@ -69,7 +68,7 @@ This version supports ROS2 Dashing, Eloquent, Foxy, Galactic and Rolling.
 To start the camera node in ROS:
 
 ```bash
-  ros2 launch realsense2_camera rs_launch.py
+ros2 launch realsense2_camera rs_launch.py
 ```
 or, with parameters, for example - temporal and spatial filters are enabled:
 ```bash
