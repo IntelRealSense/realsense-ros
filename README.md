@@ -21,7 +21,7 @@ This version supports ROS2 Dashing, Eloquent, Foxy, Galactic and Rolling.
 - #### Option 1: Install librealsense2 debian package
    - Jetson users - use the [Jetson Installation Guide](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation_jetson.md)
    - Otherwise, install from [Linux Debian Installation Guide](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages)
-      - In that case treat yourself as a developer. Make sure you follow the instructions to also install librealsense2-dev and librealsense2-dkms packages.  
+      - In this case treat yourself as a developer: make sure to follow the instructions to also install librealsense2-dev and librealsense2-dkms packages
 
 - #### Option 2: Build from source
   - Download the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/tag/v2.50.0)
@@ -52,7 +52,7 @@ This version supports ROS2 Dashing, Eloquent, Foxy, Galactic and Rolling.
    colcon build
    ```
 
-### Step 6: Source (on each new terminal):
+### Step 6: Terminal environment:
    ```bash
    ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: galactic, foxy, eloquent, dashing
    source /opt/ros/$ROS_DISTRO/setup.bash
