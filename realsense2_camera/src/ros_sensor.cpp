@@ -1,6 +1,3 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2018 Intel Corporation. All Rights Reserved
-
 #include <ros_sensor.h>
 
 using namespace realsense2_camera;
@@ -32,14 +29,16 @@ RosSensor::RosSensor(rs2::sensor sensor,
     std::function<void()> update_sensor_func,
     std::function<void()> hardware_reset_func, 
     std::shared_ptr<diagnostic_updater::Updater> diagnostics_updater,
-    rclcpp::Logger logger):
+    rclcpp::Logger logger,
+    bool force_image_default_qos):
     rs2::sensor(sensor),
     _logger(logger),
     _origin_frame_callback(frame_callback),
     _params(parameters, _logger),
     _update_sensor_func(update_sensor_func),
     _hardware_reset_func(hardware_reset_func),
-    _diagnostics_updater(diagnostics_updater)
+    _diagnostics_updater(diagnostics_updater),
+    _force_image_default_qos(force_image_default_qos)
 {
     _frame_callback = [this](rs2::frame frame)
         {
@@ -137,7 +136,7 @@ void RosSensor::registerSensorParameters()
     std::vector<stream_profile> all_profiles = get_stream_profiles();
     const std::string module_name(create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME))));
 
-    std::shared_ptr<ProfilesManager> profile_manager = std::make_shared<VideoProfilesManager>(_params.getParameters(), module_name, _logger);
+    std::shared_ptr<ProfilesManager> profile_manager = std::make_shared<VideoProfilesManager>(_params.getParameters(), module_name, _logger, _force_image_default_qos);
     profile_manager->registerProfileParameters(all_profiles, _update_sensor_func);
     if (profile_manager->isTypeExist())
     {

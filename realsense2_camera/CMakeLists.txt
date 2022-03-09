@@ -1,6 +1,3 @@
-# License: Apache 2.0. See LICENSE file in root directory.
-# Copyright(c) 2018 Intel Corporation. All Rights Reserved
-
 cmake_minimum_required(VERSION 3.5)
 project(realsense2_camera)
 
@@ -200,8 +197,6 @@ rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "realsense2_camera::RealSenseNodeFactory"
   EXECUTABLE realsense2_camera_node
 )
-
-
 
 # Install binaries
 install(TARGETS ${PROJECT_NAME}

@@ -13,13 +13,11 @@
 # limitations under the License.
 
 """Launch realsense2_camera node & a listener node."""
-import os
 from launch import LaunchDescription
-from ament_index_python.packages import get_package_share_directory
-import launch_ros.actions
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PythonExpression
-from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import ComposableNodeContainer
+from launch_ros.descriptions import ComposableNode
 
 
 configurable_parameters = [{'name': 'camera_name',                  'default': 'camera', 'description': 'camera unique name'},
@@ -81,24 +79,26 @@ def set_configurable_parameters(parameters):
 def generate_launch_description():
     """Generate launch description with multiple components."""
     container = ComposableNodeContainer(
-            node_name='my_container',
-            node_namespace='',
+            name='my_container',
+            namespace='',
             package='rclcpp_components',
-            node_executable='component_container',
+            executable='component_container',
             composable_node_descriptions=[
                 ComposableNode(
                     package='realsense2_camera',
-                    node_plugin='realsense2_camera::RealSenseNodeFactory',
-                    node_name=LaunchConfiguration("camera_name"),
-                    extra_arguments=[{'use_intra_process_comms': True}]),
+                    plugin='realsense2_camera::RealSenseNodeFactory',
+                    #name=LaunchConfiguration("camera_name"),
+                    name="camera",
+                    extra_arguments=[{'use_intra_process_comms': True}]) ,
                 ComposableNode(
-                    package='realsense2_camera',
-                    node_plugin='realsense2_camera::rs2_listener',
-                    node_name='rs2_listener',
+                    package='realsense2_listener',
+                    plugin='realsense2_camera::rs2_listener',
+                    name='rs2_listener',
                     extra_arguments=[{'use_intra_process_comms': True}])
-            ],
+                ],
             output='screen',
             arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
             emulate_tty=True,
     )
+    return LaunchDescription([container])
     

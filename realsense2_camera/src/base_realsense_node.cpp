@@ -1,6 +1,3 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2018 Intel Corporation. All Rights Reserved
-
 #include "../include/base_realsense_node.h"
 #include "assert.h"
 #include <algorithm>
@@ -82,12 +79,21 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _dev(dev),
     _json_file_path(""),
     _tf_publish_rate(TF_PUBLISH_RATE),
-    _static_tf_broadcaster(node),
     _use_intra_process(use_intra_process),
     _is_initialized_time_base(false),
     _sync_frames(SYNC_FRAMES),
     _is_profile_changed(false)
 {
+    if ( use_intra_process )
+    {
+        ROS_INFO("Intra-Process communication enabled");
+    }
+    else
+    {
+        // intra-process requirment of QoS.durability=Volatile cannot be fulfilled with `StaticTransformBroadcaster` as it only support `TransientLocal` durability.
+        _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node);
+    }
+
     _image_format[1] = CV_8UC1;    // CVBridge type
     _image_format[2] = CV_16UC1;    // CVBridge type
     _image_format[3] = CV_8UC3;    // CVBridge type
@@ -561,7 +567,6 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                     sent_depth_frame = true;
                     if (_align_depth_filter->is_enabled())
                     {
-                        //publishFrame<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>(f, t, COLOR,
                         publishFrame(f, t, COLOR,
                                     _depth_aligned_image,
                                     _depth_aligned_info_publisher,
@@ -803,6 +808,7 @@ void BaseRealSenseNode::publishExtrinsicsTopic(const stream_index_pair& sip, con
     Extrinsics msg = rsExtrinsicsToMsg(ex);
     if (_extrinsics_publishers.find(sip) != _extrinsics_publishers.end())
     {
+        _extrinsics_msgs[sip] = msg; // We keep the message for periodically publish later if needed
         _extrinsics_publishers[sip]->publish(msg);
     }
 }
@@ -887,11 +893,12 @@ void BaseRealSenseNode::publishStaticTransforms(std::vector<rs2::stream_profile>
     // Publish static transforms
     if (_publish_tf)
     {
-        for (auto& profile : profiles)
+        for (auto &profile : profiles)
         {
             calcAndPublishStaticTransform(profile, _base_profile);
         }
-        _static_tf_broadcaster.sendTransform(_static_tf_msgs);
+        if (_static_tf_broadcaster)
+            _static_tf_broadcaster->sendTransform(_static_tf_msgs);
     }
 }
 
@@ -942,7 +949,23 @@ void BaseRealSenseNode::publishDynamicTransforms()
             {
                 ROS_ERROR_STREAM("Error publishing dynamic transforms: " << e.what());
             }
-                  
+
+            // If static_tf was not created we need to publish the extrinsics periodically since it is not publishes as a latched topic.
+            if ( !_static_tf_broadcaster )
+            {
+                try
+                {
+                    for (const auto &extrinsics_publisher : _extrinsics_publishers)
+                    {
+                        const auto &ext_msg = _extrinsics_msgs[extrinsics_publisher.first];
+                        extrinsics_publisher.second->publish( ext_msg );
+                    }
+                }
+                catch (const std::exception &e)
+                {
+                    ROS_ERROR_STREAM("Error publishing extrinsics : " << e.what());
+                }
+            }
         }
     }
 }
@@ -1045,12 +1068,18 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         {
             updateStreamCalibData(f.get_profile().as<rs2::video_stream_profile>());
         }
-        cam_info.header.stamp = _node.get_clock()->now();
+        cam_info.header.stamp = t;
         info_publisher->publish(cam_info);
 
         // Prepare image topic to be published
         // We use UniquePtr for allow intra-process publish when subscribers of that type are available
         sensor_msgs::msg::Image::UniquePtr img(new sensor_msgs::msg::Image());
+
+        if (!img)
+        {
+            ROS_ERROR("sensor image message allocation failed, frame was dropped");
+            return;
+        }
 
         // Convert the CV::Mat into a ROS image message (1 copy is done here)
         cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(bpp), image).toImageMsg(*img);
@@ -1058,12 +1087,10 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         // Convert OpenCV Mat to ROS Image
         img->header.frame_id = OPTICAL_FRAME_ID(stream);
         img->header.stamp = t;
-        //img->header.stamp = _node.get_clock()->now();
         img->height = height;
         img->width = width;
-        img->encoding = _encoding.at(bpp);
         img->is_bigendian = false;
-        img->step = static_cast<sensor_msgs::msg::Image::_step_type>(image.step);
+        img->step = width * bpp;
 
         // Transfer the unique pointer ownership to the RMW
         image_publisher->publish(std::move(img));

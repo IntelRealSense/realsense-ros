@@ -1,6 +1,3 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2018 Intel Corporation. All Rights Reserved
-
 #include "ros_param_backend.h"
 
 namespace realsense2_camera

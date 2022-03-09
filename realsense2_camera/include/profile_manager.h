@@ -1,6 +1,3 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2018 Intel Corporation. All Rights Reserved
-
 #pragma once
 
 #include <librealsense2/rs.hpp>
@@ -54,7 +51,7 @@ namespace realsense2_camera
     class VideoProfilesManager : public ProfilesManager
     {
         public:
-            VideoProfilesManager(std::shared_ptr<Parameters> parameters, const std::string& module_name, rclcpp::Logger logger);
+            VideoProfilesManager(std::shared_ptr<Parameters> parameters, const std::string& module_name, rclcpp::Logger logger, bool force_image_default_qos = false);
             bool isWantedProfile(const rs2::stream_profile& profile) override;
             void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) override;
             int getHeight() {return _height;};
@@ -72,6 +69,7 @@ namespace realsense2_camera
             int      _fps;
             int _width, _height;
             bool _is_profile_exist;
+            bool _force_image_default_qos;
     };
 
     class MotionProfilesManager : public ProfilesManager

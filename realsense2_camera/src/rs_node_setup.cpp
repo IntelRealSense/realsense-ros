@@ -1,9 +1,7 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2018 Intel Corporation. All Rights Reserved
-
 #include "../include/base_realsense_node.h"
 #include <image_publisher.h>
 #include <fstream>
+#include <rclcpp/qos.hpp>
 
 using namespace realsense2_camera;
 using namespace rs2;
@@ -128,7 +126,7 @@ void BaseRealSenseNode::setAvailableSensors()
             sensor.is<rs2::fisheye_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as VideoSensor.");
-            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger);
+            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, _use_intra_process);
         }
         else if (sensor.is<rs2::motion_sensor>())
         {
@@ -177,6 +175,7 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
         }
         _metadata_publishers.erase(sip);
         _extrinsics_publishers.erase(sip);
+        _extrinsics_msgs.erase(sip);
     }
 }
 
@@ -187,6 +186,10 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
         std::string stream_name(STREAM_NAME(sip));
+
+        rmw_qos_profile_t qos = sensor.getQOS(sip);
+        rmw_qos_profile_t info_qos = sensor.getInfoQOS(sip);
+
         if (profile.is<rs2::video_stream_profile>())
         {
             std::stringstream image_raw, camera_info;
@@ -196,25 +199,22 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 
             image_raw << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << stream_name << "/camera_info";
-            
-            rmw_qos_profile_t qos = sensor.getQOS(sip);
 
             // We can use 2 types of publishers:
             // Native RCL publisher that support intra-process zero-copy comunication
             // image-transport package publisher that add's a commpressed image topic if package is found installed
-            
             if (_use_intra_process)
+            {
                 _image_publishers[sip] = std::make_shared<image_rcl_publisher>(_node, image_raw.str(), qos);
+            }
             else
             {
                 _image_publishers[sip] = std::make_shared<image_transport_publisher>(_node, image_raw.str(), qos);
-                ROS_INFO_STREAM("image transport publisher was created for topic" << image_raw.str());
+                ROS_DEBUG_STREAM("image transport publisher was created for topic" << image_raw.str());
             }
 
-
-            qos = sensor.getInfoQOS(sip);
             _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 
-                                    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
+                                    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
 
             if ((sip != DEPTH) && sip.second < 2)
             {
@@ -222,37 +222,34 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                 aligned_image_raw << "aligned_depth_to_" << stream_name << "/image_raw";
                 aligned_camera_info << "aligned_depth_to_" << stream_name << "/camera_info";
 
-                rmw_qos_profile_t qos = sensor.getQOS(sip);
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
 
                 // We can use 2 types of publishers:
                 // Native RCL publisher that support intra-process zero-copy comunication
-                // image-transport package publisher that add's a commpressed image topic if package is found installed
+                // image-transport package publisher that add's a commpressed image topic if the package is installed
                 if (_use_intra_process)
+                {
                     _depth_aligned_image_publishers[sip] = std::make_shared<image_rcl_publisher>(_node, aligned_image_raw.str(), qos);
+                }
                 else
                 {
                     _depth_aligned_image_publishers[sip] = std::make_shared<image_transport_publisher>(_node, aligned_image_raw.str(), qos);
-                    ROS_INFO_STREAM("image transport publisher was created for topic" << image_raw.str());
+                    ROS_DEBUG_STREAM("image transport publisher was created for topic" << image_raw.str());
                 }
-
-                qos = sensor.getInfoQOS(sip);
                 _depth_aligned_info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(),
-                                                      rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
+                                                      rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
             }
         }
         else if (profile.is<rs2::motion_stream_profile>())
         {
             std::stringstream data_topic_name, info_topic_name;
             data_topic_name << stream_name << "/sample";
-            rmw_qos_profile_t qos = sensor.getQOS(sip);
             _imu_publishers[sip] = _node.create_publisher<sensor_msgs::msg::Imu>(data_topic_name.str(),
-                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
+                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));                         
             // Publish Intrinsics:
             info_topic_name << stream_name << "/imu_info";
-            qos = sensor.getInfoQOS(sip);
             _imu_info_publisher[sip] = _node.create_publisher<IMUInfo>(info_topic_name.str(), 
-                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
+                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
             IMUInfo info_msg = getImuInfo(profile);
             _imu_info_publisher[sip]->publish(info_msg);
         }
@@ -260,21 +257,21 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
         {
             std::stringstream data_topic_name, info_topic_name;
             data_topic_name << stream_name << "/sample";
-            rmw_qos_profile_t qos = sensor.getQOS(sip);
             _odom_publisher = _node.create_publisher<nav_msgs::msg::Odometry>(data_topic_name.str(),
                                         rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
         }
         std::string topic_metadata(stream_name + "/metadata");
-        rmw_qos_profile_t qos = sensor.getInfoQOS(sip);
         _metadata_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(topic_metadata, 
-                                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
+                                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
         
         if (!((rs2::stream_profile)profile==(rs2::stream_profile)_base_profile))
         {
-            qos = rmw_qos_profile_latched;
+            // When intra process is on we cannot use latched qos, we will need to send this message periodically with volatile durability 
+            rmw_qos_profile_t extrinsics_qos = _use_intra_process ?  rmw_qos_profile_default : rmw_qos_profile_latched;
+
             std::string topic_extrinsics("extrinsics/" + create_graph_resource_name(ros_stream_to_string(_base_profile.stream_type()) + "_to_" + stream_name));
             _extrinsics_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Extrinsics>(topic_extrinsics, 
-                                    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
+                                    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(extrinsics_qos), extrinsics_qos));
         }
     }
 }

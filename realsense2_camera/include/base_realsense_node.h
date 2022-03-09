@@ -9,7 +9,6 @@
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <diagnostic_updater/publisher.hpp>
-
 #include "realsense2_camera_msgs/msg/imu_info.hpp"
 #include "realsense2_camera_msgs/msg/extrinsics.hpp"
 #include "realsense2_camera_msgs/msg/metadata.hpp"
@@ -239,7 +238,7 @@ namespace realsense2_camera
         std::mutex _publish_tf_mutex;
         std::mutex _update_sensor_mutex;
 
-        tf2_ros::StaticTransformBroadcaster _static_tf_broadcaster;
+        std::shared_ptr<tf2_ros::StaticTransformBroadcaster> _static_tf_broadcaster;
         std::shared_ptr<tf2_ros::TransformBroadcaster> _dynamic_tf_broadcaster;
         std::vector<geometry_msgs::msg::TransformStamped> _static_tf_msgs;
         std::shared_ptr<std::thread> _tf_t;
@@ -255,6 +254,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, rclcpp::Publisher<realsense2_camera_msgs::msg::Metadata>::SharedPtr> _metadata_publishers;
         std::map<stream_index_pair, rclcpp::Publisher<IMUInfo>::SharedPtr> _imu_info_publisher;
         std::map<stream_index_pair, rclcpp::Publisher<Extrinsics>::SharedPtr> _extrinsics_publishers;
+        std::map<stream_index_pair, Extrinsics> _extrinsics_msgs;
         std::map<stream_index_pair, cv::Mat> _image;
         std::map<unsigned int, std::string> _encoding;
 
