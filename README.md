@@ -234,7 +234,34 @@ ros2 launch realsense2_camera rs_d400_and_t265_launch.py enable_fisheye12:=true 
 ```
 - note: the parameters are called `enable_fisheye12` and `enable_fisheye22`. The node knows them as `enable_fisheye1` and `enable_fisheye2` but launch file runs 2 nodes and these parameters refer to the second one.
 
-## Still on the pipelie:
+
+
+## Efficient intra-process communication:
+
+Our ROS2 Wrapper node support intra-process zero-copy communication, further details on Efficient intra-process communication can be found [here](https://docs.ros.org/en/foxy/Tutorials/Intra-Process-Communication.html#efficient-intra-process-communication) .
+
+For running the ROS2 Wrapper in a intra-process use case you will need to launch a component container and launch our node as a component together with your component nodes. (further details on "Composing multiple nodes in a single process" can be found [here](https://docs.ros.org/en/rolling/Tutorials/Composition.html).
+
+Running example:
+
+Terminal #1: `ros2 run rclcpp_components component_container`
+
+Terminal #2: `ros2 component load /ComponentManager realsense2_camera realsense2_camera::RealSenseNodeFactory -e use_intra_process_comms:=true`
+
+and at the same way as terminal 2 command load your component nodes (Currently supported at RCLCPP and not in RCLPY)
+
+>  Don't forget to pass the `use_intra_process_comms:=true` flag.
+
+
+
+<u>Limitations:</u>
+
+* Node components are not currently supported on RCLPY.
+* Transformations: `/static_tf` topic will be disabled (activate and read `/tf` topic and` /extrinsic/\<stream\>_to\_<stream\>` instead using parameter `-p tf_publish_rate:=1.0`) 
+* `image_transport` use for compressed image topic will be disabled as it is not supporting intra-process communication
+
+## Still on the pipeline:
+
 * Migrate infra_rgb option.
 
 ### Unit tests:
