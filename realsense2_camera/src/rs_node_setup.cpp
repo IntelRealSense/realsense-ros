@@ -202,7 +202,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 
             // We can use 2 types of publishers:
             // Native RCL publisher that support intra-process zero-copy comunication
-            // image-transport package publisher that add's a commpressed image topic if package is found installed
+            // image-transport package publisher that adds a commpressed image topic if package is found installed
             if (_use_intra_process)
             {
                 _image_publishers[sip] = std::make_shared<image_rcl_publisher>(_node, image_raw.str(), qos);
