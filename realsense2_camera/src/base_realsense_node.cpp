@@ -1091,12 +1091,11 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         img->width = width;
         img->is_bigendian = false;
         img->step = width * bpp;
-
         // Transfer the unique pointer ownership to the RMW
+        sensor_msgs::msg::Image* msg_address = img.get();
         image_publisher->publish(std::move(img));
-                
 
-        ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
+        ROS_DEBUG_STREAM(rs2_stream_to_string(f.get_profile().stream_type()) << " stream published, message address: " << std::hex << msg_address);
     }
     if (is_publishMetadata)
     {
