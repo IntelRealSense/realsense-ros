@@ -5,7 +5,6 @@
 #include <geometry_msgs/msg/vector3_stamped.hpp>
 #include <rclcpp/clock.hpp>
 #include <fstream>
-#include <inttypes.h>
 #include <image_publisher.h>
 
 using namespace realsense2_camera;

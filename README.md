@@ -259,6 +259,9 @@ Further details on efficient intra-process communication can be found [here](htt
    The frame latency tool load the realsense2 ROS wrapper and a frame latency reporter tool components inside the same process 
    and print out the frame latency.
    It can be activated with with the parameter `intra_process_comms:=false` to disable intra-process communication (default = true)
+   In order for the tool to be built turn on `BUILD_TOOLS=ON` flag during build (default = OFF)
+   Build syntax:
+   `colcon build --cmake-args '-DBUILD_TOOLS=ON'`
    Run syntax:
    `ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comms:=true`
 
