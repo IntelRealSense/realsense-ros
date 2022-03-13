@@ -266,7 +266,7 @@ Further details on efficient intra-process communication can be found [here](htt
 ### Latency test tool and launch file
 
 For getting a sense of the latency reduction, a frame latency reporter tool is available via a launch file.
-The launch file loads the wrapper and a frame latency reporter tool component into a single component (so the same process).
+The launch file loads the wrapper and a frame latency reporter tool component into a single container (so the same process).
 The tool prints out the frame latency (`now - frame.timestamp`) per frame.
 
 The tool is not built unless asked for. Turn on `BUILD_TOOLS` during build to have it available:
