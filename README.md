@@ -245,7 +245,7 @@ You will need to launch a component container and launch our node as a component
 Further details on efficient intra-process communication can be found [here](https://docs.ros.org/en/foxy/Tutorials/Intra-Process-Communication.html#efficient-intra-process-communication).
 
 ### Example
-
+#### Manual run of realsense2 ROS wrapper in intra-process mode
 * Terminal #1:
   ```ros2 run rclcpp_components component_container```
 
@@ -253,6 +253,14 @@ Further details on efficient intra-process communication can be found [here](htt
   `ros2 component load /ComponentManager realsense2_camera realsense2_camera::RealSenseNodeFactory -e use_intra_process_comms:=true`
   and, in the same way, load your other component nodes.
   > Don't forget to pass the `use_intra_process_comms:=true` flag
+
+#### Launch latency test tool
+   For getting a sense of the latency reduction we introduce a frame latency tool.
+   The frame latency tool load the realsense2 ROS wrapper and a frame latency reporter tool components inside the same process 
+   and print out the frame latency.
+   It can be activated with with the parameter `intra_process_comms:=false` to disable intra-process communication (default = true)
+   Run syntax:
+   `ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comms:=true`
 
 
 

@@ -1,24 +1,17 @@
-# Copyright (c) 2022 Intel Corporation
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# License: Apache 2.0. See LICENSE file in root directory.
+# Copyright(c) 2022 Intel Corporation. All Rights Reserved
 
-"""Launch realsense2_camera node & a listener node."""
+'''
+Launch realsense2_camera node & a frame latency printer node, 
+This tool allow the user the evaluate the reduction of the frame latency when intra-process communication is used.
+Note: currently default for color stream only
+Run syntax: ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comms:=true
+'''
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-
 
 configurable_parameters = [{'name': 'camera_name',                  'default': 'camera', 'description': 'camera unique name'},
                            {'name': 'serial_no',                    'default': "''", 'description': 'choose device by serial number'},
@@ -31,6 +24,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'enable_infra2',                'default': 'false', 'description': 'enable infra2 stream'},
                            {'name': 'enable_gyro',                  'default': 'false', 'description': "enable gyro stream"},                           
                            {'name': 'enable_accel',                 'default': 'false', 'description': "enable accel stream"}, 
+                           {'name': 'intra_process_comms',          'default': 'true', 'description': "enable intra-process communication"}, 
                           ]
 
 def declare_configurable_parameters(parameters):
@@ -39,10 +33,12 @@ def declare_configurable_parameters(parameters):
 def set_configurable_parameters(parameters):
     return dict([(param['name'], LaunchConfiguration(param['name'])) for param in parameters])
 
+
 def generate_launch_description():
-    """Generate launch description with multiple components."""
-    declare_configurable_parameters(configurable_parameters)
-    container = ComposableNodeContainer(
+
+
+    return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
+        ComposableNodeContainer(
             name='my_container',
             namespace='',
             package='rclcpp_components',
@@ -50,19 +46,22 @@ def generate_launch_description():
             composable_node_descriptions=[
                 ComposableNode(
                     package='realsense2_camera',
+                    namespace='',
                     plugin='realsense2_camera::RealSenseNodeFactory',
                     name="camera",
-                    extra_arguments=[{'use_intra_process_comms': True}]) ,
+                    parameters=[set_configurable_parameters(configurable_parameters)],
+                    extra_arguments=[{'use_intra_process_comms': LaunchConfiguration("intra_process_comms")}]) ,
                 ComposableNode(
                     package='realsense2_camera',
+                    namespace='',
                     plugin='rs2_ros::tools::frame_latency::FrameLatencyNode',
                     name='frame_latency',
-                    extra_arguments=[{'use_intra_process_comms': True}])
+                    parameters=[set_configurable_parameters(configurable_parameters)],
+                    extra_arguments=[{'use_intra_process_comms': LaunchConfiguration("intra_process_comms")}]) ,
                 ],
             output='screen',
-            #arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
-            arguments=['--ros-args', '--log-level', 'info'],
-    )
-    return LaunchDescription([container])
+            emulate_tty=True, # needed for display of logs
+            arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
+    )])
 
 
