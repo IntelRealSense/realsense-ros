@@ -168,12 +168,12 @@ set(INCLUDES
 
 if (BUILD_TOOLS)
 
-  include_directories(tools/frame_latency/include)
+  include_directories(tools)
   set(INCLUDES ${INCLUDES}
-    tools/frame_latency/include/frame_latency.h)
+    tools/frame_latency/frame_latency.h)
 
   set(SOURCES ${SOURCES}
-    tools/frame_latency/src/frame_latency.cpp)
+    tools/frame_latency/frame_latency.cpp)
 endif()
 
 add_library(${PROJECT_NAME} SHARED

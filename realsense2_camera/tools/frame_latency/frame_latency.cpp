@@ -3,8 +3,7 @@
 
 #include <sstream>
 #include <string>
-
-#include <frame_latency.h>
+#include <frame_latency/frame_latency.h>
 #include <constants.h>
 // Node which receives sensor_msgs/Image messages and prints the image latency.
 
