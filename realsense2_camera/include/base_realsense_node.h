@@ -1,5 +1,5 @@
 // License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2018 Intel Corporation. All Rights Reserved
+// Copyright(c) 2022 Intel Corporation. All Rights Reserved
 
 #pragma once
 #ifndef ___BASE_REALSENSE_NODE_HEADER___
@@ -64,14 +64,14 @@ namespace realsense2_camera
 
     const std::vector<stream_index_pair> HID_STREAMS = {GYRO, ACCEL, POSE};
 
-	class PipelineSyncer : public rs2::asynchronous_syncer
-	{
-	public: 
-		void operator()(rs2::frame f) const
-		{
-			invoke(std::move(f));
-		}
-	};
+    class PipelineSyncer : public rs2::asynchronous_syncer
+    {
+    public: 
+        void operator()(rs2::frame f) const
+        {
+            invoke(std::move(f));
+        }
+    };
 
     class SyncedImuPublisher
     {

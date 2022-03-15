@@ -1,3 +1,5 @@
+/* License: Apache 2.0. See LICENSE file in root directory. */
+/* Copyright(c) 2022 Intel Corporation. All Rights Reserved. */
 #ifndef ___ROS_SENSOR_HEADER_FILE___
 #define ___ROS_SENSOR_HEADER_FILE___
 

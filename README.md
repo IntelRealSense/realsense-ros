@@ -250,7 +250,7 @@ python3 src/realsense-ros/realsense2_camera/scripts/rs2_test.py --all
 ```
 
 ## License
-Copyright 2021 Intel Corporation
+Copyright 2022 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this project except in compliance with the License.
