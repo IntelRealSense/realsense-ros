@@ -234,7 +234,55 @@ ros2 launch realsense2_camera rs_d400_and_t265_launch.py enable_fisheye12:=true 
 ```
 - note: the parameters are called `enable_fisheye12` and `enable_fisheye22`. The node knows them as `enable_fisheye1` and `enable_fisheye2` but launch file runs 2 nodes and these parameters refer to the second one.
 
-## Still on the pipelie:
+
+
+## Efficient intra-process communication:
+
+Our ROS2 Wrapper node supports zero-copy communications if loaded in the same process as a subscriber node. This can reduce copy times on image topics (not point-cloud or others), especially with big frame resolutions and high FPS.
+
+You will need to launch a component container and launch our node as a component together with other component nodes. Further details on "Composing multiple nodes in a single process" can be found [here](https://docs.ros.org/en/rolling/Tutorials/Composition.html).
+
+Further details on efficient intra-process communication can be found [here](https://docs.ros.org/en/foxy/Tutorials/Intra-Process-Communication.html#efficient-intra-process-communication).
+
+### Example
+#### Manually loading multiple components into the same process
+* Start the component:
+  ```bash
+  ros2 run rclcpp_components component_container
+  ```
+
+* Add the wrapper:
+  ```bash
+  ros2 component load /ComponentManager realsense2_camera realsense2_camera::RealSenseNodeFactory -e use_intra_process_comms:=true
+  ```
+  Load other component nodes (consumers of the wrapper topics) in the same way.
+
+### Limitations
+
+* Node components are currently not supported on RCLPY
+* Transformations: `/static_tf` topic will be disabled (activate and read `/tf` topic and `/extrinsic/<stream>_to_<stream>` and use `-p tf_publish_rate:=1.0` on the command-line)
+* `image_transport` use for compressed image topic will be disabled as it does not support intra-process communication
+
+### Latency test tool and launch file
+
+For getting a sense of the latency reduction, a frame latency reporter tool is available via a launch file.
+The launch file loads the wrapper and a frame latency reporter tool component into a single container (so the same process).
+The tool prints out the frame latency (`now - frame.timestamp`) per frame.
+
+The tool is not built unless asked for. Turn on `BUILD_TOOLS` during build to have it available:
+```bash
+colcon build --cmake-args '-DBUILD_TOOLS=ON'
+```
+
+The launch file accepts a parameter, `intra_process_comms`, controlling whether zero-copy is turned on or not. Default is on:
+```bash
+ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comms:=true
+```
+
+
+## Still in the pipeline:
+
+
 * Migrate infra_rgb option.
 
 ### Unit tests:

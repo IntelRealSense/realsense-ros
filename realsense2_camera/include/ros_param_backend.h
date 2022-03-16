@@ -1,3 +1,5 @@
+#pragma once
+
 #include <rclcpp/rclcpp.hpp>
 
 namespace realsense2_camera

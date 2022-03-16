@@ -5,6 +5,7 @@
 #include <geometry_msgs/msg/vector3_stamped.hpp>
 #include <rclcpp/clock.hpp>
 #include <fstream>
+#include <image_publisher.h>
 
 using namespace realsense2_camera;
 
@@ -68,7 +69,8 @@ size_t SyncedImuPublisher::getNumSubscribers()
 
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
                                      rs2::device dev,
-                                     std::shared_ptr<Parameters> parameters) :
+                                     std::shared_ptr<Parameters> parameters,
+                                     bool use_intra_process) :
     _is_running(true),
     _node(node),
     _logger(node.get_logger()),
@@ -76,11 +78,21 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _dev(dev),
     _json_file_path(""),
     _tf_publish_rate(TF_PUBLISH_RATE),
-    _static_tf_broadcaster(node),
+    _use_intra_process(use_intra_process),
     _is_initialized_time_base(false),
     _sync_frames(SYNC_FRAMES),
     _is_profile_changed(false)
 {
+    if ( use_intra_process )
+    {
+        ROS_INFO("Intra-Process communication enabled");
+    }
+    else
+    {
+        // intra-process requirment of QoS.durability=Volatile cannot be fulfilled with `StaticTransformBroadcaster` as it only support `TransientLocal` durability.
+        _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node);
+    }
+
     _image_format[1] = CV_8UC1;    // CVBridge type
     _image_format[2] = CV_16UC1;    // CVBridge type
     _image_format[3] = CV_8UC3;    // CVBridge type
@@ -795,6 +807,7 @@ void BaseRealSenseNode::publishExtrinsicsTopic(const stream_index_pair& sip, con
     Extrinsics msg = rsExtrinsicsToMsg(ex);
     if (_extrinsics_publishers.find(sip) != _extrinsics_publishers.end())
     {
+        _extrinsics_msgs[sip] = msg; // We keep the message for periodically publish later if needed
         _extrinsics_publishers[sip]->publish(msg);
     }
 }
@@ -879,11 +892,12 @@ void BaseRealSenseNode::publishStaticTransforms(std::vector<rs2::stream_profile>
     // Publish static transforms
     if (_publish_tf)
     {
-        for (auto& profile : profiles)
+        for (auto &profile : profiles)
         {
             calcAndPublishStaticTransform(profile, _base_profile);
         }
-        _static_tf_broadcaster.sendTransform(_static_tf_msgs);
+        if (_static_tf_broadcaster)
+            _static_tf_broadcaster->sendTransform(_static_tf_msgs);
     }
 }
 
@@ -934,7 +948,23 @@ void BaseRealSenseNode::publishDynamicTransforms()
             {
                 ROS_ERROR_STREAM("Error publishing dynamic transforms: " << e.what());
             }
-                  
+
+            // If static_tf was not created we need to publish the extrinsics periodically since it is not publishes as a latched topic.
+            if ( !_static_tf_broadcaster )
+            {
+                try
+                {
+                    for (const auto &extrinsics_publisher : _extrinsics_publishers)
+                    {
+                        const auto &ext_msg = _extrinsics_msgs[extrinsics_publisher.first];
+                        extrinsics_publisher.second->publish( ext_msg );
+                    }
+                }
+                catch (const std::exception &e)
+                {
+                    ROS_ERROR_STREAM("Error publishing extrinsics : " << e.what());
+                }
+            }
         }
     }
 }
@@ -989,11 +1019,12 @@ IMUInfo BaseRealSenseNode::getImuInfo(const rs2::stream_profile& profile)
     return info;
 }
 
+
 void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
                                      const stream_index_pair& stream,
                                      std::map<stream_index_pair, cv::Mat>& images,
                                      const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
-                                     const std::map<stream_index_pair, image_transport::Publisher>& image_publishers,
+                                     const std::map<stream_index_pair, std::shared_ptr<image_publisher>>& image_publishers,
                                      const bool is_publishMetadata)
 {
     ROS_DEBUG("publishFrame(...)");
@@ -1029,7 +1060,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     auto& info_publisher = info_publishers.at(stream);
     auto& image_publisher = image_publishers.at(stream);
     if(0 != info_publisher->get_subscription_count() ||
-       0 != image_publisher.getNumSubscribers())
+       0 != image_publisher->get_subscription_count())
     {
         auto& cam_info = _camera_info.at(stream);
         if (cam_info.width != width)
@@ -1039,17 +1070,31 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         cam_info.header.stamp = t;
         info_publisher->publish(cam_info);
 
-        sensor_msgs::msg::Image::SharedPtr img;
-        img = cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(bpp), image).toImageMsg();
-        img->width = width;
-        img->height = height;
-        img->is_bigendian = false;
-        img->step = width * bpp;
+        // Prepare image topic to be published
+        // We use UniquePtr for allow intra-process publish when subscribers of that type are available
+        sensor_msgs::msg::Image::UniquePtr img(new sensor_msgs::msg::Image());
+
+        if (!img)
+        {
+            ROS_ERROR("sensor image message allocation failed, frame was dropped");
+            return;
+        }
+
+        // Convert the CV::Mat into a ROS image message (1 copy is done here)
+        cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(bpp), image).toImageMsg(*img);
+
+        // Convert OpenCV Mat to ROS Image
         img->header.frame_id = OPTICAL_FRAME_ID(stream);
         img->header.stamp = t;
+        img->height = height;
+        img->width = width;
+        img->is_bigendian = false;
+        img->step = width * bpp;
+        // Transfer the unique pointer ownership to the RMW
+        sensor_msgs::msg::Image* msg_address = img.get();
+        image_publisher->publish(std::move(img));
 
-        image_publisher.publish(img);
-        ROS_DEBUG("%s stream published", rs2_stream_to_string(f.get_profile().stream_type()));
+        ROS_DEBUG_STREAM(rs2_stream_to_string(f.get_profile().stream_type()) << " stream published, message address: " << std::hex << msg_address);
     }
     if (is_publishMetadata)
     {

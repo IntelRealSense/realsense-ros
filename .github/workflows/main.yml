@@ -66,7 +66,7 @@ jobs:
         echo "================= ROSDEP INSTALL ===================="
         rosdep install -i --reinstall --from-path src --rosdistro ${{ matrix.ros_distro }} --skip-keys=librealsense2 -y
         echo "================== COLCON BUILD ======================"
-        colcon build
+        colcon build  --cmake-args '-DBUILD_TOOLS=ON'
 
     ## This step is commented out since we don't use rosbag files in "Run Tests" step below.
     ## Please uncomment when "Run Tests" step is fixed to run all tests.

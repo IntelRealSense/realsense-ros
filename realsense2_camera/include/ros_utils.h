@@ -1,6 +1,5 @@
 #pragma once
-#ifndef ___REALSENSE_ROS_UTILS_HEADER___
-#define ___REALSENSE_ROS_UTILS_HEADER___
+
 
 #include <iostream>
 #include <vector>
@@ -37,4 +36,4 @@ namespace realsense2_camera
 
     stream_index_pair rs2_string_to_sip(const std::string& str);
 }
-#endif //___REALSENSE_ROS_UTILS_HEADER___
+

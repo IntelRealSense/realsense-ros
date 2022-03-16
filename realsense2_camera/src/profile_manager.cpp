@@ -176,9 +176,10 @@ rmw_qos_profile_t ProfilesManager::getInfoQOS(const stream_index_pair& sip) cons
 }
 
 VideoProfilesManager::VideoProfilesManager(std::shared_ptr<Parameters> parameters,
-                                           const std::string& module_name, rclcpp::Logger logger):
+                                           const std::string& module_name, rclcpp::Logger logger, bool force_image_default_qos):
     ProfilesManager(parameters, logger),
-    _module_name(module_name)
+    _module_name(module_name),
+    _force_image_default_qos(force_image_default_qos)
 {
     _allowed_formats[RS2_STREAM_DEPTH] = RS2_FORMAT_Z16;
     _allowed_formats[RS2_STREAM_INFRARED] = RS2_FORMAT_Y8;
@@ -217,7 +218,7 @@ void VideoProfilesManager::registerProfileParameters(std::vector<stream_profile>
     {
         ROS_DEBUG_STREAM(__LINE__ << ": _enabled_profiles.size(): " << _enabled_profiles.size());
         registerSensorUpdateParam("enable_%s", checked_sips, _enabled_profiles, true, update_sensor_func);
-        registerSensorQOSParam("%s_qos", checked_sips, _profiles_image_qos_str, IMAGE_QOS);
+        registerSensorQOSParam("%s_qos", checked_sips, _profiles_image_qos_str, _force_image_default_qos ? DEFAULT_QOS : IMAGE_QOS);
         registerSensorQOSParam("%s_info_qos", checked_sips, _profiles_info_qos_str, DEFAULT_QOS);
         for (auto& sip : checked_sips)
         {

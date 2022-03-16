@@ -1,5 +1,4 @@
-#ifndef ___ROS_SENSOR_HEADER_FILE___
-#define ___ROS_SENSOR_HEADER_FILE___
+#pragma once
 
 #include <librealsense2/rs.hpp>
 #include <librealsense2/rsutil.h>
@@ -67,7 +66,8 @@ namespace realsense2_camera
                       std::function<void()> update_sensor_func,
                       std::function<void()> hardware_reset_func, 
                       std::shared_ptr<diagnostic_updater::Updater> diagnostics_updater,
-                      rclcpp::Logger logger);
+                      rclcpp::Logger logger,
+                      bool force_image_default_qos = false);
             ~RosSensor();
             void registerSensorParameters();
             bool getUpdatedProfiles(std::vector<rs2::stream_profile>& wanted_profiles);
@@ -105,6 +105,6 @@ namespace realsense2_camera
             std::vector<std::string> _parameters_names;
             std::shared_ptr<diagnostic_updater::Updater> _diagnostics_updater;
             std::map<stream_index_pair, FrequencyDiagnostics> _frequency_diagnostics;
+            bool _force_image_default_qos;
     };
 }
-#endif //___ROS_SENSOR_HEADER_FILE___
