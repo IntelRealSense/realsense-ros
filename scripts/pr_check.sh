@@ -9,7 +9,7 @@ ok=0
 fixed=0
 
 function check_folder {
-    for filename in $(find $1 -type f \( -iname \*.cpp -o -iname \*.h -o -iname \*.hpp -o -iname \*.js -o -iname \*.bat -o -iname \*.sh -o -iname \*.txt \)); do
+    for filename in $(find $1 -type f \( -iname \*.cpp -o -iname \*.h -o -iname \*.hpp -o -iname \*.js -o -iname \*.bat -o -iname \*.sh -o -iname \*.txt -o -iname \*.py \)); do
           if [[ $(grep -oP "Software License Agreement" $filename | wc -l) -ne 0 ]]; then
                echo "[WARNING] $filename contains 3rd-party license agreement"
           else
@@ -22,12 +22,7 @@ function check_folder {
 
                               if [[ $2 == *"fix"* ]]; then
                                    if [[ $(date +%Y) == "2022" ]]; then
-                                        if [[ $filename == *".hpp"* ]]; then
-                                             echo "Trying to auto-resolve...";
-                                             ex -sc '1i|// Copyright(c) 2022 Intel Corporation. All Rights Reserved.' -cx $filename
-                                             fixed=$((fixed+1))
-                                        fi
-                                        if [[ $filename == *".cpp"* ]]; then
+                                        if [[ $filename == *".hpp"* || $filename == *".cpp"* || $filename == *".js"* ]]; then
                                              echo "Trying to auto-resolve...";
                                              ex -sc '1i|// Copyright(c) 2022 Intel Corporation. All Rights Reserved.' -cx $filename
                                              fixed=$((fixed+1))
@@ -37,12 +32,7 @@ function check_folder {
                                              ex -sc '1i|/* Copyright(c) 2022 Intel Corporation. All Rights Reserved. */' -cx $filename
                                              fixed=$((fixed+1))
                                         fi
-                                        if [[ $filename == *".js"* ]]; then
-                                             echo "Trying to auto-resolve...";
-                                             ex -sc '1i|// Copyright(c) 2022 Intel Corporation. All Rights Reserved.' -cx $filename
-                                             fixed=$((fixed+1))
-                                        fi
-                                        if [[ $filename == *".txt"* ]]; then
+                                        if [[ $filename == *".txt"* || $filename == *".py"* ]]; then
                                              echo "Trying to auto-resolve...";
                                              ex -sc '1i|# Copyright(c) 2022 Intel Corporation. All Rights Reserved.' -cx $filename
                                              fixed=$((fixed+1))
@@ -58,12 +48,7 @@ function check_folder {
                               ok=$((ok+1))
 
                               if [[ $2 == *"fix"* ]]; then
-                                   if [[ $filename == *".hpp"* ]]; then
-                                        echo "Trying to auto-resolve...";
-                                        ex -sc '1i|// License: Apache 2.0. See LICENSE file in root directory.' -cx $filename
-                                        fixed=$((fixed+1))
-                                   fi
-                                   if [[ $filename == *".cpp"* ]]; then
+                                   if [[ $filename == *".hpp"* || $filename == *".cpp"* || $filename == *".js"* ]]; then
                                         echo "Trying to auto-resolve...";
                                         ex -sc '1i|// License: Apache 2.0. See LICENSE file in root directory.' -cx $filename
                                         fixed=$((fixed+1))
@@ -73,12 +58,7 @@ function check_folder {
                                         ex -sc '1i|/* License: Apache 2.0. See LICENSE file in root directory. */' -cx $filename
                                         fixed=$((fixed+1))
                                    fi
-                                   if [[ $filename == *".js"* ]]; then
-                                        echo "Trying to auto-resolve...";
-                                        ex -sc '1i|// License: Apache 2.0. See LICENSE file in root directory.' -cx $filename
-                                        fixed=$((fixed+1))
-                                   fi
-                                   if [[ $filename == *".txt"* ]]; then
+                                   if [[ $filename == *".txt"* || $filename == *".py"* ]]; then
                                         echo "Trying to auto-resolve...";
                                         ex -sc '1i|# License: Apache 2.0. See LICENSE file in root directory.' -cx $filename
                                         fixed=$((fixed+1))
@@ -120,20 +100,24 @@ if [[ $1 == *"help"* ]]; then
      echo "    --fix    Try to auto-fix defects"
      exit 0
 fi
-	
-cd ../realsense2_camera
-check_folder include $1
-check_folder src $1
-check_folder launch $1
 
-cd ../realsense2_camera_msgs
-check_folder msg $1
-check_folder srv $1
 
-cd ../realsense2_description
-check_folder launch $1
+cd ..
 
-cd ../scripts
+for outer_dir in */ ; do
+    echo "$outer_dir"
+	cd "$outer_dir"
+	for inner_dir in */ ; do
+		if [[ "$inner_dir" == *"importRosbag"* ]]; then
+			continue
+		fi
+		echo "$inner_dir"
+		check_folder "$inner_dir" $1
+	done
+	cd ..
+done
+
+cd scripts
 
 if [[ ${fixed} -ne 0 ]]; then
      echo "Re-running pr_check..."
