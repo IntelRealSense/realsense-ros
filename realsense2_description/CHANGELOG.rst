@@ -2,6 +2,10 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
+
 4.0.2 (2022-02-24)
 ------------------
 
