@@ -10,6 +10,9 @@ fixed=0
 
 function check_folder {
     for filename in $(find $1 -type f \( -iname \*.cpp -o -iname \*.h -o -iname \*.hpp -o -iname \*.js -o -iname \*.bat -o -iname \*.sh -o -iname \*.txt -o -iname \*.py \)); do
+          if [[ "$filename" == *"importRosbag"* ]]; then
+               continue;
+          fi
           if [[ $(grep -oP "Software License Agreement" $filename | wc -l) -ne 0 ]]; then
                echo "[WARNING] $filename contains 3rd-party license agreement"
           else
@@ -104,23 +107,11 @@ fi
 
 cd ..
 
-for outer_dir in */ ; do
-    echo "$outer_dir"
-	cd "$outer_dir"
-	for inner_dir in */ ; do
-		if [[ "$inner_dir" == *"importRosbag"* ]]; then
-			continue
-		fi
-		echo "$inner_dir"
-		check_folder "$inner_dir" $1
-	done
-	cd ..
-done
-
+check_folder . $1
 cd scripts
 
 if [[ ${fixed} -ne 0 ]]; then
-     echo "Re-running pr_check..."
+	 echo "Re-running pr_check..."
      ./pr_check.sh
 else
      if [[ ${ok} -ne 0 ]]; then

@@ -1,3 +1,5 @@
+# License: Apache 2.0. See LICENSE file in root directory.
+# Copyright(c) 2022 Intel Corporation. All Rights Reserved.
 cmake_minimum_required(VERSION 3.5)
 project(realsense2_camera)
 
@@ -79,8 +81,8 @@ if(BUILD_WITH_OPENMP)
 endif()
 
 if(SET_USER_BREAK_AT_STARTUP)
-	message("GOT FLAG IN CmakeLists.txt")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBPDEBUG")
+    message("GOT FLAG IN CmakeLists.txt")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBPDEBUG")
 endif()
 
 
