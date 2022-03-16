@@ -26,7 +26,7 @@ FrameLatencyNode::FrameLatencyNode( const rclcpp::NodeOptions & node_options )
     ROS_INFO_STREAM( "Intra-Process is "
                      << ( this->get_node_options().use_intra_process_comms() ? "ON" : "OFF" ) );
     // Create a subscription on the input topic.
-    sub_ = this->create_subscription< sensor_msgs::msg::Image >(
+    _sub = this->create_subscription< sensor_msgs::msg::Image >(
         "/color/image_raw",  // TODO Currently color only, we can declare and accept the required
                              // streams as ros parameters
         rclcpp::QoS( rclcpp::QoSInitialization::from_rmw( rmw_qos_profile_default ),

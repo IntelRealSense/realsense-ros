@@ -21,7 +21,7 @@ public:
                       = rclcpp::NodeOptions().use_intra_process_comms( true ) );
 
 private:
-    rclcpp::Subscription< sensor_msgs::msg::Image >::SharedPtr sub_;
+    rclcpp::Subscription< sensor_msgs::msg::Image >::SharedPtr _sub;
     rclcpp::Logger _logger;
 };
 }  // namespace frame_latency
