@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.0.3 (2022-03-16)
+------------------
 * Support intra-process zero-copy
 * Update README
 * Fix Galactic deprecated-declarations compilation warning
