@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+
+# License: Apache 2.0. See LICENSE file in root directory.
+# Copyright(c) 2022 Intel Corporation. All Rights Reserved
+
 import os
 import sys
 import rclpy

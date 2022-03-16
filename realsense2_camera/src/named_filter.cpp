@@ -1,3 +1,5 @@
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2022 Intel Corporation. All Rights Reserved.
 #include <named_filter.h>
 #include <fstream>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
