@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.0.4 (2022-03-20)
+------------------
 * fix required packages for building debians for ros2-beta branch
 
 * Contributors: NirAz
