@@ -2,6 +2,12 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix required packages for building debians for ros2-beta branch
+
+* Contributors: NirAz
+
 4.0.3 (2022-03-16)
 ------------------
 * Support intra-process zero-copy
