@@ -104,11 +104,11 @@ jobs:
     steps:
     - name: Setup ROS2 Workspace
       run: | 
-        mkdir -p /home/nvidia/github/ros2/src
+        mkdir -p /home/nvidia/actions-runner/_work/ros2/src
         
     - uses: actions/checkout@v2
       with:
-        path: '/home/nvidia/github/ros2/src/realsense-ros'
+        path: '/home/nvidia/actions-runner/_work/ros2/src/realsense-ros'
     
     - uses: ros-tooling/setup-ros@v0.2
       with:
