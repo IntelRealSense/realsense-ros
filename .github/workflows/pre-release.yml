@@ -1,3 +1,11 @@
+# This adds "pre-release" builds for Github Actions. These:
+#   - check if the package builds, installs without issues
+#   - if unit/system tests are defined, runs them
+# If these pass, we cover the general requirements of ROS-based repositories.
+#
+# These builds run on Github machines, but in the same environment and using the same flow as actual ROS
+# distro build farm releases, hence "pre-release".
+#
 # This config uses industrial_ci (https://github.com/ros-industrial/industrial_ci.git).
 # For troubleshooting, see readme (https://github.com/ros-industrial/industrial_ci/blob/master/README.rst)
 
@@ -12,13 +20,9 @@ on:
   pull_request:
     branches:
       - ros2-beta
-
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
-# This workflow contains a single job called "build"
 
 jobs:
   build:
