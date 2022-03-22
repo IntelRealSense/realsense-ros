@@ -238,27 +238,7 @@ install(DIRECTORY
 
 # Test
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  find_package(OpenCV REQUIRED)
-
-  ament_lint_auto_find_test_dependencies()
-
-  set(REALSENSE_DEVICE_PLUGIN FALSE)
-  if(${REALSENSE_DEVICE_PLUGIN})
-    ament_add_gtest(test_api test/test_api.cpp)
-  endif()
-  if(TARGET test_api)
-    target_include_directories(test_api PUBLIC
-      ${${PROJECT_NAME}_INCLUDE_DIRS}
-    )
-  ament_target_dependencies(test_api
-    OpenCV
-    rclcpp
-    sensor_msgs
-    nav_msgs
-    tf2
-    tf2_ros)
-  endif()
+# This does nothing for now, note that ROS build farm build with BUILD_TESTING=1
 endif()
 
 # Ament exports

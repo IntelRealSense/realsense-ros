@@ -30,10 +30,6 @@
   <depend>diagnostic_updater</depend>
 
   <exec_depend>launch_ros</exec_depend>
-  <test_depend>ament_cmake_gtest</test_depend>
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
-  <test_depend>libopencv-dev</test_depend>
   <build_depend>ros_environment</build_depend>
 
   <export>
