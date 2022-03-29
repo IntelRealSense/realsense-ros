@@ -95,4 +95,5 @@ jobs:
         cd ${{github.workspace}}/ros2
         source ${{github.workspace}}/.bashrc
         . install/local_setup.bash
-        python3 src/realsense-ros/realsense2_camera/scripts/rs2_test.py non_existent_file 
+        python3 src/realsense-ros/realsense2_camera/scripts/rs2_test.py non_existent_file
+        
