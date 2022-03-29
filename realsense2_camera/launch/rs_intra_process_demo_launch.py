@@ -1,5 +1,5 @@
 # License: Apache 2.0. See LICENSE file in root directory.
-# Copyright(c) 2022 Intel Corporation. All Rights Reserved
+# Copyright(c) 2022 Intel Corporation. All Rights Reserved.
 
 '''
 Launch realsense2_camera node & a frame latency printer node, 
