@@ -1,5 +1,13 @@
 #!/bin/bash
-# This script is designed to ensure all relevant header and source files contain correct copyright
+
+# License: Apache 2.0. See LICENSE file in root directory.
+# Copyright(c) 2022 Intel Corporation. All Rights Reserved.
+
+# This script makes sure all files with the following extensions - .h, .hpp, .cpp, .js, .py, .bat, .sh, .txt -
+# include the Apache license reference and Intel copyright, as it shown in this file header.
+# The script checks also that these files are using Unix line-endings and spaces as delmiters (instead of tabs).
+# It is recommended to run this script when adding new files to the project.
+# For more info, run ./pr_check.sh --help
 
 set +e
 
@@ -11,9 +19,12 @@ fixed=0
 
 function check_folder {
     for filename in $(find $1 -type f \( -iname \*.cpp -o -iname \*.h -o -iname \*.hpp -o -iname \*.js -o -iname \*.bat -o -iname \*.sh -o -iname \*.txt -o -iname \*.py \)); do
+
+          # Skip files of 3rd-party libraries which already have their own licenses and copyrights
           if [[ "$filename" == *"importRosbag"* ]]; then
                continue;
           fi
+
           if [[ $(grep -oP "Software License Agreement" $filename | wc -l) -ne 0 ]]; then
                echo "[WARNING] $filename contains 3rd-party license agreement"
           else
