@@ -1,3 +1,6 @@
+# License: Apache 2.0. See LICENSE file in root directory.
+# Copyright(c) 2022 Intel Corporation. All Rights Reserved.
+
 import rclpy
 from rclpy.node import Node
 import sensor_msgs.msg

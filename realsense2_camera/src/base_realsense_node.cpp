@@ -1,3 +1,6 @@
+// License: Apache 2.0. See LICENSE file in root directory.
+// Copyright(c) 2022 Intel Corporation. All Rights Reserved.
+
 #include "../include/base_realsense_node.h"
 #include "assert.h"
 #include <algorithm>
@@ -462,13 +465,13 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
         v_msg.vector.x = tfv.x();
         v_msg.vector.y = tfv.y();
         v_msg.vector.z = tfv.z();
-	
+    
         tfv = tf2::Vector3(-pose.angular_velocity.z, -pose.angular_velocity.x, pose.angular_velocity.y);
         tfv=tf2::quatRotate(q,tfv);
         geometry_msgs::msg::Vector3Stamped om_msg;
         om_msg.vector.x = tfv.x();
         om_msg.vector.y = tfv.y();
-        om_msg.vector.z = tfv.z();	
+        om_msg.vector.z = tfv.z();    
 
         nav_msgs::msg::Odometry odom_msg;
 

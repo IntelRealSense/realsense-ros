@@ -1,3 +1,6 @@
+# License: Apache 2.0. See LICENSE file in root directory.
+# Copyright(c) 2022 Intel Corporation. All Rights Reserved.
+
 import sys
 import time
 import rclpy
@@ -24,7 +27,7 @@ except Exception:
 
 
 def pc2_to_xyzrgb(point):
-	# Thanks to Panos for his code used in this function.
+    # Thanks to Panos for his code used in this function.
     x, y, z = point[:3]
     rgb = point[3]
 
