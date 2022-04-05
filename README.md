@@ -1,10 +1,31 @@
 # ROS2 Wrapper for Intel&reg; RealSense&trade; Devices
 These are packages for using Intel RealSense cameras (D400 and L500 series, SR300 camera and T265 Tracking Module) with ROS2.
 
+This version supports ROS2 Dashing, Eloquent, Foxy, Galactic and Rolling.
+
 LibRealSense supported version: v2.50.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
+## Please notice: if you are moving from RealSense [ROS2 branch](https://github.com/IntelRealSense/realsense-ros/tree/ros2) to ROS2-beta:
+- **Changed Parameters**:
+    - **"stereo_module"**, **"l500_depth_sensor"** are replaced by **"depth_module"**
+    - For video streams: **\<module>.profile** replaces **\<stream>_width**, **\<stream>_height**, **\<stream>_fps**
+        - **ROS2 (Old)**:
+          - ros2 launch realsense2_camera rs_launch.py depth_width:=640 depth_height:=480 depth_fps:=30.0 infra1_width:=640 infra1_height:=480 infra1_fps:=30.0
+        - **ROS2-beta (New)**:
+          - ros2 launch realsense2_camera rs_launch.py depth_module.profile:=640x480x30
+    - Removed paramets **\<stream>_frame_id**, **\<stream>_optical_frame_id**. frame_ids are now defined by camera_name
+    - **"filters"** is removed. All filters (or post-processing blocks) are enabled/disabled using **"\<filter>.enable"**
+    - **"align_depth"** is now a regular processing block and as such the parameter for enabling it is replaced with **"align_depth.enable"**
+    - **"allow_no_texture_points"**, **"ordered_pc"** are now belong to the pointcloud filter and as such are replaced by **"pointcloud.allow_no_texture_points"**, **"pointcloud.ordered_pc"**
+    - **"pointcloud_texture_stream"**, **"pointcloud_texture_index"** belong now to the pointcloud filter and were renamed to match their librealsense' names: **"pointcloud.stream_filter"**, **"pointcloud.stream_index_filter"**
+- Allow enable/disable of sensors in runtime (parameters **\<stream>.enable**)
+- Allow enable/disable of filters in runtime (parameters **\<filter_name>.enable**)
+- **unite_imu_method** parameter is now changeable in runtime.
+- **enable_sync** parameter is now changeable in runtime.
+
+
+
 ## Installation Instructions
-This version supports ROS2 Dashing, Eloquent, Foxy, Galactic and Rolling.
 
    ### Step 1: Install the ROS2 distribution
  - #### Ubuntu 18.04 : 
