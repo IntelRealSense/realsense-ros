@@ -31,7 +31,7 @@ LibRealSense2 supported version: v2.50.0 (see [realsense2_camera release notes](
     This will install both realsense2_camera and its dependents, including librealsense2 library and matching udev-rules.
 
     Notice:
-    * The version of librealsense2 is almost always behind the one availeable in RealSense&trade; official repository.
+    * The version of librealsense2 is almost always behind the one available in the RealSense&trade; official repository.
     * librealsense2 is not built to use native v4l2 driver but the less stable RS-USB protocol. That is because the last is more general and operational on a larger variety of platforms.
     * realsense2_description is available as a separate debian package of ROS distribution. It includes the 3D-models of the devices and is necessary for running launch files that include these models (i.e. rs_d435_camera_with_model.launch). It can be installed by typing:
     `sudo apt-get install ros-$ROS_DISTRO-realsense2-description`
