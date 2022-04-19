@@ -57,4 +57,11 @@ namespace realsense2_camera
             rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _pointcloud_publisher;
             std::string _pointcloud_qos;
     };
+
+    class AlignDepthFilter : public NamedFilter
+    {
+        public:
+            AlignDepthFilter(std::shared_ptr<rs2::filter> filter, std::function<void(const rclcpp::Parameter&)> update_sensor_func,
+                std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled = false);
+    };
 }

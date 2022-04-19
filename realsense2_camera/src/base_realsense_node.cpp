@@ -84,7 +84,8 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _use_intra_process(use_intra_process),
     _is_initialized_time_base(false),
     _sync_frames(SYNC_FRAMES),
-    _is_profile_changed(false)
+    _is_profile_changed(false),
+    _is_align_depth_changed(false)
 {
     if ( use_intra_process )
     {
@@ -157,8 +158,11 @@ void BaseRealSenseNode::setupFilters()
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::temporal_filter>(), _parameters, _logger));
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::hole_filling_filter>(), _parameters, _logger));
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::disparity_transform>(false), _parameters, _logger));
-    _align_depth_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::align>(RS2_STREAM_COLOR), _parameters, _logger);
+
+    std::function<void(const rclcpp::Parameter&)> update_sensor_func = [this](const rclcpp::Parameter&){_is_align_depth_changed = true; _cv_mpc.notify_one();};
+    _align_depth_filter = std::make_shared<AlignDepthFilter>(std::make_shared<rs2::align>(RS2_STREAM_COLOR), update_sensor_func, _parameters, _logger);
     _filters.push_back(_align_depth_filter);
+
     _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::colorizer>(), _parameters, _logger); 
     _filters.push_back(_colorizer_filter);
     _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::pointcloud>(), _node, _parameters, _logger);
