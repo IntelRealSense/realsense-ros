@@ -9,7 +9,7 @@ aluminum peripherial evaluation case.
 
 <robot name="sensor_d415" xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- Includes -->
-  <xacro:include filename="$(find realsense2_description)/urdf/_materials.urdf.xacro" />
+  <!-- <xacro:include filename="$(find realsense2_description)/urdf/_materials.urdf.xacro" /> -->
   <xacro:include filename="$(find realsense2_description)/urdf/_usb_plug.urdf.xacro" />
 
   <xacro:macro name="sensor_d415" params="parent *origin  name:=camera  use_nominal_extrinsics:=false add_plug:=false use_mesh:=true">
@@ -57,7 +57,9 @@ aluminum peripherial evaluation case.
           <geometry>
             <mesh filename="package://realsense2_description/meshes/d415.stl" />
           </geometry>
-          <material name="aluminum"/>
+          <material name="aluminum">
+            <color rgba="0.5 0.5 0.5 1"/>
+          </material>
         </xacro:if>
         <xacro:unless value="${use_mesh}">
           <origin xyz="0 ${-d415_cam_depth_py} 0" rpy="0 0 0"/>
