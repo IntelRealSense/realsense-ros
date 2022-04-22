@@ -271,7 +271,8 @@ namespace realsense2_camera
         stream_index_pair _pointcloud_texture;
         PipelineSyncer _syncer;
         rs2::asynchronous_syncer _asyncer;
-        std::shared_ptr<NamedFilter> _align_depth_filter, _colorizer_filter;
+        std::shared_ptr<NamedFilter> _colorizer_filter;
+        std::shared_ptr<AlignDepthFilter> _align_depth_filter;
         std::shared_ptr<PointcloudFilter> _pc_filter;
         std::vector<std::shared_ptr<NamedFilter>> _filters;
         std::vector<rs2::sensor> _dev_sensors;
