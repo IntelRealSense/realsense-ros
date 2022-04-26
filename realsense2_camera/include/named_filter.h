@@ -18,6 +18,7 @@ namespace realsense2_camera
             NamedFilter(std::shared_ptr<rs2::filter> filter, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled=false, bool is_set_parameters=true);
             bool is_enabled() {return _is_enabled;};
             rs2::frameset Process(rs2::frameset frameset);
+            rs2::frame Process(rs2::frame frame);
 
         protected:
             void setParameters(std::function<void(const rclcpp::Parameter&)> enable_param_func = std::function<void(const rclcpp::Parameter&)>());
