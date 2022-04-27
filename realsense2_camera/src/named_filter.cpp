@@ -263,3 +263,14 @@ void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2:
             _pointcloud_publisher->publish(_msg_pointcloud);
     }
 }
+
+
+AlignDepthFilter::AlignDepthFilter(std::shared_ptr<rs2::filter> filter, 
+    std::function<void(const rclcpp::Parameter&)> update_align_depth_func,
+    std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled):
+    NamedFilter(filter, parameters, logger, is_enabled, false)
+{
+    _params.registerDynamicOptions(*(_filter.get()), "align_depth");
+    _params.getParameters()->setParamT("align_depth.enable", _is_enabled, update_align_depth_func);
+    _parameters_names.push_back("align_depth.enable");
+}
