@@ -289,7 +289,7 @@ Further details on efficient intra-process communication can be found [here](htt
         ```bash
         ros2 topic echo /extrinsics/depth_to_color --qos-durability=volatile --qos-reliability=reliable
         ```
-* Compressed image topic `image_transport` will be disabled as it does not support intra-process communication
+* Compressed images using `image_transport` will be disabled as this isn't supported with intra-process communication
 
 ### Latency test tool and launch file
 
