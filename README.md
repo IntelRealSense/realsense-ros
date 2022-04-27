@@ -281,9 +281,15 @@ Further details on efficient intra-process communication can be found [here](htt
 ### Limitations
 
 * Node components are currently not supported on RCLPY
-* Transformations: `/static_tf` topic will be disabled (for getting the transformation published, activate and read `/tf` topic and `/extrinsic/<stream>_to_<stream>` and set `tf_publish_rate` to `1.0` (in the launch file or on command-line using `-p tf_publish_rate:=1.0`)
-  To echo the `/extrinsic/<stream>_to_<stream>` topic you will need to change the defualt CLI QoS to match the new QoS that `intra-process` flow use. (i.e. `ros2 topic echo /extrinsics/depth_to_color --qos-durability=volatile --qos-reliability=reliable`)
-* `image_transport` use for compressed image topic will be disabled as it does not support intra-process communication
+* Transformations: `/static_tf` topic will be disabled
+  * To get the transformations published:
+    * Set `tf_publish_rate` to `1.0` in the launch file (or on the command-line, using `-p tf_publish_rate:=1.0`)
+    * Activate and read `/tf` and `/extrinsic/<stream>_to_<stream>` topics
+      * To echo the `/extrinsic/<stream>_to_<stream>` topic you will need to change the default CLI QoS to match the new QoS that the `intra-process` flow uses. E.g.:
+        ```bash
+        ros2 topic echo /extrinsics/depth_to_color --qos-durability=volatile --qos-reliability=reliable
+        ```
+* Compressed image topic `image_transport` will be disabled as it does not support intra-process communication
 
 ### Latency test tool and launch file
 
