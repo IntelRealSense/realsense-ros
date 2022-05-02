@@ -601,9 +601,13 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             }
             if (original_depth_frame && _align_depth_filter->is_enabled())
             {
+                rs2::frame frame_to_send;
                 if (_colorizer_filter->is_enabled())
-                    original_depth_frame = _colorizer_filter->Process(original_depth_frame);
-                publishFrame(original_depth_frame, t,
+                    frame_to_send = _colorizer_filter->Process(original_depth_frame);
+                else
+                    frame_to_send = original_depth_frame;
+                
+                publishFrame(frame_to_send, t,
                                 DEPTH,
                                 _image,
                                 _info_publisher,

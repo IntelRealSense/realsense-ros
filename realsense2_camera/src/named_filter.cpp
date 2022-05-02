@@ -49,6 +49,18 @@ rs2::frameset NamedFilter::Process(rs2::frameset frameset)
     }
 }
 
+rs2::frame NamedFilter::Process(rs2::frame frame)
+{
+    if (_is_enabled)
+    {
+        return _filter->process(frame);
+    }
+    else
+    {
+        return frame;
+    }
+}
+
 
 PointcloudFilter::PointcloudFilter(std::shared_ptr<rs2::filter> filter, rclcpp::Node& node, std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled):
     NamedFilter(filter, parameters, logger, is_enabled, false),
