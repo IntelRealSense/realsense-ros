@@ -299,12 +299,17 @@ void BaseRealSenseNode::updateSensors()
             if (is_profile_changed || _is_align_depth_changed)
             {
                 std::vector<stream_profile> active_profiles = sensor->get_active_streams();
-                sensor->stop();
+                if(is_profile_changed)
+                {
+                    // Start/stop sensors only if profile was changed
+                    // No need to start/stop sensors if align_depth was changed
+                    ROS_INFO_STREAM("Stopping Sensor: " << module_name);
+                    sensor->stop();
+                }
                 stopPublishers(active_profiles);
 
                 if (!wanted_profiles.empty())
                 {
-                    ROS_INFO_STREAM("Start Sensor: " << module_name);
                     startPublishers(wanted_profiles, *sensor);
                     updateProfilesStreamCalibData(wanted_profiles);
                     {
@@ -313,7 +318,14 @@ void BaseRealSenseNode::updateSensors()
                         publishStaticTransforms(wanted_profiles);
                     }
 
-                    sensor->start(wanted_profiles);
+                    if(is_profile_changed)
+                    {
+                        // Start/stop sensors only if profile was changed
+                        // No need to start/stop sensors if align_depth was changed
+                        ROS_INFO_STREAM("Starting Sensor: " << module_name);
+                        sensor->start(wanted_profiles);
+                    }
+
                     if (sensor->rs2::sensor::is<rs2::depth_sensor>())
                     {
                         _depth_scale_meters = sensor->as<rs2::depth_sensor>().get_depth_scale();
