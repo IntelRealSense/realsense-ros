@@ -209,7 +209,7 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 ### Available services:
 - reset : Cause a hardware reset of the device. Usage: `rosservice call /camera/realsense2_camera/reset`
 - enable : Start/Stop all streaming sensors. Usage example: `rosservice call /camera/enable False"`
-- device_info : retrieve information about the device - serial_number, firmware_version etc. Type `osservice type /camera/realsense2_camera/device_info | rossrv show` for the full list. Call example: `rosservice call /camera/realsense2_camera/device_info`
+- device_info : retrieve information about the device - serial_number, firmware_version etc. Type `rosservice type /camera/realsense2_camera/device_info | rossrv show` for the full list. Call example: `rosservice call /camera/realsense2_camera/device_info`
 
 ### Point Cloud
 Here is an example of how to start the camera node and make it publish the point cloud using the pointcloud option.
