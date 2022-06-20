@@ -37,13 +37,13 @@ def generate_launch_description():
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
-        node_name='rviz2',
+        name='rviz2',
         output = 'screen',
         arguments=['-d', rviz_config_dir],
         parameters=[{'use_sim_time': False}]
         )
     model_node = Node(
-        node_name='model_node',
+        name='model_node',
         package='robot_state_publisher',
         executable='robot_state_publisher',
         namespace='',
