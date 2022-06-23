@@ -518,6 +518,18 @@ void BaseRealSenseNode::pose_callback(rs2::frame frame)
 void BaseRealSenseNode::frame_callback(rs2::frame frame)
 {
     _synced_imu_publisher->Pause();
+
+       //Skip frames in order for fps to match the one specified in publish_fps parameter
+    if (_frame_counter < _frames_to_skip)
+    {
+        _frame_counter++;
+        return;
+    }
+    else 
+    {
+        _frame_counter = 1;
+    }
+    
     try{
         double frame_time = frame.get_timestamp();
 
