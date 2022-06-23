@@ -84,7 +84,8 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _use_intra_process(use_intra_process),
     _is_initialized_time_base(false),
     _sync_frames(SYNC_FRAMES),
-    _is_profile_changed(false)
+    _is_profile_changed(false),
+    _is_align_depth_changed(false)
 {
     if ( use_intra_process )
     {
@@ -157,10 +158,26 @@ void BaseRealSenseNode::setupFilters()
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::temporal_filter>(), _parameters, _logger));
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::hole_filling_filter>(), _parameters, _logger));
     _filters.push_back(std::make_shared<NamedFilter>(std::make_shared<rs2::disparity_transform>(false), _parameters, _logger));
-    _align_depth_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::align>(RS2_STREAM_COLOR), _parameters, _logger);
+
+    /* 
+    update_align_depth_func is being used in the align depth filter for triggiring the thread that monitors profile
+    changes (_monitoring_pc) on every disable/enable of the align depth filter. This filter enablement/disablement affects
+    several topics creation/destruction, therefore, refreshing the topics is required similarly to what is done when turning on/off a sensor.
+    See BaseRealSenseNode::monitoringProfileChanges() as reference.
+    */ 
+    std::function<void(const rclcpp::Parameter&)> update_align_depth_func = [this](const rclcpp::Parameter&){
+        {
+            std::lock_guard<std::mutex> lock_guard(_profile_changes_mutex);
+            _is_align_depth_changed = true;
+        }
+        _cv_mpc.notify_one();
+    };
+    _align_depth_filter = std::make_shared<AlignDepthFilter>(std::make_shared<rs2::align>(RS2_STREAM_COLOR), update_align_depth_func, _parameters, _logger);
     _filters.push_back(_align_depth_filter);
+
     _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::colorizer>(), _parameters, _logger); 
     _filters.push_back(_colorizer_filter);
+
     _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::pointcloud>(), _node, _parameters, _logger);
     _filters.push_back(_pc_filter);
 }
@@ -584,9 +601,13 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             }
             if (original_depth_frame && _align_depth_filter->is_enabled())
             {
+                rs2::frame frame_to_send;
                 if (_colorizer_filter->is_enabled())
-                    original_depth_frame = _colorizer_filter->Process(original_depth_frame);
-                publishFrame(original_depth_frame, t,
+                    frame_to_send = _colorizer_filter->Process(original_depth_frame);
+                else
+                    frame_to_send = original_depth_frame;
+                
+                publishFrame(frame_to_send, t,
                                 DEPTH,
                                 _image,
                                 _info_publisher,

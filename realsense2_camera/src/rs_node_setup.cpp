@@ -32,11 +32,10 @@ void BaseRealSenseNode::monitoringProfileChanges()
 {
     int time_interval(10000);
     std::function<void()> func = [this, time_interval](){
-        std::mutex mu;
-        std::unique_lock<std::mutex> lock(mu);
+        std::unique_lock<std::mutex> lock(_profile_changes_mutex);
         while(_is_running) {
-            _cv_mpc.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return (!_is_running || _is_profile_changed);});
-            if (_is_running && _is_profile_changed)
+            _cv_mpc.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return (!_is_running || _is_profile_changed || _is_align_depth_changed);});
+            if (_is_running && (_is_profile_changed || _is_align_depth_changed))
             {
                 ROS_DEBUG("Profile has changed");
                 try
@@ -48,6 +47,7 @@ void BaseRealSenseNode::monitoringProfileChanges()
                     ROS_ERROR_STREAM("Error updating the sensors: " << e.what());
                 }
                 _is_profile_changed = false;
+                _is_align_depth_changed = false;
             }
         }
     };
@@ -114,7 +114,13 @@ void BaseRealSenseNode::setAvailableSensors()
 
     std::function<void(rs2::frame)> multiple_message_callback_function = [this](rs2::frame frame){multiple_message_callback(frame, _imu_sync_method);};
 
-    std::function<void()> update_sensor_func = [this](){_is_profile_changed = true; _cv_mpc.notify_one();};
+    std::function<void()> update_sensor_func = [this](){
+        {
+            std::lock_guard<std::mutex> lock_guard(_profile_changes_mutex);
+            _is_profile_changed = true;
+        }
+        _cv_mpc.notify_one();
+    };
 
     std::function<void()> hardware_reset_func = [this](){hardwareResetRequest();};
 
@@ -219,7 +225,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 
                                     rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
 
-            if ((sip != DEPTH) && sip.second < 2)
+            if (_align_depth_filter->is_enabled() && (sip != DEPTH) && sip.second < 2)
             {
                 std::stringstream aligned_image_raw, aligned_camera_info;
                 aligned_image_raw << "aligned_depth_to_" << stream_name << "/image_raw";
@@ -289,16 +295,21 @@ void BaseRealSenseNode::updateSensors()
             // if active_profiles != wanted_profiles: stop sensor.
             std::vector<stream_profile> wanted_profiles;
 
-            bool is_changed(sensor->getUpdatedProfiles(wanted_profiles));
-            if (is_changed)
+            bool is_profile_changed(sensor->getUpdatedProfiles(wanted_profiles));
+            if (is_profile_changed || _is_align_depth_changed)
             {
                 std::vector<stream_profile> active_profiles = sensor->get_active_streams();
-                sensor->stop();
+                if(is_profile_changed)
+                {
+                    // Start/stop sensors only if profile was changed
+                    // No need to start/stop sensors if align_depth was changed
+                    ROS_INFO_STREAM("Stopping Sensor: " << module_name);
+                    sensor->stop();
+                }
                 stopPublishers(active_profiles);
 
                 if (!wanted_profiles.empty())
                 {
-                    ROS_INFO_STREAM("Start Sensor: " << module_name);
                     startPublishers(wanted_profiles, *sensor);
                     updateProfilesStreamCalibData(wanted_profiles);
                     {
@@ -307,7 +318,14 @@ void BaseRealSenseNode::updateSensors()
                         publishStaticTransforms(wanted_profiles);
                     }
 
-                    sensor->start(wanted_profiles);
+                    if(is_profile_changed)
+                    {
+                        // Start/stop sensors only if profile was changed
+                        // No need to start/stop sensors if align_depth was changed
+                        ROS_INFO_STREAM("Starting Sensor: " << module_name);
+                        sensor->start(wanted_profiles);
+                    }
+
                     if (sensor->rs2::sensor::is<rs2::depth_sensor>())
                     {
                         _depth_scale_meters = sensor->as<rs2::depth_sensor>().get_depth_scale();
