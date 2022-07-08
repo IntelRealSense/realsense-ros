@@ -35,6 +35,8 @@ namespace realsense2_camera
 
             template <class T>
             void queueSetRosValue(const std::string& param_name, const T value);
+
+            rclcpp::Node& getNode() { return _node; }
             
         private:
             void monitor_update_functions();

@@ -73,6 +73,16 @@ void RosSensor::setParameters()
 
 void RosSensor::UpdateSequenceIdCallback()
 {
+    // skip sequence id callback in case playback from ros bag
+    rclcpp::Node& node = _params.getParameters()->getNode();
+    std::string rosbag = node.get_parameter("rosbag_filename").as_string();
+
+    if (!rosbag.empty())
+    {
+        ROS_DEBUG_STREAM("skipping sequence id callbacks, device playback from ros bag: " << rosbag);
+        return;
+    }
+
     // Function replaces the trivial parameter callback with one that 
     // also updates ros server about the gain and exposure of the selected sequence id.
     if (!supports(RS2_OPTION_SEQUENCE_ID))
