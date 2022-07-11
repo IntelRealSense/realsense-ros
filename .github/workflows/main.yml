@@ -90,7 +90,6 @@ jobs:
         sudo make install
 
     - name: Build
-      #if: ${{ matrix.ros_distro != 'humble' }}
       run: | 
         echo "source /opt/ros/${{ matrix.ros_distro }}/setup.bash" >> ${{github.workspace}}/.bashrc
         source ${{github.workspace}}/.bashrc
@@ -113,14 +112,12 @@ jobs:
     #    wget $bag_filename -P "records/"
         
     - name: Install Packages For Tests
-      if: ${{ matrix.ros_distro != 'humble' }}
       run: |
         sudo apt-get install python3-pip
         pip3 install numpy --upgrade
         pip3 install numpy-quaternion tqdm
 
     - name: Run Tests
-      if: ${{ matrix.ros_distro != 'humble' }}
       run: |
         cd ${{github.workspace}}/ros2
         source ${{github.workspace}}/.bashrc
