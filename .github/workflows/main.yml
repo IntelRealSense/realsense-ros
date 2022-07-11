@@ -65,6 +65,7 @@ jobs:
         required-ros-distributions: ${{ matrix.ros_distro }}
         
     - name: Install RealSense SDK 2.0 Dependencies
+      if: ${{ matrix.ros_distro != 'humble' }}
       run: |
         sudo apt-get update
         sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-key C8B3A55A6F3EFCDE
