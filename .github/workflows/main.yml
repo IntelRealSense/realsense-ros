@@ -40,7 +40,7 @@ jobs:
     - name: Setup ROS2 Workspace
       run: | 
         mkdir -p ${{github.workspace}}/ros2/src
-        
+
     - uses: actions/checkout@v2
       with:
         path: 'ros2/src/realsense-ros'
@@ -50,8 +50,17 @@ jobs:
       run: |
         cd ${{github.workspace}}/ros2/src/realsense-ros/scripts
         ./pr_check.sh 
-        
-    - uses: ros-tooling/setup-ros@v0.3
+    
+
+    - name: build ROS2 Dashing/Eloquent
+      if: ${{ matrix.ros_distro == 'eloquent' || matrix.ros_distro == 'dashing' }}
+      uses: ros-tooling/setup-ros@v0.2
+      with:
+        required-ros-distributions: ${{ matrix.ros_distro }}
+
+    - name: build ROS2 Humble/Galactic/Foxy
+      if: ${{ matrix.ros_distro != 'eloquent' && matrix.ros_distro != 'dashing' }}
+      uses: ros-tooling/setup-ros@v0.3
       with:
         required-ros-distributions: ${{ matrix.ros_distro }}
         
@@ -65,6 +74,7 @@ jobs:
         sudo apt-get update
         
     - name: Build
+      if: ${{ matrix.ros_distro != 'humble' }}
       run: | 
         echo "source /opt/ros/${{ matrix.ros_distro }}/setup.bash" >> ${{github.workspace}}/.bashrc
         source ${{github.workspace}}/.bashrc
@@ -87,12 +97,14 @@ jobs:
     #    wget $bag_filename -P "records/"
         
     - name: Install Packages For Tests
+      if: ${{ matrix.ros_distro != 'humble' }}
       run: |
         sudo apt-get install python3-pip
         pip3 install numpy --upgrade
         pip3 install numpy-quaternion tqdm
 
     - name: Run Tests
+      if: ${{ matrix.ros_distro != 'humble' }}
       run: |
         cd ${{github.workspace}}/ros2
         source ${{github.workspace}}/.bashrc
