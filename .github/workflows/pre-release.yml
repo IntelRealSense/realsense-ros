@@ -33,11 +33,11 @@ jobs:
       matrix:
         ros_distro: [foxy, galactic, humble]
         include:
-	- ros_distro: 'humble'
-	  os: ubuntu-22.04
+	      - ros_distro: 'humble'
+	        os: ubuntu-22.04
         - ros_distro: 'galactic'
           os: ubuntu-20.04
-	- ros_distro: 'foxy'
+	      - ros_distro: 'foxy'
           os: ubuntu-20.04
           
     env:
