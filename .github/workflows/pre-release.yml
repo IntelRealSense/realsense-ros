@@ -46,6 +46,7 @@ jobs:
       BASEDIR: ${{ github.workspace }}/.work
 
     steps:
+      if: ${{ matrix.ros_distro != 'humble' }}
       - uses: actions/checkout@v2
       - name: industrial_ci
         uses: ros-industrial/industrial_ci@master
