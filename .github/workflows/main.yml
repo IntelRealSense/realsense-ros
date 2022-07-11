@@ -51,7 +51,7 @@ jobs:
         cd ${{github.workspace}}/ros2/src/realsense-ros/scripts
         ./pr_check.sh 
         
-    - uses: ros-tooling/setup-ros@v0.2
+    - uses: ros-tooling/setup-ros@v0.3
       with:
         required-ros-distributions: ${{ matrix.ros_distro }}
         
