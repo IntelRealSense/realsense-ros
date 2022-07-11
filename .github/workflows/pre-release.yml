@@ -31,10 +31,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [foxy, galactic, humble]
+        ros_distro: [galactic, foxy]
         include:
-        - ros_distro: 'humble'
-          os: ubuntu-22.04
         - ros_distro: 'galactic'
           os: ubuntu-20.04
         - ros_distro: 'foxy'
@@ -46,7 +44,6 @@ jobs:
       BASEDIR: ${{ github.workspace }}/.work
 
     steps:
-      if: ${{ matrix.ros_distro != 'humble' }}
       - uses: actions/checkout@v2
       - name: industrial_ci
         uses: ros-industrial/industrial_ci@master
