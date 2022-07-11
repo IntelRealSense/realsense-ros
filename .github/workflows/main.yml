@@ -73,9 +73,19 @@ jobs:
         sudo apt-get update -qq
         sudo apt-get install librealsense2-dev --allow-unauthenticated -y
         sudo apt-get update
-        
+
+    - name: Build RealSense SDK 2.0 from source
+      if: ${{ matrix.ros_distro == 'humble' }}
+      run: |
+        sudo apt-get install gcc-11 g++-11
+        git clone https://github.com/IntelRealSense/librealsense.git -b master
+        cd librealsense
+        sudo mkdir build && cd build
+        sudo cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=false -DBUILD_GRAPHICAL_EXAMPLES=false
+        sudo make uninstall && make clean && make -j10 && sudo make install
+
     - name: Build
-      if: ${{ matrix.ros_distro != 'humble' }}
+      #if: ${{ matrix.ros_distro != 'humble' }}
       run: | 
         echo "source /opt/ros/${{ matrix.ros_distro }}/setup.bash" >> ${{github.workspace}}/.bashrc
         source ${{github.workspace}}/.bashrc
