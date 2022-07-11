@@ -52,14 +52,14 @@ jobs:
         ./pr_check.sh 
     
 
-    - name: build ROS2 Dashing/Eloquent
-      if: ${{ matrix.ros_distro == 'eloquent' || matrix.ros_distro == 'dashing' }}
+    - name: build ROS2 Galactic/Foxy/Eloquent/Dashing
+      if: ${{ matrix.ros_distro != 'humble'}}
       uses: ros-tooling/setup-ros@v0.2
       with:
         required-ros-distributions: ${{ matrix.ros_distro }}
 
-    - name: build ROS2 Humble/Galactic/Foxy
-      if: ${{ matrix.ros_distro != 'eloquent' && matrix.ros_distro != 'dashing' }}
+    - name: build ROS2 Humble
+      if: ${{ matrix.ros_distro == 'humble' }}
       uses: ros-tooling/setup-ros@v0.3
       with:
         required-ros-distributions: ${{ matrix.ros_distro }}
