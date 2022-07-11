@@ -23,11 +23,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [foxy, galactic, eloquent, dashing]
+        ros_distro: [humble, galactic, foxy, eloquent, dashing]
         include:
-        - ros_distro: 'foxy'
-          os: ubuntu-20.04
+        - ros_distro: 'humble'
+          os: ubuntu-22.04
         - ros_distro: 'galactic'
+          os: ubuntu-20.04
+        - ros_distro: 'foxy'
           os: ubuntu-20.04
         - ros_distro: 'eloquent'
           os: ubuntu-18.04
