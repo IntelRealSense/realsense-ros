@@ -78,11 +78,16 @@ jobs:
       if: ${{ matrix.ros_distro == 'humble' }}
       run: |
         sudo apt-get install gcc-11 g++-11
+        cd ${{github.workspace}}
         git clone https://github.com/IntelRealSense/librealsense.git -b master
         cd librealsense
-        sudo mkdir build && cd build
+        sudo mkdir build
+        cd build
         sudo cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=false -DBUILD_GRAPHICAL_EXAMPLES=false
-        sudo make uninstall && make clean && make -j10 && sudo make install
+        sudo make uninstall
+        sudo make clean
+        sudo make -j10
+        sudo make install
 
     - name: Build
       #if: ${{ matrix.ros_distro != 'humble' }}
