@@ -57,10 +57,9 @@ RosSensor::RosSensor(rs2::sensor sensor,
             }
             catch(const std::exception& ex)
             {
-                // do nothing if exception catched
                 // don't tick the frequency diagnostics for this publisher
+                ROS_ERROR_STREAM("An error has occurred during frame callback: " << ex.what());
             }
-           
         };
     setParameters();
 }
