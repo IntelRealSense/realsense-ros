@@ -639,6 +639,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
     catch(const std::exception& ex)
     {
         ROS_ERROR_STREAM("An error has occurred during frame callback: " << ex.what());
+        throw(ex);
     }
     _synced_imu_publisher->Resume();
 } // frame_callback
