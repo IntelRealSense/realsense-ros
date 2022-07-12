@@ -41,7 +41,7 @@ LibRealSense supported version: v2.50.0 (see [realsense2_camera release notes](h
 
 ### Step 2: Install the latest Intel&reg; RealSense&trade; SDK 2.0
 
-- #### Option 1: Install librealsense2 debian package
+- #### Option 1: Install librealsense2 debian package (Not supported in Ubuntu 22.04 yet)
    - Jetson users - use the [Jetson Installation Guide](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation_jetson.md)
    - Otherwise, install from [Linux Debian Installation Guide](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages)
       - In this case treat yourself as a developer: make sure to follow the instructions to also install librealsense2-dev and librealsense2-dkms packages
