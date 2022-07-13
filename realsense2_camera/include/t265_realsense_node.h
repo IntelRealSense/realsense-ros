@@ -14,8 +14,7 @@ namespace realsense2_camera
             T265RealsenseNode(rclcpp::Node& node,
                           rs2::device dev,
                           std::shared_ptr<Parameters> parameters,
-                          bool use_intra_process = false,
-                          bool is_rosbag_file = false);
+                          bool use_intra_process = false);
             void publishTopics();
 
         protected:
