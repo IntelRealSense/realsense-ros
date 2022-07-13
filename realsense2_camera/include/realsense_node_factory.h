@@ -35,7 +35,7 @@ namespace realsense2_camera
     private:
         void init();
         void closeDevice();
-        void startDevice();
+        void startDevice(bool is_rosbag_file = false);
         void changeDeviceCallback(rs2::event_information& info);
         void getDevice(rs2::device_list list);
         void tryGetLogSeverity(rs2_log_severity& severity) const;

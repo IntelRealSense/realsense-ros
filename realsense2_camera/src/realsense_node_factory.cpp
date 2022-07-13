@@ -285,7 +285,7 @@ void RealSenseNodeFactory::init()
             }
             if (_device)
             {
-                startDevice();
+                startDevice(true);
             }
         }
         else
@@ -347,7 +347,7 @@ void RealSenseNodeFactory::init()
     }
 }
 
-void RealSenseNodeFactory::startDevice()
+void RealSenseNodeFactory::startDevice(bool is_rosbag_file)
 {
     if (_realSenseNode) _realSenseNode.reset();
     std::string pid_str(_device.get_info(RS2_CAMERA_INFO_PRODUCT_ID));
@@ -376,10 +376,10 @@ void RealSenseNodeFactory::startDevice()
         case RS_L515_PID_PRE_PRQ:
         case RS_L515_PID:
         case RS_L535_PID:
-            _realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(*this, _device, _parameters, this->get_node_options().use_intra_process_comms()));
+            _realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(*this, _device, _parameters, this->get_node_options().use_intra_process_comms(), is_rosbag_file));
             break;
         case RS_T265_PID:
-            _realSenseNode = std::unique_ptr<T265RealsenseNode>(new T265RealsenseNode(*this, _device, _parameters, this->get_node_options().use_intra_process_comms()));
+            _realSenseNode = std::unique_ptr<T265RealsenseNode>(new T265RealsenseNode(*this, _device, _parameters, this->get_node_options().use_intra_process_comms(), is_rosbag_file));
             break;
         default:
             ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);

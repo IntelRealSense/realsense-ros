@@ -73,7 +73,8 @@ size_t SyncedImuPublisher::getNumSubscribers()
 BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
                                      rs2::device dev,
                                      std::shared_ptr<Parameters> parameters,
-                                     bool use_intra_process) :
+                                     bool use_intra_process,
+                                     bool is_rosbag_file) :
     _is_running(true),
     _node(node),
     _logger(node.get_logger()),
@@ -85,7 +86,8 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _is_initialized_time_base(false),
     _sync_frames(SYNC_FRAMES),
     _is_profile_changed(false),
-    _is_align_depth_changed(false)
+    _is_align_depth_changed(false),
+    _is_rosbag_file(is_rosbag_file)
 {
     if ( use_intra_process )
     {

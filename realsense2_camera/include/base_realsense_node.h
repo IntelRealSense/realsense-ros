@@ -97,7 +97,8 @@ namespace realsense2_camera
         BaseRealSenseNode(rclcpp::Node& node,
                           rs2::device dev,
                           std::shared_ptr<Parameters> parameters,
-                          bool use_intra_process = false);
+                          bool use_intra_process = false,
+                          bool is_rosbag_file = false);
         ~BaseRealSenseNode();
         void publishTopics();
 
@@ -293,6 +294,7 @@ namespace realsense2_camera
         mutable std::condition_variable _cv_temp, _cv_mpc, _cv_tf;
         bool _is_profile_changed;
         bool _is_align_depth_changed;
+        bool _is_rosbag_file;
 
         std::shared_ptr<diagnostic_updater::Updater> _diagnostics_updater;
         rs2::stream_profile _base_profile;
