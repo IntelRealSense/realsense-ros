@@ -19,7 +19,7 @@ constexpr auto realsense_ros_camera_version = REALSENSE_ROS_EMBEDDED_VERSION_STR
 
 RealSenseNodeFactory::RealSenseNodeFactory(const rclcpp::NodeOptions & node_options) :
 	Node("camera", "/", node_options),
-	_logger(rclcpp::get_logger("RealSenseCameraNode"))
+	_logger(this->get_logger())
 {
   init();
 }
@@ -27,7 +27,7 @@ RealSenseNodeFactory::RealSenseNodeFactory(const rclcpp::NodeOptions & node_opti
 RealSenseNodeFactory::RealSenseNodeFactory(const std::string & node_name, const std::string & ns,
 										   const rclcpp::NodeOptions & node_options) : 
 	Node(node_name, ns, node_options),
-	_logger(rclcpp::get_logger("RealSenseCameraNode"))
+	_logger(this->get_logger())
 {
   init();
 }
@@ -74,9 +74,9 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
 		else
 		{
 			bool found = false;
+			rs2::device dev;
 			for (size_t count = 0; count < list.size(); count++)
 			{
-				rs2::device dev;
 				try
 				{
 					dev = list[count];
