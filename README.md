@@ -28,18 +28,19 @@ LibRealSense supported version: v2.50.0 (see [realsense2_camera release notes](h
 ## Installation Instructions
 
    ### Step 1: Install the ROS2 distribution
- - #### Ubuntu 18.04 : 
-   - [ROS2 Dashing](https://docs.ros.org/en/dashing/Installation/Ubuntu-Install-Debians.html)
-   - [ROS2 Eloquent](https://docs.ros.org/en/eloquent/Installation/Linux-Install-Debians.html)
+ - #### Ubuntu 22.04:
+   - [ROS2 Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html)
  - #### Ubuntu 20.04: 
    - [ROS2 Foxy](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)
    - [ROS2 Galactic](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html)
-   - [ROS2 Rolling](https://docs.ros.org/en/rolling/Installation/Ubuntu-Install-Debians.html)
+ - #### Ubuntu 18.04 : 
+   - [ROS2 Dashing](https://docs.ros.org/en/dashing/Installation/Ubuntu-Install-Debians.html)
+   - [ROS2 Eloquent](https://docs.ros.org/en/eloquent/Installation/Linux-Install-Debians.html)
 
 
 ### Step 2: Install the latest Intel&reg; RealSense&trade; SDK 2.0
 
-- #### Option 1: Install librealsense2 debian package
+- #### Option 1: Install librealsense2 debian package (Not supported in Ubuntu 22.04 yet)
    - Jetson users - use the [Jetson Installation Guide](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation_jetson.md)
    - Otherwise, install from [Linux Debian Installation Guide](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages)
       - In this case treat yourself as a developer: make sure to follow the instructions to also install librealsense2-dev and librealsense2-dkms packages
@@ -75,7 +76,7 @@ LibRealSense supported version: v2.50.0 (see [realsense2_camera release notes](h
 
 ### Step 6: Terminal environment
    ```bash
-   ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: galactic, foxy, eloquent, dashing
+   ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: humble, galactic, foxy, eloquent, dashing
    source /opt/ros/$ROS_DISTRO/setup.bash
    cd ~/ros2_ws
    . install/local_setup.bash

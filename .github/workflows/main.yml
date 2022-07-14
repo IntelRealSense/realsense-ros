@@ -23,11 +23,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [foxy, galactic, eloquent, dashing]
+        ros_distro: [humble, galactic, foxy, eloquent, dashing]
         include:
-        - ros_distro: 'foxy'
-          os: ubuntu-20.04
+        - ros_distro: 'humble'
+          os: ubuntu-22.04
         - ros_distro: 'galactic'
+          os: ubuntu-20.04
+        - ros_distro: 'foxy'
           os: ubuntu-20.04
         - ros_distro: 'eloquent'
           os: ubuntu-18.04
@@ -38,7 +40,7 @@ jobs:
     - name: Setup ROS2 Workspace
       run: | 
         mkdir -p ${{github.workspace}}/ros2/src
-        
+
     - uses: actions/checkout@v2
       with:
         path: 'ros2/src/realsense-ros'
@@ -48,12 +50,27 @@ jobs:
       run: |
         cd ${{github.workspace}}/ros2/src/realsense-ros/scripts
         ./pr_check.sh 
-        
-    - uses: ros-tooling/setup-ros@v0.2
+    
+    ## If distro is one of [galactic, foxy, eloquent, dashing], use the setup-ros@v0.2
+    ## which supports old versions of ROS2 and EOL versions.
+    ## For Humble distro, use v0.3 
+    ## See: 1) https://github.com/ros-tooling/setup-ros#Supported-platforms
+    ##      2) https://github.com/ros-tooling/setup-ros/tree/v0.2#Supported-platforms 
+    - name: build ROS2 Galactic/Foxy/Eloquent/Dashing
+      if: ${{ matrix.ros_distro != 'humble'}}
+      uses: ros-tooling/setup-ros@v0.2
+      with:
+        required-ros-distributions: ${{ matrix.ros_distro }}
+    - name: build ROS2 Humble
+      if: ${{ matrix.ros_distro == 'humble' }}
+      uses: ros-tooling/setup-ros@v0.3
       with:
         required-ros-distributions: ${{ matrix.ros_distro }}
         
+    ## For all distros except humble, install RealSense SDK From Debinas
+    ## For Humble distro, install from source (TODO: Change this when we got debians for Humble)
     - name: Install RealSense SDK 2.0 Dependencies
+      if: ${{ matrix.ros_distro != 'humble' }}
       run: |
         sudo apt-get update
         sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-key C8B3A55A6F3EFCDE
@@ -61,7 +78,20 @@ jobs:
         sudo apt-get update -qq
         sudo apt-get install librealsense2-dev --allow-unauthenticated -y
         sudo apt-get update
-        
+    - name: Build RealSense SDK 2.0 from source
+      if: ${{ matrix.ros_distro == 'humble' }}
+      run: |
+        cd ${{github.workspace}}
+        git clone https://github.com/IntelRealSense/librealsense.git -b master
+        cd librealsense
+        sudo mkdir build
+        cd build
+        sudo cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=false -DBUILD_GRAPHICAL_EXAMPLES=false
+        sudo make uninstall
+        sudo make clean
+        sudo make -j10
+        sudo make install
+
     - name: Build
       run: | 
         echo "source /opt/ros/${{ matrix.ros_distro }}/setup.bash" >> ${{github.workspace}}/.bashrc

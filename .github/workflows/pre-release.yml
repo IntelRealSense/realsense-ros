@@ -31,11 +31,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [foxy, galactic]
+        ros_distro: [galactic, foxy]
         include:
-        - ros_distro: 'foxy'
-          os: ubuntu-20.04
         - ros_distro: 'galactic'
+          os: ubuntu-20.04
+        - ros_distro: 'foxy'
           os: ubuntu-20.04
           
     env:
