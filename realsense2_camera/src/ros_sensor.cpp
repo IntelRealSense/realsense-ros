@@ -49,10 +49,17 @@ RosSensor::RosSensor(rs2::sensor sensor,
             auto stream_type = frame.get_profile().stream_type();
             auto stream_index = frame.get_profile().stream_index();
             stream_index_pair sip{stream_type, stream_index};
-            if (_frequency_diagnostics.find(sip) != _frequency_diagnostics.end())
-                _frequency_diagnostics.at(sip).Tick();
-
-            _origin_frame_callback(frame);
+            try
+            {
+                _origin_frame_callback(frame);
+                if (_frequency_diagnostics.find(sip) != _frequency_diagnostics.end())
+                    _frequency_diagnostics.at(sip).Tick();
+            }
+            catch(const std::exception& ex)
+            {
+                // don't tick the frequency diagnostics for this publisher
+                ROS_ERROR_STREAM("An error has occurred during frame callback: " << ex.what());
+            }
         };
     setParameters();
 }
