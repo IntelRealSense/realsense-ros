@@ -33,7 +33,8 @@ RosSensor::RosSensor(rs2::sensor sensor,
     std::function<void()> hardware_reset_func, 
     std::shared_ptr<diagnostic_updater::Updater> diagnostics_updater,
     rclcpp::Logger logger,
-    bool force_image_default_qos):
+    bool force_image_default_qos,
+    bool is_rosbag_file):
     rs2::sensor(sensor),
     _logger(logger),
     _origin_frame_callback(frame_callback),
@@ -61,7 +62,7 @@ RosSensor::RosSensor(rs2::sensor sensor,
                 ROS_ERROR_STREAM("An error has occurred during frame callback: " << ex.what());
             }
         };
-    setParameters();
+    setParameters(is_rosbag_file);
 }
 
 RosSensor::~RosSensor()
@@ -70,11 +71,16 @@ RosSensor::~RosSensor()
     stop();
 }
 
-void RosSensor::setParameters()
+void RosSensor::setParameters(bool is_rosbag_file)
 {
     std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
     _params.registerDynamicOptions(*this, module_name);
-    UpdateSequenceIdCallback();
+
+    // for rosbag files, don't set hdr(sequence_id) / gain / exposure options
+    // since these options can be changed only in real devices
+    if(!is_rosbag_file)
+        UpdateSequenceIdCallback();
+    
     registerSensorParameters();
 }
 
