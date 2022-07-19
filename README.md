@@ -216,7 +216,10 @@ For setting a new value for a parameter use `ros2 param set <node> <parameter_na
 - **device_type**: will attach to a device whose name includes the given *device_type* regular expression pattern. Default, ignore device type. For example, device_type:=d435 will match d435 and d435i. device_type=d435(?!i) will match d435 but not d435i.
 - **reconnect_timeout**: When the driver cannot connect to the device try to reconnect after this timeout (in seconds).
 - **wait_for_device_timeout**: If the specified device is not found, will wait *wait_for_device_timeout* seconds before exits. Defualt, *wait_for_device_timeout < 0*, will wait indefinitely.
-- **rosbag_filename**: Will publish topics from rosbag file.
+- **rosbag_filename**: Publish topics from rosbag file. There are two ways for loading rosbag file:
+   * Command line - ```ros2 launch realsense2_camera rs_launch.py rosbag_filename:="/full/path/to/rosbag.bag"```
+   * Launch file - set ```rosbag_filename``` parameter with rosbag full path (see ```realsense2_camera/launch/rs_launch.py``` as reference) 
+
 - **initial_reset**: On occasions the device was not closed properly and due to firmware issues needs to reset. If set to true, the device will reset prior to usage.
 
 - ***<stream_name>*_frame_id**, ***<stream_name>*_optical_frame_id**, **aligned_depth_to_*<stream_name>*_frame_id**: Specify the different frame_id for the different frames. Especially important when using multiple cameras.
