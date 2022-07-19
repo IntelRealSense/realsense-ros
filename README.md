@@ -217,7 +217,7 @@ For setting a new value for a parameter use `ros2 param set <node> <parameter_na
 - **reconnect_timeout**: When the driver cannot connect to the device try to reconnect after this timeout (in seconds).
 - **wait_for_device_timeout**: If the specified device is not found, will wait *wait_for_device_timeout* seconds before exits. Defualt, *wait_for_device_timeout < 0*, will wait indefinitely.
 - **rosbag_filename**: Publish topics from rosbag file. There are two ways for loading rosbag file:
-   * Command line - ```ros2 launch realsense2_camera rs_launch.py rosbag_filename:="/full/path/to/rosbag.bag"```
+   * Command line - ```ros2 run realsense2_camera realsense2_camera_node -p rosbag_filename:="/full/path/to/rosbag.bag"```
    * Launch file - set ```rosbag_filename``` parameter with rosbag full path (see ```realsense2_camera/launch/rs_launch.py``` as reference) 
 
 - **initial_reset**: On occasions the device was not closed properly and due to firmware issues needs to reset. If set to true, the device will reset prior to usage.
