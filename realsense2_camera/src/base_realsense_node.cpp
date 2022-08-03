@@ -404,6 +404,13 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
 
     auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
     rclcpp::Time t(frameSystemTimeSec(frame));
+
+    if(_imu_publishers.find(stream_index) == _imu_publishers.end())
+    {
+        ROS_DEBUG("Received IMU callback while topic does not exist");
+        return;
+    }
+
     if (0 != _imu_publishers[stream_index]->get_subscription_count())
     {
         auto imu_msg = sensor_msgs::msg::Imu();
