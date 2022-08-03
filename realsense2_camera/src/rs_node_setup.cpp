@@ -296,7 +296,12 @@ void BaseRealSenseNode::updateSensors()
             std::vector<stream_profile> wanted_profiles;
 
             bool is_profile_changed(sensor->getUpdatedProfiles(wanted_profiles));
-            if (is_profile_changed || _is_align_depth_changed)
+            bool is_video_sensor = (sensor->is<rs2::depth_sensor>() || sensor->is<rs2::color_sensor>() || sensor->is<rs2::fisheye_sensor>());          
+
+            // do all updates if profile has been changed, or if the align depth filter status has been changed
+            // and we are on a video sensor. TODO: explore better options to monitor and update changes
+            // without resetting the whole sensors and topics.
+            if (is_profile_changed || (_is_align_depth_changed && is_video_sensor))
             {
                 std::vector<stream_profile> active_profiles = sensor->get_active_streams();
                 if(is_profile_changed)
