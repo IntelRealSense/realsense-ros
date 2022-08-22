@@ -25,26 +25,6 @@
 
 namespace realsense2_camera
 {
-    const stream_index_pair COLOR{RS2_STREAM_COLOR, 0};
-    const stream_index_pair DEPTH{RS2_STREAM_DEPTH, 0};
-    const stream_index_pair INFRA0{RS2_STREAM_INFRARED, 0};
-    const stream_index_pair INFRA1{RS2_STREAM_INFRARED, 1};
-    const stream_index_pair INFRA2{RS2_STREAM_INFRARED, 2};
-    const stream_index_pair FISHEYE{RS2_STREAM_FISHEYE, 0};
-    const stream_index_pair FISHEYE1{RS2_STREAM_FISHEYE, 1};
-    const stream_index_pair FISHEYE2{RS2_STREAM_FISHEYE, 2};
-    const stream_index_pair GYRO{RS2_STREAM_GYRO, 0};
-    const stream_index_pair ACCEL{RS2_STREAM_ACCEL, 0};
-    const stream_index_pair POSE{RS2_STREAM_POSE, 0};
-    const stream_index_pair CONFIDENCE{RS2_STREAM_CONFIDENCE, 0};    
-
-    const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA0, INFRA1, INFRA2,
-                                                          COLOR,
-                                                          FISHEYE,
-                                                          FISHEYE1, FISHEYE2, CONFIDENCE};
-
-    const std::vector<stream_index_pair> HID_STREAMS = {GYRO, ACCEL, POSE};
-
     class InterfaceRealSenseNode
     {
     public:
