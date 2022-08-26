@@ -103,6 +103,7 @@
   <arg name="filters"                  default=""/>
   <arg name="clip_distance"            default="-1"/>
   <arg name="linear_accel_cov"         default="0.01"/>
+  <arg name="angular_velocity_cov"     default="0.01"/>
   <arg name="initial_reset"            default="false"/>
   <arg name="reconnect_timeout"        default= "6.0"/>
   <arg name="wait_for_device_timeout"  default= "-1.0"/>
@@ -209,6 +210,7 @@
     <param name="filters"                  type="str"    value="$(arg filters)"/>
     <param name="clip_distance"            type="double" value="$(arg clip_distance)"/>
     <param name="linear_accel_cov"         type="double" value="$(arg linear_accel_cov)"/>
+    <param name="angular_velocity_cov"     type="double" value="$(arg angular_velocity_cov)"/>
     <param name="initial_reset"            type="bool"   value="$(arg initial_reset)"/>
     <param name="reconnect_timeout"        type="double" value="$(arg reconnect_timeout)"/>
     <param name="wait_for_device_timeout"  type="double" value="$(arg wait_for_device_timeout)"/>
