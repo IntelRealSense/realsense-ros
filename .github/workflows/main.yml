@@ -104,15 +104,13 @@ jobs:
         echo "================== COLCON BUILD ======================"
         colcon build  --cmake-args '-DBUILD_TOOLS=ON'
 
-    ## This step is commented out since we don't use rosbag files in "Run Tests" step below.
-    ## Please uncomment when "Run Tests" step is fixed to run all tests.
-    #- name: Download Data For Tests
-    #  run: |
-    #    cd ${{github.workspace}}/ros2
-    #    bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
-    #    wget $bag_filename -P "records/"
-    #    bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
-    #    wget $bag_filename -P "records/"
+    - name: Download Data For Tests
+      run: |
+        cd ${{github.workspace}}/ros2
+        bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
+        wget $bag_filename -P "records/"
+        bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
+        wget $bag_filename -P "records/"
         
     - name: Install Packages For Tests
       run: |
