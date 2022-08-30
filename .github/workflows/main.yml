@@ -47,9 +47,6 @@ jobs:
       with:
         path: 'ros2/src/realsense-ros'
     
-    - name: Setup upterm session
-      uses: lhotari/action-upterm@v1
-
     - name: Check Copyright & Line-Endings
       shell: bash
       run: |
