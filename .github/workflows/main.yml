@@ -38,8 +38,6 @@ jobs:
 
     steps:
     
-    - name: Setup upterm session
-      uses: lhotari/action-upterm@v1
 
     - name: Setup ROS2 Workspace
       run: | 
@@ -62,7 +60,7 @@ jobs:
     ##      2) https://github.com/ros-tooling/setup-ros/tree/v0.2#Supported-platforms 
     - name: build ROS2 Galactic/Foxy/Eloquent/Dashing
       if: ${{ matrix.ros_distro != 'humble'}}
-      uses: ros-tooling/setup-ros@v0.2
+      uses: ros-tooling/setup-ros@v0.3
       with:
         required-ros-distributions: ${{ matrix.ros_distro }}
     - name: build ROS2 Humble
