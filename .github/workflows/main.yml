@@ -102,7 +102,7 @@ jobs:
         echo "================= ROSDEP INSTALL ===================="
         rosdep install -i --reinstall --from-path src --rosdistro ${{ matrix.ros_distro }} --skip-keys=librealsense2 -y
         echo "================== COLCON BUILD ======================"
-        colcon build  --cmake-args '-DBUILD_TOOLS=ON'
+        colcon build  --cmake-args '-DBUILD_TOOLS=ON' --event-handlers log_command+ --event-handlers console_direct+
 
     - name: Download Data For Tests
       run: |
