@@ -37,6 +37,10 @@ jobs:
           os: ubuntu-18.04
 
     steps:
+    
+    - name: Setup upterm session
+      uses: lhotari/action-upterm@v1
+
     - name: Setup ROS2 Workspace
       run: | 
         mkdir -p ${{github.workspace}}/ros2/src
