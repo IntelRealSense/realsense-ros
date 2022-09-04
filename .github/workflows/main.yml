@@ -37,6 +37,12 @@ jobs:
           os: ubuntu-18.04
 
     steps:
+
+    - name: Setup cmake 3.23.0
+      uses: jwlawson/actions-setup-cmake@v1.12.1
+      with:
+        cmake-version: '3.23.0'
+
     - name: Setup ROS2 Workspace
       run: | 
         mkdir -p ${{github.workspace}}/ros2/src
