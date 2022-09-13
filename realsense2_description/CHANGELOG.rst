@@ -2,8 +2,8 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.51.1 (2022-09-13)
+-------------------
 * Add copyright and license to all ROS2-beta source files
 
 * Contributors: SamerKhshiboun

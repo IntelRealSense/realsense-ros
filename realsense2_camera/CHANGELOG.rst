@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.51.1 (2022-09-13)
+-------------------
 * Fix crash when activating IMU & aligned depth together
 * Fix rosbag device loading by preventing set_option to HDR/Gain/Exposure
 * Support ROS2 Humble
