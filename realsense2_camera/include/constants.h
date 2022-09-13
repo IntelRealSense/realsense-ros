@@ -7,8 +7,8 @@
 #include <rclcpp/rclcpp.hpp>
 
 #define REALSENSE_ROS_MAJOR_VERSION    4
-#define REALSENSE_ROS_MINOR_VERSION    0
-#define REALSENSE_ROS_PATCH_VERSION    4
+#define REALSENSE_ROS_MINOR_VERSION    51
+#define REALSENSE_ROS_PATCH_VERSION    1
 
 #define STRINGIFY(arg) #arg
 #define VAR_ARG_STRING(arg) STRINGIFY(arg)

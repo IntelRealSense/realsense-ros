@@ -2,6 +2,12 @@
 Changelog for package realsense2_camera_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add copyright and license to all ROS2-beta source files
+
+* Contributors: SamerKhshiboun
+
 4.0.4 (2022-03-20)
 ------------------
 

@@ -3,7 +3,7 @@ These are packages for using Intel RealSense cameras (D400 and L500 series, SR30
 
 This version supports ROS2 Dashing, Eloquent, Foxy, Galactic and Rolling.
 
-LibRealSense supported version: v2.50.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
+LibRealSense supported version: v2.51.1 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
 ## Please notice: if you are moving from RealSense [ROS2 branch](https://github.com/IntelRealSense/realsense-ros/tree/ros2) to ROS2-beta:
 - **Changed Parameters**:
@@ -46,7 +46,7 @@ LibRealSense supported version: v2.50.0 (see [realsense2_camera release notes](h
       - In this case treat yourself as a developer: make sure to follow the instructions to also install librealsense2-dev and librealsense2-dkms packages
 
 - #### Option 2: Build from source
-  - Download the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/tag/v2.50.0)
+  - Download the latest [Intel&reg; RealSense&trade; SDK 2.0](https://github.com/IntelRealSense/librealsense/releases/tag/v2.51.1)
   - Follow the instructions under [Linux Installation](https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md)
 
 
