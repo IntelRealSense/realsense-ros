@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [humble,galactic, foxy]
+        ros_distro: [humble, galactic, foxy]
         include:
         - ros_distro: 'humble'
           os: ubuntu-22.04
