@@ -850,7 +850,7 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
     rs2_extrinsics ex;
     try
     {
-        ex = profile.get_extrinsics_to(base_profile);
+        ex = base_profile.get_extrinsics_to(profile);
     }
     catch (std::exception& e)
     {
