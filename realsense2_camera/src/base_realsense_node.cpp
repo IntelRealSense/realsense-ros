@@ -330,7 +330,7 @@ void BaseRealSenseNode::FillImuData_Copy(const CimuData imu_data, std::deque<sen
 
 void BaseRealSenseNode::ImuMessage_AddDefaultValues(sensor_msgs::msg::Imu& imu_msg)
 {
-    imu_msg.header.frame_id = DEFAULT_IMU_OPTICAL_FRAME_ID;
+    imu_msg.header.frame_id = IMU_OPTICAL_FRAME_ID;
     imu_msg.orientation.x = 0.0;
     imu_msg.orientation.y = 0.0;
     imu_msg.orientation.z = 0.0;
