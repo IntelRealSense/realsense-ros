@@ -28,7 +28,7 @@ This version supports ROS2 Dashing, Eloquent and Foxy.
     `sudo apt-get install ros-$ROS_DISTRO-realsense2-description`
 
 * ### Method 2: The RealSense&trade; distribution:
-     > This option is demonstrated in the [.travis.yml](https://github.com/IntelRealSense/realsense-ros/blob/ros2/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
+     > This option is demonstrated in the [.travis.yml](https://github.com/IntelRealSense/realsense-ros/blob/ros2-legacy/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
 
 
    ### Step 1: Install the latest Intel&reg; RealSense&trade; SDK 2.0
