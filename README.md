@@ -5,13 +5,16 @@ This version supports ROS2 Dashing, Eloquent, Foxy, Galactic and Rolling.
 
 LibRealSense supported version: v2.51.1 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
-## Please notice: if you are moving from RealSense [ROS2 branch](https://github.com/IntelRealSense/realsense-ros/tree/ros2) to ROS2-beta:
+
+## For LibRS ROS1 Wrapper please refer to [ROS1-legacy branch](https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy)
+
+## Please notice: if you are moving from RealSense [ROS2-legacy branch](https://github.com/IntelRealSense/realsense-ros/tree/ros2-legacy) to ROS2-development:
 - **Changed Parameters**:
     - **"stereo_module"**, **"l500_depth_sensor"** are replaced by **"depth_module"**
     - For video streams: **\<module>.profile** replaces **\<stream>_width**, **\<stream>_height**, **\<stream>_fps**
-        - **ROS2 (Old)**:
+        - **ROS2-legacy (Old)**:
           - ros2 launch realsense2_camera rs_launch.py depth_width:=640 depth_height:=480 depth_fps:=30.0 infra1_width:=640 infra1_height:=480 infra1_fps:=30.0
-        - **ROS2-beta (New)**:
+        - **ROS2-development (New)**:
           - ros2 launch realsense2_camera rs_launch.py depth_module.profile:=640x480x30
     - Removed paramets **\<stream>_frame_id**, **\<stream>_optical_frame_id**. frame_ids are now defined by camera_name
     - **"filters"** is removed. All filters (or post-processing blocks) are enabled/disabled using **"\<filter>.enable"**
@@ -58,7 +61,7 @@ LibRealSense supported version: v2.51.1 (see [realsense2_camera release notes](h
       ```
    - Clone the latest ROS2 Intel&reg; RealSense&trade;  wrapper from [here](https://github.com/IntelRealSense/realsense-ros.git) into '~/ros2_ws/src/'
       ```bashrc
-      git clone https://github.com/IntelRealSense/realsense-ros.git -b ros2-beta
+      git clone https://github.com/IntelRealSense/realsense-ros.git -b ros2-development
       cd ~/ros2_ws
       ```
 ### Step 4: Install dependencies
