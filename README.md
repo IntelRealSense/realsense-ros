@@ -3,7 +3,7 @@ These are packages for using Intel RealSense cameras (D400 series SR300 camera a
 
 This version supports Kinetic, Melodic and Noetic distributions.
 
-For running in ROS2 environment please switch to the [ros2 branch](https://github.com/IntelRealSense/realsense-ros/tree/ros2-beta). </br>
+For running in ROS2 environment please switch to the [ros2-development branch](https://github.com/IntelRealSense/realsense-ros/tree/ros2-development). </br>
 
 LibRealSense2 supported version: v2.50.0 (see [realsense2_camera release notes](https://github.com/IntelRealSense/realsense-ros/releases))
 
@@ -41,7 +41,7 @@ LibRealSense2 supported version: v2.50.0 (see [realsense2_camera release notes](
     **Chocolatey distribution Coming soon**
 
 * ### Method 2: The RealSense&trade; distribution:
-     > This option is demonstrated in the [.travis.yml](https://github.com/intel-ros/realsense/blob/development/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
+     > This option is demonstrated in the [.travis.yml](https://github.com/intel-ros/realsense/blob/ros1-legacy/.travis.yml) file. It basically summerize the elaborate instructions in the following 2 steps:
 
 
    ### Step 1: Install the latest Intel&reg; RealSense&trade; SDK 2.0

@@ -4,11 +4,11 @@ name: CI
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the development branch
+  # Triggers the workflow on push or pull request events but only for the ros1-legacy branch
   push:
-    branches: [ development ]
+    branches: [ ros1-legacy ]
   pull_request:
-    branches: [ development ]
+    branches: [ ros1-legacy ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
