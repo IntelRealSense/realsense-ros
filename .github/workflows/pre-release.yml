@@ -13,7 +13,7 @@ name: pre-release
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the ros2-beta branch
+  # Triggers the workflow on push or pull request events but only for the ros2-development branch
   push:
     branches:
       - ros2-development
