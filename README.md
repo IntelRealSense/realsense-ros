@@ -232,8 +232,8 @@ For setting a new value for a parameter use `ros2 param set <node> <parameter_na
 
 - **unite_imu_method**: The D435i and T265 cameras have built in IMU components which produce 2 unrelated streams: *gyro* - which shows angular velocity and *accel* which shows linear acceleration. Each with it's own frequency. By default, 2 corresponding topics are available, each with only the relevant fields of the message sensor_msgs::Imu are filled out.
 Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default *gyro* and *accel* topics. The *imu* topic is published at the rate of the gyro. All the fields of the Imu message under the *imu* topic are filled out.
-   - **linear_interpolation**: Every gyro message is attached by the an accel message interpolated to the gyro's timestamp.
-   - **copy**: Every gyro message is attached by the last accel message.
+   - **linear_interpolation**: Every gyro message is attached by the an accel message interpolated to the gyro's timestamp when `unite_imu_method:=2`.
+   - **copy**: Every gyro message is attached by the last accel message when `unite_imu_method:=1`.
 - **clip_distance**: remove from the depth image all values above a given value (meters). Disable by giving negative value (default)
 - **linear_accel_cov**, **angular_velocity_cov**: sets the variance given to the Imu readings. For the T265, these values are being modified by the inner confidence value.
 - **hold_back_imu_for_frames**: Images processing takes time. Therefor there is a time gap between the moment the image arrives at the wrapper and the moment the image is published to the ROS environment. During this time, Imu messages keep on arriving and a situation is created where an image with earlier timestamp is published after Imu message with later timestamp. If that is a problem, setting *hold_back_imu_for_frames* to *true* will hold the Imu messages back while processing the images and then publish them all in a burst, thus keeping the order of publication as the order of arrival. Note that in either case, the timestamp in each message's header reflects the time of it's origin.
