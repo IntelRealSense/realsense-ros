@@ -15,7 +15,15 @@ namespace realsense2_camera
                 _logger(node.get_logger())
                 {};
             ~ParametersBackend();
-            void add_on_set_parameters_callback(rclcpp::node_interfaces::NodeParametersInterface::OnParametersSetCallbackType callback);
+
+
+            #if defined( ROLLING ) 
+                using ros2_param_callback_type = rclcpp::node_interfaces::NodeParametersInterface::OnSetParametersCallbackType;
+            #else
+                using ros2_param_callback_type = rclcpp::node_interfaces::NodeParametersInterface::OnParametersSetCallbackType;
+            #endif
+
+            void add_on_set_parameters_callback(ros2_param_callback_type callback);
 
 
         private:
