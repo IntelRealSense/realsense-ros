@@ -67,8 +67,8 @@ LibRealSense supported version: v2.51.1 (see [realsense2_camera release notes](h
 ### Step 4: Install dependencies
    ```bash
    sudo apt-get install python3-rosdep -y
-   sudo rosdep init # "sudo rosdep init --include-eol-distros" for Dashing
-   rosdep update
+   sudo rosdep init # "sudo rosdep init --include-eol-distros" for Eloquent and earlier
+   rosdep update # "sudo rosdep update --include-eol-distros" for Eloquent and earlier
    rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys=librealsense2 -y
    ```
 
