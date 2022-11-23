@@ -6,7 +6,13 @@
 #include <librealsense2/rs.hpp>
 #include <librealsense2/rsutil.h>
 #include "constants.h"
+
+// cv_bridge.h last supported version is humble
+#if defined(ROLLING)
+#include <cv_bridge/cv_bridge.hpp>
+#else
 #include <cv_bridge/cv_bridge.h>
+#endif
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <diagnostic_updater/publisher.hpp>
