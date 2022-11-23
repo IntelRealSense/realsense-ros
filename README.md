@@ -231,7 +231,7 @@ For setting a new value for a parameter use `ros2 param set <node> <parameter_na
 - **odom_frame_id**: defines the origin coordinate system in ROS convention (X-Forward, Y-Left, Z-Up). pose topic defines the pose relative to that system.
 
 - **unite_imu_method**: The D435i and T265 cameras have built in IMU components which produce 2 unrelated streams: *gyro* - which shows angular velocity and *accel* which shows linear acceleration. Each with it's own frequency. By default, 2 corresponding topics are available, each with only the relevant fields of the message sensor_msgs::Imu are filled out.
-Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default *gyro* and *accel* topics. The *imu* topic is published at the rate of the gyro. All the fields of the Imu message under the *imu* topic are filled out.
+Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default *gyro* and *accel* topics. The *imu* topic is published at the rate of the gyro. All the fields of the Imu message under the *imu* topic are filled out. `unite_imu_method` parameter supported values are [0-2] meaning:  [0 -> None, 1 -> Copy, 2 -> Linear_ interpolation] when:
    - **linear_interpolation**: Every gyro message is attached by the an accel message interpolated to the gyro's timestamp.
    - **copy**: Every gyro message is attached by the last accel message.
 - **clip_distance**: remove from the depth image all values above a given value (meters). Disable by giving negative value (default)
