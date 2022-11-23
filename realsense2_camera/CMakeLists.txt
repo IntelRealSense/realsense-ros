@@ -128,6 +128,7 @@ set(SOURCES
     src/named_filter.cpp
     src/profile_manager.cpp
     src/image_publisher.cpp
+    src/cv_mat_sensor_msgs_image_type_adapter.cpp
   )
 
 if(NOT DEFINED ENV{ROS_DISTRO})
@@ -173,7 +174,8 @@ set(INCLUDES
     include/named_filter.h
     include/ros_param_backend.h
     include/profile_manager.h
-    include/image_publisher.h)
+    include/image_publisher.h
+    include/cv_mat_sensor_msgs_image_type_adapter.hpp)
 
 
 if (BUILD_TOOLS)
