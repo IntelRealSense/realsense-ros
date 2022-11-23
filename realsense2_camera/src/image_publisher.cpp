@@ -6,18 +6,20 @@
 using namespace realsense2_camera;
 
 // --- image_rcl_publisher implementation ---
+//MODIFY THE IMPLEMENTATION ACCORDINGY TO THE USE OF CvCONTAINER
 image_rcl_publisher::image_rcl_publisher( rclcpp::Node & node,
                                           const std::string & topic_name,
                                           const rmw_qos_profile_t & qos )
 {
-    image_publisher_impl = node.create_publisher< sensor_msgs::msg::Image >(
+    image_publisher_impl = node.create_publisher< cv_type_adapt::ROSCvMatContainer >(
         topic_name,
         rclcpp::QoS( rclcpp::QoSInitialization::from_rmw( qos ), qos ) );
 }
 
 void image_rcl_publisher::publish( sensor_msgs::msg::Image::UniquePtr image_ptr )
 {
-    image_publisher_impl->publish( std::move( image_ptr ) );
+    auto container = std::make_unique<cv_type_adapt::ROSCvMatContainer>(std::move(image_ptr));
+    image_publisher_impl->publish( std::move( container ) );
 }
 
 size_t image_rcl_publisher::get_subscription_count() const
