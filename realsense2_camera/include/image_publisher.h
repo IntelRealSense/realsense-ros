@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include <cv_mat_sensor_msgs_image_type_adapter.hpp>
+//#include <cv_mat_sensor_msgs_image_type_adapter.hpp>
+#include <cv_bridge/cv_mat_sensor_msgs_image_type_adapter.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
@@ -14,7 +15,7 @@
 #endif
 
 RCLCPP_USING_CUSTOM_TYPE_AS_ROS_MESSAGE_TYPE(
-  cv_type_adapt::ROSCvMatContainer,
+  cv_bridge::ROSCvMatContainer,
   sensor_msgs::msg::Image);
 
 namespace realsense2_camera {
@@ -37,7 +38,7 @@ public:
     size_t get_subscription_count() const override;
 
 private:
-    rclcpp::Publisher< cv_type_adapt::ROSCvMatContainer >::SharedPtr image_publisher_impl;
+    rclcpp::Publisher< cv_bridge::ROSCvMatContainer >::SharedPtr image_publisher_impl;
 };
 
 // image_transport implementation of an image publisher (adds a compressed image topic)
