@@ -3,7 +3,6 @@
 
 #pragma once
 
-//#include <cv_mat_sensor_msgs_image_type_adapter.hpp>
 #include <cv_bridge/cv_mat_sensor_msgs_image_type_adapter.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
