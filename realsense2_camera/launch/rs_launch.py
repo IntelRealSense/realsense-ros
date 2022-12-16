@@ -59,6 +59,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'depth_module.gain.2',         'default': '16', 'description': 'Initial value for hdr_merge filter'},
                            {'name': 'wait_for_device_timeout',      'default': '-1.', 'description': 'Timeout for waiting for device to connect (Seconds)'},
                            {'name': 'reconnect_timeout',            'default': '6.', 'description': 'Timeout(seconds) between consequtive reconnection attempts'},
+                           {'name': 'rgb_camera.power_line_frequency', 'default': '1', 'description': 'Disabled - 0; 50 Hz - 1; 60 Hz - 2'},
                           ]
 
 def declare_configurable_parameters(parameters):
