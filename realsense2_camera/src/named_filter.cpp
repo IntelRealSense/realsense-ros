@@ -240,7 +240,6 @@ void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2:
     }
     else
     {
-        std::string format_str = "intensity";
         msg_pointcloud->row_step = msg_pointcloud->width * msg_pointcloud->point_step;
         msg_pointcloud->data.resize(msg_pointcloud->height * msg_pointcloud->row_step);
 
