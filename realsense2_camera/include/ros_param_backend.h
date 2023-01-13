@@ -13,7 +13,7 @@ namespace realsense2_camera
             ParametersBackend(rclcpp::Node& node) : 
                 _node(node),
                 _logger(node.get_logger())
-                {};
+                {}
             ~ParametersBackend();
 
 
