@@ -17,7 +17,7 @@ namespace realsense2_camera
             ~ParametersBackend();
 
 
-            #if defined( ROLLING ) 
+            #if defined( RCLCPP_HAS_OnSetParametersCallbackType )
                 using ros2_param_callback_type = rclcpp::node_interfaces::NodeParametersInterface::OnSetParametersCallbackType;
             #else
                 using ros2_param_callback_type = rclcpp::node_interfaces::NodeParametersInterface::OnParametersSetCallbackType;
