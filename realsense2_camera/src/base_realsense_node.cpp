@@ -10,6 +10,13 @@
 #include <fstream>
 #include <image_publisher.h>
 
+// Header files for disabling intra-process comms for static broadcaster.
+#include <rclcpp/publisher_options.hpp>
+// This header file is not available in ROS 2 Dashing.
+#ifndef DASHING
+#include <tf2_ros/qos.hpp>
+#endif
+
 using namespace realsense2_camera;
 
 SyncedImuPublisher::SyncedImuPublisher(rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher, 
@@ -91,11 +98,14 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     {
         ROS_INFO("Intra-Process communication enabled");
     }
-    else
-    {
-        // intra-process requirment of QoS.durability=Volatile cannot be fulfilled with `StaticTransformBroadcaster` as it only support `TransientLocal` durability.
-        _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node);
-    }
+
+    rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
+    options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+    #ifndef DASHING
+    _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node, tf2_ros::StaticBroadcasterQoS(), std::move(options));
+    #else
+    _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node, rclcpp::QoS(100), std::move(options));
+    #endif
 
     _image_format[1] = CV_8UC1;    // CVBridge type
     _image_format[2] = CV_16UC1;    // CVBridge type
