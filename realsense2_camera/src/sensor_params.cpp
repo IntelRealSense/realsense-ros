@@ -102,12 +102,13 @@ void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const s
     rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
     std::stringstream desc;
     desc << sensor.get_option_description(option) << std::endl << description_addition;
-    crnt_descriptor.description = desc.str();
     if (std::is_same<T, int>::value || std::is_same<T, bool>::value)
     {
         rcl_interfaces::msg::IntegerRange range;
         range.from_value = int(op_range.min);
         range.to_value = int(op_range.max);
+	range.step = int(op_range.step);
+	desc << " default value: " << int(op_range.def);
         crnt_descriptor.integer_range.push_back(range);
         if (std::is_same<T, bool>::value)
             ROS_DEBUG_STREAM("Declare: BOOL::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
@@ -119,10 +120,13 @@ void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const s
         rcl_interfaces::msg::FloatingPointRange range;
         range.from_value = double(op_range.min);
         range.to_value = double(op_range.max);
+        range.step = double(op_range.step);
+	desc << " default value: " << double(op_range.def);
         crnt_descriptor.floating_point_range.push_back(range);
         ROS_DEBUG_STREAM("Declare: DOUBLE::" << option_name << " = " << option_value);
     }
-
+    crnt_descriptor.description = desc.str();
+    
     T new_val;
     try
     {
