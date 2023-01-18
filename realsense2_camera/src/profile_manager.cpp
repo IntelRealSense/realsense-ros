@@ -114,7 +114,7 @@ rs2::stream_profile ProfilesManager::getDefaultProfile()
     }
     if (!(default_profile.get()))
     {
-        ROS_INFO_STREAM("No default profile found. Setting the first available profile as the default one.")
+        ROS_INFO_STREAM("No default profile found. Setting the first available profile as the default one.");
         default_profile = _all_profiles.front();
     }
 
