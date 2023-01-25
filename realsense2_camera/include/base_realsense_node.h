@@ -212,6 +212,7 @@ namespace realsense2_camera
         void FillImuData_LinearInterpolation(const CimuData imu_data, std::deque<sensor_msgs::msg::Imu>& imu_msgs);
         void imu_callback(rs2::frame frame);
         void imu_callback_sync(rs2::frame frame, imu_sync_method sync_method=imu_sync_method::COPY);
+        void safety_callback(rs2::frame frame);
         void pose_callback(rs2::frame frame);
         void multiple_message_callback(rs2::frame frame, imu_sync_method sync_method);
         void frame_callback(rs2::frame frame);

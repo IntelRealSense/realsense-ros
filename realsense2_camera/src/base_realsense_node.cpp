@@ -437,6 +437,11 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
     publishMetadata(frame, t, OPTICAL_FRAME_ID(stream_index));
 }
 
+void BaseRealSenseNode::safety_callback(rs2::frame frame)
+{
+    ROS_INFO("safety frame arrived");
+}
+
 void BaseRealSenseNode::pose_callback(rs2::frame frame)
 {
     double frame_time = frame.get_timestamp();
@@ -653,6 +658,9 @@ void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_met
         case RS2_STREAM_ACCEL:
             if (sync_method > imu_sync_method::NONE) imu_callback_sync(frame, sync_method);
             else imu_callback(frame);
+            break;
+        case RS2_STREAM_SAFETY:
+            safety_callback(frame);
             break;
         case RS2_STREAM_POSE:
             pose_callback(frame);
