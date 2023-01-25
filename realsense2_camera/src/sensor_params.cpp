@@ -100,31 +100,43 @@ void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const s
     }
     rs2::option_range op_range = sensor.get_option_range(option);
     rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
+
+    // set descriptor name to be the option name in order to get more detailed warnings/errors
+    crnt_descriptor.name = option_name;
+
     std::stringstream desc;
     desc << sensor.get_option_description(option) << std::endl << description_addition;
     if (std::is_same<T, int>::value || std::is_same<T, bool>::value)
     {
         rcl_interfaces::msg::IntegerRange range;
-        range.from_value = int(op_range.min);
-        range.to_value = int(op_range.max);
-        range.step = int(op_range.step);
-        desc << " default value: " << int(op_range.def);
+        range.from_value = static_cast<int64_t>(op_range.min);
+        range.to_value = static_cast<int64_t>(op_range.max);
+        range.step = static_cast<uint64_t>(op_range.step);
+        desc << " default value: " << static_cast<int64_t>(op_range.def);
         crnt_descriptor.integer_range.push_back(range);
-        if (std::is_same<T, bool>::value)
+        if (std::is_same<T, bool>::value) 
+        {
+            crnt_descriptor.type = rclcpp::PARAMETER_BOOL;
             ROS_DEBUG_STREAM("Declare: BOOL::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
+        }
         else
+        {
+            crnt_descriptor.type = rclcpp::PARAMETER_INTEGER;
             ROS_DEBUG_STREAM("Declare: INT::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
+        }
     }
     else
     {
         rcl_interfaces::msg::FloatingPointRange range;
-        range.from_value = double(op_range.min);
-        range.to_value = double(op_range.max);
-        range.step = double(op_range.step);
-        desc << " default value: " << double(op_range.def);
+        range.from_value = static_cast<double>(op_range.min);
+        range.to_value = static_cast<double>(op_range.max);
+        range.step = static_cast<double>(op_range.step);
+        desc << " default value: " << static_cast<double>(op_range.def);        
         crnt_descriptor.floating_point_range.push_back(range);
+        crnt_descriptor.type = rclcpp::PARAMETER_DOUBLE;
         ROS_DEBUG_STREAM("Declare: DOUBLE::" << option_name << " = " << option_value);
     }
+
     crnt_descriptor.description = desc.str();
     
     T new_val;
