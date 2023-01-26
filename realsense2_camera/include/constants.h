@@ -68,6 +68,7 @@ namespace realsense2_camera
     const uint16_t RS416_RGB_PID    = 0x0B52; // F416 RGB
     const uint16_t RS405_PID        = 0x0B5B; // DS5U
     const uint16_t RS455_PID        = 0x0B5C; // D455
+    const uint16_t RS457_PID        = 0xABCD; // D457
     const uint16_t RS_T265_PID      = 0x0b37; // 
     const uint16_t RS_L515_PID_PRE_PRQ = 0x0B3D; // 
     const uint16_t RS_L515_PID      = 0x0B64; // 
