@@ -48,7 +48,6 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'allow_no_texture_points',      'default': 'false', 'description': "''"},                           
                            {'name': 'pointcloud.ordered_pc',        'default': 'false', 'description': ''},
                            {'name': 'calib_odom_file',              'default': "''", 'description': "''"},
-                           {'name': 'topic_odom_in',                'default': "''", 'description': 'topic for T265 wheel odometry'},
                            {'name': 'tf_publish_rate',              'default': '0.0', 'description': 'Rate of publishing static_tf'},
                            {'name': 'diagnostics_period',           'default': '0.0', 'description': 'Rate of publishing diagnostics. 0=Disabled'},
                            {'name': 'decimation_filter.enable',     'default': 'false', 'description': 'Rate of publishing static_tf'},

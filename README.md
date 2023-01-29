@@ -1,5 +1,5 @@
 # ROS2 Wrapper for Intel&reg; RealSense&trade; Devices
-These are packages for using Intel RealSense cameras (D400 and L500 series, SR300 camera and T265 Tracking Module) with ROS2.
+These are packages for using Intel RealSense cameras (D400, L500 and SR300 cameras) with ROS2.
 
 This version supports ROS2 Dashing, Eloquent, Foxy, Galactic and Rolling.
 
@@ -157,7 +157,7 @@ Enabling stream adds matching topics. For instance, enabling the gyro and accel 
 
 To turn them off: `ros2 param set /camera/camera enable_infra false`
 The "/camera" prefix is the namesapce specified in the given launch file.
-When using D435 or D415, the gyro and accel topics wont be available. Likewise, other topics will be available when using T265 (see below).
+When using D435 or D415, the gyro and accel topics wont be available.
 
 ### The metadata topic:
 The metadata messages store the camera's available metadata in a *json* format. To learn more, a dedicated script for echoing a metadata topic in runtime is attached. For instance, use the following command to echo the camera/depth/metadata topic:
@@ -230,14 +230,14 @@ For setting a new value for a parameter use `ros2 param set <node> <parameter_na
 - **base_frame_id**: defines the frame_id all static transformations refers to.
 - **odom_frame_id**: defines the origin coordinate system in ROS convention (X-Forward, Y-Left, Z-Up). pose topic defines the pose relative to that system.
 
-- **unite_imu_method**: The D435i and T265 cameras have built in IMU components which produce 2 unrelated streams: *gyro* - which shows angular velocity and *accel* which shows linear acceleration. Each with it's own frequency. By default, 2 corresponding topics are available, each with only the relevant fields of the message sensor_msgs::Imu are filled out.
+- **unite_imu_method**: The D435i camera has built in IMU components which produce 2 unrelated streams: *gyro* - which shows angular velocity and *accel* which shows linear acceleration. Each with it's own frequency. By default, 2 corresponding topics are available, each with only the relevant fields of the message sensor_msgs::Imu are filled out.
 Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default *gyro* and *accel* topics. The *imu* topic is published at the rate of the gyro. All the fields of the Imu message under the *imu* topic are filled out. `unite_imu_method` parameter supported values are [0-2] meaning:  [0 -> None, 1 -> Copy, 2 -> Linear_ interpolation] when:
    - **linear_interpolation**: Every gyro message is attached by the an accel message interpolated to the gyro's timestamp.
    - **copy**: Every gyro message is attached by the last accel message.
 - **clip_distance**: remove from the depth image all values above a given value (meters). Disable by giving negative value (default)
-- **linear_accel_cov**, **angular_velocity_cov**: sets the variance given to the Imu readings. For the T265, these values are being modified by the inner confidence value.
+- **linear_accel_cov**, **angular_velocity_cov**: sets the variance given to the Imu readings.
 - **hold_back_imu_for_frames**: Images processing takes time. Therefor there is a time gap between the moment the image arrives at the wrapper and the moment the image is published to the ROS environment. During this time, Imu messages keep on arriving and a situation is created where an image with earlier timestamp is published after Imu message with later timestamp. If that is a problem, setting *hold_back_imu_for_frames* to *true* will hold the Imu messages back while processing the images and then publish them all in a burst, thus keeping the order of publication as the order of arrival. Note that in either case, the timestamp in each message's header reflects the time of it's origin.
-- **topic_odom_in**: For T265, add wheel odometry information through this topic. The code refers only to the *twist.linear* field in the message.
+- **topic_odom_in**: The code refers only to the *twist.linear* field in the message.
 - **calib_odom_file**: For the T265 to include odometry input, it must be given a [configuration file](https://github.com/IntelRealSense/librealsense/blob/master/unit-tests/resources/calibration_odometry.json). Explanations can be found [here](https://github.com/IntelRealSense/librealsense/pull/3462). The calibration is done in ROS coordinates system.
 - **publish_tf**: boolean, publish or not TF at all. Defaults to True.
 - **diagnostics_period**: double, positive values set the period between diagnostics updates on the `/diagnostics` topic. 0 or negative values mean no diagnostics topic is published. Defaults to 0.</br>
@@ -248,20 +248,6 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 ### Available services:
 - device_info : retrieve information about the device - serial_number, firmware_version etc. Type `ros2 interface show realsense2_camera_msgs/srv/DeviceInfo` for the full list. Call example: `ros2 service call /camera/device_info realsense2_camera_msgs/srv/DeviceInfo`
   - Note that for **ROS2 Dashing** the command is `ros2 srv show realsense2_camera_msgs/srv/DeviceInfo`
-## Using T265 ##
-
-### Start the camera node
-To start the camera node:
-
-```bash
-ros2 run realsense2_camera realsense2_camera_node --ros-args -p enable_pose:=true -p device_type:=t265
-```
-or, if you also have a d4xx connected, you can try out the launch file:
-```bash
-ros2 launch realsense2_camera rs_d400_and_t265_launch.py enable_fisheye12:=true enable_fisheye22:=true
-```
-- note: the parameters are called `enable_fisheye12` and `enable_fisheye22`. The node knows them as `enable_fisheye1` and `enable_fisheye2` but launch file runs 2 nodes and these parameters refer to the second one.
-
 
 
 ## Efficient intra-process communication:
