@@ -3,7 +3,7 @@
 <package format="3">
   <name>realsense2_camera</name>
   <version>4.51.1</version>
-  <description>RealSense camera package allowing access to Intel T265 Tracking module and SR300 and D400 3D cameras</description>
+  <description>RealSense camera package allowing access to Intel SR300 and D400 3D cameras</description>
   <maintainer email="librs.ros@intel.com">LibRealSense ROS Team</maintainer>
   <license>Apache License 2.0</license>
   

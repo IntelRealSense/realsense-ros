@@ -118,7 +118,6 @@ set(node_plugins "")
 set(SOURCES
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
-    src/t265_realsense_node.cpp
     src/parameters.cpp
     src/rs_node_setup.cpp
     src/ros_sensor.cpp
@@ -165,7 +164,6 @@ set(INCLUDES
     include/constants.h
     include/realsense_node_factory.h
     include/base_realsense_node.h
-    include/t265_realsense_node.h
     include/ros_sensor.h
     include/ros_utils.h
     include/dynamic_params.h
