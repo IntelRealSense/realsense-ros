@@ -86,11 +86,6 @@ SensorParams::~SensorParams()
 
 double SensorParams::float_to_double(float val, rs2::option_range option_range)
 {
-    if(val == 0)
-    {
-        return 0.0;
-    }
-
     // casting from float to double, while trying to increase precision
     // in order to be comply with the FloatingPointRange configurations
     // and to succeed the rclcpp NodeParameters::declare_parameter call
@@ -133,7 +128,7 @@ rcl_interfaces::msg::ParameterDescriptor SensorParams::get_parameter_descriptor(
         // add the default value of this option to the description stream
         description_stream << "Default value: " << static_cast<double>(option_range.def);        
 
-        ROS_INFO_STREAM("Declare: DOUBLE::" << option_name << "=" << option_value << "  [" << option_range.min << ", " << option_range.max << "]");
+        ROS_DEBUG_STREAM("Declare: DOUBLE::" << option_name << "=" << option_value << "  [" << option_range.min << ", " << option_range.max << "]");
     }
     else // T is bool or int
     {
