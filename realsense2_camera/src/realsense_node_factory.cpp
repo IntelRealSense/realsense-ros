@@ -174,12 +174,6 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
         }
     }
 
-    bool remove_tm2_handle(_device && RS_T265_PID != std::stoi(_device.get_info(RS2_CAMERA_INFO_PRODUCT_ID), 0, 16));
-    if (remove_tm2_handle)
-    {
-        _ctx.unload_tracking_module();
-    }
-
     if (_device && _initial_reset)
     {
         _initial_reset = false;

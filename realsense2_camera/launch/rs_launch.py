@@ -26,7 +26,6 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'enable_infra1',                'default': 'false', 'description': 'enable infra1 stream'},
                            {'name': 'enable_infra2',                'default': 'false', 'description': 'enable infra2 stream'},
                            {'name': 'infra_rgb',                    'default': 'false', 'description': 'enable infra2 stream'},
-                           {'name': 'tracking_module.profile',      'default': '0,0,0', 'description': 'fisheye width'},
                            {'name': 'enable_fisheye1',              'default': 'true', 'description': 'enable fisheye1 stream'},
                            {'name': 'enable_fisheye2',              'default': 'true', 'description': 'enable fisheye2 stream'},
                            {'name': 'enable_confidence',            'default': 'true', 'description': 'enable depth stream'},
