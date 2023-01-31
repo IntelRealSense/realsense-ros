@@ -54,7 +54,6 @@ namespace realsense2_camera
             bool _allow_no_texture_points;
             bool _ordered_pc;
             std::mutex _mutex_publisher;
-            sensor_msgs::msg::PointCloud2 _msg_pointcloud;
             rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _pointcloud_publisher;
             std::string _pointcloud_qos;
     };

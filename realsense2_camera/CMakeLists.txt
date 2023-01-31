@@ -160,6 +160,17 @@ else()
   message(FATAL_ERROR "Unsupported ROS Distribution: " "$ENV{ROS_DISTRO}")
 endif()
 
+# The header 'cv_bridge/cv_bridge.hpp' was added in version 3.3.0. For older
+# cv_bridge versions, we have to use the header 'cv_bridge/cv_bridge.h'.
+if(${cv_bridge_VERSION} VERSION_GREATER_EQUAL "3.3.0")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCV_BRDIGE_HAS_HPP")
+endif()
+
+# 'OnSetParametersCallbackType' is only defined for rclcpp 17 and onward.
+if(${rclcpp_VERSION} VERSION_GREATER_EQUAL "17.0")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRCLCPP_HAS_OnSetParametersCallbackType")
+endif()
+
 set(INCLUDES
     include/constants.h
     include/realsense_node_factory.h
