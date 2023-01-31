@@ -23,6 +23,10 @@ namespace realsense2_camera
             rclcpp::Logger _logger;
 
         private:
+            double float_to_double(float val, rs2::option_range option_range);
+            template<class T>
+            rcl_interfaces::msg::ParameterDescriptor get_parameter_descriptor(const std::string& option_name, rs2::option_range option_range,
+                T option_value, const std::string& option_description, const std::string& description_addition);
             template<class T>
             void set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name, const std::string& description_addition="");
 
