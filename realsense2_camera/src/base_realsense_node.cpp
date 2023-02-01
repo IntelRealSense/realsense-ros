@@ -22,7 +22,7 @@ using namespace realsense2_camera;
 SyncedImuPublisher::SyncedImuPublisher(rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher, 
                                        std::size_t waiting_list_size):
             _publisher(imu_publisher), _pause_mode(false),
-            _waiting_list_size(waiting_list_size)
+            _waiting_list_size(waiting_list_size), _is_enabled(false)
             {}
 
 SyncedImuPublisher::~SyncedImuPublisher()
@@ -87,10 +87,21 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _parameters(parameters),
     _dev(dev),
     _json_file_path(""),
+    _depth_scale_meters(0),
+    _clipping_distance(0),
+    _linear_accel_cov(0),
+    _angular_velocity_cov(0),
+    _hold_back_imu_for_frames(false),
+    _publish_tf(false),
     _tf_publish_rate(TF_PUBLISH_RATE),
+    _diagnostics_period(0),
     _use_intra_process(use_intra_process),
     _is_initialized_time_base(false),
+    _camera_time_base(0),
     _sync_frames(SYNC_FRAMES),
+    _pointcloud(false),
+    _publish_odom_tf(false),
+    _imu_sync_method(imu_sync_method::NONE),
     _is_profile_changed(false),
     _is_align_depth_changed(false)
 {
@@ -918,7 +929,7 @@ void BaseRealSenseNode::SetBaseStream()
     }
     
     std::vector<stream_index_pair>::const_iterator base_stream(base_stream_priority.begin());
-    while( (available_profiles.find(*base_stream) == available_profiles.end()) && (base_stream != base_stream_priority.end()))
+    while((base_stream != base_stream_priority.end()) && (available_profiles.find(*base_stream) == available_profiles.end()))
     {
         base_stream++;
     }
@@ -973,9 +984,7 @@ void BaseRealSenseNode::startDynamicTf()
 void BaseRealSenseNode::publishDynamicTransforms()
 {
     // Publish transforms for the cameras
-
-    std::mutex mu;
-    std::unique_lock<std::mutex> lock(mu);
+    std::unique_lock<std::mutex> lock(_publish_dynamic_tf_mutex);
     while (rclcpp::ok() && _is_running && _tf_publish_rate > 0)
     {
         _cv_tf.wait_for(lock, std::chrono::milliseconds((int)(1000.0/_tf_publish_rate)), [&]{return (!(_is_running && _tf_publish_rate > 0));});
