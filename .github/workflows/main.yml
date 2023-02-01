@@ -40,15 +40,6 @@ jobs:
 
     steps:
 
-    # Workaround - forcing cmake 3.23.0 instead of using latest cmake of GHA.
-    # cmake 3.24.0 is not compaitable with galactic/foxy/humble ament_cmake
-    # see: https://github.com/ament/ament_cmake/pull/395
-    # TODO: remove this step once ament_cmake for galactic/foxy/humble is released
-    - name: Setup cmake 3.23.0
-      uses: jwlawson/actions-setup-cmake@v1.12.1
-      with:
-        cmake-version: '3.23.0'
-
     - name: Setup ROS2 Workspace
       run: | 
         mkdir -p ${{github.workspace}}/ros2/src
@@ -62,7 +53,16 @@ jobs:
       run: |
         cd ${{github.workspace}}/ros2/src/realsense-ros/scripts
         ./pr_check.sh 
-    
+
+    # Workaround - forcing cmake 3.23.0 instead of using latest cmake of GHA.
+    # cmake 3.24.0 is not compaitable with galactic/foxy/humble ament_cmake
+    # see: https://github.com/ament/ament_cmake/pull/395
+    # TODO: remove this step once ament_cmake for galactic/foxy/humble is released
+    - name: Setup cmake 3.23.0
+      uses: jwlawson/actions-setup-cmake@v1.12.1
+      with:
+        cmake-version: '3.23.0'
+
     ## If distro is one of [galactic, foxy, eloquent, dashing], use the setup-ros@v0.2
     ## which supports old versions of ROS2 and EOL versions.
     ## For Humble distro, use v0.3 
@@ -140,4 +140,4 @@ jobs:
         source ${{github.workspace}}/.bashrc
         . install/local_setup.bash
         python3 src/realsense-ros/realsense2_camera/scripts/rs2_test.py non_existent_file
-        
+
