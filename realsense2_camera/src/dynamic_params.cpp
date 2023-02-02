@@ -70,8 +70,7 @@ namespace realsense2_camera
     {
         int time_interval(1000);
         std::function<void()> func = [this, time_interval](){
-            std::mutex mu;
-            std::unique_lock<std::mutex> lock(mu);
+            std::unique_lock<std::mutex> lock(_mu);
             while(_is_running) {
                 _update_functions_cv.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return !_is_running || !_update_functions_v.empty();});
                 while (!_update_functions_v.empty())

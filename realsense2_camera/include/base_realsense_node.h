@@ -88,7 +88,6 @@ namespace realsense2_camera
     class SyncedImuPublisher
     {
         public:
-            SyncedImuPublisher() {_is_enabled=false;};
             SyncedImuPublisher(rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher, 
                                std::size_t waiting_list_size=1000);
             ~SyncedImuPublisher();
@@ -157,7 +156,7 @@ namespace realsense2_camera
         std::list<std::string> _parameters_names;
 
         void publishExtrinsicsTopic(const stream_index_pair& sip, const rs2_extrinsics& ex);
-        virtual void calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile);
+        void calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile);
         void getDeviceInfo(const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr req,
                                  realsense2_camera_msgs::srv::DeviceInfo::Response::SharedPtr res);
         tf2::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
@@ -258,6 +257,7 @@ namespace realsense2_camera
         std::mutex _publish_tf_mutex;
         std::mutex _update_sensor_mutex;
         std::mutex _profile_changes_mutex;
+        std::mutex _publish_dynamic_tf_mutex;
 
         std::shared_ptr<tf2_ros::StaticTransformBroadcaster> _static_tf_broadcaster;
         std::shared_ptr<tf2_ros::TransformBroadcaster> _dynamic_tf_broadcaster;
