@@ -104,7 +104,8 @@ if __name__ == '__main__':
     print ('Press Q to quit')
     print
 
-    status_keys = [key[0] for key in status.keys()]
+    status_keys = [key for key in status.keys() if key not in ['mode', 'message']]
+    initial_letters = [key[0] for key in status_keys]
     print ('%-8s%-8s%-8s%s' % ('Mode', 'value', 'step', 'message'))
     print_status(status)
     publish_status(broadcaster, status)
@@ -112,8 +113,8 @@ if __name__ == '__main__':
         kk = getch()
         status['message'] = ''
         try:
-            key_idx = status_keys.index(kk)
-            status['mode'] = status.keys()[key_idx]
+            key_idx = initial_letters.index(kk.lower())
+            status['mode'] = status_keys[key_idx]
         except ValueError as e:
             if kk.upper() == 'Q':
                 sys.stdout.write('\n')
