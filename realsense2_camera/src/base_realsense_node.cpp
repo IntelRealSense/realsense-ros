@@ -121,6 +121,7 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
         ROS_INFO("Intra-Process communication enabled");
     }
 
+    // intra-process do not support latched QoS, so we need to disable intra-process for this topic
     rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
     options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
     #ifndef DASHING

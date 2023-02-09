@@ -286,7 +286,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
         if (!((rs2::stream_profile)profile==(rs2::stream_profile)_base_profile))
         {
 
-
+            // intra-process do not support latched QoS, so we need to disable intra-process for this topic
             rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
             options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
             rmw_qos_profile_t extrinsics_qos = rmw_qos_profile_latched;
