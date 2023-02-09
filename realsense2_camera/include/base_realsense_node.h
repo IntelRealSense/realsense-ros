@@ -275,7 +275,6 @@ namespace realsense2_camera
         std::map<stream_index_pair, rclcpp::Publisher<realsense2_camera_msgs::msg::Metadata>::SharedPtr> _metadata_publishers;
         std::map<stream_index_pair, rclcpp::Publisher<IMUInfo>::SharedPtr> _imu_info_publisher;
         std::map<stream_index_pair, rclcpp::Publisher<Extrinsics>::SharedPtr> _extrinsics_publishers;
-        std::map<stream_index_pair, Extrinsics> _extrinsics_msgs;
         std::map<stream_index_pair, cv::Mat> _image;
         std::map<unsigned int, std::string> _encoding;
 

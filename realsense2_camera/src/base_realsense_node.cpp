@@ -864,7 +864,6 @@ void BaseRealSenseNode::publishExtrinsicsTopic(const stream_index_pair& sip, con
     Extrinsics msg = rsExtrinsicsToMsg(ex);
     if (_extrinsics_publishers.find(sip) != _extrinsics_publishers.end())
     {
-        _extrinsics_msgs[sip] = msg; // We keep the message for periodically publish later if needed
         _extrinsics_publishers[sip]->publish(msg);
     }
 }
@@ -1011,23 +1010,6 @@ void BaseRealSenseNode::publishDynamicTransforms()
             catch(const std::exception& e)
             {
                 ROS_ERROR_STREAM("Error publishing dynamic transforms: " << e.what());
-            }
-
-            // If static_tf was not created we need to publish the extrinsics periodically since it is not publishes as a latched topic.
-            if ( !_static_tf_broadcaster )
-            {
-                try
-                {
-                    for (const auto &extrinsics_publisher : _extrinsics_publishers)
-                    {
-                        const auto &ext_msg = _extrinsics_msgs[extrinsics_publisher.first];
-                        extrinsics_publisher.second->publish( ext_msg );
-                    }
-                }
-                catch (const std::exception &e)
-                {
-                    ROS_ERROR_STREAM("Error publishing extrinsics : " << e.what());
-                }
             }
         }
     }
