@@ -363,7 +363,7 @@ void BaseRealSenseNode::FillImuData_Copy(const CimuData imu_data, std::deque<sen
 
 void BaseRealSenseNode::ImuMessage_AddDefaultValues(sensor_msgs::msg::Imu& imu_msg)
 {
-    imu_msg.header.frame_id = IMU_OPTICAL_FRAME_ID;
+    imu_msg.header.frame_id = IMU_OPTICAL_FRAME_ID(sip);
     imu_msg.orientation.x = 0.0;
     imu_msg.orientation.y = 0.0;
     imu_msg.orientation.z = 0.0;
@@ -916,8 +916,8 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
 
     if ((_imu_sync_method > imu_sync_method::NONE) && (profile.stream_type() == RS2_STREAM_GYRO))
     {
-        publish_static_tf(transform_ts_, zero_trans, zero_rot_quaternions, FRAME_ID(sip), IMU_FRAME_ID);
-        publish_static_tf(transform_ts_, zero_trans, quaternion_optical, IMU_FRAME_ID, IMU_OPTICAL_FRAME_ID);
+        publish_static_tf(transform_ts_, zero_trans, zero_rot_quaternions, FRAME_ID(sip), IMU_FRAME_ID(sip));
+        publish_static_tf(transform_ts_, zero_trans, quaternion_optical, IMU_FRAME_ID(sip), IMU_OPTICAL_FRAME_ID(sip));
     }
 
     publishExtrinsicsTopic(sip, ex);
