@@ -123,11 +123,6 @@ void BaseRealSenseNode::setAvailableSensors()
             imu_callback_sync(frame);
     };
 
-
-    std::function<void(rs2::frame)> safety_callback_function = [this](rs2::frame frame){
-        safety_callback(frame);
-    };
-    
     std::function<void(rs2::frame)> multiple_message_callback_function = [this](rs2::frame frame){multiple_message_callback(frame, _imu_sync_method);};
 
     std::function<void()> update_sensor_func = [this](){
@@ -148,7 +143,8 @@ void BaseRealSenseNode::setAvailableSensors()
         std::unique_ptr<RosSensor> rosSensor;
         if (sensor.is<rs2::depth_sensor>() || 
             sensor.is<rs2::color_sensor>() ||
-            sensor.is<rs2::fisheye_sensor>())
+            sensor.is<rs2::fisheye_sensor>() ||
+            sensor.is<rs2::safety_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as VideoSensor.");
             rosSensor = std::make_unique<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, _use_intra_process, _dev.is<playback>());
@@ -157,11 +153,6 @@ void BaseRealSenseNode::setAvailableSensors()
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as ImuSensor.");
             rosSensor = std::make_unique<RosSensor>(sensor, _parameters, imu_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, false, _dev.is<playback>());
-        }
-        else if (sensor.is<rs2::safety_sensor>())
-        {
-            ROS_INFO_STREAM("Set " << module_name << " as SafetySensor.");
-            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, safety_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, false, _dev.is<playback>());
         }
         else if (sensor.is<rs2::pose_sensor>())
         {
