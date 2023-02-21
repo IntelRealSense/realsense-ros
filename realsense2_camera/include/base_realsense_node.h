@@ -1,5 +1,16 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2022 Intel Corporation. All Rights Reserved.
+// Copyright 2023 Intel Corporation. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #pragma once
 
@@ -8,7 +19,7 @@
 #include "constants.h"
 
 // cv_bridge.h last supported version is humble
-#if defined(ROLLING)
+#if defined(CV_BRDIGE_HAS_HPP)
 #include <cv_bridge/cv_bridge.hpp>
 #else
 #include <cv_bridge/cv_bridge.h>
@@ -77,7 +88,6 @@ namespace realsense2_camera
     class SyncedImuPublisher
     {
         public:
-            SyncedImuPublisher() {_is_enabled=false;};
             SyncedImuPublisher(rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher, 
                                std::size_t waiting_list_size=1000);
             ~SyncedImuPublisher();
@@ -146,7 +156,7 @@ namespace realsense2_camera
         std::list<std::string> _parameters_names;
 
         void publishExtrinsicsTopic(const stream_index_pair& sip, const rs2_extrinsics& ex);
-        virtual void calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile);
+        void calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile);
         void getDeviceInfo(const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr req,
                                  realsense2_camera_msgs::srv::DeviceInfo::Response::SharedPtr res);
         tf2::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
@@ -248,6 +258,7 @@ namespace realsense2_camera
         std::mutex _publish_tf_mutex;
         std::mutex _update_sensor_mutex;
         std::mutex _profile_changes_mutex;
+        std::mutex _publish_dynamic_tf_mutex;
 
         std::shared_ptr<tf2_ros::StaticTransformBroadcaster> _static_tf_broadcaster;
         std::shared_ptr<tf2_ros::TransformBroadcaster> _dynamic_tf_broadcaster;
@@ -265,7 +276,6 @@ namespace realsense2_camera
         std::map<stream_index_pair, rclcpp::Publisher<realsense2_camera_msgs::msg::Metadata>::SharedPtr> _metadata_publishers;
         std::map<stream_index_pair, rclcpp::Publisher<IMUInfo>::SharedPtr> _imu_info_publisher;
         std::map<stream_index_pair, rclcpp::Publisher<Extrinsics>::SharedPtr> _extrinsics_publishers;
-        std::map<stream_index_pair, Extrinsics> _extrinsics_msgs;
         std::map<stream_index_pair, cv::Mat> _image;
         std::map<unsigned int, std::string> _encoding;
 

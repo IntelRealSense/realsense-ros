@@ -1,7 +1,18 @@
 #!/bin/bash
 
-# License: Apache 2.0. See LICENSE file in root directory.
-# Copyright(c) 2022 Intel Corporation. All Rights Reserved.
+# Copyright 2023 Intel Corporation. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # This script makes sure all files with the following extensions - .h, .hpp, .cpp, .js, .py, .bat, .sh, .txt -
 # include the Apache license reference and Intel copyright, as it shown in this file header.
@@ -16,12 +27,13 @@ sudo apt-get install dos2unix
 ok=0
 fixed=0
 
+license_file=$PWD/../LICENSE
 
 function check_folder {
     for filename in $(find $1 -type f \( -iname \*.cpp -o -iname \*.h -o -iname \*.hpp -o -iname \*.js -o -iname \*.bat -o -iname \*.sh -o -iname \*.txt -o -iname \*.py \)); do
 
         # Skip files of 3rd-party libraries which already have their own licenses and copyrights
-        if [[ "$filename" == *"importRosbag"* ]]; then
+        if [[ "$filename" == *"importRosbag"* || "$filename" == *"pr_check.sh"* ]]; then
             continue;
         fi
 
@@ -31,43 +43,30 @@ function check_folder {
             if [[ ! $filename == *"usbhost"* ]]; then
                 # Only check files that are not .gitignore-d
                 if [[ $(git check-ignore $filename | wc -l) -eq 0 ]]; then
-                    if [[ $(grep -oP "(?<=\(c\) )(.*)(?= Intel)" $filename | wc -l) -eq 0 ]]; then
-                        echo "[ERROR] $filename is missing the copyright notice"
+                    if [[ $(grep -oP "Copyright 2023 Intel Corporation. All Rights Reserved" $filename | wc -l) -eq 0 || 
+                          $(grep -oP "Licensed under the Apache License, Version 2.0" $filename | wc -l) -eq 0
+                       ]]; then
+                        echo "[ERROR] $filename is missing the copyright/license notice"
                         ok=$((ok+1))
 
                         if [[ $2 == *"fix"* ]]; then
-                            if [[ $(date +%Y) == "2022" ]]; then
-                                if [[ $filename == *".h"* || $filename == *".hpp"* || $filename == *".cpp"* || $filename == *".js"* ]]; then
-                                    echo "Trying to auto-resolve...";
-                                    ex -sc '1i|// Copyright(c) 2022 Intel Corporation. All Rights Reserved.' -cx $filename
-                                    fixed=$((fixed+1))
-                                fi
-                                if [[ $filename == *".txt"* || $filename == *".py"* ]]; then
-                                    echo "Trying to auto-resolve...";
-                                    ex -sc '1i|# Copyright(c) 2022 Intel Corporation. All Rights Reserved.' -cx $filename
-                                    fixed=$((fixed+1))
-                                fi
-                            else
-                                echo Please update pr_check to auto-resolve missing copyright
-                            fi
-                        fi
-                    fi
-
-                    if [[ $(grep -oP "Apache 2.0" $filename | wc -l) -eq 0 ]]; then
-                        echo "[ERROR] $filename is missing license notice"
-                        ok=$((ok+1))
-
-                        if [[ $2 == *"fix"* ]]; then
+                            # take last 13 linse from LICENSE file, and put them at beginning of $filename
                             if [[ $filename == *".h"* || $filename == *".hpp"* || $filename == *".cpp"* || $filename == *".js"* ]]; then
-                                echo "Trying to auto-resolve...";
-                                ex -sc '1i|// License: Apache 2.0. See LICENSE file in root directory.' -cx $filename
-                                fixed=$((fixed+1))
+                                license_str="$(tail -13 ${license_file} | sed -e 's/^   / /' | sed -e 's/^/\/\//')"
                             fi
                             if [[ $filename == *".txt"* || $filename == *".py"* ]]; then
-                                echo "Trying to auto-resolve...";
-                                ex -sc '1i|# License: Apache 2.0. See LICENSE file in root directory.' -cx $filename
-                                fixed=$((fixed+1))
+                                license_str="$(tail -13 ${license_file} | sed -e 's/^   / /' | sed -e 's/^/#/')"
                             fi
+                            echo "Trying to auto-resolve...";
+                            ed -s $filename << END
+0i
+${license_str}
+
+.
+w
+q
+END
+                            fixed=$((fixed+1))
                         fi
                     fi
 

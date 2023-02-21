@@ -1,5 +1,16 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2022 Intel Corporation. All Rights Reserved.
+// Copyright 2023 Intel Corporation. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <sensor_params.h>
 #include <constants.h>
@@ -84,57 +95,128 @@ SensorParams::~SensorParams()
     clearParameters();
 }
 
+double SensorParams::float_to_double(float val, rs2::option_range option_range)
+{
+    // casting from float to double, while trying to increase precision
+    // in order to be comply with the FloatingPointRange configurations
+    // and to succeed the rclcpp NodeParameters::declare_parameter call
+    // for more info, see https://github.com/ros2/rclcpp/blob/rolling/rclcpp/src/rclcpp/node_interfaces/node_parameters.cpp
+    // rcl_interfaces::msg::SetParametersResult and __are_doubles_equal methods
+    float range = option_range.max - option_range.min;
+    int steps = range / option_range.step;
+    double step = static_cast<double>(range) / steps;
+    double rounded_div = std::round((val - option_range.min) / step);
+    return option_range.min + rounded_div * step;
+}
+
+//for more info, see https://docs.ros2.org/galactic/api/rcl_interfaces/msg/ParameterDescriptor.html
+template<class T>
+rcl_interfaces::msg::ParameterDescriptor SensorParams::get_parameter_descriptor(const std::string& option_name,
+    rs2::option_range option_range, T option_value, const std::string& option_description, const std::string& description_addition)
+{
+    rcl_interfaces::msg::ParameterDescriptor parameter_descriptor;
+
+    // set descriptor name to be the option name in order to get more detailed warnings/errors from rclcpp
+    parameter_descriptor.name = option_name;
+
+    // create description stream, and start filling it.
+    std::stringstream description_stream;
+    description_stream << option_description << std::endl << description_addition;
+    if(description_addition.length() > 0)
+         description_stream << std::endl;
+
+    if (std::is_same<T, double>::value)
+    {
+        parameter_descriptor.type = rclcpp::PARAMETER_DOUBLE;
+
+        // set option range values (floats)
+        rcl_interfaces::msg::FloatingPointRange range;
+        range.from_value = float_to_double(option_range.min, option_range);
+        range.to_value = float_to_double(option_range.max, option_range);
+        range.step = float_to_double(option_range.step, option_range);
+        parameter_descriptor.floating_point_range.push_back(range);
+
+        // add the default value of this option to the description stream
+        description_stream << "Default value: " << static_cast<double>(option_range.def);        
+
+        ROS_DEBUG_STREAM("Declare: DOUBLE::" << option_name << "=" << option_value << "  [" << option_range.min << ", " << option_range.max << "]");
+    }
+    else // T is bool or int
+    {
+        // set option range values (integers) (suitable for boolean ranges also: [0,1])
+        rcl_interfaces::msg::IntegerRange range;
+        range.from_value = static_cast<int64_t>(option_range.min);
+        range.to_value = static_cast<int64_t>(option_range.max);
+        range.step = static_cast<uint64_t>(option_range.step);
+        parameter_descriptor.integer_range.push_back(range);
+
+        if (std::is_same<T, bool>::value) 
+        {
+            parameter_descriptor.type = rclcpp::PARAMETER_BOOL;
+
+            // add the default value of this option to the description stream
+            description_stream << "Default value: " << (option_range.def == 0 ? "False" : "True");
+
+            ROS_DEBUG_STREAM("Declare: BOOL::" << option_name << "=" << (option_range.def == 0 ? "False" : "True") << "  [" << option_range.min << ", " << option_range.max << "]");
+        }
+        else
+        {
+            parameter_descriptor.type = rclcpp::PARAMETER_INTEGER;
+
+            // add the default value of this option to the description stream
+            description_stream << "Default value: " << static_cast<int64_t>(option_range.def);
+
+            ROS_DEBUG_STREAM("Declare: INT::" << option_name << "=" << option_value << "  [" << option_range.min << ", " << option_range.max << "]");
+        }
+    }
+    parameter_descriptor.description = description_stream.str();
+    return parameter_descriptor;
+}
+
 template<class T>
 void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const std::string& module_name, const std::string& description_addition)
 {
+    // set the option name, for example: depth_module.exposure
     const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
+
+    // get option current value, and option range values from the sensor
     T option_value;
+    rs2::option_range option_range;
     try
     {
-        option_value = static_cast<T>(sensor.get_option(option));
+        option_range = sensor.get_option_range(option);
+        float current_val = sensor.get_option(option);
+        if(std::is_same<T, double>::value)
+        {
+            option_value = float_to_double(current_val, option_range);
+        }
+        else
+        {
+            option_value = static_cast<T>(current_val);
+        }
     }
     catch(const std::exception& ex)
     {
         ROS_ERROR_STREAM("An error has occurred while calling sensor for: " << option_name << ":" << ex.what());
         return;
     }
-    rs2::option_range op_range = sensor.get_option_range(option);
-    rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
-    std::stringstream desc;
-    desc << sensor.get_option_description(option) << std::endl << description_addition;
-    crnt_descriptor.description = desc.str();
-    if (std::is_same<T, int>::value || std::is_same<T, bool>::value)
-    {
-        rcl_interfaces::msg::IntegerRange range;
-        range.from_value = int(op_range.min);
-        range.to_value = int(op_range.max);
-        crnt_descriptor.integer_range.push_back(range);
-        if (std::is_same<T, bool>::value)
-            ROS_DEBUG_STREAM("Declare: BOOL::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
-        else
-            ROS_DEBUG_STREAM("Declare: INT::" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]");
-    }
-    else
-    {
-        rcl_interfaces::msg::FloatingPointRange range;
-        range.from_value = double(op_range.min);
-        range.to_value = double(op_range.max);
-        crnt_descriptor.floating_point_range.push_back(range);
-        ROS_DEBUG_STREAM("Declare: DOUBLE::" << option_name << " = " << option_value);
-    }
 
+    // get parameter descriptor for this option
+    rcl_interfaces::msg::ParameterDescriptor parameter_descriptor = 
+        get_parameter_descriptor(option_name, option_range, option_value, sensor.get_option_description(option), description_addition);
+    
     T new_val;
     try
     {
         new_val = (_parameters->setParam<T>(option_name, option_value, [option, sensor](const rclcpp::Parameter& parameter)
                     {
                         param_set_option<T>(sensor, option, parameter);
-                    }, crnt_descriptor));
+                    }, parameter_descriptor));
         _parameters_names.push_back(option_name);
     }
     catch(const rclcpp::exceptions::InvalidParameterValueException& e)
     {
-        ROS_WARN_STREAM("Failed to set parameter:" << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]\n" << e.what());
+        ROS_WARN_STREAM("Failed to set parameter:" << option_name << " = " << option_value << "[" << option_range.min << ", " << option_range.max << "]\n" << e.what());
         return;
     }
     
@@ -146,7 +228,7 @@ void SensorParams::set_parameter(rs2::options sensor, rs2_option option, const s
         }
         catch(std::exception& e)
         {
-            ROS_WARN_STREAM("Failed to set value to sensor: " << option_name << " = " << option_value << "[" << op_range.min << ", " << op_range.max << "]\n" << e.what());            
+            ROS_WARN_STREAM("Failed to set value to sensor: " << option_name << " = " << option_value << "[" << option_range.min << ", " << option_range.max << "]\n" << e.what());            
         }
     }
 }
