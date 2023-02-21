@@ -1,5 +1,16 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2022 Intel Corporation. All Rights Reserved.
+// Copyright 2023 Intel Corporation. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "../include/base_realsense_node.h"
 #include <image_publisher.h>
@@ -184,7 +195,6 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
         }
         _metadata_publishers.erase(sip);
         _extrinsics_publishers.erase(sip);
-        _extrinsics_msgs.erase(sip);
     }
 }
 
@@ -275,12 +285,15 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
         
         if (!((rs2::stream_profile)profile==(rs2::stream_profile)_base_profile))
         {
-            // When intra process is on we cannot use latched qos, we will need to send this message periodically with volatile durability 
-            rmw_qos_profile_t extrinsics_qos = _use_intra_process ?  rmw_qos_profile_default : rmw_qos_profile_latched;
 
+            // intra-process do not support latched QoS, so we need to disable intra-process for this topic
+            rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
+            options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+            rmw_qos_profile_t extrinsics_qos = rmw_qos_profile_latched;
+            
             std::string topic_extrinsics("extrinsics/" + create_graph_resource_name(ros_stream_to_string(_base_profile.stream_type()) + "_to_" + stream_name));
             _extrinsics_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Extrinsics>(topic_extrinsics, 
-                                    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(extrinsics_qos), extrinsics_qos));
+                                    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(extrinsics_qos), extrinsics_qos), std::move(options));
         }
     }
 }

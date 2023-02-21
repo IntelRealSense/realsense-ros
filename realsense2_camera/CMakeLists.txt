@@ -1,5 +1,16 @@
-# License: Apache 2.0. See LICENSE file in root directory.
-# Copyright(c) 2022 Intel Corporation. All Rights Reserved.
+# Copyright 2023 Intel Corporation. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 cmake_minimum_required(VERSION 3.5)
 project(realsense2_camera)
@@ -118,7 +129,6 @@ set(node_plugins "")
 set(SOURCES
     src/realsense_node_factory.cpp
     src/base_realsense_node.cpp
-    src/t265_realsense_node.cpp
     src/parameters.cpp
     src/rs_node_setup.cpp
     src/ros_sensor.cpp
@@ -161,11 +171,21 @@ else()
   message(FATAL_ERROR "Unsupported ROS Distribution: " "$ENV{ROS_DISTRO}")
 endif()
 
+# The header 'cv_bridge/cv_bridge.hpp' was added in version 3.3.0. For older
+# cv_bridge versions, we have to use the header 'cv_bridge/cv_bridge.h'.
+if(${cv_bridge_VERSION} VERSION_GREATER_EQUAL "3.3.0")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCV_BRDIGE_HAS_HPP")
+endif()
+
+# 'OnSetParametersCallbackType' is only defined for rclcpp 17 and onward.
+if(${rclcpp_VERSION} VERSION_GREATER_EQUAL "17.0")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRCLCPP_HAS_OnSetParametersCallbackType")
+endif()
+
 set(INCLUDES
     include/constants.h
     include/realsense_node_factory.h
     include/base_realsense_node.h
-    include/t265_realsense_node.h
     include/ros_sensor.h
     include/ros_utils.h
     include/dynamic_params.h

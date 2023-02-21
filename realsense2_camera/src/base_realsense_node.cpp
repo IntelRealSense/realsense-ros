@@ -1,5 +1,16 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2022 Intel Corporation. All Rights Reserved.
+// Copyright 2023 Intel Corporation. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "../include/base_realsense_node.h"
 #include "assert.h"
@@ -10,12 +21,19 @@
 #include <fstream>
 #include <image_publisher.h>
 
+// Header files for disabling intra-process comms for static broadcaster.
+#include <rclcpp/publisher_options.hpp>
+// This header file is not available in ROS 2 Dashing.
+#ifndef DASHING
+#include <tf2_ros/qos.hpp>
+#endif
+
 using namespace realsense2_camera;
 
 SyncedImuPublisher::SyncedImuPublisher(rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_publisher, 
                                        std::size_t waiting_list_size):
             _publisher(imu_publisher), _pause_mode(false),
-            _waiting_list_size(waiting_list_size)
+            _waiting_list_size(waiting_list_size), _is_enabled(false)
             {}
 
 SyncedImuPublisher::~SyncedImuPublisher()
@@ -80,10 +98,21 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _parameters(parameters),
     _dev(dev),
     _json_file_path(""),
+    _depth_scale_meters(0),
+    _clipping_distance(0),
+    _linear_accel_cov(0),
+    _angular_velocity_cov(0),
+    _hold_back_imu_for_frames(false),
+    _publish_tf(false),
     _tf_publish_rate(TF_PUBLISH_RATE),
+    _diagnostics_period(0),
     _use_intra_process(use_intra_process),
     _is_initialized_time_base(false),
+    _camera_time_base(0),
     _sync_frames(SYNC_FRAMES),
+    _pointcloud(false),
+    _publish_odom_tf(false),
+    _imu_sync_method(imu_sync_method::NONE),
     _is_profile_changed(false),
     _is_align_depth_changed(false)
 {
@@ -91,11 +120,15 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     {
         ROS_INFO("Intra-Process communication enabled");
     }
-    else
-    {
-        // intra-process requirment of QoS.durability=Volatile cannot be fulfilled with `StaticTransformBroadcaster` as it only support `TransientLocal` durability.
-        _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node);
-    }
+
+    // intra-process do not support latched QoS, so we need to disable intra-process for this topic
+    rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
+    options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+    #ifndef DASHING
+    _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node, tf2_ros::StaticBroadcasterQoS(), std::move(options));
+    #else
+    _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node, rclcpp::QoS(100), std::move(options));
+    #endif
 
     _image_format[1] = CV_8UC1;    // CVBridge type
     _image_format[2] = CV_16UC1;    // CVBridge type
@@ -832,7 +865,6 @@ void BaseRealSenseNode::publishExtrinsicsTopic(const stream_index_pair& sip, con
     Extrinsics msg = rsExtrinsicsToMsg(ex);
     if (_extrinsics_publishers.find(sip) != _extrinsics_publishers.end())
     {
-        _extrinsics_msgs[sip] = msg; // We keep the message for periodically publish later if needed
         _extrinsics_publishers[sip]->publish(msg);
     }
 }
@@ -908,7 +940,7 @@ void BaseRealSenseNode::SetBaseStream()
     }
     
     std::vector<stream_index_pair>::const_iterator base_stream(base_stream_priority.begin());
-    while( (available_profiles.find(*base_stream) == available_profiles.end()) && (base_stream != base_stream_priority.end()))
+    while((base_stream != base_stream_priority.end()) && (available_profiles.find(*base_stream) == available_profiles.end()))
     {
         base_stream++;
     }
@@ -963,9 +995,7 @@ void BaseRealSenseNode::startDynamicTf()
 void BaseRealSenseNode::publishDynamicTransforms()
 {
     // Publish transforms for the cameras
-
-    std::mutex mu;
-    std::unique_lock<std::mutex> lock(mu);
+    std::unique_lock<std::mutex> lock(_publish_dynamic_tf_mutex);
     while (rclcpp::ok() && _is_running && _tf_publish_rate > 0)
     {
         _cv_tf.wait_for(lock, std::chrono::milliseconds((int)(1000.0/_tf_publish_rate)), [&]{return (!(_is_running && _tf_publish_rate > 0));});
@@ -981,23 +1011,6 @@ void BaseRealSenseNode::publishDynamicTransforms()
             catch(const std::exception& e)
             {
                 ROS_ERROR_STREAM("Error publishing dynamic transforms: " << e.what());
-            }
-
-            // If static_tf was not created we need to publish the extrinsics periodically since it is not publishes as a latched topic.
-            if ( !_static_tf_broadcaster )
-            {
-                try
-                {
-                    for (const auto &extrinsics_publisher : _extrinsics_publishers)
-                    {
-                        const auto &ext_msg = _extrinsics_msgs[extrinsics_publisher.first];
-                        extrinsics_publisher.second->publish( ext_msg );
-                    }
-                }
-                catch (const std::exception &e)
-                {
-                    ROS_ERROR_STREAM("Error publishing extrinsics : " << e.what());
-                }
             }
         }
     }

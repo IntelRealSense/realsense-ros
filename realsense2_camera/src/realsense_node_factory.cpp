@@ -1,9 +1,19 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2022 Intel Corporation. All Rights Reserved
+// Copyright 2023 Intel Corporation. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "../include/realsense_node_factory.h"
 #include "../include/base_realsense_node.h"
-#include "../include/t265_realsense_node.h"
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -173,12 +183,6 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
                 }
             }
         }
-    }
-
-    bool remove_tm2_handle(_device && RS_T265_PID != std::stoi(_device.get_info(RS2_CAMERA_INFO_PRODUCT_ID), 0, 16));
-    if (remove_tm2_handle)
-    {
-        _ctx.unload_tracking_module();
     }
 
     if (_device && _initial_reset)
@@ -373,15 +377,13 @@ void RealSenseNodeFactory::startDevice()
         case RS435_RGB_PID:
         case RS435i_RGB_PID:
         case RS455_PID:
+        case RS457_PID:
         case RS465_PID:
         case RS_USB2_PID:
         case RS_L515_PID_PRE_PRQ:
         case RS_L515_PID:
         case RS_L535_PID:
             _realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(*this, _device, _parameters, this->get_node_options().use_intra_process_comms()));
-            break;
-        case RS_T265_PID:
-            _realSenseNode = std::unique_ptr<T265RealsenseNode>(new T265RealsenseNode(*this, _device, _parameters, this->get_node_options().use_intra_process_comms()));
             break;
         default:
             ROS_FATAL_STREAM("Unsupported device!" << " Product ID: 0x" << pid_str);

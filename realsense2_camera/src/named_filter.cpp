@@ -1,5 +1,16 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2022 Intel Corporation. All Rights Reserved.
+// Copyright 2023 Intel Corporation. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <named_filter.h>
 #include <fstream>
@@ -167,14 +178,16 @@ void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2:
 
     rs2_intrinsics depth_intrin = pc.get_profile().as<rs2::video_stream_profile>().get_intrinsics();
 
-    sensor_msgs::PointCloud2Modifier modifier(_msg_pointcloud);
+    sensor_msgs::msg::PointCloud2::UniquePtr msg_pointcloud = std::make_unique<sensor_msgs::msg::PointCloud2>();
+
+    sensor_msgs::PointCloud2Modifier modifier(*msg_pointcloud);
     modifier.setPointCloud2FieldsByString(1, "xyz");    
     modifier.resize(pc.size());
     if (_ordered_pc)
     {
-        _msg_pointcloud.width = depth_intrin.width;
-        _msg_pointcloud.height = depth_intrin.height;
-        _msg_pointcloud.is_dense = false;
+        msg_pointcloud->width = depth_intrin.width;
+        msg_pointcloud->height = depth_intrin.height;
+        msg_pointcloud->is_dense = false;
     }
 
     vertex = pc.get_vertices();
@@ -198,14 +211,14 @@ void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2:
             default:
                 throw std::runtime_error("Unhandled texture format passed in pointcloud " + std::to_string(texture_frame.get_profile().format()));
         }
-        _msg_pointcloud.point_step = addPointField(_msg_pointcloud, format_str.c_str(), 1, sensor_msgs::msg::PointField::FLOAT32, _msg_pointcloud.point_step);
-        _msg_pointcloud.row_step = _msg_pointcloud.width * _msg_pointcloud.point_step;
-        _msg_pointcloud.data.resize(_msg_pointcloud.height * _msg_pointcloud.row_step);
+        msg_pointcloud->point_step = addPointField(*msg_pointcloud, format_str.c_str(), 1, sensor_msgs::msg::PointField::FLOAT32, msg_pointcloud->point_step);
+        msg_pointcloud->row_step = msg_pointcloud->width * msg_pointcloud->point_step;
+        msg_pointcloud->data.resize(msg_pointcloud->height * msg_pointcloud->row_step);
 
-        sensor_msgs::PointCloud2Iterator<float>iter_x(_msg_pointcloud, "x");
-        sensor_msgs::PointCloud2Iterator<float>iter_y(_msg_pointcloud, "y");
-        sensor_msgs::PointCloud2Iterator<float>iter_z(_msg_pointcloud, "z");
-        sensor_msgs::PointCloud2Iterator<uint8_t>iter_color(_msg_pointcloud, format_str);
+        sensor_msgs::PointCloud2Iterator<float>iter_x(*msg_pointcloud, "x");
+        sensor_msgs::PointCloud2Iterator<float>iter_y(*msg_pointcloud, "y");
+        sensor_msgs::PointCloud2Iterator<float>iter_z(*msg_pointcloud, "z");
+        sensor_msgs::PointCloud2Iterator<uint8_t>iter_color(*msg_pointcloud, format_str);
         color_point = pc.get_texture_coordinates();
 
         float color_pixel[2];
@@ -238,13 +251,12 @@ void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2:
     }
     else
     {
-        std::string format_str = "intensity";
-        _msg_pointcloud.row_step = _msg_pointcloud.width * _msg_pointcloud.point_step;
-        _msg_pointcloud.data.resize(_msg_pointcloud.height * _msg_pointcloud.row_step);
+        msg_pointcloud->row_step = msg_pointcloud->width * msg_pointcloud->point_step;
+        msg_pointcloud->data.resize(msg_pointcloud->height * msg_pointcloud->row_step);
 
-        sensor_msgs::PointCloud2Iterator<float>iter_x(_msg_pointcloud, "x");
-        sensor_msgs::PointCloud2Iterator<float>iter_y(_msg_pointcloud, "y");
-        sensor_msgs::PointCloud2Iterator<float>iter_z(_msg_pointcloud, "z");
+        sensor_msgs::PointCloud2Iterator<float>iter_x(*msg_pointcloud, "x");
+        sensor_msgs::PointCloud2Iterator<float>iter_y(*msg_pointcloud, "y");
+        sensor_msgs::PointCloud2Iterator<float>iter_z(*msg_pointcloud, "z");
 
         for (size_t point_idx=0; point_idx < pc.size(); point_idx++, vertex++)
         {
@@ -260,19 +272,19 @@ void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2:
             }
         }
     }
-    _msg_pointcloud.header.stamp = t;
-    _msg_pointcloud.header.frame_id = frame_id;
+    msg_pointcloud->header.stamp = t;
+    msg_pointcloud->header.frame_id = frame_id;
     if (!_ordered_pc)
     {
-        _msg_pointcloud.width = valid_count;
-        _msg_pointcloud.height = 1;
-        _msg_pointcloud.is_dense = true;
+        msg_pointcloud->width = valid_count;
+        msg_pointcloud->height = 1;
+        msg_pointcloud->is_dense = true;
         modifier.resize(valid_count);
     }
     {
         std::lock_guard<std::mutex> lock_guard(_mutex_publisher);
         if (_pointcloud_publisher)
-            _pointcloud_publisher->publish(_msg_pointcloud);
+            _pointcloud_publisher->publish(std::move(msg_pointcloud));
     }
 }
 
