@@ -143,7 +143,8 @@ void BaseRealSenseNode::setAvailableSensors()
         std::unique_ptr<RosSensor> rosSensor;
         if (sensor.is<rs2::depth_sensor>() || 
             sensor.is<rs2::color_sensor>() ||
-            sensor.is<rs2::fisheye_sensor>())
+            sensor.is<rs2::fisheye_sensor>() ||
+            sensor.is<rs2::safety_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as VideoSensor.");
             rosSensor = std::make_unique<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, _use_intra_process, _dev.is<playback>());
