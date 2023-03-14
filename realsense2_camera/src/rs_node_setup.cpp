@@ -390,4 +390,5 @@ void BaseRealSenseNode::getDeviceInfo(const realsense2_camera_msgs::srv::DeviceI
     }
 
     res->sensors = sensors_names.str().substr(0, sensors_names.str().size()-1);
+    res->physical_port = _dev.supports(RS2_CAMERA_INFO_PHYSICAL_PORT) ? _dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT) : "";
 }
