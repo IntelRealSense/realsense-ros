@@ -192,6 +192,7 @@ namespace realsense2_camera
         void enable_devices();
         void setupFilters();
         bool setBaseTime(double frame_time, rs2_timestamp_domain time_domain);
+        uint64_t millisecondsToNanoseconds(double timestamp_ms);
         rclcpp::Time frameSystemTimeSec(rs2::frame frame);
         cv::Mat& fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image);
         void clip_depth(rs2::depth_frame depth_frame, float clipping_dist);
