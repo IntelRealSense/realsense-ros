@@ -161,8 +161,8 @@ void BaseRealSenseNode::setAvailableSensors()
         }
         else
         {
-            ROS_ERROR_STREAM("Module Name \"" << module_name << "\" does not define a callback.");
-            throw("Error: Module not supported");
+            ROS_WARN_STREAM("Module Name \"" << module_name << "\" does not define a callback.");
+            continue;
         }
         _available_ros_sensors.push_back(std::move(rosSensor));
     }
