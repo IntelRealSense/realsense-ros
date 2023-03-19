@@ -717,10 +717,7 @@ uint64_t BaseRealSenseNode::millisecondsToNanoseconds(double timestamp_ms)
         //convert both parts to ns
         static constexpr uint64_t milli_to_nano = 1000000;
         uint64_t int_part_ns = static_cast<uint64_t>(int_part_ms) * milli_to_nano;
-        // for fract_part_ns, multiplie ns * 10, then divide by 10 while rounding
-        // to be aligned with librealsense get_timestamp API
-        uint64_t fract_part_ns = static_cast<uint64_t>(fract_part_ms * milli_to_nano * 10);
-        fract_part_ns = (fract_part_ns + 5)/10;
+        uint64_t fract_part_ns = static_cast<uint64_t>(std::round(fract_part_ms * milli_to_nano));
 
         return int_part_ns + fract_part_ns;
 }
