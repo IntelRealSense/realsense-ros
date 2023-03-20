@@ -708,17 +708,32 @@ bool BaseRealSenseNode::setBaseTime(double frame_time, rs2_timestamp_domain time
     return false;
 }
 
+uint64_t BaseRealSenseNode::millisecondsToNanoseconds(double timestamp_ms)
+{
+        // modf breaks input into an integral and fractional part
+        double int_part_ms, fract_part_ms;
+        fract_part_ms = modf(timestamp_ms, &int_part_ms);
+
+        //convert both parts to ns
+        static constexpr uint64_t milli_to_nano = 1000000;
+        uint64_t int_part_ns = static_cast<uint64_t>(int_part_ms) * milli_to_nano;
+        uint64_t fract_part_ns = static_cast<uint64_t>(std::round(fract_part_ms * milli_to_nano));
+
+        return int_part_ns + fract_part_ns;
+}
+
 rclcpp::Time BaseRealSenseNode::frameSystemTimeSec(rs2::frame frame)
 {
+    double timestamp_ms = frame.get_timestamp();
     if (frame.get_frame_timestamp_domain() == RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK)
     {
-        double elapsed_camera_ns = (/*ms*/ frame.get_timestamp() - /*ms*/ _camera_time_base) * 1e6;
+        double elapsed_camera_ns = millisecondsToNanoseconds(timestamp_ms - _camera_time_base);
 
         /*
         Fixing deprecated-declarations compilation warning.
         Duration(rcl_duration_value_t) is deprecated in favor of 
         static Duration::from_nanoseconds(rcl_duration_value_t)
-        starting from GALAXY.
+        starting from GALACTIC.
         */
 #if defined(FOXY) || defined(ELOQUENT) || defined(DASHING)
         auto duration = rclcpp::Duration(elapsed_camera_ns);
@@ -730,7 +745,7 @@ rclcpp::Time BaseRealSenseNode::frameSystemTimeSec(rs2::frame frame)
     }
     else
     {
-        return rclcpp::Time(frame.get_timestamp() * 1e6);
+        return rclcpp::Time(millisecondsToNanoseconds(timestamp_ms));
     }
 }
 
