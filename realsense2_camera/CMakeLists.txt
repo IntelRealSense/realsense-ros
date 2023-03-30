@@ -269,7 +269,33 @@ install(DIRECTORY
 
 # Test
 if(BUILD_TESTING)
-# This does nothing for now, note that ROS build farm build with BUILD_TESTING=1
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(${PROJECT_NAME}_test1 test/test_gtest.cpp)
+  target_include_directories(${PROJECT_NAME}_test1 PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+  )
+  ament_target_dependencies(${PROJECT_NAME}_test1
+    std_msgs
+  )
+  #target_link_libraries(${PROJECT_NAME}_test1 name_of_local_library)
+
+
+
+  find_package(ament_cmake_pytest REQUIRED)
+  set(_pytest_tests
+    test/pytest_integration_fn.py
+    test/pytest_integration_test_template.py
+    # Add other test files here
+  )
+  foreach(_test_path ${_pytest_tests})
+    get_filename_component(_test_name ${_test_path} NAME_WE)
+    ament_add_pytest_test(${_test_name} ${_test_path}
+      APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}
+      TIMEOUT 60
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+  endforeach()
 endif()
 
 # Ament exports
