@@ -261,7 +261,7 @@ namespace realsense2_camera
         std::mutex _publish_dynamic_tf_mutex;
 
         std::shared_ptr<tf2_ros::StaticTransformBroadcaster> _static_tf_broadcaster;
-        std::shared_ptr<tf2_ros::TransformBroadcaster> _dynamic_tf_broadcaster;
+        std::shared_ptr<tf2_ros::TransformBroadcaster> _dynamic_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(_node);
         std::vector<geometry_msgs::msg::TransformStamped> _static_tf_msgs;
         std::shared_ptr<std::thread> _tf_t;
 

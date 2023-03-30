@@ -989,7 +989,6 @@ void BaseRealSenseNode::startDynamicTf()
         ROS_WARN("Publishing dynamic camera transforms (/tf) at %g Hz", _tf_publish_rate);
         if (!_tf_t)
         {
-            _dynamic_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(_node);
             _tf_t = std::make_shared<std::thread>([this]()
             {
                 publishDynamicTransforms();
@@ -1002,7 +1001,6 @@ void BaseRealSenseNode::startDynamicTf()
         {
             _tf_t->join();
             _tf_t.reset();
-            _dynamic_tf_broadcaster.reset();
         }
     }
 }
