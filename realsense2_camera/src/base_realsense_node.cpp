@@ -1001,12 +1001,18 @@ void BaseRealSenseNode::startDynamicTf()
         {
             _tf_t->join();
             _tf_t.reset();
+            _dynamic_tf_broadcaster.reset();
         }
     }
 }
 
 void BaseRealSenseNode::publishDynamicTransforms()
 {
+    if (!_dynamic_tf_broadcaster)
+    {
+        _dynamic_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(_node);
+    }
+
     // Publish transforms for the cameras
     std::unique_lock<std::mutex> lock(_publish_dynamic_tf_mutex);
     while (rclcpp::ok() && _is_running && _tf_publish_rate > 0)
