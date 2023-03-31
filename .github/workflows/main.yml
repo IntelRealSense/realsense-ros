@@ -128,14 +128,14 @@ jobs:
         wget $bag_filename -P "records/"
         bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
         wget $bag_filename -P "records/"
-        
+        sudo apt install ros-${{ matrix.ros_distro}}-launch-pytest
+       
     - name: Install Packages For Tests
       run: |
         sudo apt-get install python3-pip
         pip3 install numpy --upgrade
         pip3 install numpy-quaternion tqdm
-        sudo apt install ros-${{ matrix.ros_distro}}-launch-pytest
-
+ 
     - name: Run Tests
       run: |
         cd ${{github.workspace}}/ros2
