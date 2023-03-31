@@ -149,6 +149,6 @@ jobs:
         cd ${{github.workspace}}/ros2
         source ${{github.workspace}}/.bashrc
         . install/local_setup.bash
-        export ROSBAG_DIR_PATH=${{github.workspace}}/ros2/records/
+        export ROSBAG_FILE_PATH=${{github.workspace}}/ros2/records/
         colcon test --packages-select realsense2_camera --event-handlers console_direct+
         colcon test-result --all --test-result-base build/realsense2_camera/test_results/ --verbose
