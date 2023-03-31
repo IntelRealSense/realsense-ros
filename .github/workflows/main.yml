@@ -141,4 +141,13 @@ jobs:
         source ${{github.workspace}}/.bashrc
         . install/local_setup.bash
         python3 src/realsense-ros/realsense2_camera/scripts/rs2_test.py non_existent_file
-
+    
+    - name: Run integration tests
+      if: ${{ matrix.ros_distro == 'humble'}}
+      run: |
+        cd ${{github.workspace}}/ros2
+        source ${{github.workspace}}/.bashrc
+        . install/local_setup.bash
+        export ROSBAG_DIR_PATH=${{github.workspace}}/ros2/records/
+        colcon test --packages-select realsense2_camera --event-handlers console_direct+
+        colcon test-result --all --test-result-base build/realsense2_camera/test_results/ --verbose
