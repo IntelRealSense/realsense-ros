@@ -62,7 +62,7 @@ aluminum peripherial evaluation case.
           <box size="${r430_cam_width} ${r430_cam_height} ${r430_cam_depth}"/>
           <!--<mesh filename="package://realsense2_description/meshes/r430/r430.dae" />-->
         </geometry>
-        <material name="aluminum"/>
+        <xacro:material_aluminum/>
       </visual>
       <collision>
         <origin xyz="0.0 0.0 ${r430_cam_height/2}" rpy="0 0 0"/>

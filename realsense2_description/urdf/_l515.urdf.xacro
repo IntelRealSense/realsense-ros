@@ -95,7 +95,7 @@ aluminum peripherial evaluation case.
           <geometry>
             <cylinder radius="${l515_cam_width/2.0}" length="${l515_cam_depth}"/>
           </geometry>
-          <material name="aluminum"/>
+          <xacro:material_aluminum/>
         </xacro:unless>
       </visual>
       <collision>

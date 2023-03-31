@@ -83,7 +83,7 @@ aluminum peripherial evaluation case.
           <geometry>
             <box size="${d435_cam_depth} ${d435_cam_width} ${d435_cam_height}"/>
           </geometry>
-          <material name="aluminum"/>
+          <xacro:material_aluminum/>
         </xacro:unless>     
       </visual>
       <collision>
