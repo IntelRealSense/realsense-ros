@@ -134,6 +134,7 @@ jobs:
         sudo apt-get install python3-pip
         pip3 install numpy --upgrade
         pip3 install numpy-quaternion tqdm
+        sudo apt install ros-${{ matrix.ros_distro}}-launch-pytest
 
     - name: Run Tests
       run: |
