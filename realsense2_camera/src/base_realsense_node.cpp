@@ -286,13 +286,13 @@ sensor_msgs::msg::Imu BaseRealSenseNode::CreateUnitedMessage(const CimuData acce
     rclcpp::Time t(gyro_data.m_time_ns);  //rclcpp::Time(uint64_t nanoseconds)
     imu_msg.header.stamp = t;
 
-    imu_msg.angular_velocity.x = gyro_data.m_data.x();
-    imu_msg.angular_velocity.y = gyro_data.m_data.y();
-    imu_msg.angular_velocity.z = gyro_data.m_data.z();
+    imu_msg.angular_velocity.x = -gyro_data.m_data.z();
+    imu_msg.angular_velocity.y = gyro_data.m_data.x();
+    imu_msg.angular_velocity.z = -gyro_data.m_data.y();
 
-    imu_msg.linear_acceleration.x = accel_data.m_data.x();
-    imu_msg.linear_acceleration.y = accel_data.m_data.y();
-    imu_msg.linear_acceleration.z = accel_data.m_data.z();
+    imu_msg.linear_acceleration.x = -accel_data.m_data.z();
+    imu_msg.linear_acceleration.y = accel_data.m_data.x();
+    imu_msg.linear_acceleration.z = -accel_data.m_data.y();
     return imu_msg;
 }
 
