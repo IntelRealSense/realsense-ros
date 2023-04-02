@@ -889,7 +889,9 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
     // Transform base to stream
     stream_index_pair sip(profile.stream_type(), profile.stream_index());
     tf2::Quaternion quaternion_optical;
+    tf2::Quaternion quaternion_optical_imu;
     quaternion_optical.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
+    quaternion_optical_imu.setRPY(0.0, 0.0, 0.0);
     float3 zero_trans{0, 0, 0};
     tf2::Quaternion zero_rot_quaternions;
     zero_rot_quaternions.setRPY(0, 0, 0);
@@ -932,7 +934,7 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
     if ((_imu_sync_method > imu_sync_method::NONE) && (profile.stream_type() == RS2_STREAM_GYRO))
     {
         publish_static_tf(transform_ts_, zero_trans, zero_rot_quaternions, FRAME_ID(sip), IMU_FRAME_ID);
-        publish_static_tf(transform_ts_, zero_trans, quaternion_optical, IMU_FRAME_ID, IMU_OPTICAL_FRAME_ID);
+        publish_static_tf(transform_ts_, zero_trans, quaternion_optical_imu, IMU_FRAME_ID, IMU_OPTICAL_FRAME_ID);
     }
 
     publishExtrinsicsTopic(sip, ex);
