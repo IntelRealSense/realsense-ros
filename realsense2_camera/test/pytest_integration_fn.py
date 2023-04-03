@@ -30,23 +30,17 @@ sys.path.append(os.getenv("COLCON_PREFIX_PATH")+'/realsense2_camera/share/realse
 import rs_launch
 
 
-def get_default_params():
-    params = {}
-    for param in rs_launch.configurable_parameters:
-        params[param['name']] = param['default']
-    return params
-
 def kill_realsense2_camera_node():
     cmd = "kill -s INT $(ps aux | grep '[r]ealsense2_camera_node' | awk '{print $2}')"
     os.system(cmd)
 
 @pytest.fixture
 def start_camera():
-    params = get_default_params()
+    params = {}
     rosbag_dir = os.getenv("ROSBAG_FILE_PATH")
     print(rosbag_dir)
     assert rosbag_dir!=None,"ROSBAG_FILE_PATH was not set" 
-    rosfile = rosbag_dir+"/../records/outdoors_1color.bag"
+    rosfile = rosbag_dir+"/outdoors_1color.bag"
     params['rosbag_filename'] = rosfile
     params['color_width'] = '0'
     params['color_height'] = '0'
