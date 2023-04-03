@@ -107,14 +107,14 @@ def get_rs_node_description(name, params):
     with open(tmp_yaml.name, 'w') as f:
         yaml.dump(camera_params, f)
 
+    '''
+    comment out the '#prefix' line, if you like gdb and want to debug the code, you may have to do more
+    if you have more than one rs node.
+    '''
     return launch_ros.actions.Node(
         package='realsense2_camera',
         namespace=params["camera_name"],
         name=name,
-        '''
-        comment out the below line, if you like gdb and want to debug the code, you may have to do more
-        if you have more than one rs node.
-        '''
         #prefix=['xterm -e gdb --args'],
         executable='realsense2_camera_node',
         parameters=[tmp_yaml.name],
@@ -122,6 +122,7 @@ def get_rs_node_description(name, params):
         arguments=['--ros-args', '--log-level', "info"],
         emulate_tty=True,
     )
+
 ''' 
 This function returns a launch description with three rs nodes that
 use the same rosbag file. Test developer can use this as a reference and 
