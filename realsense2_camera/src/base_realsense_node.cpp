@@ -992,14 +992,14 @@ void BaseRealSenseNode::startDynamicTf()
     }
     if (_tf_publish_rate > 0)
     {
-            ROS_WARN("Publishing dynamic camera transforms (/tf) at %g Hz", _tf_publish_rate);
-            if (!_tf_t)
+        ROS_WARN("Publishing dynamic camera transforms (/tf) at %g Hz", _tf_publish_rate);
+        if (!_tf_t)
+        {
+            _tf_t = std::make_shared<std::thread>([this]()
             {
-                _tf_t = std::make_shared<std::thread>([this]()
-                {
-                    publishDynamicTransforms();
-                });
-            }
+                publishDynamicTransforms();
+            });
+        }
     }
     else
     {
