@@ -29,14 +29,41 @@ assert os.getenv("COLCON_PREFIX_PATH")!=None,"COLCON_PREFIX_PATH was not set"
 sys.path.append(os.getenv("COLCON_PREFIX_PATH")+'/realsense2_camera/share/realsense2_camera/launch')
 import rs_launch
 
+'''
+get the default parameters from the launch script so that the test doesn't have to
+get updated for each change to the parameter or default values 
+'''
+def get_default_params():
+    params = {}
+    for param in rs_launch.configurable_parameters:
+        params[param['name']] = param['default']
+    return params
+
+'''
+function taken from rs_launch to kill the camera node. kept as a local copy so that when the template is 
+used, it can be changed to kill say, a particular node alone depending on the test scenario
+'''
 
 def kill_realsense2_camera_node():
     cmd = "kill -s INT $(ps aux | grep '[r]ealsense2_camera_node' | awk '{print $2}')"
     os.system(cmd)
 
+'''
+This is a pytest fixture used by the lauch_pytest
+
+This function triggers the launch of a process. This mimics the 
+behavior of the customer usecases where they use the launch file directly.
+
+So this test can be used as a template to create customer scenarios and also to 
+test the ra_launch.py script 
+
+This function uses default parameters from the launch file and overwrites the required
+parameters.
+'''
+
 @pytest.fixture
 def start_camera():
-    params = {}
+    params = get_default_params() 
     rosbag_dir = os.getenv("ROSBAG_FILE_PATH")
     print(rosbag_dir)
     assert rosbag_dir!=None,"ROSBAG_FILE_PATH was not set" 
@@ -48,7 +75,7 @@ def start_camera():
     params['depth_height'] = '0'
     params['infra_width'] = '0'
     params['infra_height'] = '0'
-    params_str = ' '.join([key + ':=' + params[key] for key in sorted(params.keys())])
+    params_str = ' '.join(["" if params[key]=="''" else key + ':=' + params[key] for key in sorted(params.keys())])
     cmd_params=['ros2', 'launch', 'realsense2_camera', 'rs_launch.py'] + params_str.split(' ')
     time.sleep(1)
     return launch.actions.ExecuteProcess(
@@ -56,8 +83,11 @@ def start_camera():
         shell=True,
         cached_output=True,
     )
-
-# This function specifies the processes to be run for the test.
+'''
+This function specifies the processes to be run during the test.
+The tester can add more such functions to start specific processes
+or do specific actions.
+'''
 @launch_pytest.fixture
 def launch_description(start_camera):
     """Launch a simple process to start the camera"""
@@ -67,6 +97,14 @@ def launch_description(start_camera):
         # If no ReadyToTest action is added, one will be appended automatically.
         launch_pytest.actions.ReadyToTest()
     ])
+
+
+'''
+This is a test that can be used as a reference for other tests where it checks if
+the realsense node has come up or not.
+In this test, once the camera is detected, the camera itself is killed. But the user
+can do different operations based on the testcase requirements
+'''
 
 
 @pytest.mark.launch(fixture=launch_description)
@@ -83,5 +121,8 @@ def test_start_camera(start_camera, launch_context):
     process_tools.assert_output_sync(
         launch_context, start_camera, validate_output, timeout=5)
     yield
-    #-2 for shutdown
+    '''
+    the next code checks the return value of the start_camera. 
+    Since it was killed, -2 is expected to indicate shutdown
+    '''
     assert start_camera.return_code == -2 

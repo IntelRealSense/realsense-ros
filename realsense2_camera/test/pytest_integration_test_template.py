@@ -29,6 +29,10 @@ import rclpy
 from rclpy import qos
 from rclpy.node import Node
 from sensor_msgs.msg import Image as msg_Image
+'''
+the below step is used for reusing the rs_launch file for testing.
+If the ". install/setup.bash" was not run, the assertion may get triggered. 
+'''
 assert os.getenv("COLCON_PREFIX_PATH")!=None,"COLCON_PREFIX_PATH was not set" 
 sys.path.append(os.getenv("COLCON_PREFIX_PATH")+'/realsense2_camera/share/realsense2_camera/launch')
 import rs_launch 
@@ -42,17 +46,29 @@ from launch.substitutions import LaunchConfiguration
 
 import pytest
 
+'''
+get the default parameters from the launch script so that the test doesn't have to
+get updated for each change to the parameter or default values 
+'''
+
 def get_default_params():
     params = {}
     for param in rs_launch.configurable_parameters:
         params[param['name']] = param['default']
     return params
 
+'''
+function taken from rs_launch to kill the camera node. kept as a local copy so that when the template is 
+used, it can be changed to kill say, a particular node alone depending on the test scenario
+'''
 def kill_realsense2_camera_node():
     cmd = "kill -s INT $(ps aux | grep '[r]ealsense2_camera_node' | awk '{print $2}')"
     os.system(cmd)
 
-''' all these to reuse the params from the rs_launch'''
+''' 
+The format used by rs_launch.py and the LuanchConfiguration yaml files are different,
+so the params reused from the rs_launch has to be reformated to be added to yaml file.
+'''
 def convert_params(params):
     cparams = {}
     def strtobool (val):
@@ -76,6 +92,11 @@ def convert_params(params):
                     cparams[key] = value.replace("'","")
     return cparams
 
+''' 
+The get_rs_node_description file is used to create a node description of an rs
+camera with a temporary yaml file to hold the parameters.  
+'''
+
 def get_rs_node_description(name, params):
     import tempfile
     import yaml
@@ -83,7 +104,6 @@ def get_rs_node_description(name, params):
     params = convert_params(params)
     ros_params = {"ros__parameters":params}
     camera_params = {"camera/"+name: ros_params}
-    #tmp_yaml.write(camera_params)
     with open(tmp_yaml.name, 'w') as f:
         yaml.dump(camera_params, f)
 
@@ -91,6 +111,10 @@ def get_rs_node_description(name, params):
         package='realsense2_camera',
         namespace=params["camera_name"],
         name=name,
+        '''
+        comment out the below line, if you like gdb and want to debug the code, you may have to do more
+        if you have more than one rs node.
+        '''
         #prefix=['xterm -e gdb --args'],
         executable='realsense2_camera_node',
         parameters=[tmp_yaml.name],
@@ -98,6 +122,11 @@ def get_rs_node_description(name, params):
         arguments=['--ros-args', '--log-level', "info"],
         emulate_tty=True,
     )
+''' 
+This function returns a launch description with three rs nodes that
+use the same rosbag file. Test developer can use this as a reference and 
+create a function that creates as many nodes (s)he wants for the test  
+'''
 
 @launch_pytest.fixture
 def launch_descr_with_yaml():
@@ -122,6 +151,11 @@ def launch_descr_with_yaml():
         #launch_pytest.actions.ReadyToTest(),
     ])
 
+''' 
+This is a testcase simiar to the integration_fn testcase, the only difference is that
+this one uses the launch configuration to launch the nodes.  
+'''
+
 @pytest.mark.launch(fixture=launch_descr_with_yaml)
 def test_using_function(launch_context):
     # by now, the camera would have started.
@@ -137,6 +171,11 @@ def test_using_function(launch_context):
     assert True
 
 
+''' 
+This is another test that can be used as a template. The expectation is that most of the
+integration tests will use this format where the tester can create a test node to subscribe
+to different published topics and decide whether the test passed or failed.  
+'''
 
 @pytest.mark.launch(fixture=launch_descr_with_yaml)
 class TestFixture1():
@@ -162,8 +201,10 @@ class TestFixture1():
         finally:
             rclpy.shutdown()
 
+''' 
+This is that holds the test node that listens to a subscription created by a test.  
+'''
 class MakeTestNode(Node):
-
     def __init__(self, name='test_node'):
         print('\nCreating node... ' + name)
         super().__init__(name)
