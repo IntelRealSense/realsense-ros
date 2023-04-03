@@ -984,16 +984,22 @@ void BaseRealSenseNode::publishStaticTransforms(std::vector<rs2::stream_profile>
 
 void BaseRealSenseNode::startDynamicTf()
 {
+    if (!_publish_tf)
+    {
+        ROS_WARN("Since the param 'publish_tf' is set to 'false',"
+                "the value set on the param 'tf_publish_rate' won't have any effect");
+        return;
+    }
     if (_tf_publish_rate > 0)
     {
-        ROS_WARN("Publishing dynamic camera transforms (/tf) at %g Hz", _tf_publish_rate);
-        if (!_tf_t)
-        {
-            _tf_t = std::make_shared<std::thread>([this]()
+            ROS_WARN("Publishing dynamic camera transforms (/tf) at %g Hz", _tf_publish_rate);
+            if (!_tf_t)
             {
-                publishDynamicTransforms();
-            });
-        }
+                _tf_t = std::make_shared<std::thread>([this]()
+                {
+                    publishDynamicTransforms();
+                });
+            }
     }
     else
     {
@@ -1002,6 +1008,11 @@ void BaseRealSenseNode::startDynamicTf()
             _tf_t->join();
             _tf_t.reset();
             _dynamic_tf_broadcaster.reset();
+            ROS_WARN("Stopped publishing dynamic camera transforms (/tf)");
+        }
+        else
+        {
+            ROS_WARN("Currently not publishing dynamic camera transforms (/tf)");
         }
     }
 }
