@@ -17,80 +17,18 @@ import os
 import sys
 import subprocess
 import time
-import unittest
 
-import launch
-import launch.actions
-import launch_ros.actions
-import launch_testing.actions
-import launch_testing.markers
 import pytest
+from launch import LaunchDescription
+import launch_ros.actions
+import launch_pytest
 import rclpy
 from rclpy import qos
 from rclpy.node import Node
 from sensor_msgs.msg import Image as msg_Image
-'''
-the below step is used for reusing the rs_launch file for testing.
-If the ". install/setup.bash" was not run, the assertion may get triggered. 
-'''
-assert os.getenv("COLCON_PREFIX_PATH")!=None,"COLCON_PREFIX_PATH was not set" 
-sys.path.append(os.getenv("COLCON_PREFIX_PATH")+'/realsense2_camera/share/realsense2_camera/launch')
-import rs_launch 
 
-import launch
-from launch import LaunchDescription
-import launch_pytest
-from launch_pytest.tools import process as process_tools
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
-from launch.substitutions import LaunchConfiguration
+import pytest_rs_utils
 
-import pytest
-
-'''
-get the default parameters from the launch script so that the test doesn't have to
-get updated for each change to the parameter or default values 
-'''
-
-def get_default_params():
-    params = {}
-    for param in rs_launch.configurable_parameters:
-        params[param['name']] = param['default']
-    return params
-
-'''
-function taken from rs_launch to kill the camera node. kept as a local copy so that when the template is 
-used, it can be changed to kill say, a particular node alone depending on the test scenario
-'''
-def kill_realsense2_camera_node():
-    cmd = "kill -s INT $(ps aux | grep '[r]ealsense2_camera_node' | awk '{print $2}')"
-    os.system(cmd)
-
-''' 
-The format used by rs_launch.py and the LuanchConfiguration yaml files are different,
-so the params reused from the rs_launch has to be reformated to be added to yaml file.
-'''
-def convert_params(params):
-    cparams = {}
-    def strtobool (val):
-        val = val.lower()
-        if val == 'true':
-            return True
-        elif val == 'false':
-            return False
-        else:
-            raise ValueError("invalid truth value %r" % (val,))
-    for key, value in params.items():
-        try:
-            cparams[key] = int(value)
-        except ValueError:
-            try:
-                cparams[key] = float(value)
-            except ValueError:
-                try:
-                    cparams[key] = strtobool(value)
-                except ValueError:
-                    cparams[key] = value.replace("'","")
-    return cparams
 
 ''' 
 The get_rs_node_description file is used to create a node description of an rs
@@ -101,7 +39,7 @@ def get_rs_node_description(name, params):
     import tempfile
     import yaml
     tmp_yaml = tempfile.NamedTemporaryFile(prefix='launch_rs_',delete=False)
-    params = convert_params(params)
+    params = pytest_rs_utils.convert_params(params)
     ros_params = {"ros__parameters":params}
     camera_params = {"camera/"+name: ros_params}
     with open(tmp_yaml.name, 'w') as f:
@@ -131,7 +69,7 @@ create a function that creates as many nodes (s)he wants for the test
 
 @launch_pytest.fixture
 def launch_descr_with_yaml():
-    params = get_default_params()
+    params = pytest_rs_utils.get_default_params()
     rosbag_dir = os.getenv("ROSBAG_FILE_PATH")
     assert rosbag_dir!=None,"ROSBAG_FILE_PATH was not set" 
     rosfile = rosbag_dir+"/outdoors_1color.bag"
@@ -167,7 +105,7 @@ def test_using_function(launch_context):
     time.sleep(5)
     print ('Node is UP')
     print ('*'*8 + ' Killing ROS ' + '*'*9)
-    kill_realsense2_camera_node()
+    pytest_rs_utils.kill_realsense2_camera_node()
     yield
     assert True
 

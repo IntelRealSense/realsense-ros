@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import sys
 import os
+import sys
 import subprocess
 import time
 
@@ -24,29 +23,8 @@ from launch_pytest.tools import process as process_tools
 
 import pytest
 from setuptools import find_packages
-packages=find_packages(exclude=['test'])
-assert os.getenv("COLCON_PREFIX_PATH")!=None,"COLCON_PREFIX_PATH was not set" 
-sys.path.append(os.getenv("COLCON_PREFIX_PATH")+'/realsense2_camera/share/realsense2_camera/launch')
-import rs_launch
 
-'''
-get the default parameters from the launch script so that the test doesn't have to
-get updated for each change to the parameter or default values 
-'''
-def get_default_params():
-    params = {}
-    for param in rs_launch.configurable_parameters:
-        params[param['name']] = param['default']
-    return params
-
-'''
-function taken from rs_launch to kill the camera node. kept as a local copy so that when the template is 
-used, it can be changed to kill say, a particular node alone depending on the test scenario
-'''
-
-def kill_realsense2_camera_node():
-    cmd = "kill -s INT $(ps aux | grep '[r]ealsense2_camera_node' | awk '{print $2}')"
-    os.system(cmd)
+import pytest_rs_utils
 
 '''
 This is a pytest fixture used by the lauch_pytest
@@ -63,7 +41,7 @@ parameters.
 
 @pytest.fixture
 def start_camera():
-    params = get_default_params() 
+    params = pytest_rs_utils.get_default_params() 
     rosbag_dir = os.getenv("ROSBAG_FILE_PATH")
     print(rosbag_dir)
     assert rosbag_dir!=None,"ROSBAG_FILE_PATH was not set" 
@@ -75,7 +53,7 @@ def start_camera():
     params['depth_height'] = '0'
     params['infra_width'] = '0'
     params['infra_height'] = '0'
-    params_str = ' '.join(["" if params[key]=="''" else key + ':=' + params[key] for key in sorted(params.keys())])
+    params_str = pytest_rs_utils.get_params_string_for_launch(params)
     cmd_params=['ros2', 'launch', 'realsense2_camera', 'rs_launch.py'] + params_str.split(' ')
     time.sleep(1)
     return launch.actions.ExecuteProcess(
@@ -117,7 +95,7 @@ def test_start_camera(start_camera, launch_context):
         assert is_node_up, 'Node is NOT UP'
         print ('Node is UP')
         print ('*'*8 + ' Killing ROS ' + '*'*9)
-        kill_realsense2_camera_node()
+        pytest_rs_utils.kill_realsense2_camera_node()
     process_tools.assert_output_sync(
         launch_context, start_camera, validate_output, timeout=5)
     yield
