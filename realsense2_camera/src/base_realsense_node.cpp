@@ -865,9 +865,13 @@ void BaseRealSenseNode::publish_static_tf(const rclcpp::Time& t,
     msg.header.stamp = t;
     msg.header.frame_id = from;
     msg.child_frame_id = to;
+
+    // Convert x,y,z (taken from camera extrinsics)
+    // from optical cooridnates to ros coordinates
     msg.transform.translation.x = trans.z;
     msg.transform.translation.y = -trans.x;
     msg.transform.translation.z = -trans.y;
+
     msg.transform.rotation.x = q.getX();
     msg.transform.rotation.y = q.getY();
     msg.transform.rotation.z = q.getZ();
@@ -917,7 +921,10 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
     auto Q = rotationMatrixToQuaternion(ex.rotation);
     Q = quaternion_optical * Q * quaternion_optical.inverse();
 
-    float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
+    // Invert x,y,z of extrinsic translation before sending this as TF translation
+    // because extrinsic from A to B is the position of A relative to B
+    // while TF from A to B is the transformation to be done on A to get to B
+    float3 trans{-ex.translation[0], -ex.translation[1], -ex.translation[2]};
     publish_static_tf(transform_ts_, trans, Q, _base_frame_id, FRAME_ID(sip));
 
     // Transform stream frame to stream optical frame
