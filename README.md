@@ -4,11 +4,29 @@
 
 <p align="center">
   ROS2 packages for using Intel RealSense D400 cameras.<br>
-  Supported ROS2 Distros: Dashing, Eloquent, Foxy, Humble and Rolling.<br>
   <a href="https://github.com/IntelRealSense/realsense-ros/releases">Latest release notes</a>
 </p>
 
 <hr>
+
+<div style="text-align:center">
+
+[![rolling][rolling-badge]][rolling]
+[![humble][humble-badge]][humble]
+[![foxy][foxy-badge]][foxy]
+[![galactic][galactic-badge]][galactic]
+[![eloquent][eloquent-badge]][eloquent]
+[![dashing][dashing-badge]][dashing]
+[![ubuntu22][ubuntu22-badge]][ubuntu22]
+[![ubuntu20][ubuntu20-badge]][ubuntu20]
+[![ubuntu18][ubuntu18-badge]][ubuntu18]
+
+![GitHubWorkflowStatus](https://img.shields.io/github/actions/workflow/status/IntelRealSense/realsense-ros/main.yml?logo=github&style=flat-square)
+![GitHubcontributors](https://img.shields.io/github/contributors/IntelRealSense/realsense-ros?style=flat-square)
+![License](https://img.shields.io/github/license/IntelRealSense/realsense-ros?style=flat-square)
+
+</div>
+
 
 ## Table of contents
   * [ROS1 and ROS2 legacy](#legacy)
@@ -21,8 +39,8 @@
      * [Post-Processing Filters](#filters)
      * [Available Services](#services)
      * [Efficient intra-process communication](#intra-process)
-  * [Contributing](#contributing)
-  * [License](#license)
+  * [Contributing](CONTRIBUTING.md)
+  * [License](LICENSE)
 
 <h2 id="legacy">
   Legacy
@@ -348,277 +366,28 @@ The launch file accepts a parameter, `intra_process_comms`, controlling whether 
 ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comms:=true
 ```
 
-  <details>
-    <summary>
-      <h3 id="contributing">
-        Contributing
-      </h3>
-    </summary>
-  # How to Contribute
-
-This project welcomes third-party code via GitHub pull requests.
-
-You are welcome to propose and discuss enhancements using project [issues](https://github.com/IntelRealSense/realsense-ros/issues).
-
-> **Branching Policy**:
-> The `ros2-development` branch is considered stable, at all times.
-> If you plan to propose a patch, please commit into the `ros2-development` branch, or its own feature branch.
-
-In addition, please run `pr_check.sh` under `scripts` directory. This scripts verify compliance with project's standards:
-
-1. Every example / source file must refer to [LICENSE](https://github.com/IntelRealSense/realsense-ros/blob/ros2-development/LICENSE)
-2. Every example / source file must include correct copyright notice
-3. For indentation we are using spaces and not tabs
-4. Line-endings must be Unix and not DOS style
-
-Most common issues can be automatically resolved by running `./pr_check.sh --fix`
-
-Please familirize yourself with the [Apache License 2.0](https://github.com/IntelRealSense/realsense-ros/blob/ros2-development/LICENSE) before contributing.
-
-## Step-by-Step
-
-1. Make sure you have `git` and `cmake` installed on your system. On Windows we recommend using [Git Extensions](https://github.com/gitextensions/gitextensions/releases) for git bash.
-2. Run `git clone https://github.com/IntelRealSense/realsense-ros.git` and `cd realsense-ros`
-3. To align with latest status of the ros2-development branch, run:
-```
-git fetch origin
-git checkout ros2-development
-git reset --hard origin/ros2-development
-```
-4. `git checkout -b name_of_your_contribution` to create a dedicated branch
-5. Make your changes to the local repository
-6. Make sure your local git user is updated, or run `git config --global user.email "email@example.com"` and `git config --global user.user "user"` to set it up. This is the user & email that will appear in GitHub history.
-7. `git add -p` to select the changes you wish to add
-8. `git commit -m "Description of the change"`
-9. Make sure you have a GitHub user and [fork realsense-ros](https://github.com/IntelRealSense/realsense-ros#fork-destination-box)
-10. `git remote add fork https://github.com/username/realsense-ros.git` with your GitHub `username`
-11. `git fetch fork`
-12. `git push fork` to push `name_of_your_contribution` branch to your fork
-13. Go to your fork on GitHub at `https://github.com/username/realsense-ros`
-14. Click the `New pull request` button
-15. For `base` combo-box select `ros2-development`, since you want to submit a PR to that branch
-16. For `compare` combo-box select `name_of_your_contribution` with your commit
-17. Review your changes and click `Create pull request`
-18. Wait for all automated checks to pass
-19. The PR will be approved / rejected after review from the team and the community
-
-To continue to new change, goto step 3.
-To return to your PR (in order to make more changes):
-1. `git stash`
-2. `git checkout name_of_your_contribution`
-3. Repeat items 5-8 from the previous list
-4. `git push fork`
-The pull request will be automatically updated
-
 </details>
 
-<details>
-  <summary>
-    <h3 id="license">
-      License
-    </h3>
-  </summary>
-  
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
-
-   1. Definitions.
-
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
-
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
-
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
-
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
-
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
-
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
-
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
-
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
-
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
-
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
-
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
-
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
-
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
-
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
-
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
-
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
-
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
-
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
-
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
-
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
-
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
-
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
-
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
-
-   END OF TERMS AND CONDITIONS
-
-   APPENDIX: How to apply the Apache License to your work.
-
-      To apply the Apache License to your work, attach the following
-      boilerplate notice, with the fields enclosed by brackets "[]"
-      replaced with your own identifying information. (Don't include
-      the brackets!)  The text should be enclosed in the appropriate
-      comment syntax for the file format. We also recommend that a
-      file or class name and description of purpose be included on the
-      same "printed page" as the copyright notice for easier
-      identification within third-party archives.
-
-   Copyright 2023 Intel Corporation. All Rights Reserved.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-  
-</details>
+[supporteddistros-badge]: https://img.shields.io/badge/-Supported%20ROS2%20Distros-lightgrey?style=flat-square&logo=ros
+[supporteddistro]: https://docs.ros.org/en/rolling/Releases.html
+[rolling-badge]: https://img.shields.io/badge/-ROLLING-blue?style=flat-square&logo=ros
+[rolling]: https://docs.ros.org/en/rolling/Releases.html
+[humble-badge]: https://img.shields.io/badge/-HUMBLE-blue?style=flat-square&logo=ros
+[humble]: https://docs.ros.org/en/rolling/Releases/Release-Humble-Hawksbill.html
+[foxy-badge]: https://img.shields.io/badge/-FOXY-blue?style=flat-square&logo=ros
+[foxy]: https://docs.ros.org/en/rolling/Releases/Release-Foxy-Fitzroy.html
+[galactic-badge]: https://img.shields.io/badge/-GALACTIC-blue?style=flat-square&logo=ros
+[galactic]: https://docs.ros.org/en/galactic/Releases/Release-Foxy-Fitzroy.html
+[eloquent-badge]: https://img.shields.io/badge/-ELOQUENT-blue?style=flat-square&logo=ros
+[eloquent]: https://docs.ros.org/en/eloquent/Releases/Release-Foxy-Fitzroy.html
+[dashing-badge]: https://img.shields.io/badge/-DASHING-blue?style=flat-square&logo=ros
+[dashing]: https://docs.ros.org/en/dashing/Releases/Release-Foxy-Fitzroy.html
+[supported-ubuntu-badge]: https://img.shields.io/badge/-Supported%20Ubuntu%20Releases-lightgrey?style=flat-square&logo=ubuntu&logoColor=white
+[supported-ubuntu]: https://wiki.ubuntu.com/Releases
+[ubuntu22-badge]: https://img.shields.io/badge/-UBUNTU%2022%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
+[ubuntu22]: https://releases.ubuntu.com/jammy/
+[ubuntu20-badge]: https://img.shields.io/badge/-UBUNTU%2020%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
+[ubuntu20]: https://releases.ubuntu.com/focal/
+[ubuntu18-badge]: https://img.shields.io/badge/-UBUNTU%2018%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
+[ubuntu18]: https://releases.ubuntu.com/18.04/
