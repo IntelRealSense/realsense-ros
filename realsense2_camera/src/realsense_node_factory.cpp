@@ -281,12 +281,8 @@ void RealSenseNodeFactory::init()
         {
             {
                 ROS_INFO_STREAM("publish topics from rosbag file: " << rosbag_filename.c_str());
-                auto pipe = std::make_shared<rs2::pipeline>();
-                rs2::config cfg;
-                cfg.enable_device_from_file(rosbag_filename.c_str(), false);
-                cfg.enable_all_streams();
-                pipe->start(cfg); //File will be opened in read mode at this point
-                _device = pipe->get_active_profile().get_device();
+                rs2::context ctx;
+                _device = ctx.load_device(rosbag_filename.c_str());
                 _serial_no = _device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
             }
             if (_device)
