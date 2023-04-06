@@ -9,23 +9,19 @@
 
 <hr>
 
-<div style="text-align:center">
 
 [![rolling][rolling-badge]][rolling]
 [![humble][humble-badge]][humble]
 [![foxy][foxy-badge]][foxy]
 [![galactic][galactic-badge]][galactic]
-[![eloquent][eloquent-badge]][eloquent]
-[![dashing][dashing-badge]][dashing]
 [![ubuntu22][ubuntu22-badge]][ubuntu22]
 [![ubuntu20][ubuntu20-badge]][ubuntu20]
-[![ubuntu18][ubuntu18-badge]][ubuntu18]
 
 ![GitHubWorkflowStatus](https://img.shields.io/github/actions/workflow/status/IntelRealSense/realsense-ros/main.yml?logo=github&style=flat-square)
 ![GitHubcontributors](https://img.shields.io/github/contributors/IntelRealSense/realsense-ros?style=flat-square)
 ![License](https://img.shields.io/github/license/IntelRealSense/realsense-ros?style=flat-square)
 
-</div>
+<hr>
 
 
 ## Table of contents
@@ -34,6 +30,12 @@
   * [Usage](#usage)
      * [Starting the camera node](#start-camera-node)
      * [Parameters](#parameters)
+     * [ROS2-vs-Optical Coordination Systems](#coordination)
+       * [Point Of View](#point-of-view)
+       * [ROS (Robot) Coordinates](#ros-coordination)
+       * [Optical (Camera) Coordinates](#optical-coordination)
+       * [TFs](#tfs)
+       * [Extrinsics](#extrinsics)
      * [Topics](#topics)
      * [Metadata Topic](#metadata)
      * [Post-Processing Filters](#filters)
@@ -41,6 +43,8 @@
      * [Efficient intra-process communication](#intra-process)
   * [Contributing](CONTRIBUTING.md)
   * [License](LICENSE)
+
+<hr>
 
 <h2 id="legacy">
   Legacy
@@ -93,9 +97,6 @@
 - #### Ubuntu 20.04: 
   - [ROS2 Foxy](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)
   - [ROS2 Galactic](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html)
-- #### Ubuntu 18.04 : 
-  - [ROS2 Dashing](https://docs.ros.org/en/dashing/Installation/Ubuntu-Install-Debians.html)
-  - [ROS2 Eloquent](https://docs.ros.org/en/eloquent/Installation/Linux-Install-Debians.html)
     
 </details>
   
@@ -159,13 +160,15 @@
 
   -  Source environment
    ```bash
-   ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: humble, galactic, foxy, eloquent, dashing
+   ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: humble, galactic, foxy
    source /opt/ros/$ROS_DISTRO/setup.bash
    cd ~/ros2_ws
    . install/local_setup.bash
    ```
   
   </details>
+
+<hr>
 
 <h2 id="usage">
   Usage
@@ -183,7 +186,9 @@
   #### with ros2 launch:
     ros2 launch realsense2_camera rs_launch.py
     ros2 launch realsense2_camera rs_launch.py depth_module.profile:=1280x720x30 pointcloud.enable:=true
-  
+
+<hr>
+
 <h3 id="parameters">
   Parameters
 <h3>
@@ -239,7 +244,67 @@ Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default
 The `/diagnostics` topic includes information regarding the device temperatures and actual frequency of the enabled streams.
 
 - **publish_odom_tf**: If True (default) publish TF from odom_frame to pose_frame.
-    
+
+<hr>
+
+
+<h3 id="coordination">
+  ROS2(Robot) vs Optical(Camera) Coordination Systems:
+</h3>
+
+<h4 id="point-of-view">
+  Point Of View:
+</h4>
+
+- Imagine we are standing behind of the camera, and looking forward.
+- Always use this point of view when talking about coordinates, left vs right IRs, position of sensor, etc..
+
+<h4 id="ros-coordination">
+  ROS2 Coordinate System:
+</h4>
+
+ROS2 Coordinate System (X: Forward, Y:Left, Z: Up)
+
+<h4 id="optical-coordination">
+  Camera Optical Coordinate System:
+</h4>
+
+Camera Optical Coordinate System (X: Right, Y: Down, Z: Forward).
+
+<h4 id="tfs">
+  TF from coordinate A to coordinate B:
+</h4>
+
+- TF msg expresses a transform from coordinate frame "header.frame_id" (source) to the coordinate frame child_frame_id (destination) [Reference](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Transform.html)
+- In RealSense cameras, the origin point (0,0,0) is taken from the left IR (infra1) position and named as "camera_link" frame
+- Depth, left IR and "camera_link" coordinates converge together.   
+- Our wrapper provide TFs between each sensor coordinate to the camera base (camera_link)
+- Also, it provides TFs from each sensor ROS coordinates to its corrosponding optical coordinates.
+
+<h4 id="extrinsics">
+  Extrinsics from sensor A to sensor B:
+</h4>
+
+- Extrinsic from sensor A to sensor B means the position and orientation of sensor A relative to sensor B.
+- Imagine that B is the origin (0,0,0), then the Extrensics(A->B) describes where is sensor A relative to sensor B.
+- For example, depth_to_color, in D435i:
+  - If we look from behind of the D435i, extrinsic from depth to color, means, where is the depth in relative to the color.
+  - If we just look at the X coordinates, in the optical coordiantes (again, from behind) and assume that COLOR(RGB) sensor is (0,0,0), we can say that DEPTH sensor is on the right of RGB by 0.0148m (1.48cm).
+
+```
+administrator@perclnx466 ~/ros2_humble $ ros2 topic echo /camera/extrinsics/depth_to_color
+rotation:
+...
+translation:
+- 0.01485931035131216
+- 0.0010161789832636714
+- 0.0005317096947692335
+---
+```
+![image](https://user-images.githubusercontent.com/99127997/230220297-e392f0fc-63bf-4bab-8001-af1ddf0ed00e.png)
+
+<hr>
+
 <h3 id="topics">
   Published Topics
 </h3>
@@ -282,6 +347,8 @@ Enabling stream adds matching topics. For instance, enabling the gyro and accel 
 - /camera/gyro/metadata
 - /camera/gyro/sample
 
+<hr>
+
 <h3 id="metadata">
   Metadata topic
 </h3>
@@ -291,6 +358,8 @@ The metadata messages store the camera's available metadata in a *json* format. 
 python3 src/realsense-ros/realsense2_camera/scripts/echo_metadada.py /camera/depth/metadata
 ```
   
+<hr>
+
 <h3 id="filters">
   Post-Processing Filters
 </h3>
@@ -315,12 +384,15 @@ The following post processing filters are available:
 
 Each of the above filters have it's own parameters, following the naming convention of `<filter_name>.<parameter_name>` including a `<filter_name>.enable` parameter to enable/disable it. 
 
+<hr>
+
 <h3 id="services">
   Available services
 </h3>
   
 - device_info : retrieve information about the device - serial_number, firmware_version etc. Type `ros2 interface show realsense2_camera_msgs/srv/DeviceInfo` for the full list. Call example: `ros2 service call /camera/device_info realsense2_camera_msgs/srv/DeviceInfo`
-  - Note that for **ROS2 Dashing** the command is `ros2 srv show realsense2_camera_msgs/srv/DeviceInfo`
+
+<hr>
 
 <h3 id="intra-process">
   Efficient intra-process communication:
@@ -369,8 +441,6 @@ ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comm
 </details>
 
 
-[supporteddistros-badge]: https://img.shields.io/badge/-Supported%20ROS2%20Distros-lightgrey?style=flat-square&logo=ros
-[supporteddistro]: https://docs.ros.org/en/rolling/Releases.html
 [rolling-badge]: https://img.shields.io/badge/-ROLLING-blue?style=flat-square&logo=ros
 [rolling]: https://docs.ros.org/en/rolling/Releases.html
 [humble-badge]: https://img.shields.io/badge/-HUMBLE-blue?style=flat-square&logo=ros
@@ -379,15 +449,7 @@ ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comm
 [foxy]: https://docs.ros.org/en/rolling/Releases/Release-Foxy-Fitzroy.html
 [galactic-badge]: https://img.shields.io/badge/-GALACTIC-blue?style=flat-square&logo=ros
 [galactic]: https://docs.ros.org/en/galactic/Releases/Release-Foxy-Fitzroy.html
-[eloquent-badge]: https://img.shields.io/badge/-ELOQUENT-blue?style=flat-square&logo=ros
-[eloquent]: https://docs.ros.org/en/eloquent/Releases/Release-Foxy-Fitzroy.html
-[dashing-badge]: https://img.shields.io/badge/-DASHING-blue?style=flat-square&logo=ros
-[dashing]: https://docs.ros.org/en/dashing/Releases/Release-Foxy-Fitzroy.html
-[supported-ubuntu-badge]: https://img.shields.io/badge/-Supported%20Ubuntu%20Releases-lightgrey?style=flat-square&logo=ubuntu&logoColor=white
-[supported-ubuntu]: https://wiki.ubuntu.com/Releases
 [ubuntu22-badge]: https://img.shields.io/badge/-UBUNTU%2022%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
 [ubuntu22]: https://releases.ubuntu.com/jammy/
 [ubuntu20-badge]: https://img.shields.io/badge/-UBUNTU%2020%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
 [ubuntu20]: https://releases.ubuntu.com/focal/
-[ubuntu18-badge]: https://img.shields.io/badge/-UBUNTU%2018%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
-[ubuntu18]: https://releases.ubuntu.com/18.04/
