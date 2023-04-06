@@ -18,11 +18,10 @@
 [![ubuntu20][ubuntu20-badge]][ubuntu20]
 
 ![GitHubWorkflowStatus](https://img.shields.io/github/actions/workflow/status/IntelRealSense/realsense-ros/main.yml?logo=github&style=flat-square)
-![GitHubcontributors](https://img.shields.io/github/contributors/IntelRealSense/realsense-ros?style=flat-square)
-![License](https://img.shields.io/github/license/IntelRealSense/realsense-ros?style=flat-square)
+[![GitHubcontributors](https://img.shields.io/github/contributors/IntelRealSense/realsense-ros?style=flat-square)](CONTRIBUTING.md)
+[![License](https://img.shields.io/github/license/IntelRealSense/realsense-ros?style=flat-square)](LICENSE)
 
 <hr>
-
 
 ## Table of contents
   * [ROS1 and ROS2 legacy](#legacy)
@@ -31,11 +30,8 @@
      * [Starting the camera node](#start-camera-node)
      * [Parameters](#parameters)
      * [ROS2-vs-Optical Coordination Systems](#coordination)
-       * [Point Of View](#point-of-view)
-       * [ROS (Robot) Coordinates](#ros-coordination)
-       * [Optical (Camera) Coordinates](#optical-coordination)
-       * [TFs](#tfs)
-       * [Extrinsics](#extrinsics)
+     * [TF from coordinate A to coordinate B](#tfs)
+     * [Extrinsics from sensor A to sensor B](#extrinsics)
      * [Topics](#topics)
      * [Metadata Topic](#metadata)
      * [Post-Processing Filters](#filters)
@@ -194,102 +190,144 @@
 <h3>
   
 ### Sensor Parameters:
-Each sensor has a unique set of parameters.
-Video sensors, such as depth_module or rgb_camera have, at least, the 'profile' parameter.</br>
-It is a string of the following format: \<width>X\<height>X\<fps> (The deviding character can be X, x or ",". Spaces are ignored.)
+- Each sensor has a unique set of parameters.
+- Video sensors, such as depth_module or rgb_camera have, at least, the 'profile' parameter.</br>
+  - The profile parameter is a string of the following format: \<width>X\<height>X\<fps> (The deviding character can be X, x or ",". Spaces are ignored.)
+  - For example: ```depth_module.profile:=640x480x30```
+- Since infra1, infra2 and depth are all streams of the depth_module, their width, height and fps are defined by their common sensor.
+- If the specified combination of parameters is not available by the device, the default configuration will be used.
 
-Since infra1, infra2 and depth are all streams of the depth_module, their width, height and fps are defined by their common sensor.
-If the specified combination of parameters is not available by the device, the default configuration will be used.</br>
+</br>
 
 ### Available Parameters:
-For the entire list of parameters type `ros2 param list`.
-For reading a parameter value use `ros2 param get <node> <parameter_name>` for instance: `ros2 param get /camera/camera depth_module.emitter_on_off`
-For setting a new value for a parameter use `ros2 param set <node> <parameter_name> <value>` i.e. `ros2 param set /camera/camera depth_module.emitter_on_off true`
+- For the entire list of parameters type `ros2 param list`.
+- For reading a parameter value use `ros2 param get <node> <parameter_name>` 
+  - For example: `ros2 param get /camera/camera depth_module.emitter_on_off`
+- For setting a new value for a parameter use `ros2 param set <node> <parameter_name> <value>`
+  - For example: `ros2 param set /camera/camera depth_module.emitter_on_off true`
 
 #### Parameters that can be modified during runtime:
 - All of the filters and sensors inner parameters.
-- **enable_*<stream_name>***: Choose whether to enable a specified stream or not. Default is true for images and false for orientation streams. <stream_name> can be any of *infra1, infra2, color, depth, fisheye, fisheye1, fisheye2, gyro, accel, pose*.
-- **enable_sync**: gathers closest frames of different sensors, infra red, color and depth, to be sent with the same timetag. This happens automatically when such filters as pointcloud are enabled.
-- ***<stream_type>*_qos**: <stream_type> can be any of *infra, color, fisheye, depth, gyro, accel, pose*. Sets the QoS by which the topic is published. Available values are the following strings: SYSTEM_DEFAULT, DEFAULT, PARAMETER_EVENTS, SERVICES_DEFAULT, PARAMETERS, SENSOR_DATA.
+- **enable_*<stream_name>***: 
+  - Choose whether to enable a specified stream or not. Default is true for images and false for orientation streams.
+  - <stream_name> can be any of *infra1, infra2, color, depth, fisheye, fisheye1, fisheye2, gyro, accel, pose*.
+  - For example: ```enable_infra1:=true enable_color:=false```
+- **enable_sync**:
+  - gathers closest frames of different sensors, infra red, color and depth, to be sent with the same timetag.
+  - This happens automatically when such filters as pointcloud are enabled.
+- ***<stream_type>*_qos**: 
+  - Sets the QoS by which the topic is published.
+  - <stream_type> can be any of *infra, color, fisheye, depth, gyro, accel, pose*.
+  -  Available values are the following strings: `SYSTEM_DEFAULT`, `DEFAULT`, `PARAMETER_EVENTS`, `SERVICES_DEFAULT`, `PARAMETERS`, `SENSOR_DATA`.
+  - For example: ```depth_qos:=SENSOR_DATA```
+  - Reference: [ROS2 QoS profiles formal documentation](https://docs.ros.org/en/rolling/Concepts/About-Quality-of-Service-Settings.html#qos-profiles)
 - **Notice:** ***<stream_type>*_info_qos** refers to both camera_info topics and metadata topics.
 - **tf_publish_rate**: double, positive values mean dynamic transform publication with specified rate, all other values mean static transform publication. Defaults to 0 
 
 #### Parameters that cannot be changed in runtime:
-- **serial_no**: will attach to the device with the given serial number (*serial_no*) number. Default, attach to the first (in an inner list) RealSense device.
-  - Note: serial number can also be defined with "_" prefix. For instance, serial number 831612073525 can be set in command line as `serial_no:=_831612073525`. That is a workaround until a better method will be found to ROS2's auto conversion of strings containing only digits into integers.
-- **usb_port_id**: will attach to the device with the given USB port (*usb_port_id*). i.e 4-1, 4-2 etc. Default, ignore USB port when choosing a device.
-- **device_type**: will attach to a device whose name includes the given *device_type* regular expression pattern. Default, ignore device type. For example, device_type:=d435 will match d435 and d435i. device_type=d435(?!i) will match d435 but not d435i.
-- **reconnect_timeout**: When the driver cannot connect to the device try to reconnect after this timeout (in seconds).
-- **wait_for_device_timeout**: If the specified device is not found, will wait *wait_for_device_timeout* seconds before exits. Defualt, *wait_for_device_timeout < 0*, will wait indefinitely.
-- **rosbag_filename**: Publish topics from rosbag file. There are two ways for loading rosbag file:
+- **serial_no**:
+  - will attach to the device with the given serial number (*serial_no*) number.
+  - Default, attach to the first (in an inner list) RealSense device.
+  - Note: serial number should be defined with "_" prefix.
+    - That is a workaround until a better method will be found to ROS2's auto conversion of strings containing only digits into integers.
+  - Example: serial number 831612073525 can be set in command line as `serial_no:=_831612073525`. 
+- **usb_port_id**:
+  - will attach to the device with the given USB port (*usb_port_id*).
+  - For example: `usb_port_id:=4-1` or `usb_port_id:=4-2` 
+  - Default, ignore USB port when choosing a device.
+- **device_type**:
+  - will attach to a device whose name includes the given *device_type* regular expression pattern.
+  - Default, ignore device type.
+  - For example:
+    - `device_type:=d435` will match d435 and d435i.
+    - `device_type=d435(?!i)` will match d435 but not d435i.
+- **reconnect_timeout**:
+  - When the driver cannot connect to the device try to reconnect after this timeout (in seconds).
+  - For Example: `reconnect_timeout:=10`
+- **wait_for_device_timeout**: 
+  - If the specified device is not found, will wait *wait_for_device_timeout* seconds before exits.
+  - Defualt, *wait_for_device_timeout < 0*, will wait indefinitely.
+  - For example: `wait_for_device_timeout:=60`
+- **rosbag_filename**:
+  - Publish topics from rosbag file. There are two ways for loading rosbag file:
    * Command line - ```ros2 run realsense2_camera realsense2_camera_node -p rosbag_filename:="/full/path/to/rosbag.bag"```
    * Launch file - set ```rosbag_filename``` parameter with rosbag full path (see ```realsense2_camera/launch/rs_launch.py``` as reference) 
-
-- **initial_reset**: On occasions the device was not closed properly and due to firmware issues needs to reset. If set to true, the device will reset prior to usage.
-
+- **initial_reset**:
+  - On occasions the device was not closed properly and due to firmware issues needs to reset. 
+  - If set to true, the device will reset prior to usage.
+  - For example: `initial_reset:=true`
 - ***<stream_name>*_frame_id**, ***<stream_name>*_optical_frame_id**, **aligned_depth_to_*<stream_name>*_frame_id**: Specify the different frame_id for the different frames. Especially important when using multiple cameras.
-
 - **base_frame_id**: defines the frame_id all static transformations refers to.
 - **odom_frame_id**: defines the origin coordinate system in ROS convention (X-Forward, Y-Left, Z-Up). pose topic defines the pose relative to that system.
 
-- **unite_imu_method**: The D435i camera has built in IMU components which produce 2 unrelated streams: *gyro* - which shows angular velocity and *accel* which shows linear acceleration. Each with it's own frequency. By default, 2 corresponding topics are available, each with only the relevant fields of the message sensor_msgs::Imu are filled out.
-Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default *gyro* and *accel* topics. The *imu* topic is published at the rate of the gyro. All the fields of the Imu message under the *imu* topic are filled out. `unite_imu_method` parameter supported values are [0-2] meaning:  [0 -> None, 1 -> Copy, 2 -> Linear_ interpolation] when:
-   - **linear_interpolation**: Every gyro message is attached by the an accel message interpolated to the gyro's timestamp.
-   - **copy**: Every gyro message is attached by the last accel message.
-- **clip_distance**: remove from the depth image all values above a given value (meters). Disable by giving negative value (default)
+- **unite_imu_method**:
+  - D400 cameras have built in IMU components which produce 2 unrelated streams, each with it's own frequency: 
+    - *gyro* - which shows angular velocity 
+    - *accel* which shows linear acceleration. 
+  - By default, 2 corresponding topics are available, each with only the relevant fields of the message sensor_msgs::Imu are filled out.
+  - Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default *gyro* and *accel* topics.
+    - The *imu* topic is published at the rate of the gyro.
+    - All the fields of the Imu message under the *imu* topic are filled out. 
+  - `unite_imu_method` parameter supported values are [0-2] meaning:  [0 -> None, 1 -> Copy, 2 -> Linear_ interpolation] when:
+    - **linear_interpolation**: Every gyro message is attached by the an accel message interpolated to the gyro's timestamp.
+    - **copy**: Every gyro message is attached by the last accel message.
+- **clip_distance**:
+  - Remove from the depth image all values above a given value (meters). Disable by giving negative value (default)
+  - For example: `clip_distance:=1.5`
 - **linear_accel_cov**, **angular_velocity_cov**: sets the variance given to the Imu readings.
 - **hold_back_imu_for_frames**: Images processing takes time. Therefor there is a time gap between the moment the image arrives at the wrapper and the moment the image is published to the ROS environment. During this time, Imu messages keep on arriving and a situation is created where an image with earlier timestamp is published after Imu message with later timestamp. If that is a problem, setting *hold_back_imu_for_frames* to *true* will hold the Imu messages back while processing the images and then publish them all in a burst, thus keeping the order of publication as the order of arrival. Note that in either case, the timestamp in each message's header reflects the time of it's origin.
-- **publish_tf**: boolean, publish or not TF at all. Defaults to True.
-- **diagnostics_period**: double, positive values set the period between diagnostics updates on the `/diagnostics` topic. 0 or negative values mean no diagnostics topic is published. Defaults to 0.</br>
+- **publish_tf**:
+  - boolean, publish or not TF at all.
+  - Defaults to True.
+- **diagnostics_period**: 
+  - double, positive values set the period between diagnostics updates on the `/diagnostics` topic.
+  - 0 or negative values mean no diagnostics topic is published. Defaults to 0.</br>
 The `/diagnostics` topic includes information regarding the device temperatures and actual frequency of the enabled streams.
 
 - **publish_odom_tf**: If True (default) publish TF from odom_frame to pose_frame.
 
 <hr>
 
-
 <h3 id="coordination">
   ROS2(Robot) vs Optical(Camera) Coordination Systems:
 </h3>
 
-<h4 id="point-of-view">
-  Point Of View:
-</h4>
+- Point Of View:
+  - Imagine we are standing behind of the camera, and looking forward.
+  - Always use this point of view when talking about coordinates, left vs right IRs, position of sensor, etc..
 
-- Imagine we are standing behind of the camera, and looking forward.
-- Always use this point of view when talking about coordinates, left vs right IRs, position of sensor, etc..
+![image](https://user-images.githubusercontent.com/99127997/230150735-bc31fedf-d715-4e35-b462-fe2c338832c3.png)
 
-<h4 id="ros-coordination">
-  ROS2 Coordinate System:
-</h4>
+- ROS2 Coordinate System: (X: Forward, Y:Left, Z: Up)
+- Camera Optical Coordinate System: (X: Right, Y: Down, Z: Forward)
 
-ROS2 Coordinate System (X: Forward, Y:Left, Z: Up)
+<hr>
 
-<h4 id="optical-coordination">
-  Camera Optical Coordinate System:
-</h4>
-
-Camera Optical Coordinate System (X: Right, Y: Down, Z: Forward).
-
-<h4 id="tfs">
+<h3 id="tfs">
   TF from coordinate A to coordinate B:
-</h4>
+</h3>
 
 - TF msg expresses a transform from coordinate frame "header.frame_id" (source) to the coordinate frame child_frame_id (destination) [Reference](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Transform.html)
 - In RealSense cameras, the origin point (0,0,0) is taken from the left IR (infra1) position and named as "camera_link" frame
 - Depth, left IR and "camera_link" coordinates converge together.   
-- Our wrapper provide TFs between each sensor coordinate to the camera base (camera_link)
+- Our wrapper provide static TFs between each sensor coordinate to the camera base (camera_link)
 - Also, it provides TFs from each sensor ROS coordinates to its corrosponding optical coordinates.
+- Example of static TFs of RGB sensor and Infra2 (right infra) sensor of D435i module as it shown in rviz2: 
+![example](https://user-images.githubusercontent.com/99127997/230148106-0f79cbdb-c401-4d09-b386-a366af18e5f7.png)
 
-<h4 id="extrinsics">
+<hr>
+
+<h3 id="extrinsics">
   Extrinsics from sensor A to sensor B:
-</h4>
+</h3>
 
 - Extrinsic from sensor A to sensor B means the position and orientation of sensor A relative to sensor B.
 - Imagine that B is the origin (0,0,0), then the Extrensics(A->B) describes where is sensor A relative to sensor B.
 - For example, depth_to_color, in D435i:
   - If we look from behind of the D435i, extrinsic from depth to color, means, where is the depth in relative to the color.
   - If we just look at the X coordinates, in the optical coordiantes (again, from behind) and assume that COLOR(RGB) sensor is (0,0,0), we can say that DEPTH sensor is on the right of RGB by 0.0148m (1.48cm).
+
+![d435i](https://user-images.githubusercontent.com/99127997/230220297-e392f0fc-63bf-4bab-8001-af1ddf0ed00e.png)
 
 ```
 administrator@perclnx466 ~/ros2_humble $ ros2 topic echo /camera/extrinsics/depth_to_color
@@ -301,7 +339,7 @@ translation:
 - 0.0005317096947692335
 ---
 ```
-![image](https://user-images.githubusercontent.com/99127997/230220297-e392f0fc-63bf-4bab-8001-af1ddf0ed00e.png)
+
 
 <hr>
 
@@ -365,15 +403,22 @@ python3 src/realsense-ros/realsense2_camera/scripts/echo_metadada.py /camera/dep
 </h3>
   
 The following post processing filters are available:
- - ```align_depth```: If enabled, will publish the depth image aligned to the color image on the topic `/camera/aligned_depth_to_color/image_raw`.</br> The pointcloud, if created, will be based on the aligned depth image.
+ - ```align_depth```: If enabled, will publish the depth image aligned to the color image on the topic `/camera/aligned_depth_to_color/image_raw`.
+   - The pointcloud, if created, will be based on the aligned depth image.
  - ```colorizer```: will color the depth image. On the depth topic an RGB image will be published, instead of the 16bit depth values .
  - ```pointcloud```: will add a pointcloud topic `/camera/depth/color/points`.
     * The texture of the pointcloud can be modified using the `pointcloud.stream_filter` parameter.</br>
     * The depth FOV and the texture FOV are not similar. By default, pointcloud is limited to the section of depth containing the texture. You can have a full depth to pointcloud, coloring the regions beyond the texture with zeros, by setting `pointcloud.allow_no_texture_points` to true.
     * pointcloud is of an unordered format by default. This can be changed by setting `pointcloud.ordered_pc` to true.
- - ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values. The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.</br> To view the effect on the infrared image for each sequence id use the `sequence_id_filter.sequence_id` parameter.</br> To initialize these parameters in start time use the following parameters:</br>
-  `depth_module.exposure.1`, `depth_module.gain.1`, `depth_module.exposure.2`, `depth_module.gain.2`</br>
-  \* For in-depth review of the subject please read the accompanying [white paper](https://dev.intelrealsense.com/docs/high-dynamic-range-with-stereoscopic-depth-cameras).
+ - ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values.
+  - The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.
+  - To view the effect on the infrared image for each sequence id use the `sequence_id_filter.sequence_id` parameter.
+  - To initialize these parameters in start time use the following parameters:
+    - `depth_module.exposure.1`
+    - `depth_module.gain.1`
+    - `depth_module.exposure.2`
+    - `depth_module.gain.2`
+  - For in-depth review of the subject please read the accompanying [white paper](https://dev.intelrealsense.com/docs/high-dynamic-range-with-stereoscopic-depth-cameras).
 
   - The following filters have detailed descriptions in : https://github.com/IntelRealSense/librealsense/blob/master/doc/post-processing-filters.md
     - ```disparity_filter``` - convert depth to disparity before applying other filters and back.
@@ -441,13 +486,13 @@ ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comm
 </details>
 
 
-[rolling-badge]: https://img.shields.io/badge/-ROLLING-blue?style=flat-square&logo=ros
+[rolling-badge]: https://img.shields.io/badge/-ROLLING-orange?style=flat-square&logo=ros
 [rolling]: https://docs.ros.org/en/rolling/Releases.html
-[humble-badge]: https://img.shields.io/badge/-HUMBLE-blue?style=flat-square&logo=ros
+[humble-badge]: https://img.shields.io/badge/-HUMBLE-orange?style=flat-square&logo=ros
 [humble]: https://docs.ros.org/en/rolling/Releases/Release-Humble-Hawksbill.html
-[foxy-badge]: https://img.shields.io/badge/-FOXY-blue?style=flat-square&logo=ros
+[foxy-badge]: https://img.shields.io/badge/-FOXY-orange?style=flat-square&logo=ros
 [foxy]: https://docs.ros.org/en/rolling/Releases/Release-Foxy-Fitzroy.html
-[galactic-badge]: https://img.shields.io/badge/-GALACTIC-blue?style=flat-square&logo=ros
+[galactic-badge]: https://img.shields.io/badge/-GALACTIC-orange?style=flat-square&logo=ros
 [galactic]: https://docs.ros.org/en/galactic/Releases/Release-Foxy-Fitzroy.html
 [ubuntu22-badge]: https://img.shields.io/badge/-UBUNTU%2022%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
 [ubuntu22]: https://releases.ubuntu.com/jammy/
