@@ -888,6 +888,30 @@ void BaseRealSenseNode::publishExtrinsicsTopic(const stream_index_pair& sip, con
     }
 }
 
+
+rs2_extrinsics BaseRealSenseNode::invertExtrinsics(const rs2_extrinsics& ex) const
+{
+    rs2_extrinsics result;
+
+    // invert translation vector
+    result.translation[0] = -ex.translation[0];
+    result.translation[1] = -ex.translation[1];
+    result.translation[2] = -ex.translation[2];
+
+    // invert rotation matrix
+    result.rotation[0] = ex.rotation[0];
+    result.rotation[1] = ex.rotation[3];
+    result.rotation[2] = ex.rotation[6];
+    result.rotation[3] = ex.rotation[1];
+    result.rotation[4] = ex.rotation[4];
+    result.rotation[5] = ex.rotation[7];
+    result.rotation[6] = ex.rotation[2];
+    result.rotation[7] = ex.rotation[5];
+    result.rotation[8] = ex.rotation[8];
+
+    return result;
+}
+
 void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile)
 {
     // Transform base to stream
@@ -918,13 +942,17 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
         }
     }
 
-    auto Q = rotationMatrixToQuaternion(ex.rotation);
-    Q = quaternion_optical * Q * quaternion_optical.inverse();
+    publishExtrinsicsTopic(sip, ex);
 
-    // Invert x,y,z of extrinsic translation before sending this as TF translation
+    // Invert extrinsic translation vector and rotation matrix before sending this as TF translation
     // because extrinsic from A to B is the position of A relative to B
     // while TF from A to B is the transformation to be done on A to get to B
-    float3 trans{-ex.translation[0], -ex.translation[1], -ex.translation[2]};
+    ex = invertExtrinsics(ex);
+
+    auto Q = rotationMatrixToQuaternion(ex.rotation);
+    Q = quaternion_optical * Q * quaternion_optical.inverse();
+    float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
+
     publish_static_tf(transform_ts_, trans, Q, _base_frame_id, FRAME_ID(sip));
 
     // Transform stream frame to stream optical frame
@@ -941,8 +969,6 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
         publish_static_tf(transform_ts_, zero_trans, zero_rot_quaternions, FRAME_ID(sip), IMU_FRAME_ID);
         publish_static_tf(transform_ts_, zero_trans, quaternion_optical, IMU_FRAME_ID, IMU_OPTICAL_FRAME_ID);
     }
-
-    publishExtrinsicsTopic(sip, ex);
 }
 
 void BaseRealSenseNode::SetBaseStream()
