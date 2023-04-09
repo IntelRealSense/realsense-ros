@@ -303,9 +303,12 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 
 <hr>
 
-<h3 id="tfs">
-  TF from coordinate A to coordinate B:
-</h3>
+<details>
+   <summary>
+      <h3 id="tfs">
+         TF from coordinate A to coordinate B:
+      </h3>
+   </summary>
 
 - TF msg expresses a transform from coordinate frame "header.frame_id" (source) to the coordinate frame child_frame_id (destination) [Reference](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Transform.html)
 - In RealSense cameras, the origin point (0,0,0) is taken from the left IR (infra1) position and named as "camera_link" frame
@@ -315,11 +318,17 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 - Example of static TFs of RGB sensor and Infra2 (right infra) sensor of D435i module as it shown in rviz2: 
 ![example](https://user-images.githubusercontent.com/99127997/230148106-0f79cbdb-c401-4d09-b386-a366af18e5f7.png)
 
+</details>
+
 <hr>
 
-<h3 id="extrinsics">
-  Extrinsics from sensor A to sensor B:
-</h3>
+<details>
+   <summary>
+      <h3 id="extrinsics">
+         Extrinsics from sensor A to sensor B:
+      </h3>
+   </summary>
+
 
 - Extrinsic from sensor A to sensor B means the position and orientation of sensor A relative to sensor B.
 - Imagine that B is the origin (0,0,0), then the Extrensics(A->B) describes where is sensor A relative to sensor B.
@@ -340,6 +349,7 @@ translation:
 ---
 ```
 
+</details>
 
 <hr>
 
