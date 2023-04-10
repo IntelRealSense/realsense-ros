@@ -300,6 +300,7 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 
 - ROS2 Coordinate System: (X: Forward, Y:Left, Z: Up)
 - Camera Optical Coordinate System: (X: Right, Y: Down, Z: Forward)
+- References: [REP-0103](https://www.ros.org/reps/rep-0103.html#coordinate-frame-conventions) [REP-0105](https://www.ros.org/reps/rep-0105.html#coordinate-frames) 
 
 <hr>
 
