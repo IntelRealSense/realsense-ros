@@ -28,74 +28,15 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image as msg_Image
 
 import pytest_rs_utils
+from pytest_rs_utils import launch_descr_with_yaml
 
-
-''' 
-The get_rs_node_description file is used to create a node description of an rs
-camera with a temporary yaml file to hold the parameters.  
-'''
-
-def get_rs_node_description(name, params):
-    import tempfile
-    import yaml
-    tmp_yaml = tempfile.NamedTemporaryFile(prefix='launch_rs_',delete=False)
-    params = pytest_rs_utils.convert_params(params)
-    ros_params = {"ros__parameters":params}
-    camera_params = {"camera/"+name: ros_params}
-    with open(tmp_yaml.name, 'w') as f:
-        yaml.dump(camera_params, f)
-
-    '''
-    comment out the '#prefix' line, if you like gdb and want to debug the code, you may have to do more
-    if you have more than one rs node.
-    '''
-    return launch_ros.actions.Node(
-        package='realsense2_camera',
-        namespace=params["camera_name"],
-        name=name,
-        #prefix=['xterm -e gdb --args'],
-        executable='realsense2_camera_node',
-        parameters=[tmp_yaml.name],
-        output='screen',
-        arguments=['--ros-args', '--log-level', "info"],
-        emulate_tty=True,
-    )
-
-''' 
-This function returns a launch description with three rs nodes that
-use the same rosbag file. Test developer can use this as a reference and 
-create a function that creates as many nodes (s)he wants for the test  
-'''
-
-@launch_pytest.fixture
-def launch_descr_with_yaml():
-    params = pytest_rs_utils.get_default_params()
-    rosbag_dir = os.getenv("ROSBAG_FILE_PATH")
-    assert rosbag_dir!=None,"ROSBAG_FILE_PATH was not set" 
-    rosfile = rosbag_dir+"/outdoors_1color.bag"
-    params['rosbag_filename'] = rosfile
-    params['color_width'] = '0'
-    params['color_height'] = '0'
-    params['depth_width'] = '0'
-    params['depth_height'] = '0'
-    params['infra_width'] = '0'
-    params['infra_height'] = '0'
-    first_node = get_rs_node_description("camera", params)
-    second_node = get_rs_node_description("camera1", params)
-    third_node = get_rs_node_description("camera2", params)
-    return LaunchDescription([
-        first_node,
-        second_node,
-        third_node,
-        #launch_pytest.actions.ReadyToTest(),
-    ])
 
 ''' 
 This is a testcase simiar to the integration_fn testcase, the only difference is that
 this one uses the launch configuration to launch the nodes.  
 '''
 
-@pytest.mark.launch(fixture=launch_descr_with_yaml)
+@pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
 def test_using_function(launch_context):
     # by now, the camera would have started.
     service_list = subprocess.check_output(['ros2', 'node', 'list']).decode("utf-8")
@@ -116,7 +57,7 @@ integration tests will use this format where the tester can create a test node t
 to different published topics and decide whether the test passed or failed.  
 '''
 
-@pytest.mark.launch(fixture=launch_descr_with_yaml)
+@pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
 class TestFixture1():
     def test_node_start(self):
         rclpy.init()

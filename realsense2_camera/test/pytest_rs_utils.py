@@ -13,7 +13,13 @@
 # limitations under the License.
 import os
 import sys
-
+import pytest
+from launch import LaunchDescription
+import launch_ros.actions
+import launch_pytest
+import rclpy
+from rclpy import qos
+from rclpy.node import Node
 assert os.getenv("COLCON_PREFIX_PATH")!=None,"COLCON_PREFIX_PATH was not set" 
 sys.path.append(os.getenv("COLCON_PREFIX_PATH")+'/realsense2_camera/share/realsense2_camera/launch')
 import rs_launch
@@ -78,3 +84,63 @@ def convert_params(params):
 def get_params_string_for_launch(params):
     params_str = ' '.join(["" if params[key]=="''" else key + ':=' + params[key] for key in sorted(params.keys())])
     return params_str
+
+''' 
+The get_rs_node_description file is used to create a node description of an rs
+camera with a temporary yaml file to hold the parameters.  
+'''
+
+def get_rs_node_description(name, params):
+    import tempfile
+    import yaml
+    tmp_yaml = tempfile.NamedTemporaryFile(prefix='launch_rs_',delete=False)
+    params = convert_params(params)
+    ros_params = {"ros__parameters":params}
+    camera_params = {"camera/"+name: ros_params}
+    with open(tmp_yaml.name, 'w') as f:
+        yaml.dump(camera_params, f)
+
+    '''
+    comment out the '#prefix' line, if you like gdb and want to debug the code, you may have to do more
+    if you have more than one rs node.
+    '''
+    return launch_ros.actions.Node(
+        package='realsense2_camera',
+        namespace=params["camera_name"],
+        name=name,
+        #prefix=['xterm -e gdb --args'],
+        executable='realsense2_camera_node',
+        parameters=[tmp_yaml.name],
+        output='screen',
+        arguments=['--ros-args', '--log-level', "info"],
+        emulate_tty=True,
+    )
+
+''' 
+This function returns a launch description with three rs nodes that
+use the same rosbag file. Test developer can use this as a reference and 
+create a function that creates as many nodes (s)he wants for the test  
+'''
+
+@launch_pytest.fixture
+def launch_descr_with_yaml():
+    params = get_default_params()
+    rosbag_dir = os.getenv("ROSBAG_FILE_PATH")
+    assert rosbag_dir!=None,"ROSBAG_FILE_PATH was not set" 
+    rosfile = rosbag_dir+"/outdoors_1color.bag"
+    params['rosbag_filename'] = rosfile
+    params['color_width'] = '0'
+    params['color_height'] = '0'
+    params['depth_width'] = '0'
+    params['depth_height'] = '0'
+    params['infra_width'] = '0'
+    params['infra_height'] = '0'
+    first_node = get_rs_node_description("camera", params)
+    second_node = get_rs_node_description("camera1", params)
+    third_node = get_rs_node_description("camera2", params)
+    return LaunchDescription([
+        first_node,
+        second_node,
+        third_node,
+        #launch_pytest.actions.ReadyToTest(),
+    ])
