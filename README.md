@@ -303,12 +303,9 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 
 <hr>
 
-<details>
-   <summary>
-      <h3 id="tfs">
-         TF from coordinate A to coordinate B:
-      </h3>
-   </summary>
+<h3 id="tfs">
+   TF from coordinate A to coordinate B:
+</h3>
 
 - TF msg expresses a transform from coordinate frame "header.frame_id" (source) to the coordinate frame child_frame_id (destination) [Reference](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Transform.html)
 - In RealSense cameras, the origin point (0,0,0) is taken from the left IR (infra1) position and named as "camera_link" frame
@@ -318,16 +315,11 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 - Example of static TFs of RGB sensor and Infra2 (right infra) sensor of D435i module as it shown in rviz2: 
 ![example](https://user-images.githubusercontent.com/99127997/230148106-0f79cbdb-c401-4d09-b386-a366af18e5f7.png)
 
-</details>
-
 <hr>
 
-<details>
-   <summary>
-      <h3 id="extrinsics">
-         Extrinsics from sensor A to sensor B:
-      </h3>
-   </summary>
+<h3 id="extrinsics">
+   Extrinsics from sensor A to sensor B:
+</h3>
 
 
 - Extrinsic from sensor A to sensor B means the position and orientation of sensor A relative to sensor B.
@@ -348,8 +340,6 @@ translation:
 - 0.0005317096947692335
 ---
 ```
-
-</details>
 
 <hr>
 
@@ -497,13 +487,13 @@ ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comm
 
 
 [rolling-badge]: https://img.shields.io/badge/-ROLLING-orange?style=flat-square&logo=ros
-[rolling]: https://docs.ros.org/en/rolling/Releases.html
+[rolling]: https://docs.ros.org/en/rolling/index.html
 [humble-badge]: https://img.shields.io/badge/-HUMBLE-orange?style=flat-square&logo=ros
-[humble]: https://docs.ros.org/en/rolling/Releases/Release-Humble-Hawksbill.html
+[humble]: https://docs.ros.org/en/humble/index.html
 [foxy-badge]: https://img.shields.io/badge/-FOXY-orange?style=flat-square&logo=ros
-[foxy]: https://docs.ros.org/en/rolling/Releases/Release-Foxy-Fitzroy.html
+[foxy]: https://docs.ros.org/en/foxy/index.html
 [galactic-badge]: https://img.shields.io/badge/-GALACTIC-orange?style=flat-square&logo=ros
-[galactic]: https://docs.ros.org/en/galactic/Releases/Release-Foxy-Fitzroy.html
+[galactic]: https://docs.ros.org/en/galactic/index.html
 [ubuntu22-badge]: https://img.shields.io/badge/-UBUNTU%2022%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
 [ubuntu22]: https://releases.ubuntu.com/jammy/
 [ubuntu20-badge]: https://img.shields.io/badge/-UBUNTU%2020%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
