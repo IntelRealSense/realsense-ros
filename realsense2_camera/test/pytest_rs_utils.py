@@ -136,6 +136,30 @@ def launch_descr_with_yaml():
     params['infra_width'] = '0'
     params['infra_height'] = '0'
     first_node = get_rs_node_description("camera", params)
+    return LaunchDescription([
+        first_node,
+        launch_pytest.actions.ReadyToTest(),
+    ])
+''' 
+This function returns a launch description with three rs nodes that
+use the same rosbag file. Test developer can use this as a reference and 
+create a function that creates as many nodes (s)he wants for the test  
+'''
+
+@launch_pytest.fixture
+def launch_descr_with_yaml_multi_camera_instances():
+    params = get_default_params()
+    rosbag_dir = os.getenv("ROSBAG_FILE_PATH")
+    assert rosbag_dir!=None,"ROSBAG_FILE_PATH was not set" 
+    rosfile = rosbag_dir+"/outdoors_1color.bag"
+    params['rosbag_filename'] = rosfile
+    params['color_width'] = '0'
+    params['color_height'] = '0'
+    params['depth_width'] = '0'
+    params['depth_height'] = '0'
+    params['infra_width'] = '0'
+    params['infra_height'] = '0'
+    first_node = get_rs_node_description("camera", params)
     second_node = get_rs_node_description("camera1", params)
     third_node = get_rs_node_description("camera2", params)
     return LaunchDescription([
