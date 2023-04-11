@@ -217,7 +217,7 @@ class RsTestNode(Node):
         self.flag = True
         
 
-class TestFixture():
+class RsTestBaseClass():
     def init_test(self):
         rclpy.init()
         self.flag = False
@@ -265,6 +265,7 @@ class TestFixture():
     def process_data(self, themes):
         for theme in themes:
             data = self.node.pop_first_chunk(theme['topic'])
+            print("first chunck of data for"+ theme['topic'] + ":")
             print(data.header)
         return True
     def shutdown(self):

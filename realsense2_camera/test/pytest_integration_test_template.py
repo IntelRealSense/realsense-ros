@@ -39,10 +39,17 @@ this one uses the launch configuration to launch the nodes.
 @pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
 def test_using_function(launch_context):
     time.sleep(0.1)
-    # by now, the camera would have started.
-    service_list = subprocess.check_output(['ros2', 'node', 'list']).decode("utf-8")
-    is_node_up = '/camera/camera' in service_list
-    print(service_list)
+    # by now, the camera would have started
+    start = time.time()
+    timeout = 1.0
+    while time.time() - start < timeout:
+        service_list = subprocess.check_output(['ros2', 'node', 'list']).decode("utf-8")
+        is_node_up = '/camera/camera' in service_list
+        if is_node_up == True:
+            break
+        else:
+            print(service_list)
+        time.sleep(timeout/5)
 
     assert is_node_up, 'Node is NOT UP'
     print ('Node is UP')
@@ -59,9 +66,33 @@ integration tests will use this format where the tester can create a test node t
 to different published topics and decide whether the test passed or failed.  
 '''
 
+'''
+use the launch description from the utils and also inherit from basic test class RsTestBaseClass
+'''
+@pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
+class TestCamera1(pytest_rs_utils.RsTestBaseClass):
+    def test_node_start(self):
+        ''' 
+        current rosbag file doesn't have color data 
+        '''
+        themes = [
+            #{'topic':'/camera/color/image_raw','type':msg_Image,'expected_data_chunks':1},
+        {'topic':'/camera/depth/image_rect_raw','type':msg_Image,'expected_data_chunks':1}
+        ]
+        try:
+            ''' 
+            initialize, run and check the data 
+            '''
+            self.init_test()
+            assert self.run_test(themes)
+            assert self.process_data(themes)
+        finally:
+            self.shutdown()
+    def process_data(self, themes):
+        return super().process_data(themes)
 
 @pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
-class TestFixture1(pytest_rs_utils.TestFixture):
+class TestCamera2(pytest_rs_utils.RsTestBaseClass):
     def test_node_start(self):
         themes = [
             #{'topic':'/camera/color/image_raw','type':msg_Image,'expected_data_chunks':1},
@@ -73,3 +104,15 @@ class TestFixture1(pytest_rs_utils.TestFixture):
             assert self.process_data(themes)
         finally:
             self.shutdown()
+    ''' 
+    override the process_data and check if the data is correct or not 
+    '''
+
+    def process_data(self, themes):
+        data = self.node.pop_first_chunk('/camera/depth/image_rect_raw')
+        print(data.header)
+        #if data.std_msgs.msg.Header.frame_id=='camera_depth_optical_frame':
+        if data.header.frame_id=='camera_depth_optical_frame':
+            return True
+        else:
+            return False
