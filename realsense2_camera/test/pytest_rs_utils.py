@@ -13,6 +13,8 @@
 # limitations under the License.
 import os
 import sys
+import time
+from collections import deque
 import pytest
 from launch import LaunchDescription
 import launch_ros.actions
@@ -168,3 +170,102 @@ def launch_descr_with_yaml_multi_camera_instances():
         third_node,
         #launch_pytest.actions.ReadyToTest(),
     ])
+
+''' 
+This is that holds the test node that listens to a subscription created by a test.  
+'''
+class RsTestNode(Node):
+    def __init__(self, name='test_node'):
+        print('\nCreating node... ' + name)
+        super().__init__(name)
+        self.flag = False
+        self.data = {}
+
+    def wait_for_node(self, node_name, timeout=8.0):
+        start = time.time()
+        flag = False
+        print('Waiting for node... ' + node_name)
+        while time.time() - start < timeout:
+            flag = node_name in self.get_node_names()
+            print(self.get_node_names())
+            print( "Flag: " +str(flag))
+            if flag:
+                return True
+            time.sleep(0.1)
+        return False
+    def create_subscription(self, msg_type, topic , data_type):
+        super().create_subscription(msg_type, topic , self.rsCallback(topic), data_type)
+        self.data[topic] = deque()
+    def get_num_chunks(self,topic):
+        return len(self.data[topic])
+    def pop_first_chunk(self, topic):
+        data = self.data[topic][0]
+        del self.data[topic][0]
+        return data
+
+    def rsCallback(self, topic):
+        print("RSCallback")
+        def _rsCallback(data):
+            print('Got the callback for ' + topic)
+            print(data.header)
+            self.flag = True
+            self.data[topic].insert(0,data)
+        return _rsCallback
+    def _callback(self, msg):
+        print('Got the callback')
+        print(msg.header)
+        self.flag = True
+        
+
+class TestFixture():
+    def init_test(self):
+        rclpy.init()
+        self.flag = False
+        self.node = None
+    def run_test(self, themes):
+        try:
+            self.node = RsTestNode('RsTestNode')
+            for theme in themes:
+                self.node.create_subscription(theme['type'], theme['topic'] , qos.qos_profile_sensor_data)
+                print('subscription created for ' + theme['topic'])
+            start = time.time()
+            timeout = 1.0
+            print('Waiting for topic... ' )
+            self.flag = False
+            while time.time() - start < timeout:
+                print('Spinning... ' )
+                rclpy.spin_once(self.node)
+                all_found = True 
+                for theme in themes:
+                    '''
+                    print("expected for " + theme['topic'])
+                    print( theme['expected_data_chunks'])
+                    if theme['expected_data_chunks'] == int(self.node.get_num_chunks(theme['topic'])):
+                        print("num chunks " +theme['topic'] + " " + str(self.node.get_num_chunks(theme['topic'])))
+                        print("expected " + str(theme['expected_data_chunks']))
+                    else:
+                        print("data not found for " + theme['topic'])
+                        all_found = False
+                        break
+                    '''
+                    '''Expecting the data to be equal, not more or less than expected.'''
+                    if theme['expected_data_chunks'] != int(self.node.get_num_chunks(theme['topic'])):
+                        all_found = False
+                        break
+                if all_found == True:
+                    self.flag =True
+                    break
+        except  Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
+            print("An exception occurred, test failed")
+            self.flag =False
+        return self.flag
+    def process_data(self, themes):
+        for theme in themes:
+            data = self.node.pop_first_chunk(theme['topic'])
+            print(data.header)
+        return True
+    def shutdown(self):
+        rclpy.shutdown()

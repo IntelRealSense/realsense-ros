@@ -38,16 +38,18 @@ this one uses the launch configuration to launch the nodes.
 
 @pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
 def test_using_function(launch_context):
+    time.sleep(0.1)
     # by now, the camera would have started.
     service_list = subprocess.check_output(['ros2', 'node', 'list']).decode("utf-8")
     is_node_up = '/camera/camera' in service_list
     print(service_list)
+
     assert is_node_up, 'Node is NOT UP'
-    time.sleep(5)
     print ('Node is UP')
     print ('*'*8 + ' Killing ROS ' + '*'*9)
-    pytest_rs_utils.kill_realsense2_camera_node()
     yield
+    pytest_rs_utils.kill_realsense2_camera_node()
+    time.sleep(0.1)
     assert True
 
 
@@ -57,53 +59,17 @@ integration tests will use this format where the tester can create a test node t
 to different published topics and decide whether the test passed or failed.  
 '''
 
+
 @pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
-class TestFixture1():
+class TestFixture1(pytest_rs_utils.TestFixture):
     def test_node_start(self):
-        rclpy.init()
-        self.flag = False
+        themes = [
+            #{'topic':'/camera/color/image_raw','type':msg_Image,'expected_data_chunks':1},
+        {'topic':'/camera/depth/image_rect_raw','type':msg_Image,'expected_data_chunks':1}
+        ]
         try:
-            node = MakeTestNode('test_node')
-            #node.create_subscription(msg_Image, '/camera/depth/image_rect_raw', node.static_tf_callback , qos.qos_profile_sensor_data)
-            node.create_subscription(msg_Image, '/camera/color/image_raw', node.static_tf_callback , qos.qos_profile_sensor_data)
-            print('subscription created... ' )
-            
-            start = time.time()
-            timeout = 1.0
-            print('Waiting for topic... ' )
-            while time.time() - start < timeout:
-                print('Spinning... ' )
-                rclpy.spin_once(node)
-                if node.flag:
-                    break
-            assert node.flag
-            print('Test Passed... ' )
+            self.init_test()
+            assert self.run_test(themes)
+            assert self.process_data(themes)
         finally:
-            rclpy.shutdown()
-
-''' 
-This is that holds the test node that listens to a subscription created by a test.  
-'''
-class MakeTestNode(Node):
-    def __init__(self, name='test_node'):
-        print('\nCreating node... ' + name)
-        super().__init__(name)
-
-    def wait_for_node(self, node_name, timeout=8.0):
-        start = time.time()
-        flag = False
-        self.flag = False
-        print('Waiting for node... ' + node_name)
-        while time.time() - start < timeout:
-            flag = node_name in self.get_node_names()
-            print(self.get_node_names())
-            print( "Flag: " +str(flag))
-            if flag:
-                return True
-            time.sleep(0.1)
-        return False 
-
-    def static_tf_callback(self, msg):
-        print('Got the callback')
-        print(msg.header)
-        self.flag = True
+            self.shutdown()
