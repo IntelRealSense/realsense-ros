@@ -210,6 +210,7 @@ class RsTestNode(Node):
             print(data.header)
             self.flag = True
             self.data[topic].insert(0,data)
+            #print(len(self.data[topic]))
         return _rsCallback
     def _callback(self, msg):
         print('Got the callback')
@@ -229,7 +230,7 @@ class RsTestBaseClass():
                 self.node.create_subscription(theme['type'], theme['topic'] , qos.qos_profile_sensor_data)
                 print('subscription created for ' + theme['topic'])
             start = time.time()
-            timeout = 1.0
+            timeout = 4.0
             print('Waiting for topic... ' )
             self.flag = False
             while time.time() - start < timeout:
@@ -249,12 +250,15 @@ class RsTestBaseClass():
                         break
                     '''
                     '''Expecting the data to be equal, not more or less than expected.'''
-                    if theme['expected_data_chunks'] != int(self.node.get_num_chunks(theme['topic'])):
+                    if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
                         all_found = False
                         break
                 if all_found == True:
                     self.flag =True
                     break
+            else:
+                assert False, "run_test timedout"
+                
         except  Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]

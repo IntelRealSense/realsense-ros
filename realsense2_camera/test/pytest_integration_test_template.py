@@ -95,8 +95,18 @@ class TestCamera1(pytest_rs_utils.RsTestBaseClass):
 class TestCamera2(pytest_rs_utils.RsTestBaseClass):
     def test_node_start(self):
         themes = [
-            #{'topic':'/camera/color/image_raw','type':msg_Image,'expected_data_chunks':1},
-        {'topic':'/camera/depth/image_rect_raw','type':msg_Image,'expected_data_chunks':1}
+            {'topic':'/camera/depth/image_rect_raw',
+                'type':msg_Image,
+                'expected_data_chunks':1, 
+                'frame_id':'camera_depth_optical_frame',
+                'height':720,
+                'width':1280},
+            {'topic':'/camera/color/image_raw',
+                'type':msg_Image,
+                'expected_data_chunks':1, 
+                'frame_id':'camera_color_optical_frame',
+                'height':480,
+                'width':640},
         ]
         try:
             self.init_test()
@@ -109,13 +119,11 @@ class TestCamera2(pytest_rs_utils.RsTestBaseClass):
     override the process_data and check if the data is correct or not 
     '''
     def process_data(self, themes):
-        data = self.node.pop_first_chunk('/camera/depth/image_rect_raw')
-        #message format can be found at /opt/ros/humble/share/sensor_msgs/msg/Image.msg
-        #print(data.header)
-        #print(data.height)
-        #print(data.width)
-        #print(data.step)
-        if (data.header.frame_id=='camera_depth_optical_frame') and (data.height == 720) and (data.width == 1280):
-            return True
-        else:
-            return False
+        for theme in themes:
+            data = self.node.pop_first_chunk(theme['topic'])
+            #message format can be found at /opt/ros/humble/share/sensor_msgs/msg/Image.msg
+            print(data.header)
+            if (data.header.frame_id==theme['frame_id']) and (data.height == theme['height']) and (data.width == theme['width']):
+                return True
+            else:
+                return False
