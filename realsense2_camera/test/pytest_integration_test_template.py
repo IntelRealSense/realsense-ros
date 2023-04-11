@@ -104,15 +104,18 @@ class TestCamera2(pytest_rs_utils.RsTestBaseClass):
             assert self.process_data(themes)
         finally:
             self.shutdown()
+
     ''' 
     override the process_data and check if the data is correct or not 
     '''
-
     def process_data(self, themes):
         data = self.node.pop_first_chunk('/camera/depth/image_rect_raw')
-        print(data.header)
-        #if data.std_msgs.msg.Header.frame_id=='camera_depth_optical_frame':
-        if data.header.frame_id=='camera_depth_optical_frame':
+        #message format can be found at /opt/ros/humble/share/sensor_msgs/msg/Image.msg
+        #print(data.header)
+        #print(data.height)
+        #print(data.width)
+        #print(data.step)
+        if (data.header.frame_id=='camera_depth_optical_frame') and (data.height == 720) and (data.width == 1280):
             return True
         else:
             return False
