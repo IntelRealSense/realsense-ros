@@ -139,7 +139,7 @@ void BaseRealSenseNode::setAvailableSensors()
 
     for(auto&& sensor : _dev_sensors)
     {
-        const std::string module_name(sensor.get_info(RS2_CAMERA_INFO_NAME));
+        const std::string module_name(rs2_to_ros(sensor.get_info(RS2_CAMERA_INFO_NAME)));
         std::unique_ptr<RosSensor> rosSensor;
         if (sensor.is<rs2::depth_sensor>() || 
             sensor.is<rs2::color_sensor>() ||
@@ -304,7 +304,7 @@ void BaseRealSenseNode::updateSensors()
     try{
         for(auto&& sensor : _available_ros_sensors)
         {
-            std::string module_name(sensor->get_info(RS2_CAMERA_INFO_NAME));
+            std::string module_name(rs2_to_ros(sensor->get_info(RS2_CAMERA_INFO_NAME)));
             // if active_profiles != wanted_profiles: stop sensor.
             std::vector<stream_profile> wanted_profiles;
 
@@ -386,7 +386,7 @@ void BaseRealSenseNode::getDeviceInfo(const realsense2_camera_msgs::srv::DeviceI
 
     for(auto&& sensor : _available_ros_sensors)
     {
-        sensors_names << create_graph_resource_name(sensor->get_info(RS2_CAMERA_INFO_NAME)) << ",";
+        sensors_names << create_graph_resource_name(rs2_to_ros(sensor->get_info(RS2_CAMERA_INFO_NAME))) << ",";
     }
 
     res->sensors = sensors_names.str().substr(0, sensors_names.str().size()-1);
