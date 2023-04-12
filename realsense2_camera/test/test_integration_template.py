@@ -125,7 +125,6 @@ class TestCamera2(pytest_rs_utils.RsTestBaseClass):
             data = self.node.pop_first_chunk(theme['topic'])
             #message format can be found at /opt/ros/humble/share/sensor_msgs/msg/Image.msg
             print(data.header)
-            if (data.header.frame_id==theme['frame_id']) and (data.height == theme['height']) and (data.width == theme['width']):
-                return True
-            else:
+            if (data.header.frame_id!=theme['frame_id']) or (data.height != theme['height']) or (data.width != theme['width']):
                 return False
+        return True
