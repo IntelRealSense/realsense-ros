@@ -199,9 +199,7 @@ class RsTestNode(Node):
     def get_num_chunks(self,topic):
         return len(self.data[topic])
     def pop_first_chunk(self, topic):
-        data = self.data[topic][0]
-        del self.data[topic][0]
-        return data
+        return self.data[topic].popleft()
 
     def rsCallback(self, topic):
         print("RSCallback")
@@ -209,7 +207,7 @@ class RsTestNode(Node):
             print('Got the callback for ' + topic)
             print(data.header)
             self.flag = True
-            self.data[topic].insert(0,data)
+            self.data[topic].append(data)
             #print(len(self.data[topic]))
         return _rsCallback
     def _callback(self, msg):
