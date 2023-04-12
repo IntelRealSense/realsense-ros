@@ -865,9 +865,13 @@ void BaseRealSenseNode::publish_static_tf(const rclcpp::Time& t,
     msg.header.stamp = t;
     msg.header.frame_id = from;
     msg.child_frame_id = to;
+
+    // Convert x,y,z (taken from camera extrinsics)
+    // from optical cooridnates to ros coordinates
     msg.transform.translation.x = trans.z;
     msg.transform.translation.y = -trans.x;
     msg.transform.translation.z = -trans.y;
+
     msg.transform.rotation.x = q.getX();
     msg.transform.rotation.y = q.getY();
     msg.transform.rotation.z = q.getZ();
@@ -896,17 +900,25 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
 
     rclcpp::Time transform_ts_ = _node.now();
 
-    rs2_extrinsics ex;
+    // extrinsic from A to B is the position of A relative to B
+    // TF from A to B is the transformation to be done on A to get to B
+    // so, we need to calculate extrinsics in two opposite ways, one for extrinsic topic
+    // and the second is for transformation topic (TF)
+    rs2_extrinsics normal_ex;  // used to for extrinsics topic
+    rs2_extrinsics tf_ex; // used for TF
+
     try
     {
-        ex = base_profile.get_extrinsics_to(profile);
+        normal_ex = base_profile.get_extrinsics_to(profile);
+        tf_ex = profile.get_extrinsics_to(base_profile);
     }
     catch (std::exception& e)
     {
         if (!strcmp(e.what(), "Requested extrinsics are not available!"))
         {
-            ROS_WARN_STREAM("(" << rs2_stream_to_string(profile.stream_type()) << ", " << profile.stream_index() << ") -> (" << rs2_stream_to_string(base_profile.stream_type()) << ", " << base_profile.stream_index() << "): " << e.what() << " : using unity as default.");
-            ex = rs2_extrinsics({{1, 0, 0, 0, 1, 0, 0, 0, 1}, {0,0,0}});
+            ROS_WARN_STREAM("(" << rs2_stream_to_string(base_profile.stream_type()) << ", " << base_profile.stream_index() << ") -> (" << rs2_stream_to_string(profile.stream_type()) << ", " << profile.stream_index() << "): " << e.what() << " : using unity as default.");
+            normal_ex = rs2_extrinsics({{1, 0, 0, 0, 1, 0, 0, 0, 1}, {0,0,0}});
+            tf_ex = normal_ex;
         }
         else
         {
@@ -914,13 +926,16 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
         }
     }
 
-    auto Q = rotationMatrixToQuaternion(ex.rotation);
-    Q = quaternion_optical * Q * quaternion_optical.inverse();
+    // publish normal extrinsics e.g. /camera/extrinsics/depth_to_color
+    publishExtrinsicsTopic(sip, normal_ex);
 
-    float3 trans{ex.translation[0], ex.translation[1], ex.translation[2]};
+    // publish static TF
+    auto Q = rotationMatrixToQuaternion(tf_ex.rotation);
+    Q = quaternion_optical * Q * quaternion_optical.inverse();
+    float3 trans{tf_ex.translation[0], tf_ex.translation[1], tf_ex.translation[2]};
     publish_static_tf(transform_ts_, trans, Q, _base_frame_id, FRAME_ID(sip));
 
-    // Transform stream frame to stream optical frame
+    // Transform stream frame to stream optical frame and publish it
     publish_static_tf(transform_ts_, zero_trans, quaternion_optical, FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
 
     if (profile.is<rs2::video_stream_profile>() && profile.stream_type() != RS2_STREAM_DEPTH && profile.stream_index() == 1)
@@ -934,8 +949,6 @@ void BaseRealSenseNode::calcAndPublishStaticTransform(const rs2::stream_profile&
         publish_static_tf(transform_ts_, zero_trans, zero_rot_quaternions, FRAME_ID(sip), IMU_FRAME_ID);
         publish_static_tf(transform_ts_, zero_trans, quaternion_optical, IMU_FRAME_ID, IMU_OPTICAL_FRAME_ID);
     }
-
-    publishExtrinsicsTopic(sip, ex);
 }
 
 void BaseRealSenseNode::SetBaseStream()
