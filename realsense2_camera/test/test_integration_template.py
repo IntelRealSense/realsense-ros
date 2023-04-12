@@ -69,6 +69,7 @@ to different published topics and decide whether the test passed or failed.
 '''
 use the launch description from the utils and also inherit from basic test class RsTestBaseClass
 '''
+@pytest.mark.rosbag
 @pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
 class TestCamera1(pytest_rs_utils.RsTestBaseClass):
     def test_node_start(self):
@@ -91,6 +92,7 @@ class TestCamera1(pytest_rs_utils.RsTestBaseClass):
     def process_data(self, themes):
         return super().process_data(themes)
 
+@pytest.mark.rosbag
 @pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
 class TestCamera2(pytest_rs_utils.RsTestBaseClass):
     def test_node_start(self):
