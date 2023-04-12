@@ -121,15 +121,6 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
         ROS_INFO("Intra-Process communication enabled");
     }
 
-    // intra-process do not support latched QoS, so we need to disable intra-process for this topic
-    rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
-    options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
-    #ifndef DASHING
-    _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node, tf2_ros::StaticBroadcasterQoS(), std::move(options));
-    #else
-    _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node, rclcpp::QoS(100), std::move(options));
-    #endif
-
     _image_format[1] = CV_8UC1;    // CVBridge type
     _image_format[2] = CV_16UC1;    // CVBridge type
     _image_format[3] = CV_8UC3;    // CVBridge type
@@ -973,6 +964,19 @@ void BaseRealSenseNode::publishStaticTransforms(std::vector<rs2::stream_profile>
     // Publish static transforms
     if (_publish_tf)
     {
+        if (!_static_tf_broadcaster)
+        {
+            // intra-process do not support latched QoS, so we need to disable intra-process for this topic
+            rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
+            options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+
+            #ifndef DASHING
+            _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(_node, tf2_ros::StaticBroadcasterQoS(), std::move(options));
+            #else
+            _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(_node, rclcpp::QoS(100), std::move(options));
+            #endif
+        }
+
         for (auto &profile : profiles)
         {
             calcAndPublishStaticTransform(profile, _base_profile);
