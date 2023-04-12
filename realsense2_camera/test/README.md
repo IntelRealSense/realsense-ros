@@ -65,24 +65,24 @@ Note: The below command helps view the steps taken by the build command.
 ### Prerequisites for running the tests
 
 1. The template tests require the rosbag files from librealsense.intel.comi, the following commands download them:
-
+	```
 	bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
         wget $bag_filename -P "records/"
         bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
         wget $bag_filename -P "records/"
-
+	```
 2. The tests use the environment variable ROSBAG_FILE_PATH as the directory that contains the rosbag files
-	
+	```	
 	export ROSBAG_FILE_PATH=/path/to/directory/of/rosbag
-
+	```
 3. Install launch_pytest package. For humble: 
-	
+	```
 	sudo apt install ros-humble-launch-pytest 
-
+	```
 4. As in the case of all the packages, the install script of realsesnse2_camera has to be run.
-	
+	```
 	. install/local_setup.bash
-
+	```
 ### Running the tests using colcon
 
 All the tests can be run using the below command:
