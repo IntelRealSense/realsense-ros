@@ -8,12 +8,13 @@ If the user wants to add a new test, the user can create a copy of the gtest_tem
 
 ### Adding a new test folder
 It is recommended to use the test folder itself for storing all the cpp tests. However, if the user wants to add a different folder for a set of tests, please ensure that the file name format mentioned above is followed. The folder path is added to realsense_camera/CMakeLists.txt as below for the build to detect the new test.
-
+'''
   find_package(ament_cmake_gtest REQUIRED)
   set(_gtest_folders
     test                        #<-- default folder for the gtest sources
     new_folder_for_test_but_why #<-- new folder name is added
   )
+'''
 
 ## Test using pytest
 The default folder for the test py files is realsense2_camera/test/. Two test template files test_launch_template.py and test_integration_template.py are available in the same folder for reference.
@@ -28,14 +29,13 @@ The test_integration_template.py has two types of tests, one has a function "tes
 
 ### Adding a new test folder
 It is recommended to use the test folder itself for storing all the pytests. However, if the user wants to add a different folder for a set of tests, please ensure that the file name format mentioned above is followed. The folder path should be added to realsense_camera/CMakeLists.txt as below for the infra to detect the new test.
-  
+'''  
 find_package(ament_cmake_pytest REQUIRED)
 set(_pytest_folders
 test
 newfolder_for_pytest #<-- new folder
 )
-
-
+'''
 
 ### Grouping of tests  
 The pytests can be grouped using markers. These markers can be used to select a group of tests while running them. However, "colcon test" command doesn't pass a custom marker using (--pytest-args -m <marker_name>) to the pytest internally. So till this is fixed in the launch_pytest plugins or another way is found, pytest command has to be used directly for running a group of tests. Please see the next session for more details on how to run a group py tests.
@@ -53,26 +53,32 @@ The command used for building the tests along with the node:
 The test statements in CMakeLists.txt are protected by BUILD_TESTING macro, so in case the tests are not being built, then it could be that the macro may be disabled by default.
 
 Note: The below command helps view the steps taken by the build command.
+
 	colcon build --event-handlers console_direct+
 
 All the tests can be run using the below command 
+
 	colcon test --packages-select realsense2_camera
 
 This command will invoke both gtest and pytest infra and run all the tests specified in the files mentioned above. Since the test results are stored in build/realsense2_camera/test_results folder, it's good to clean this up after running the tests with a new test added/removed.
 
 The same command with console_direct can be used for more info on failing tests, as below:
+
 	colcon test --packages-select realsense2_camera --event-handlers console_direct+
 
 The test results can be viewed using the command
+
 	colcon test-result --all --test-result-base build/realsense2_camera/test_results/
 
 The xml files mentioned by the command can be directly opened also.
 
 ### Running pytests directly
 User can run all the tests in a pytest file directly using the below command:
+
 	pytest-3 -s realsense2_camera/test/test_integration_template.py
 
 All the pytests in a test folder can be directly run using the below command:
+
 	pytest-3 -s realsense2_camera/test/
 
 ### Running a group of pytests
