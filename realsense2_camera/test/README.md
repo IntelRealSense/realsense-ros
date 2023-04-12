@@ -50,6 +50,8 @@ It is recommended to use markers such as ds457, rosbag, ds415 etc to differentia
  
 ## Building and running tests  
 
+### Build steps 
+
 The command used for building the tests along with the node:
 
 	colcon build
@@ -59,6 +61,29 @@ The test statements in CMakeLists.txt are protected by BUILD_TESTING macro. So i
 Note: The below command helps view the steps taken by the build command.
 
 	colcon build --event-handlers console_direct+
+
+### Prerequisites for running the tests
+
+1. The template tests require the rosbag files from librealsense.intel.comi, the following commands download them:
+
+	bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
+        wget $bag_filename -P "records/"
+        bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
+        wget $bag_filename -P "records/"
+
+2. The tests use the environment variable ROSBAG_FILE_PATH as the directory that contains the rosbag files
+	
+	export ROSBAG_FILE_PATH=/path/to/directory/of/rosbag
+
+3. Install launch_pytest package. For humble: 
+	
+	sudo apt install ros-humble-launch-pytest 
+
+4. As in the case of all the packages, the install script of realsesnse2_camera has to be run.
+	
+	. install/local_setup.bash
+
+### Running the tests using colcon
 
 All the tests can be run using the below command:
 
@@ -77,6 +102,8 @@ The test results can be viewed using the command:
 The xml files mentioned by the command can be directly opened also.
 
 ### Running pytests directly
+
+
 User can run all the tests in a pytest file directly using the below command:
 
 	pytest-3 -s realsense2_camera/test/test_integration_template.py
