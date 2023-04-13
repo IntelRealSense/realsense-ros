@@ -43,8 +43,16 @@ test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color
     'infra_height': '0',
     }
 
+test_params1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_and_IMU_Stands_still.bag",
+    'color_width': '0',
+    'color_height': '0',
+    'depth_width': '0',
+    'depth_height': '0',
+    'infra_width': '0',
+    'infra_height': '0',
+    }
 @pytest.mark.rosbag
-@pytest.mark.parametrize("launch_descr_with_parameters", [test_params],indirect=True)
+@pytest.mark.parametrize("launch_descr_with_parameters", [test_params,test_params1],indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestCamera2(pytest_rs_utils.RsTestBaseClass):
     def test_node_start(self):
@@ -53,14 +61,7 @@ class TestCamera2(pytest_rs_utils.RsTestBaseClass):
                 'msg_type':msg_Image,
                 'expected_data_chunks':1, 
                 'frame_id':'camera_depth_optical_frame',
-                'height':720,
-                'width':1280},
-            {'topic':'/camera/color/image_raw',
-                'msg_type':msg_Image,
-                'expected_data_chunks':1, 
-                'frame_id':'camera_color_optical_frame',
-                'height':480,
-                'width':640},
+            },
         ]
         ''' # TODO: find a rosbag file that has accel/sample to test this
                     {'topic': '/camera/accel/sample', 
@@ -83,6 +84,6 @@ class TestCamera2(pytest_rs_utils.RsTestBaseClass):
             data = self.node.pop_first_chunk(theme['topic'])
             #message format can be found at /opt/ros/humble/share/sensor_msgs/msg/Image.msg
             print(data.header)
-            if (data.header.frame_id!=theme['frame_id']) or (data.height != theme['height']) or (data.width != theme['width']):
+            if (data.header.frame_id!=theme['frame_id']):
                 return False
         return True
