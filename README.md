@@ -336,13 +336,25 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 ```
 administrator@perclnx466 ~/ros2_humble $ ros2 topic echo /camera/extrinsics/depth_to_color
 rotation:
-...
+- 0.9999583959579468
+- 0.008895332925021648
+- -0.0020127370953559875
+- -0.008895229548215866
+- 0.9999604225158691
+- 6.045500049367547e-05
+- 0.0020131953060626984
+- -4.254872692399658e-05
+- 0.9999979734420776
 translation:
 - 0.01485931035131216
 - 0.0010161789832636714
 - 0.0005317096947692335
 ---
 ```
+
+- Extrinsic msg is made up of two parts:
+  - float64[9] rotation  (Column - major 3x3 rotation matrix)
+  - float64[3] translation  (Three-element translation vector, in meters)
 
 <hr>
 
