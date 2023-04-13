@@ -26,6 +26,7 @@ import rclpy
 from rclpy import qos
 from rclpy.node import Node
 from sensor_msgs.msg import Image as msg_Image
+from sensor_msgs.msg import Imu as msg_Imu
 
 import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_yaml
@@ -42,14 +43,16 @@ def test_using_function(launch_context):
     # by now, the camera would have started
     start = time.time()
     timeout = 1.0
-    while time.time() - start < timeout:
+    while (time.time() - start) < timeout:
         service_list = subprocess.check_output(['ros2', 'node', 'list']).decode("utf-8")
         is_node_up = '/camera/camera' in service_list
         if is_node_up == True:
             break
         else:
-            print(service_list)
+            print("node list output:"+service_list)
         time.sleep(timeout/5)
+    else:
+        print("Timed out searching for node")
 
     assert is_node_up, 'Node is NOT UP'
     print ('Node is UP')
@@ -77,8 +80,8 @@ class TestCamera1(pytest_rs_utils.RsTestBaseClass):
         current rosbag file doesn't have color data 
         '''
         themes = [
-            #{'topic':'/camera/color/image_raw','type':msg_Image,'expected_data_chunks':1},
-        {'topic':'/camera/depth/image_rect_raw','type':msg_Image,'expected_data_chunks':1}
+            #{'topic':'/camera/color/image_raw','msg_type':msg_Image,'expected_data_chunks':1},
+        {'topic':'/camera/depth/image_rect_raw','msg_type':msg_Image,'expected_data_chunks':1}
         ]
         try:
             ''' 
@@ -98,18 +101,24 @@ class TestCamera2(pytest_rs_utils.RsTestBaseClass):
     def test_node_start(self):
         themes = [
             {'topic':'/camera/depth/image_rect_raw',
-                'type':msg_Image,
+                'msg_type':msg_Image,
                 'expected_data_chunks':1, 
                 'frame_id':'camera_depth_optical_frame',
                 'height':720,
                 'width':1280},
             {'topic':'/camera/color/image_raw',
-                'type':msg_Image,
+                'msg_type':msg_Image,
                 'expected_data_chunks':1, 
                 'frame_id':'camera_color_optical_frame',
                 'height':480,
                 'width':640},
         ]
+        ''' # TODO: find a rosbag file that has accel/sample to test this
+                    {'topic': '/camera/accel/sample', 
+                        'msg_type': msg_Imu,
+                        'expected_data_chunks':1, 
+                        },
+        '''
         try:
             self.init_test()
             assert self.run_test(themes)

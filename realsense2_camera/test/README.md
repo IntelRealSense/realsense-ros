@@ -83,6 +83,11 @@ sudo apt install ros-humble-launch-pytest
 ```
 . install/local_setup.bash
 ```
+5. If the tests are run on a machine that has the RS board connected or the tests are using rosbag files, then its better to let the ROS search for the nodes in the local machine, this will be faster and less prone to interference and hence unexpected errors. It can be achieved using the following environment variable.
+```
+export ROS_DOMAIN_ID=1
+```
+
 ### Running the tests using colcon
 
 All the tests can be run using the below command:

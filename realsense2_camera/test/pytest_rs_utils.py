@@ -225,7 +225,7 @@ class RsTestBaseClass():
         try:
             self.node = RsTestNode('RsTestNode')
             for theme in themes:
-                self.node.create_subscription(theme['type'], theme['topic'] , qos.qos_profile_sensor_data)
+                self.node.create_subscription(theme['msg_type'], theme['topic'] , qos.qos_profile_sensor_data)
                 print('subscription created for ' + theme['topic'])
             start = time.time()
             timeout = 4.0
@@ -261,7 +261,10 @@ class RsTestBaseClass():
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, fname, exc_tb.tb_lineno)
-            print("An exception occurred, test failed")
+            if hasattr(e, 'message'):
+                print(e.message)
+            else:
+                print(e)
             self.flag =False
         return self.flag
     def process_data(self, themes):
