@@ -1,5 +1,5 @@
 # Testing realsense2_camera
-The test infra for realsense2_camera uses both gtest and pytest. gtest is typically used here for testing at the unit level and pytest for integration level testing.
+The test infra for realsense2_camera uses both gtest and pytest. gtest is typically used here for testing at the unit level and pytest for integration level testing. Please be aware that the README assumes that the ROS2 version used is Humble or later, as the launch_pytest package used here is not available in prior versions
 
 ## Test using gtest
 The default folder for the test cpp files is realsense2_camera/test. A test template gtest_template.cpp is available in the same folder.
@@ -42,7 +42,7 @@ new_folder_for_pytest #<-- new folder
 ```
 
 ### Grouping of tests  
-The pytests can be grouped using markers. These markers can be used to run a group of tests. However, "colcon test" command doesn't pass a custom marker using (--pytest-args -m `marker_name`) to the pytest internally. So till this is fixed in the launch_pytest plugins or another way is found, pytest command has to be used directly for running a group of tests. Please see the next session for the commands to run a group py tests.
+The pytests can be grouped using markers. These markers can be used to run a group of tests. However, "colcon test" command doesn't pass a custom marker using (--pytest-args -m `marker_name`) to the pytest internally. This is because, the ament_cmake that works as a bridge between colcon and pytest doesn't pass the pytest arguments to to pytest. So till this is fixed, pytest command has to be used directly for running a group of tests. Please see the next session for the commands to run a group py tests.
 
 The grouping is specified by adding a marker just before the test declaration. In the test_integration_template.py `rosbag` is specified as a marker specify tests that use rosbag file. This is achieved by adding "@pytest.mark.rosbag" to the begining of the test. So when the pytest parses for test, it detects the marker for the test. If this marker is selected or none of the markers are specified, the test will be added to the list, else will be listed as a deselected test.
 
@@ -77,7 +77,7 @@ export ROSBAG_FILE_PATH=/path/to/directory/of/rosbag
 ```
 3. Install launch_pytest package. For humble: 
 ```
-sudo apt install ros-humble-launch-pytest 
+sudo apt install ros-$ROS_DISTRO-launch-pytest
 ```
 4. As in the case of all the packages, the install script of realsesnse2_camera has to be run.
 ```
@@ -85,6 +85,19 @@ sudo apt install ros-humble-launch-pytest
 ```
 5. If the tests are run on a machine that has the RS board connected or the tests are using rosbag files, then its better to let the ROS search for the nodes in the local machine, this will be faster and less prone to interference and hence unexpected errors. It can be achieved using the following environment variable.
 ```
+export ROS_DOMAIN_ID=1
+```
+
+So, all put together:
+
+```
+sudo apt install  ros-$ROS_DISTRO-launch-pytest
+bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
+wget $bag_filename -P "records/"
+bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
+wget $bag_filename -P "records/"
+export ROSBAG_FILE_PATH=$PWD/records
+. install/local_setup.bash
 export ROS_DOMAIN_ID=1
 ```
 
