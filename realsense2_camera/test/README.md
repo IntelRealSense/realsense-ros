@@ -42,7 +42,7 @@ new_folder_for_pytest #<-- new folder
 ```
 
 ### Grouping of tests  
-The pytests can be grouped using markers. These markers can be used to run a group of tests. However, "colcon test" command doesn't pass a custom marker using (--pytest-args -m `marker_name`) to the pytest internally. This is because, the ament_cmake that works as a bridge between colcon and pytest doesn't pass the pytest arguments to to pytest. So till this is fixed, pytest command has to be used directly for running a group of tests. Please see the next session for the commands to run a group py tests.
+The pytests can be grouped using markers. These markers can be used to run a group of tests. However, "colcon test" command doesn't pass a custom marker using (--pytest-args -m `marker_name`) to the pytest internally. This is because, the ament_cmake that works as a bridge between colcon and pytest doesn't pass the pytest arguments to pytest. So till this is fixed, pytest command has to be used directly for running a group of tests. Please see the next session for the commands to run a group py tests.
 
 The grouping is specified by adding a marker just before the test declaration. In the test_integration_template.py `rosbag` is specified as a marker specify tests that use rosbag file. This is achieved by adding "@pytest.mark.rosbag" to the begining of the test. So when the pytest parses for test, it detects the marker for the test. If this marker is selected or none of the markers are specified, the test will be added to the list, else will be listed as a deselected test.
 

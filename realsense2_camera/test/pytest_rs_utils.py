@@ -142,6 +142,24 @@ def launch_descr_with_yaml():
         first_node,
         launch_pytest.actions.ReadyToTest(),
     ])
+
+''' 
+This function returns a launch description with a single rs node instance built based on the parameter
+passed, use the test_paramterized.py as example
+'''
+@launch_pytest.fixture
+def launch_descr_with_parameters(request):
+    changed_params = request.param
+    params = get_default_params()
+    for key, value in changed_params.items():
+        params[key] = value    
+    first_node = get_rs_node_description("camera", params)
+    return LaunchDescription([
+        first_node,
+        launch_pytest.actions.ReadyToTest(),
+    ])
+
+
 ''' 
 This function returns a launch description with three rs nodes that
 use the same rosbag file. Test developer can use this as a reference and 
