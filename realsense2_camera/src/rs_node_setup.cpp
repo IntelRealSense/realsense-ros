@@ -195,6 +195,26 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
         }
         _metadata_publishers.erase(sip);
         _extrinsics_publishers.erase(sip);
+
+        if (_publish_tf)
+        {
+            std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
+
+            unpublish_static_tf(_base_frame_id, FRAME_ID(sip));
+            unpublish_static_tf(FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
+
+            if (profile.is<rs2::video_stream_profile>() && profile.stream_type() != RS2_STREAM_DEPTH && profile.stream_index() == 1)
+            {
+                unpublish_static_tf(_base_frame_id, ALIGNED_DEPTH_TO_FRAME_ID(sip));
+                unpublish_static_tf(ALIGNED_DEPTH_TO_FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
+            }
+
+            if ((_imu_sync_method > imu_sync_method::NONE) && (profile.stream_type() == RS2_STREAM_GYRO))
+            {
+                unpublish_static_tf(FRAME_ID(sip), IMU_FRAME_ID);
+                unpublish_static_tf(IMU_FRAME_ID, IMU_OPTICAL_FRAME_ID);
+            }
+        }
     }
 }
 
@@ -330,10 +350,13 @@ void BaseRealSenseNode::updateSensors()
                 {
                     startPublishers(wanted_profiles, *sensor);
                     updateProfilesStreamCalibData(wanted_profiles);
+                    if (_publish_tf)
                     {
                         std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
-                        _static_tf_msgs.clear();
-                        publishStaticTransforms(wanted_profiles);
+                        for (auto &profile : wanted_profiles)
+                        {
+                            calcAndPublishStaticTransform(profile, _base_profile);
+                        }
                     }
 
                     if(is_profile_changed)
@@ -350,6 +373,11 @@ void BaseRealSenseNode::updateSensors()
                     }
                 }
             }
+        }
+        if (_publish_tf)
+        {
+            std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
+            publishStaticTransforms();
         }
     }
     catch(const std::exception& ex)

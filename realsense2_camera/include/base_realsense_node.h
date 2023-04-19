@@ -165,6 +165,8 @@ namespace realsense2_camera
                                const tf2::Quaternion& q,
                                const std::string& from,
                                const std::string& to);
+        void unpublish_static_tf(const std::string& frame_id,
+                                 const std::string& child_frame_id);
         void setup();
 
     private:
@@ -200,7 +202,7 @@ namespace realsense2_camera
         void updateExtrinsicsCalibData(const rs2::video_stream_profile& left_video_profile, const rs2::video_stream_profile& right_video_profile);
         void updateStreamCalibData(const rs2::video_stream_profile& video_profile);
         void SetBaseStream();
-        void publishStaticTransforms(std::vector<rs2::stream_profile> profiles);
+        void publishStaticTransforms();
         void startDynamicTf();
         void publishDynamicTransforms();
         void publishPointCloud(rs2::points f, const rclcpp::Time& t, const rs2::frameset& frameset);

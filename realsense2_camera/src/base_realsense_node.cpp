@@ -846,6 +846,37 @@ tf2::Quaternion BaseRealSenseNode::rotationMatrixToQuaternion(const float rotati
     return tf2::Quaternion(q.x(), q.y(), q.z(), q.w());
 }
 
+void BaseRealSenseNode::unpublish_static_tf(const std::string& frame_id,
+                                            const std::string& child_frame_id)
+{
+    std::vector<geometry_msgs::msg::TransformStamped>::iterator it;
+    struct find_tf
+    {
+        const std::string& frame_id;
+        const std::string& child_frame_id;
+
+        // Struct Constructor
+        find_tf(const std::string& frame_id, const std::string& child_frame_id) :
+                                frame_id(frame_id), child_frame_id(child_frame_id) {}
+
+        bool operator()(const geometry_msgs::msg::TransformStamped &static_tf_msg) const
+        {
+            return (static_tf_msg.header.frame_id == frame_id &&
+                    static_tf_msg.child_frame_id == child_frame_id);
+        }
+    };
+
+    // Find whether there is any TF with given 'frame_id' and 'child_frame_id'
+    it = std::find_if(_static_tf_msgs.begin(), _static_tf_msgs.end(),
+                                        find_tf(frame_id, child_frame_id));
+
+    // If found, erase that specific TF
+    if (it != std::end(_static_tf_msgs))
+    {
+        _static_tf_msgs.erase(it);
+    }
+}
+
 void BaseRealSenseNode::publish_static_tf(const rclcpp::Time& t,
                                           const float3& trans,
                                           const tf2::Quaternion& q,
@@ -959,31 +990,27 @@ void BaseRealSenseNode::SetBaseStream()
     _base_profile = available_profiles[*base_stream];
 }
 
-void BaseRealSenseNode::publishStaticTransforms(std::vector<rs2::stream_profile> profiles)
+void BaseRealSenseNode::publishStaticTransforms()
 {
-    // Publish static transforms
-    if (_publish_tf)
+    // Since the _static_tf_broadcaster is a latched topic, the old transforms will
+    // be alive even if the sensors are dynamically disabled. So, reset the
+    // broadcaster everytime and publish the transforms of enabled sensors alone.
+    if (_static_tf_broadcaster)
     {
-        if (!_static_tf_broadcaster)
-        {
-            // intra-process do not support latched QoS, so we need to disable intra-process for this topic
-            rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
-            options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
-
-            #ifndef DASHING
-            _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(_node, tf2_ros::StaticBroadcasterQoS(), std::move(options));
-            #else
-            _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(_node, rclcpp::QoS(100), std::move(options));
-            #endif
-        }
-
-        for (auto &profile : profiles)
-        {
-            calcAndPublishStaticTransform(profile, _base_profile);
-        }
-        if (_static_tf_broadcaster)
-            _static_tf_broadcaster->sendTransform(_static_tf_msgs);
+        _static_tf_broadcaster.reset();
     }
+
+    // intra-process do not support latched QoS, so we need to disable intra-process for this topic
+    rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
+    options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+
+    #ifndef DASHING
+    _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(_node, tf2_ros::StaticBroadcasterQoS(), std::move(options));
+    #else
+    _static_tf_broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(_node, rclcpp::QoS(100), std::move(options));
+    #endif
+
+    _static_tf_broadcaster->sendTransform(_static_tf_msgs);
 }
 
 void BaseRealSenseNode::startDynamicTf()
