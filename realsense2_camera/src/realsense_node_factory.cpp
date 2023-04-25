@@ -274,7 +274,7 @@ void RealSenseNodeFactory::init()
         _reconnect_timeout = declare_parameter("reconnect_timeout", 6.0);
 
         // A ROS2 hack: until a better way is found to avoid auto convertion of strings containing only digits to integers:
-        if (_serial_no.front() == '_') _serial_no = _serial_no.substr(1);    // remove '_' prefix
+        if (!_serial_no.empty() && _serial_no.front() == '_') _serial_no = _serial_no.substr(1);    // remove '_' prefix
 
         std::string rosbag_filename(declare_parameter("rosbag_filename", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>());
         if (!rosbag_filename.empty())
