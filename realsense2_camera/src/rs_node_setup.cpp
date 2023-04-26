@@ -198,22 +198,7 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
 
         if (_publish_tf)
         {
-            std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
-
-            unpublish_static_tf(_base_frame_id, FRAME_ID(sip));
-            unpublish_static_tf(FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
-
-            if (profile.is<rs2::video_stream_profile>() && profile.stream_type() != RS2_STREAM_DEPTH && profile.stream_index() == 1)
-            {
-                unpublish_static_tf(_base_frame_id, ALIGNED_DEPTH_TO_FRAME_ID(sip));
-                unpublish_static_tf(ALIGNED_DEPTH_TO_FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
-            }
-
-            if ((_imu_sync_method > imu_sync_method::NONE) && (profile.stream_type() == RS2_STREAM_GYRO))
-            {
-                unpublish_static_tf(FRAME_ID(sip), IMU_FRAME_ID);
-                unpublish_static_tf(IMU_FRAME_ID, IMU_OPTICAL_FRAME_ID);
-            }
+            eraseTransformMsgs(sip, profile);
         }
     }
 }
@@ -355,7 +340,7 @@ void BaseRealSenseNode::updateSensors()
                         std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
                         for (auto &profile : wanted_profiles)
                         {
-                            calcAndPublishStaticTransform(profile, _base_profile);
+                            calcAndAppendTransformMsgs(profile, _base_profile);
                         }
                     }
 

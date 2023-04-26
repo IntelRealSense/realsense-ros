@@ -155,18 +155,20 @@ namespace realsense2_camera
         std::shared_ptr<Parameters> _parameters;
         std::list<std::string> _parameters_names;
 
+        void restartStaticTransformBroadcaster();
         void publishExtrinsicsTopic(const stream_index_pair& sip, const rs2_extrinsics& ex);
-        void calcAndPublishStaticTransform(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile);
+        void calcAndAppendTransformMsgs(const rs2::stream_profile& profile, const rs2::stream_profile& base_profile);
         void getDeviceInfo(const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr req,
                                  realsense2_camera_msgs::srv::DeviceInfo::Response::SharedPtr res);
         tf2::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
-        void publish_static_tf(const rclcpp::Time& t,
+        void append_static_tf_msg(const rclcpp::Time& t,
                                const float3& trans,
                                const tf2::Quaternion& q,
                                const std::string& from,
                                const std::string& to);
-        void unpublish_static_tf(const std::string& frame_id,
+        void erase_static_tf_msg(const std::string& frame_id,
                                  const std::string& child_frame_id);
+        void eraseTransformMsgs(const stream_index_pair& sip, const rs2::stream_profile& profile);
         void setup();
 
     private:
