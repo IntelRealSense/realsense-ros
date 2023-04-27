@@ -195,6 +195,11 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
         }
         _metadata_publishers.erase(sip);
         _extrinsics_publishers.erase(sip);
+
+        if (_publish_tf)
+        {
+            eraseTransformMsgs(sip, profile);
+        }
     }
 }
 
@@ -330,10 +335,13 @@ void BaseRealSenseNode::updateSensors()
                 {
                     startPublishers(wanted_profiles, *sensor);
                     updateProfilesStreamCalibData(wanted_profiles);
+                    if (_publish_tf)
                     {
                         std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
-                        _static_tf_msgs.clear();
-                        publishStaticTransforms(wanted_profiles);
+                        for (auto &profile : wanted_profiles)
+                        {
+                            calcAndAppendTransformMsgs(profile, _base_profile);
+                        }
                     }
 
                     if(is_profile_changed)
@@ -350,6 +358,11 @@ void BaseRealSenseNode::updateSensors()
                     }
                 }
             }
+        }
+        if (_publish_tf)
+        {
+            std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
+            publishStaticTransforms();
         }
     }
     catch(const std::exception& ex)

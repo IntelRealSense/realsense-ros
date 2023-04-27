@@ -222,7 +222,12 @@
   - For example: ```depth_qos:=SENSOR_DATA```
   - Reference: [ROS2 QoS profiles formal documentation](https://docs.ros.org/en/rolling/Concepts/About-Quality-of-Service-Settings.html#qos-profiles)
 - **Notice:** ***<stream_type>*_info_qos** refers to both camera_info topics and metadata topics.
-- **tf_publish_rate**: double, positive values mean dynamic transform publication with specified rate, all other values mean static transform publication. Defaults to 0 
+- **tf_publish_rate**: 
+  - double, rate (in Hz) at which dynamic transforms are published
+  - Default value is 0.0 Hz *(means no dynamic TF)*
+  - This param also depends on **publish_tf** param
+    - If **publish_tf:=false**, then no TFs will be published, even if **tf_publish_rate** is >0.0 Hz
+    - If **publish_tf:=true** and **tf_publish_rate** set to >0.0 Hz, then dynamic TFs will be published at the specified rate
 
 #### Parameters that cannot be changed in runtime:
 - **serial_no**:
@@ -277,8 +282,11 @@
 - **linear_accel_cov**, **angular_velocity_cov**: sets the variance given to the Imu readings.
 - **hold_back_imu_for_frames**: Images processing takes time. Therefor there is a time gap between the moment the image arrives at the wrapper and the moment the image is published to the ROS environment. During this time, Imu messages keep on arriving and a situation is created where an image with earlier timestamp is published after Imu message with later timestamp. If that is a problem, setting *hold_back_imu_for_frames* to *true* will hold the Imu messages back while processing the images and then publish them all in a burst, thus keeping the order of publication as the order of arrival. Note that in either case, the timestamp in each message's header reflects the time of it's origin.
 - **publish_tf**:
-  - boolean, publish or not TF at all.
-  - Defaults to True.
+  - boolean, enable/disable publishing static and dynamic TFs
+  - Defaults to True
+    - So, static TFs will be published by default
+    - If dynamic TFs are needed, user should set the param **tf_publish_rate** to >0.0 Hz
+  - If set to false, both static and dynamic TFs won't be published, even if the param **tf_publish_rate** is set to >0.0 Hz
 - **diagnostics_period**: 
   - double, positive values set the period between diagnostics updates on the `/diagnostics` topic.
   - 0 or negative values mean no diagnostics topic is published. Defaults to 0.</br>
