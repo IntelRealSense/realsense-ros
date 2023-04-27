@@ -87,7 +87,7 @@ aluminum peripherial evaluation case.
         <xacro:if value="${use_mesh}">
           <origin xyz="${l515_zero_depth_to_glass} 0 ${-l515_cam_center_to_depth_pz}" rpy="${M_PI/2} 0 ${M_PI/2}"/>
           <geometry>
-              <mesh filename="package://realsense2_description/meshes/l515.dae" />
+              <mesh filename="file://$(find realsense2_description)/meshes/l515.dae" />
           </geometry>
         </xacro:if>
         <xacro:unless value="${use_mesh}">
