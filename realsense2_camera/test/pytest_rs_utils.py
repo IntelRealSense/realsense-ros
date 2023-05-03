@@ -238,43 +238,59 @@ class RsTestBaseClass():
     def init_test(self):
         rclpy.init()
         self.flag = False
-        self.node = None
+        self.node = RsTestNode('RsTestNode')
+        self.subscribed_topics = []
+    def create_subscription(self, msg_type, topic , data_type):
+        if not topic in self.subscribed_topics:
+            self.node.create_subscription(msg_type, topic, data_type)
+            self.subscribed_topics.append(topic)
+
+    def spin_for_data(self,themes):
+        start = time.time()
+        timeout = 4.0
+        print('Waiting for topic... ' )
+        flag = False
+        while time.time() - start < timeout:
+            print('Spinning... ' )
+            rclpy.spin_once(self.node)
+            all_found = True 
+            for theme in themes:
+                '''
+                print("expected for " + theme['topic'])
+                print( theme['expected_data_chunks'])
+                if theme['expected_data_chunks'] == int(self.node.get_num_chunks(theme['topic'])):
+                    print("num chunks " +theme['topic'] + " " + str(self.node.get_num_chunks(theme['topic'])))
+                    print("expected " + str(theme['expected_data_chunks']))
+                else:
+                    print("data not found for " + theme['topic'])
+                    all_found = False
+                    break
+                '''
+                '''Expecting the data to be equal, not more or less than expected.'''
+                if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
+                    all_found = False
+                    break
+            if all_found == True:
+                flag =True
+                break
+        else:
+            assert False, "run_test timedout"
+        return flag
+
+    def spin_for_time(self,wait_time):
+        start = time.time()
+        print('Waiting for topic... ' )
+        flag = False
+        while time.time() - start < wait_time:
+            print('Spinning... ' )
+            rclpy.spin_once(self.node)
+
     def run_test(self, themes):
         try:
-            self.node = RsTestNode('RsTestNode')
             for theme in themes:
-                self.node.create_subscription(theme['msg_type'], theme['topic'] , qos.qos_profile_sensor_data)
+                self.create_subscription(theme['msg_type'], theme['topic'] , qos.qos_profile_sensor_data)
                 print('subscription created for ' + theme['topic'])
-            start = time.time()
-            timeout = 4.0
-            print('Waiting for topic... ' )
-            self.flag = False
-            while time.time() - start < timeout:
-                print('Spinning... ' )
-                rclpy.spin_once(self.node)
-                all_found = True 
-                for theme in themes:
-                    '''
-                    print("expected for " + theme['topic'])
-                    print( theme['expected_data_chunks'])
-                    if theme['expected_data_chunks'] == int(self.node.get_num_chunks(theme['topic'])):
-                        print("num chunks " +theme['topic'] + " " + str(self.node.get_num_chunks(theme['topic'])))
-                        print("expected " + str(theme['expected_data_chunks']))
-                    else:
-                        print("data not found for " + theme['topic'])
-                        all_found = False
-                        break
-                    '''
-                    '''Expecting the data to be equal, not more or less than expected.'''
-                    if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
-                        all_found = False
-                        break
-                if all_found == True:
-                    self.flag =True
-                    break
-            else:
-                assert False, "run_test timedout"
-                
+            self.flag = self.spin_for_data(themes)                
         except  Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
