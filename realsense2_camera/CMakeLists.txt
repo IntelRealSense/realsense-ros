@@ -138,6 +138,7 @@ set(SOURCES
     src/named_filter.cpp
     src/profile_manager.cpp
     src/image_publisher.cpp
+    src/tfs.cpp
   )
 
 if(NOT DEFINED ENV{ROS_DISTRO})
