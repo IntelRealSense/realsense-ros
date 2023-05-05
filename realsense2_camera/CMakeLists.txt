@@ -294,6 +294,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   set(_pytest_folders
     test
+    test/templates
   )
   foreach(test_folder ${_pytest_folders})
     file(GLOB files "${test_folder}/test_*.py")
@@ -301,7 +302,7 @@ if(BUILD_TESTING)
 
     get_filename_component(_test_name ${file} NAME_WE)
     ament_add_pytest_test(${_test_name} ${file}
-      APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}
+      APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}:${CMAKE_SOURCE_DIR}/test/utils
       TIMEOUT 60
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )

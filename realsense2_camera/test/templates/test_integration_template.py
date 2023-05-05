@@ -27,18 +27,25 @@ from rclpy import qos
 from rclpy.node import Node
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
-
+'''
+sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
+print("pras:")
+#print(os. path. abspath(os.path.dirname(__file__)+"/../utils"))
+#print(__file__)
+print(sys.path)
+import pytest_rs_utils
+from pytest_rs_utils import launch_descr_with_yaml
+'''
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_yaml
-
 
 ''' 
 This is a testcase simiar to the integration_fn testcase, the only difference is that
 this one uses the launch configuration to launch the nodes.  
 '''
 
-@pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
+@pytest.mark.launch(fixture=launch_descr_with_yaml)
 def test_using_function(launch_context):
     time.sleep(0.1)
     # by now, the camera would have started

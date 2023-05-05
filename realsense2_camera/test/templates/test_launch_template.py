@@ -24,8 +24,10 @@ from launch_pytest.tools import process as process_tools
 import pytest
 from setuptools import find_packages
 
-sys.path.append("../utils")
+sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
+from pytest_rs_utils import launch_descr_with_yaml
+
 
 '''
 This is a pytest fixture used by the lauch_pytest

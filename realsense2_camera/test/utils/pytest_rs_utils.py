@@ -296,4 +296,5 @@ class RsTestBaseClass():
             print(data.header)
         return True
     def shutdown(self):
+        self.node.destroy_node()
         rclpy.shutdown()
