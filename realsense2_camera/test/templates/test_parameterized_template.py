@@ -28,6 +28,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
 
+sys.path.append("../utils")
 import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_yaml
 from pytest_rs_utils import launch_descr_with_parameters

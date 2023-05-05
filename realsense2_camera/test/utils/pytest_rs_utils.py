@@ -255,18 +255,6 @@ class RsTestBaseClass():
             rclpy.spin_once(self.node)
             all_found = True 
             for theme in themes:
-                '''
-                print("expected for " + theme['topic'])
-                print( theme['expected_data_chunks'])
-                if theme['expected_data_chunks'] == int(self.node.get_num_chunks(theme['topic'])):
-                    print("num chunks " +theme['topic'] + " " + str(self.node.get_num_chunks(theme['topic'])))
-                    print("expected " + str(theme['expected_data_chunks']))
-                else:
-                    print("data not found for " + theme['topic'])
-                    all_found = False
-                    break
-                '''
-                '''Expecting the data to be equal, not more or less than expected.'''
                 if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
                     all_found = False
                     break

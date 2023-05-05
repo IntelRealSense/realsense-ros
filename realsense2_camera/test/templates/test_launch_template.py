@@ -24,6 +24,7 @@ from launch_pytest.tools import process as process_tools
 import pytest
 from setuptools import find_packages
 
+sys.path.append("../utils")
 import pytest_rs_utils
 
 '''
