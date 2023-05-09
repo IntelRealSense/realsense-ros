@@ -37,7 +37,6 @@ void BaseRealSenseNode::getParameters()
                 startDynamicTf();
             });
     _parameters_names.push_back(param_name);
-    startDynamicTf();
 
     param_name = std::string("diagnostics_period");
     _diagnostics_period = _parameters->setParam<double>(param_name, DIAGNOSTICS_PERIOD);

@@ -274,19 +274,15 @@ void RealSenseNodeFactory::init()
         _reconnect_timeout = declare_parameter("reconnect_timeout", 6.0);
 
         // A ROS2 hack: until a better way is found to avoid auto convertion of strings containing only digits to integers:
-        if (_serial_no.front() == '_') _serial_no = _serial_no.substr(1);    // remove '_' prefix
+        if (!_serial_no.empty() && _serial_no.front() == '_') _serial_no = _serial_no.substr(1);    // remove '_' prefix
 
         std::string rosbag_filename(declare_parameter("rosbag_filename", rclcpp::ParameterValue("")).get<rclcpp::PARAMETER_STRING>());
         if (!rosbag_filename.empty())
         {
             {
                 ROS_INFO_STREAM("publish topics from rosbag file: " << rosbag_filename.c_str());
-                auto pipe = std::make_shared<rs2::pipeline>();
-                rs2::config cfg;
-                cfg.enable_device_from_file(rosbag_filename.c_str(), false);
-                cfg.enable_all_streams();
-                pipe->start(cfg); //File will be opened in read mode at this point
-                _device = pipe->get_active_profile().get_device();
+                rs2::context ctx;
+                _device = ctx.load_device(rosbag_filename.c_str());
                 _serial_no = _device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
             }
             if (_device)
@@ -372,6 +368,7 @@ void RealSenseNodeFactory::startDevice()
         case RS420_PID:
         case RS420_MM_PID:
         case RS430_PID:
+        case RS430i_PID:
         case RS430_MM_PID:
         case RS430_MM_RGB_PID:
         case RS435_RGB_PID:

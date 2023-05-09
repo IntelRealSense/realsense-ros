@@ -54,6 +54,8 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'enable_gyro',                  'default': 'false', 'description': "enable gyro stream"},                           
                            {'name': 'enable_accel',                 'default': 'false', 'description': "enable accel stream"}, 
                            {'name': 'intra_process_comms',          'default': 'true', 'description': "enable intra-process communication"}, 
+                           {'name': 'publish_tf',                   'default': 'true', 'description': '[bool] enable/disable publishing static & dynamic TF'},
+                           {'name': 'tf_publish_rate',              'default': '0.0', 'description': '[double] rate in HZ for publishing dynamic TF'},
                           ]
 
 def declare_configurable_parameters(parameters):
