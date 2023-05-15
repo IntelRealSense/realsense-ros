@@ -40,7 +40,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'infra_rgb',                    'default': 'false', 'description': 'enable infra2 stream'},
                            {'name': 'enable_fisheye1',              'default': 'true', 'description': 'enable fisheye1 stream'},
                            {'name': 'enable_fisheye2',              'default': 'true', 'description': 'enable fisheye2 stream'},
-                           {'name': 'enable_confidence',            'default': 'true', 'description': 'enable depth stream'},
+                           {'name': 'enable_confidence',            'default': 'true', 'description': 'enable confidence'},
                            {'name': 'gyro_fps',                     'default': '0', 'description': "''"},                           
                            {'name': 'accel_fps',                    'default': '0', 'description': "''"},                           
                            {'name': 'enable_gyro',                  'default': 'false', 'description': "''"},                           
