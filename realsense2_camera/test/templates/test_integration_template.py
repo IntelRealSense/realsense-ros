@@ -27,15 +27,7 @@ from rclpy import qos
 from rclpy.node import Node
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
-'''
-sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
-print("pras:")
-#print(os. path. abspath(os.path.dirname(__file__)+"/../utils"))
-#print(__file__)
-print(sys.path)
-import pytest_rs_utils
-from pytest_rs_utils import launch_descr_with_yaml
-'''
+
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_yaml
