@@ -19,6 +19,8 @@
 #include <rclcpp/clock.hpp>
 #include <fstream>
 #include <image_publisher.h>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 
 // Header files for disabling intra-process comms for static broadcaster.
 #include <rclcpp/publisher_options.hpp>
@@ -520,6 +522,11 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             if (f.is<rs2::video_frame>())
                 ROS_DEBUG_STREAM("frame: " << f.as<rs2::video_frame>().get_width() << " x " << f.as<rs2::video_frame>().get_height());
 
+            if (f.is<rs2::labeled_points>())
+            {
+                publishLabeledPointCloud(frame.as<rs2::labeled_points>(), t, sip);
+                continue;
+            }
             if (f.is<rs2::points>())
             {
                 publishPointCloud(f.as<rs2::points>(), t, frameset);
@@ -579,6 +586,15 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                     _image,
                     _info_publisher,
                     _image_publishers);
+    }
+    else if (frame.is<rs2::labeled_points>())
+    {
+        auto stream_type = frame.get_profile().stream_type();
+        auto stream_index = frame.get_profile().stream_index();
+        stream_index_pair sip{stream_type,stream_index};
+        ROS_DEBUG("Single labeled point cloud frame arrived (%s, %d). frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
+                    rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame_time, t.nanoseconds());
+        publishLabeledPointCloud(frame.as<rs2::labeled_points>(), t, sip);
     }
     _synced_imu_publisher->Resume();
 } // frame_callback
@@ -783,6 +799,55 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t,
 {
     std::string frame_id = (_align_depth_filter->is_enabled() ? OPTICAL_FRAME_ID(COLOR) : OPTICAL_FRAME_ID(DEPTH));
     _pc_filter->Publish(pc, t, frameset, frame_id);
+}
+
+void BaseRealSenseNode::publishLabeledPointCloud(rs2::labeled_points pc, const rclcpp::Time& t, const stream_index_pair& stream)
+{
+    auto& info_publisher = _info_publisher.at(stream);
+    if(0 == info_publisher->get_subscription_count() && 0 == _labeled_pointcloud_publisher->get_subscription_count())
+        return;
+        
+    auto mp = _get_label_to_color3f();
+
+    // Create the PointCloud message
+    sensor_msgs::msg::PointCloud2::UniquePtr msg_pointcloud = std::make_unique<sensor_msgs::msg::PointCloud2>();
+
+    // Define the fields of the PointCloud message
+    sensor_msgs::PointCloud2Modifier modifier(*msg_pointcloud);
+
+    modifier.setPointCloud2Fields(4, "x", 1, sensor_msgs::msg::PointField::FLOAT32,
+                                "y", 1, sensor_msgs::msg::PointField::FLOAT32,
+                                "z", 1, sensor_msgs::msg::PointField::FLOAT32,
+                                "label", 1, sensor_msgs::msg::PointField::FLOAT32);
+    modifier.resize(pc.size());
+
+    // Fill the PointCloud message with data
+    sensor_msgs::PointCloud2Iterator<float> iter_x(*msg_pointcloud, "x");
+    sensor_msgs::PointCloud2Iterator<float> iter_y(*msg_pointcloud, "y");
+    sensor_msgs::PointCloud2Iterator<float> iter_z(*msg_pointcloud, "z");
+    sensor_msgs::PointCloud2Iterator<float> iter_color(*msg_pointcloud, "label");
+    const rs2::vertex* vertex = pc.get_vertices();
+    const uint8_t* label = pc.get_labels();
+    msg_pointcloud->row_step = msg_pointcloud->width * msg_pointcloud->point_step;
+    msg_pointcloud->data.resize(msg_pointcloud->height * msg_pointcloud->row_step);
+
+    for (size_t point_idx=0; point_idx < pc.size(); point_idx++, vertex++, label++)
+    {
+        bool valid_pixel(vertex->z > 0);
+        if (valid_pixel)
+        {
+            *iter_x = vertex->x;
+            *iter_y = vertex->y;
+            *iter_z = vertex->z;
+            *iter_color =  mp[static_cast<rs2_point_cloud_label>(*label)].x + 256.0*mp[static_cast<rs2_point_cloud_label>(*label)].y + 256.0*256.0*mp[static_cast<rs2_point_cloud_label>(*label)].z;
+            ++iter_x; ++iter_y; ++iter_z; ++iter_color;
+        }
+    }
+    msg_pointcloud->header.stamp = t;
+    msg_pointcloud->header.frame_id = "camera_link";
+
+    // Publish the PointCloud message
+    _labeled_pointcloud_publisher->publish(std::move(msg_pointcloud));
 }
 
 

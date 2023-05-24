@@ -144,7 +144,8 @@ void BaseRealSenseNode::setAvailableSensors()
         if (sensor.is<rs2::depth_sensor>() || 
             sensor.is<rs2::color_sensor>() ||
             sensor.is<rs2::fisheye_sensor>() ||
-            sensor.is<rs2::safety_sensor>())
+            sensor.is<rs2::safety_sensor>() ||
+            sensor.is<rs2::depth_mapping_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as VideoSensor.");
             rosSensor = std::make_unique<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, _use_intra_process, _dev.is<playback>());
@@ -215,7 +216,17 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
         rmw_qos_profile_t qos = sensor.getQOS(sip);
         rmw_qos_profile_t info_qos = sensor.getInfoQOS(sip);
 
-        if (profile.is<rs2::video_stream_profile>())
+        // special handling for labeled point cloud stream
+        if (profile.is<rs2::video_stream_profile>() && profile.stream_type() == RS2_STREAM_LABELED_POINT_CLOUD)
+        {
+            std::stringstream camera_info(stream_name + "/camera_info");
+            _labeled_pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("labeled_point_cloud/points",
+                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos),qos));
+            _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 
+                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
+
+        }
+        else if (profile.is<rs2::video_stream_profile>())
         {
             std::stringstream image_raw, camera_info;
             bool rectified_image = false;
@@ -289,7 +300,8 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
         _metadata_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(topic_metadata, 
                                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
         
-        if (!((rs2::stream_profile)profile==(rs2::stream_profile)_base_profile))
+        if (!((rs2::stream_profile)profile==(rs2::stream_profile)_base_profile) &&
+            profile.stream_type() != RS2_STREAM_LABELED_POINT_CLOUD)
         {
 
             // intra-process do not support latched QoS, so we need to disable intra-process for this topic
