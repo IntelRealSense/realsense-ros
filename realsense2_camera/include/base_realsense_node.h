@@ -171,33 +171,6 @@ namespace realsense2_camera
         void eraseTransformMsgs(const stream_index_pair& sip, const rs2::stream_profile& profile);
         void setup();
 
-
-    std::map<rs2_point_cloud_label, float3> _get_label_to_color3f()
-    {
-        static const float3 DARK_PURPLE_COL = { 0.2f, 0.1f, 0.2f };
-        static const float3 BROWN_COL = { 0.6f, 0.3f, 0.0f };
-        static const float3 GREEN_COL = { 0.0f, 1.0f, 0.0f };
-        static const float3 RED_COL = { 1.0f, 0.0f, 0.0f };
-        static const float3 TURQUOISE_COL = { 0.0f, 1.0f, 1.0f };
-        static const float3 BLUE_COL = { 0.0f, 0.0f, 1.0f };
-        static const float3 PINK_COL = { 1.0f, 0.75f, 0.8f };
-        static const float3 GREY_COL = { 0.5f, 0.5f, 0.5f };
-        std::map<rs2_point_cloud_label, float3> label_to_color3f;
-
-        label_to_color3f[RS2_POINT_CLOUD_LABEL_UNKNOWN] = DARK_PURPLE_COL;
-        label_to_color3f[RS2_POINT_CLOUD_LABEL_UNDEFINED] = DARK_PURPLE_COL;
-        label_to_color3f[RS2_POINT_CLOUD_LABEL_INVALID] = DARK_PURPLE_COL;
-        label_to_color3f[RS2_POINT_CLOUD_LABEL_GROUND] = BROWN_COL;
-        label_to_color3f[RS2_POINT_CLOUD_LABEL_NEAR_GROUND] = GREEN_COL;
-        label_to_color3f[RS2_POINT_CLOUD_LABEL_OBSTACLE] = RED_COL;
-        label_to_color3f[RS2_POINT_CLOUD_LABEL_OVERHEAD] = TURQUOISE_COL;
-        label_to_color3f[RS2_POINT_CLOUD_LABEL_ABOVE_CEILING_HEIGHT] = BLUE_COL;
-        label_to_color3f[RS2_POINT_CLOUD_LABEL_GAP] = PINK_COL;
-        label_to_color3f[RS2_POINT_CLOUD_LABEL_MASKED] = GREY_COL;
-
-        return label_to_color3f;
-    }
-
     private:
         class CimuData
         {
@@ -235,7 +208,7 @@ namespace realsense2_camera
         void startDynamicTf();
         void publishDynamicTransforms();
         void publishPointCloud(rs2::points f, const rclcpp::Time& t, const rs2::frameset& frameset);
-        void publishLabeledPointCloud(rs2::labeled_points points, const rclcpp::Time& t, const stream_index_pair& stream);
+        void publishLabeledPointCloud(rs2::labeled_points points, const rclcpp::Time& t);
 
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics) const;
 

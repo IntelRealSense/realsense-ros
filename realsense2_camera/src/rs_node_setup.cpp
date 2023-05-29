@@ -222,8 +222,6 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             std::stringstream camera_info(stream_name + "/camera_info");
             _labeled_pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("labeled_point_cloud/points",
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos),qos));
-            _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 
-                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
 
         }
         else if (profile.is<rs2::video_stream_profile>())
@@ -249,8 +247,14 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                 ROS_DEBUG_STREAM("image transport publisher was created for topic" << image_raw.str());
             }
 
-            _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(), 
+            auto stream_type = profile.stream_type();
+            if(stream_type != RS2_STREAM_SAFETY &&
+               stream_type != RS2_STREAM_OCCUPANCY &&
+               stream_type != RS2_STREAM_LABELED_POINT_CLOUD)
+            {
+                _info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(),
                                     rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
+            }
 
             if (_align_depth_filter->is_enabled() && (sip != DEPTH) && sip.second < 2)
             {
