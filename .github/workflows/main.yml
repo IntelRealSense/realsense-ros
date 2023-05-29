@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [rolling, humble, galactic, foxy, eloquent, dashing]
+        ros_distro: [rolling, humble, galactic, foxy]
         include:
         - ros_distro: 'rolling'
           os: ubuntu-22.04
@@ -33,10 +33,6 @@ jobs:
           os: ubuntu-20.04
         - ros_distro: 'foxy'
           os: ubuntu-20.04
-        - ros_distro: 'eloquent'
-          os: ubuntu-18.04
-        - ros_distro: 'dashing'
-          os: ubuntu-18.04
 
     steps:
 
@@ -63,12 +59,12 @@ jobs:
       with:
         cmake-version: '3.23.0'
 
-    ## If distro is one of [galactic, foxy, eloquent, dashing], use the setup-ros@v0.2
+    ## If distro is one of [galactic, foxy], use the setup-ros@v0.2
     ## which supports old versions of ROS2 and EOL versions.
     ## For Humble distro, use v0.3 
     ## See: 1) https://github.com/ros-tooling/setup-ros#Supported-platforms
     ##      2) https://github.com/ros-tooling/setup-ros/tree/v0.2#Supported-platforms 
-    - name: build ROS2 Galactic/Foxy/Eloquent/Dashing
+    - name: build ROS2 Galactic/Foxy
       if: ${{ matrix.ros_distro != 'humble' && matrix.ros_distro != 'rolling'}}
       uses: ros-tooling/setup-ros@v0.2
       with:

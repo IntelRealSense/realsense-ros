@@ -244,7 +244,7 @@ void RosSensor::stop()
 {
     if (get_active_streams().size() == 0)
         return;
-    ROS_INFO_STREAM("Stop Sensor: " << get_info(RS2_CAMERA_INFO_NAME));
+    ROS_INFO_STREAM("Stop Sensor: " << rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
     _frequency_diagnostics.clear();
 
     try
@@ -337,13 +337,13 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
         profile_manager->addWantedProfiles(wanted_profiles);        
     }
 
-    ROS_DEBUG_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "active_profiles.size() = " << active_profiles.size());
+    ROS_DEBUG_STREAM(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)) << ":" << "active_profiles.size() = " << active_profiles.size());
     for (auto& profile : active_profiles)
     {
         ROS_DEBUG_STREAM("Sensor profile: " << ProfilesManager::profile_string(profile));
     }
 
-    ROS_DEBUG_STREAM(get_info(RS2_CAMERA_INFO_NAME) << ":" << "wanted_profiles");
+    ROS_DEBUG_STREAM(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)) << ":" << "wanted_profiles");
     for (auto& profile : wanted_profiles)
     {
         ROS_DEBUG_STREAM("Sensor profile: " << ProfilesManager::profile_string(profile));

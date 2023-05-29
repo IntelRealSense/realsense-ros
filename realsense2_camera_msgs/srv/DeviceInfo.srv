@@ -5,3 +5,4 @@ string firmware_version
 string usb_type_descriptor
 string firmware_update_id
 string sensors
+string physical_port
