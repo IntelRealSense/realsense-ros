@@ -209,7 +209,7 @@ namespace realsense2_camera
         void publishDynamicTransforms();
         void publishPointCloud(rs2::points f, const rclcpp::Time& t, const rs2::frameset& frameset);
         void publishLabeledPointCloud(rs2::labeled_points points, const rclcpp::Time& t);
-
+        bool shouldPublishCameraInfo(const stream_index_pair& sip);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics) const;
 
         IMUInfo getImuInfo(const rs2::stream_profile& profile);

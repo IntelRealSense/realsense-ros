@@ -525,6 +525,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             if (f.is<rs2::labeled_points>())
             {
                 publishLabeledPointCloud(frame.as<rs2::labeled_points>(), t);
+                publishMetadata(f, t, OPTICAL_FRAME_ID(sip));
                 continue;
             }
             if (f.is<rs2::points>())
@@ -595,6 +596,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
         ROS_DEBUG("Single labeled point cloud frame arrived (%s, %d). frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
                     rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame_time, t.nanoseconds());
         publishLabeledPointCloud(frame.as<rs2::labeled_points>(), t);
+        publishMetadata(frame, t, OPTICAL_FRAME_ID(sip));
     }
     _synced_imu_publisher->Resume();
 } // frame_callback
@@ -801,10 +803,18 @@ void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t,
     _pc_filter->Publish(pc, t, frameset, frame_id);
 }
 
+bool BaseRealSenseNode::shouldPublishCameraInfo(const stream_index_pair& sip)
+{
+    const rs2_stream stream = sip.first;
+    return (stream != RS2_STREAM_SAFETY && stream != RS2_STREAM_OCCUPANCY && stream != RS2_STREAM_LABELED_POINT_CLOUD);
+}
+
 void BaseRealSenseNode::publishLabeledPointCloud(rs2::labeled_points pc, const rclcpp::Time& t){
     if(0 == _labeled_pointcloud_publisher->get_subscription_count())
         return;
     
+    ROS_DEBUG("Publishing Labeled Point Cloud Frame");
+
     // Create the PointCloud message
     sensor_msgs::msg::PointCloud2::UniquePtr msg_pointcloud = std::make_unique<sensor_msgs::msg::PointCloud2>();
 
@@ -821,9 +831,12 @@ void BaseRealSenseNode::publishLabeledPointCloud(rs2::labeled_points pc, const r
     sensor_msgs::PointCloud2Iterator<float> iter_x(*msg_pointcloud, "x");
     sensor_msgs::PointCloud2Iterator<float> iter_y(*msg_pointcloud, "y");
     sensor_msgs::PointCloud2Iterator<float> iter_z(*msg_pointcloud, "z");
-    sensor_msgs::PointCloud2Iterator<float> iter_label(*msg_pointcloud, "label");
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_label(*msg_pointcloud, "label");
     const rs2::vertex* vertex = pc.get_vertices();
     const uint8_t* label = pc.get_labels();
+    msg_pointcloud->width = 320;
+    msg_pointcloud->height = 180;
+    msg_pointcloud->point_step = 3*sizeof(float) + sizeof(uint8_t);
     msg_pointcloud->row_step = msg_pointcloud->width * msg_pointcloud->point_step;
     msg_pointcloud->data.resize(msg_pointcloud->height * msg_pointcloud->row_step);
 
@@ -835,8 +848,9 @@ void BaseRealSenseNode::publishLabeledPointCloud(rs2::labeled_points pc, const r
         *iter_label = *label;
         ++iter_x; ++iter_y; ++iter_z; ++iter_label;
     }
+
     msg_pointcloud->header.stamp = t;
-    msg_pointcloud->header.frame_id = "camera_link";
+    msg_pointcloud->header.frame_id = OPTICAL_FRAME_ID(LABELED_POINT_CLOUD);
 
     // Publish the PointCloud message
     _labeled_pointcloud_publisher->publish(std::move(msg_pointcloud));
@@ -918,58 +932,54 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         image = fix_depth_scale(image, _depth_scaled_image[stream]);
     }
 
-    if (info_publishers.find(stream) == info_publishers.end() ||
-        image_publishers.find(stream) == image_publishers.end())
-        {
-            // Stream is already disabled.
-            return;
-        }
-    auto& info_publisher = info_publishers.at(stream);
-    auto& image_publisher = image_publishers.at(stream);
-    if(0 != info_publisher->get_subscription_count() ||
-       0 != image_publisher->get_subscription_count())
+    // if stream is on, and is not a SC stream, publish cameraInfo
+    if(shouldPublishCameraInfo(stream) && info_publishers.find(stream) != info_publishers.end())
     {
-        auto& cam_info = _camera_info.at(stream);
-        if (cam_info.width != width)
+        auto& info_publisher = info_publishers.at(stream);
+        if(0 != info_publisher->get_subscription_count())
         {
-            updateStreamCalibData(f.get_profile().as<rs2::video_stream_profile>());
-        }
-        cam_info.header.stamp = t;
+            auto& cam_info = _camera_info.at(stream);
+            if (cam_info.width != width)
+            {
+                updateStreamCalibData(f.get_profile().as<rs2::video_stream_profile>());
+            }
+            cam_info.header.stamp = t;
 
-        // don't publish camera info messages for SC streams
-        auto stream_type = f.get_profile().stream_type();
-        if(stream_type != RS2_STREAM_SAFETY &&
-           stream_type != RS2_STREAM_OCCUPANCY &&
-           stream_type != RS2_STREAM_LABELED_POINT_CLOUD)
-        {
             info_publisher->publish(cam_info);
         }
+    }
 
-        // Prepare image topic to be published
-        // We use UniquePtr for allow intra-process publish when subscribers of that type are available
-        sensor_msgs::msg::Image::UniquePtr img(new sensor_msgs::msg::Image());
-
-        if (!img)
+    if (image_publishers.find(stream) != image_publishers.end())
+    {
+        auto &image_publisher = image_publishers.at(stream);
+        if (0 != image_publisher->get_subscription_count())
         {
-            ROS_ERROR("sensor image message allocation failed, frame was dropped");
-            return;
+            // Prepare image topic to be published
+            // We use UniquePtr for allow intra-process publish when subscribers of that type are available
+            sensor_msgs::msg::Image::UniquePtr img(new sensor_msgs::msg::Image());
+
+            if (!img)
+            {
+                ROS_ERROR("sensor image message allocation failed, frame was dropped");
+                return;
+            }
+
+            // Convert the CV::Mat into a ROS image message (1 copy is done here)
+            cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(bpp), image).toImageMsg(*img);
+
+            // Convert OpenCV Mat to ROS Image
+            img->header.frame_id = OPTICAL_FRAME_ID(stream);
+            img->header.stamp = t;
+            img->height = height;
+            img->width = width;
+            img->is_bigendian = false;
+            img->step = width * bpp;
+            // Transfer the unique pointer ownership to the RMW
+            sensor_msgs::msg::Image *msg_address = img.get();
+            image_publisher->publish(std::move(img));
+
+            ROS_DEBUG_STREAM(rs2_stream_to_string(f.get_profile().stream_type()) << " stream published, message address: " << std::hex << msg_address);
         }
-
-        // Convert the CV::Mat into a ROS image message (1 copy is done here)
-        cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(bpp), image).toImageMsg(*img);
-
-        // Convert OpenCV Mat to ROS Image
-        img->header.frame_id = OPTICAL_FRAME_ID(stream);
-        img->header.stamp = t;
-        img->height = height;
-        img->width = width;
-        img->is_bigendian = false;
-        img->step = width * bpp;
-        // Transfer the unique pointer ownership to the RMW
-        sensor_msgs::msg::Image* msg_address = img.get();
-        image_publisher->publish(std::move(img));
-
-        ROS_DEBUG_STREAM(rs2_stream_to_string(f.get_profile().stream_type()) << " stream published, message address: " << std::hex << msg_address);
     }
     if (is_publishMetadata)
     {
