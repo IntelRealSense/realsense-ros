@@ -157,7 +157,7 @@ def launch_descr_with_parameters(request):
     return LaunchDescription([
         first_node,
         launch_pytest.actions.ReadyToTest(),
-    ])
+    ]),request.param
 
 
 ''' 
@@ -272,7 +272,7 @@ class RsTestBaseClass():
         while time.time() - start < wait_time:
             print('Spinning... ' )
             rclpy.spin_once(self.node)
-
+ 
     def run_test(self, themes):
         try:
             for theme in themes:

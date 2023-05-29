@@ -56,7 +56,8 @@ test_params1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_an
 @pytest.mark.parametrize("launch_descr_with_parameters", [test_params,test_params1],indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestCamera2(pytest_rs_utils.RsTestBaseClass):
-    def test_node_start(self):
+    def test_node_start(self, launch_descr_with_parameters):
+        print(launch_descr_with_parameters[1])
         themes = [
             {'topic':'/camera/depth/image_rect_raw',
                 'msg_type':msg_Image,
