@@ -98,16 +98,8 @@ namespace realsense2_camera
     const std::string DEFAULT_QOS  = "DEFAULT";
     const std::string HID_QOS         = "SENSOR_DATA";
 
-
-    const bool ENABLE_DEPTH   = true;
-    const bool ENABLE_INFRA1  = true;
-    const bool ENABLE_INFRA2  = true;
-    const bool ENABLE_COLOR   = true;
-    const bool ENABLE_FISHEYE = true;
-    const bool ENABLE_IMU     = true;
     const bool HOLD_BACK_IMU_FOR_FRAMES = false;
     const bool PUBLISH_ODOM_TF = true;
-
 
     const std::string DEFAULT_BASE_FRAME_ID            = "link";
     const std::string DEFAULT_ODOM_FRAME_ID            = "odom_frame";

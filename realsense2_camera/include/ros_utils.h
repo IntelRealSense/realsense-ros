@@ -46,8 +46,5 @@ namespace realsense2_camera
     const rmw_qos_profile_t qos_string_to_qos(std::string str);
     const std::string list_available_qos_strings();
 
-    rs2_stream rs2_string_to_stream(std::string str);
-
-    stream_index_pair rs2_string_to_sip(const std::string& str);
 }
 
