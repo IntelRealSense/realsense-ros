@@ -295,6 +295,7 @@ if(BUILD_TESTING)
   set(_pytest_folders
     test
     test/templates
+    test/rosbag
   )
   foreach(test_folder ${_pytest_folders})
     file(GLOB files "${test_folder}/test_*.py")

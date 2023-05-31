@@ -61,16 +61,11 @@ class TestCamera2(pytest_rs_utils.RsTestBaseClass):
         themes = [
             {'topic':'/camera/depth/image_rect_raw',
                 'msg_type':msg_Image,
+                'store_raw_data':True,
                 'expected_data_chunks':1, 
                 'frame_id':'camera_depth_optical_frame',
             },
         ]
-        ''' # TODO: find a rosbag file that has accel/sample to test this
-                    {'topic': '/camera/accel/sample', 
-                        'msg_type': msg_Imu,
-                        'expected_data_chunks':1, 
-                        },
-        '''
         try:
             self.init_test()
             assert self.run_test(themes)
