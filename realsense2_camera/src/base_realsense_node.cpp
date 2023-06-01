@@ -526,31 +526,32 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             {
                 publishLabeledPointCloud(frame.as<rs2::labeled_points>(), t);
                 publishMetadata(f, t, OPTICAL_FRAME_ID(sip));
-                continue;
             }
-            if (f.is<rs2::points>())
+            else if (f.is<rs2::points>())
             {
                 publishPointCloud(f.as<rs2::points>(), t, frameset);
-                continue;
             }
-            if (stream_type == RS2_STREAM_DEPTH)
+            else
             {
-                if (sent_depth_frame) continue;
-                sent_depth_frame = true;
-                if (_align_depth_filter->is_enabled())
+                if (stream_type == RS2_STREAM_DEPTH)
                 {
-                    publishFrame(f, t, COLOR,
+                    if (sent_depth_frame) continue;
+                    sent_depth_frame = true;
+                    if (_align_depth_filter->is_enabled())
+                    {
+                        publishFrame(f, t, COLOR,
                             _depth_aligned_image,
                             _depth_aligned_info_publisher,
                             _depth_aligned_image_publishers,
                             false);
-                    continue;
+                        continue;
+                    }
                 }
+                publishFrame(f, t, sip,
+                    _image,
+                    _info_publisher,
+                    _image_publishers);
             }
-            publishFrame(f, t, sip,
-                        _image,
-                        _info_publisher,
-                        _image_publishers);
         }
         if (original_depth_frame && _align_depth_filter->is_enabled())
         {
