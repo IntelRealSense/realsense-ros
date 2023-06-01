@@ -208,6 +208,8 @@ namespace realsense2_camera
         void startDynamicTf();
         void publishDynamicTransforms();
         void publishPointCloud(rs2::points f, const rclcpp::Time& t, const rs2::frameset& frameset);
+        void publishLabeledPointCloud(rs2::labeled_points points, const rclcpp::Time& t);
+        bool shouldPublishCameraInfo(const stream_index_pair& sip);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics) const;
 
         IMUInfo getImuInfo(const rs2::stream_profile& profile);
@@ -271,7 +273,7 @@ namespace realsense2_camera
 
         bool _use_intra_process;      
         std::map<stream_index_pair, std::shared_ptr<image_publisher>> _image_publishers;
-        
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _labeled_pointcloud_publisher;
         std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr> _imu_publishers;
         std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> _odom_publisher;
         std::shared_ptr<SyncedImuPublisher> _synced_imu_publisher;
