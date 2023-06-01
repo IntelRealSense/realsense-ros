@@ -524,7 +524,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
 
             if (f.is<rs2::labeled_points>())
             {
-                publishLabeledPointCloud(frame.as<rs2::labeled_points>(), t);
+                publishLabeledPointCloud(f.as<rs2::labeled_points>(), t);
                 publishMetadata(f, t, OPTICAL_FRAME_ID(sip));
             }
             else if (f.is<rs2::points>())
