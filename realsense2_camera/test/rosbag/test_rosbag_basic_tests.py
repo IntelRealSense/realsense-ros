@@ -35,10 +35,10 @@ from sensor_msgs.msg import Imu as msg_Imu
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
-from pytest_rs_utils import launch_descr_with_yaml
 from pytest_rs_utils import launch_descr_with_parameters
 
 test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'Vis2_Cam',
     'color_width': '0',
     'color_height': '0',
     'depth_width': '0',
@@ -61,7 +61,7 @@ class TestVis2(pytest_rs_utils.RsTestBaseClass):
         params = launch_descr_with_parameters[1]
         data = pytest_rs_utils.ImageColorGetData(params["rosbag_filename"])
         themes = [
-        {'topic':'/camera/color/image_raw',
+        {'topic':'/'+params['camera_name']+'/color/image_raw',
          'msg_type':msg_Image,
          'expected_data_chunks':1,
          'data':data
@@ -71,7 +71,7 @@ class TestVis2(pytest_rs_utils.RsTestBaseClass):
             ''' 
             initialize, run and check the data 
             '''
-            self.init_test()
+            self.init_test("RsTest"+params['camera_name'])
             assert self.run_test(themes)
             assert self.process_data(themes)
         finally:
@@ -80,6 +80,7 @@ class TestVis2(pytest_rs_utils.RsTestBaseClass):
         return super().process_data(themes)
 
 test_params_accel = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_and_IMU_Stands_still.bag",
+    'camera_name': 'Accel_Cam',
     'color_width': '0',
     'color_height': '0',
     'depth_width': '0',
@@ -104,7 +105,7 @@ class TestAccelUp1(pytest_rs_utils.RsTestBaseClass):
         params = launch_descr_with_parameters[1]
         data = pytest_rs_utils.AccelGetDataDeviceStandStraight(params["rosbag_filename"])
         themes = [
-        {'topic':'/camera/accel/sample',
+        {'topic':'/'+params['camera_name']+'/accel/sample',
          'msg_type':msg_Imu,
          'expected_data_chunks':1,
          'data':data
@@ -114,7 +115,7 @@ class TestAccelUp1(pytest_rs_utils.RsTestBaseClass):
             ''' 
             initialize, run and check the data 
             '''
-            self.init_test()
+            self.init_test("RsTest"+params['camera_name'])
             assert self.run_test(themes)
             assert self.process_data(themes)
         finally:

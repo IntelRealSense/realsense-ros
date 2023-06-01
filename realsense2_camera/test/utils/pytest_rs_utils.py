@@ -25,6 +25,7 @@ import launch_pytest
 import rclpy
 from rclpy import qos
 from rclpy.node import Node
+from rclpy.utilities import ok
 
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
@@ -179,6 +180,7 @@ used, it can be changed to kill say, a particular node alone depending on the te
 def kill_realsense2_camera_node():
     cmd = "kill -s INT $(ps aux | grep '[r]ealsense2_camera_node' | awk '{print $2}')"
     os.system(cmd)
+    pass
 
 '''
 get the default parameters from the launch script so that the test doesn't have to
@@ -233,7 +235,7 @@ def get_rs_node_description(name, params):
     tmp_yaml = tempfile.NamedTemporaryFile(prefix='launch_rs_',delete=False)
     params = convert_params(params)
     ros_params = {"ros__parameters":params}
-    camera_params = {"camera/"+name: ros_params}
+    camera_params = {name+"/"+name: ros_params}
     with open(tmp_yaml.name, 'w') as f:
         yaml.dump(camera_params, f)
 
@@ -243,6 +245,8 @@ def get_rs_node_description(name, params):
     '''
     return launch_ros.actions.Node(
         package='realsense2_camera',
+        #namespace=LaunchConfiguration("camera_name"),
+        #name=LaunchConfiguration("camera_name"),
         namespace=params["camera_name"],
         name=name,
         #prefix=['xterm -e gdb --args'],
@@ -260,23 +264,18 @@ create a function that creates as many nodes (s)he wants for the test
 '''
 
 @launch_pytest.fixture
-def launch_descr_with_yaml():
+def launch_descr_with_yaml(request):
+    changed_params = request.param
     params = get_default_params()
-    rosbag_dir = os.getenv("ROSBAG_FILE_PATH")
-    assert rosbag_dir!=None,"ROSBAG_FILE_PATH was not set" 
-    rosfile = rosbag_dir+"/outdoors_1color.bag"
-    params['rosbag_filename'] = rosfile
-    params['color_width'] = '0'
-    params['color_height'] = '0'
-    params['depth_width'] = '0'
-    params['depth_height'] = '0'
-    params['infra_width'] = '0'
-    params['infra_height'] = '0'
-    first_node = get_rs_node_description("camera", params)
+    for key, value in changed_params.items():
+        params[key] = value   
+    if  'camera_name' not in changed_params:
+        params['camera_name'] = 'camera_with_yaml'
+    first_node = get_rs_node_description(params['camera_name'], params)
     return LaunchDescription([
         first_node,
         launch_pytest.actions.ReadyToTest(),
-    ])
+    ]),request.param
 
 ''' 
 This function returns a launch description with a single rs node instance built based on the parameter
@@ -287,42 +286,15 @@ def launch_descr_with_parameters(request):
     changed_params = request.param
     params = get_default_params()
     for key, value in changed_params.items():
-        params[key] = value    
-    first_node = get_rs_node_description("camera", params)
+        params[key] = value   
+    if  'camera_name' not in changed_params:
+        params['camera_name'] = 'camera_with_params'
+    first_node = get_rs_node_description(params['camera_name'], params)
     return LaunchDescription([
         first_node,
         launch_pytest.actions.ReadyToTest(),
     ]),request.param
 
-
-''' 
-This function returns a launch description with three rs nodes that
-use the same rosbag file. Test developer can use this as a reference and 
-create a function that creates as many nodes (s)he wants for the test  
-'''
-
-@launch_pytest.fixture
-def launch_descr_with_yaml_multi_camera_instances():
-    params = get_default_params()
-    rosbag_dir = os.getenv("ROSBAG_FILE_PATH")
-    assert rosbag_dir!=None,"ROSBAG_FILE_PATH was not set" 
-    rosfile = rosbag_dir+"/outdoors_1color.bag"
-    params['rosbag_filename'] = rosfile
-    params['color_width'] = '0'
-    params['color_height'] = '0'
-    params['depth_width'] = '0'
-    params['depth_height'] = '0'
-    params['infra_width'] = '0'
-    params['infra_height'] = '0'
-    first_node = get_rs_node_description("camera", params)
-    second_node = get_rs_node_description("camera1", params)
-    third_node = get_rs_node_description("camera2", params)
-    return LaunchDescription([
-        first_node,
-        second_node,
-        third_node,
-        #launch_pytest.actions.ReadyToTest(),
-    ])
 
 ''' 
 This is that holds the test node that listens to a subscription created by a test.  
@@ -442,10 +414,11 @@ class RsTestNode(Node):
         
 
 class RsTestBaseClass():
-    def init_test(self):
-        rclpy.init()
+    def init_test(self,name='RsTestNode'):
+        if not ok():
+            rclpy.init()
         self.flag = False
-        self.node = RsTestNode('RsTestNode')
+        self.node = RsTestNode(name)
         self.subscribed_topics = []
     def create_subscription(self, msg_type, topic, data_type, store_raw_data=False):
         if not topic in self.subscribed_topics:
@@ -524,5 +497,7 @@ class RsTestBaseClass():
 
         return True
     def shutdown(self):
-        self.node.destroy_node()
-        rclpy.shutdown()
+        #if self.node == None: 
+        #    self.node.destroy_node()
+        #rclpy.shutdown()
+        pass

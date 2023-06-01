@@ -26,9 +26,11 @@ The test_launch_template.py uses the rs_launch.py to start the camera node, so t
 
 The test_integration_template.py gives a better control for testing, it uses few util functions and base test class from pytest_rs_utils.py located at the same location. However, it doesn't use the rs_launch.py, it creates the node directly instead.
 
-The test_integration_template.py has two types of tests, one has a function "test_using_function". If the user wants to have a better control over the launch context for any specific test scenarios, this can be used. Both the function based test and class based tests use a default launch configuration from the utils. 
-If the user wants to change a specific parameter in the configuration, it's recommended to copy the launch configuration function(pytest_rs_utils.launch_descr_with_yaml) and modify. 
-It is expected that the class based test is used as the test format for most of the usecases. The class based test inherits from pytest_rs_utils.RsTestBaseClass and it has three steps, namely: init, run_test and process_data. Unless for the basic tests, the user will have to override the process_data function and check if the data received from the topics are as expected. An assert command can be used to indicate if the test failed or passed. Please see the template for more info.
+The test_integration_template.py has two types of tests, one has a function "test_using_function". If the user wants to have a better control over the launch context for any specific test scenarios, this can be used. Both the function based test and class based tests use a default launch configuration from the utils. It's recommended to modify the camera name to a unique one in the parameters itself so that there are not clashes between tests. 
+
+It is expected that the class based test is used as the test format for most of the usecases. The class based test inherits from pytest_rs_utils.RsTestBaseClass and it has three steps, namely: init, run_test and process_data. Unless for the basic tests, the user will have to override the process_data function and check if the data received from the topics are as expected. Also, if the user doesn't want the base class to modify the data, use 'store_raw_data':True in the theme definition. Please see the test_integration_template.py for reference.
+
+An assert command can be used to indicate if the test failed or passed. Please see the template for more info.
 
 ### Adding a new test folder
 It is recommended to use the test folder itself for storing all the pytests. However, if the user wants to add a different folder for a set of tests, please ensure that the file name format mentioned above is followed. The folder path should be added to realsense_camera/CMakeLists.txt as below for the infra to detect the new test folder and the tests within.
@@ -37,7 +39,10 @@ It is recommended to use the test folder itself for storing all the pytests. How
 find_package(ament_cmake_pytest REQUIRED)
 set(_pytest_folders
 test                  #default test folder
-new_folder_for_pytest #<-- new folder
+test/templates
+test/rosbag
+new_folder_for_pytest #<-- new folder #but please be aware that the utils functions are in test/utils folder, 
+                                      #so if the template is used, change the include path also accordingly
 )
 ```
 

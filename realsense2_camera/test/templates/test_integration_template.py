@@ -36,13 +36,24 @@ from pytest_rs_utils import launch_descr_with_yaml
 This is a testcase simiar to the integration_fn testcase, the only difference is that
 this one uses the launch configuration to launch the nodes.  
 '''
+test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'test_Cam',
+    'color_width': '0',
+    'color_height': '0',
+    'depth_width': '0',
+    'depth_height': '0',
+    'infra_width': '0',
+    'infra_height': '0',
+    }
 
 @pytest.mark.launch(fixture=launch_descr_with_yaml)
-def test_using_function(launch_context):
+@pytest.mark.parametrize("launch_descr_with_yaml", [test_params],indirect=True)
+def test_using_function(launch_context,launch_descr_with_yaml):
+    params = launch_descr_with_yaml[1]
     time.sleep(0.1)
     # by now, the camera would have started
     start = time.time()
-    timeout = 1.0
+    timeout = 4.0
     while (time.time() - start) < timeout:
         service_list = subprocess.check_output(['ros2', 'node', 'list']).decode("utf-8")
         is_node_up = '/camera/camera' in service_list
@@ -72,46 +83,67 @@ to different published topics and decide whether the test passed or failed.
 '''
 use the launch description from the utils and also inherit from basic test class RsTestBaseClass
 '''
+test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'test_Cam2',
+    'color_width': '0',
+    'color_height': '0',
+    'depth_width': '0',
+    'depth_height': '0',
+    'infra_width': '0',
+    'infra_height': '0',
+    }
 @pytest.mark.rosbag
 @pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
+@pytest.mark.parametrize("launch_descr_with_yaml", [test_params],indirect=True)
 class TestCamera1(pytest_rs_utils.RsTestBaseClass):
-    def test_node_start(self):
+    def test_camera_1(self, launch_descr_with_yaml):
         ''' 
         current rosbag file doesn't have color data 
         '''
+        params = launch_descr_with_yaml[1]
         themes = [
             #{'topic':'/camera/color/image_raw','msg_type':msg_Image,'expected_data_chunks':1},
-        {'topic':'/camera/depth/image_rect_raw','msg_type':msg_Image,'expected_data_chunks':1}
+        {'topic':'/'+params['camera_name']+'/depth/image_rect_raw','msg_type':msg_Image,'expected_data_chunks':1}
         ]
         try:
             ''' 
             initialize, run and check the data 
             '''
-            self.init_test()
+            self.init_test('RsTest'+params['camera_name'])
             assert self.run_test(themes)
             assert self.process_data(themes)
         finally:
             self.shutdown()
     def process_data(self, themes):
         return super().process_data(themes)
-
+test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'test_Cam3',
+    'color_width': '0',
+    'color_height': '0',
+    'depth_width': '0',
+    'depth_height': '0',
+    'infra_width': '0',
+    'infra_height': '0',
+    }
 @pytest.mark.rosbag
 @pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
+@pytest.mark.parametrize("launch_descr_with_yaml", [test_params],indirect=True)
 class TestCamera2(pytest_rs_utils.RsTestBaseClass):
-    def test_node_start(self):
+    def test_camera_2(self,launch_descr_with_yaml):
+        params = launch_descr_with_yaml[1]
         themes = [
-            {'topic':'/camera/depth/image_rect_raw',
+            {'topic':'/'+params['camera_name']+'/depth/image_rect_raw',
                 'msg_type':msg_Image,
                 'store_raw_data':True,
                 'expected_data_chunks':1, 
-                'frame_id':'camera_depth_optical_frame',
+                'frame_id':params['camera_name']+'_depth_optical_frame',
                 'height':720,
                 'width':1280},
-            {'topic':'/camera/color/image_raw',
+            {'topic':'/'+params['camera_name']+'/color/image_raw',
                 'msg_type':msg_Image,
                 'store_raw_data':True,
                 'expected_data_chunks':1, 
-                'frame_id':'camera_color_optical_frame',
+                'frame_id':params['camera_name']+'_color_optical_frame',
                 'height':480,
                 'width':640},
         ]
@@ -122,7 +154,7 @@ class TestCamera2(pytest_rs_utils.RsTestBaseClass):
                         },
         '''
         try:
-            self.init_test()
+            self.init_test('RsTest'+params['camera_name'])
             assert self.run_test(themes)
             assert self.process_data(themes)
         finally:

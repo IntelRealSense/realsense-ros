@@ -26,7 +26,6 @@ from setuptools import find_packages
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
-from pytest_rs_utils import launch_descr_with_yaml
 
 
 '''
@@ -49,6 +48,7 @@ def start_camera():
     print(rosbag_dir)
     assert rosbag_dir!=None,"ROSBAG_FILE_PATH was not set" 
     rosfile = rosbag_dir+"/outdoors_1color.bag"
+    params['camera_name'] = 'camera'
     params['rosbag_filename'] = rosfile
     params['color_width'] = '0'
     params['color_height'] = '0'
@@ -99,6 +99,7 @@ def test_start_camera(start_camera, launch_context):
         print ('Node is UP')
         print ('*'*8 + ' Killing ROS ' + '*'*9)
         pytest_rs_utils.kill_realsense2_camera_node()
+
     process_tools.assert_output_sync(
         launch_context, start_camera, validate_output, timeout=5)
     yield

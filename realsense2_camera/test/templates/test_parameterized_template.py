@@ -30,12 +30,12 @@ from sensor_msgs.msg import Imu as msg_Imu
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
-from pytest_rs_utils import launch_descr_with_yaml
 from pytest_rs_utils import launch_descr_with_parameters
 
 
 
 test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'TestCamera1',
     'color_width': '0',
     'color_height': '0',
     'depth_width': '0',
@@ -45,6 +45,7 @@ test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color
     }
 
 test_params1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_and_IMU_Stands_still.bag",
+    'camera_name': 'TestCamera2',
     'color_width': '0',
     'color_height': '0',
     'depth_width': '0',
@@ -57,17 +58,17 @@ test_params1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_an
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestCamera2(pytest_rs_utils.RsTestBaseClass):
     def test_node_start(self, launch_descr_with_parameters):
-        print(launch_descr_with_parameters[1])
+        params = launch_descr_with_parameters[1]
         themes = [
-            {'topic':'/camera/depth/image_rect_raw',
+            {'topic':'/'+params['camera_name']+'/depth/image_rect_raw',
                 'msg_type':msg_Image,
                 'store_raw_data':True,
                 'expected_data_chunks':1, 
-                'frame_id':'camera_depth_optical_frame',
+                'frame_id':params['camera_name']+'_depth_optical_frame',
             },
         ]
         try:
-            self.init_test()
+            self.init_test("RsTest"+params['camera_name'])
             assert self.run_test(themes)
             assert self.process_data(themes)
         finally:
