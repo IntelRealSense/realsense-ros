@@ -54,9 +54,10 @@ def test_using_function(launch_context,launch_descr_with_yaml):
     # by now, the camera would have started
     start = time.time()
     timeout = 4.0
+    camera_name = '/'+params['camera_name']+'/'+params['camera_name'] 
     while (time.time() - start) < timeout:
         service_list = subprocess.check_output(['ros2', 'node', 'list']).decode("utf-8")
-        is_node_up = '/camera/camera' in service_list
+        is_node_up = camera_name in service_list
         if is_node_up == True:
             break
         else:
