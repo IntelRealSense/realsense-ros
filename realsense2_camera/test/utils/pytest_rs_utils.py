@@ -94,6 +94,21 @@ def ImageColorGetData(rec_filename):
 def ImageDepthGetData(rec_filename):
     return ImageGetData(rec_filename, '/device_0/sensor_0/Depth_0/image/data')
 
+def ImageDepthInColorShapeGetData(rec_filename):
+    gt_data = ImageDepthGetData(rec_filename)
+    color_data = ImageColorGetData(rec_filename)
+    gt_data['shape'] = color_data['shape'][:2]
+    gt_data['reported_size'] = color_data['reported_size']
+    gt_data['reported_size'][2] = gt_data['reported_size'][0]*2
+    gt_data['ok_percent']['epsilon'] *= 3
+    return gt_data
+
+def ImageDepthGetData_decimation(rec_filename):
+    gt_data = ImageDepthGetData(rec_filename)
+    gt_data['shape'] = [x/2 for x in gt_data['shape']]
+    gt_data['reported_size'] = [x/2 for x in gt_data['reported_size']]
+    gt_data['epsilon'] *= 3
+    return gt_data
 
 def ImageColorTest(data, gt_data):
     # check that all data['num_channels'] are the same as gt_data['num_channels'] and that avg value of all
