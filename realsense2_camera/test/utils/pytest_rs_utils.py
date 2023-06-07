@@ -27,8 +27,15 @@ from rclpy import qos
 from rclpy.node import Node
 from rclpy.utilities import ok
 
+import ctypes
+import struct
+
+
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
+from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
+from sensor_msgs_py import point_cloud2 as pc2
+
 import quaternion
 if (os.getenv('ROS_DISTRO') != "dashing"):
     import tf2_ros
@@ -64,11 +71,12 @@ def AccelGetDataDeviceStandStraight(rec_filename):
     gt_data['ros_max_diff'] = np.array([0.06940174, 0.04032778, 0.05982018])
     return gt_data
 
+
+
 def ImageGetData(rec_filename, topic):
     all_avg = []
     ok_percent = []
     res = dict()
-
     data = importRosbag(rec_filename, importTopics=[topic], log='ERROR', disable_bar=True)[topic]
     for pyimg in data['frames']:
         ok_number = (pyimg != 0).sum()
@@ -175,6 +183,42 @@ def ImuTest(data, gt_data):
         print ('Test Failed: %s' % msg)
         return False, msg
     return True, ''
+def PointCloudTest(data, gt_data):
+    width = np.array(data['width']).mean()
+    height = np.array(data['height']).mean()
+    msg = 'Expect image size %d(+-%d), %d. Got %d, %d.' % (gt_data['width'][0], gt_data['width'][1], gt_data['height'][0], width, height)
+    print (msg)
+    if abs(width - gt_data['width'][0]) > gt_data['width'][1] or height != gt_data['height'][0]:
+        return False, msg
+    mean_pos = np.array([xx[:3] for xx in data['avg']]).mean(0)
+    msg = 'Expect average position of %s (+-%.3f). Got average of %s.' % (gt_data['avg'][0][:3], gt_data['epsilon'][0], mean_pos)
+    print (msg)
+    if abs(mean_pos - gt_data['avg'][0][:3]).max() > gt_data['epsilon'][0]:
+        return False, msg
+    mean_col = np.array([xx[3:] for xx in data['avg']]).mean(0)
+    msg = 'Expect average color of %s (+-%.3f). Got average of %s.' % (gt_data['avg'][0][3:], gt_data['epsilon'][1], mean_col)
+    print (msg)
+    if abs(mean_col - gt_data['avg'][0][3:]).max() > gt_data['epsilon'][1]:
+        return False, msg
+
+    return True, ''
+
+
+def pc2_to_xyzrgb(point):
+    # Thanks to Panos for his code used in this function.
+    point = list(point)
+    x, y, z = point[:3]
+    rgb = point[3]
+
+    # cast float32 to int so that bitwise operations are possible
+    s = struct.pack('>f', rgb)
+    i = struct.unpack('>l', s)[0]
+    # you can get back the float value by the inverse operations
+    pack = ctypes.c_uint32(i).value
+    r = (pack & 0x00FF0000) >> 16
+    g = (pack & 0x0000FF00) >> 8
+    b = (pack & 0x000000FF)
+    return x, y, z, r, g, b
 
 
 '''
@@ -321,6 +365,7 @@ class RsTestNode(Node):
         self.flag = False
         self.data = {}
         self.tfBuffer = None
+        self.frame_counter = {}
 
     def wait_for_node(self, node_name, timeout=8.0):
         start = time.time()
@@ -337,6 +382,7 @@ class RsTestNode(Node):
     def create_subscription(self, msg_type, topic , data_type, store_raw_data):
         super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
         self.data[topic] = deque()
+        self.frame_counter[topic] = 0
         if (os.getenv('ROS_DISTRO') != "dashing") and (self.tfBuffer == None):
             self.tfBuffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, super())
@@ -373,7 +419,7 @@ class RsTestNode(Node):
         print("RSCallback")
         def _rsCallback(data):
             print('Got the callback for ' + topic)
-            print(data.header)
+            #print(data.header)
             self.flag = True
             if store_raw_data == True:
                 self.data[topic].append(data)
@@ -387,6 +433,8 @@ class RsTestNode(Node):
 
                 pyimg = self.image_msg_to_numpy(data)
                 channels = pyimg.shape[2] if len(pyimg.shape) > 2 else 1
+                #print("pyimg from callback:")
+                #print(pyimg)
                 ok_number = (pyimg != 0).sum()
                 func_data['avg'].append(pyimg.sum() / ok_number)
                 func_data['ok_percent'].append(float(ok_number) / (pyimg.shape[0] * pyimg.shape[1]) / channels)
@@ -418,6 +466,31 @@ class RsTestNode(Node):
                 except Exception as e:
                     print(e)
                     return
+            elif msg_type == msg_PointCloud2:
+                func_data = dict()
+                func_data.setdefault('frame_counter', 0)
+                func_data.setdefault('avg', [])
+                func_data.setdefault('size', [])
+                func_data.setdefault('width', [])
+                func_data.setdefault('height', [])
+                # until parsing pointcloud is done in real time, I'll use only the first frame.
+                func_data['frame_counter'] = self.frame_counter[topic]
+                self.frame_counter[topic] += 1
+                #print("frame_counter "+str(func_data['frame_counter']))
+                if func_data['frame_counter'] == 1:
+                    # Known issue - 1st pointcloud published has invalid texture. Skip 1st frame.
+                    return
+                    #pass
+                try:
+                    points = np.array([pc2_to_xyzrgb(pp) for pp in pc2.read_points(data, skip_nans=True, field_names=("x", "y", "z", "rgb")) if pp[0] > 0])
+                except Exception as e:
+                    print(e)
+                    return
+                func_data['avg'].append(points.mean(0))
+                func_data['size'].append(len(points))
+                func_data['width'].append(data.width)
+                func_data['height'].append(data.height)
+                self.data[topic].append(func_data)
             else:
                 self.data[topic].append(data)
             #print(len(self.data[topic]))
@@ -446,12 +519,12 @@ class RsTestBaseClass():
         timeout value varies depending upon the system, it needs to be more if
         the access is over the network
         '''
-        timeout = 8.0
+        timeout = 5.0
         print('Waiting for topic... ' )
         flag = False
-        while time.time() - start < timeout:
-            print('Spinning... ' )
+        while (time.time() - start) < timeout:
             rclpy.spin_once(self.node)
+            print('Spun once... ' )
             all_found = True 
             for theme in themes:
                 if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
@@ -469,8 +542,8 @@ class RsTestBaseClass():
         print('Waiting for topic... ' )
         flag = False
         while time.time() - start < wait_time:
-            print('Spinning... ' )
             rclpy.spin_once(self.node)
+            print('Spun once... ' )
  
     def run_test(self, themes):
         try:
@@ -505,6 +578,9 @@ class RsTestBaseClass():
                     assert ret[0], ret[1]
             elif theme['msg_type'] == msg_Imu:
                     ret = ImuTest(data, theme['data'])
+                    assert ret[0], ret[1]
+            elif theme['msg_type'] == msg_PointCloud2:
+                    ret = PointCloudTest(data, theme['data'])
                     assert ret[0], ret[1]
             else:
                 print("first chunck of data for"+ theme['topic'] + ":")

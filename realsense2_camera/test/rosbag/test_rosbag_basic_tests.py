@@ -32,6 +32,9 @@ from rclpy import qos
 from rclpy.node import Node
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
+from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
+
+import numpy as np
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
@@ -289,3 +292,50 @@ class TestAlignDepthColor(pytest_rs_utils.RsTestBaseClass):
     def process_data(self, themes):
         return super().process_data(themes)
     
+test_params_points_cloud_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'Points_cloud_1',
+    'color_width': '0',
+    'color_height': '0',
+    'depth_width': '0',
+    'depth_height': '0',
+    'infra_width': '0',
+    'infra_height': '0',
+    'pointcloud.enable': 'true'
+    }
+'''
+This test was ported from rs2_test.py
+the command used to run is "python3 realsense2_camera/scripts/rs2_test.py points_cloud_1"
+'''
+@pytest.mark.rosbag
+@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_points_cloud_1],indirect=True)
+@pytest.mark.launch(fixture=launch_descr_with_parameters)
+class TestPointsCloud1(pytest_rs_utils.RsTestBaseClass):
+    def test_points_cloud_1(self,launch_descr_with_parameters):
+        ''' 
+        current rosbag file doesn't have color data 
+        '''
+        params = launch_descr_with_parameters[1]
+        self.rosbag = params["rosbag_filename"]
+        themes = [
+        {'topic':'/'+params['camera_name']+'/depth/color/points',
+         'msg_type':msg_PointCloud2,
+         'expected_data_chunks':1,
+         #'data':data
+        }
+        ]
+        try:
+            ''' 
+            initialize, run and check the data 
+            '''
+            self.init_test("RsTest"+params['camera_name'])
+            assert self.run_test(themes)
+            assert self.process_data(themes)
+        finally:
+            self.shutdown()
+    def process_data(self, themes):
+        data = {'width': [660353, 2300], 
+                'height': [1], 
+                'avg': [np.array([ 1.28251814, -0.15839984, 4.82235184, 80, 160, 240])], 
+                'epsilon': [0.04, 5]}
+        themes[0]["data"] = data
+        return super().process_data(themes)
