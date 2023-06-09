@@ -15,21 +15,12 @@
 
 import os
 import sys
-import subprocess
-import time
+import itertools
+
 
 import pytest
-from launch import LaunchDescription
-from launch import LaunchContext
-from launch import LaunchService
-
-from launch_testing.legacy import LaunchTestService
-
-import launch_ros.actions
-import launch_pytest
 import rclpy
-from rclpy import qos
-from rclpy.node import Node
+
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
 from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
@@ -402,3 +393,64 @@ class TestDepthPointsCloud1(pytest_rs_utils.RsTestBaseClass):
             self.shutdown()
     def process_data(self, themes):
         return super().process_data(themes)
+
+
+test_params_static_tf_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'Static_tf_1',
+    'color_width': '0',
+    'color_height': '0',
+    'depth_width': '0',
+    'depth_height': '0',
+    'infra_width': '0',
+    'infra_height': '0',
+    'enable_infra1':'true', 
+    'enable_infra2':'true'
+    }
+'''
+This test was ported from rs2_test.py
+the command used to run is "python3 realsense2_camera/scripts/rs2_test.py static_tf_1"
+'''
+@pytest.mark.rosbag
+@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_static_tf_1],indirect=True)
+@pytest.mark.launch(fixture=launch_descr_with_parameters)
+class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
+    def test_static_tf_1(self,launch_descr_with_parameters):
+        ''' 
+        current rosbag file doesn't have color data 
+        '''
+        params = launch_descr_with_parameters[1]
+        self.rosbag = params["rosbag_filename"]
+        data = {('camera_link', 'camera_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702]), 
+                                                          ('camera_link', 'camera_depth_frame'): ([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]), 
+                                                          ('camera_link', 'camera_infra1_frame'): ([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]), 
+                                                          ('camera_depth_frame', 'camera_infra1_frame'): ([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]), 
+                                                          ('camera_depth_frame', 'camera_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702]), 
+                                                          ('camera_infra1_frame', 'camera_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702])}
+        themes = [
+        {'topic':'/'+params['camera_name']+'/color/image_raw',
+         'msg_type':msg_Image,
+         'expected_data_chunks':1,
+         'data':data,
+        }
+        ]
+        try:
+            ''' 
+            initialize, run and check the data 
+            '''
+            self.init_test("RsTest"+params['camera_name'])
+            assert self.run_test(themes)
+            assert self.process_data(themes)
+        finally:
+            self.shutdown()
+    def process_data(self, themes):
+        #print ('Gathering static transforms')
+        frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame', 'camera_fisheye_frame', 'camera_pose']
+        coupled_frame_ids = [xx for xx in itertools.combinations(frame_ids, 2)]
+        res = {}
+        for couple in coupled_frame_ids:
+            from_id, to_id = couple
+            if (self.node.tfBuffer.can_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6))):
+                res[couple] = self.node.tfBuffer.lookup_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=1e6)).transform
+            else:
+                res[couple] = None
+        return pytest_rs_utils.staticTFTest(res, themes[0]["data"])

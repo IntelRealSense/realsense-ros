@@ -185,6 +185,7 @@ def ImuTest(data, gt_data):
         print ('Test Failed: %s' % msg)
         return False, msg
     return True, ''
+
 def PointCloudTest(data, gt_data):
     width = np.array(data['width']).mean()
     height = np.array(data['height']).mean()
@@ -205,6 +206,20 @@ def PointCloudTest(data, gt_data):
 
     return True, ''
 
+def staticTFTest(data, gt_data):
+    for couple in gt_data.keys():
+        if data[couple] is None:
+            msg = 'Tf is None for couple %s' % '->'.join(couple)
+            return False, msg
+        temp = data[couple].translation
+        np_trans = np.array([temp.x, temp.y, temp.z])
+        temp = data[couple].rotation
+        np_rot = np.array([temp.x, temp.y, temp.z, temp.w])
+        if any(abs(np_trans - gt_data[couple][0]) > 1e-5) or \
+           any(abs(np_rot - gt_data[couple][1]) > 1e-5):
+           msg = 'Tf is changed for couple %s' % '->'.join(couple)
+           return False, msg
+    return True, ''
 
 def pc2_to_xyzrgb(point):
     # Thanks to Panos for his code used in this function.
