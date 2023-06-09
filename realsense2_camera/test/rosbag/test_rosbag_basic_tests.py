@@ -454,3 +454,27 @@ class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
             else:
                 res[couple] = None
         return pytest_rs_utils.staticTFTest(res, themes[0]["data"])
+
+
+test_params_non_existing_rosbag = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/non_existent.bag",
+    'camera_name': 'non_existing_rosbag',
+    }
+'''
+This test was ported from rs2_test.py
+the command used to run is "python3 realsense2_camera/scripts/rs2_test.py static_tf_1"
+'''
+@pytest.mark.rosbag
+@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_non_existing_rosbag],indirect=True)
+@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
+class TestNonExistingRosbag(pytest_rs_utils.RsTestBaseClass):
+    def test_non_existing_rosbag(self,delayed_launch_descr_with_parameters):
+        params = delayed_launch_descr_with_parameters[1]
+        try:
+            ''' 
+            initialize, run and check the data 
+            '''
+            self.init_test("RsTest"+params['camera_name'])
+            ret = self.node.wait_for_node(params['camera_name'],timeout=2.0)
+            assert not ret[0], ret[1]
+        finally:
+            self.shutdown()

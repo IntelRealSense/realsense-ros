@@ -408,14 +408,12 @@ class RsTestNode(Node):
         flag = False
         print('Waiting for node... ' + node_name)
         while time.time() - start < timeout:
+            print(node_name + ": waiting for the node to come up")
             flag = node_name in self.get_node_names()
-            print(self.get_node_names())
-            print( "Flag: " +str(flag))
             if flag:
-                return True
-            time.sleep(0.1)
-        print("Timed out waiting for %d seconds", timeout )
-        return False
+                return True, ""
+            time.sleep(timeout/5)
+        return False, "Timed out waiting for "+ str(timeout)+  "seconds"
     def create_subscription(self, msg_type, topic , data_type, store_raw_data):
         super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
         self.data[topic] = deque()
