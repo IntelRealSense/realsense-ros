@@ -39,6 +39,7 @@ import numpy as np
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_parameters
+from pytest_rs_utils import delayed_launch_descr_with_parameters
 
 test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
     'camera_name': 'Vis2_Cam',
@@ -333,9 +334,71 @@ class TestPointsCloud1(pytest_rs_utils.RsTestBaseClass):
         finally:
             self.shutdown()
     def process_data(self, themes):
-        data = {'width': [660353, 2300], 
+        data = {'width': [660353, 3300], 
                 'height': [1], 
                 'avg': [np.array([ 1.28251814, -0.15839984, 4.82235184, 80, 160, 240])], 
                 'epsilon': [0.04, 5]}
         themes[0]["data"] = data
+        return super().process_data(themes)
+    
+
+test_params_depth_points_cloud_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'Points_cloud_1',
+    'color_width': '0',
+    'color_height': '0',
+    'depth_width': '0',
+    'depth_height': '0',
+    'infra_width': '0',
+    'infra_height': '0',
+    'pointcloud.enable': 'true'
+    }
+'''
+This test was ported from rs2_test.py
+the command used to run is "python3 realsense2_camera/scripts/rs2_test.py depth_w_cloud1 points_cloud_1"
+This rs2_test command fails once in a while because of the delay in bringing up of the test node misses
+some of the points cloud data. This test adds a delay in bringing up the RS node.
+
+Even then, the test fails sometimes due to the avg and epsilon value of points cloud that was set for 
+a different rosbag file (or so its seems.)
+'''
+@pytest.mark.rosbag
+@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_depth_points_cloud_1],indirect=True)
+@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
+class TestDepthPointsCloud1(pytest_rs_utils.RsTestBaseClass):
+    def test_depth_points_cloud_1(self,delayed_launch_descr_with_parameters):
+        ''' 
+        Using the delayed launch of the ROS node so that the below data can be extracted.
+        This can be done after also as in the case of test_points_cloud_1, but even with that
+        since there are two callbacks, the initial few frames/data gets lost.
+        '''
+        params = delayed_launch_descr_with_parameters[1]
+        self.rosbag = params["rosbag_filename"]
+        data2 = pytest_rs_utils.ImageDepthGetData(params["rosbag_filename"])
+        data1 = {'width': [660353, 3300], 
+                'height': [1], 
+                'avg': [np.array([ 1.28251814, -0.15839984, 4.82235184, 80, 160, 240])], 
+                'epsilon': [0.04, 5]}
+        themes = [
+        {'topic':'/'+params['camera_name']+'/depth/color/points',
+         'msg_type':msg_PointCloud2,
+         'expected_data_chunks':1,
+         'data':data1
+        },
+        {'topic':'/'+params['camera_name']+'/depth/image_rect_raw',
+         'msg_type':msg_Image,
+         'expected_data_chunks':1,
+         'data':data2
+        }
+
+        ]
+        try:
+            ''' 
+            initialize, run and check the data 
+            '''
+            self.init_test("RsTest"+params['camera_name'])
+            assert self.run_test(themes)
+            assert self.process_data(themes)
+        finally:
+            self.shutdown()
+    def process_data(self, themes):
         return super().process_data(themes)

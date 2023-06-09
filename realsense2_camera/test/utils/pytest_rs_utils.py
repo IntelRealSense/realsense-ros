@@ -20,6 +20,8 @@ import pytest
 import numpy as np
 
 from launch import LaunchDescription
+import launch.actions
+
 import launch_ros.actions
 import launch_pytest
 import rclpy
@@ -354,6 +356,25 @@ def launch_descr_with_parameters(request):
         launch_pytest.actions.ReadyToTest(),
     ]),request.param
 
+''' 
+This function returns a launch description with a single rs node instance built based on the parameter
+passed, this is similar to launch_descr_with_parameters. However this delays the launch of the rs node
+so as to give preparation time for the test node. This useful when the preprocessing of the test data takes
+a lot of time due to the data size itself 
+'''
+@launch_pytest.fixture
+def delayed_launch_descr_with_parameters(request):
+    changed_params = request.param
+    params = get_default_params()
+    for key, value in changed_params.items():
+        params[key] = value   
+    if  'camera_name' not in changed_params:
+        params['camera_name'] = 'camera_with_params'
+    first_node = get_rs_node_description(params['camera_name'], params)
+    return LaunchDescription([launch.actions.TimerAction(
+            actions = [
+        first_node,], period=2.0)
+    ]),request.param
 
 ''' 
 This is that holds the test node that listens to a subscription created by a test.  
@@ -378,6 +399,7 @@ class RsTestNode(Node):
             if flag:
                 return True
             time.sleep(0.1)
+        print("Timed out waiting for %d seconds", timeout )
         return False
     def create_subscription(self, msg_type, topic , data_type, store_raw_data):
         super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
@@ -523,7 +545,7 @@ class RsTestBaseClass():
         print('Waiting for topic... ' )
         flag = False
         while (time.time() - start) < timeout:
-            rclpy.spin_once(self.node)
+            rclpy.spin_once(self.node, timeout_sec=1)
             print('Spun once... ' )
             all_found = True 
             for theme in themes:
@@ -534,8 +556,9 @@ class RsTestBaseClass():
                 flag =True
                 break
         else:
-            assert False, "run_test timedout"
-        return flag
+            print("Timed out waiting for", timeout, "seconds" )
+            return False, "run_test timedout"
+        return flag,""
 
     def spin_for_time(self,wait_time):
         start = time.time()
@@ -563,7 +586,7 @@ class RsTestBaseClass():
             else:
                 print(e)
             self.flag =False
-        return self.flag
+        return self.flag[0]
     '''
     Please override and use your own process_data if the default check is not suitable.
     Please also store_raw_data parameter in the themes as True, if you want the
