@@ -466,7 +466,7 @@ Each of the above filters have it's own parameters, following the naming convent
   Efficient intra-process communication:
 </h3>
   
-Our ROS2 Wrapper node supports zero-copy communications if loaded in the same process as a subscriber node. This can reduce copy times on image topics (not point-cloud or others), especially with big frame resolutions and high FPS.
+Our ROS2 Wrapper node supports zero-copy communications if loaded in the same process as a subscriber node. This can reduce copy times on image/pointcloud topics, especially with big frame resolutions and high FPS.
 
 You will need to launch a component container and launch our node as a component together with other component nodes. Further details on "Composing multiple nodes in a single process" can be found [here](https://docs.ros.org/en/rolling/Tutorials/Composition.html).
 
