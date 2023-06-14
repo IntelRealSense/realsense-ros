@@ -197,10 +197,6 @@ def PointCloudTest(data, gt_data):
 
 
 def staticTFTest(data, gt_data):
-    print("data:")
-    print(data)
-    print("gt_data:")
-    print(gt_data)
     for couple in gt_data.keys():
         if data[couple] is None:
             msg = 'Tf is None for couple %s' % '->'.join(couple)
