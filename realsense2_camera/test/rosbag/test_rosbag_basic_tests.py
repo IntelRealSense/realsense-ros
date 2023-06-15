@@ -171,9 +171,6 @@ the command used to run is "python3 realsense2_camera/scripts/rs2_test.py depth_
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestDepthAvg1(pytest_rs_utils.RsTestBaseClass):
     def test_depth_avg_1(self,launch_descr_with_parameters):
-        ''' 
-        current rosbag file doesn't have color data 
-        '''
         params = launch_descr_with_parameters[1]
         data = pytest_rs_utils.ImageDepthGetData(params["rosbag_filename"])
         themes = [
@@ -215,9 +212,6 @@ the command used to run is "python3 realsense2_camera/scripts/rs2_test.py depth_
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestDepthAvgDecimation1(pytest_rs_utils.RsTestBaseClass):
     def test_depth_avg_decimation_1(self,launch_descr_with_parameters):
-        ''' 
-        current rosbag file doesn't have color data 
-        '''
         params = launch_descr_with_parameters[1]
         data = pytest_rs_utils.ImageDepthGetData_decimation(params["rosbag_filename"])
         themes = [
@@ -240,50 +234,6 @@ class TestDepthAvgDecimation1(pytest_rs_utils.RsTestBaseClass):
         return super().process_data(themes)
 
 
-test_params_align_depth_color_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
-    'camera_name': 'Align_Depth_Color_1',
-    'color_width': '0',
-    'color_height': '0',
-    'depth_width': '0',
-    'depth_height': '0',
-    'infra_width': '0',
-    'infra_height': '0',
-    'align_depth.enable':'true'
-    }
-'''
-This test was ported from rs2_test.py
-the command used to run is "python3 realsense2_camera/scripts/rs2_test.py align_depth_color_1"
-'''
-@pytest.mark.rosbag
-@pytest.mark.skip
-@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_align_depth_color_1],indirect=True)
-@pytest.mark.launch(fixture=launch_descr_with_parameters)
-class TestAlignDepthColor(pytest_rs_utils.RsTestBaseClass):
-    def test_align_depth_color_1(self,launch_descr_with_parameters):
-        ''' 
-        current rosbag file doesn't have color data 
-        '''
-        params = launch_descr_with_parameters[1]
-        data = pytest_rs_utils.ImageDepthInColorShapeGetData(params["rosbag_filename"])
-        themes = [
-        {'topic':'/'+params['camera_name']+'/aligned_depth_to_color/image_raw',
-         'msg_type':msg_Image,
-         'expected_data_chunks':1,
-         'data':data
-        }
-        ]
-        try:
-            ''' 
-            initialize, run and check the data 
-            '''
-            self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
-            assert self.process_data(themes)
-        finally:
-            self.shutdown()
-    def process_data(self, themes):
-        return super().process_data(themes)
-    
 test_params_points_cloud_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
     'camera_name': 'Points_cloud_1',
     'color_width': '0',
@@ -303,9 +253,6 @@ the command used to run is "python3 realsense2_camera/scripts/rs2_test.py points
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestPointsCloud1(pytest_rs_utils.RsTestBaseClass):
     def test_points_cloud_1(self,launch_descr_with_parameters):
-        ''' 
-        current rosbag file doesn't have color data 
-        '''
         params = launch_descr_with_parameters[1]
         self.rosbag = params["rosbag_filename"]
         themes = [
@@ -415,9 +362,6 @@ the command used to run is "python3 realsense2_camera/scripts/rs2_test.py static
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
     def test_static_tf_1(self,launch_descr_with_parameters):
-        ''' 
-        current rosbag file doesn't have color data 
-        '''
         params = launch_descr_with_parameters[1]
         self.rosbag = params["rosbag_filename"]
         data = {('camera_link', 'camera_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702]), 
@@ -478,3 +422,112 @@ class TestNonExistingRosbag(pytest_rs_utils.RsTestBaseClass):
             assert not ret[0], ret[1]
         finally:
             self.shutdown()
+
+
+
+test_params_align_depth_color_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'Align_Depth_Color_1',
+    'color_width': '0',
+    'color_height': '0',
+    'depth_width': '0',
+    'depth_height': '0',
+    'infra_width': '0',
+    'infra_height': '0',
+    'align_depth.enable':'true'
+    }
+'''
+This test was ported from rs2_test.py
+the command used to run is "python3 realsense2_camera/scripts/rs2_test.py align_depth_color_1"
+'''
+'''
+The following testcase is skipped due to a possible issue. It can be re-enabled once fixed.
+    If the fps and frame sizes of depth and color are different, then the aligned_depth_to_color 
+    publishes frames with different sizes. When both stream types are available, the published 
+    frames are aligned and when only one stream types are available, original frame size is published.
+    Look like,
+        if RGB image is there, alignment happens -> result is of RGB's resolution
+        if RGB image is not there at any point, -> result is of depth's resolution
+'''
+@pytest.mark.skip
+@pytest.mark.rosbag
+@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_align_depth_color_1],indirect=True)
+@pytest.mark.launch(fixture=launch_descr_with_parameters)
+class TestAlignDepthColor(pytest_rs_utils.RsTestBaseClass):
+    def test_align_depth_color_1(self,launch_descr_with_parameters):
+        params = launch_descr_with_parameters[1]
+        data = pytest_rs_utils.ImageDepthInColorShapeGetData(params["rosbag_filename"])
+        themes = [
+        {'topic':'/'+params['camera_name']+'/aligned_depth_to_color/image_raw',
+         'msg_type':msg_Image,
+         'expected_data_chunks':1,
+         'data':data
+        }
+        ]
+        try:
+            ''' 
+            initialize, run and check the data 
+            '''
+            self.init_test("RsTest"+params['camera_name'])
+            assert self.run_test(themes)
+            assert self.process_data(themes)
+        finally:
+            self.shutdown()
+    def process_data(self, themes):
+        return super().process_data(themes)
+
+
+test_params_align_depth_infra_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'Align_Depth_Infra_1',
+    'color_width': '0',
+    'color_height': '0',
+    'depth_width': '0',
+    'depth_height': '0',
+    'infra_width': '0',
+    'infra_height': '0',
+    'enable_infra1':'true',
+    'enable_infra2':'true',
+    'align_depth.enable':'true',
+    }
+'''
+This test was ported from rs2_test.py
+the command used to run is "python3 realsense2_camera/scripts/rs2_test.py align_depth_ir_1"
+'''
+''' 
+The following testcase is skipped due to a possible issue. It can be re-enabled once fixed.
+    The ROS2 node doesn't publish the aligned depth data in /aligned_depth_to_infra1/image_raw.
+    It seems that the aligned depth data is generated only for color, not for infrared.
+
+    Hardwired the generation to Infra1 instead of color and test passed. 
+    (Line nos 195 and 531 in realsense2_camera/src/base_realsense_node.cpp)
+
+    However a proper fix needs to have all the alignments, such as color, infra1, infra2, if needed.
+'''
+@pytest.mark.skip
+@pytest.mark.rosbag
+@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_align_depth_infra_1],indirect=True)
+@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
+class TestAlignDepthInfra1(pytest_rs_utils.RsTestBaseClass):
+    def test_align_depth_infra_1(self,delayed_launch_descr_with_parameters):
+        params = delayed_launch_descr_with_parameters[1]
+        self.rosbag = params["rosbag_filename"]
+        #data = pytest_rs_utils.ImageDepthInColorShapeGetData(params["rosbag_filename"])
+        themes = [
+        {'topic':'/'+params['camera_name']+'/aligned_depth_to_infra1/image_raw',
+         'msg_type':msg_Image,
+         'expected_data_chunks':1,
+         #'data':data
+        }
+        ]
+        try:
+            ''' 
+            initialize, run and check the data 
+            '''
+            self.init_test("RsTest"+params['camera_name'])
+            assert self.run_test(themes)
+            assert self.process_data(themes)
+        finally:
+            self.shutdown()
+    def process_data(self, themes):
+        data = pytest_rs_utils.ImageDepthInInfra1ShapeGetData(self.rosbag)
+        themes[0]["data"] = data
+        return super().process_data(themes)

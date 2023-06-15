@@ -98,9 +98,6 @@ test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color
 @pytest.mark.parametrize("launch_descr_with_yaml", [test_params],indirect=True)
 class TestCamera1(pytest_rs_utils.RsTestBaseClass):
     def test_camera_1(self, launch_descr_with_yaml):
-        ''' 
-        current rosbag file doesn't have color data 
-        '''
         params = launch_descr_with_yaml[1]
         themes = [
             #{'topic':'/camera/color/image_raw','msg_type':msg_Image,'expected_data_chunks':1},
