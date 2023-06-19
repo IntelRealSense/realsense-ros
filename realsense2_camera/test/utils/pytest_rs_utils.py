@@ -36,6 +36,7 @@ import struct
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
 from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
+from sensor_msgs.msg import CameraInfo as msg_CameraInfo
 from sensor_msgs_py import point_cloud2 as pc2
 
 import quaternion
@@ -630,6 +631,14 @@ class RsTestBaseClass():
             elif theme['msg_type'] == msg_PointCloud2:
                     ret = PointCloudTest(data, theme['data'])
                     assert ret[0], ret[1]
+            elif theme['msg_type'] == msg_CameraInfo:
+                #print("first chunck of data for"+ theme['topic'] + ":")
+                #print(data)
+                if 'data' in theme.keys():
+                    if theme['data'] != data:
+                        return False
+                else:
+                    print(data)
             else:
                 print("first chunck of data for"+ theme['topic'] + ":")
                 print(data.header)
