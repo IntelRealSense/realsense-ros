@@ -148,7 +148,7 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
             '''
             self.init_test("RsTest"+params['camera_name'])
             assert self.run_test(themes)
-            assert self.process_data(themes)
+            assert self.process_data(themes), "Data check failed, probably the rosbag file changed?"
         finally:
             self.shutdown()
     def process_data(self, themes):
