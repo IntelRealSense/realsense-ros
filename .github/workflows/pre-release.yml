@@ -31,11 +31,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [humble, iron]
+        ros_distro: [iron, humble]
         include:
-        - ros_distro: 'humble'
-          os: ubuntu-22.04
         - ros_distro: 'iron'
+          os: ubuntu-22.04
+        - ros_distro: 'humble'
           os: ubuntu-22.04
           
     env:

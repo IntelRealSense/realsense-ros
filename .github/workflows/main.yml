@@ -23,13 +23,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [rolling, humble, galactic, foxy]
+        ros_distro: [rolling, iron, humble]
         include:
         - ros_distro: 'rolling'
           os: ubuntu-22.04
-        - ros_distro: 'humble'
-          os: ubuntu-22.04
         - ros_distro: 'iron'
+          os: ubuntu-22.04
+        - ros_distro: 'humble'
           os: ubuntu-22.04
 
     steps:
@@ -48,24 +48,15 @@ jobs:
         cd ${{github.workspace}}/ros2/src/realsense-ros/scripts
         ./pr_check.sh 
 
-    # Workaround - forcing cmake 3.23.0 instead of using latest cmake of GHA.
-    # cmake 3.24.0 is not compaitable with galactic/foxy/humble ament_cmake
-    # see: https://github.com/ament/ament_cmake/pull/395
-    # TODO: remove this step once ament_cmake for galactic/foxy/humble is released
-    - name: Setup cmake 3.23.0
-      uses: jwlawson/actions-setup-cmake@v1.12.1
-      with:
-        cmake-version: '3.23.0'
-
     - name: build ROS2
-      uses: ros-tooling/setup-ros@v0.3
+      uses: ros-tooling/setup-ros@v0.6
       with:
         required-ros-distributions: ${{ matrix.ros_distro }}
                 
     - name: Build RealSense SDK 2.0 from source
       run: |
         cd ${{github.workspace}}
-        git clone https://github.com/IntelRealSense/librealsense.git -b master
+        git clone https://github.com/IntelRealSense/librealsense.git -b development
         cd librealsense
         sudo mkdir build
         cd build
@@ -75,7 +66,7 @@ jobs:
         sudo make -j10
         sudo make install
 
-    - name: Build
+    - name: Build RealSense ROS2 Wrapper
       run: | 
         echo "source /opt/ros/${{ matrix.ros_distro }}/setup.bash" >> ${{github.workspace}}/.bashrc
         source ${{github.workspace}}/.bashrc
