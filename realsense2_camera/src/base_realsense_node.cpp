@@ -851,7 +851,7 @@ void BaseRealSenseNode::publishLabeledPointCloud(rs2::labeled_points pc, const r
     }
 
     msg_pointcloud->header.stamp = t;
-    msg_pointcloud->header.frame_id = OPTICAL_FRAME_ID(LABELED_POINT_CLOUD);
+    msg_pointcloud->header.frame_id = FRAME_ID(LABELED_POINT_CLOUD);
 
     // Publish the PointCloud message
     _labeled_pointcloud_publisher->publish(std::move(msg_pointcloud));
