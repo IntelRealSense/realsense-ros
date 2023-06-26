@@ -37,6 +37,7 @@ from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
 from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
 from sensor_msgs.msg import CameraInfo as msg_CameraInfo
+from realsense2_camera_msgs.msg import Extrinsics as msg_Extrinsics
 from sensor_msgs_py import point_cloud2 as pc2
 
 import quaternion
@@ -52,6 +53,19 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../../scripts"))
 Copied from the old code in scripts folder
 '''
 from importRosbag.importRosbag import importRosbag
+
+def CameraInfoGetData(rec_filename, topic):
+    data = importRosbag(rec_filename, importTopics=[topic], log='ERROR', disable_bar=True)[topic]
+    data =  {k.lower(): v for k, v in data.items()}
+    data['distortionmodel'] = "plumb_bob"
+    data['k'] = data['k'].reshape(-1)
+    data['r'] = data['r'].reshape(-1)
+    data['p'] = data['p'].reshape(-1)
+    return data
+
+def CameraInfoColorGetData(rec_filename):
+    return CameraInfoGetData(rec_filename, '/device_0/sensor_1/Color_0/info/camera_info')
+
 
 def ImuGetData(rec_filename, topic):
     # res['value'] = first value of topic.
@@ -233,6 +247,25 @@ def staticTFTest(data, gt_data):
            msg = 'Tf is changed for couple %s' % '->'.join(couple)
            return False, msg
     return True, ''
+
+def extrinsicsTest(data, gt_data):
+    msg = ''
+    if len(data.translation) != len(gt_data.translation):
+        msg = 'translation sizes are not matching in extrinsics'
+        return False, msg
+    if len(data.rotation) != len(gt_data.rotation):
+        msg = 'rotation sizes are not matching in extrinsics'
+        return False, msg
+    for count in range(len(data.translation)):
+        if abs(data.translation[count] - gt_data.translation[count]) > 1e-5:
+            msg = 'translation at %s are not matching values are %s and %s', (count, data.translation[count] , gt_data.translation[count])
+            return False, msg
+    for count in range(len(data.rotation)):
+        if abs(data.rotation[count] - gt_data.rotation[count]) > 1e-5:
+            msg = 'rotation at %s are not matching values are %s and %s', (count, data.rotation[count] , gt_data.rotation[count])
+            return False, msg
+    return True, ""
+
 
 def pc2_to_xyzrgb(point):
     # Thanks to Panos for his code used in this function.
@@ -621,24 +654,23 @@ class RsTestBaseClass():
     def process_data(self, themes):
         for theme in themes:
             data = self.node.pop_first_chunk(theme['topic'])
-            if theme['msg_type'] == msg_Image:
-                if 'data' in theme:
-                    ret = ImageColorTest(data, theme['data'])
-                    assert ret[0], ret[1]
+            if 'data' not in theme:
+                print('No data to compare')
+            elif theme['msg_type'] == msg_Image:
+                ret = ImageColorTest(data, theme['data'])
+                assert ret[0], ret[1]
             elif theme['msg_type'] == msg_Imu:
-                    ret = ImuTest(data, theme['data'])
-                    assert ret[0], ret[1]
+                ret = ImuTest(data, theme['data'])
+                assert ret[0], ret[1]
             elif theme['msg_type'] == msg_PointCloud2:
-                    ret = PointCloudTest(data, theme['data'])
-                    assert ret[0], ret[1]
+                ret = PointCloudTest(data, theme['data'])
+                assert ret[0], ret[1]
             elif theme['msg_type'] == msg_CameraInfo:
-                #print("first chunck of data for"+ theme['topic'] + ":")
-                #print(data)
-                if 'data' in theme.keys():
-                    if theme['data'] != data:
-                        return False
-                else:
-                    print(data)
+                if theme['data'] != data:
+                    assert False, 'CameraInfo data is not matching'
+            elif theme['msg_type'] == msg_Extrinsics:
+                ret = extrinsicsTest(data, theme['data'])
+                assert ret[0], ret[1]
             else:
                 print("first chunck of data for"+ theme['topic'] + ":")
                 print(data.header)

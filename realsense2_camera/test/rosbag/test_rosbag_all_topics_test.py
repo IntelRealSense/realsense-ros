@@ -22,6 +22,7 @@ import numpy as np
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
 from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
+from realsense2_camera_msgs.msg import Extrinsics as msg_Extrinsics
 
 from array import array
 from builtin_interfaces.msg import Time
@@ -62,6 +63,12 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
         '''
         params = delayed_launch_descr_with_parameters[1]
         self.rosbag = params["rosbag_filename"]
+        '''
+        The test is hardwired to ensure the rosbag file is not changed.
+        The function CameraInfoColorGetData requires changes to adapt to the changes
+        made by the rosbag reader on extrincsic
+        color_data = pytest_rs_utils.CameraInfoColorGetData(self.rosbag)
+        '''
         color_data = CameraInfo(header=Header(stamp=Time(sec=1508282881, nanosec=33132324),
                                         frame_id="AllTopics_color_optical_frame"),
                                         width=640,
@@ -74,7 +81,6 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
                                         binning_x=0,
                                         binning_y=0,
                                         roi=RegionOfInterest(x_offset=0, y_offset=0, height=0, width=0, do_rectify=False))
-    
         depth_data = CameraInfo(header=Header(stamp=Time(sec=1508282880, nanosec=968727295), 
                                         frame_id='AllTopics_depth_optical_frame'), 
                                         height=720, 
@@ -115,7 +121,28 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
                                                 roi=RegionOfInterest(x_offset=0, y_offset=0, height=0, width=0, do_rectify=False))
 
 
+        depth_to_infra_extrinsics_data = msg_Extrinsics()
+        depth_to_infra_extrinsics_data.rotation = [1., 0., 0., 0., 1., 0., 0., 0., 1.]
+        depth_to_infra_extrinsics_data.translation =[-0., -0., -0.]
+
+        depth_to_color_extrinsics_data = msg_Extrinsics()
+        depth_to_color_extrinsics_data.rotation=array('f',[ 0.99999666,  0.00166541,  0.00198587, -0.00166956,  0.99999642,
+                        0.00208678, -0.00198239, -0.00209009,  0.99999583])
+        depth_to_color_extrinsics_data.translation=array('f',[ 0.01484134, -0.00020221,  0.00013059])
+
         themes = [
+        {
+         'topic':'/'+params['camera_name']+'/extrinsics/depth_to_color',
+         'msg_type':msg_Extrinsics,
+         'expected_data_chunks':1,
+         'data':depth_to_color_extrinsics_data
+        },
+        {
+         'topic':'/'+params['camera_name']+'/extrinsics/depth_to_infra1',
+         'msg_type':msg_Extrinsics,
+         'expected_data_chunks':1,
+         'data':depth_to_infra_extrinsics_data
+        },
         {
          'topic':'/'+params['camera_name']+'/color/camera_info',
          'msg_type':CameraInfo,
@@ -133,14 +160,13 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
          'msg_type':CameraInfo,
          'expected_data_chunks':1,
          'data':infra1_data
-        }
-        ,
+        },
         {
          'topic':'/'+params['camera_name']+'/aligned_depth_to_color/camera_info',
          'msg_type':CameraInfo,
          'expected_data_chunks':1,
          'data':depth_to_color_data
-        }
+        },
         ]
         try:
             ''' 
