@@ -38,12 +38,14 @@ from sensor_msgs.msg import Imu as msg_Imu
 from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
 from sensor_msgs.msg import CameraInfo as msg_CameraInfo
 from realsense2_camera_msgs.msg import Extrinsics as msg_Extrinsics
+from realsense2_camera_msgs.msg import Metadata as msg_Metadata
 from sensor_msgs_py import point_cloud2 as pc2
 
 import quaternion
 if (os.getenv('ROS_DISTRO') != "dashing"):
     import tf2_ros
 
+import json
 
 assert os.getenv("COLCON_PREFIX_PATH")!=None,"COLCON_PREFIX_PATH was not set" 
 sys.path.append(os.getenv("COLCON_PREFIX_PATH")+'/realsense2_camera/share/realsense2_camera/launch')
@@ -266,6 +268,31 @@ def extrinsicsTest(data, gt_data):
             return False, msg
     return True, ""
 
+def metadatTest(data, gt_data):
+    jdata = json.loads(data.json_data)
+    gt_jdata = json.loads(gt_data.json_data)
+    if jdata['frame_number'] != gt_jdata['frame_number']:
+        msg = 'Frame no not matching: ' + str(jdata['frame_number']) + " and " + str(gt_jdata['frame_number'])
+        return False, msg
+    if jdata['clock_domain'] != gt_jdata['clock_domain']:
+        msg = 'clock_domain not matching: ' + str(jdata['clock_domain']) + " and " + str(gt_jdata['clock_domain'])
+        return False, msg
+    if jdata['frame_timestamp'] != gt_jdata['frame_timestamp']:
+        msg = 'frame_timestamp not matching: ' + str(jdata['frame_timestamp']) + " and " + str(gt_jdata['frame_timestamp'])
+        return False, msg
+    '''
+    frame counter is not populated by rsobag reader in libRealsense it seems
+    '''
+    '''
+    if jdata['frame_counter'] != gt_jdata['frame_counter']:
+        msg = 'frame_counter not matching: ' + str(jdata['frame_counter']) + " and " + str(gt_jdata['frame_counter'])
+        return False, msg
+    '''
+    if jdata['time_of_arrival'] != gt_jdata['time_of_arrival']:
+        msg = 'time_of_arrival not matching: ' + str(jdata['time_of_arrival']) + " and " + str(gt_jdata['time_of_arrival'])
+        return False, msg
+    return True, ""
+    
 
 def pc2_to_xyzrgb(point):
     # Thanks to Panos for his code used in this function.
@@ -670,6 +697,9 @@ class RsTestBaseClass():
                     assert False, 'CameraInfo data is not matching'
             elif theme['msg_type'] == msg_Extrinsics:
                 ret = extrinsicsTest(data, theme['data'])
+                assert ret[0], ret[1]
+            elif theme['msg_type'] == msg_Metadata:
+                ret = metadatTest(data, theme['data'])
                 assert ret[0], ret[1]
             else:
                 print("first chunck of data for"+ theme['topic'] + ":")

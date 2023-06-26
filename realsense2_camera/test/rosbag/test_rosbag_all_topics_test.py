@@ -23,6 +23,7 @@ from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
 from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
 from realsense2_camera_msgs.msg import Extrinsics as msg_Extrinsics
+from realsense2_camera_msgs.msg import Metadata as msg_Metadata
 
 from array import array
 from builtin_interfaces.msg import Time
@@ -130,7 +131,33 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
                         0.00208678, -0.00198239, -0.00209009,  0.99999583])
         depth_to_color_extrinsics_data.translation=array('f',[ 0.01484134, -0.00020221,  0.00013059])
 
+        color_metadata = msg_Metadata()
+        color_metadata.json_data = '{"frame_number":39,"clock_domain":"system_time","frame_timestamp":1508282881033.132324,"frame_counter":-8134432827560165376,"time_of_arrival":1508282881033}'
+
+        depth_metadata = msg_Metadata()
+        depth_metadata.json_data ='{"frame_number":13048,"clock_domain":"system_time","frame_timestamp":1508282880968.727295,"frame_counter":-327065418902536192,"time_of_arrival":1508282880968}'
+        infra1_metadata = msg_Metadata()
+        infra1_metadata.json_data ='{"frame_number":10938,"clock_domain":"system_time","frame_timestamp":1508282880964.985352,"frame_counter":0,"time_of_arrival":1508282880964}'
+
         themes = [
+        {
+         'topic':'/'+params['camera_name']+'/color/metadata',
+         'msg_type':msg_Metadata,
+         'expected_data_chunks':1,
+         'data':color_metadata
+        },
+        {
+         'topic':'/'+params['camera_name']+'/depth/metadata',
+         'msg_type':msg_Metadata,
+         'expected_data_chunks':1,
+         'data':depth_metadata
+        },
+        {
+         'topic':'/'+params['camera_name']+'/infra1/metadata',
+         'msg_type':msg_Metadata,
+         'expected_data_chunks':1,
+         'data':infra1_metadata
+        },
         {
          'topic':'/'+params['camera_name']+'/extrinsics/depth_to_color',
          'msg_type':msg_Extrinsics,
@@ -179,4 +206,3 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
             self.shutdown()
     def process_data(self, themes):
         return super().process_data(themes)
-
