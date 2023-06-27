@@ -499,6 +499,8 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             clip_depth(original_depth_frame, _clipping_distance);
         }
 
+        rs2::video_frame original_color_frame = frameset.get_color_frame();
+
         ROS_DEBUG("num_filters: %d", static_cast<int>(_filters.size()));
         for (auto filter_it : _filters)
         {
@@ -529,7 +531,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             {
                 if (sent_depth_frame) continue;
                 sent_depth_frame = true;
-                if (_align_depth_filter->is_enabled())
+                if (original_color_frame && _align_depth_filter->is_enabled())
                 {
                     publishFrame(f, t, COLOR,
                             _depth_aligned_image,
