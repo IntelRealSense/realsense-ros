@@ -55,6 +55,7 @@ test_params_all_topics = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outd
 To test all topics published
 '''
 @pytest.mark.rosbag
+
 @pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_all_topics],indirect=True)
 @pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
 class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
@@ -206,3 +207,44 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
             self.shutdown()
     def process_data(self, themes):
         return super().process_data(themes)
+
+test_params_imu_topics = {#"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+                          "rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_and_IMU_Stands_still.bag",
+    'camera_name': 'ImuTopics',
+    'color_width': '0',
+    'color_height': '0',
+    'depth_width': '0',
+    'depth_height': '0',
+    'infra_width': '0',
+    'infra_height': '0',
+    'enable_accel':True,
+    'enable_gyro':True,
+    'unite_imu_method':1,
+    'delay_ms':3000, #delay the start
+    }
+@pytest.mark.rosbag
+@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_imu_topics],indirect=True)
+@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
+class TestImuTopics(pytest_rs_utils.RsTestBaseClass):
+    def test_imu_topics(self,delayed_launch_descr_with_parameters):
+        ''' 
+        current rosbag file doesn't have color data 
+        '''
+        params = delayed_launch_descr_with_parameters[1]
+        self.rosbag = params["rosbag_filename"]
+        themes = [{
+         'topic':'/'+params['camera_name']+'/imu',
+         'msg_type':msg_Imu,
+         'expected_data_chunks':1,
+         #'data':depth_to_color_data
+        },
+        ]
+        try:
+            ''' 
+            initialize, run and check the data 
+            '''
+            self.init_test("RsTest"+params['camera_name'])
+            assert self.run_test(themes)
+            assert self.process_data(themes), "Data check failed, probably the rosbag file changed?"
+        finally:
+            self.shutdown()

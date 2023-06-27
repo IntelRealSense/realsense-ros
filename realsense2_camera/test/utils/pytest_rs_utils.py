@@ -455,13 +455,17 @@ def delayed_launch_descr_with_parameters(request):
     changed_params = request.param
     params = get_default_params()
     for key, value in changed_params.items():
-        params[key] = value   
+        if key in params.keys():
+            params[key] = value 
     if  'camera_name' not in changed_params:
         params['camera_name'] = 'camera_with_params'
+    period = 2.0
+    if 'delay_ms' in changed_params.keys():
+        period = changed_params['delay_ms']/1000
     first_node = get_rs_node_description(params['camera_name'], params)
     return LaunchDescription([launch.actions.TimerAction(
             actions = [
-        first_node,], period=2.0)
+        first_node,], period=period)
     ]),request.param
 
 ''' 
