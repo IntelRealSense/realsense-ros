@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.54.1 (2023-06-27)
+-------------------
 * add info about extrinsic msg format in Extrinsics.msg and README.md
 * Expose USB port in DeviceInfo service
 * Fix Apache License Header and Intel Copyrights

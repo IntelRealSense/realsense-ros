@@ -2,8 +2,8 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.54.1 (2023-06-27)
+-------------------
 * Update mesh path
 * clone PR1637 to ros2-development
 * Fix Apache License Header and Intel Copyrights

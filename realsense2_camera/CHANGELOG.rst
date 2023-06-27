@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.54.1 (2023-06-27)
+-------------------
 * Applying AlignDepth filter after Pointcloud
 * Publish /aligned_depth_to_color topic only when color frame present
 * Support Iron distro
