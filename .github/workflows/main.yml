@@ -23,16 +23,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [rolling, humble, galactic, foxy]
+        ros_distro: [rolling, iron, humble]
         include:
         - ros_distro: 'rolling'
           os: ubuntu-22.04
+        - ros_distro: 'iron'
+          os: ubuntu-22.04
         - ros_distro: 'humble'
           os: ubuntu-22.04
-        - ros_distro: 'galactic'
-          os: ubuntu-20.04
-        - ros_distro: 'foxy'
-          os: ubuntu-20.04
 
     steps:
 
@@ -50,49 +48,15 @@ jobs:
         cd ${{github.workspace}}/ros2/src/realsense-ros/scripts
         ./pr_check.sh 
 
-    # Workaround - forcing cmake 3.23.0 instead of using latest cmake of GHA.
-    # cmake 3.24.0 is not compaitable with galactic/foxy/humble ament_cmake
-    # see: https://github.com/ament/ament_cmake/pull/395
-    # TODO: remove this step once ament_cmake for galactic/foxy/humble is released
-    - name: Setup cmake 3.23.0
-      uses: jwlawson/actions-setup-cmake@v1.12.1
-      with:
-        cmake-version: '3.23.0'
-
-    ## If distro is one of [galactic, foxy], use the setup-ros@v0.2
-    ## which supports old versions of ROS2 and EOL versions.
-    ## For Humble distro, use v0.3 
-    ## See: 1) https://github.com/ros-tooling/setup-ros#Supported-platforms
-    ##      2) https://github.com/ros-tooling/setup-ros/tree/v0.2#Supported-platforms 
-    - name: build ROS2 Galactic/Foxy
-      if: ${{ matrix.ros_distro != 'humble' && matrix.ros_distro != 'rolling'}}
-      uses: ros-tooling/setup-ros@v0.2
+    - name: build ROS2
+      uses: ros-tooling/setup-ros@v0.6
       with:
         required-ros-distributions: ${{ matrix.ros_distro }}
-
-    - name: build ROS2 Humble
-      if: ${{ matrix.ros_distro == 'humble' || matrix.ros_distro == 'rolling' }}
-      uses: ros-tooling/setup-ros@v0.3
-      with:
-        required-ros-distributions: ${{ matrix.ros_distro }}
-        
-    ## For all distros except humble and rolling, install RealSense SDK From Debians
-    ## For humble + rolling distros, install from source (TODO: Change this when we have public librealsense2 debians for Ubuntu22)
-    - name: Install RealSense SDK 2.0 Dependencies
-      if: ${{ matrix.ros_distro != 'humble' && matrix.ros_distro != 'rolling' }}
-      run: |
-        sudo apt-get update
-        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-key C8B3A55A6F3EFCDE
-        sudo add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main"
-        sudo apt-get update -qq
-        sudo apt-get install librealsense2-dev --allow-unauthenticated -y
-        sudo apt-get update
-        
+                
     - name: Build RealSense SDK 2.0 from source
-      if: ${{ matrix.ros_distro == 'humble' || matrix.ros_distro == 'rolling' }}
       run: |
         cd ${{github.workspace}}
-        git clone https://github.com/IntelRealSense/librealsense.git -b master
+        git clone https://github.com/IntelRealSense/librealsense.git -b development
         cd librealsense
         sudo mkdir build
         cd build
@@ -102,7 +66,7 @@ jobs:
         sudo make -j10
         sudo make install
 
-    - name: Build
+    - name: Build RealSense ROS2 Wrapper
       run: | 
         echo "source /opt/ros/${{ matrix.ros_distro }}/setup.bash" >> ${{github.workspace}}/.bashrc
         source ${{github.workspace}}/.bashrc

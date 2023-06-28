@@ -2,6 +2,71 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+4.54.1 (2023-06-27)
+-------------------
+* Applying AlignDepth filter after Pointcloud
+* Publish /aligned_depth_to_color topic only when color frame present
+* Support Iron distro
+* Protect empty string dereference
+* Fix: /tf and /static_tf topics' inconsistencies
+* Revamped the TF related code
+* Fixing TF frame links b/w multi camera nodes when using custom names
+* Updated TF descriptions in launch py and readme
+* Fixing /tf topic has only TFs of last started sensor
+* add D430i support
+* Fix Swapped TFs Axes
+* replace stereo module with depth module
+* use rs2_to_ros to replace stereo module with depth moudle
+* calculate extriniscs twice in two opposite ways to save inverting rotation matrix
+* fix matrix rotation
+* Merge branch 'ros2-development' into readme_fix
+* invert translation
+* Added 'publish_tf' param in rs launch files
+* Indentation corrections
+* Fix: Don't publish /tf when publish_tf is false
+* use playback device for rosbags
+* Avoid configuring dynamic_tf_broadcaster within tf_publish_rate param's callback
+* Fix lower FPS in D405, D455
+* update rs_launch.py to support enable_auto_exposure and manual exposure
+* fix timestamp calculation metadata header to be aligned with metadata json timestamp
+* Expose USB port in DeviceInfo service
+* Use latched QoS for Extrinsic topic when intra-process is used
+* add cppcheck to GHA
+* Fix Apache License Header and Intel Copyrights
+* apply copyrights and license on project
+* Enable intra-process communication for point clouds
+* Fix ros2 parameter descriptions and range values
+* T265 clean up
+* fix float_to_double method
+* realsense2_camera/src/sensor_params.cpp
+* remove T265 device from ROS Wrapper - step1
+* Enable D457
+* Fix hdr_merge filter initialization in ros2 launch
+* if default profile is not defined, take the first available profile as default
+* changed to static_cast and added descriptor name and type
+* remove extra ';'
+* remove unused variable format_str
+* publish point cloud via unique shared pointer
+* make source backward compatible to older versions of cv_bridge and rclcpp
+* add hdr_merge.enable and depth_module.hdr_enabled to rs_launch.py
+* fix compilation errors
+* fix tabs
+* if default profile is not defined, take the first available profile as default
+* Fix ros2 sensor controls steps and add control default value to param description
+* Publish static transforms when intra porocess communication is enabled
+* Properly read camera config files in rs_launch.py
+* fix deprecated API
+* Add D457
+* Windows bring-up
+* publish actual IMU optical frame ID in IMU messages
+* Publish static tf for IMU frames
+* fix extrinsics calculation
+* fix ordered_pc arg prefix
+* publish IMU frames only if unite/sync imu method is not none
+* Publish static tf for IMU frames
+* add D430i support
+* Contributors: Arun Prasad, Arun Prasad V, Arun-Prasad-V, Christian Rauch, Daniel Honies, Gilad Bretter, Nir Azkiel, NirAz, Pranav Dhulipala, Samer Khshiboun, SamerKhshiboun, Stephan Wirth, Xiangyu, Yadunund, nvidia
+
 4.51.1 (2022-09-13)
 -------------------
 * Fix crash when activating IMU & aligned depth together

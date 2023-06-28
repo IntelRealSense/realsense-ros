@@ -195,14 +195,15 @@ void BaseRealSenseNode::setupFilters()
         }
         _cv_mpc.notify_one();
     };
-    _align_depth_filter = std::make_shared<AlignDepthFilter>(std::make_shared<rs2::align>(RS2_STREAM_COLOR), update_align_depth_func, _parameters, _logger);
-    _filters.push_back(_align_depth_filter);
 
     _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::colorizer>(), _parameters, _logger); 
     _filters.push_back(_colorizer_filter);
 
     _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::pointcloud>(), _node, _parameters, _logger);
     _filters.push_back(_pc_filter);
+
+    _align_depth_filter = std::make_shared<AlignDepthFilter>(std::make_shared<rs2::align>(RS2_STREAM_COLOR), update_align_depth_func, _parameters, _logger);
+    _filters.push_back(_align_depth_filter);
 }
 
 cv::Mat& BaseRealSenseNode::fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image)
@@ -499,6 +500,8 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             clip_depth(original_depth_frame, _clipping_distance);
         }
 
+        rs2::video_frame original_color_frame = frameset.get_color_frame();
+
         ROS_DEBUG("num_filters: %d", static_cast<int>(_filters.size()));
         for (auto filter_it : _filters)
         {
@@ -529,7 +532,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             {
                 if (sent_depth_frame) continue;
                 sent_depth_frame = true;
-                if (_align_depth_filter->is_enabled())
+                if (original_color_frame && _align_depth_filter->is_enabled())
                 {
                     publishFrame(f, t, COLOR,
                             _depth_aligned_image,
