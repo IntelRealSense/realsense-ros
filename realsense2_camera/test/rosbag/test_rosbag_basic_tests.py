@@ -46,11 +46,11 @@ This test was ported from rs2_test.py
 the command used to run is "python3 realsense2_camera/scripts/rs2_test.py vis_avg_2"
 '''
 @pytest.mark.rosbag
-@pytest.mark.parametrize("launch_descr_with_parameters", [test_params],indirect=True)
-@pytest.mark.launch(fixture=launch_descr_with_parameters)
+@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params],indirect=True)
+@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
 class TestVis2(pytest_rs_utils.RsTestBaseClass):
-    def test_vis_2(self,launch_descr_with_parameters):
-        params = launch_descr_with_parameters[1]
+    def test_vis_2(self,delayed_launch_descr_with_parameters):
+        params = delayed_launch_descr_with_parameters[1]
         data = pytest_rs_utils.ImageColorGetData(params["rosbag_filename"])
         themes = [
         {'topic':'/'+params['camera_name']+'/color/image_raw',
@@ -439,22 +439,12 @@ test_params_align_depth_color_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH
 This test was ported from rs2_test.py
 the command used to run is "python3 realsense2_camera/scripts/rs2_test.py align_depth_color_1"
 '''
-'''
-The following testcase is skipped due to a possible issue. It can be re-enabled once fixed.
-    If the fps and frame sizes of depth and color are different, then the aligned_depth_to_color 
-    publishes frames with different sizes. When both stream types are available, the published 
-    frames are aligned and when only one stream types are available, original frame size is published.
-    Look like,
-        if RGB image is there, alignment happens -> result is of RGB's resolution
-        if RGB image is not there at any point, -> result is of depth's resolution
-'''
-@pytest.mark.skip
 @pytest.mark.rosbag
-@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_align_depth_color_1],indirect=True)
-@pytest.mark.launch(fixture=launch_descr_with_parameters)
+@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_align_depth_color_1],indirect=True)
+@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
 class TestAlignDepthColor(pytest_rs_utils.RsTestBaseClass):
-    def test_align_depth_color_1(self,launch_descr_with_parameters):
-        params = launch_descr_with_parameters[1]
+    def test_align_depth_color_1(self,delayed_launch_descr_with_parameters):
+        params = delayed_launch_descr_with_parameters[1]
         data = pytest_rs_utils.ImageDepthInColorShapeGetData(params["rosbag_filename"])
         themes = [
         {'topic':'/'+params['camera_name']+'/aligned_depth_to_color/image_raw',

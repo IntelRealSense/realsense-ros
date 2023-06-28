@@ -55,7 +55,6 @@ test_params_all_topics = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outd
 To test all topics published
 '''
 @pytest.mark.rosbag
-
 @pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_all_topics],indirect=True)
 @pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
 class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
@@ -234,6 +233,18 @@ class TestImuTopics(pytest_rs_utils.RsTestBaseClass):
         self.rosbag = params["rosbag_filename"]
         themes = [{
          'topic':'/'+params['camera_name']+'/imu',
+         'msg_type':msg_Imu,
+         'expected_data_chunks':1,
+         #'data':depth_to_color_data
+        },
+        {
+         'topic':'/'+params['camera_name']+'/gyro/sample',
+         'msg_type':msg_Imu,
+         'expected_data_chunks':1,
+         #'data':depth_to_color_data
+        },
+        {
+         'topic':'/'+params['camera_name']+'/accel/sample',
          'msg_type':msg_Imu,
          'expected_data_chunks':1,
          #'data':depth_to_color_data
