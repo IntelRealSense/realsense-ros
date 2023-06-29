@@ -30,6 +30,7 @@
 #include "realsense2_camera_msgs/msg/imu_info.hpp"
 #include "realsense2_camera_msgs/msg/extrinsics.hpp"
 #include "realsense2_camera_msgs/msg/metadata.hpp"
+#include "realsense2_camera_msgs/msg/rgbd.hpp"
 #include "realsense2_camera_msgs/srv/device_info.hpp"
 #include <librealsense2/hpp/rs_processing.hpp>
 #include <librealsense2/rs_advanced_mode.hpp>
@@ -57,6 +58,7 @@
 
 using realsense2_camera_msgs::msg::Extrinsics;
 using realsense2_camera_msgs::msg::IMUInfo;
+using realsense2_camera_msgs::msg::RGBD;
 
 #define FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_" << STREAM_NAME(sip) << "_frame")).str()
 #define IMU_FRAME_ID (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_imu_frame")).str()
@@ -220,6 +222,9 @@ namespace realsense2_camera
                           const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
                           const std::map<stream_index_pair, std::shared_ptr<image_publisher>>& image_publishers,
                           const bool is_publishMetadata = true);
+
+        void publishRGBD(rs2::depth_frame& depth_frame, rs2::video_frame& video_frame, const rclcpp::Time& t);
+
         void publishMetadata(rs2::frame f, const rclcpp::Time& header_time, const std::string& frame_id);
 
         sensor_msgs::msg::Imu CreateUnitedMessage(const CimuData accel_data, const CimuData gyro_data);
@@ -282,6 +287,7 @@ namespace realsense2_camera
         std::map<stream_index_pair, rclcpp::Publisher<realsense2_camera_msgs::msg::Metadata>::SharedPtr> _metadata_publishers;
         std::map<stream_index_pair, rclcpp::Publisher<IMUInfo>::SharedPtr> _imu_info_publisher;
         std::map<stream_index_pair, rclcpp::Publisher<Extrinsics>::SharedPtr> _extrinsics_publishers;
+        rclcpp::Publisher<RGBD>::SharedPtr _rgbd_publisher;
         std::map<stream_index_pair, cv::Mat> _image;
         std::map<unsigned int, std::string> _encoding;
 

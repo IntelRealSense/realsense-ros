@@ -501,6 +501,9 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             clip_depth(original_depth_frame, _clipping_distance);
         }
 
+        rs2::video_frame original_color_frame = frameset.get_color_frame();
+        
+        publishRGBD(original_depth_frame, original_color_frame, t);
         ROS_DEBUG("num_filters: %d", static_cast<int>(_filters.size()));
         for (auto filter_it : _filters)
         {
@@ -985,6 +988,69 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     if (is_publishMetadata)
     {
         publishMetadata(f, t, OPTICAL_FRAME_ID(stream));
+    }
+}
+
+void BaseRealSenseNode::publishRGBD(rs2::depth_frame& depth_frame, rs2::video_frame& video_frame, const rclcpp::Time& t)
+{
+    if (0 != _rgbd_publisher->get_subscription_count())
+    {
+        ROS_DEBUG_STREAM("Publishinig RGBD message");
+
+        unsigned int v_height = video_frame.get_height();
+        unsigned int v_width = video_frame.get_width();
+        unsigned int v_bpp = video_frame.get_bytes_per_pixel();
+        cv::Mat v_image;
+        v_image.create(v_height, v_width, _image_format[v_bpp]);
+        v_image.data = (uint8_t*)video_frame.get_data();
+        sensor_msgs::msg::Image::UniquePtr v_img(new sensor_msgs::msg::Image());
+
+        if (!v_img)
+        {
+            ROS_ERROR("sensor image message allocation failed, frame was dropped");
+            return;
+        }
+
+        // Convert the CV::Mat into a ROS image message (1 copy is done here)
+        cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(v_bpp), v_image).toImageMsg(*v_img);
+
+        // Convert OpenCV Mat to ROS Image
+        v_img->header.frame_id = OPTICAL_FRAME_ID(COLOR);
+        v_img->header.stamp = t;
+        v_img->height = v_height;
+        v_img->width = v_width;
+        v_img->is_bigendian = false;
+        v_img->step = v_width * v_bpp;
+
+        unsigned int d_height = depth_frame.get_height();
+        unsigned int d_width = depth_frame.get_width();
+        unsigned int d_bpp = depth_frame.get_bytes_per_pixel();
+        cv::Mat d_image;
+        d_image.create(d_height, d_width, _image_format[d_bpp]);
+        d_image.data = (uint8_t*)depth_frame.get_data();
+        sensor_msgs::msg::Image::UniquePtr d_img(new sensor_msgs::msg::Image());
+
+        if (!d_img)
+        {
+            ROS_ERROR("sensor image message allocation failed, frame was dropped");
+            return;
+        }
+
+        // Convert the CV::Mat into a ROS image message (1 copy is done here)
+        cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(d_bpp), d_image).toImageMsg(*d_img);
+
+        // Convert OpenCV Mat to ROS Image
+        d_img->header.frame_id = OPTICAL_FRAME_ID(DEPTH);
+        d_img->header.stamp = t;
+        d_img->height = d_height;
+        d_img->width = d_width;
+        d_img->is_bigendian = false;
+        d_img->step = d_width * d_bpp;
+
+        realsense2_camera_msgs::msg::RGBD msg;
+        msg.rgb = *v_img;
+        msg.depth = *d_img;
+        _rgbd_publisher->publish(std::move(msg));
     }
 }
 

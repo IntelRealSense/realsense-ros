@@ -213,6 +213,7 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
 void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profiles, const RosSensor& sensor)
 {
     const std::string module_name(create_graph_resource_name(rs2_to_ros(sensor.get_info(RS2_CAMERA_INFO_NAME))));
+    rmw_qos_profile_t rgbd_qos;
     for (auto& profile : profiles)
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
@@ -223,6 +224,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 
         if (profile.is<rs2::video_stream_profile>())
         {
+            rgbd_qos = qos;
             if (profile.stream_type() != RS2_STREAM_LABELED_POINT_CLOUD)
             {
                 std::stringstream image_raw, camera_info;
@@ -322,6 +324,10 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                                     rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(extrinsics_qos), extrinsics_qos), std::move(options));
         }
     }
+    rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
+    options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+    _rgbd_publisher = _node.create_publisher<realsense2_camera_msgs::msg::RGBD>("rgbd",
+        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rgbd_qos), rgbd_qos), std::move(options));
 }
 
 void BaseRealSenseNode::updateSensors()
