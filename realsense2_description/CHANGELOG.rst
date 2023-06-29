@@ -2,6 +2,15 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+4.54.1 (2023-06-27)
+-------------------
+* Update mesh path
+* clone PR1637 to ros2-development
+* Fix Apache License Header and Intel Copyrights
+* apply copyrights and license on project
+* Replace deprecated parameter node_name with name
+* Contributors: Arun Prasad, Nir Azkiel, SamerKhshiboun, augustelalande, marqrazz
+
 4.51.1 (2022-09-13)
 -------------------
 * Add copyright and license to all ROS2-beta source files
