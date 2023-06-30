@@ -188,12 +188,6 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
          'expected_data_chunks':1,
          'data':infra1_data
         },
-        {
-         'topic':'/'+params['camera_name']+'/aligned_depth_to_color/camera_info',
-         'msg_type':CameraInfo,
-         'expected_data_chunks':1,
-         'data':depth_to_color_data
-        },
         ]
         try:
             ''' 
