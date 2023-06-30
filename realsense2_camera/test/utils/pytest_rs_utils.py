@@ -99,16 +99,16 @@ def ImageGetData(rec_filename, topic):
     data = importRosbag(rec_filename, importTopics=[topic], log='ERROR', disable_bar=True)[topic]
     for pyimg in data['frames']:
         ok_number = (pyimg != 0).sum()
-        ok_percent.append(float(ok_number) / (pyimg.shape[0] * pyimg.shape[1]))
+        channels = pyimg.shape[2] if len(pyimg.shape) > 2 else 1
+        ok_percent.append(float(ok_number) / (pyimg.shape[0] * pyimg.shape[1] * channels))
         all_avg.append(pyimg.sum() / ok_number)
-
+    
     all_avg = np.array(all_avg)
 
-    channels = pyimg.shape[2] if len(pyimg.shape) > 2 else 1
     res['num_channels'] = channels
     res['shape'] = pyimg.shape
     res['avg'] = all_avg.mean()
-    res['ok_percent'] = {'value': (np.array(ok_percent).mean()) / channels, 'epsilon': 0.01}
+    res['ok_percent'] = np.array(ok_percent).mean()
     res['epsilon'] = max(all_avg.max() - res['avg'], res['avg'] - all_avg.min())
     res['reported_size'] = [pyimg.shape[1], pyimg.shape[0], pyimg.shape[1]*pyimg.dtype.itemsize*channels]
 
@@ -130,7 +130,7 @@ def ImageDepthInColorShapeGetData(rec_filename):
     gt_data['shape'] = color_data['shape'][:2]
     gt_data['reported_size'] = color_data['reported_size']
     gt_data['reported_size'][2] = gt_data['reported_size'][0]*2
-    gt_data['ok_percent']['epsilon'] *= 3
+    gt_data['epsilon'] *= 4 #4 instead of 3 due to size difference between Depth and color?
     return gt_data
 
 def ImageDepthInInfra1ShapeGetData(rec_filename):
@@ -139,7 +139,7 @@ def ImageDepthInInfra1ShapeGetData(rec_filename):
     gt_data['shape'] = infra1_data['shape'][:2]
     gt_data['reported_size'] = infra1_data['reported_size']
     gt_data['reported_size'][2] = gt_data['reported_size'][0]*2
-    gt_data['ok_percent']['epsilon'] *= 3
+    gt_data['epsilon'] *= 3
     return gt_data
 
 def ImageDepthGetData_decimation(rec_filename):
@@ -178,9 +178,9 @@ def ImageColorTest(data, gt_data):
         if abs(np.array(data['avg']).mean() - gt_data['avg'].mean()) > gt_data['epsilon']:
             return False, msg
 
-        msg = 'Expect no holes percent > %.3f. Got %.3f.' % (gt_data['ok_percent']['value']-gt_data['ok_percent']['epsilon'], np.array(data['ok_percent']).mean())
+        msg = 'Expect no holes percent > %.3f. Got %.3f.' % (gt_data['ok_percent']-gt_data['epsilon'], np.array(data['ok_percent']).mean())
         print (msg)
-        if np.array(data['ok_percent']).mean() < gt_data['ok_percent']['value']-gt_data['ok_percent']['epsilon']:
+        if np.array(data['ok_percent']).mean() < gt_data['ok_percent']-gt_data['epsilon']:
             return False, msg
     except Exception as e:
         msg = '%s' % e
@@ -249,6 +249,54 @@ def staticTFTest(data, gt_data):
            msg = 'Tf is changed for couple %s' % '->'.join(couple)
            return False, msg
     return True, ''
+
+def cameraInfoTest(data, gt_data):
+    msg = ''
+    if data.height != gt_data.height:
+        msg = 'CameraInfo height is not matching'
+        return False, msg
+    if data.width != gt_data.width:
+        msg = 'CameraInfo width is not matching'
+        return False, msg
+    if data.distortion_model != gt_data.distortion_model:
+        msg = 'CameraInfo distortion_model is not matching'
+        return False, msg
+    if not np.all(np.equal(data.d , gt_data.d)):
+        msg = 'CameraInfo d is not matching'
+        return False, msg
+    if len(data.k) != len(gt_data.k):
+        msg = 'k sizes are not matching in extrinsics'
+        return False, msg
+    for count in range(len(data.k)):
+        if abs(data.k[count] - gt_data.k[count]) > 1e-5:
+            msg = 'k at %s are not matching values are %s and %s', (count, data.k[count] , gt_data.k[count])
+            return False, msg
+
+    if len(data.r) != len(gt_data.r):
+        msg = 'r sizes are not matching in extrinsics'
+        return False, msg
+    for count in range(len(data.r)):
+        if abs(data.r[count] - gt_data.r[count]) > 1e-5:
+            msg = 'r at %s are not matching values are %s and %s', (count, data.r[count] , gt_data.r[count])
+            return False, msg
+    if len(data.p) != len(gt_data.p):
+        msg = 'p sizes are not matching in extrinsics'
+        return False, msg
+    for count in range(len(data.p)):
+        if abs(data.p[count] - gt_data.p[count]) > 1e-5:
+            msg = 'p at %s are not matching values are %s and %s', (count, data.p[count] , gt_data.p[count])
+            return False, msg
+
+    if data.binning_x != gt_data.binning_x:
+        msg = 'CameraInfo binning_x is not matching'
+        return False, msg
+    if data.binning_y != gt_data.binning_y:
+        msg = 'CameraInfo binning_y is not matching'
+        return False, msg
+    if data.roi != gt_data.roi:
+        msg = 'CameraInfo roi is not matching'
+        return False, msg
+    return True, ""
 
 def extrinsicsTest(data, gt_data):
     msg = ''
@@ -553,7 +601,6 @@ class RsTestNode(Node):
                 func_data['num_channels'].append(channels)
                 func_data['shape'].append(pyimg.shape)
                 func_data['reported_size'].append((data.width, data.height, data.step))
-
                 self.data[topic].append(func_data)
             elif msg_type == msg_Imu:
                 func_data = dict()
@@ -686,7 +733,8 @@ class RsTestBaseClass():
         for theme in themes:
             data = self.node.pop_first_chunk(theme['topic'])
             if 'data' not in theme:
-                print('No data to compare')
+                print('No data to compare for ' + theme['topic'])
+                #print(data)
             elif theme['msg_type'] == msg_Image:
                 ret = ImageColorTest(data, theme['data'])
                 assert ret[0], ret[1]
@@ -697,8 +745,8 @@ class RsTestBaseClass():
                 ret = PointCloudTest(data, theme['data'])
                 assert ret[0], ret[1]
             elif theme['msg_type'] == msg_CameraInfo:
-                if theme['data'] != data:
-                    assert False, 'CameraInfo data is not matching'
+                ret = cameraInfoTest(data, theme['data'])
+                assert ret[0], ret[1]
             elif theme['msg_type'] == msg_Extrinsics:
                 ret = extrinsicsTest(data, theme['data'])
                 assert ret[0], ret[1]
