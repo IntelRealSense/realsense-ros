@@ -68,12 +68,6 @@ namespace realsense2_camera
 {
     typedef std::pair<rs2_stream, int> stream_index_pair;
 
-    const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA0, INFRA1, INFRA2,
-                                                          COLOR,
-                                                          FISHEYE,
-                                                          FISHEYE1, FISHEYE2};
-
-    const std::vector<stream_index_pair> HID_STREAMS = {GYRO, ACCEL, POSE};
     class image_publisher; // forward declaration
 
     class PipelineSyncer : public rs2::asynchronous_syncer
@@ -214,9 +208,6 @@ namespace realsense2_camera
         
         void publishFrame(rs2::frame f, const rclcpp::Time& t,
                           const stream_index_pair& stream,
-                          std::map<stream_index_pair, cv::Mat>& images,
-                          const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
-                          const std::map<stream_index_pair, std::shared_ptr<image_publisher>>& image_publishers,
                           const bool is_publishMetadata = true);
         void publishMetadata(rs2::frame f, const rclcpp::Time& header_time, const std::string& frame_id);
 
@@ -275,12 +266,12 @@ namespace realsense2_camera
         std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr> _imu_publishers;
         std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> _odom_publisher;
         std::shared_ptr<SyncedImuPublisher> _synced_imu_publisher;
-        std::map<unsigned int, int> _image_format;
-        std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr> _info_publisher;
+        std::map<unsigned int, int> _image_formats;
+        std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr> _info_publishers;
         std::map<stream_index_pair, rclcpp::Publisher<realsense2_camera_msgs::msg::Metadata>::SharedPtr> _metadata_publishers;
-        std::map<stream_index_pair, rclcpp::Publisher<IMUInfo>::SharedPtr> _imu_info_publisher;
+        std::map<stream_index_pair, rclcpp::Publisher<IMUInfo>::SharedPtr> _imu_info_publishers;
         std::map<stream_index_pair, rclcpp::Publisher<Extrinsics>::SharedPtr> _extrinsics_publishers;
-        std::map<stream_index_pair, cv::Mat> _image;
+        std::map<stream_index_pair, cv::Mat> _images;
         std::map<unsigned int, std::string> _encoding;
 
         std::map<stream_index_pair, sensor_msgs::msg::CameraInfo> _camera_info;
