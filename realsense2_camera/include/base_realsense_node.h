@@ -206,9 +206,14 @@ namespace realsense2_camera
 
         IMUInfo getImuInfo(const rs2::stream_profile& profile);
         
-        void publishFrame(rs2::frame f, const rclcpp::Time& t,
-                          const stream_index_pair& stream,
-                          const bool is_publishMetadata = true);
+        void publishFrame(rs2::frame f,
+            const rclcpp::Time& t,
+            const stream_index_pair& stream,
+            std::map<stream_index_pair, cv::Mat>& images,
+            const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
+            const std::map<stream_index_pair, std::shared_ptr<image_publisher>>& image_publishers,
+            const bool is_publishMetadata = true);
+
         void publishMetadata(rs2::frame f, const rclcpp::Time& header_time, const std::string& frame_id);
 
         sensor_msgs::msg::Imu CreateUnitedMessage(const CimuData accel_data, const CimuData gyro_data);
