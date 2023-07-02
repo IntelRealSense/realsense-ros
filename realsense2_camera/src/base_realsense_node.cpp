@@ -540,11 +540,11 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                 sent_depth_frame = true;
                 if (original_color_frame && _align_depth_filter->is_enabled())
                 {
-                    publishFrame(f, t, COLOR, false);
+                    publishFrame(f, t, COLOR, _depth_aligned_image, _depth_aligned_info_publisher, _depth_aligned_image_publishers, false);
                     continue;
                 }
             }
-            publishFrame(f, t, sip);
+            publishFrame(f, t, sip, _images, _info_publishers, _image_publishers);
         }
         if (original_depth_frame && _align_depth_filter->is_enabled())
         {
@@ -554,7 +554,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             else
                 frame_to_send = original_depth_frame;
                 
-            publishFrame(frame_to_send, t, DEPTH);
+            publishFrame(frame_to_send, t, DEPTH, _images, _info_publishers, _image_publishers);
         }
     }
     else if (frame.is<rs2::video_frame>())
@@ -572,7 +572,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                 clip_depth(frame, _clipping_distance);
             }
         }
-        publishFrame(frame, t, sip);
+        publishFrame(frame, t, sip, _images, _info_publishers, _image_publishers);
     }
     else if (frame.is<rs2::labeled_points>())
     {
@@ -887,9 +887,14 @@ IMUInfo BaseRealSenseNode::getImuInfo(const rs2::stream_profile& profile)
 }
 
 
-void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
-                                     const stream_index_pair& stream,
-                                     const bool is_publishMetadata)
+void BaseRealSenseNode::publishFrame(
+    rs2::frame f,
+    const rclcpp::Time& t,
+    const stream_index_pair& stream,
+    std::map<stream_index_pair, cv::Mat>& images,
+    const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
+    const std::map<stream_index_pair, std::shared_ptr<image_publisher>>& image_publishers,
+    const bool is_publishMetadata)
 {
     ROS_DEBUG("publishFrame(...)");
     unsigned int width = 0;
@@ -902,7 +907,7 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         height = timage.get_height();
         bpp = timage.get_bytes_per_pixel();
     }
-    auto& image = _images[stream];
+    auto& image = images[stream];
 
     if (image.size() != cv::Size(width, height) || image.depth() != _image_formats[bpp])
     {
@@ -916,9 +921,9 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     }
 
     // if stream is on, and is not a SC stream, publish cameraInfo
-    if(shouldPublishCameraInfo(stream) && _info_publishers.find(stream) != _info_publishers.end())
+    if(shouldPublishCameraInfo(stream) && info_publishers.find(stream) != info_publishers.end())
     {
-        auto& info_publisher = _info_publishers.at(stream);
+        auto& info_publisher = info_publishers.at(stream);
         if(0 != info_publisher->get_subscription_count())
         {
             auto& cam_info = _camera_info.at(stream);
@@ -932,9 +937,9 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         }
     }
 
-    if (_image_publishers.find(stream) != _image_publishers.end())
+    if (image_publishers.find(stream) != image_publishers.end())
     {
-        auto &image_publisher = _image_publishers.at(stream);
+        auto &image_publisher = image_publishers.at(stream);
         if (0 != image_publisher->get_subscription_count())
         {
             // Prepare image topic to be published
