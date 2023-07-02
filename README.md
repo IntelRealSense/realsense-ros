@@ -11,9 +11,8 @@
 
 
 [![rolling][rolling-badge]][rolling]
+[![iron][iron-badge]][iron]
 [![humble][humble-badge]][humble]
-[![foxy][foxy-badge]][foxy]
-[![galactic][galactic-badge]][galactic]
 [![ubuntu22][ubuntu22-badge]][ubuntu22]
 [![ubuntu20][ubuntu20-badge]][ubuntu20]
 
@@ -89,10 +88,8 @@
   </summary>
   
 - #### Ubuntu 22.04:
+  - [ROS2 Iron](https://docs.ros.org/en/iron/Installation/Ubuntu-Install-Debians.html)
   - [ROS2 Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html)
-- #### Ubuntu 20.04: 
-  - [ROS2 Foxy](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)
-  - [ROS2 Galactic](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html) (deprecated)
     
 </details>
   
@@ -156,7 +153,7 @@
 
   -  Source environment
    ```bash
-   ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: humble, galactic, foxy
+   ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: iron, humble
    source /opt/ros/$ROS_DISTRO/setup.bash
    cd ~/ros2_ws
    . install/local_setup.bash
@@ -466,11 +463,11 @@ Each of the above filters have it's own parameters, following the naming convent
   Efficient intra-process communication:
 </h3>
   
-Our ROS2 Wrapper node supports zero-copy communications if loaded in the same process as a subscriber node. This can reduce copy times on image topics (not point-cloud or others), especially with big frame resolutions and high FPS.
+Our ROS2 Wrapper node supports zero-copy communications if loaded in the same process as a subscriber node. This can reduce copy times on image/pointcloud topics, especially with big frame resolutions and high FPS.
 
 You will need to launch a component container and launch our node as a component together with other component nodes. Further details on "Composing multiple nodes in a single process" can be found [here](https://docs.ros.org/en/rolling/Tutorials/Composition.html).
 
-Further details on efficient intra-process communication can be found [here](https://docs.ros.org/en/foxy/Tutorials/Intra-Process-Communication.html#efficient-intra-process-communication).
+Further details on efficient intra-process communication can be found [here](https://docs.ros.org/en/humble/Tutorials/Intra-Process-Communication.html#efficient-intra-process-communication).
 
   ### Example
 #### Manually loading multiple components into the same process
@@ -513,10 +510,8 @@ ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comm
 [rolling]: https://docs.ros.org/en/rolling/index.html
 [humble-badge]: https://img.shields.io/badge/-HUMBLE-orange?style=flat-square&logo=ros
 [humble]: https://docs.ros.org/en/humble/index.html
-[foxy-badge]: https://img.shields.io/badge/-FOXY-orange?style=flat-square&logo=ros
-[foxy]: https://docs.ros.org/en/foxy/index.html
-[galactic-badge]: https://img.shields.io/badge/-GALACTIC-orange?style=flat-square&logo=ros
-[galactic]: https://docs.ros.org/en/galactic/index.html
+[iron-badge]: https://img.shields.io/badge/-IRON-orange?style=flat-square&logo=ros
+[iron]: https://docs.ros.org/en/iron/index.html
 [ubuntu22-badge]: https://img.shields.io/badge/-UBUNTU%2022%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
 [ubuntu22]: https://releases.ubuntu.com/jammy/
 [ubuntu20-badge]: https://img.shields.io/badge/-UBUNTU%2020%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white

@@ -23,9 +23,9 @@
 
 """Launch realsense2_camera node."""
 import copy
-from launch import LaunchDescription
+from launch import LaunchDescription, LaunchContext
 import launch_ros.actions
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, OpaqueFunction
 from launch.substitutions import LaunchConfiguration, ThisLaunchFileDir
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 import sys
@@ -47,6 +47,16 @@ def duplicate_params(general_params, posix):
         param['name'] += posix
     return local_params
     
+def add_node_action(context : LaunchContext):
+    # dummy static transformation from camera1 to camera2
+    node = launch_ros.actions.Node(
+            package = "tf2_ros",
+            executable = "static_transform_publisher",
+            arguments = ["0", "0", "0", "0", "0", "0",
+                          context.launch_configurations['camera_name1'] + "_link",
+                          context.launch_configurations['camera_name2'] + "_link"]
+    )
+    return [node]
 
 def generate_launch_description():
     params1 = duplicate_params(rs_launch.configurable_parameters, '1')
@@ -64,10 +74,5 @@ def generate_launch_description():
             PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/rs_launch.py']),
             launch_arguments=set_configurable_parameters(params2).items(),
         ),
-        # dummy static transformation from camera1 to camera2
-        launch_ros.actions.Node(
-            package = "tf2_ros",
-            executable = "static_transform_publisher",
-            arguments = ["0", "0", "0", "0", "0", "0", "camera1_link", "camera2_link"]
-        ),
+        OpaqueFunction(function=add_node_action)
     ])

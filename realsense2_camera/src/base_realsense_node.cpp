@@ -122,9 +122,9 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
         ROS_INFO("Intra-Process communication enabled");
     }
 
-    _image_format[1] = CV_8UC1;    // CVBridge type
-    _image_format[2] = CV_16UC1;    // CVBridge type
-    _image_format[3] = CV_8UC3;    // CVBridge type
+    _image_formats[1] = CV_8UC1;    // CVBridge type
+    _image_formats[2] = CV_16UC1;    // CVBridge type
+    _image_formats[3] = CV_8UC3;    // CVBridge type
     _encoding[1] = sensor_msgs::image_encodings::MONO8; // ROS message type
     _encoding[2] = sensor_msgs::image_encodings::TYPE_16UC1; // ROS message type
     _encoding[3] = sensor_msgs::image_encodings::RGB8; // ROS message type
@@ -197,14 +197,15 @@ void BaseRealSenseNode::setupFilters()
         }
         _cv_mpc.notify_one();
     };
-    _align_depth_filter = std::make_shared<AlignDepthFilter>(std::make_shared<rs2::align>(RS2_STREAM_COLOR), update_align_depth_func, _parameters, _logger);
-    _filters.push_back(_align_depth_filter);
 
     _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::colorizer>(), _parameters, _logger); 
     _filters.push_back(_colorizer_filter);
 
     _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::pointcloud>(), _node, _parameters, _logger);
     _filters.push_back(_pc_filter);
+
+    _align_depth_filter = std::make_shared<AlignDepthFilter>(std::make_shared<rs2::align>(RS2_STREAM_COLOR), update_align_depth_func, _parameters, _logger);
+    _filters.push_back(_align_depth_filter);
 }
 
 cv::Mat& BaseRealSenseNode::fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image)
@@ -221,7 +222,7 @@ cv::Mat& BaseRealSenseNode::fix_depth_scale(const cv::Mat& from_image, cv::Mat& 
         to_image.create(from_image.rows, from_image.cols, from_image.type());
     }
 
-    CV_Assert(from_image.depth() == _image_format[2]);
+    CV_Assert(from_image.depth() == _image_formats[2]);
 
     int nRows = from_image.rows;
     int nCols = from_image.cols;
@@ -501,9 +502,9 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             clip_depth(original_depth_frame, _clipping_distance);
         }
 
-        rs2::video_frame original_color_frame = frameset.get_color_frame();
-        
+        rs2::video_frame original_color_frame = frameset.get_color_frame();        
         publishRGBD(original_depth_frame, original_color_frame, t);
+
         ROS_DEBUG("num_filters: %d", static_cast<int>(_filters.size()));
         for (auto filter_it : _filters)
         {
@@ -534,27 +535,17 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             {
                 publishPointCloud(f.as<rs2::points>(), t, frameset);
             }
-            else
+            if (stream_type == RS2_STREAM_DEPTH)
             {
-                if (stream_type == RS2_STREAM_DEPTH)
+                if (sent_depth_frame) continue;
+                sent_depth_frame = true;
+                if (original_color_frame && _align_depth_filter->is_enabled())
                 {
-                    if (sent_depth_frame) continue;
-                    sent_depth_frame = true;
-                    if (_align_depth_filter->is_enabled())
-                    {
-                        publishFrame(f, t, COLOR,
-                            _depth_aligned_image,
-                            _depth_aligned_info_publisher,
-                            _depth_aligned_image_publishers,
-                            false);
-                        continue;
-                    }
+                    publishFrame(f, t, COLOR, false);
+                    continue;
                 }
-                publishFrame(f, t, sip,
-                    _image,
-                    _info_publisher,
-                    _image_publishers);
             }
+            publishFrame(f, t, sip);
         }
         if (original_depth_frame && _align_depth_filter->is_enabled())
         {
@@ -564,11 +555,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             else
                 frame_to_send = original_depth_frame;
                 
-            publishFrame(frame_to_send, t,
-                        DEPTH,
-                        _image,
-                        _info_publisher,
-                        _image_publishers);
+            publishFrame(frame_to_send, t, DEPTH);
         }
     }
     else if (frame.is<rs2::video_frame>())
@@ -586,11 +573,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                 clip_depth(frame, _clipping_distance);
             }
         }
-        publishFrame(frame, t,
-                    sip,
-                    _image,
-                    _info_publisher,
-                    _image_publishers);
+        publishFrame(frame, t, sip);
     }
     else if (frame.is<rs2::labeled_points>())
     {
@@ -907,9 +890,6 @@ IMUInfo BaseRealSenseNode::getImuInfo(const rs2::stream_profile& profile)
 
 void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
                                      const stream_index_pair& stream,
-                                     std::map<stream_index_pair, cv::Mat>& images,
-                                     const std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>& info_publishers,
-                                     const std::map<stream_index_pair, std::shared_ptr<image_publisher>>& image_publishers,
                                      const bool is_publishMetadata)
 {
     ROS_DEBUG("publishFrame(...)");
@@ -923,11 +903,11 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         height = timage.get_height();
         bpp = timage.get_bytes_per_pixel();
     }
-    auto& image = images[stream];
+    auto& image = _images[stream];
 
-    if (image.size() != cv::Size(width, height) || image.depth() != _image_format[bpp])
+    if (image.size() != cv::Size(width, height) || image.depth() != _image_formats[bpp])
     {
-        image.create(height, width, _image_format[bpp]);
+        image.create(height, width, _image_formats[bpp]);
     }
     image.data = (uint8_t*)f.get_data();
 
@@ -937,9 +917,9 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
     }
 
     // if stream is on, and is not a SC stream, publish cameraInfo
-    if(shouldPublishCameraInfo(stream) && info_publishers.find(stream) != info_publishers.end())
+    if(shouldPublishCameraInfo(stream) && _info_publishers.find(stream) != _info_publishers.end())
     {
-        auto& info_publisher = info_publishers.at(stream);
+        auto& info_publisher = _info_publishers.at(stream);
         if(0 != info_publisher->get_subscription_count())
         {
             auto& cam_info = _camera_info.at(stream);
@@ -953,9 +933,9 @@ void BaseRealSenseNode::publishFrame(rs2::frame f, const rclcpp::Time& t,
         }
     }
 
-    if (image_publishers.find(stream) != image_publishers.end())
+    if (_image_publishers.find(stream) != _image_publishers.end())
     {
-        auto &image_publisher = image_publishers.at(stream);
+        auto &image_publisher = _image_publishers.at(stream);
         if (0 != image_publisher->get_subscription_count())
         {
             // Prepare image topic to be published

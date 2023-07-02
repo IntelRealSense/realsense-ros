@@ -2,6 +2,14 @@
 Changelog for package realsense2_camera_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+4.54.1 (2023-06-27)
+-------------------
+* add info about extrinsic msg format in Extrinsics.msg and README.md
+* Expose USB port in DeviceInfo service
+* Fix Apache License Header and Intel Copyrights
+* apply copyrights and license on project
+* Contributors: Arun Prasad, Nir Azkiel, SamerKhshiboun, Stephan Wirth
+
 4.51.1 (2022-09-13)
 -------------------
 * Add copyright and license to all ROS2-beta source files
