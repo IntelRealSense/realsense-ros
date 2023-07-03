@@ -87,11 +87,11 @@ This test was ported from rs2_test.py
 the command used to run is "python3 realsense2_camera/scripts/rs2_test.py accel_up_1"
 '''
 @pytest.mark.rosbag
-@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_accel],indirect=True)
-@pytest.mark.launch(fixture=launch_descr_with_parameters)
+@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_accel],indirect=True)
+@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
 class TestAccelUp1(pytest_rs_utils.RsTestBaseClass):
-    def test_accel_up_1(self,launch_descr_with_parameters):
-        params = launch_descr_with_parameters[1]
+    def test_accel_up_1(self,delayed_launch_descr_with_parameters):
+        params = delayed_launch_descr_with_parameters[1]
         data = pytest_rs_utils.AccelGetDataDeviceStandStraight(params["rosbag_filename"])
         themes = [
         {'topic':'/'+params['camera_name']+'/accel/sample',

@@ -761,5 +761,5 @@ class RsTestBaseClass():
     def shutdown(self):
         #if self.node == None: 
         #    self.node.destroy_node()
-        #rclpy.shutdown()
+        rclpy.shutdown()
         pass
