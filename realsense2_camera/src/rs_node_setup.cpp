@@ -223,8 +223,10 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 
         if (profile.is<rs2::video_stream_profile>())
         {
-            _is_depth_enabled |= profile.stream_type() == RS2_STREAM_DEPTH;
-            _is_color_enabled |= profile.stream_type() == RS2_STREAM_COLOR;
+            if(profile.stream_type() == RS2_STREAM_COLOR)
+                _is_color_enabled = true;
+            else if (profile.stream_type() == RS2_STREAM_DEPTH)
+                _is_depth_enabled = true;
 
             if (profile.stream_type() != RS2_STREAM_LABELED_POINT_CLOUD)
             {
@@ -279,11 +281,6 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                     _depth_aligned_info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(),
                                                       rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
                 }
-
-                if(_enable_rgbd && sip == COLOR)
-                {
-                    startRGBDPublisher(qos, info_qos);
-                }
             }
             else {
 
@@ -332,26 +329,23 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
     }
 }
 
-void BaseRealSenseNode::startRGBDPublisher(rmw_qos_profile_t qos, rmw_qos_profile_t info_qos)
+void BaseRealSenseNode::startRGBDPublisherIfNeeded()
 {
     _rgbd_publisher.reset();
-    if(!_rgbd_publisher)
+    if(_enable_rgbd && !_rgbd_publisher)
     {
-        if(!_sync_frames)
-            ROS_ERROR("!_sync_frames");
-        if(!_is_color_enabled)
-            ROS_ERROR("!is_color_enabled");
-        if(!_is_depth_enabled)
-            ROS_ERROR("!is_depth_enabled");
         if (_sync_frames && _is_color_enabled && _is_depth_enabled)
         {
+            rmw_qos_profile_t qos = rmw_qos_profile_system_default;
+
             rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
             options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
             _rgbd_publisher = _node.create_publisher<realsense2_camera_msgs::msg::RGBD>("rgbd",
-                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), info_qos), std::move(options));
+                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos), std::move(options));
         }
         else {
-            ROS_ERROR("In order to get rgbd stream enabled, you should enable sync mode and enable both depth and color streams");
+            ROS_ERROR("In order to get rgbd topic enabled, "\
+             "you should enable: color stream, depth stream, sync_mode and align_depth");
         }
     }
 }
@@ -417,6 +411,7 @@ void BaseRealSenseNode::updateSensors()
             std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
             publishStaticTransforms();
         }
+        startRGBDPublisherIfNeeded();
     }
     catch(const std::exception& ex)
     {

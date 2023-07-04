@@ -47,7 +47,14 @@ void BaseRealSenseNode::getParameters()
     _parameters_names.push_back(param_name);
 
     param_name = std::string("enable_rgbd");
-    _parameters->setParamT(param_name, _enable_rgbd);
+    _parameters->setParamT(param_name, _enable_rgbd, [this](const rclcpp::Parameter& )
+    {
+        {
+            std::lock_guard<std::mutex> lock_guard(_profile_changes_mutex);
+            _is_profile_changed = true;
+        }
+        _cv_mpc.notify_one();
+    });
     _parameters_names.push_back(param_name);
 
     param_name = std::string("json_file_path");

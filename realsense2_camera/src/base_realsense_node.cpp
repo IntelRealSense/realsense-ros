@@ -112,6 +112,8 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _camera_time_base(0),
     _sync_frames(SYNC_FRAMES),
     _enable_rgbd(ENABLE_RGBD),
+    _is_color_enabled(false),
+    _is_depth_enabled(false),
     _pointcloud(false),
     _publish_odom_tf(false),
     _imu_sync_method(imu_sync_method::NONE),
@@ -558,8 +560,8 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
 
             if(_enable_rgbd)
             {
-                publishRGBD(_depth_aligned_image[COLOR], _images[COLOR], t);
-            }
+                publishRGBD(_images[COLOR], _depth_aligned_image[COLOR], t);
+            }  
         }
     }
     else if (frame.is<rs2::video_frame>())
@@ -891,16 +893,15 @@ IMUInfo BaseRealSenseNode::getImuInfo(const rs2::stream_profile& profile)
     return info;
 }
 
-sensor_msgs::msg::Image::UniquePtr BaseRealSenseNode::getImageMsgPtr(
-    cv::Mat& cv_matrix_image,
+void BaseRealSenseNode::fillMessageImage(
+    const cv::Mat& cv_matrix_image,
     const stream_index_pair& stream,
     unsigned int width,
     unsigned int height,
     unsigned int bpp,
-    const rclcpp::Time& t)
+    const rclcpp::Time& t,
+    sensor_msgs::msg::Image* img_msg_ptr)
 {
-    sensor_msgs::msg::Image::UniquePtr img_msg_ptr(new sensor_msgs::msg::Image());
-
     // Convert the CV::Mat into a ROS image message (1 copy is done here)
     cv_bridge::CvImage(std_msgs::msg::Header(), _encoding.at(bpp), cv_matrix_image).toImageMsg(*img_msg_ptr);
 
@@ -911,8 +912,6 @@ sensor_msgs::msg::Image::UniquePtr BaseRealSenseNode::getImageMsgPtr(
     img_msg_ptr->width = width;
     img_msg_ptr->is_bigendian = false;
     img_msg_ptr->step = width * bpp;
-
-    return img_msg_ptr;
 }
 
 cv::Mat& BaseRealSenseNode::getCVMatImage(
@@ -964,13 +963,27 @@ void BaseRealSenseNode::publishFrame(
     if (image_publishers.find(stream) != image_publishers.end())
     {
         auto &image_publisher = image_publishers.at(stream);
+        cv::Mat image_cv_matrix;
+
+        // if rgbd has subscribers we fetch the CV image here
+        if (_rgbd_publisher && 0 != _rgbd_publisher->get_subscription_count())
+        {
+            image_cv_matrix = getCVMatImage(f, images, width, height, bpp, stream);
+        }
+
+        // if depth/color has subscribers, ask first if rgbd already fetched
+        // the images from the frame. if not, fetch the relevant color/depth image.
         if (0 != image_publisher->get_subscription_count())
         {
-            auto& image_cv_matrix = getCVMatImage(f, images, width, height, bpp, stream);
+            if(image_cv_matrix.empty())
+            {
+                image_cv_matrix = getCVMatImage(f, images, width, height, bpp, stream);
+            }
 
             // Prepare image topic to be published
             // We use UniquePtr for allow intra-process publish when subscribers of that type are available
-            sensor_msgs::msg::Image::UniquePtr img_msg_ptr = getImageMsgPtr(image_cv_matrix, stream, width, height, bpp, t);
+            sensor_msgs::msg::Image::UniquePtr img_msg_ptr(new sensor_msgs::msg::Image());
+            fillMessageImage(image_cv_matrix, stream, width, height, bpp, t, img_msg_ptr.get());
             if (!img_msg_ptr)
             {
                 ROS_ERROR("sensor image message allocation failed, frame was dropped");
@@ -988,50 +1001,71 @@ void BaseRealSenseNode::publishFrame(
     if(shouldPublishCameraInfo(stream) && info_publishers.find(stream) != info_publishers.end())
     {
         auto& info_publisher = info_publishers.at(stream);
-        if(0 != info_publisher->get_subscription_count())
+
+        // If rgbd has subscribers, get the camera info of color/detph sensors from _camera_info map.
+        // We need this camera info to fill the rgbd msg, regardless if there subscribers to depth/color camera info.
+        // We are not publishing this cam_info here, but will be published by rgbd publisher.
+        if (_rgbd_publisher && 0 != _rgbd_publisher->get_subscription_count())
         {
             auto& cam_info = _camera_info.at(stream);
+
+            // Fix the camera info if needed, usually only in the first time
+            // when we init this object in the _camera_info map
             if (cam_info.width != width)
             {
                 updateStreamCalibData(f.get_profile().as<rs2::video_stream_profile>());
             }
             cam_info.header.stamp = t;
+        }
 
+        // If depth/color camera info has subscribers get camera info from _camera_info map,
+        // and publish this msg.
+        if(0 != info_publisher->get_subscription_count())
+        {
+            auto& cam_info = _camera_info.at(stream);
+
+            // Fix the camera info if needed, usually only in the first time
+            // when we init this object in the _camera_info map
+            if (cam_info.width != width)
+            {
+                updateStreamCalibData(f.get_profile().as<rs2::video_stream_profile>());
+            }
+            cam_info.header.stamp = t;
             info_publisher->publish(cam_info);
         }
     }
-
     if (is_publishMetadata)
     {
         publishMetadata(f, t, OPTICAL_FRAME_ID(stream));
     }
 }
 
-void BaseRealSenseNode::publishRGBD(cv::Mat& depth_cv_matrix, cv::Mat& video_cv_matrix, const rclcpp::Time& t)
+
+void BaseRealSenseNode::publishRGBD(const cv::Mat& rgb_cv_matrix, const cv::Mat& depth_cv_matrix, const rclcpp::Time& t)
 {
     if (_rgbd_publisher && 0 != _rgbd_publisher->get_subscription_count())
     {
-        ROS_DEBUG_STREAM("Publishinig RGBD message");
-        unsigned int width = video_cv_matrix.size().width;
-        unsigned int height = video_cv_matrix.size().height;
-        unsigned int bpp = video_cv_matrix.elemSize();
+        ROS_DEBUG_STREAM("Publishing RGBD message");
+        unsigned int rgb_width = rgb_cv_matrix.size().width;
+        unsigned int rgb_height = rgb_cv_matrix.size().height;
+        unsigned int rgb_bpp = rgb_cv_matrix.elemSize();
+        unsigned int depth_width = depth_cv_matrix.size().width;
+        unsigned int depth_height = depth_cv_matrix.size().height;
+        unsigned int depth_bpp = depth_cv_matrix.elemSize();
 
-        sensor_msgs::msg::Image::UniquePtr video_msg_ptr = getImageMsgPtr(video_cv_matrix, COLOR, width, height, bpp, t);
-        sensor_msgs::msg::Image::UniquePtr depth_msg_ptr = getImageMsgPtr(depth_cv_matrix, DEPTH, width, height, bpp, t);
+        realsense2_camera_msgs::msg::RGBD::UniquePtr msg(new realsense2_camera_msgs::msg::RGBD());
 
-        if (!depth_msg_ptr || !video_msg_ptr)
-        {
-            ROS_ERROR("sensor image message allocation failed, frame was dopped");
-            return;
-        }
+        fillMessageImage(rgb_cv_matrix, COLOR, rgb_width, rgb_height, rgb_bpp, t, &msg->rgb);
+        fillMessageImage(depth_cv_matrix, DEPTH, depth_width, depth_height, depth_bpp, t, &msg->depth);
 
-        realsense2_camera_msgs::msg::RGBD msg;
-        msg.rgb = *video_msg_ptr;
-        msg.depth = *depth_msg_ptr;
+        msg->header.frame_id = "camera_rgbd_optical_frame";
+        msg->header.stamp = t;
 
-        auto& cam_info = _camera_info.at(COLOR);
-        cam_info.header.stamp = t;
-        msg.camera_info = cam_info;
+        auto rgb_camera_info = _camera_info.at(COLOR);
+        msg->rgb_camera_info = rgb_camera_info;
+
+        auto depth_camera_info = _camera_info.at(DEPTH);
+        msg->depth_camera_info = depth_camera_info;
 
         _rgbd_publisher->publish(std::move(msg));
     }
