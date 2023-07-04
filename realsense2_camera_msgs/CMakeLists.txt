@@ -30,7 +30,6 @@ find_package(builtin_interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
-
 set(msg_files
   "msg/IMUInfo.msg"
   "msg/Extrinsics.msg"
