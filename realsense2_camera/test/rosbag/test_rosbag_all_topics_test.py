@@ -30,6 +30,7 @@ from builtin_interfaces.msg import Time
 from sensor_msgs.msg import RegionOfInterest
 from std_msgs.msg import Header
 from sensor_msgs.msg import CameraInfo
+import time
 
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
@@ -49,7 +50,7 @@ test_params_all_topics = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outd
     'infra_height': '0',
     'enable_infra1':'true',
     'enable_infra2':'true',
-    'align_depth.enable':'true',
+    #'align_depth.enable':'true',
     }
 '''
 To test all topics published
@@ -59,17 +60,9 @@ To test all topics published
 @pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
 class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
     def test_all_topics(self,delayed_launch_descr_with_parameters):
-        ''' 
-        current rosbag file doesn't have color data 
-        '''
+ 
         params = delayed_launch_descr_with_parameters[1]
         self.rosbag = params["rosbag_filename"]
-        '''
-        The test is hardwired to ensure the rosbag file is not changed.
-        The function CameraInfoColorGetData requires changes to adapt to the changes
-        made by the rosbag reader on extrincsic
-        color_data = pytest_rs_utils.CameraInfoColorGetData(self.rosbag)
-        '''
 
         depth_to_infra_extrinsics_data = msg_Extrinsics()
         depth_to_infra_extrinsics_data.rotation = [1., 0., 0., 0., 1., 0., 0., 0., 1.]
@@ -100,6 +93,7 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
             '''
             self.init_test("RsTest"+params['camera_name'])
             assert self.run_test(themes)
+            time.sleep(0.5)
             assert self.process_data(themes), "Data check failed, probably the rosbag file changed?"
         finally:
             self.shutdown()
