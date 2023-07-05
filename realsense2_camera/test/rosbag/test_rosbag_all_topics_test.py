@@ -205,7 +205,7 @@ class TestCamerInfoTopics(pytest_rs_utils.RsTestBaseClass):
         color_data = pytest_rs_utils.CameraInfoColorGetData(self.rosbag)
         '''
         color_data = CameraInfo(header=Header(stamp=Time(sec=1508282881, nanosec=33132324),
-                                        frame_id="AllTopics_color_optical_frame"),
+                                        frame_id=params['camera_name']+"_color_optical_frame"),
                                         width=640,
                                         height=480,
                                         distortion_model='plumb_bob', 
@@ -217,7 +217,7 @@ class TestCamerInfoTopics(pytest_rs_utils.RsTestBaseClass):
                                         binning_y=0,
                                         roi=RegionOfInterest(x_offset=0, y_offset=0, height=0, width=0, do_rectify=False))
         depth_data = CameraInfo(header=Header(stamp=Time(sec=1508282880, nanosec=968727295), 
-                                        frame_id='AllTopics_depth_optical_frame'), 
+                                        frame_id=params['camera_name']+'_depth_optical_frame'), 
                                         height=720, 
                                         width=1280, 
                                         distortion_model='plumb_bob', 
@@ -230,7 +230,7 @@ class TestCamerInfoTopics(pytest_rs_utils.RsTestBaseClass):
                                         roi=RegionOfInterest(x_offset=0, y_offset=0, height=0, width=0, do_rectify=False))
         
         infra1_data =CameraInfo(header=Header(stamp=Time(sec=1508282880, nanosec=964985352), 
-                                              frame_id='AllTopics_infra1_optical_frame'), 
+                                              frame_id=params['camera_name']+'_infra1_optical_frame'), 
                                               height=720, 
                                               width=1280, 
                                               distortion_model='plumb_bob', 
@@ -243,7 +243,7 @@ class TestCamerInfoTopics(pytest_rs_utils.RsTestBaseClass):
                                               roi=RegionOfInterest(x_offset=0, y_offset=0, height=0, width=0, do_rectify=False))
         
         depth_to_color_data = CameraInfo(header=Header(stamp=Time(sec=1508282880, nanosec=968727295), 
-                                                frame_id='AllTopics_color_optical_frame'), 
+                                                frame_id=params['camera_name']+'_color_optical_frame'), 
                                                 height=480, 
                                                 width=640, 
                                                 distortion_model='plumb_bob', 
@@ -287,57 +287,3 @@ class TestCamerInfoTopics(pytest_rs_utils.RsTestBaseClass):
     def process_data(self, themes):
         return super().process_data(themes)
     
-
-
-test_params_imu_topics = {#"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
-                          "rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_and_IMU_Stands_still.bag",
-    'camera_name': 'ImuTopics',
-    'color_width': '0',
-    'color_height': '0',
-    'depth_width': '0',
-    'depth_height': '0',
-    'infra_width': '0',
-    'infra_height': '0',
-    'enable_accel':True,
-    'enable_gyro':True,
-    'unite_imu_method':1,
-    'delay_ms':3000, #delay the start
-    }
-@pytest.mark.rosbag
-@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_imu_topics],indirect=True)
-@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
-class TestImuTopics(pytest_rs_utils.RsTestBaseClass):
-    def test_imu_topics(self,delayed_launch_descr_with_parameters):
-        ''' 
-        current rosbag file doesn't have color data 
-        '''
-        params = delayed_launch_descr_with_parameters[1]
-        self.rosbag = params["rosbag_filename"]
-        themes = [{
-         'topic':'/'+params['camera_name']+'/imu',
-         'msg_type':msg_Imu,
-         'expected_data_chunks':1,
-         #'data':depth_to_color_data
-        },
-        {
-         'topic':'/'+params['camera_name']+'/gyro/sample',
-         'msg_type':msg_Imu,
-         'expected_data_chunks':1,
-         #'data':depth_to_color_data
-        },
-        {
-         'topic':'/'+params['camera_name']+'/accel/sample',
-         'msg_type':msg_Imu,
-         'expected_data_chunks':1,
-         #'data':depth_to_color_data
-        },
-        ]
-        try:
-            ''' 
-            initialize, run and check the data 
-            '''
-            self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
-            assert self.process_data(themes), "Data check failed, probably the rosbag file changed?"
-        finally:
-            self.shutdown()

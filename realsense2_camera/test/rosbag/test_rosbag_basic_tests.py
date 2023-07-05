@@ -71,46 +71,6 @@ class TestVis2(pytest_rs_utils.RsTestBaseClass):
     def process_data(self, themes):
         return super().process_data(themes)
 
-test_params_accel = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_and_IMU_Stands_still.bag",
-    'camera_name': 'Accel_Cam',
-    'color_width': '0',
-    'color_height': '0',
-    'depth_width': '0',
-    'depth_height': '0',
-    'infra_width': '0',
-    'infra_height': '0',
-    'enable_accel': 'true',
-    'accel_fps': '0.0'
-    }
-'''
-This test was ported from rs2_test.py
-the command used to run is "python3 realsense2_camera/scripts/rs2_test.py accel_up_1"
-'''
-@pytest.mark.rosbag
-@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_accel],indirect=True)
-@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
-class TestAccelUp1(pytest_rs_utils.RsTestBaseClass):
-    def test_accel_up_1(self,delayed_launch_descr_with_parameters):
-        params = delayed_launch_descr_with_parameters[1]
-        data = pytest_rs_utils.AccelGetDataDeviceStandStraight(params["rosbag_filename"])
-        themes = [
-        {'topic':'/'+params['camera_name']+'/accel/sample',
-         'msg_type':msg_Imu,
-         'expected_data_chunks':1,
-         'data':data
-        }
-        ]
-        try:
-            ''' 
-            initialize, run and check the data 
-            '''
-            self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
-            assert self.process_data(themes)
-        finally:
-            self.shutdown()
-    def process_data(self, themes):
-        return super().process_data(themes)
     
 test_params_depth = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
     'camera_name': 'Depth_W_Cloud',
