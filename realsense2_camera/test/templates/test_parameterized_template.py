@@ -69,7 +69,8 @@ class TestCamera2(pytest_rs_utils.RsTestBaseClass):
         ]
         try:
             self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
+            ret = self.run_test(themes)
+            assert ret[0], ret[1]
             assert self.process_data(themes)
         finally:
             self.shutdown()

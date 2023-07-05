@@ -66,7 +66,8 @@ class TestDepthAvgDecimation1(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
+            ret = self.run_test(themes)
+            assert ret[0], ret[1]
             assert self.process_data(themes)
         finally:
             self.shutdown()
@@ -106,7 +107,8 @@ class TestDepthAvg1(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
+            ret = self.run_test(themes)
+            assert ret[0], ret[1]
             assert self.process_data(themes)
         finally:
             self.shutdown()
@@ -147,7 +149,8 @@ class TestDepthAvgDecimation1(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
+            ret = self.run_test(themes)
+            assert ret[0], ret[1]
             assert self.process_data(themes)
         finally:
             self.shutdown()
@@ -188,7 +191,8 @@ class TestPointsCloud1(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
+            ret = self.run_test(themes)
+            assert ret[0], ret[1]
             assert self.process_data(themes)
         finally:
             self.shutdown()

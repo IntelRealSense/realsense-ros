@@ -88,7 +88,8 @@ class TestDepthPointsCloud1(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
+            ret = self.run_test(themes)
+            assert ret[0], ret[1]
             assert self.process_data(themes)
         finally:
             self.shutdown()
@@ -136,7 +137,8 @@ class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
+            ret = self.run_test(themes)
+            assert ret[0], ret[1]
             assert self.process_data(themes)
         finally:
             self.shutdown()
@@ -212,7 +214,8 @@ class TestAlignDepthColor(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
+            ret = self.run_test(themes)
+            assert ret[0], ret[1]
             assert self.process_data(themes)
         finally:
             self.shutdown()
@@ -267,7 +270,8 @@ class TestAlignDepthInfra1(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
+            ret = self.run_test(themes)
+            assert ret[0], ret[1]
             assert self.process_data(themes)
         finally:
             self.shutdown()

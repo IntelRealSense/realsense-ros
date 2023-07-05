@@ -94,7 +94,7 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
             self.init_test("RsTest"+params['camera_name'])
             ret = self.run_test(themes)
             assert ret[0], ret[1]
-            #time.sleep(0.5)
+            time.sleep(0.5)
             assert self.process_data(themes), "Data check failed, probably the rosbag file changed?"
         finally:
             self.shutdown()
@@ -161,7 +161,8 @@ class TestMetaDataTopics(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
+            ret = self.run_test(themes)
+            assert ret[0], ret[1]
             assert self.process_data(themes), "Data check failed, probably the rosbag file changed?"
         finally:
             self.shutdown()
@@ -275,7 +276,8 @@ class TestCamerInfoTopics(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
+            ret = self.run_test(themes)
+            assert ret[0], ret[1]
             assert self.process_data(themes), "Data check failed, probably the rosbag file changed?"
         finally:
             self.shutdown()
