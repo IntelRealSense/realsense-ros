@@ -720,10 +720,12 @@ class RsTestBaseClass():
             print(exc_type, fname, exc_tb.tb_lineno)
             if hasattr(e, 'message'):
                 print(e.message)
+                self.flag =False,e.message
             else:
                 print(e)
-            self.flag =False
-        return self.flag[0]
+                self.flag =False,e
+            
+        return self.flag 
     '''
     Please override and use your own process_data if the default check is not suitable.
     Please also store_raw_data parameter in the themes as True, if you want the
