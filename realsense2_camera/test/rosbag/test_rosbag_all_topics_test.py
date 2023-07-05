@@ -70,6 +70,86 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
         made by the rosbag reader on extrincsic
         color_data = pytest_rs_utils.CameraInfoColorGetData(self.rosbag)
         '''
+
+        depth_to_infra_extrinsics_data = msg_Extrinsics()
+        depth_to_infra_extrinsics_data.rotation = [1., 0., 0., 0., 1., 0., 0., 0., 1.]
+        depth_to_infra_extrinsics_data.translation =[-0., -0., -0.]
+
+        depth_to_color_extrinsics_data = msg_Extrinsics()
+        depth_to_color_extrinsics_data.rotation=array('f',[ 0.99999666,  0.00166541,  0.00198587, -0.00166956,  0.99999642,
+                        0.00208678, -0.00198239, -0.00209009,  0.99999583])
+        depth_to_color_extrinsics_data.translation=array('f',[ 0.01484134, -0.00020221,  0.00013059])
+
+        color_metadata = msg_Metadata()
+        color_metadata.json_data = '{"frame_number":39,"clock_domain":"system_time","frame_timestamp":1508282881033.132324,"frame_counter":-8134432827560165376,"time_of_arrival":1508282881033}'
+
+        depth_metadata = msg_Metadata()
+        depth_metadata.json_data ='{"frame_number":13048,"clock_domain":"system_time","frame_timestamp":1508282880968.727295,"frame_counter":-327065418902536192,"time_of_arrival":1508282880968}'
+        infra1_metadata = msg_Metadata()
+        infra1_metadata.json_data ='{"frame_number":10938,"clock_domain":"system_time","frame_timestamp":1508282880964.985352,"frame_counter":0,"time_of_arrival":1508282880964}'
+
+        themes = [
+        {
+         'topic':'/'+params['camera_name']+'/color/metadata',
+         'msg_type':msg_Metadata,
+         'expected_data_chunks':1,
+         'data':color_metadata
+        },
+        {
+         'topic':'/'+params['camera_name']+'/depth/metadata',
+         'msg_type':msg_Metadata,
+         'expected_data_chunks':1,
+         'data':depth_metadata
+        },
+        {
+         'topic':'/'+params['camera_name']+'/infra1/metadata',
+         'msg_type':msg_Metadata,
+         'expected_data_chunks':1,
+         'data':infra1_metadata
+        },
+        {
+         'topic':'/'+params['camera_name']+'/extrinsics/depth_to_color',
+         'msg_type':msg_Extrinsics,
+         'expected_data_chunks':1,
+         'data':depth_to_color_extrinsics_data
+        },
+        {
+         'topic':'/'+params['camera_name']+'/extrinsics/depth_to_infra1',
+         'msg_type':msg_Extrinsics,
+         'expected_data_chunks':1,
+         'data':depth_to_infra_extrinsics_data
+        },
+        ]
+        try:
+            ''' 
+            initialize, run and check the data 
+            '''
+            self.init_test("RsTest"+params['camera_name'])
+            assert self.run_test(themes)
+            assert self.process_data(themes), "Data check failed, probably the rosbag file changed?"
+        finally:
+            self.shutdown()
+    def process_data(self, themes):
+        return super().process_data(themes)
+'''
+To test all topics published
+'''
+@pytest.mark.rosbag
+@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_all_topics],indirect=True)
+@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
+class TestCamerInfoTopics(pytest_rs_utils.RsTestBaseClass):
+    def test_camera_info_topics(self,delayed_launch_descr_with_parameters):
+        ''' 
+        current rosbag file doesn't have color data 
+        '''
+        params = delayed_launch_descr_with_parameters[1]
+        self.rosbag = params["rosbag_filename"]
+        '''
+        The test is hardwired to ensure the rosbag file is not changed.
+        The function CameraInfoColorGetData requires changes to adapt to the changes
+        made by the rosbag reader on extrincsic
+        color_data = pytest_rs_utils.CameraInfoColorGetData(self.rosbag)
+        '''
         color_data = CameraInfo(header=Header(stamp=Time(sec=1508282881, nanosec=33132324),
                                         frame_id="AllTopics_color_optical_frame"),
                                         width=640,
@@ -121,56 +201,8 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
                                                 binning_y=0, 
                                                 roi=RegionOfInterest(x_offset=0, y_offset=0, height=0, width=0, do_rectify=False))
 
-
-        depth_to_infra_extrinsics_data = msg_Extrinsics()
-        depth_to_infra_extrinsics_data.rotation = [1., 0., 0., 0., 1., 0., 0., 0., 1.]
-        depth_to_infra_extrinsics_data.translation =[-0., -0., -0.]
-
-        depth_to_color_extrinsics_data = msg_Extrinsics()
-        depth_to_color_extrinsics_data.rotation=array('f',[ 0.99999666,  0.00166541,  0.00198587, -0.00166956,  0.99999642,
-                        0.00208678, -0.00198239, -0.00209009,  0.99999583])
-        depth_to_color_extrinsics_data.translation=array('f',[ 0.01484134, -0.00020221,  0.00013059])
-
-        color_metadata = msg_Metadata()
-        color_metadata.json_data = '{"frame_number":39,"clock_domain":"system_time","frame_timestamp":1508282881033.132324,"frame_counter":-8134432827560165376,"time_of_arrival":1508282881033}'
-
-        depth_metadata = msg_Metadata()
-        depth_metadata.json_data ='{"frame_number":13048,"clock_domain":"system_time","frame_timestamp":1508282880968.727295,"frame_counter":-327065418902536192,"time_of_arrival":1508282880968}'
-        infra1_metadata = msg_Metadata()
-        infra1_metadata.json_data ='{"frame_number":10938,"clock_domain":"system_time","frame_timestamp":1508282880964.985352,"frame_counter":0,"time_of_arrival":1508282880964}'
-
         themes = [
-        {
-         'topic':'/'+params['camera_name']+'/color/metadata',
-         'msg_type':msg_Metadata,
-         'expected_data_chunks':1,
-         'data':color_metadata
-        },
-        {
-         'topic':'/'+params['camera_name']+'/depth/metadata',
-         'msg_type':msg_Metadata,
-         'expected_data_chunks':1,
-         'data':depth_metadata
-        },
-        {
-         'topic':'/'+params['camera_name']+'/infra1/metadata',
-         'msg_type':msg_Metadata,
-         'expected_data_chunks':1,
-         'data':infra1_metadata
-        },
-        {
-         'topic':'/'+params['camera_name']+'/extrinsics/depth_to_color',
-         'msg_type':msg_Extrinsics,
-         'expected_data_chunks':1,
-         'data':depth_to_color_extrinsics_data
-        },
-        {
-         'topic':'/'+params['camera_name']+'/extrinsics/depth_to_infra1',
-         'msg_type':msg_Extrinsics,
-         'expected_data_chunks':1,
-         'data':depth_to_infra_extrinsics_data
-        },
-        {
+         {
          'topic':'/'+params['camera_name']+'/color/camera_info',
          'msg_type':CameraInfo,
          'expected_data_chunks':1,
@@ -200,6 +232,8 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
             self.shutdown()
     def process_data(self, themes):
         return super().process_data(themes)
+    
+
 
 test_params_imu_topics = {#"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
                           "rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_and_IMU_Stands_still.bag",

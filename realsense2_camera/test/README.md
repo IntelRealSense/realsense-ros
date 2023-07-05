@@ -140,3 +140,13 @@ As mentioned above, a set of pytests that are grouped using markers can be run u
 
 	pytest-3 -s -m rosbag realsense2_camera/test/
 
+
+### Running a single pytest
+The below command finds the test with the name test_static_tf_1 in realsense2_camera/test folder run:
+
+	pytest-3 -s -k test_static_tf_1 realsense2_camera/test/
+
+### Points to be noted while writing pytests
+The tests that are in one file are nromally run in parallel. So if there are multiple tests in one file, the system capacity can influence the test execution. It's recomended to have 3-4 tests in file, more than that can affect the test results due to delays.
+
+

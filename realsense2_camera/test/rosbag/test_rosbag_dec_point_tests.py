@@ -32,107 +32,28 @@ import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_parameters
 from pytest_rs_utils import delayed_launch_descr_with_parameters
 
-test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
-    'camera_name': 'Vis2_Cam',
-    'color_width': '0',
-    'color_height': '0',
-    'depth_width': '0',
-    'depth_height': '0',
-    'infra_width': '0',
-    'infra_height': '0',
-    }
-'''
-This test was ported from rs2_test.py
-the command used to run is "python3 realsense2_camera/scripts/rs2_test.py vis_avg_2"
-'''
-@pytest.mark.rosbag
-@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params],indirect=True)
-@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
-class TestVis2(pytest_rs_utils.RsTestBaseClass):
-    def test_vis_2(self,delayed_launch_descr_with_parameters):
-        params = delayed_launch_descr_with_parameters[1]
-        data = pytest_rs_utils.ImageColorGetData(params["rosbag_filename"])
-        themes = [
-        {'topic':'/'+params['camera_name']+'/color/image_raw',
-         'msg_type':msg_Image,
-         'expected_data_chunks':1,
-         'data':data
-        }
-        ]
-        try:
-            ''' 
-            initialize, run and check the data 
-            '''
-            self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
-            assert self.process_data(themes)
-        finally:
-            self.shutdown()
-    def process_data(self, themes):
-        return super().process_data(themes)
 
-test_params_accel = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_and_IMU_Stands_still.bag",
-    'camera_name': 'Accel_Cam',
+test_params_depth_avg_decimation_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'Align_Depth_Color_1',
     'color_width': '0',
     'color_height': '0',
     'depth_width': '0',
     'depth_height': '0',
     'infra_width': '0',
     'infra_height': '0',
-    'enable_accel': 'true',
-    'accel_fps': '0.0'
+    'decimation_filter.enable':'true'
     }
 '''
 This test was ported from rs2_test.py
-the command used to run is "python3 realsense2_camera/scripts/rs2_test.py accel_up_1"
+the command used to run is "python3 realsense2_camera/scripts/rs2_test.py depth_avg_decimation_1"
 '''
 @pytest.mark.rosbag
-@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_accel],indirect=True)
-@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
-class TestAccelUp1(pytest_rs_utils.RsTestBaseClass):
-    def test_accel_up_1(self,delayed_launch_descr_with_parameters):
-        params = delayed_launch_descr_with_parameters[1]
-        data = pytest_rs_utils.AccelGetDataDeviceStandStraight(params["rosbag_filename"])
-        themes = [
-        {'topic':'/'+params['camera_name']+'/accel/sample',
-         'msg_type':msg_Imu,
-         'expected_data_chunks':1,
-         'data':data
-        }
-        ]
-        try:
-            ''' 
-            initialize, run and check the data 
-            '''
-            self.init_test("RsTest"+params['camera_name'])
-            assert self.run_test(themes)
-            assert self.process_data(themes)
-        finally:
-            self.shutdown()
-    def process_data(self, themes):
-        return super().process_data(themes)
-    
-test_params_depth = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
-    'camera_name': 'Depth_W_Cloud',
-    'color_width': '0',
-    'color_height': '0',
-    'depth_width': '0',
-    'depth_height': '0',
-    'infra_width': '0',
-    'infra_height': '0',
-    'enable_pointcloud': 'true'
-    }
-'''
-This test was ported from rs2_test.py
-the command used to run is "python3 realsense2_camera/scripts/rs2_test.py depth_w_cloud_1"
-'''
-@pytest.mark.rosbag
-@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_depth],indirect=True)
+@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_depth_avg_decimation_1],indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
-class TestDepthWCloud(pytest_rs_utils.RsTestBaseClass):
-    def test_depth_w_cloud_1(self,launch_descr_with_parameters):
+class TestDepthAvgDecimation1(pytest_rs_utils.RsTestBaseClass):
+    def test_depth_avg_decimation_1(self,launch_descr_with_parameters):
         params = launch_descr_with_parameters[1]
-        data = pytest_rs_utils.ImageDepthGetData(params["rosbag_filename"])
+        data = pytest_rs_utils.ImageDepthGetData_decimation(params["rosbag_filename"])
         themes = [
         {'topic':'/'+params['camera_name']+'/depth/image_rect_raw',
          'msg_type':msg_Image,
@@ -193,3 +114,89 @@ class TestDepthAvg1(pytest_rs_utils.RsTestBaseClass):
         return super().process_data(themes)
     
 
+test_params_depth_avg_decimation_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'Align_Depth_Color_1',
+    'color_width': '0',
+    'color_height': '0',
+    'depth_width': '0',
+    'depth_height': '0',
+    'infra_width': '0',
+    'infra_height': '0',
+    'decimation_filter.enable':'true'
+    }
+'''
+This test was ported from rs2_test.py
+the command used to run is "python3 realsense2_camera/scripts/rs2_test.py depth_avg_decimation_1"
+'''
+@pytest.mark.rosbag
+@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_depth_avg_decimation_1],indirect=True)
+@pytest.mark.launch(fixture=launch_descr_with_parameters)
+class TestDepthAvgDecimation1(pytest_rs_utils.RsTestBaseClass):
+    def test_depth_avg_decimation_1(self,launch_descr_with_parameters):
+        params = launch_descr_with_parameters[1]
+        data = pytest_rs_utils.ImageDepthGetData_decimation(params["rosbag_filename"])
+        themes = [
+        {'topic':'/'+params['camera_name']+'/depth/image_rect_raw',
+         'msg_type':msg_Image,
+         'expected_data_chunks':1,
+         'data':data
+        }
+        ]
+        try:
+            ''' 
+            initialize, run and check the data 
+            '''
+            self.init_test("RsTest"+params['camera_name'])
+            assert self.run_test(themes)
+            assert self.process_data(themes)
+        finally:
+            self.shutdown()
+    def process_data(self, themes):
+        return super().process_data(themes)
+
+
+test_params_points_cloud_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+    'camera_name': 'Points_cloud_1',
+    'color_width': '0',
+    'color_height': '0',
+    'depth_width': '0',
+    'depth_height': '0',
+    'infra_width': '0',
+    'infra_height': '0',
+    'pointcloud.enable': 'true'
+    }
+'''
+This test was ported from rs2_test.py
+the command used to run is "python3 realsense2_camera/scripts/rs2_test.py points_cloud_1"
+'''
+@pytest.mark.rosbag
+@pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_points_cloud_1],indirect=True)
+@pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
+class TestPointsCloud1(pytest_rs_utils.RsTestBaseClass):
+    def test_points_cloud_1(self,delayed_launch_descr_with_parameters):
+        params = delayed_launch_descr_with_parameters[1]
+        self.rosbag = params["rosbag_filename"]
+        themes = [
+        {'topic':'/'+params['camera_name']+'/depth/color/points',
+         'msg_type':msg_PointCloud2,
+         'expected_data_chunks':1,
+         #'data':data
+        }
+        ]
+        try:
+            ''' 
+            initialize, run and check the data 
+            '''
+            self.init_test("RsTest"+params['camera_name'])
+            assert self.run_test(themes)
+            assert self.process_data(themes)
+        finally:
+            self.shutdown()
+    def process_data(self, themes):
+        data = {'width': [660353, 3300], 
+                'height': [1], 
+                'avg': [np.array([ 1.28251814, -0.15839984, 4.82235184, 80, 160, 240])], 
+                'epsilon': [0.04, 5]}
+        themes[0]["data"] = data
+        return super().process_data(themes)
+    
