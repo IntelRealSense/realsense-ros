@@ -47,11 +47,11 @@ aluminum peripherial evaluation case.
     <xacro:property name="d585_cam_depth" value="0.0931"/>
 
     <!-- TODO Samer: This parameter is still missing, took it from D455 -->
-    <xacro:property name="d585_cam_mount_from_center_offset" value="0.0377"/> <!-- TODO Samer: check -->
+    <xacro:property name="d585_cam_mount_from_center_offset" value="0.042"/> <!-- TODO Samer: check -->
     <!-- TODO Samer: This parameter is still missing, took it from D455 -->
     <xacro:property name="d585_glass_to_front" value="0.1e-3"/> <!-- TODO Samer: check -->
     <!-- TODO Samer: This parameter is still missing, took it from D455 -->
-    <xacro:property name="d585_zero_depth_to_glass" value="4.55e-3"/> <!-- TODO Samer: check -->
+    <xacro:property name="d585_zero_depth_to_glass" value="0.0056"/> <!-- TODO Samer: check -->
     <!-- TODO Samer: This parameter is still missing, took it from D455 -->
     <xacro:property name="d585_mesh_x_offset" value="${d585_cam_mount_from_center_offset-d585_glass_to_front-d585_zero_depth_to_glass}"/>
 
