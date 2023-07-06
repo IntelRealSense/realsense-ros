@@ -208,6 +208,7 @@ VideoProfilesManager::VideoProfilesManager(std::shared_ptr<Parameters> parameter
     _allowed_formats[{RS2_STREAM_DEPTH, 0}] = RS2_FORMAT_Z16;
     _allowed_formats[{RS2_STREAM_INFRARED, 0}] = RS2_FORMAT_RGB8;
     _allowed_formats[{RS2_STREAM_INFRARED, 1}] = RS2_FORMAT_Y8;
+    _allowed_formats[{RS2_STREAM_INFRARED, 2}] = RS2_FORMAT_Y8;
 }
 
 bool VideoProfilesManager::isSameProfileValues(const rs2::stream_profile& profile, const int width, const int height, const int fps)
