@@ -46,13 +46,9 @@ aluminum peripherial evaluation case.
     <xacro:property name="d585_cam_height" value="0.043"/>
     <xacro:property name="d585_cam_depth" value="0.0931"/>
 
-    <!-- TODO Samer: This parameter is still missing, took it from D455 -->
-    <xacro:property name="d585_cam_mount_from_center_offset" value="0.042"/> <!-- TODO Samer: check -->
-    <!-- TODO Samer: This parameter is still missing, took it from D455 -->
-    <xacro:property name="d585_glass_to_front" value="0.1e-3"/> <!-- TODO Samer: check -->
-    <!-- TODO Samer: This parameter is still missing, took it from D455 -->
-    <xacro:property name="d585_zero_depth_to_glass" value="0.0056"/> <!-- TODO Samer: check -->
-    <!-- TODO Samer: This parameter is still missing, took it from D455 -->
+    <xacro:property name="d585_cam_mount_from_center_offset" value="0.042"/> <!-- TODO: Not final numbers, still require refinements -->
+    <xacro:property name="d585_glass_to_front" value="0.1e-3"/> <!-- TODO: Not final numbers, still require refinements -->
+    <xacro:property name="d585_zero_depth_to_glass" value="0.0056"/> <!-- TODO: Not final numbers, still require refinements -->
     <xacro:property name="d585_mesh_x_offset" value="${d585_cam_mount_from_center_offset-d585_glass_to_front-d585_zero_depth_to_glass}"/>
 
     <!-- The following offset is relative to the physical d585 camera peripherial
@@ -194,9 +190,9 @@ aluminum peripherial evaluation case.
 
 
       <!-- IMU -->
-      <xacro:property name="d585_imu_px" value="0.0114"/> <!-- TODO Samer: check -->
-      <xacro:property name="d585_imu_py" value="-0.0195"/> <!-- TODO Samer: check -->
-      <xacro:property name="d585_imu_pz" value="0"/> <!-- TODO Samer: check -->
+      <xacro:property name="d585_imu_px" value="0.0114"/> <!-- TODO: Not final numbers, still require refinements -->
+      <xacro:property name="d585_imu_py" value="-0.0195"/> <!-- TODO: Not final numbers, still require refinements -->
+      <xacro:property name="d585_imu_pz" value="0"/> <!-- TODO: Not final numbers, still require refinements -->
 
       <link name="${name}_accel_frame" />
       <link name="${name}_accel_optical_frame" />
