@@ -126,9 +126,6 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _encoding[1] = sensor_msgs::image_encodings::MONO8; // ROS message type
     _encoding[2] = sensor_msgs::image_encodings::TYPE_16UC1; // ROS message type
     _encoding[3] = sensor_msgs::image_encodings::RGB8; // ROS message type
-    
-    // Infrared stream
-    _format[RS2_STREAM_INFRARED] = RS2_FORMAT_Y8;
 
     _monitor_options = {RS2_OPTION_ASIC_TEMPERATURE, RS2_OPTION_PROJECTOR_TEMPERATURE};
 }
