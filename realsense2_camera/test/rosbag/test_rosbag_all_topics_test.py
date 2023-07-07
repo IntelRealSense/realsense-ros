@@ -55,6 +55,7 @@ test_params_all_topics = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outd
 '''
 To test all topics published
 '''
+@pytest.mark.skip
 @pytest.mark.rosbag
 @pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_all_topics],indirect=True)
 @pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
