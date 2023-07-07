@@ -72,7 +72,7 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
         depth_to_color_extrinsics_data.rotation=array('f',[ 0.99999666,  0.00166541,  0.00198587, -0.00166956,  0.99999642,
                         0.00208678, -0.00198239, -0.00209009,  0.99999583])
         depth_to_color_extrinsics_data.translation=array('f',[ 0.01484134, -0.00020221,  0.00013059])
-
+        data = pytest_rs_utils.ImageColorGetData(params["rosbag_filename"])
         themes = [
         {
          'topic':'/'+params['camera_name']+'/extrinsics/depth_to_color',
@@ -85,6 +85,11 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
          'msg_type':msg_Extrinsics,
          'expected_data_chunks':1,
          'data':depth_to_infra_extrinsics_data
+        },
+               {'topic':'/'+params['camera_name']+'/color/image_raw',
+         'msg_type':msg_Image,
+         'expected_data_chunks':1,
+         'data':data
         },
         ]
         try:

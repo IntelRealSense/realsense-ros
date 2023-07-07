@@ -678,7 +678,7 @@ class RsTestBaseClass():
         timeout value varies depending upon the system, it needs to be more if
         the access is over the network
         '''
-        timeout = 250.0
+        timeout = 25.0
         print('Waiting for topic... ' )
         flag = False
         while (time.time() - start) < timeout:
