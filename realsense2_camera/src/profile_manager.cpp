@@ -89,9 +89,8 @@ void ProfilesManager::registerSensorUpdateParam(std::string template_name,
         std::string param_name = applyTemplateName(template_name, sip);
         if (params.find(sip) == params.end())
         {
-            std::string enable_infra = "enable_infra";
-            if (param_name == enable_infra)
-                // Setting the default value of 'enable_infra' param to false
+            if (sip == INFRA0)
+                // Disabling Infra 0 stream by default
                 params[sip] = std::make_shared<T>(false);
             else
                 params[sip] = std::make_shared<T>(value);
