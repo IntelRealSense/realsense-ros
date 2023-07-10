@@ -33,7 +33,6 @@
   <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>launch_pytest</test_depend>
   <test_depend>sensor_msgs_py</test_depend>
-  <test_depend>quaternion</test_depend>
 
   <exec_depend>launch_ros</exec_depend>
   <build_depend>ros_environment</build_depend>
