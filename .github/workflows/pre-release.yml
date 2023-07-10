@@ -47,3 +47,5 @@ jobs:
       - uses: actions/checkout@v2
       - name: industrial_ci
         uses: ros-industrial/industrial_ci@master
+        env: 
+          AFTER_INSTALL_TARGET_DEPENDENCIES: 'pip3 install numpy-quaternion tqdm'
