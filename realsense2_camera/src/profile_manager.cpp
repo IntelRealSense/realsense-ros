@@ -204,7 +204,7 @@ VideoProfilesManager::VideoProfilesManager(std::shared_ptr<Parameters> parameter
     _module_name(module_name),
     _force_image_default_qos(force_image_default_qos)
 {
-    
+
 }
 
 bool VideoProfilesManager::isSameProfileValues(const rs2::stream_profile& profile, const int width, const int height, const int fps)
@@ -218,8 +218,8 @@ bool VideoProfilesManager::isSameProfileValues(const rs2::stream_profile& profil
     return ((video_profile.width() == width) &&
             (video_profile.height() == height) &&
             (video_profile.fps() == fps) &&
-            (_allowed_formats[sip] == rs2_format_to_string(RS2_FORMAT_ANY) || 
-                rs2_format_to_string(video_profile.format()) == _allowed_formats[sip]));
+            (_allowed_formats[sip] == RS2_FORMAT_ANY || 
+             _allowed_formats[sip] == video_profile.format()));
 }
 
 bool VideoProfilesManager::isWantedProfile(const rs2::stream_profile& profile)
@@ -275,22 +275,17 @@ std::string VideoProfilesManager::get_profiles_descriptions()
 void VideoProfilesManager::registerVideoSensorProfileFormat(stream_index_pair sip)
 {
     if (sip == DEPTH)
-        _allowed_formats[DEPTH] = rs2_format_to_string(RS2_FORMAT_Z16);
-
+        _allowed_formats[DEPTH] = RS2_FORMAT_Z16;
     else if (sip == INFRA0)
-        _allowed_formats[INFRA0] = rs2_format_to_string(RS2_FORMAT_RGB8);
-
+        _allowed_formats[INFRA0] = RS2_FORMAT_RGB8;
     else if (sip == INFRA1)
-        _allowed_formats[INFRA1] = rs2_format_to_string(RS2_FORMAT_Y8);
-
+        _allowed_formats[INFRA1] = RS2_FORMAT_Y8;
     else if (sip == INFRA2)
-        _allowed_formats[INFRA2] = rs2_format_to_string(RS2_FORMAT_Y8);
-        
+        _allowed_formats[INFRA2] = RS2_FORMAT_Y8;
     else if (sip == COLOR)
-        _allowed_formats[COLOR] = rs2_format_to_string(RS2_FORMAT_RGB8);
-
+        _allowed_formats[COLOR] = RS2_FORMAT_RGB8;
     else
-        _allowed_formats[{sip.first, sip.second}] = rs2_format_to_string(RS2_FORMAT_ANY);
+        _allowed_formats[{sip.first, sip.second}] = RS2_FORMAT_ANY;
 }
 
 void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair> sips)
@@ -362,12 +357,22 @@ void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair>
     {
         std::string param_name(_module_name + ".profile." + STREAM_NAME(sip) + "_stream_format");
         registerVideoSensorProfileFormat(sip);
-        _params.getParameters()->setParam(param_name, _allowed_formats[sip], 
-                                            [this, sip](const rclcpp::Parameter& parameter)
+        std::string param_value = rs2_format_to_string(_allowed_formats[sip]);
+        _params.getParameters()->setParam(param_name, param_value, 
+                                            [this, sip, param_value](const rclcpp::Parameter& parameter)
                                             {
                                                 std::string format_str(parameter.get_value<std::string>());
-                                                _allowed_formats[sip] = format_str;
-                                                ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
+                                                rs2_format format = RS2_FORMAT_ANY;
+                                                if (string_to_rs2_format(format_str , &format))
+                                                {
+                                                    _allowed_formats[sip] = format;
+                                                    ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
+                                                }
+                                                else
+                                                {
+                                                    ROS_WARN_STREAM("Given " << sip.first <<" stream format is invalid. Setting to default format: " << param_value);
+                                                    _params.getParameters()->queueSetRosValue(parameter.get_name(), param_value);
+                                                }
                                             });
         _parameters_names.push_back(param_name);
     }
