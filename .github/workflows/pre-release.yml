@@ -45,10 +45,5 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Install Packages For Tests
-        run: |
-          sudo apt-get install python3-pip
-          pip3 install numpy --upgrade
-          pip3 install numpy-quaternion tqdm
       - name: industrial_ci
         uses: ros-industrial/industrial_ci@master
