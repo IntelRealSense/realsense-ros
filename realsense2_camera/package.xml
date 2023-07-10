@@ -31,6 +31,7 @@
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>launch_testing</test_depend>
   <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>launch_pytest</test_depend>
 
   <exec_depend>launch_ros</exec_depend>
   <build_depend>ros_environment</build_depend>
