@@ -48,4 +48,4 @@ jobs:
       - name: industrial_ci
         uses: ros-industrial/industrial_ci@master
         env: 
-          AFTER_INSTALL_TARGET_DEPENDENCIES: 'pip3 install numpy-quaternion tqdm'
+          AFTER_INIT: 'pip3 install numpy-quaternion tqdm'
