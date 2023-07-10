@@ -33,6 +33,7 @@
   <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>launch_pytest</test_depend>
   <test_depend>sensor_msgs_py</test_depend>
+  <test_depend>numpy</test_depend>
   <test_depend>python-numpy-quaternion-pip</test_depend>
 
   <exec_depend>launch_ros</exec_depend>
