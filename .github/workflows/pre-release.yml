@@ -48,4 +48,4 @@ jobs:
       - name: industrial_ci
         uses: ros-industrial/industrial_ci@master
         env: 
-          AFTER_INIT: 'pip install numpy-quaternion'
+          AFTER_INIT: 'python -m pip install numpy-quaternion'
