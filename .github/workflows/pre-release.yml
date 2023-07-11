@@ -48,4 +48,4 @@ jobs:
       - name: industrial_ci
         uses: ros-industrial/industrial_ci@master
         env: 
-          AFTER_INIT_EMBED: 'sudo apt-get install python3-pip && pip3 install numpy-quaternion'
+          AFTER_setup_ros_prerelease: 'echo testing2 && pip3 install numpy-quaternion'
