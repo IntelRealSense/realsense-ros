@@ -48,4 +48,4 @@ jobs:
       - name: industrial_ci
         uses: ros-industrial/industrial_ci@master
         env: 
-          AFTER_INIT: 'sudo apt-get install python3-pip'
+          AFTER_INIT: 'pip3 install numpy-quaternion'
