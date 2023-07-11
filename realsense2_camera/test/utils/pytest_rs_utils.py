@@ -40,8 +40,10 @@ from sensor_msgs.msg import CameraInfo as msg_CameraInfo
 from realsense2_camera_msgs.msg import Extrinsics as msg_Extrinsics
 from realsense2_camera_msgs.msg import Metadata as msg_Metadata
 from sensor_msgs_py import point_cloud2 as pc2
+cmd = "pip list | grep -i quat && pip show quaternion"
+os.system(cmd)
 
-import quaternion
+
 if (os.getenv('ROS_DISTRO') != "dashing"):
     import tf2_ros
 
@@ -612,6 +614,7 @@ class RsTestNode(Node):
                     func_data['value'].append(value)
                     
                     if (self.tfBuffer.can_transform('camera_link', frame_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6))):
+                        import quaternion
                         msg = self.tfBuffer.lookup_transform('camera_link', frame_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6)).transform
                         quat = np.quaternion(msg.rotation.x, msg.rotation.y, msg.rotation.z, msg.rotation.w)
                         point = np.matrix([value.x, value.y, value.z], dtype='float32')
