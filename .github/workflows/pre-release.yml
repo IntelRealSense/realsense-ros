@@ -49,4 +49,4 @@ jobs:
         uses: ros-industrial/industrial_ci@master
         env: 
           AFTER_SETUP_ROS_PRERELEASE_EMBED: 'echo testing2 && pip3 install numpy-quaternion tqdm'
-          AFTER_RUN_PRERELEASE_SCRIPT_EMBED: 'echo testing3 && pip3 install numpy-quaternion tqdm'
+          BEFORE_RUN_PRERELEASE_SCRIPT_EMBED: 'echo testing3 && pip3 install numpy-quaternion tqdm'
