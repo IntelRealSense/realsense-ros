@@ -48,4 +48,4 @@ jobs:
       - name: industrial_ci
         uses: ros-industrial/industrial_ci@master
         env: 
-          AFTER_SETUP_ROS_PRERELEASE: 'echo testing2 && pip3 install numpy-quaternion tqdm'
+          AFTER_SETUP_ROS_PRERELEASE_EMBED: 'echo testing2 && pip3 install numpy-quaternion tqdm'
