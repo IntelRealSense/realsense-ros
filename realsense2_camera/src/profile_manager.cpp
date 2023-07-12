@@ -160,6 +160,16 @@ void ProfilesManager::addWantedProfiles(std::vector<rs2::stream_profile>& wanted
             ROS_DEBUG_STREAM("Found profile for " << ros_stream_to_string(sip.first) << ":" << sip.second);
         }
     }
+    for (auto const & x : _enabled_profiles)
+    {
+        auto sip = x.first;
+        auto stream_enabled = x.second;
+        if (*stream_enabled && !found_sips[sip])
+        {
+            ROS_WARN_STREAM("Couldn't find profile for " << ros_stream_to_string(sip.first) << ":" << sip.second << " stream."
+                            << " Update the profile settings and re-enable the stream for the change to take effect.");
+        }
+    }
 }
 
 std::string ProfilesManager::profile_string(const rs2::stream_profile& profile)
@@ -207,24 +217,24 @@ VideoProfilesManager::VideoProfilesManager(std::shared_ptr<Parameters> parameter
 
 }
 
-bool VideoProfilesManager::isSameProfileValues(const rs2::stream_profile& profile, const int width, const int height, const int fps)
+bool VideoProfilesManager::isSameProfileValues(const rs2::stream_profile& profile, const int width, const int height, const int fps, const rs2_format format)
 {
     if (!profile.is<rs2::video_stream_profile>())
         return false;
     auto video_profile = profile.as<rs2::video_stream_profile>();
     ROS_DEBUG_STREAM("Sensor profile: " << profile_string(profile));
 
-    stream_index_pair sip = {video_profile.stream_type(), video_profile.stream_index()};
     return ((video_profile.width() == width) &&
             (video_profile.height() == height) &&
             (video_profile.fps() == fps) &&
-            (_allowed_formats[sip] == RS2_FORMAT_ANY || 
-             _allowed_formats[sip] == video_profile.format()));
+            (RS2_FORMAT_ANY == format || 
+             video_profile.format() == format));
 }
 
 bool VideoProfilesManager::isWantedProfile(const rs2::stream_profile& profile)
 {
-    return isSameProfileValues(profile, _width, _height, _fps);
+    stream_index_pair sip = {profile.stream_type(), profile.stream_index()};
+    return isSameProfileValues(profile, _width, _height, _fps, _formats[sip]);
 }
 
 void VideoProfilesManager::registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func)
@@ -275,17 +285,17 @@ std::string VideoProfilesManager::get_profiles_descriptions()
 void VideoProfilesManager::registerVideoSensorProfileFormat(stream_index_pair sip)
 {
     if (sip == DEPTH)
-        _allowed_formats[DEPTH] = RS2_FORMAT_Z16;
+        _formats[DEPTH] = RS2_FORMAT_Z16;
     else if (sip == INFRA0)
-        _allowed_formats[INFRA0] = RS2_FORMAT_RGB8;
+        _formats[INFRA0] = RS2_FORMAT_RGB8;
     else if (sip == INFRA1)
-        _allowed_formats[INFRA1] = RS2_FORMAT_Y8;
+        _formats[INFRA1] = RS2_FORMAT_Y8;
     else if (sip == INFRA2)
-        _allowed_formats[INFRA2] = RS2_FORMAT_Y8;
+        _formats[INFRA2] = RS2_FORMAT_Y8;
     else if (sip == COLOR)
-        _allowed_formats[COLOR] = RS2_FORMAT_RGB8;
+        _formats[COLOR] = RS2_FORMAT_RGB8;
     else
-        _allowed_formats[{sip.first, sip.second}] = RS2_FORMAT_ANY;
+        _formats[{sip.first, sip.second}] = RS2_FORMAT_ANY;
 }
 
 void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair> sips)
@@ -324,7 +334,7 @@ void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair>
                         for (const auto& profile : _all_profiles)
                         {
                             found = false;
-                            if (isSameProfileValues(profile, temp_width, temp_height, temp_fps))
+                            if (isSameProfileValues(profile, temp_width, temp_height, temp_fps, RS2_FORMAT_ANY))
                             {
                                 _width = temp_width;
                                 _height = temp_height;
@@ -357,23 +367,35 @@ void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair>
     {
         std::string param_name(_module_name + ".profile." + STREAM_NAME(sip) + "_stream_format");
         registerVideoSensorProfileFormat(sip);
-        std::string param_value = rs2_format_to_string(_allowed_formats[sip]);
-        _params.getParameters()->setParam(param_name, param_value, 
-                                            [this, sip, param_value](const rclcpp::Parameter& parameter)
-                                            {
-                                                std::string format_str(parameter.get_value<std::string>());
-                                                rs2_format format = RS2_FORMAT_ANY;
-                                                if (string_to_rs2_format(format_str , &format))
-                                                {
-                                                    _allowed_formats[sip] = format;
-                                                    ROS_WARN_STREAM("re-enable the stream for the change to take effect.");
-                                                }
-                                                else
-                                                {
-                                                    ROS_WARN_STREAM("Given " << sip.first <<" stream format is invalid. Setting to default format: " << param_value);
-                                                    _params.getParameters()->queueSetRosValue(parameter.get_name(), param_value);
-                                                }
-                                            });
+        std::string param_value = rs2_format_to_string(_formats[sip]);
+        _params.getParameters()->setParam(param_name, param_value, [this, sip](const rclcpp::Parameter& parameter)
+                {
+                    std::string format_str(parameter.get_value<std::string>());
+                    rs2_format temp_format = RS2_FORMAT_ANY;
+                    bool found = false;
+                    if (string_to_rs2_format(format_str , &temp_format))
+                    {                        
+                        for (const auto& profile : _all_profiles)
+                        {
+                            stream_index_pair profile_sip = {profile.stream_type(), profile.stream_index()};
+
+                            if (sip == profile_sip && temp_format == profile.format())
+                            {
+                                ROS_WARN_STREAM("re-enable the " << sip.first << " stream for the change to take effect.");
+                                found = true;
+                                _formats[sip] = temp_format;
+                                break;
+                            }
+                        }
+                    }
+                    if (!found)
+                    {
+                        ROS_WARN_STREAM(STREAM_NAME(sip) <<" stream doesn't support " << format_str <<" format. "
+                                << "Setting the ROS param '" << parameter.get_name() <<"' back to: " << _formats[sip]);
+                        _params.getParameters()->queueSetRosValue(parameter.get_name(), 
+                                                    (std::string)rs2_format_to_string(_formats[sip]));
+                    }
+                });
         _parameters_names.push_back(param_name);
     }
 }
