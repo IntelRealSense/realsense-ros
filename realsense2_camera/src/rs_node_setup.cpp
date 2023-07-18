@@ -223,6 +223,11 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 
         if (profile.is<rs2::video_stream_profile>())
         {
+            if(profile.stream_type() == RS2_STREAM_COLOR)
+                _is_color_enabled = true;
+            else if (profile.stream_type() == RS2_STREAM_DEPTH)
+                _is_depth_enabled = true;
+
             if (profile.stream_type() != RS2_STREAM_LABELED_POINT_CLOUD)
             {
                 std::stringstream image_raw, camera_info;
@@ -324,6 +329,27 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
     }
 }
 
+void BaseRealSenseNode::startRGBDPublisherIfNeeded()
+{
+    _rgbd_publisher.reset();
+    if(_enable_rgbd && !_rgbd_publisher)
+    {
+        if (_sync_frames && _is_color_enabled && _is_depth_enabled)
+        {
+            rmw_qos_profile_t qos = rmw_qos_profile_system_default;
+
+            rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
+            options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+            _rgbd_publisher = _node.create_publisher<realsense2_camera_msgs::msg::RGBD>("rgbd",
+                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos), std::move(options));
+        }
+        else {
+            ROS_ERROR("In order to get rgbd topic enabled, "\
+             "you should enable: color stream, depth stream, sync_mode and align_depth");
+        }
+    }
+}
+
 void BaseRealSenseNode::updateSensors()
 {    
     std::lock_guard<std::mutex> lock_guard(_update_sensor_mutex);
@@ -385,6 +411,7 @@ void BaseRealSenseNode::updateSensors()
             std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
             publishStaticTransforms();
         }
+        startRGBDPublisherIfNeeded();
     }
     catch(const std::exception& ex)
     {
