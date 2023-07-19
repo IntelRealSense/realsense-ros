@@ -77,6 +77,7 @@ namespace realsense2_camera
             bool isSameProfileValues(const rs2::stream_profile& profile, const int width, const int height, const int fps, const rs2_format format);
             void registerVideoSensorParams(std::set<stream_index_pair> sips);
             std::string get_profiles_descriptions();
+            std::string get_profile_formats_descriptions(stream_index_pair sip);
 
         private:
             std::string _module_name;
