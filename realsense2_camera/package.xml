@@ -36,6 +36,7 @@
   <test_depend>python3-numpy</test_depend>
   <test_depend>sensor_msgs_py</test_depend>
   <test_depend>tf2_ros_py</test_depend>
+  <test_depend>python3-tqdm</test_depend>
 
 
   <exec_depend>launch_ros</exec_depend>
