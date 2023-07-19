@@ -803,7 +803,7 @@ bool BaseRealSenseNode::shouldPublishCameraInfo(const stream_index_pair& sip)
 }
 
 void BaseRealSenseNode::publishLabeledPointCloud(rs2::labeled_points pc, const rclcpp::Time& t){
-    if(0 == _labeled_pointcloud_publisher->get_subscription_count())
+    if(!_labeled_pointcloud_publisher || 0 == _labeled_pointcloud_publisher->get_subscription_count())
         return;
     
     ROS_DEBUG("Publishing Labeled Point Cloud Frame");

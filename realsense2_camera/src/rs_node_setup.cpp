@@ -189,8 +189,7 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
             _info_publishers.erase(sip);
             _depth_aligned_image_publishers.erase(sip);
             _depth_aligned_info_publisher.erase(sip);
-
-            if(_labeled_pointcloud_publisher)
+            if(profile.stream_type() == RS2_STREAM_LABELED_POINT_CLOUD && _labeled_pointcloud_publisher)
             {
                 _labeled_pointcloud_publisher.reset();
             }
