@@ -44,8 +44,8 @@ cmd = "pip list | grep -i quat && pip show quaternion"
 os.system(cmd)
 
 
-if (os.getenv('ROS_DISTRO') != "dashing"):
-    import tf2_ros
+#if (os.getenv('ROS_DISTRO') != "dashing"):
+import tf2_ros
 
 import json
 
