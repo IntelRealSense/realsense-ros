@@ -48,14 +48,7 @@ os.system(cmd)
 import tf2_ros
 
 import json
-
-assert os.getenv("COLCON_PREFIX_PATH")!=None,"COLCON_PREFIX_PATH was not set" 
-sys.path.append(os.getenv("COLCON_PREFIX_PATH")+'/realsense2_camera/share/realsense2_camera/launch')
 import rs_launch
-sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../../scripts"))
-'''
-Copied from the old code in scripts folder
-'''
 from importRosbag.importRosbag import importRosbag
 
 def CameraInfoGetData(rec_filename, topic):
