@@ -79,7 +79,7 @@ namespace realsense2_camera
 
         private:
             std::string _module_name;
-            std::map<rs2_stream, rs2_format>  _allowed_formats;
+            std::map<stream_index_pair, rs2_format>  _allowed_formats;
             int      _fps;
             int _width, _height;
             bool _is_profile_exist;
