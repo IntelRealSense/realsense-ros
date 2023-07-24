@@ -31,9 +31,10 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_parameters
 from pytest_rs_utils import delayed_launch_descr_with_parameters
+from pytest_rs_utils import get_rosbag_file_path
 
 
-test_params_depth_points_cloud_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+test_params_depth_points_cloud_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'Points_cloud_1',
     'color_width': '0',
     'color_height': '0',
@@ -97,7 +98,7 @@ class TestDepthPointsCloud1(pytest_rs_utils.RsTestBaseClass):
         return super().process_data(themes)
 
 
-test_params_static_tf_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+test_params_static_tf_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'Static_tf_1',
     'color_width': '0',
     'color_height': '0',
@@ -156,7 +157,7 @@ class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
         return pytest_rs_utils.staticTFTest(res, themes[0]["data"])
 
 
-test_params_non_existing_rosbag = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/non_existent.bag",
+test_params_non_existing_rosbag = {"rosbag_filename":"non_existent.bag",
     'camera_name': 'non_existing_rosbag',
     }
 '''
@@ -181,7 +182,7 @@ class TestNonExistingRosbag(pytest_rs_utils.RsTestBaseClass):
 
 
 
-test_params_align_depth_color_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+test_params_align_depth_color_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'Align_Depth_Color_1',
     'color_width': '0',
     'color_height': '0',
@@ -223,7 +224,7 @@ class TestAlignDepthColor(pytest_rs_utils.RsTestBaseClass):
         return super().process_data(themes)
 
 
-test_params_align_depth_infra_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+test_params_align_depth_infra_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'Align_Depth_Infra_1',
     'color_width': '0',
     'color_height': '0',

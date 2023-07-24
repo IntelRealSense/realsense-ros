@@ -37,9 +37,10 @@ import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_parameters
 
 from pytest_rs_utils import delayed_launch_descr_with_parameters
+from pytest_rs_utils import get_rosbag_file_path
 
 
-test_params_accel = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_and_IMU_Stands_still.bag",
+test_params_accel = {"rosbag_filename":get_rosbag_file_path("D435i_Depth_and_IMU_Stands_still.bag"),
     'camera_name': 'Accel_Cam',
     'color_width': '0',
     'color_height': '0',
@@ -81,8 +82,8 @@ class TestAccelUp1(pytest_rs_utils.RsTestBaseClass):
     def process_data(self, themes):
         return super().process_data(themes)
 
-test_params_imu_topics = {#"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
-                          "rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_and_IMU_Stands_still.bag",
+test_params_imu_topics = {#"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
+                          "rosbag_filename":get_rosbag_file_path("D435i_Depth_and_IMU_Stands_still.bag"),
     'camera_name': 'ImuTopics',
     'color_width': '0',
     'color_height': '0',

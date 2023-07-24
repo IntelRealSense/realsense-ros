@@ -31,10 +31,11 @@ from sensor_msgs.msg import Imu as msg_Imu
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_parameters
+from pytest_rs_utils import get_rosbag_file_path
 
 
 
-test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+test_params = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'TestCamera1',
     'color_width': '0',
     'color_height': '0',
@@ -44,7 +45,7 @@ test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color
     'infra_height': '0',
     }
 
-test_params1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/D435i_Depth_and_IMU_Stands_still.bag",
+test_params1 = {"rosbag_filename":get_rosbag_file_path("D435i_Depth_and_IMU_Stands_still.bag"),
     'camera_name': 'TestCamera2',
     'color_width': '0',
     'color_height': '0',

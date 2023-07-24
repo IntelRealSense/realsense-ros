@@ -31,6 +31,7 @@ from rclpy.utilities import ok
 
 import ctypes
 import struct
+import requests
 
 
 from sensor_msgs.msg import Image as msg_Image
@@ -40,16 +41,53 @@ from sensor_msgs.msg import CameraInfo as msg_CameraInfo
 from realsense2_camera_msgs.msg import Extrinsics as msg_Extrinsics
 from realsense2_camera_msgs.msg import Metadata as msg_Metadata
 from sensor_msgs_py import point_cloud2 as pc2
-cmd = "pip list | grep -i quat && pip show quaternion"
-os.system(cmd)
-
-
-#if (os.getenv('ROS_DISTRO') != "dashing"):
 import tf2_ros
 
 import json
 import rs_launch
+
+'''
+Copied from the old code in scripts folder
+'''
 from importRosbag.importRosbag import importRosbag
+
+import tempfile
+import os
+import requests
+class RosbagManager(object):
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(RosbagManager, cls).__new__(cls)
+            cls.init(cls.instance)
+        return cls.instance
+    def init(self):
+        self.rosbag_files = {
+                "outdoors_1color.bag":"https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag",
+                "D435i_Depth_and_IMU_Stands_still.bag":"https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag"
+                }
+        self.rosbag_location = os.getenv("HOME") + "/realsense_records/" 
+        print(self.rosbag_location)
+        if not os.path.exists(self.rosbag_location):
+            os.mkdir(self.rosbag_location)
+        for key in self.rosbag_files:
+            file_path = self.rosbag_location + key
+            if not os.path.isfile(file_path): 
+                print(" downloading from " + self.rosbag_files[key])
+                r = requests.get(self.rosbag_files[key], allow_redirects=True)
+                open(file_path, 'wb').write(r.content)
+                print(file_path + " downloaded")
+            else:
+                print(file_path + " exists")
+
+    def get_rosbag_path(self, filename):
+        if filename in self.rosbag_files:
+            return self.rosbag_location + "/" + filename
+rosbagMgr = RosbagManager()
+def get_rosbag_file_path(filename):
+    path = rosbagMgr.get_rosbag_path(filename)
+    assert path, "No rosbag file found :"+filename 
+    return path
+
 
 def CameraInfoGetData(rec_filename, topic):
     data = importRosbag(rec_filename, importTopics=[topic], log='ERROR', disable_bar=True)[topic]

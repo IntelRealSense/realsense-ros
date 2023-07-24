@@ -38,9 +38,10 @@ import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_parameters
 
 from pytest_rs_utils import delayed_launch_descr_with_parameters
+from pytest_rs_utils import get_rosbag_file_path
 
 
-test_params_all_topics = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+test_params_all_topics = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'AllTopics',
     'color_width': '0',
     'color_height': '0',
@@ -107,7 +108,7 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
     def process_data(self, themes):
         return super().process_data(themes)
 
-test_params_metadata_topics = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+test_params_metadata_topics = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'MetadataTopics',
     'color_width': '0',
     'color_height': '0',
@@ -175,7 +176,7 @@ class TestMetaDataTopics(pytest_rs_utils.RsTestBaseClass):
     def process_data(self, themes):
         return super().process_data(themes)
 
-test_params_camera_info_topics = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+test_params_camera_info_topics = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'CameraInfoTopics',
     'color_width': '0',
     'color_height': '0',

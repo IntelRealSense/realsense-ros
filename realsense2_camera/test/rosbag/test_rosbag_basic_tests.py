@@ -31,8 +31,9 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_parameters
 from pytest_rs_utils import delayed_launch_descr_with_parameters
+from pytest_rs_utils import get_rosbag_file_path
 
-test_params = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+test_params = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'Vis2_Cam',
     'color_width': '0',
     'color_height': '0',
@@ -73,7 +74,7 @@ class TestVis2(pytest_rs_utils.RsTestBaseClass):
         return super().process_data(themes)
 
     
-test_params_depth = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+test_params_depth = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'Depth_W_Cloud',
     'color_width': '0',
     'color_height': '0',
@@ -115,7 +116,7 @@ class TestDepthWCloud(pytest_rs_utils.RsTestBaseClass):
         return super().process_data(themes)
 
 
-test_params_depth_avg_1 = {"rosbag_filename":os.getenv("ROSBAG_FILE_PATH")+"/outdoors_1color.bag",
+test_params_depth_avg_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'Depth_Avg_1',
     'color_width': '0',
     'color_height': '0',
