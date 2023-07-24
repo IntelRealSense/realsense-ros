@@ -696,8 +696,8 @@ class RsTestNode(Node):
 
 class RsTestBaseClass():
     def init_test(self,name='RsTestNode'):
-        cmd = "pip list | grep -i quat && pip show quaternion"
-        os.system(cmd)
+        #cmd = "pip list | grep -i quat && pip show quaternion"
+        #os.system(cmd)
         if not ok():
             rclpy.init()
         self.flag = False
