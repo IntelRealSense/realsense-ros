@@ -26,7 +26,7 @@ aluminum peripherial evaluation case.
   <xacro:include filename="$(find realsense2_description)/urdf/_materials.urdf.xacro" />
   <xacro:include filename="$(find realsense2_description)/urdf/_usb_plug.urdf.xacro" />
 
-  <xacro:macro name="sensor_d585" params="parent *origin name:=camera use_nominal_extrinsics:=false">
+  <xacro:macro name="sensor_d585" params="parent *origin name:=camera use_nominal_extrinsics:=false sp_x:=0 sp_y:=0 sp_z:=0 sp_roll:=0 sp_pitch:=0 sp_yaw:=0">
     <xacro:arg name="add_plug" default="false" />
     <xacro:property name="M_PI" value="3.1415926535897931" />
 
@@ -160,7 +160,7 @@ aluminum peripherial evaluation case.
       
       <!-- camera labeled point cloud joints and links -->
       <joint name="${name}_labeled_point_cloud_joint" type="fixed">
-        <origin xyz="0 ${d585_cam_depth_to_labeled_point_cloud_offset} 0" rpy="0 0 0" />
+        <origin xyz="${sp_x} ${sp_y} ${sp_z}" rpy="${sp_roll} ${sp_pitch} ${sp_yaw}" />
         <parent link="${name}_link" />
         <child link="${name}_labeled_point_cloud_frame" />
       </joint>
@@ -175,7 +175,7 @@ aluminum peripherial evaluation case.
 
       <!-- camera occupancy joints and links -->
       <joint name="${name}_occupancy_joint" type="fixed">
-        <origin xyz="0 ${d585_cam_depth_to_labeled_point_cloud_offset} 0" rpy="0 0 0" />
+        <origin xyz="${sp_x} ${sp_y} ${sp_z}" rpy="${sp_roll} ${sp_pitch} ${sp_yaw}" />
         <parent link="${name}_link" />
         <child link="${name}_occupancy_frame" />
       </joint>
