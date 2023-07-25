@@ -81,23 +81,34 @@ jobs:
     ## This step is commented out since we don't use rosbag files in "Run Tests" step below.
     ## Please uncomment when "Run Tests" step is fixed to run all tests.
     #- name: Download Data For Tests
+    #  if: ${{ matrix.ros_distro != 'rolling'}}
     #  run: |
     #    cd ${{github.workspace}}/ros2
     #    bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
     #    wget $bag_filename -P "records/"
     #    bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
     #    wget $bag_filename -P "records/"
-        
+    #    sudo apt install ros-${{ matrix.ros_distro}}-launch-pytest
+       
     - name: Install Packages For Tests
       run: |
         sudo apt-get install python3-pip
         pip3 install numpy --upgrade
         pip3 install numpy-quaternion tqdm
-
+ 
     - name: Run Tests
       run: |
         cd ${{github.workspace}}/ros2
         source ${{github.workspace}}/.bashrc
         . install/local_setup.bash
         python3 src/realsense-ros/realsense2_camera/scripts/rs2_test.py non_existent_file
-
+    
+    - name: Run integration tests
+      if: ${{ matrix.ros_distro != 'rolling'}}
+      run: |
+        cd ${{github.workspace}}/ros2
+        source ${{github.workspace}}/.bashrc
+        . install/local_setup.bash
+        #export ROSBAG_FILE_PATH=${{github.workspace}}/ros2/records/
+        colcon test --packages-select realsense2_camera --event-handlers console_direct+
+        colcon test-result --all --test-result-base build/realsense2_camera/test_results/ --verbose
