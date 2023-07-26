@@ -95,7 +95,7 @@ namespace realsense2_camera
             template<class T> 
             bool is() const
             {
-                return (dynamic_cast<const T*> (&(*this)));
+                return rs2::sensor::is<T>();
             }
 
         private:
