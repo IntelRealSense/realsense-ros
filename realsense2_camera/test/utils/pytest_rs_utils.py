@@ -770,6 +770,10 @@ class RsTestBaseClass():
     def process_data(self, themes):
         for theme in themes:
             data = self.node.pop_first_chunk(theme['topic'])
+            if 'width' in theme:
+                assert theme['width'] == data['shape'][0][1]  # (get from numpy image the width)
+            if 'height' in theme:
+                assert theme['height'] == data['shape'][0][0]  # (get from numpy image the height)
             if 'data' not in theme:
                 print('No data to compare for ' + theme['topic'])
                 #print(data)
