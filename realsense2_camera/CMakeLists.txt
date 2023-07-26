@@ -300,6 +300,7 @@ if(BUILD_TESTING)
     test
     test/templates
     test/rosbag
+    test/post_processing_filters
   )
   foreach(test_folder ${_pytest_folders})
     file(GLOB files "${test_folder}/test_*.py")
