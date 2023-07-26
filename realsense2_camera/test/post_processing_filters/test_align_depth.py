@@ -50,7 +50,7 @@ Also we check that the recieved frames of each topic are in the right width and 
 '''
 test_params = {
     "rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
-    'camera_name': 'camera',
+    'camera_name': 'camera_1',
     'enable_color': 'true',
     'enable_depth': 'true',
     'depth_module.profile': '1280x720x30',
@@ -63,9 +63,8 @@ test_params = {
 @pytest.mark.launch(fixture=pytest_rs_utils.launch_descr_with_yaml)
 @pytest.mark.parametrize("launch_descr_with_yaml", [test_params],indirect=True)
 class TestBasicAlignDepthEnable(pytest_rs_utils.RsTestBaseClass):
-    def test_camera_1(self, launch_descr_with_yaml):
+    def test_align_depth_on(self, launch_descr_with_yaml):
         params = launch_descr_with_yaml[1]
-        data = pytest_rs_utils.ImageDepthGetData(params["rosbag_filename"])
         themes = [
             {'topic': '/'+params['camera_name']+'/color/image_raw', 'msg_type': msg_Image,
              'expected_data_chunks': 1, 'width': 640, 'height': 480},
@@ -84,6 +83,3 @@ class TestBasicAlignDepthEnable(pytest_rs_utils.RsTestBaseClass):
             assert self.process_data(themes)
         finally:
             self.shutdown()
-
-    def process_data(self, themes):
-        return super().process_data(themes)
