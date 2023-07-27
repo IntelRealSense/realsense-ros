@@ -17,9 +17,9 @@
 # Use this launch file to launch 2 devices.
 # The Parameters available for definition in the command line for each camera are described in rs_launch.configurable_parameters
 # For each device, the parameter name was changed to include an index.
-# For example: to set camera_name for device1 set parameter camera_name_1.
+# For example: to set camera_name for device1 set parameter camera_name1.
 # command line example:
-# ros2 launch realsense2_camera rs_multi_camera_launch.py camera_name_1:=D400 device_type_2:=l5. device_type_1:=d4..
+# ros2 launch realsense2_camera rs_multi_camera_launch.py camera_name1:=D400 device_type2:=l5. device_type1:=d4..
 
 """Launch realsense2_camera node."""
 import copy
@@ -33,8 +33,8 @@ import pathlib
 sys.path.append(str(pathlib.Path(__file__).parent.absolute()))
 import rs_launch
 
-local_parameters = [{'name': 'camera_name_1', 'default': 'camera1', 'description': 'camera unique name'},
-                    {'name': 'camera_name_2', 'default': 'camera2', 'description': 'camera unique name'},
+local_parameters = [{'name': 'camera_name1', 'default': 'camera1', 'description': 'camera unique name'},
+                    {'name': 'camera_name2', 'default': 'camera2', 'description': 'camera unique name'},
                    ]
 
 def set_configurable_parameters(local_params):
@@ -53,14 +53,14 @@ def add_node_action(context : LaunchContext):
             package = "tf2_ros",
             executable = "static_transform_publisher",
             arguments = ["0", "0", "0", "0", "0", "0",
-                          context.launch_configurations['camera_name_1'] + "_link",
-                          context.launch_configurations['camera_name_2'] + "_link"]
+                          context.launch_configurations['camera_name1'] + "_link",
+                          context.launch_configurations['camera_name2'] + "_link"]
     )
     return [node]
 
 def generate_launch_description():
-    params1 = duplicate_params(rs_launch.configurable_parameters, '_1')
-    params2 = duplicate_params(rs_launch.configurable_parameters, '_2')
+    params1 = duplicate_params(rs_launch.configurable_parameters, '1')
+    params2 = duplicate_params(rs_launch.configurable_parameters, '2')
     return LaunchDescription(
         rs_launch.declare_configurable_parameters(local_parameters) +
         rs_launch.declare_configurable_parameters(params1) + 
