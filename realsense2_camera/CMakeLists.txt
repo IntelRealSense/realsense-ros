@@ -274,7 +274,46 @@ install(DIRECTORY
 
 # Test
 if(BUILD_TESTING)
-# This does nothing for now, note that ROS build farm build with BUILD_TESTING=1
+  find_package(ament_cmake_gtest REQUIRED)
+  set(_gtest_folders
+    test
+  )
+  foreach(test_folder ${_gtest_folders})
+    file(GLOB files "${test_folder}/gtest_*.cpp")
+    foreach(file ${files})
+       get_filename_component(_test_name ${file} NAME_WE)
+       ament_add_gtest(${_test_name} ${file})
+       target_include_directories(${_test_name} PUBLIC
+          $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+          $<INSTALL_INTERFACE:include>
+       )
+       ament_target_dependencies(${_test_name}
+          std_msgs
+       )
+       #target_link_libraries(${_test_name} name_of_local_library)
+    endforeach()
+  endforeach()
+
+
+  find_package(ament_cmake_pytest REQUIRED)
+  set(_pytest_folders
+    test
+    test/templates
+    test/rosbag
+    test/post_processing_filters
+  )
+  foreach(test_folder ${_pytest_folders})
+    file(GLOB files "${test_folder}/test_*.py")
+    foreach(file ${files})
+
+    get_filename_component(_test_name ${file} NAME_WE)
+    ament_add_pytest_test(${_test_name} ${file}
+      APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}:${CMAKE_SOURCE_DIR}/test/utils:${CMAKE_SOURCE_DIR}/launch:${CMAKE_SOURCE_DIR}/scripts
+      TIMEOUT 60
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+    endforeach()
+  endforeach()
 endif()
 
 # Ament exports
