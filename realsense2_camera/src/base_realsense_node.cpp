@@ -560,7 +560,9 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
                 frame_to_send = original_depth_frame;
             publishFrame(frame_to_send, t, DEPTH, _images, _info_publishers, _image_publishers);
 
-            if(_enable_rgbd)
+            // Publish RGBD only if rgbd enabled and both depth and color frames exist.
+            // On this line we already know original_depth_frame is valid.
+            if(_enable_rgbd && original_color_frame)
             {
                 publishRGBD(_images[COLOR], _depth_aligned_image[COLOR], t);
             }  
