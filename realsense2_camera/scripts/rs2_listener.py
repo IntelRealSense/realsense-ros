@@ -18,9 +18,6 @@ import rclpy
 from rclpy.node import Node
 from rclpy import qos
 from sensor_msgs.msg import Image as msg_Image
-# from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
-# import sensor_msgs.point_cloud2 as pc2
-from sensor_msgs.msg import Imu as msg_Imu
 import numpy as np
 import inspect
 import ctypes
@@ -29,7 +26,12 @@ import quaternion
 import os
 if (os.getenv('ROS_DISTRO') != "dashing"):
     import tf2_ros
-
+if (os.getenv('ROS_DISTRO') == "humble"):
+    from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
+    from sensor_msgs_py import point_cloud2 as pc2
+# from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
+# import sensor_msgs.point_cloud2 as pc2
+from sensor_msgs.msg import Imu as msg_Imu
 
 try:
     from theora_image_transport.msg import Packet as msg_theora
@@ -38,6 +40,7 @@ except Exception:
 
 
 def pc2_to_xyzrgb(point):
+    point = list(point)
     # Thanks to Panos for his code used in this function.
     x, y, z = point[:3]
     rgb = point[3]
@@ -87,7 +90,7 @@ class CWaitForMessage:
 
         self.themes = {'depthStream': {'topic': '/camera/depth/image_rect_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
                        'colorStream': {'topic': '/camera/color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
-                    #    'pointscloud': {'topic': '/camera/depth/color/points', 'callback': self.pointscloudCallback, 'msg_type': msg_PointCloud2},
+                       #'pointscloud': {'topic': '/camera/depth/color/points', 'callback': self.pointscloudCallback, 'msg_type': msg_PointCloud2},
                        'alignedDepthInfra1': {'topic': '/camera/aligned_depth_to_infra1/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
                        'alignedDepthColor': {'topic': '/camera/aligned_depth_to_color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},
                        'static_tf': {'topic': '/camera/color/image_raw', 'callback': self.imageColorCallback, 'msg_type': msg_Image},

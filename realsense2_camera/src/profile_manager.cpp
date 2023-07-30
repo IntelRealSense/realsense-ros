@@ -88,7 +88,13 @@ void ProfilesManager::registerSensorUpdateParam(std::string template_name,
     {
         std::string param_name = applyTemplateName(template_name, sip);
         if (params.find(sip) == params.end())
-            params[sip] = std::make_shared<T>(value);
+        {
+            if (sip == INFRA0)
+                // Disabling Infra 0 stream by default
+                params[sip] = std::make_shared<T>(false);
+            else
+                params[sip] = std::make_shared<T>(value);
+        }
         std::shared_ptr<T> param = params[sip];
         _params.getParameters()->setParam<T>(param_name, *(params[sip]), [param, update_sensor_func](const rclcpp::Parameter& parameter)
                 {
@@ -198,8 +204,10 @@ VideoProfilesManager::VideoProfilesManager(std::shared_ptr<Parameters> parameter
     _module_name(module_name),
     _force_image_default_qos(force_image_default_qos)
 {
-    _allowed_formats[RS2_STREAM_DEPTH] = RS2_FORMAT_Z16;
-    _allowed_formats[RS2_STREAM_INFRARED] = RS2_FORMAT_Y8;
+    _allowed_formats[{RS2_STREAM_DEPTH, 0}] = RS2_FORMAT_Z16;
+    _allowed_formats[{RS2_STREAM_INFRARED, 0}] = RS2_FORMAT_RGB8;
+    _allowed_formats[{RS2_STREAM_INFRARED, 1}] = RS2_FORMAT_Y8;
+    _allowed_formats[{RS2_STREAM_INFRARED, 2}] = RS2_FORMAT_Y8;
 }
 
 bool VideoProfilesManager::isSameProfileValues(const rs2::stream_profile& profile, const int width, const int height, const int fps)
@@ -209,10 +217,11 @@ bool VideoProfilesManager::isSameProfileValues(const rs2::stream_profile& profil
     auto video_profile = profile.as<rs2::video_stream_profile>();
     ROS_DEBUG_STREAM("Sensor profile: " << profile_string(profile));
 
+    stream_index_pair sip = {video_profile.stream_type(), video_profile.stream_index()};
     return ((video_profile.width() == width) &&
             (video_profile.height() == height) &&
             (video_profile.fps() == fps) &&
-            (_allowed_formats.find(video_profile.stream_type()) == _allowed_formats.end() || video_profile.format() == _allowed_formats[video_profile.stream_type()] ));
+            (_allowed_formats.find(sip) == _allowed_formats.end() || video_profile.format() == _allowed_formats[sip] ));
 }
 
 bool VideoProfilesManager::isWantedProfile(const rs2::stream_profile& profile)

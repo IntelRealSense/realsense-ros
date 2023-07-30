@@ -66,13 +66,11 @@ def generate_launch_description():
         rs_launch.declare_configurable_parameters(params1) + 
         rs_launch.declare_configurable_parameters(params2) + 
         [
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/rs_launch.py']),
-            launch_arguments=set_configurable_parameters(params1).items(),
-        ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/rs_launch.py']),
-            launch_arguments=set_configurable_parameters(params2).items(),
-        ),
+        OpaqueFunction(function=rs_launch.launch_setup,
+                       kwargs = {'params'           : set_configurable_parameters(params1),
+                                 'param_name_suffix': '1'}),
+        OpaqueFunction(function=rs_launch.launch_setup,
+                       kwargs = {'params'           : set_configurable_parameters(params2),
+                                 'param_name_suffix': '2'}),
         OpaqueFunction(function=add_node_action)
     ])

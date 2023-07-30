@@ -35,12 +35,12 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'rgb_camera.profile',           'default': '0,0,0', 'description': 'color image width'},
                            {'name': 'rgb_camera.enable_auto_exposure', 'default': 'true', 'description': 'enable/disable auto exposure for color image'},
                            {'name': 'enable_color',                 'default': 'true', 'description': 'enable color stream'},
+                           {'name': 'enable_infra',                 'default': 'false', 'description': 'enable infra0 stream'},
                            {'name': 'enable_infra1',                'default': 'false', 'description': 'enable infra1 stream'},
                            {'name': 'enable_infra2',                'default': 'false', 'description': 'enable infra2 stream'},
-                           {'name': 'infra_rgb',                    'default': 'false', 'description': 'enable infra2 stream'},
                            {'name': 'enable_fisheye1',              'default': 'true', 'description': 'enable fisheye1 stream'},
                            {'name': 'enable_fisheye2',              'default': 'true', 'description': 'enable fisheye2 stream'},
-                           {'name': 'enable_confidence',            'default': 'true', 'description': 'enable depth stream'},
+                           {'name': 'enable_confidence',            'default': 'true', 'description': 'enable confidence'},
                            {'name': 'gyro_fps',                     'default': '0', 'description': "''"},                           
                            {'name': 'accel_fps',                    'default': '0', 'description': "''"},                           
                            {'name': 'enable_gyro',                  'default': 'false', 'description': "'enable gyro stream'"},                           
@@ -90,43 +90,42 @@ def yaml_to_dict(path_to_yaml):
     with open(path_to_yaml, "r") as f:
         return yaml.load(f, Loader=yaml.SafeLoader)
 
-def launch_setup(context, *args, **kwargs):
-    _config_file = LaunchConfiguration("config_file").perform(context)
+def launch_setup(context, params, param_name_suffix=''):
+    _config_file = LaunchConfiguration('config_file' + param_name_suffix).perform(context)
     params_from_file = {} if _config_file == "''" else yaml_to_dict(_config_file)
-    log_level = 'info'
     # Realsense
     if (os.getenv('ROS_DISTRO') == "dashing") or (os.getenv('ROS_DISTRO') == "eloquent"):
         return [
             launch_ros.actions.Node(
                 package='realsense2_camera',
-                node_namespace=LaunchConfiguration("camera_name"),
-                node_name=LaunchConfiguration("camera_name"),
+                node_namespace=LaunchConfiguration('camera_name' + param_name_suffix),
+                node_name=LaunchConfiguration('camera_name' + param_name_suffix),
                 node_executable='realsense2_camera_node',
                 prefix=['stdbuf -o L'],
-                parameters=[set_configurable_parameters(configurable_parameters)
+                parameters=[params
                             , params_from_file
                             ],
                 output='screen',
-                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
+                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level' + param_name_suffix)],
                 )
             ]
     else:
         return [
             launch_ros.actions.Node(
                 package='realsense2_camera',
-                namespace=LaunchConfiguration("camera_name"),
-                name=LaunchConfiguration("camera_name"),
+                namespace=LaunchConfiguration('camera_name' + param_name_suffix),
+                name=LaunchConfiguration('camera_name' + param_name_suffix),
                 executable='realsense2_camera_node',
-                parameters=[set_configurable_parameters(configurable_parameters)
+                parameters=[params
                             , params_from_file
                             ],
                 output='screen',
-                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
+                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level' + param_name_suffix)],
                 emulate_tty=True,
                 )
         ]
     
 def generate_launch_description():
     return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
-        OpaqueFunction(function=launch_setup)
+        OpaqueFunction(function=launch_setup, kwargs = {'params' : set_configurable_parameters(configurable_parameters)})
     ])
