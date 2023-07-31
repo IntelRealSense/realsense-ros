@@ -45,6 +45,7 @@ namespace realsense2_camera
     std::string create_graph_resource_name(const std::string &original_name);
     const rmw_qos_profile_t qos_string_to_qos(std::string str);
     const std::string list_available_qos_strings();
+    rs2_format string_to_rs2_format(std::string str);
 
 }
 

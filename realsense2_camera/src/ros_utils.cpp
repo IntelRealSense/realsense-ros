@@ -80,6 +80,22 @@ std::string create_graph_resource_name(const std::string &original_name)
     return fixed_name;
 }
 
+rs2_format string_to_rs2_format(std::string str)
+{
+    rs2_format format = RS2_FORMAT_ANY;
+
+    for (int i = 0; i < RS2_FORMAT_COUNT; i++)
+    {
+        transform(str.begin(), str.end(), str.begin(), ::toupper);
+        if (str.compare(rs2_format_to_string((rs2_format)i)) == 0)
+        {
+            format = (rs2_format)i;
+            break;
+        }
+    }
+    return format;
+}
+
 static const rmw_qos_profile_t rmw_qos_profile_latched =
 {
     RMW_QOS_POLICY_HISTORY_KEEP_LAST,
