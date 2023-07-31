@@ -53,7 +53,7 @@ void BaseRealSenseNode::append_static_tf_msg(const rclcpp::Time& t,
     msg.header.frame_id = from;
     msg.child_frame_id = to;
 
-    // Convert x,y,z (taken from camera extrinsics)
+    // Convert translation vector (x,y,z) (taken from camera extrinsics)
     // from optical cooridnates to ros coordinates
     msg.transform.translation.x = trans.z;
     msg.transform.translation.y = -trans.x;
@@ -124,11 +124,17 @@ void BaseRealSenseNode::calcAndAppendTransformMsgs(const rs2::stream_profile& pr
 {
     // Transform base to stream
     stream_index_pair sip(profile.stream_type(), profile.stream_index());
+
+    // rotation quaternion from ROS CS to Optical CS
     tf2::Quaternion quaternion_optical;
-    quaternion_optical.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
-    float3 zero_trans{0, 0, 0};
+    quaternion_optical.setRPY(-M_PI / 2, 0, -M_PI/2);  // R,P,Y rotations over the original axes
+
+    // zero rotation quaternion, used for IMU
     tf2::Quaternion zero_rot_quaternions;
     zero_rot_quaternions.setRPY(0, 0, 0);
+
+    // zero translation, used for moving from ROS frame to its correspending Optical frame
+    float3 zero_trans{0, 0, 0};
 
     rclcpp::Time transform_ts_ = _node.now();
 
@@ -166,14 +172,28 @@ void BaseRealSenseNode::calcAndAppendTransformMsgs(const rs2::stream_profile& pr
     // publish normal extrinsics e.g. /camera/extrinsics/depth_to_color
     publishExtrinsicsTopic(sip, normal_ex);
 
-    // publish static TF
+    // Representing Rotations with Quaternions
+    // see https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Using_quaternions_as_rotations for reference
+
+    // Q defines a quaternion rotation from <base profile CS> to <current profile CS>
+    // for example, rotation from depth to infra2
     auto Q = rotationMatrixToQuaternion(tf_ex.rotation);
-    Q = quaternion_optical * Q * quaternion_optical.inverse();
+
     float3 trans{tf_ex.translation[0], tf_ex.translation[1], tf_ex.translation[2]};
 
-    append_static_tf_msg(transform_ts_, trans, Q, _base_frame_id, FRAME_ID(sip));
+    // Rotation order is important (start from left to right):
+    // 1. quaternion_optical.inverse() [ROS -> Optical]
+    // 2. Q [Optical -> Optical] (usually no rotation, but might be very small rotations between sensors, like from Depth to Color)
+    // 3. quaternion_optical [Optical -> ROS]
+    // We do all these products since we want to finish in ROS CS, while Q is a rotation from optical to optical,
+    // and cant be used directly in ROS TF without this combination 
+    Q = quaternion_optical * Q * quaternion_optical.inverse();
 
-    // Transform stream frame to stream optical frame and publish it
+    // The translation vector is in the Optical CS, and we convert it to ROS CS inside append_static_tf_msg
+    append_static_tf_msg(transform_ts_, trans, Q, _base_frame_id, FRAME_ID(sip));
+    
+     // Transform stream frame from ROS CS to optical CS and publish it
+    // We are using zero translation vector here, since no translation between frame and optical_frame, but only rotation
     append_static_tf_msg(transform_ts_, zero_trans, quaternion_optical, FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
 
     if (profile.is<rs2::video_stream_profile>() &&
