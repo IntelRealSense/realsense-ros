@@ -89,6 +89,7 @@ namespace realsense2_camera
     const bool ALLOW_NO_TEXTURE_POINTS = false;
     const bool ORDERED_PC     = false;
     const bool SYNC_FRAMES    = false;
+    const bool ENABLE_RGBD    = false;
 
     const bool PUBLISH_TF     = true;
     const double TF_PUBLISH_RATE = 0; // Static transform
