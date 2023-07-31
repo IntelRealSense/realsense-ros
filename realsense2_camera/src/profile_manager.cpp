@@ -172,7 +172,8 @@ void ProfilesManager::addWantedProfiles(std::vector<rs2::stream_profile>& wanted
         {
             ROS_WARN_STREAM("Couldn't open " << ros_stream_to_string(sip.first) << ":" << sip.second << " stream "
                             << "due to wrong profile selection. "
-                            << "Update the profile settings and re-enable the stream for the change to take effect. "
+                            << "Please verify and update the profile settings (such as width, height, fps, format) "
+                            << "and re-enable the stream for the changes to take effect. "
                             << "Run 'rs-enumerate-devices' command to know the list of profiles supported by the sensors.");
         }
     }
@@ -314,6 +315,22 @@ std::string VideoProfilesManager::getProfileFormatsDescriptions(stream_index_pai
     return descriptors;
 }
 
+void VideoProfilesManager::registerVideoSensorProfileFormat(stream_index_pair sip)
+{
+    if (sip == DEPTH)
+        _formats[DEPTH] = RS2_FORMAT_Z16;
+    else if (sip == INFRA0)
+        _formats[INFRA0] = RS2_FORMAT_RGB8;
+    else if (sip == INFRA1)
+        _formats[INFRA1] = RS2_FORMAT_Y8;
+    else if (sip == INFRA2)
+        _formats[INFRA2] = RS2_FORMAT_Y8;
+    else if (sip == COLOR)
+        _formats[COLOR] = RS2_FORMAT_RGB8;
+    else
+        _formats[sip] = RS2_FORMAT_ANY;
+}
+
 void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair> sips)
 {
     // Set default values:
@@ -335,47 +352,24 @@ void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair>
     _width = video_profile.width();
     _height = video_profile.height();
     _fps = video_profile.fps();
-    _formats[{default_profile.stream_type(), default_profile.stream_index()}] = video_profile.format();
 
-    // Set the stream format from the default profiles provided by LibRealsense
+    // Set the stream formats
+    for (auto sip : sips)
+    {
+        registerVideoSensorProfileFormat(sip);
+    }
+
+    // Overwrite the _formats with default values queried from LibRealsense
     for (auto sip_default_profile : sip_default_profiles)
     {
         stream_index_pair sip = sip_default_profile.first;
 
-        if (_formats.find(sip) == _formats.end())
+        default_profile = sip_default_profile.second;
+        video_profile = default_profile.as<rs2::video_stream_profile>();
+
+        if (isSameProfileValues(default_profile, _width, _height, _fps, video_profile.format()))
         {
-            default_profile = sip_default_profile.second;
-            video_profile = default_profile.as<rs2::video_stream_profile>();
-
-            if (isSameProfileValues(default_profile, _width, _height, _fps, video_profile.format()))
-            {
-                _formats[sip] = video_profile.format();
-            }
-        }
-    }
-
-    // Set the format for the streams which doesn't have default profiles
-    for (auto sip : sips)
-    {
-        if (_formats.find(sip) == _formats.end())
-        {
-            for (const auto& profile : _all_profiles)
-            {
-                bool found = false;
-                stream_index_pair profile_sip(profile.stream_type(), profile.stream_index());
-
-                if (sip == profile_sip &&
-                    isSameProfileValues(profile, _width, _height, _fps, profile.as<rs2::video_stream_profile>().format()))
-                {
-                    _formats[sip] = profile.format();
-                    found = true;
-                    break;
-                }
-                if (!found)
-                {
-                    _formats[sip] = RS2_FORMAT_ANY;
-                }
-            }
+            _formats[sip] = video_profile.format();
         }
     }
 

@@ -211,8 +211,8 @@
     - If the specified parameter is not available by the stream, the default or previously set configuration will be used.
       - Run ```ros2 param describe <your_node_name> <param_name>``` to get the list of supported formats.
     - Note: Should re-enable the stream for the change to take effect.
-  - If the stream doesn't support the user selected profile \<width>X\<height>X\<fps> + \<format>, it will not be opened and awarning message will be shown.
-    - Should update the profile setting and re-enable the stream for the change to take effect.
+  - If the stream doesn't support the user selected profile \<width>X\<height>X\<fps> + \<format>, it will not be opened and a warning message will be shown.
+    - Should update the profile settings and re-enable the stream for the change to take effect.
     - Run ```rs-enumerate-devices``` command to know the list of profiles supported by the connected sensors.
 - **enable_*<stream_name>***: 
   - Choose whether to enable a specified stream or not. Default is true for images and false for orientation streams.
