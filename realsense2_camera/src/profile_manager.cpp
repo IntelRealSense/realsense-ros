@@ -446,7 +446,7 @@ void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair>
         _params.getParameters()->setParam(param_name, param_value, [this, sip](const rclcpp::Parameter& parameter)
                 {
                     std::string format_str(parameter.get_value<std::string>());
-                    rs2_format temp_format = rs2_format_string_to_rs2_format(format_str);
+                    rs2_format temp_format = string_to_rs2_format(format_str);
                     bool found = false;
 
                     if (temp_format != RS2_FORMAT_ANY)

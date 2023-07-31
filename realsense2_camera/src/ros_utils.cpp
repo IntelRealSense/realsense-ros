@@ -80,7 +80,7 @@ std::string create_graph_resource_name(const std::string &original_name)
     return fixed_name;
 }
 
-rs2_format rs2_format_string_to_rs2_format(std::string str)
+rs2_format string_to_rs2_format(std::string str)
 {
     rs2_format format = RS2_FORMAT_ANY;
 
