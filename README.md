@@ -202,16 +202,14 @@
     - Since infra, infra1, infra2, fisheye, fisheye1, fisheye2 and depth are all streams of the depth_module, their width, height and fps are defined by the same param **depth_module.profile**
     - If the specified combination of parameters is not available by the device, the default or previously set configuration will be used.
       - Run ```ros2 param describe <your_node_name> <param_name>``` to get the list of supported profiles.
-      - To automatically choose a default profile, set the param to '0x0x0'.
     - Note: Should re-enable the stream for the change to take effect.
-  - ***<stream_name>*_stream_format**
+  - ***<stream_name>*_format**
     - This parameter is a string used to select the stream format.
     - <stream_name> can be any of *infra, infra1, infra2, color, depth, fisheye, fisheye1, fisheye2*.
-    - For example: ```depth_module.profile.depth_stream_format:=Z16 depth_module.profile.infra1_stream_format:=y8 rgb_camera.profile.color_stream_format:=RGB8```
+    - For example: ```depth_module.depth_format:=Z16 depth_module.infra1_format:=y8 rgb_camera.color_format:=RGB8```
     - This parameter supports both lower case and upper case letters.
     - If the specified parameter is not available by the stream, the default or previously set configuration will be used.
       - Run ```ros2 param describe <your_node_name> <param_name>``` to get the list of supported formats.
-      - To automatically choose a suitable format, set the param to 'ANY'.
     - Note: Should re-enable the stream for the change to take effect.
   - If the stream doesn't support the user selected profile \<width>X\<height>X\<fps> + \<format>, it will not be opened and awarning message will be shown.
     - Should update the profile setting and re-enable the stream for the change to take effect.

@@ -337,7 +337,7 @@ void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair>
     _fps = video_profile.fps();
     _formats[{default_profile.stream_type(), default_profile.stream_index()}] = video_profile.format();
 
-    // Set default _formats for other streams
+    // Set the stream format from the default profiles provided by LibRealsense
     for (auto sip_default_profile : sip_default_profiles)
     {
         stream_index_pair sip = sip_default_profile.first;
@@ -351,9 +351,30 @@ void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair>
             {
                 _formats[sip] = video_profile.format();
             }
-            else
+        }
+    }
+
+    // Set the format for the streams which doesn't have default profiles
+    for (auto sip : sips)
+    {
+        if (_formats.find(sip) == _formats.end())
+        {
+            for (const auto& profile : _all_profiles)
             {
-                _formats[sip] = RS2_FORMAT_ANY;
+                bool found = false;
+                stream_index_pair profile_sip(profile.stream_type(), profile.stream_index());
+
+                if (sip == profile_sip &&
+                    isSameProfileValues(profile, _width, _height, _fps, profile.as<rs2::video_stream_profile>().format()))
+                {
+                    _formats[sip] = profile.format();
+                    found = true;
+                    break;
+                }
+                if (!found)
+                {
+                    _formats[sip] = RS2_FORMAT_ANY;
+                }
             }
         }
     }
@@ -418,31 +439,18 @@ void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair>
 
     for (auto sip : sips)
     {
-        std::string param_name(_module_name + ".profile." + STREAM_NAME(sip) + "_stream_format");
-
-        if (_formats.find(sip) == _formats.end())
-        {
-            _formats[sip] = RS2_FORMAT_ANY;
-        }
-
+        std::string param_name(_module_name + "." + STREAM_NAME(sip) + "_format");
         std::string param_value = rs2_format_to_string(_formats[sip]);
         rcl_interfaces::msg::ParameterDescriptor crnt_descriptor;
         crnt_descriptor.description = "Available options are:\n" + getProfileFormatsDescriptions(sip);
         _params.getParameters()->setParam(param_name, param_value, [this, sip](const rclcpp::Parameter& parameter)
                 {
                     std::string format_str(parameter.get_value<std::string>());
-                    rs2_format temp_format = RS2_FORMAT_ANY;
+                    rs2_format temp_format = rs2_format_string_to_rs2_format(format_str);
                     bool found = false;
 
-                    if (format_str == rs2_format_to_string(RS2_FORMAT_ANY))
+                    if (temp_format != RS2_FORMAT_ANY)
                     {
-                        ROS_WARN_STREAM("A suitable format for " << STREAM_NAME(sip) << " stream will be chosen automatically. "
-                                << "re-enable the stream for the change to take effect.");
-                        found = true;
-                        _formats[sip] = RS2_FORMAT_ANY;
-                    }
-                    else if (string_to_rs2_format(format_str , &temp_format))
-                    {                        
                         for (const auto& profile : _all_profiles)
                         {
                             stream_index_pair profile_sip = {profile.stream_type(), profile.stream_index()};
@@ -461,7 +469,6 @@ void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair>
                         ROS_ERROR_STREAM(STREAM_NAME(sip) <<" stream doesn't support " << format_str <<" format. "
                                 << "Run 'ros2 param describe <your_node_name> " << parameter.get_name() 
                                 << "' to get the list of supported formats. "
-                                << "To automatically choose a suitable format, set the param to 'ANY'. "
                                 << "Setting the ROS param '" << parameter.get_name() <<"' back to: " << _formats[sip]);
                         _params.getParameters()->queueSetRosValue(parameter.get_name(), 
                                                     (std::string)rs2_format_to_string(_formats[sip]));
