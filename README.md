@@ -186,16 +186,6 @@
 <h3 id="parameters">
   Parameters
 <h3>
-  
-### Sensor Parameters:
-- Each sensor has a unique set of parameters.
-- Video sensors, such as depth_module or rgb_camera have, at least, the 'profile' parameter.</br>
-  - The profile parameter is a string of the following format: \<width>X\<height>X\<fps> (The deviding character can be X, x or ",". Spaces are ignored.)
-  - For example: ```depth_module.profile:=640x480x30```
-- Since infra1, infra2 and depth are all streams of the depth_module, their width, height and fps are defined by their common sensor.
-- If the specified combination of parameters is not available by the device, the default configuration will be used.
-
-</br>
 
 ### Available Parameters:
 - For the entire list of parameters type `ros2 param list`.
@@ -206,16 +196,35 @@
 
 #### Parameters that can be modified during runtime:
 - All of the filters and sensors inner parameters.
+- Video Sensor Parameters: (```depth_module``` and ```rgb_camera```)
+  - They have, at least, the **profile** parameter.
+    - The profile parameter is a string of the following format: \<width>X\<height>X\<fps> (The dividing character can be X, x or ",". Spaces are ignored.)
+    - For example: ```depth_module.profile:=640x480x30 rgb_camera.profile:=1280x720x30```
+    - Since infra, infra1, infra2, fisheye, fisheye1, fisheye2 and depth are all streams of the depth_module, their width, height and fps are defined by the same param **depth_module.profile**
+    - If the specified combination of parameters is not available by the device, the default or previously set configuration will be used.
+      - Run ```ros2 param describe <your_node_name> <param_name>``` to get the list of supported profiles.
+    - Note: Should re-enable the stream for the change to take effect.
+  - ***<stream_name>*_format**
+    - This parameter is a string used to select the stream format.
+    - <stream_name> can be any of *infra, infra1, infra2, color, depth, fisheye, fisheye1, fisheye2*.
+    - For example: ```depth_module.depth_format:=Z16 depth_module.infra1_format:=y8 rgb_camera.color_format:=RGB8```
+    - This parameter supports both lower case and upper case letters.
+    - If the specified parameter is not available by the stream, the default or previously set configuration will be used.
+      - Run ```ros2 param describe <your_node_name> <param_name>``` to get the list of supported formats.
+    - Note: Should re-enable the stream for the change to take effect.
+  - If the stream doesn't support the user selected profile \<width>X\<height>X\<fps> + \<format>, it will not be opened and a warning message will be shown.
+    - Should update the profile settings and re-enable the stream for the change to take effect.
+    - Run ```rs-enumerate-devices``` command to know the list of profiles supported by the connected sensors.
 - **enable_*<stream_name>***: 
   - Choose whether to enable a specified stream or not. Default is true for images and false for orientation streams.
-  - <stream_name> can be any of *infra1, infra2, color, depth, fisheye, fisheye1, fisheye2, gyro, accel, pose*.
+  - <stream_name> can be any of *infra, infra1, infra2, color, depth, fisheye, fisheye1, fisheye2, gyro, accel, pose*.
   - For example: ```enable_infra1:=true enable_color:=false```
 - **enable_sync**:
   - gathers closest frames of different sensors, infra red, color and depth, to be sent with the same timetag.
   - This happens automatically when such filters as pointcloud are enabled.
 - ***<stream_type>*_qos**: 
   - Sets the QoS by which the topic is published.
-  - <stream_type> can be any of *infra, color, fisheye, depth, gyro, accel, pose*.
+  - <stream_type> can be any of *infra, infra1, infra2, color, depth, fisheye, fisheye1, fisheye2, gyro, accel, pose*.
   -  Available values are the following strings: `SYSTEM_DEFAULT`, `DEFAULT`, `PARAMETER_EVENTS`, `SERVICES_DEFAULT`, `PARAMETERS`, `SENSOR_DATA`.
   - For example: ```depth_qos:=SENSOR_DATA```
   - Reference: [ROS2 QoS profiles formal documentation](https://docs.ros.org/en/rolling/Concepts/About-Quality-of-Service-Settings.html#qos-profiles)
