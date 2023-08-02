@@ -68,27 +68,15 @@ Note: The below command helps view the steps taken by the build command.
 	colcon build --event-handlers console_direct+
 
 ### Prerequisites for running the tests
-
-1. The template tests require the rosbag files from librealsense.intel.comi, the following commands download them:
-```
-bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
-wget $bag_filename -P "records/"
-bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
-wget $bag_filename -P "records/"
-```
-2. The tests use the environment variable ROSBAG_FILE_PATH as the directory that contains the rosbag files
-```	
-export ROSBAG_FILE_PATH=/path/to/directory/of/rosbag
-```
-3. Install launch_pytest package. For humble: 
+1. Install launch_pytest package. For humble: 
 ```
 sudo apt install ros-$ROS_DISTRO-launch-pytest
 ```
-4. As in the case of all the packages, the install script of realsesnse2_camera has to be run.
+2. As in the case of all the packages, the install script of realsesnse2_camera has to be run.
 ```
 . install/local_setup.bash
 ```
-5. If the tests are run on a machine that has the RS board connected or the tests are using rosbag files, then its better to let the ROS search for the nodes in the local machine, this will be faster and less prone to interference and hence unexpected errors. It can be achieved using the following environment variable.
+3. If the tests are run on a machine that has the RS board connected or the tests are using rosbag files, then its better to let the ROS search for the nodes in the local machine, this will be faster and less prone to interference and hence unexpected errors. It can be achieved using the following environment variable.
 ```
 export ROS_DOMAIN_ID=1
 ```
@@ -97,11 +85,6 @@ So, all put together:
 
 ```
 sudo apt install  ros-$ROS_DISTRO-launch-pytest
-bag_filename="https://librealsense.intel.com/rs-tests/TestData/outdoors_1color.bag";
-wget $bag_filename -P "records/"
-bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
-wget $bag_filename -P "records/"
-export ROSBAG_FILE_PATH=$PWD/records
 . install/local_setup.bash
 export ROS_DOMAIN_ID=1
 ```
@@ -129,22 +112,23 @@ The xml files mentioned by the command can be directly opened also.
 
 User can run all the tests in a pytest file directly using the below command:
 
-	pytest-3 -s realsense2_camera/test/test_integration_template.py
+	PYTHONPATH=$PYTHONPATH:$PWD/realsense2_camera/test/utils:$PWD/realsense2_camera//launch:$PWD/realsense2_camera//scripts pytest-3 -s realsense2_camera/test/test_integration_template.py
+ Note: The PYTHONPATH additions are required because we are bypassing the python path settings in CMakeLists.txt for ament_cmake_pytest. If the above mentioned command is failing, but colcon test is passing, then it could be due to some difference in the python paths. Please check the paths in the CMakeLists.txt and modify the command accordingly.
 
 All the pytests in a test folder can be directly run using the below command:
 
-	pytest-3 -s realsense2_camera/test/
+	PYTHONPATH=$PYTHONPATH:$PWD/realsense2_camera/test/utils:$PWD/realsense2_camera//launch:$PWD/realsense2_camera//scripts pytest-3 -s realsense2_camera/test/
 
 ### Running a group of pytests
 As mentioned above, a set of pytests that are grouped using markers can be run using the pytest command. The below command runs all the pytests in realsense2_camera/test folder that has the marker rosbag:
 
-	pytest-3 -s -m rosbag realsense2_camera/test/
+	PYTHONPATH=$PYTHONPATH:$PWD/realsense2_camera/test/utils:$PWD/realsense2_camera//launch:$PWD/realsense2_camera//scripts pytest-3 -s -m rosbag realsense2_camera/test/
 
 
 ### Running a single pytest
 The below command finds the test with the name test_static_tf_1 in realsense2_camera/test folder run:
 
-	pytest-3 -s -k test_static_tf_1 realsense2_camera/test/
+	PYTHONPATH=$PYTHONPATH:$PWD/realsense2_camera/test/utils:$PWD/realsense2_camera//launch:$PWD/realsense2_camera//scripts pytest-3 -s -k test_static_tf_1 realsense2_camera/test/
 
 ### Points to be noted while writing pytests
 The tests that are in one file are nromally run in parallel. So if there are multiple tests in one file, the system capacity can influence the test execution. It's recomended to have 3-4 tests in file, more than that can affect the test results due to delays.
