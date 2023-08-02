@@ -33,6 +33,14 @@ import ctypes
 import struct
 import requests
 
+#from rclpy.parameter import Parameter
+from rcl_interfaces.msg import Parameter
+from rcl_interfaces.msg import ParameterValue
+from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
+from rcl_interfaces.msg import ParameterType
+from rcl_interfaces.msg import ParameterValue
+
+
 
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
@@ -708,6 +716,26 @@ class RsTestBaseClass():
             self.node.create_subscription(msg_type, topic, data_type, store_raw_data)
             self.subscribed_topics.append(topic)
 
+    def create_param_ifs(self, camera_name):
+
+        self.set_param_if = self.node.create_client(SetParameters, '/' + camera_name + '/set_parameters')
+        self.get_param_if = self.node.create_client(GetParameters, '/' + camera_name + '/get_parameters')
+        while not self.get_param_if.wait_for_service(timeout_sec=1.0):
+            print('service not available, waiting again...') 
+        while not self.set_param_if.wait_for_service(timeout_sec=1.0):
+            print('service not available, waiting again...') 
+    def set_string_param(self, param_name, param_value):
+        req = SetParameters.Request()
+        new_param_value = ParameterValue(type=ParameterType.PARAMETER_STRING, string_value=param_value)
+        req.parameters = [Parameter(name=param_name, value=new_param_value)]
+        future = self.set_param_if.call_async(req)
+
+    def set_bool_param(self, param_name, param_value):
+        req = SetParameters.Request()
+        new_param_value = ParameterValue(type=ParameterType.PARAMETER_BOOL, bool_value=param_value)
+        req.parameters = [Parameter(name=param_name, value=new_param_value)]
+        future = self.set_param_if.call_async(req)
+
     def spin_for_data(self,themes):
         start = time.time()
         '''
@@ -771,9 +799,9 @@ class RsTestBaseClass():
         for theme in themes:
             data = self.node.pop_first_chunk(theme['topic'])
             if 'width' in theme:
-                assert theme['width'] == data['shape'][0][1]  # (get from numpy image the width)
+                assert theme['width'] == data['shape'][0][1], "Width not matched. Expected:" +  str(theme['width']) + " & got: " + str(data['shape'][0][1]) # (get from numpy image the width)
             if 'height' in theme:
-                assert theme['height'] == data['shape'][0][0]  # (get from numpy image the height)
+                assert theme['height'] == data['shape'][0][0], "Height not matched. Expected:" +  str(theme['height']) + " & got: " + str(data['shape'][0][0])  # (get from numpy image the height)
             if 'data' not in theme:
                 print('No data to compare for ' + theme['topic'])
                 #print(data)
