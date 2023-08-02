@@ -296,12 +296,31 @@ if(BUILD_TESTING)
 
 
   find_package(ament_cmake_pytest REQUIRED)
+
   set(_pytest_folders
     test
     test/templates
     test/rosbag
     test/post_processing_filters
   )
+  set(rs_query_cmd "rs-enumerate-devices -s")
+  execute_process(COMMAND bash -c ${rs_query_cmd}
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      RESULT_VARIABLE rs_result
+      OUTPUT_VARIABLE RS_DEVICE_INFO)
+  
+ # message(STATUS "rs_result ${rs_result}")
+  message(STATUS "rs_device_info:")
+  message(STATUS "${RS_DEVICE_INFO}")
+  if(RS_DEVICE_INFO MATCHES "D455")
+    message(STATUS "D455 device found")
+    set(_pytest_folders
+      ${_pytest_folders}
+      test/d455
+    )
+  endif()
+
+
   foreach(test_folder ${_pytest_folders})
     file(GLOB files "${test_folder}/test_*.py")
     foreach(file ${files})
