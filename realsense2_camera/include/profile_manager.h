@@ -51,7 +51,7 @@ namespace realsense2_camera
             rmw_qos_profile_t getInfoQOS(const stream_index_pair& sip) const;
 
         protected:
-            rs2::stream_profile getDefaultProfile();
+            std::map<stream_index_pair, rs2::stream_profile> getDefaultProfiles();
 
         protected:
             rclcpp::Logger _logger;
@@ -73,13 +73,15 @@ namespace realsense2_camera
             int getFPS() {return _fps;};
 
         private:
-            bool isSameProfileValues(const rs2::stream_profile& profile, const int width, const int height, const int fps);
-            void registerVideoSensorParams();
+            bool isSameProfileValues(const rs2::stream_profile& profile, const int width, const int height, const int fps, const rs2_format format);
+            void registerVideoSensorProfileFormat(stream_index_pair sip);
+            void registerVideoSensorParams(std::set<stream_index_pair> sips);
             std::string get_profiles_descriptions();
+            std::string getProfileFormatsDescriptions(stream_index_pair sip);
 
         private:
             std::string _module_name;
-            std::map<stream_index_pair, rs2_format>  _allowed_formats;
+            std::map<stream_index_pair, rs2_format>  _formats;
             int      _fps;
             int _width, _height;
             bool _is_profile_exist;

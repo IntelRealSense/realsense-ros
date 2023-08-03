@@ -534,7 +534,8 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             {
                 publishPointCloud(f.as<rs2::points>(), t, frameset);
             }
-            else {
+            else
+            {
                 if (stream_type == RS2_STREAM_DEPTH)
                 {
                     if (sent_depth_frame) continue;
@@ -961,6 +962,7 @@ void BaseRealSenseNode::publishFrame(
         bpp = timage.get_bytes_per_pixel();
     }
 
+    // Publish stream image
     if (image_publishers.find(stream) != image_publishers.end())
     {
         auto &image_publisher = image_publishers.at(stream);
@@ -998,8 +1000,9 @@ void BaseRealSenseNode::publishFrame(
             ROS_DEBUG_STREAM(rs2_stream_to_string(f.get_profile().stream_type()) << " stream published, message address: " << std::hex << msg_address);
         }
     }
-    // if stream is on, and is not a SC stream, publish cameraInfo
-    if(shouldPublishCameraInfo(stream) && info_publishers.find(stream) != info_publishers.end())
+
+    // Publish stream camera info
+    if(info_publishers.find(stream) != info_publishers.end())
     {
         auto& info_publisher = info_publishers.at(stream);
 
@@ -1035,6 +1038,8 @@ void BaseRealSenseNode::publishFrame(
             info_publisher->publish(cam_info);
         }
     }
+
+    // Publish stream metadata
     if (is_publishMetadata)
     {
         publishMetadata(f, t, OPTICAL_FRAME_ID(stream));
@@ -1068,7 +1073,9 @@ void BaseRealSenseNode::publishRGBD(const cv::Mat& rgb_cv_matrix, const cv::Mat&
         auto depth_camera_info = _camera_info.at(DEPTH);
         msg->depth_camera_info = depth_camera_info;
 
+        realsense2_camera_msgs::msg::RGBD *msg_address = msg.get();
         _rgbd_publisher->publish(std::move(msg));
+        ROS_DEBUG_STREAM("rgbd stream published, message address: " << std::hex << msg_address);
     }
 }
 
