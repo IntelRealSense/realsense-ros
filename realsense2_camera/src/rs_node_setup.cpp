@@ -333,14 +333,12 @@ void BaseRealSenseNode::startRGBDPublisherIfNeeded()
     _rgbd_publisher.reset();
     if(_enable_rgbd && !_rgbd_publisher)
     {
-        if (_sync_frames && _is_color_enabled && _is_depth_enabled)
+        if (_sync_frames && _is_color_enabled && _is_depth_enabled && _align_depth_filter->is_enabled())
         {
-            rmw_qos_profile_t qos = rmw_qos_profile_system_default;
+            rmw_qos_profile_t qos = _use_intra_process ? qos_string_to_qos(DEFAULT_QOS) : qos_string_to_qos(IMAGE_QOS);
 
-            rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
-            options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
             _rgbd_publisher = _node.create_publisher<realsense2_camera_msgs::msg::RGBD>("rgbd",
-                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos), std::move(options));
+                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
         }
         else {
             ROS_ERROR("In order to get rgbd topic enabled, "\

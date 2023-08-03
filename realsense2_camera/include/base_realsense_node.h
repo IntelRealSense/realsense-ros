@@ -276,7 +276,6 @@ namespace realsense2_camera
         bool  _hold_back_imu_for_frames;
 
         std::map<stream_index_pair, rs2_intrinsics> _stream_intrinsics;
-        std::map<rs2_stream, rs2_format>  _format;
         std::map<stream_index_pair, bool> _enable;
         bool _publish_tf;
         double _tf_publish_rate, _diagnostics_period;
