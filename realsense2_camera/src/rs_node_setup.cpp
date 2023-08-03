@@ -160,8 +160,8 @@ void BaseRealSenseNode::setAvailableSensors()
         }
         else
         {
-            ROS_ERROR_STREAM("Module Name \"" << module_name << "\" does not define a callback.");
-            throw("Error: Module not supported");
+            ROS_WARN_STREAM("Module Name \"" << module_name << "\" does not define a callback.");
+            continue;
         }
         _available_ros_sensors.push_back(std::move(rosSensor));
     }
@@ -216,6 +216,10 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 
         if (profile.is<rs2::video_stream_profile>())
         {
+            if(profile.stream_type() == RS2_STREAM_COLOR)
+                _is_color_enabled = true;
+            else if (profile.stream_type() == RS2_STREAM_DEPTH)
+                _is_depth_enabled = true;
             std::stringstream image_raw, camera_info;
             bool rectified_image = false;
             if (sensor.rs2::sensor::is<rs2::depth_sensor>())
@@ -303,6 +307,25 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
     }
 }
 
+void BaseRealSenseNode::startRGBDPublisherIfNeeded()
+{
+    _rgbd_publisher.reset();
+    if(_enable_rgbd && !_rgbd_publisher)
+    {
+        if (_sync_frames && _is_color_enabled && _is_depth_enabled && _align_depth_filter->is_enabled())
+        {
+            rmw_qos_profile_t qos = _use_intra_process ? qos_string_to_qos(DEFAULT_QOS) : qos_string_to_qos(IMAGE_QOS);
+
+            _rgbd_publisher = _node.create_publisher<realsense2_camera_msgs::msg::RGBD>("rgbd",
+                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
+        }
+        else {
+            ROS_ERROR("In order to get rgbd topic enabled, "\
+             "you should enable: color stream, depth stream, sync_mode and align_depth");
+        }
+    }
+}
+
 void BaseRealSenseNode::updateSensors()
 {    
     std::lock_guard<std::mutex> lock_guard(_update_sensor_mutex);
@@ -364,6 +387,7 @@ void BaseRealSenseNode::updateSensors()
             std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
             publishStaticTransforms();
         }
+        startRGBDPublisherIfNeeded();
     }
     catch(const std::exception& ex)
     {
