@@ -37,6 +37,8 @@ import requests
 from rcl_interfaces.msg import Parameter
 from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
+from rcl_interfaces.msg import SetParametersResult
+from rcl_interfaces.srv import SetParameters_Response
 from rcl_interfaces.msg import ParameterType
 from rcl_interfaces.msg import ParameterValue
 
@@ -572,11 +574,12 @@ class RsTestNode(Node):
     def wait_for_node(self, node_name, timeout=8.0):
         start = time.time()
         flag = False
-        print('Waiting for node... ' + node_name)
+        print('Waiting for node... ' + str(node_name))
         while time.time() - start < timeout:
             print(node_name + ": waiting for the node to come up")
             flag = node_name in self.get_node_names()
             if flag:
+                print('Node is up: ' + str(node_name))
                 return True, ""
             time.sleep(timeout/5)
         return False, "Timed out waiting for "+ str(timeout)+  "seconds"
@@ -711,6 +714,8 @@ class RsTestBaseClass():
         self.flag = False
         self.node = RsTestNode(name)
         self.subscribed_topics = []
+    def wait_for_node(self, node_name, timeout=8.0):
+        self.node.wait_for_node(node_name, timeout)
     def create_subscription(self, msg_type, topic, data_type, store_raw_data=False):
         if not topic in self.subscribed_topics:
             self.node.create_subscription(msg_type, topic, data_type, store_raw_data)
@@ -724,17 +729,33 @@ class RsTestBaseClass():
             print('service not available, waiting again...') 
         while not self.set_param_if.wait_for_service(timeout_sec=1.0):
             print('service not available, waiting again...') 
+
+    def send_param(self, req):
+        future = self.set_param_if.call_async(req)
+        while rclpy.ok():
+            rclpy.spin_once(self.node)
+            if future.done():
+                try:
+                    response = future.result()
+                    if response.results[0].successful:
+                        return True
+                except Exception as e:
+                    print("exception raised:")
+                    print(e)
+                    pass
+                return False
+
     def set_string_param(self, param_name, param_value):
         req = SetParameters.Request()
         new_param_value = ParameterValue(type=ParameterType.PARAMETER_STRING, string_value=param_value)
         req.parameters = [Parameter(name=param_name, value=new_param_value)]
-        future = self.set_param_if.call_async(req)
-
+        return self.send_param(req)
+    
     def set_bool_param(self, param_name, param_value):
         req = SetParameters.Request()
         new_param_value = ParameterValue(type=ParameterType.PARAMETER_BOOL, bool_value=param_value)
         req.parameters = [Parameter(name=param_name, value=new_param_value)]
-        future = self.set_param_if.call_async(req)
+        return self.send_param(req)
 
     def spin_for_data(self,themes):
         start = time.time()
@@ -763,9 +784,9 @@ class RsTestBaseClass():
 
     def spin_for_time(self,wait_time):
         start = time.time()
-        print('Waiting for topic... ' )
+        print('Waiting for time... ' )
         flag = False
-        while time.time() - start < wait_time:
+        while time.time() - (start < wait_time):
             rclpy.spin_once(self.node)
             print('Spun once... ' )
  
