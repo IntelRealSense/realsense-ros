@@ -92,12 +92,13 @@ class RosbagManager(object):
     def get_rosbag_path(self, filename):
         if filename in self.rosbag_files:
             return self.rosbag_location + "/" + filename
-rosbagMgr = RosbagManager()
+
 def get_rosbag_file_path(filename):
+    rosbagMgr = RosbagManager()
     path = rosbagMgr.get_rosbag_path(filename)
     assert path, "No rosbag file found :"+filename 
     return path
-
+get_rosbag_file_path.rosbagMgr = None
 
 def CameraInfoGetData(rec_filename, topic):
     data = importRosbag(rec_filename, importTopics=[topic], log='ERROR', disable_bar=True)[topic]
