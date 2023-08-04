@@ -32,6 +32,7 @@
      * [TF from coordinate A to coordinate B](#tfs)
      * [Extrinsics from sensor A to sensor B](#extrinsics)
      * [Topics](#topics)
+     * [RGBD Topic](#rgbd)
      * [Metadata Topic](#metadata)
      * [Post-Processing Filters](#filters)
      * [Available Services](#services)
@@ -413,6 +414,28 @@ Enabling stream adds matching topics. For instance, enabling the gyro and accel 
 - /camera/gyro/imu_info
 - /camera/gyro/metadata
 - /camera/gyro/sample
+
+<hr>
+
+<h3 id="rgbd">
+  RGBD Topic
+</h3>
+
+RGBD new topic, publishing [RGB + Depth] in the same message (see RGBD.msg for reference). For now, works only with depth aligned to color images, as color and depth images are synchronized by frame time tag.
+
+These boolean paramters should be true to enable rgbd messages:
+
+- `enable_rgbd`: new paramter, to enable/disable rgbd topic, changeable during runtime
+- `align_depth.enable`: align depth images to rgb images
+- `enable_sync`: let librealsense sync between frames, and get the frameset with color and depth images combined
+- `enable_color` + `enable_depth`: enable both color and depth sensors
+
+The current QoS of the topic itself, is the same as Depth and Color streams (SYSTEM_DEFAULT)
+
+Example:
+```
+ros2 launch realsense2_camera rs_launch.py enable_rgbd:=true enable_sync:=true align_depth.enable:=true enable_color:=true enable_depth:=true 
+```
 
 <hr>
 
