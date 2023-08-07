@@ -37,8 +37,15 @@ import requests
 from rcl_interfaces.msg import Parameter
 from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
-from rcl_interfaces.msg import SetParametersResult
-from rcl_interfaces.srv import SetParameters_Response
+'''
+humble doesn't have the SetParametersResult and SetParameters_Response imported using 
+__init__.py. The below two lines can be used for iron and hopefully succeeding ROS2 versions
+'''
+#from rcl_interfaces.msg import SetParametersResult
+#from rcl_interfaces.srv import SetParameters_Response
+from rcl_interfaces.msg._set_parameters_result import SetParametersResult
+from rcl_interfaces.srv._set_parameters  import SetParameters_Response
+
 from rcl_interfaces.msg import ParameterType
 from rcl_interfaces.msg import ParameterValue
 

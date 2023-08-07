@@ -45,6 +45,10 @@ test_params_all_profiles_d415 = {
     'camera_name': 'D415',
     'device_type': 'D415',
     }
+test_params_all_profiles_d435 = {
+    'camera_name': 'D435',
+    'device_type': 'D435',
+    }
 '''
 This test was implemented as a template to set the parameters and run the test.
 This directory is not added to the CMakeLists.txt so as to avoid the colcon failure in the
@@ -52,7 +56,7 @@ machines that don't have the D455 connected.
 1. Only a subset of parameter types are implemented in py_rs_utils, it has to be extended for others
 2. After setting the param, rclpy.spin_once may be needed.Test passes even without this though.
 '''
-@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_all_profiles_d415,test_params_all_profiles_d455],indirect=True)
+@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_all_profiles_d435, test_params_all_profiles_d415,test_params_all_profiles_d455],indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
     def test_LiveCamera_Change_Resolution(self,launch_descr_with_parameters):
@@ -100,8 +104,11 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
             serial_no = None
             if 'serial_no' in params:
                 serial_no = params['serial_no']
-            cap = pytest_live_camera_utils.get_camera_capabilities(params['device_type'], serial_no)
             self.init_test("RsTest"+params['camera_name'])
+            cap = pytest_live_camera_utils.get_camera_capabilities(params['device_type'], serial_no)
+            if cap == None:
+                print("Device not found? : " + params['device_type'])
+                return
             self.create_param_ifs(params['camera_name'] + '/' + params['camera_name'])
             for profile in cap["color_profile"]:
                 if profile[0] == 'Color':
