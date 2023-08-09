@@ -36,6 +36,71 @@ import pytest_live_camera_utils
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
+from pytest_live_camera_utils import debug_print
+def check_if_skip_test(profile, format):
+    if profile == 'Color':
+        if "BGRA8" == format:
+            return True
+        if "RGBA8" == format:
+            return True
+        if "Y8" == format:
+            return True
+    '''
+    elif profile == 'Depth':
+        if "Z16" == format:
+            return True
+    elif profile == 'Infrared':
+        if "Y8" == format:
+            return True
+        if "Y16" == format:
+            return True
+        if "BGRA8" == format:
+            return True
+        if "RGBA8" == format:
+            return True
+        if "Y10BPACK" == format:
+            return True
+        if "UYVY" == format:
+            return True
+        if "BGR8" == format:
+            return True
+        if "RGB8" == format:
+            return True
+        if "RAW10" == format:
+            return True
+    elif profile == 'Infrared1':
+        if "Y8" ==format:
+            return True
+        if "Y16" ==format:
+            return True
+        if "Y10BPACK"  == format:
+            return True
+        if "UYVY" ==format:
+            return True
+        if "BGR8" ==format:
+            return True
+        if "RGB8" ==format:
+            return True
+        if "RAW10" ==format:
+            return True
+    if profile == 'Infrared2':                    
+        if "Y8" == format:
+            return True
+        if "Y16" == format:
+            return True
+        if "Y10BPACK" == format:
+            return True
+        if "UYVY" == format:
+            return True
+        if "BGR8" == format:
+            return True
+        if "RGB8" == format:
+            return True
+        if "RAW10" == format:
+            return True
+    '''
+    return False
+
 
 test_params_all_profiles_d455 = {
     'camera_name': 'D455',
@@ -49,6 +114,8 @@ test_params_all_profiles_d435 = {
     'camera_name': 'D435',
     'device_type': 'D435',
     }
+
+
 '''
 This test was implemented as a template to set the parameters and run the test.
 This directory is not added to the CMakeLists.txt so as to avoid the colcon failure in the
@@ -56,47 +123,26 @@ machines that don't have the D455 connected.
 1. Only a subset of parameter types are implemented in py_rs_utils, it has to be extended for others
 2. After setting the param, rclpy.spin_once may be needed.Test passes even without this though.
 '''
-@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_all_profiles_d435, test_params_all_profiles_d415,test_params_all_profiles_d455],indirect=True)
+@pytest.mark.parametrize("launch_descr_with_parameters", [
+    pytest.param(test_params_all_profiles_d455, marks=pytest.mark.d455),
+    pytest.param(test_params_all_profiles_d415, marks=pytest.mark.d415),
+    pytest.param(test_params_all_profiles_d435, marks=pytest.mark.d435),]
+    ,indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
     def test_LiveCamera_Change_Resolution(self,launch_descr_with_parameters):
         skipped_tests = []
+        num_passed = 0
+        num_failed = 0
         params = launch_descr_with_parameters[1]
-        themes = [
-        {'topic':'/'+params['camera_name']+'/color/image_raw',
-         'msg_type':msg_Image,
-         'expected_data_chunks':1,
-         #'data':data
+        themes = [{'topic':'/'+params['camera_name']+'/color/image_raw', 'msg_type':msg_Image,'expected_data_chunks':1}]
+        config = {
+            "Color":{"profile":"rgb_camera.profile", "format":'rgb_camera.color_format', "param":"enable_color", "topic":'/'+params['camera_name']+'/color/image_raw',},
+            "Depth":{"profile":"depth_module.profile", "format":'depth_module.depth_format', "param":"enable_depth", 'topic':'/'+params['camera_name']+'/depth/image_rect_raw'},
+            "Infrared":{"profile":"depth_module.profile", "format":'depth_module.infra_format', "param":"enable_infra", 'topic':'/'+params['camera_name']+'/infra/image_rect_raw'},
+            "Infrared1":{"profile":"depth_module.profile", "format":'depth_module.infra1_format',"param":"enable_infra1", 'topic':'/'+params['camera_name']+'/infra/image_rect_raw'},
+            "Infrared2":{"profile":"depth_module.profile", "format":'depth_module.infra2_format',"param":"enable_infra2", 'topic':'/'+params['camera_name']+'/infra/image_rect_raw'},
         }
-        ]
-        depth_themes = [
-        {'topic':'/'+params['camera_name']+'/depth/image_rect_raw',
-         'msg_type':msg_Image,
-         'expected_data_chunks':1,
-         #'data':data
-        }
-        ]  
-        infra_themes = [
-        {'topic':'/'+params['camera_name']+'/infra/image_rect_raw',
-         'msg_type':msg_Image,
-         'expected_data_chunks':1,
-         #'data':data
-        }
-        ]        
-        infra1_themes = [
-        {'topic':'/'+params['camera_name']+'/infra1/image_rect_raw',
-         'msg_type':msg_Image,
-         'expected_data_chunks':1,
-         #'data':data
-        }
-        ]   
-        infra2_themes = [
-        {'topic':'/'+params['camera_name']+'/infra2/image_rect_raw',
-         'msg_type':msg_Image,
-         'expected_data_chunks':1,
-         #'data':data
-        }
-        ]   
         try:
             ''' 
             initialize, run and check the data 
@@ -107,185 +153,83 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
             self.init_test("RsTest"+params['camera_name'])
             cap = pytest_live_camera_utils.get_camera_capabilities(params['device_type'], serial_no)
             if cap == None:
-                print("Device not found? : " + params['device_type'])
+                debug_print("Device not found? : " + params['device_type'])
                 return
             self.create_param_ifs(params['camera_name'] + '/' + params['camera_name'])
-            for profile in cap["color_profile"]:
-                if profile[0] == 'Color':
-                    print("Testing :"+ profile[0] + " " + profile[1] + " " + profile[2])
-                    if "BGRA8" == profile[2]:
-                        print("Skipping " +profile[2])
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        continue
-                    if "RGBA8" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "Y8" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    self.set_bool_param('enable_color', False)
-                    self.set_bool_param('enable_depth', False)
-                    self.set_bool_param('enable_infra', False)
-                    self.set_bool_param('enable_infra1', False)
-                    self.set_bool_param('enable_infra2', False)
-                    self.set_string_param('rgb_camera.profile', profile[1])
-                    self.set_string_param('rgb_camera.color_format', profile[2])
-                    self.set_bool_param('enable_color', True)
-                    themes[0]['width'] = int(profile[1].split('x')[0])
-                    themes[0]['height'] = int(profile[1].split('x')[1])
+            config["Color"]["default_profile1"],config["Color"]["default_profile2"] = pytest_live_camera_utils.get_default_profiles(cap["color_profile"], "Color")
+            config["Depth"]["default_profile1"],config["Depth"]["default_profile2"] = pytest_live_camera_utils.get_default_profiles(cap["depth_profile"], "Depth")
+            config["Infrared"]["default_profile1"],config["Infrared"]["default_profile2"] = pytest_live_camera_utils.get_default_profiles(cap["depth_profile"], "Infrared")
+            config["Infrared1"]["default_profile1"],config["Infrared1"]["default_profile2"] = pytest_live_camera_utils.get_default_profiles(cap["depth_profile"], "Infrared1")
+            config["Infrared2"]["default_profile1"],config["Infrared2"]["default_profile2"] = pytest_live_camera_utils.get_default_profiles(cap["depth_profile"], "Infrared2")
+            for key in cap["color_profile"]:
+                profile_type = key[0]
+                profile = key[1]
+                format = key[2]
+                if check_if_skip_test(profile_type, format):
+                    skipped_tests.append(" ".join(key))
+                    continue
+                themes[0]['topic'] = config[profile_type]['topic']
+                themes[0]['width'] = int(profile.split('x')[0])
+                themes[0]['height'] = int(profile.split('x')[1])
+                if themes[0]['width'] == int(config[profile_type]["default_profile2"].split('x')[0]):
+                    self.set_string_param(config[profile_type]["profile"], config[profile_type]["default_profile1"])
+                else:
+                    self.set_string_param(config[profile_type]["profile"], config[profile_type]["default_profile2"])
+                self.set_bool_param(config[profile_type]["param"], True)
+                self.disable_all_params()
+                self.set_string_param(config[profile_type]["profile"], profile)
+                self.set_string_param(config[profile_type]["format"], format)
+                self.set_bool_param(config[profile_type]["param"], True)
+                ret = self.run_test(themes)
+                assert ret[0], ret[1]
+                assert self.process_data(themes), " ".join(key) + " failed"
+            debug_print("Color tests completed")
+            for key in cap["depth_profile"]:
+                profile_type = key[0]
+                profile = key[1]
+                format = key[2]
+                if check_if_skip_test(profile_type, format):
+                    skipped_tests.append(" ".join(key))
+                    continue
+                debug_print("Testing " + " ".join(key))
+                
+                themes[0]['topic'] = config[profile_type]['topic']
+                themes[0]['width'] = int(profile.split('x')[0])
+                themes[0]['height'] = int(profile.split('x')[1])
+                if themes[0]['width'] == int(config[profile_type]["default_profile2"].split('x')[0]):
+                    self.set_string_param(config[profile_type]["profile"], config[profile_type]["default_profile1"])
+                else:
+                    self.set_string_param(config[profile_type]["profile"], config[profile_type]["default_profile2"])
+                self.set_bool_param(config[profile_type]["param"], True)
+
+
+                self.disable_all_params()
+                self.set_string_param(config[profile_type]["profile"], profile)
+                self.set_string_param(config[profile_type]["format"], format)
+                self.set_bool_param(config[profile_type]["param"], True)
+                try:
                     ret = self.run_test(themes)
                     assert ret[0], ret[1]
-                    assert self.process_data(themes)
-            for profile in cap["depth_profile"]:
-                self.set_bool_param('enable_color', False)
-                self.set_bool_param('enable_depth', False)
-                self.set_bool_param('enable_infra', False)
-                self.set_bool_param('enable_infra1', False)
-                self.set_bool_param('enable_infra2', False)
-                if profile[0] == 'Depth':
-                    print("Testing :"+ profile[0] + " " + profile[1] + " " + profile[2])
-                    if "Z16" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    self.set_string_param('depth_module.profile', profile[1])
-                    self.set_string_param('depth_module.depth_format', profile[2])
-                    self.set_bool_param('enable_depth', True)
-                    depth_themes[0]['width'] = int(profile[1].split('x')[0])
-                    depth_themes[0]['height'] = int(profile[1].split('x')[1])
-                    ret = self.run_test(depth_themes)
-                    assert ret[0], ret[1]
-                    assert self.process_data(depth_themes)
-
-
-                if profile[0] == 'Infrared':
-                    print("Testing :"+ profile[0] + " " + profile[1] + " " + profile[2])
-                    if "Y8" == profile[2]:
-                        skipped_tests.append( profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "Y16" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "BGRA8" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "RGBA8" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "Y10BPACK" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "UYVY" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "BGR8" == profile[2]:
-                        print("Skipping " +profile[2])
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        continue
-                    if "RGB8" == profile[2]:
-                        print("Skipping " +profile[2])
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        continue
-                    if "RAW10" == profile[2]:
-                        print("Skipping " +profile[2])
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        continue
-                    self.set_string_param('depth_module.profile', profile[1])
-                    self.set_string_param('depth_module.infra_format', profile[2])
-                    self.set_bool_param('enable_infra', True)
-                    infra_themes[0]['width'] = int(profile[1].split('x')[0])
-                    infra_themes[0]['height'] = int(profile[1].split('x')[1])
-                    ret = self.run_test(infra_themes)
-                    assert ret[0], ret[1]
-                    assert self.process_data(infra_themes)
-                if profile[0] == 'Infrared1':
-                    print("Testing :"+ profile[0] + " "  + profile[1] + " " + profile[2])
-                    if "Y8" == profile[2]:                    
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "Y16" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "Y10BPACK" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "UYVY" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "BGR8" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "RGB8" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "RAW10" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    self.set_string_param('depth_module.profile', profile[1])
-                    self.set_string_param('depth_module.infra1_format', profile[2])
-                    self.set_bool_param('enable_infra1', True)
-                    infra1_themes[0]['width'] = int(profile[1].split('x')[0])
-                    infra1_themes[0]['height'] = int(profile[1].split('x')[1])
-                    ret = self.run_test(infra1_themes)
-                    assert ret[0], ret[1]
-                    assert self.process_data(infra1_themes)
-                if profile[0] == 'Infrared2':                    
-                    if "Y8" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "Y16" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "Y10BPACK" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "UYVY" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "BGR8" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "RGB8" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    if "RAW10" == profile[2]:
-                        skipped_tests.append(profile[0] + " " + profile[1] + " " + profile[2])
-                        print("Skipping " +profile[2])
-                        continue
-                    self.set_string_param('depth_module.profile', profile[1])
-                    self.set_string_param('depth_module.infra2_format', profile[2])
-                    self.set_bool_param('enable_infra2', True)
-                    infra2_themes[0]['width'] = int(profile[1].split('x')[0])
-                    infra2_themes[0]['height'] = int(profile[1].split('x')[1])
-                    ret = self.run_test(infra2_themes)
-                    assert ret[0], ret[1]
-                    assert self.process_data(infra2_themes)
+                    assert self.process_data(themes), " ".join(key) + " failed"
+                    num_passed += 1
+                except Exception as e:
+                    print("Test failed")
+                    print(e)
+                    num_failed += 1
+            debug_print("Depth tests completed")
         finally:
             #this step is important because the test will fail next time
             pytest_rs_utils.kill_realsense2_camera_node()
             self.shutdown()
-            print("\nSkipped tests:" + params['device_type'])
-            print("\n".join(skipped_tests))
-
+            debug_print("\nSkipped tests:" + params['device_type'])
+            debug_print("\n".join(skipped_tests))
+            print("Tests passed " + str(num_passed))
+            print("Tests skipped " + str(len(skipped_tests)))
+            print("Tests failed " + str(num_failed))
+    def disable_all_params(self):
+        self.set_bool_param('enable_color', False)
+        self.set_bool_param('enable_depth', False)
+        self.set_bool_param('enable_infra', False)
+        self.set_bool_param('enable_infra1', False)
+        self.set_bool_param('enable_infra2', False)
 

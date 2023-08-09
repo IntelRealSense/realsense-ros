@@ -52,7 +52,31 @@ The pytests can be grouped using markers. These markers can be used to run a gro
 The grouping is specified by adding a marker just before the test declaration. In the test_integration_template.py `rosbag` is specified as a marker specify tests that use rosbag file. This is achieved by adding "@pytest.mark.rosbag" to the begining of the test. So when the pytest parses for test, it detects the marker for the test. If this marker is selected or none of the markers are specified, the test will be added to the list, else will be listed as a deselected test.
 
 It is recommended to use markers such as ds457, rosbag, ds415 etc to differentiate the tests so that it's easier to run a group of tests in a machine that has the required hardware.
- 
+
+### Running multipe test instances using parameters and a single test case
+
+If a test is generic enough that it can be used for say, two devices (D415 and D455). then the same testcase be triggered as many times by giving different settings as parameters to the testcase. "@pytest.mark.parametrize" can be used to specify the parameters. See the example below, the test TestLiveCamera_Change_Resolution will be run two times one with test_params_all_profiles_d455 and the other with test_params_all_profiles_d415.  
+
+```
+@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_all_profiles_d455, test_params_all_profiles_d415]
+    ,indirect=True)
+@pytest.mark.launch(fixture=launch_descr_with_parameters)
+class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
+```
+### Grouping the set of parameters using mark option
+
+Just like the marking of testcases using mark option as mentioned before, the parameters can also be marked using pytest.mark option. One example is given below as reference.
+
+```
+@pytest.mark.parametrize("launch_descr_with_parameters", [
+    pytest.param(test_params_all_profiles_d455, marks=pytest.mark.d455),
+    pytest.param(test_params_all_profiles_d415, marks=pytest.mark.d415),
+    pytest.param(test_params_all_profiles_d435, marks=pytest.mark.d435),]
+    ,indirect=True)
+@pytest.mark.launch(fixture=launch_descr_with_parameters)
+class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
+``` 
+
 ## Building and running tests  
 
 ### Build steps 
