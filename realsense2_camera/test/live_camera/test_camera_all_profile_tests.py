@@ -136,13 +136,7 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
         num_failed = 0
         params = launch_descr_with_parameters[1]
         themes = [{'topic':'/'+params['camera_name']+'/color/image_raw', 'msg_type':msg_Image,'expected_data_chunks':1}]
-        config = {
-            "Color":{"profile":"rgb_camera.profile", "format":'rgb_camera.color_format', "param":"enable_color", "topic":'/'+params['camera_name']+'/color/image_raw',},
-            "Depth":{"profile":"depth_module.profile", "format":'depth_module.depth_format', "param":"enable_depth", 'topic':'/'+params['camera_name']+'/depth/image_rect_raw'},
-            "Infrared":{"profile":"depth_module.profile", "format":'depth_module.infra_format', "param":"enable_infra", 'topic':'/'+params['camera_name']+'/infra/image_rect_raw'},
-            "Infrared1":{"profile":"depth_module.profile", "format":'depth_module.infra1_format',"param":"enable_infra1", 'topic':'/'+params['camera_name']+'/infra/image_rect_raw'},
-            "Infrared2":{"profile":"depth_module.profile", "format":'depth_module.infra2_format',"param":"enable_infra2", 'topic':'/'+params['camera_name']+'/infra/image_rect_raw'},
-        }
+        config = pytest_live_camera_utils.get_profile_config(params['camera_name'])
         try:
             ''' 
             initialize, run and check the data 

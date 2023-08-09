@@ -19,6 +19,16 @@ import struct
 import requests
 import json
 
+def get_profile_config(camera_name):
+    config = {
+        "Color":{"profile":"rgb_camera.profile", "format":'rgb_camera.color_format', "param":"enable_color", "topic":'/'+camera_name+'/color/image_raw',},
+        "Depth":{"profile":"depth_module.profile", "format":'depth_module.depth_format', "param":"enable_depth", 'topic':'/'+camera_name+'/depth/image_rect_raw'},
+        "Infrared":{"profile":"depth_module.profile", "format":'depth_module.infra_format', "param":"enable_infra", 'topic':'/'+camera_name+'/infra/image_rect_raw'},
+        "Infrared1":{"profile":"depth_module.profile", "format":'depth_module.infra1_format',"param":"enable_infra1", 'topic':'/'+camera_name+'/infra/image_rect_raw'},
+        "Infrared2":{"profile":"depth_module.profile", "format":'depth_module.infra2_format',"param":"enable_infra2", 'topic':'/'+camera_name+'/infra/image_rect_raw'},
+    }
+    return config
+
 def debug_print(*args):
     if(False):
         print(*args)
