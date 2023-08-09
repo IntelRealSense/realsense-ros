@@ -22,6 +22,21 @@ import json
 def debug_print(*args):
     if(False):
         print(*args)
+def get_default_profiles(cap, profile):
+    profile1 = "" 
+    profile2 = ""
+    for profiles in cap:
+        if profiles[0] == profile and int(profiles[1].split('x')[0]) != 640:
+            profile1 = profiles[1]
+            break
+    for profiles in cap:
+        if profiles[0] == profile and int(profiles[1].split('x')[0]) != int(profile1.split('x')[0]):
+            profile2 = profiles[1]
+            break
+    debug_print(profile + " default profile1:" +  profile1)
+    debug_print(profile + " default profile2:" +  profile2)
+    return profile1,profile2
+
 def get_camera_capabilities_short(device_type, serial_no=None):
     short_data = os.popen("rs-enumerate-devices -s").read().splitlines()
     print(serial_no)
@@ -35,6 +50,7 @@ def get_camera_capabilities_short(device_type, serial_no=None):
                 print(device_type + " with serial_no " + serial_no +" found in " + line)
                 return
     print(device_type + " not found")
+
 
 device_info_string = "Device info:"
 

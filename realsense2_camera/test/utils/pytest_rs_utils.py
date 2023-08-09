@@ -591,10 +591,13 @@ class RsTestNode(Node):
                 return True, ""
             time.sleep(timeout/5)
         return False, "Timed out waiting for "+ str(timeout)+  "seconds"
-    def create_subscription(self, msg_type, topic , data_type, store_raw_data):
-        super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
+    def reset_data(self, topic):
         self.data[topic] = deque()
         self.frame_counter[topic] = 0
+
+    def create_subscription(self, msg_type, topic , data_type, store_raw_data):
+        self.reset_data(topic)
+        super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
         if (os.getenv('ROS_DISTRO') != "dashing") and (self.tfBuffer == None):
             self.tfBuffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, super())
@@ -728,6 +731,9 @@ class RsTestBaseClass():
         if not topic in self.subscribed_topics:
             self.node.create_subscription(msg_type, topic, data_type, store_raw_data)
             self.subscribed_topics.append(topic)
+        else:
+            self.node.reset_data(topic)
+   
 
     def create_param_ifs(self, camera_name):
 
@@ -771,7 +777,7 @@ class RsTestBaseClass():
         timeout value varies depending upon the system, it needs to be more if
         the access is over the network
         '''
-        timeout = 25.0
+        timeout = 5.0
         print('Waiting for topic... ' )
         flag = False
         while (time.time() - start) < timeout:
