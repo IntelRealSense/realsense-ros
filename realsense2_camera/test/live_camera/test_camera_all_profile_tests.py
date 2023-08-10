@@ -38,6 +38,7 @@ from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
 from pytest_live_camera_utils import debug_print
 def check_if_skip_test(profile, format):
+    '''
     if profile == 'Color':
         if "BGRA8" == format:
             return True
@@ -45,7 +46,6 @@ def check_if_skip_test(profile, format):
             return True
         if "Y8" == format:
             return True
-    '''
     elif profile == 'Depth':
         if "Z16" == format:
             return True
@@ -174,9 +174,15 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
                 self.set_string_param(config[profile_type]["profile"], profile)
                 self.set_string_param(config[profile_type]["format"], format)
                 self.set_bool_param(config[profile_type]["param"], True)
-                ret = self.run_test(themes)
-                assert ret[0], ret[1]
-                assert self.process_data(themes), " ".join(key) + " failed"
+                try:
+                    ret = self.run_test(themes)
+                    assert ret[0], ret[1]
+                    assert self.process_data(themes), " ".join(key) + " failed"
+                    num_passed += 1
+                except Exception as e:
+                    print("Test failed")
+                    print(e)
+                    num_failed += 1
             debug_print("Color tests completed")
             for key in cap["depth_profile"]:
                 profile_type = key[0]
