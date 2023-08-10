@@ -610,39 +610,6 @@ The launch file accepts a parameter, `intra_process_comms`, controlling whether 
 ```bash
 ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comms:=true
 ```
-<hr>
-
-### Providing launch params in YAML file:
-Generally, the launch params will be provided in 'ros2 launch' command. For example:
-```bash
-ros2 launch realsense2_camera rs_launch.py enable_depth:=true enable_color:=true
-```
-
-Alternatively, they can be defined in a YAML file and that YAML file can be passed to 'config_file' param.
-For example:
-```bash
-ros2 launch realsense2_camera rs_launch.py config_file:='/full/path/to/config.yaml'
-```
-
-The yaml file can have the launch params' in the following syntax:
-  - <`param_name`>: <`value`>
-
-Example `config.yaml` file:
-```bash
-enable_depth: true
-enable_color: true
-rgb_camera.color_format: RGB8
-tf_publish_rate: 10.0
-```
-
-Note: 
-- If a same param is set in both YAML file and in ros2 launch command, the value set in YAML will have high priority. For example:
-  - Let's say, in command line, 'enable_depth' is set to true:
-    - `ros2 launch realsense2_camera rs_launch.py config_file:='/full/path/to/config.yaml' enable_depth:=true`
-  - And in config.yaml, 'enable_depth' is set to false:
-    - `enable_depth: false`
-  - The param provided in command line during launch will be overwritten by the value provided in YAML file.
-    - So, the result will be `enable_depth = false`
 
 </details>
 

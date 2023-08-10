@@ -109,12 +109,12 @@ def launch_setup(context, params, param_name_suffix=''):
     return [
         launch_ros.actions.Node(
             package     = 'realsense2_camera',
-            namespace   = params['camera_namespace'],
-            name        = params['camera_name'],
+            namespace   = params['camera_namespace' + param_name_suffix],
+            name        = params['camera_name' + param_name_suffix],
             executable  = 'realsense2_camera_node',
             parameters  = [params],
-            output      = LaunchConfiguration('output' + param_name_suffix),
-            arguments   = ['--ros-args', '--log-level', params['log_level']],
+            output      = 'screen',
+            arguments   = ['--ros-args', '--log-level', params['log_level' + param_name_suffix]],
             emulate_tty = True,
             )
     ]
