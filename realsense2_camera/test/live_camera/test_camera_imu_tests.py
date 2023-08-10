@@ -37,70 +37,6 @@ from rclpy.parameter import Parameter
 from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
 from pytest_live_camera_utils import debug_print
-def check_if_skip_test(profile, format):
-    '''
-    if profile == 'Color':
-        if "BGRA8" == format:
-            return True
-        if "RGBA8" == format:
-            return True
-        if "Y8" == format:
-            return True
-    elif profile == 'Depth':
-        if "Z16" == format:
-            return True
-    elif profile == 'Infrared':
-        if "Y8" == format:
-            return True
-        if "Y16" == format:
-            return True
-        if "BGRA8" == format:
-            return True
-        if "RGBA8" == format:
-            return True
-        if "Y10BPACK" == format:
-            return True
-        if "UYVY" == format:
-            return True
-        if "BGR8" == format:
-            return True
-        if "RGB8" == format:
-            return True
-        if "RAW10" == format:
-            return True
-    elif profile == 'Infrared1':
-        if "Y8" ==format:
-            return True
-        if "Y16" ==format:
-            return True
-        if "Y10BPACK"  == format:
-            return True
-        if "UYVY" ==format:
-            return True
-        if "BGR8" ==format:
-            return True
-        if "RGB8" ==format:
-            return True
-        if "RAW10" ==format:
-            return True
-    if profile == 'Infrared2':                    
-        if "Y8" == format:
-            return True
-        if "Y16" == format:
-            return True
-        if "Y10BPACK" == format:
-            return True
-        if "UYVY" == format:
-            return True
-        if "BGR8" == format:
-            return True
-        if "RGB8" == format:
-            return True
-        if "RAW10" == format:
-            return True
-    '''
-    return False
-
 
 test_params_all_profiles_d455 = {
     'camera_name': 'D455',
@@ -116,9 +52,6 @@ test_params_all_profiles_d455 = {
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestLiveCamera_TestMotionSensor(pytest_rs_utils.RsTestBaseClass):
     def test_LiveCamera_check_motion_sensor(self,launch_descr_with_parameters):
-        skipped_tests = []
-        num_passed = 0
-        num_failed = 0
         params = launch_descr_with_parameters[1]
         themes = [{'topic':'/'+params['camera_name']+'/imu', 'msg_type':msg_Imu,'expected_data_chunks':1},
                 {'topic':'/'+params['camera_name']+'/gyro/sample', 'msg_type':msg_Imu,'expected_data_chunks':1},
