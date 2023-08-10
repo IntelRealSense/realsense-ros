@@ -30,7 +30,6 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'unite_imu_method',             'default': "0", 'description': '[0-None, 1-copy, 2-linear_interpolation]'},
                            {'name': 'json_file_path',               'default': "''", 'description': 'allows advanced configuration'},
                            {'name': 'log_level',                    'default': 'info', 'description': 'debug log level [DEBUG|INFO|WARN|ERROR|FATAL]'},
-                           {'name': 'output',                       'default': 'screen', 'description': 'pipe node output [screen|log]'},
                            {'name': 'depth_module.profile',         'default': '0,0,0', 'description': 'depth module profile'},
                            {'name': 'depth_module.depth_format',    'default': 'Z16', 'description': 'depth stream format'},
                            {'name': 'depth_module.infra_format',    'default': 'RGB8', 'description': 'infra0 stream format'},
@@ -95,35 +94,35 @@ def yaml_to_dict(path_to_yaml):
 def launch_setup(context, params, param_name_suffix=''):
     _config_file = LaunchConfiguration('config_file' + param_name_suffix).perform(context)
     params_from_file = {} if _config_file == "''" else yaml_to_dict(_config_file)
+
+    # Overwrite the params with the values provided in YAML config file
+    params.update(params_from_file)
+
     # Realsense
     if (os.getenv('ROS_DISTRO') == "dashing") or (os.getenv('ROS_DISTRO') == "eloquent"):
         return [
             launch_ros.actions.Node(
-                package='realsense2_camera',
-                node_namespace=LaunchConfiguration('camera_namespace' + param_name_suffix),
-                node_name=LaunchConfiguration('camera_name' + param_name_suffix),
-                node_executable='realsense2_camera_node',
-                prefix=['stdbuf -o L'],
-                parameters=[params
-                            , params_from_file
-                            ],
-                output='screen',
-                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level' + param_name_suffix)],
+                package         = 'realsense2_camera',
+                node_namespace  = params['camera_namespace' + param_name_suffix],
+                node_name       = params['camera_name' + param_name_suffix],
+                node_executable = 'realsense2_camera_node',
+                prefix          = ['stdbuf -o L'],
+                parameters      = [params],
+                output          = 'screen',
+                arguments       = ['--ros-args', '--log-level', params['log_level' + param_name_suffix]],
                 )
             ]
     else:
         return [
             launch_ros.actions.Node(
-                package='realsense2_camera',
-                namespace=LaunchConfiguration('camera_namespace' + param_name_suffix),
-                name=LaunchConfiguration('camera_name' + param_name_suffix),
-                executable='realsense2_camera_node',
-                parameters=[params
-                            , params_from_file
-                            ],
-                output='screen',
-                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level' + param_name_suffix)],
-                emulate_tty=True,
+                package     = 'realsense2_camera',
+                namespace   = params['camera_namespace' + param_name_suffix],
+                name        = params['camera_name' + param_name_suffix],
+                executable  = 'realsense2_camera_node',
+                parameters  = [params],
+                output      = 'screen',
+                arguments   = ['--ros-args', '--log-level', params['log_level' + param_name_suffix]],
+                emulate_tty = True,
                 )
         ]
 

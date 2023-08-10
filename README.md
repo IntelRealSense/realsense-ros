@@ -300,6 +300,10 @@
 The `/diagnostics` topic includes information regarding the device temperatures and actual frequency of the enabled streams.
 
 - **publish_odom_tf**: If True (default) publish TF from odom_frame to pose_frame.
+- **json_file_path**:
+  - JSON file with advanced configurations like depth presets.
+  - The user can get predefined depth presets from 'realsense-viewer' or https://dev.intelrealsense.com/docs/d400-series-visual-presets based on their usecase.
+  - Note: Once these configurations are loaded, it will remain until there is a reset or power cycle.
 
 <hr>
 
@@ -534,6 +538,33 @@ The launch file accepts a parameter, `intra_process_comms`, controlling whether 
 ```bash
 ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comms:=true
 ```
+<hr>
+
+### Get the realsense node params from YAML file and launch:
+For example:
+```bash
+ros2 launch realsense2_camera rs_launch.py config_file:='/full/path/to/config.yaml'
+```
+
+The yaml file should have the realsense ros2 node params' values in the following syntax:
+  - <`param_name`>: <`value`>
+
+Example `config.yaml` file:
+```bash
+enable_depth: true
+rgb_camera.color_format: RGB8
+tf_publish_rate: 10.0
+```
+
+Note: If a param is set in both YAML file and launch params, the value set in YAML will have high priority.
+
+For example:
+  - Let's say, in command line, if 'enable_depth' is set to true:
+    - `ros2 launch realsense2_camera rs_launch.py config_file:='/full/path/to/config.yaml' enable_depth:=true`
+  - And in config.yaml, if 'enable_depth' is set to false:
+    - `enable_depth: false`
+  - The param given in command line during launch will be overwritten by the value given in YAML file.
+    - So, the result will be `enable_depth = false`
 
 </details>
 
