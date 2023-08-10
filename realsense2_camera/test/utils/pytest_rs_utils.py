@@ -771,13 +771,18 @@ class RsTestBaseClass():
         req.parameters = [Parameter(name=param_name, value=new_param_value)]
         return self.send_param(req)
 
-    def spin_for_data(self,themes):
+    def set_integer_param(self, param_name, param_value):
+        req = SetParameters.Request()
+        new_param_value = ParameterValue(type=ParameterType.PARAMETER_INTEGER, integer_value=param_value)
+        req.parameters = [Parameter(name=param_name, value=new_param_value)]
+        return self.send_param(req)
+
+    def spin_for_data(self,themes, timeout=5.0):
         start = time.time()
         '''
         timeout value varies depending upon the system, it needs to be more if
         the access is over the network
         '''
-        timeout = 5.0
         print('Waiting for topic... ' )
         flag = False
         while (time.time() - start) < timeout:
@@ -800,11 +805,11 @@ class RsTestBaseClass():
         start = time.time()
         print('Waiting for time... ' )
         flag = False
-        while time.time() - (start < wait_time):
+        while (time.time() - start) < wait_time:
+            print('Spun for time once... ' )
             rclpy.spin_once(self.node)
-            print('Spun once... ' )
  
-    def run_test(self, themes):
+    def run_test(self, themes, initial_wait_time=0.0, timeout=5.0):
         try:
             for theme in themes:
                 store_raw_data = False
@@ -812,7 +817,9 @@ class RsTestBaseClass():
                     store_raw_data = theme['store_raw_data']
                 self.create_subscription(theme['msg_type'], theme['topic'] , qos.qos_profile_sensor_data,store_raw_data)
                 print('subscription created for ' + theme['topic'])
-            self.flag = self.spin_for_data(themes)                
+            if initial_wait_time != 0.0: 
+                self.spin_for_time(initial_wait_time)
+            self.flag = self.spin_for_data(themes, timeout)                
         except  Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -832,6 +839,9 @@ class RsTestBaseClass():
     '''
     def process_data(self, themes):
         for theme in themes:
+            if theme['expected_data_chunks'] == 0:
+                assert self.node.get_num_chunks(theme['topic']) == 0, "Received data, when not expected for topic:" + theme['topic']
+                continue #no more checks needed if data is not available
             data = self.node.pop_first_chunk(theme['topic'])
             if 'width' in theme:
                 assert theme['width'] == data['shape'][0][1], "Width not matched. Expected:" +  str(theme['width']) + " & got: " + str(data['shape'][0][1]) # (get from numpy image the width)
