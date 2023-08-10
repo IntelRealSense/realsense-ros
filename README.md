@@ -142,8 +142,8 @@
   - Install dependencies
    ```bash
    sudo apt-get install python3-rosdep -y
-   sudo rosdep init # "sudo rosdep init --include-eol-distros" for Eloquent and earlier
-   rosdep update # "sudo rosdep update --include-eol-distros" for Eloquent and earlier
+   sudo rosdep init # "sudo rosdep init --include-eol-distros" for Foxy and earlier
+   rosdep update # "sudo rosdep update --include-eol-distros" for Foxy and earlier
    rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys=librealsense2 -y
    ```
 
@@ -200,13 +200,13 @@
   - They have, at least, the **profile** parameter.
     - The profile parameter is a string of the following format: \<width>X\<height>X\<fps> (The dividing character can be X, x or ",". Spaces are ignored.)
     - For example: ```depth_module.profile:=640x480x30 rgb_camera.profile:=1280x720x30```
-    - Since infra, infra1, infra2, fisheye, fisheye1, fisheye2 and depth are all streams of the depth_module, their width, height and fps are defined by the same param **depth_module.profile**
+    - Since infra, infra1, infra2 and depth are all streams of the depth_module, their width, height and fps are defined by the same param **depth_module.profile**
     - If the specified combination of parameters is not available by the device, the default or previously set configuration will be used.
       - Run ```ros2 param describe <your_node_name> <param_name>``` to get the list of supported profiles.
     - Note: Should re-enable the stream for the change to take effect.
   - ***<stream_name>*_format**
     - This parameter is a string used to select the stream format.
-    - <stream_name> can be any of *infra, infra1, infra2, color, depth, fisheye, fisheye1, fisheye2*.
+    - <stream_name> can be any of *infra, infra1, infra2, color, depth*.
     - For example: ```depth_module.depth_format:=Z16 depth_module.infra1_format:=y8 rgb_camera.color_format:=RGB8```
     - This parameter supports both lower case and upper case letters.
     - If the specified parameter is not available by the stream, the default or previously set configuration will be used.
@@ -217,14 +217,14 @@
     - Run ```rs-enumerate-devices``` command to know the list of profiles supported by the connected sensors.
 - **enable_*<stream_name>***: 
   - Choose whether to enable a specified stream or not. Default is true for images and false for orientation streams.
-  - <stream_name> can be any of *infra, infra1, infra2, color, depth, fisheye, fisheye1, fisheye2, gyro, accel, pose*.
+  - <stream_name> can be any of *infra, infra1, infra2, color, depth, gyro, accel*.
   - For example: ```enable_infra1:=true enable_color:=false```
 - **enable_sync**:
   - gathers closest frames of different sensors, infra red, color and depth, to be sent with the same timetag.
   - This happens automatically when such filters as pointcloud are enabled.
 - ***<stream_type>*_qos**: 
   - Sets the QoS by which the topic is published.
-  - <stream_type> can be any of *infra, infra1, infra2, color, depth, fisheye, fisheye1, fisheye2, gyro, accel, pose*.
+  - <stream_type> can be any of *infra, infra1, infra2, color, depth, gyro, accel*.
   -  Available values are the following strings: `SYSTEM_DEFAULT`, `DEFAULT`, `PARAMETER_EVENTS`, `SERVICES_DEFAULT`, `PARAMETERS`, `SENSOR_DATA`.
   - For example: ```depth_qos:=SENSOR_DATA```
   - Reference: [ROS2 QoS profiles formal documentation](https://docs.ros.org/en/rolling/Concepts/About-Quality-of-Service-Settings.html#qos-profiles)
@@ -270,7 +270,6 @@
   - For example: `initial_reset:=true`
 - ***<stream_name>*_frame_id**, ***<stream_name>*_optical_frame_id**, **aligned_depth_to_*<stream_name>*_frame_id**: Specify the different frame_id for the different frames. Especially important when using multiple cameras.
 - **base_frame_id**: defines the frame_id all static transformations refers to.
-- **odom_frame_id**: defines the origin coordinate system in ROS convention (X-Forward, Y-Left, Z-Up). pose topic defines the pose relative to that system.
 
 - **unite_imu_method**:
   - D400 cameras have built in IMU components which produce 2 unrelated streams, each with it's own frequency: 
@@ -298,8 +297,6 @@
   - double, positive values set the period between diagnostics updates on the `/diagnostics` topic.
   - 0 or negative values mean no diagnostics topic is published. Defaults to 0.</br>
 The `/diagnostics` topic includes information regarding the device temperatures and actual frequency of the enabled streams.
-
-- **publish_odom_tf**: If True (default) publish TF from odom_frame to pose_frame.
 
 <hr>
 

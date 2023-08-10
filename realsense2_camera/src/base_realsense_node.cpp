@@ -22,10 +22,8 @@
 
 // Header files for disabling intra-process comms for static broadcaster.
 #include <rclcpp/publisher_options.hpp>
-// This header file is not available in ROS 2 Dashing.
-#ifndef DASHING
+
 #include <tf2_ros/qos.hpp>
-#endif
 
 using namespace realsense2_camera;
 
@@ -113,7 +111,6 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _is_color_enabled(false),
     _is_depth_enabled(false),
     _pointcloud(false),
-    _publish_odom_tf(false),
     _imu_sync_method(imu_sync_method::NONE),
     _is_profile_changed(false),
     _is_align_depth_changed(false)
@@ -182,7 +179,6 @@ void BaseRealSenseNode::initializeFormatsMaps()
     rs_format_to_cv_format[RS2_FORMAT_RGBA8] = CV_8UC4;
     rs_format_to_cv_format[RS2_FORMAT_BGRA8] = CV_8UC4;
     rs_format_to_cv_format[RS2_FORMAT_YUYV] = CV_16UC3;
-    rs_format_to_cv_format[RS2_FORMAT_M420] = CV_16UC3;
     rs_format_to_cv_format[RS2_FORMAT_RAW8] = CV_8UC1;
     rs_format_to_cv_format[RS2_FORMAT_RAW10] = CV_16UC1;
     rs_format_to_cv_format[RS2_FORMAT_RAW16] = CV_16UC1;
@@ -198,7 +194,6 @@ void BaseRealSenseNode::initializeFormatsMaps()
     rs_format_to_ros_format[RS2_FORMAT_RGBA8] = sensor_msgs::image_encodings::RGBA8;
     rs_format_to_ros_format[RS2_FORMAT_BGRA8] = sensor_msgs::image_encodings::BGRA8;
     rs_format_to_ros_format[RS2_FORMAT_YUYV] = sensor_msgs::image_encodings::YUV422;
-    //rs_format_to_ros_format[RS2_FORMAT_M420] = not supported in ROS2 image msg yet
     rs_format_to_ros_format[RS2_FORMAT_RAW8] = sensor_msgs::image_encodings::TYPE_8UC1;
     rs_format_to_ros_format[RS2_FORMAT_RAW10] = sensor_msgs::image_encodings::TYPE_16UC1;
     rs_format_to_ros_format[RS2_FORMAT_RAW16] = sensor_msgs::image_encodings::TYPE_16UC1;
@@ -630,9 +625,6 @@ void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_met
             if (sync_method > imu_sync_method::NONE) imu_callback_sync(frame, sync_method);
             else imu_callback(frame);
             break;
-        case RS2_STREAM_POSE:
-            pose_callback(frame);
-            break;
         default:
             frame_callback(frame);
     }
@@ -672,17 +664,7 @@ rclcpp::Time BaseRealSenseNode::frameSystemTimeSec(rs2::frame frame)
     {
         double elapsed_camera_ns = millisecondsToNanoseconds(timestamp_ms - _camera_time_base);
 
-        /*
-        Fixing deprecated-declarations compilation warning.
-        Duration(rcl_duration_value_t) is deprecated in favor of 
-        static Duration::from_nanoseconds(rcl_duration_value_t)
-        starting from GALACTIC.
-        */
-#if defined(FOXY) || defined(ELOQUENT) || defined(DASHING)
-        auto duration = rclcpp::Duration(elapsed_camera_ns);
-#else
         auto duration = rclcpp::Duration::from_nanoseconds(elapsed_camera_ns);
-#endif
 
         return rclcpp::Time(_ros_time_base + duration);
     }
@@ -788,7 +770,7 @@ void BaseRealSenseNode::updateExtrinsicsCalibData(const rs2::video_stream_profil
 
 void BaseRealSenseNode::SetBaseStream()
 {
-    const std::vector<stream_index_pair> base_stream_priority = {DEPTH, POSE};
+    const std::vector<stream_index_pair> base_stream_priority = {DEPTH};
     std::set<stream_index_pair> checked_sips;
     std::map<stream_index_pair, rs2::stream_profile> available_profiles;
     for(auto&& sensor : _available_ros_sensors)

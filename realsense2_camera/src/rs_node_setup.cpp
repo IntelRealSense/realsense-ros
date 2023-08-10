@@ -281,13 +281,6 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             IMUInfo info_msg = getImuInfo(profile);
             _imu_info_publishers[sip]->publish(info_msg);
         }
-        else if (profile.is<rs2::pose_stream_profile>())
-        {
-            std::stringstream data_topic_name, info_topic_name;
-            data_topic_name << stream_name << "/sample";
-            _odom_publisher = _node.create_publisher<nav_msgs::msg::Odometry>(data_topic_name.str(),
-                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
-        }
         std::string topic_metadata(stream_name + "/metadata");
         _metadata_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(topic_metadata, 
             rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
