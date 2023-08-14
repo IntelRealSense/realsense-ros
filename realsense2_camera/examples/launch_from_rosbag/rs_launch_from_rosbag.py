@@ -14,10 +14,10 @@
 
 # DESCRIPTION #
 # ----------- #
-# Use this launch file to launch a device and visualize pointcloud.
+# Use this launch file to launch a device from rosbag file.
 # The Parameters available for definition in the command line for the camera are described in rs_launch.configurable_parameters
 # command line example:
-# ros2 launch realsense2_camera rs_pointcloud_launch.py
+# ros2 launch realsense2_camera rs_launch_from_rosbag.py
 
 """Launch realsense2_camera node."""
 from launch import LaunchDescription
@@ -32,11 +32,12 @@ from ament_index_python.packages import get_package_share_directory
 sys.path.append(os.path.join(get_package_share_directory('realsense2_camera'), 'launch'))
 import rs_launch
 
-local_parameters = [{'name': 'camera_name',                  'default': 'camera', 'description': 'camera unique name'},
-                    {'name': 'camera_namespace',             'default': 'camera', 'description': 'camera namespace'},
-                    {'name': 'enable_color',                 'default': 'true', 'description': 'enable color stream'},
-                    {'name': 'enable_depth',                 'default': 'true', 'description': 'enable depth stream'},
-                    {'name': 'pointcloud.enable',            'default': 'true', 'description': 'enable pointcloud'},
+local_parameters = [{'name': 'camera_name',         'default': 'camera', 'description': 'camera unique name'},
+                    {'name': 'camera_namespace',    'default': 'camera', 'description': 'camera namespace'},
+                    {'name': 'enable_depth',        'default': 'true', 'description': 'enable depth stream'},
+                    {'name': 'enable_gyro',         'default': 'true', 'description': "'enable gyro stream'"},
+                    {'name': 'enable_accel',        'default': 'true', 'description': "'enable accel stream'"},
+                    {'name': 'rosbag_filename',     'default': [ThisLaunchFileDir(), "/D435i_Depth_and_IMU_Stands_still.bag"], 'description': 'A realsense bagfile to run from as a device'},
                    ]
 
 def set_configurable_parameters(local_params):
@@ -51,12 +52,5 @@ def generate_launch_description():
         [
         OpaqueFunction(function=rs_launch.launch_setup,
                 kwargs = {'params' : set_configurable_parameters(params)}
-        ),
-        launch_ros.actions.Node(
-            package='rviz2',
-            namespace='',
-            executable='rviz2',
-            name='rviz2',
-            arguments=['-d', [ThisLaunchFileDir(), '/pointcloud.rviz']]
-    )
+        )
     ])
