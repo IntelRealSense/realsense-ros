@@ -19,6 +19,9 @@ import struct
 import requests
 import json
 
+from pytest_rs_utils import debug_print
+
+
 def get_profile_config(camera_name):
     config = {
         "Color":{"profile":"rgb_camera.profile", "format":'rgb_camera.color_format', "param":"enable_color", "topic":'/'+camera_name+'/color/image_raw',},
@@ -29,9 +32,7 @@ def get_profile_config(camera_name):
     }
     return config
 
-def debug_print(*args):
-    if(False):
-        print(*args)
+
 def get_default_profiles(cap, profile):
     profile1 = "" 
     profile2 = ""
