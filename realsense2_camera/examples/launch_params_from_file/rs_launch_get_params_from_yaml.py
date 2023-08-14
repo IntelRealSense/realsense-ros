@@ -14,10 +14,10 @@
 
 # DESCRIPTION #
 # ----------- #
-# Use this launch file to launch a device and visualize pointcloud.
+# Use this launch file to launch a device and get the params from a YAML file.
 # The Parameters available for definition in the command line for the camera are described in rs_launch.configurable_parameters
 # command line example:
-# ros2 launch realsense2_camera rs_pointcloud_launch.py
+# ros2 launch realsense2_camera rs_launch_get_params_from_yaml.py
 
 """Launch realsense2_camera node."""
 from launch import LaunchDescription
@@ -32,11 +32,9 @@ from ament_index_python.packages import get_package_share_directory
 sys.path.append(os.path.join(get_package_share_directory('realsense2_camera'), 'launch'))
 import rs_launch
 
-local_parameters = [{'name': 'camera_name',                  'default': 'camera', 'description': 'camera unique name'},
-                    {'name': 'camera_namespace',             'default': 'camera', 'description': 'camera namespace'},
-                    {'name': 'enable_color',                 'default': 'true', 'description': 'enable color stream'},
-                    {'name': 'enable_depth',                 'default': 'true', 'description': 'enable depth stream'},
-                    {'name': 'pointcloud.enable',            'default': 'true', 'description': 'enable pointcloud'},
+local_parameters = [{'name': 'camera_name',         'default': 'camera', 'description': 'camera unique name'},
+                    {'name': 'camera_namespace',    'default': 'camera', 'description': 'camera namespace'},
+                    {'name': 'config_file',         'default': [ThisLaunchFileDir(), "/config.yaml"], 'description': 'yaml config file'},
                    ]
 
 def set_configurable_parameters(local_params):
@@ -51,12 +49,5 @@ def generate_launch_description():
         [
         OpaqueFunction(function=rs_launch.launch_setup,
                 kwargs = {'params' : set_configurable_parameters(params)}
-        ),
-        launch_ros.actions.Node(
-            package='rviz2',
-            namespace='',
-            executable='rviz2',
-            name='rviz2',
-            arguments=['-d', [ThisLaunchFileDir(), '/pointcloud.rviz']]
-    )
+        )
     ])
