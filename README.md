@@ -536,12 +536,7 @@ The following post processing filters are available:
     * pointcloud is of an unordered format by default. This can be changed by setting `pointcloud.ordered_pc` to true.
  - ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values.
   - The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.
-  - To view the effect on the infrared image for each sequence id use the `sequence_id_filter.sequence_id` parameter.
-  - To initialize these parameters in start time use the following parameters:
-    - `depth_module.exposure.1`
-    - `depth_module.gain.1`
-    - `depth_module.exposure.2`
-    - `depth_module.gain.2`
+  - To view the effect on the infrared image for each sequence id use the `filter_by_sequence_id.sequence_id` parameter.
   - For in-depth review of the subject please read the accompanying [white paper](https://dev.intelrealsense.com/docs/high-dynamic-range-with-stereoscopic-depth-cameras).
 
   - The following filters have detailed descriptions in : https://github.com/IntelRealSense/librealsense/blob/master/doc/post-processing-filters.md
