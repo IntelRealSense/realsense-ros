@@ -15,6 +15,7 @@ import os
 import sys
 import time
 from collections import deque
+import functools
 import pytest
 
 import numpy as np
@@ -28,10 +29,14 @@ import rclpy
 from rclpy import qos
 from rclpy.node import Node
 from rclpy.utilities import ok
+from ros2topic.verb.bw import ROSTopicBandwidth
+from ros2topic.verb.hz import ROSTopicHz
+from ros2topic.api import get_msg_class
 
 import ctypes
 import struct
 import requests
+import math
 
 #from rclpy.parameter import Parameter
 from rcl_interfaces.msg import Parameter
@@ -71,6 +76,11 @@ from importRosbag.importRosbag import importRosbag
 import tempfile
 import os
 import requests
+
+def debug_print(*args):
+    if(True):
+        print(*args)
+
 class RosbagManager(object):
     def __new__(cls):
         if not hasattr(cls, 'instance'):
@@ -567,6 +577,18 @@ def delayed_launch_descr_with_parameters(request):
         first_node,], period=period)
     ]),request.param
 
+
+class HzWrapper(ROSTopicHz):
+    def _callback_hz(self, m, topic=None):
+        if self.get_last_printed_tn(topic=topic) == 0:
+            self.set_last_printed_tn(self.get_msg_tn(topic=topic), topic=topic)
+        return self.callback_hz(m, topic)
+    def restart_topic(self, topic):
+        self._last_printed_tn[topic] = 0
+        self._times[topic].clear()
+        self._msg_tn[topic] = 0
+        self._msg_t0[topic] = -1
+
 ''' 
 This is that holds the test node that listens to a subscription created by a test.  
 '''
@@ -578,6 +600,8 @@ class RsTestNode(Node):
         self.data = {}
         self.tfBuffer = None
         self.frame_counter = {}
+        self._ros_topic_hz = HzWrapper(super(), 10000, use_wtime=False)
+
 
     def wait_for_node(self, node_name, timeout=8.0):
         start = time.time()
@@ -594,10 +618,19 @@ class RsTestNode(Node):
     def reset_data(self, topic):
         self.data[topic] = deque()
         self.frame_counter[topic] = 0
+        self._ros_topic_hz.restart_topic(topic)
+
 
     def create_subscription(self, msg_type, topic , data_type, store_raw_data):
         self.reset_data(topic)
         super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
+        #hz measurements are not working
+        msg_class = get_msg_class(super(), topic, blocking=True, include_hidden_topics=True)
+        super().create_subscription(msg_class,topic,functools.partial(self._ros_topic_hz._callback_hz, topic=topic),data_type)
+        self._ros_topic_hz.set_last_printed_tn(0, topic=topic)
+
+        #super().create_subscription(msg_class,topic,self._ros_topic_hz.callback_hz,data_type)
+
         if (os.getenv('ROS_DISTRO') != "dashing") and (self.tfBuffer == None):
             self.tfBuffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, super())
@@ -631,9 +664,9 @@ class RsTestNode(Node):
     The processing of data is taken from the existing testcase in scripts rs2_test
     '''
     def rsCallback(self, topic, msg_type, store_raw_data):
-        print("RSCallback")
+        debug_print("RSCallback")
         def _rsCallback(data):
-            print('Got the callback for ' + topic)
+            debug_print('Got the callback for ' + topic)
             #print(data.header)
             self.flag = True
             if store_raw_data == True:
@@ -725,6 +758,7 @@ class RsTestBaseClass():
         self.flag = False
         self.node = RsTestNode(name)
         self.subscribed_topics = []
+
     def wait_for_node(self, node_name, timeout=8.0):
         self.node.wait_for_node(node_name, timeout)
     def create_subscription(self, msg_type, topic, data_type, store_raw_data=False):
@@ -733,6 +767,7 @@ class RsTestBaseClass():
             self.subscribed_topics.append(topic)
         else:
             self.node.reset_data(topic)
+
    
 
     def create_param_ifs(self, camera_name):
@@ -787,7 +822,7 @@ class RsTestBaseClass():
         flag = False
         while (time.time() - start) < timeout:
             rclpy.spin_once(self.node, timeout_sec=1)
-            print('Spun once... ' )
+            debug_print('Spun once... ' )
             all_found = True 
             for theme in themes:
                 if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
@@ -806,7 +841,7 @@ class RsTestBaseClass():
         print('Waiting for time... ' )
         flag = False
         while (time.time() - start) < wait_time:
-            print('Spun for time once... ' )
+            debug_print('Spun for time once... ' )
             rclpy.spin_once(self.node)
  
     def run_test(self, themes, initial_wait_time=0.0, timeout=5.0):
@@ -842,6 +877,12 @@ class RsTestBaseClass():
             if theme['expected_data_chunks'] == 0:
                 assert self.node.get_num_chunks(theme['topic']) == 0, "Received data, when not expected for topic:" + theme['topic']
                 continue #no more checks needed if data is not available
+
+            if 'expected_fps_in_hz' in theme:
+                speed= 1e9*self.node._ros_topic_hz.get_hz(theme['topic'])[0]
+                msg = "FPS in Hz of topic " + theme['topic'] + " is " + str(speed) + ". Expected is " + str(theme['expected_fps_in_hz'])
+                if (abs(theme['expected_fps_in_hz']-speed) > theme['expected_fps_in_hz']/10):
+                    assert False,msg
             data = self.node.pop_first_chunk(theme['topic'])
             if 'width' in theme:
                 assert theme['width'] == data['shape'][0][1], "Width not matched. Expected:" +  str(theme['width']) + " & got: " + str(data['shape'][0][1]) # (get from numpy image the width)
