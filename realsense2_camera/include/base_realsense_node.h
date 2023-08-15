@@ -208,7 +208,7 @@ namespace realsense2_camera
         IMUInfo getImuInfo(const rs2::stream_profile& profile);
         void initializeFormatsMaps();
 
-        void fillMessageImage(
+        bool fillROSImageMsgAndReturnStatus(
             const cv::Mat& cv_matrix_image,
             const stream_index_pair& stream,
             unsigned int width,
@@ -217,7 +217,7 @@ namespace realsense2_camera
             const rclcpp::Time& t,
             sensor_msgs::msg::Image* img_msg_ptr);
 
-        cv::Mat& getCVMatImage(
+        bool fillCVMatImageAndReturnStatus(
             rs2::frame& frame,
             std::map<stream_index_pair, cv::Mat>& images,
             unsigned int width,
