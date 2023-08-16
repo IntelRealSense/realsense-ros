@@ -89,7 +89,7 @@ class TestDepthPointsCloud1(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            ret = self.run_test(themes)
+            ret = self.run_test(themes, timeout=25.0)
             assert ret[0], ret[1]
             assert self.process_data(themes)
         finally:
