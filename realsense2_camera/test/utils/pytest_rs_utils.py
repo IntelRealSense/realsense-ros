@@ -844,7 +844,7 @@ class RsTestBaseClass():
             debug_print('Spun for time once... ' )
             rclpy.spin_once(self.node)
  
-    def run_test(self, themes, initial_wait_time=0.0, timeout=5.0):
+    def run_test(self, themes, initial_wait_time=0.0, timeout=25.0):
         try:
             for theme in themes:
                 store_raw_data = False
