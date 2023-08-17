@@ -581,10 +581,11 @@ def delayed_launch_descr_with_parameters(request):
     period = 1.0 + 20.0 * (end - start).total_seconds()
     if period > 10.0:
         period = 10.0
-    '''
     period = 20.0 * (end - start).total_seconds()
     if period > 20.0:
         period = 20.0
+    '''
+    period = 2.0
 
     if 'delay_ms' in changed_params.keys():
         period = changed_params['delay_ms']/1000
