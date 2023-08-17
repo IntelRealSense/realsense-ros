@@ -568,7 +568,25 @@ def delayed_launch_descr_with_parameters(request):
             params[key] = value 
     if  'camera_name' not in changed_params:
         params['camera_name'] = 'camera_with_params'
-    period = 4.0
+    from datetime import datetime
+    import random
+    start = datetime.now()
+    test = 0
+    for i in range(500000):
+        test += random.randint(1,15)
+    end = datetime.now()
+    
+    '''
+    the test fails if the machine allocated to run has lesser resources. So delay is adjusted based on that
+    period = 1.0 + 20.0 * (end - start).total_seconds()
+    if period > 10.0:
+        period = 10.0
+    '''
+    period = 20.0 * (end - start).total_seconds()
+    if period > 25.0:
+        period = 25.0
+
+    print("time delay for the node:" , period)
     if 'delay_ms' in changed_params.keys():
         period = changed_params['delay_ms']/1000
     first_node = get_rs_node_description(params['camera_name'], params)
