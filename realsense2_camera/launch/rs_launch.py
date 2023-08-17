@@ -31,6 +31,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'initial_reset',                'default': 'false', 'description': "''"},
                            {'name': 'rosbag_filename',              'default': "''", 'description': 'A realsense bagfile to run from as a device'},
                            {'name': 'log_level',                    'default': 'info', 'description': 'debug log level [DEBUG|INFO|WARN|ERROR|FATAL]'},
+                           {'name': 'output',                       'default': 'screen', 'description': 'pipe node output [screen|log]'},
                            {'name': 'enable_color',                 'default': 'true', 'description': 'enable color stream'},
                            {'name': 'rgb_camera.profile',           'default': '0,0,0', 'description': 'color image width'},
                            {'name': 'rgb_camera.color_format',      'default': 'RGB8', 'description': 'color stream format'},
@@ -112,7 +113,7 @@ def launch_setup(context, params, param_name_suffix=''):
                 parameters=[params
                             , params_from_file
                             ],
-                output='screen',
+                output=LaunchConfiguration('output' + param_name_suffix),
                 arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level' + param_name_suffix)],
                 )
             ]
@@ -126,7 +127,7 @@ def launch_setup(context, params, param_name_suffix=''):
                 parameters=[params
                             , params_from_file
                             ],
-                output='screen',
+                output=LaunchConfiguration('output' + param_name_suffix),
                 arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level' + param_name_suffix)],
                 emulate_tty=True,
                 )
