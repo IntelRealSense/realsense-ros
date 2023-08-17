@@ -639,13 +639,14 @@ class RsTestNode(Node):
         self._ros_topic_hz.restart_topic(topic)
 
 
-    def create_subscription(self, msg_type, topic , data_type, store_raw_data):
+    def create_subscription(self, msg_type, topic , data_type, store_raw_data, measure_hz):
         self.reset_data(topic)
         super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
         #hz measurements are not working
-        msg_class = get_msg_class(super(), topic, blocking=True, include_hidden_topics=True)
-        #super().create_subscription(msg_class,topic,functools.partial(self._ros_topic_hz._callback_hz, topic=topic),data_type)
-        self._ros_topic_hz.set_last_printed_tn(0, topic=topic)
+        if measure_hz == True:
+            msg_class = get_msg_class(super(), topic, blocking=True, include_hidden_topics=True)
+            super().create_subscription(msg_class,topic,functools.partial(self._ros_topic_hz._callback_hz, topic=topic),data_type)
+            self._ros_topic_hz.set_last_printed_tn(0, topic=topic)
 
         if (os.getenv('ROS_DISTRO') != "dashing") and (self.tfBuffer == None):
             self.tfBuffer = tf2_ros.Buffer()
@@ -777,9 +778,9 @@ class RsTestBaseClass():
 
     def wait_for_node(self, node_name, timeout=8.0):
         self.node.wait_for_node(node_name, timeout)
-    def create_subscription(self, msg_type, topic, data_type, store_raw_data=False):
+    def create_subscription(self, msg_type, topic, data_type, store_raw_data=False, measure_hz=False):
         if not topic in self.subscribed_topics:
-            self.node.create_subscription(msg_type, topic, data_type, store_raw_data)
+            self.node.create_subscription(msg_type, topic, data_type, store_raw_data, measure_hz)
             self.subscribed_topics.append(topic)
         else:
             self.node.reset_data(topic)
@@ -866,7 +867,12 @@ class RsTestBaseClass():
                 store_raw_data = False
                 if 'store_raw_data' in theme:
                     store_raw_data = theme['store_raw_data']
-                self.create_subscription(theme['msg_type'], theme['topic'] , qos.qos_profile_sensor_data,store_raw_data)
+                if 'expected_fps_in_hz' in theme:
+                    measure_hz = True
+                else:
+                    measure_hz = False
+
+                self.create_subscription(theme['msg_type'], theme['topic'] , qos.qos_profile_sensor_data,store_raw_data, measure_hz)
                 print('subscription created for ' + theme['topic'])
             if initial_wait_time != 0.0: 
                 self.spin_for_time(initial_wait_time)
