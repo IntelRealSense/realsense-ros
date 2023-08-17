@@ -581,10 +581,11 @@ def delayed_launch_descr_with_parameters(request):
     period = 1.0 + 20.0 * (end - start).total_seconds()
     if period > 10.0:
         period = 10.0
-    '''
     period = 20.0 * (end - start).total_seconds()
     if period > 25.0:
         period = 25.0
+    '''
+    period = 8.0
 
     print("time delay for the node:" , period)
     if 'delay_ms' in changed_params.keys():
