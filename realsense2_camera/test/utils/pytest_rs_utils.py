@@ -581,15 +581,14 @@ def delayed_launch_descr_with_parameters(request):
     period = 1.0 + 20.0 * (end - start).total_seconds()
     if period > 10.0:
         period = 10.0
-    period = 20.0 * (end - start).total_seconds()
-    if period > 25.0:
-        period = 25.0
     '''
-    period = 8.0
+    period = 20.0 * (end - start).total_seconds()
+    if period > 20.0:
+        period = 20.0
 
-    print("time delay for the node:" , period)
     if 'delay_ms' in changed_params.keys():
         period = changed_params['delay_ms']/1000
+    print("time delay for the node:" , period)
     first_node = get_rs_node_description(params['camera_name'], params)
     return LaunchDescription([launch.actions.TimerAction(
             actions = [
@@ -645,10 +644,8 @@ class RsTestNode(Node):
         super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
         #hz measurements are not working
         msg_class = get_msg_class(super(), topic, blocking=True, include_hidden_topics=True)
-        super().create_subscription(msg_class,topic,functools.partial(self._ros_topic_hz._callback_hz, topic=topic),data_type)
+        #super().create_subscription(msg_class,topic,functools.partial(self._ros_topic_hz._callback_hz, topic=topic),data_type)
         self._ros_topic_hz.set_last_printed_tn(0, topic=topic)
-
-        #super().create_subscription(msg_class,topic,self._ros_topic_hz.callback_hz,data_type)
 
         if (os.getenv('ROS_DISTRO') != "dashing") and (self.tfBuffer == None):
             self.tfBuffer = tf2_ros.Buffer()
