@@ -78,7 +78,7 @@ import os
 import requests
 
 def debug_print(*args):
-    if(True):
+    if(False):
         print(*args)
 
 class RosbagManager(object):
