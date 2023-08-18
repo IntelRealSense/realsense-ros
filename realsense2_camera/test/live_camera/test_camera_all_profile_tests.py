@@ -132,6 +132,7 @@ machines that don't have the D455 connected.
 class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
     def test_LiveCamera_Change_Resolution(self,launch_descr_with_parameters):
         skipped_tests = []
+        failed_tests = []
         num_passed = 0
         num_failed = 0
         params = launch_descr_with_parameters[1]
@@ -183,6 +184,7 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
                     print("Test failed")
                     print(e)
                     num_failed += 1
+                    failed_tests.append(" ".join(key))
             debug_print("Color tests completed")
             for key in cap["depth_profile"]:
                 profile_type = key[0]
@@ -216,16 +218,22 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
                     print("Test failed")
                     print(e)
                     num_failed += 1
+                    failed_tests.append(" ".join(key))
             debug_print("Depth tests completed")
         finally:
             #this step is important because the test will fail next time
             pytest_rs_utils.kill_realsense2_camera_node()
             self.shutdown()
-            debug_print("\nSkipped tests:" + params['device_type'])
-            debug_print("\n".join(skipped_tests))
             print("Tests passed " + str(num_passed))
             print("Tests skipped " + str(len(skipped_tests)))
+            if len(skipped_tests):
+                debug_print("\nSkipped tests:" + params['device_type'])
+                debug_print("\n".join(skipped_tests))
             print("Tests failed " + str(num_failed))
+            if num_failed != 0:
+                debug_print("\nFailed tests:" + params['device_type'])
+                debug_print("\n".join(failed_tests))
+
     def disable_all_params(self):
         self.set_bool_param('enable_color', False)
         self.set_bool_param('enable_depth', False)
