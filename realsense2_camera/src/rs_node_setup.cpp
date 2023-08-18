@@ -27,16 +27,10 @@ void BaseRealSenseNode::setup()
     setAvailableSensors();
     SetBaseStream();
     setupFilters();
-    setupFiltersPublishers();
     setCallbackFunctions();
     monitoringProfileChanges();
     updateSensors();
     publishServices();
-}
-
-void BaseRealSenseNode::setupFiltersPublishers()
-{
-    _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
 }
 
 void BaseRealSenseNode::monitoringProfileChanges()
@@ -190,6 +184,9 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
         }
         else if (profile.is<rs2::motion_stream_profile>())
         {
+            _is_accel_enabled = false;
+            _is_gyro_enabled = false;
+            _synced_imu_publisher.reset();
             _imu_publishers.erase(sip);
             _imu_info_publishers.erase(sip);
         }
@@ -270,6 +267,11 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
         }
         else if (profile.is<rs2::motion_stream_profile>())
         {
+            if(profile.stream_type() == RS2_STREAM_ACCEL)
+                _is_accel_enabled = true;
+            else if (profile.stream_type() == RS2_STREAM_GYRO)
+                _is_gyro_enabled = true;
+
             std::stringstream data_topic_name, info_topic_name;
             data_topic_name << stream_name << "/sample";
             _imu_publishers[sip] = _node.create_publisher<sensor_msgs::msg::Imu>(data_topic_name.str(),
@@ -305,6 +307,11 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(extrinsics_qos), extrinsics_qos), std::move(options));
         }
     }
+    if (_is_accel_enabled && _is_gyro_enabled && (_imu_sync_method > imu_sync_method::NONE))
+    {
+        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
+    }
+
 }
 
 void BaseRealSenseNode::startRGBDPublisherIfNeeded()
