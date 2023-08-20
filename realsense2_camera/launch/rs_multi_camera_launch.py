@@ -33,9 +33,11 @@ import pathlib
 sys.path.append(str(pathlib.Path(__file__).parent.absolute()))
 import rs_launch
 
-local_parameters = [{'name': 'camera_name1', 'default': 'camera1', 'description': 'camera unique name'},
-                    {'name': 'camera_name2', 'default': 'camera2', 'description': 'camera unique name'},
-                   ]
+local_parameters = [{'name': 'camera_name1', 'default': 'camera1', 'description': 'camera1 unique name'},
+                    {'name': 'camera_name2', 'default': 'camera2', 'description': 'camera2 unique name'},
+                    {'name': 'camera_namespace1', 'default': 'camera1', 'description': 'camera1 namespace'},
+                    {'name': 'camera_namespace2', 'default': 'camera2', 'description': 'camera2 namespace'},
+                    ]
 
 def set_configurable_parameters(local_params):
     return dict([(param['original_name'], LaunchConfiguration(param['name'])) for param in local_params])
@@ -46,7 +48,7 @@ def duplicate_params(general_params, posix):
         param['original_name'] = param['name']
         param['name'] += posix
     return local_params
-    
+
 def add_node_action(context : LaunchContext):
     # dummy static transformation from camera1 to camera2
     node = launch_ros.actions.Node(
@@ -63,8 +65,8 @@ def generate_launch_description():
     params2 = duplicate_params(rs_launch.configurable_parameters, '2')
     return LaunchDescription(
         rs_launch.declare_configurable_parameters(local_parameters) +
-        rs_launch.declare_configurable_parameters(params1) + 
-        rs_launch.declare_configurable_parameters(params2) + 
+        rs_launch.declare_configurable_parameters(params1) +
+        rs_launch.declare_configurable_parameters(params2) +
         [
         OpaqueFunction(function=rs_launch.launch_setup,
                        kwargs = {'params'           : set_configurable_parameters(params1),
