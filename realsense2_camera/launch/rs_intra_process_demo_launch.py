@@ -49,6 +49,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'rgb_camera.profile',           'default': '0,0,0', 'description': 'color image width'},
                            {'name': 'enable_color',                 'default': 'true', 'description': 'enable color stream'},
                            {'name': 'enable_depth',                 'default': 'false', 'description': 'enable depth stream'},
+                           {'name': 'enable_infra',                 'default': 'false', 'description': 'enable infra stream'},
                            {'name': 'enable_infra1',                'default': 'false', 'description': 'enable infra1 stream'},
                            {'name': 'enable_infra2',                'default': 'false', 'description': 'enable infra2 stream'},
                            {'name': 'enable_gyro',                  'default': 'false', 'description': "enable gyro stream"},                           
@@ -56,6 +57,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'intra_process_comms',          'default': 'true', 'description': "enable intra-process communication"}, 
                            {'name': 'publish_tf',                   'default': 'true', 'description': '[bool] enable/disable publishing static & dynamic TF'},
                            {'name': 'tf_publish_rate',              'default': '0.0', 'description': '[double] rate in HZ for publishing dynamic TF'},
+                           {'name': 'topic_name',                   'default': '/color/image_raw', 'description': 'topic to which latency calculated'},
                           ]
 
 def declare_configurable_parameters(parameters):
