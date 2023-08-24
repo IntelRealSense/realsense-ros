@@ -44,7 +44,7 @@ void NamedFilter::clearParameters()
     {
         auto name = _parameters_names.back();
         _params.getParameters()->removeParam(name);
-        _parameters_names.pop_back();        
+        _parameters_names.pop_back();
     }
 }
 
@@ -117,12 +117,12 @@ void PointcloudFilter::setParameters()
         });
 }
 
-void PointcloudFilter::setPublisher() 
-{   
+void PointcloudFilter::setPublisher()
+{
     std::lock_guard<std::mutex> lock_guard(_mutex_publisher);
     if ((_is_enabled) && (!_pointcloud_publisher))
     {
-        _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("depth/color/points", 
+        _pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("~/depth/color/points",
                                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos_string_to_qos(_pointcloud_qos)),
                                             qos_string_to_qos(_pointcloud_qos)));
     }
@@ -156,8 +156,8 @@ void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2:
     if (use_texture)
     {
         std::set<rs2_format> available_formats{ rs2_format::RS2_FORMAT_RGB8, rs2_format::RS2_FORMAT_Y8 };
-        
-        texture_frame_itr = std::find_if(frameset.begin(), frameset.end(), [&texture_source_id, &available_formats] (rs2::frame f) 
+
+        texture_frame_itr = std::find_if(frameset.begin(), frameset.end(), [&texture_source_id, &available_formats] (rs2::frame f)
                                 {return (rs2_stream(f.get_profile().stream_type()) == texture_source_id) &&
                                             (available_formats.find(f.get_profile().format()) != available_formats.end()); });
         if (texture_frame_itr == frameset.end())
@@ -181,7 +181,7 @@ void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2:
     sensor_msgs::msg::PointCloud2::UniquePtr msg_pointcloud = std::make_unique<sensor_msgs::msg::PointCloud2>();
 
     sensor_msgs::PointCloud2Modifier modifier(*msg_pointcloud);
-    modifier.setPointCloud2FieldsByString(1, "xyz");    
+    modifier.setPointCloud2FieldsByString(1, "xyz");
     modifier.resize(pc.size());
     if (_ordered_pc)
     {
@@ -266,7 +266,7 @@ void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2:
                 *iter_x = vertex->x;
                 *iter_y = vertex->y;
                 *iter_z = vertex->z;
-    
+
                 ++iter_x; ++iter_y; ++iter_z;
                 ++valid_count;
             }
@@ -289,7 +289,7 @@ void PointcloudFilter::Publish(rs2::points pc, const rclcpp::Time& t, const rs2:
 }
 
 
-AlignDepthFilter::AlignDepthFilter(std::shared_ptr<rs2::filter> filter, 
+AlignDepthFilter::AlignDepthFilter(std::shared_ptr<rs2::filter> filter,
     std::function<void(const rclcpp::Parameter&)> update_align_depth_func,
     std::shared_ptr<Parameters> parameters, rclcpp::Logger logger, bool is_enabled):
     NamedFilter(filter, parameters, logger, is_enabled, false)
