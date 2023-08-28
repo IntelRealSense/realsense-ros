@@ -353,7 +353,7 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 ![d435i](https://user-images.githubusercontent.com/99127997/230220297-e392f0fc-63bf-4bab-8001-af1ddf0ed00e.png)
 
 ```
-administrator@perclnx466 ~/ros2_humble $ ros2 topic echo /camera/extrinsics/depth_to_color
+administrator@perclnx466 ~/ros2_humble $ ros2 topic echo /camera/camera/extrinsics/depth_to_color
 rotation:
 - 0.9999583959579468
 - 0.008895332925021648
