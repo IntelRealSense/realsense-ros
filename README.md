@@ -192,7 +192,7 @@
 - For reading a parameter value use `ros2 param get <node> <parameter_name>` 
   - For example: `ros2 param get /camera/camera depth_module.emitter_enabled`
 - For setting a new value for a parameter use `ros2 param set <node> <parameter_name> <value>`
-  - For example: `ros2 param set /camera/camera depth_module.emitter_enabled true`
+  - For example: `ros2 param set /camera/camera depth_module.emitter_enabled 1`
 
 #### Parameters that can be modified during runtime:
 - All of the filters and sensors inner parameters.
@@ -491,7 +491,7 @@ Each of the above filters have it's own parameters, following the naming convent
   Available services
 </h3>
   
-- device_info : retrieve information about the device - serial_number, firmware_version etc. Type `ros2 interface show realsense2_camera_msgs/srv/DeviceInfo` for the full list. Call example: `ros2 service call /camera/device_info realsense2_camera_msgs/srv/DeviceInfo`
+- device_info : retrieve information about the device - serial_number, firmware_version etc. Type `ros2 interface show realsense2_camera_msgs/srv/DeviceInfo` for the full list. Call example: `ros2 service call /camera/camera/device_info realsense2_camera_msgs/srv/DeviceInfo`
 
 <hr>
 
