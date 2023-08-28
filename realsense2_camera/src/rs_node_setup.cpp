@@ -404,7 +404,7 @@ void BaseRealSenseNode::updateSensors()
 void BaseRealSenseNode::publishServices()
 {
     _device_info_srv = _node.create_service<realsense2_camera_msgs::srv::DeviceInfo>(
-            "device_info",
+            "~/device_info",
             [&](const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr req,
                         realsense2_camera_msgs::srv::DeviceInfo::Response::SharedPtr res)
                         {getDeviceInfo(req, res);});
