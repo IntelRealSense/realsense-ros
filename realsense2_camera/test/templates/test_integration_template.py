@@ -32,6 +32,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_yaml
 from pytest_rs_utils import get_rosbag_file_path
+from pytest_rs_utils import get_node_heirarchy
 
 ''' 
 This is a testcase simiar to the integration_fn testcase, the only difference is that
@@ -57,7 +58,7 @@ def test_using_function(launch_context,launch_descr_with_yaml):
     # by now, the camera would have started
     start = time.time()
     timeout = 4.0
-    camera_name = '/'+params['camera_name']+'/'+params['camera_name'] 
+    camera_name = get_node_heirarchy(params)+'/'+params['camera_name'] 
     while (time.time() - start) < timeout:
         service_list = subprocess.check_output(['ros2', 'node', 'list']).decode("utf-8")
         is_node_up = camera_name in service_list
@@ -104,7 +105,7 @@ class TestCamera1(pytest_rs_utils.RsTestBaseClass):
         params = launch_descr_with_yaml[1]
         themes = [
             #{'topic':'/camera/color/image_raw','msg_type':msg_Image,'expected_data_chunks':1},
-        {'topic':'/'+params['camera_name']+'/depth/image_rect_raw','msg_type':msg_Image,'expected_data_chunks':1}
+        {'topic':get_node_heirarchy(params)+'/depth/image_rect_raw','msg_type':msg_Image,'expected_data_chunks':1}
         ]
         try:
             ''' 
@@ -134,14 +135,14 @@ class TestCamera2(pytest_rs_utils.RsTestBaseClass):
     def test_camera_2(self,launch_descr_with_yaml):
         params = launch_descr_with_yaml[1]
         themes = [
-            {'topic':'/'+params['camera_name']+'/depth/image_rect_raw',
+            {'topic':get_node_heirarchy(params)+'/depth/image_rect_raw',
                 'msg_type':msg_Image,
                 'store_raw_data':True,
                 'expected_data_chunks':1, 
                 'frame_id':params['camera_name']+'_depth_optical_frame',
                 'height':720,
                 'width':1280},
-            {'topic':'/'+params['camera_name']+'/color/image_raw',
+            {'topic':get_node_heirarchy(params)+'/color/image_raw',
                 'msg_type':msg_Image,
                 'store_raw_data':True,
                 'expected_data_chunks':1, 

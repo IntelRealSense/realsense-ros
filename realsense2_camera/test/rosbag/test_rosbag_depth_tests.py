@@ -32,6 +32,7 @@ import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_parameters
 from pytest_rs_utils import delayed_launch_descr_with_parameters
 from pytest_rs_utils import get_rosbag_file_path
+from pytest_rs_utils import get_node_heirarchy
 
 
 test_params_depth_points_cloud_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
@@ -72,12 +73,12 @@ class TestDepthPointsCloud1(pytest_rs_utils.RsTestBaseClass):
                 'avg': [np.array([ 1.28251814, -0.15839984, 4.82235184, 80, 160, 240])], 
                 'epsilon': [0.04, 5]}
         themes = [
-        {'topic':'/'+params['camera_name']+'/depth/color/points',
+        {'topic':get_node_heirarchy(params)+'/depth/color/points',
          'msg_type':msg_PointCloud2,
          'expected_data_chunks':1,
          'data':data1
         },
-        {'topic':'/'+params['camera_name']+'/depth/image_rect_raw',
+        {'topic':get_node_heirarchy(params)+'/depth/image_rect_raw',
          'msg_type':msg_Image,
          'expected_data_chunks':1,
          'data':data2
@@ -127,7 +128,7 @@ class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
                                                           ('camera_depth_frame', 'camera_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702]), 
                                                           ('camera_infra1_frame', 'camera_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702])}
         themes = [
-        {'topic':'/'+params['camera_name']+'/color/image_raw',
+        {'topic':get_node_heirarchy(params)+'/color/image_raw',
          'msg_type':msg_Image,
          'expected_data_chunks':1,
          'data':data,
@@ -204,7 +205,7 @@ class TestAlignDepthColor(pytest_rs_utils.RsTestBaseClass):
         params = delayed_launch_descr_with_parameters[1]
         data = pytest_rs_utils.ImageDepthInColorShapeGetData(params["rosbag_filename"])
         themes = [
-        {'topic':'/'+params['camera_name']+'/aligned_depth_to_color/image_raw',
+        {'topic':get_node_heirarchy(params)+'/aligned_depth_to_color/image_raw',
          'msg_type':msg_Image,
          'expected_data_chunks':1,
          'data':data
@@ -260,7 +261,7 @@ class TestAlignDepthInfra1(pytest_rs_utils.RsTestBaseClass):
         self.rosbag = params["rosbag_filename"]
         #data = pytest_rs_utils.ImageDepthInColorShapeGetData(params["rosbag_filename"])
         themes = [
-        {'topic':'/'+params['camera_name']+'/aligned_depth_to_infra1/image_raw',
+        {'topic':get_node_heirarchy(params)+'/aligned_depth_to_infra1/image_raw',
          'msg_type':msg_Image,
          'expected_data_chunks':1,
          #'data':data
