@@ -225,6 +225,8 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             if (sensor.rs2::sensor::is<rs2::depth_sensor>())
                 rectified_image = true;
 
+            // adding "~/" to the topic name will add node namespace and node name to the topic
+            // see "Private Namespace Substitution Character" section on https://design.ros2.org/articles/topic_and_service_names.html
             image_raw << "~/" << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << "~/" << stream_name << "/camera_info";
 
@@ -316,6 +318,8 @@ void BaseRealSenseNode::startRGBDPublisherIfNeeded()
         {
             rmw_qos_profile_t qos = _use_intra_process ? qos_string_to_qos(DEFAULT_QOS) : qos_string_to_qos(IMAGE_QOS);
 
+            // adding "~/" to the topic name will add node namespace and node name to the topic
+            // see "Private Namespace Substitution Character" section on https://design.ros2.org/articles/topic_and_service_names.html
             _rgbd_publisher = _node.create_publisher<realsense2_camera_msgs::msg::RGBD>("~/rgbd",
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
         }
@@ -403,6 +407,8 @@ void BaseRealSenseNode::updateSensors()
 
 void BaseRealSenseNode::publishServices()
 {
+    // adding "~/" to the service name will add node namespace and node name to the service
+    // see "Private Namespace Substitution Character" section on https://design.ros2.org/articles/topic_and_service_names.html
     _device_info_srv = _node.create_service<realsense2_camera_msgs::srv::DeviceInfo>(
             "~/device_info",
             [&](const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr req,

@@ -27,6 +27,7 @@
   * [Installation](#installation)
   * [Usage](#usage)
      * [Starting the camera node](#start-camera-node)
+     * [Camera name and namespace](#camera-name-and-namespace)
      * [Parameters](#parameters)
      * [ROS2-vs-Optical Coordination Systems](#coordination)
      * [TF from coordinate A to coordinate B](#tfs)
@@ -182,6 +183,74 @@
     ros2 launch realsense2_camera rs_launch.py depth_module.profile:=1280x720x30 pointcloud.enable:=true
 
 <hr>
+
+<h3 id="camera-name-and-namespace">
+  Camera Name And Camera Namespace
+</h3>
+
+### Usage
+User can set the camera name and camera namespace, to distinguish between cameras and platforms, which helps identifying the right nodes and topics to work with.
+
+### Example
+- If user have multiple cameras (might be of the same model) and multiple robots then user can choose to launch/run his nodes on this way.
+- For the first robot and first camera he will run/launch it with these parameters:
+  - camera_namespace:
+    - robot1
+  - camera_name
+    - D455_1
+  
+  - With ros2 launch (via command line or by editing these two parameters in the launch file):
+    
+  ```ros2 launch realsense2_camera rs_launch.py camera_namespace:=robot1 camera_name:=D455_1```
+    
+  - With ros2 run (using remapping mechanisim [Reference](https://docs.ros.org/en/foxy/How-To-Guides/Node-arguments.html)):
+    
+  ```ros2 run realsense2_camera realsense2_camera_node --ros-args -r __node:=D455_1 -r __ns:=robot1```
+
+  - Result
+  ```
+  > ros2 node list
+  /robot1/D455_1
+  
+  > ros2 topic list
+  /robot1/D455_1/color/camera_info
+  /robot1/D455_1/color/image_raw
+  /robot1/D455_1/color/metadata
+  /robot1/D455_1/depth/camera_info
+  /robot1/D455_1/depth/image_rect_raw
+  /robot1/D455_1/depth/metadata
+  /robot1/D455_1/extrinsics/depth_to_color
+  /robot1/D455_1/imu
+  
+  > ros2 service list
+  /robot1/D455_1/device_info
+  ```
+
+### Default behavior if non of these parameters are given:
+  - camera_namespace:=camera
+  - camera_name:=camera
+
+```
+> ros2 node list
+/camera/camera
+
+> ros2 topic list
+/camera/camera/color/camera_info
+/camera/camera/color/image_raw
+/camera/camera/color/metadata
+/camera/camera/depth/camera_info
+/camera/camera/depth/image_rect_raw
+/camera/camera/depth/metadata
+/camera/camera/extrinsics/depth_to_color
+/camera/camera/imu
+
+> ros2 service list
+/camera/camera/device_info
+```
+
+
+<hr>
+
 
 <h3 id="parameters">
   Parameters
