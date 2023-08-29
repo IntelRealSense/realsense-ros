@@ -459,13 +459,14 @@ The get_rs_node_description file is used to create a node description of an rs
 camera with a temporary yaml file to hold the parameters.  
 '''
 
-def get_rs_node_description(name, params):
+def get_rs_node_description(params):
     import tempfile
     import yaml
     tmp_yaml = tempfile.NamedTemporaryFile(prefix='launch_rs_',delete=False)
     params = convert_params(params)
     ros_params = {"ros__parameters":params}
-    camera_params = {name+"/"+name: ros_params}
+
+    camera_params = {params['camera_namespace'] +"/"+params['camera_name']: ros_params}
     with open(tmp_yaml.name, 'w') as f:
         yaml.dump(camera_params, f)
 
@@ -477,8 +478,8 @@ def get_rs_node_description(name, params):
         package='realsense2_camera',
         #namespace=LaunchConfiguration("camera_name"),
         #name=LaunchConfiguration("camera_name"),
-        namespace=params["camera_name"],
-        name=name,
+        namespace=params["camera_namespace"],
+        name=params["camera_name"],
         #prefix=['xterm -e gdb --args'],
         executable='realsense2_camera_node',
         parameters=[tmp_yaml.name],
@@ -486,6 +487,9 @@ def get_rs_node_description(name, params):
         arguments=['--ros-args', '--log-level', "info"],
         emulate_tty=True,
     )
+
+def get_node_heirarchy(params):
+    return "/"+params['camera_namespace'] +"/"+params['camera_name']
 
 ''' 
 This function returns a launch description with three rs nodes that
@@ -501,11 +505,11 @@ def launch_descr_with_yaml(request):
         params[key] = value   
     if  'camera_name' not in changed_params:
         params['camera_name'] = 'camera_with_yaml'
-    first_node = get_rs_node_description(params['camera_name'], params)
+    first_node = get_rs_node_description(params)
     return LaunchDescription([
         first_node,
         launch_pytest.actions.ReadyToTest(),
-    ]),request.param
+    ]),params
 
 ''' 
 This function returns a launch description with a single rs node instance built based on the parameter
@@ -519,11 +523,11 @@ def launch_descr_with_parameters(request):
         params[key] = value   
     if  'camera_name' not in changed_params:
         params['camera_name'] = 'camera_with_params'
-    first_node = get_rs_node_description(params['camera_name'], params)
+    first_node = get_rs_node_description(params)
     return LaunchDescription([
         first_node,
         launch_pytest.actions.ReadyToTest(),
-    ]),request.param
+    ]),params
 
 ''' 
 This function returns a launch description with a single rs node instance built based on the parameter
@@ -543,11 +547,11 @@ def delayed_launch_descr_with_parameters(request):
     period = 2.0
     if 'delay_ms' in changed_params.keys():
         period = changed_params['delay_ms']/1000
-    first_node = get_rs_node_description(params['camera_name'], params)
+    first_node = get_rs_node_description(params)
     return LaunchDescription([launch.actions.TimerAction(
             actions = [
         first_node,], period=period)
-    ]),request.param
+    ]),params
 
 ''' 
 This is that holds the test node that listens to a subscription created by a test.  

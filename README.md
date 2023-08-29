@@ -190,9 +190,9 @@
 ### Available Parameters:
 - For the entire list of parameters type `ros2 param list`.
 - For reading a parameter value use `ros2 param get <node> <parameter_name>` 
-  - For example: `ros2 param get /camera/camera depth_module.emitter_on_off`
+  - For example: `ros2 param get /camera/camera depth_module.emitter_enabled`
 - For setting a new value for a parameter use `ros2 param set <node> <parameter_name> <value>`
-  - For example: `ros2 param set /camera/camera depth_module.emitter_on_off true`
+  - For example: `ros2 param set /camera/camera depth_module.emitter_enabled 1`
 
 #### Parameters that can be modified during runtime:
 - All of the filters and sensors inner parameters.
@@ -346,7 +346,7 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 ![d435i](https://user-images.githubusercontent.com/99127997/230220297-e392f0fc-63bf-4bab-8001-af1ddf0ed00e.png)
 
 ```
-administrator@perclnx466 ~/ros2_humble $ ros2 topic echo /camera/extrinsics/depth_to_color
+administrator@perclnx466 ~/ros2_humble $ ros2 topic echo /camera/camera/extrinsics/depth_to_color
 rotation:
 - 0.9999583959579468
 - 0.008895332925021648
@@ -376,17 +376,17 @@ translation:
   
 The published topics differ according to the device and parameters.
 After running the above command with D435i attached, the following list of topics will be available (This is a partial list. For full one type `ros2 topic list`):
-- /camera/aligned_depth_to_color/camera_info
-- /camera/aligned_depth_to_color/image_raw
-- /camera/color/camera_info
-- /camera/color/image_raw
-- /camera/color/metadata
-- /camera/depth/camera_info
-- /camera/depth/color/points
-- /camera/depth/image_rect_raw
-- /camera/depth/metadata
-- /camera/extrinsics/depth_to_color
-- /camera/imu
+- /camera/camera/aligned_depth_to_color/camera_info
+- /camera/camera/aligned_depth_to_color/image_raw
+- /camera/camera/color/camera_info
+- /camera/camera/color/image_raw
+- /camera/camera/color/metadata
+- /camera/camera/depth/camera_info
+- /camera/camera/depth/color/points
+- /camera/camera/depth/image_rect_raw
+- /camera/camera/depth/metadata
+- /camera/camera/extrinsics/depth_to_color
+- /camera/camera/imu
 - /diagnostics
 - /parameter_events
 - /rosout
@@ -403,14 +403,14 @@ ros2 param set /camera/camera enable_gyro true
 ```
 
 Enabling stream adds matching topics. For instance, enabling the gyro and accel streams adds the following topics:
-- /camera/accel/imu_info
-- /camera/accel/metadata
-- /camera/accel/sample
-- /camera/extrinsics/depth_to_accel
-- /camera/extrinsics/depth_to_gyro
-- /camera/gyro/imu_info
-- /camera/gyro/metadata
-- /camera/gyro/sample
+- /camera/camera/accel/imu_info
+- /camera/camera/accel/metadata
+- /camera/camera/accel/sample
+- /camera/camera/extrinsics/depth_to_accel
+- /camera/camera/extrinsics/depth_to_gyro
+- /camera/camera/gyro/imu_info
+- /camera/camera/gyro/metadata
+- /camera/camera/gyro/sample
 
 <hr>
 
@@ -442,7 +442,7 @@ ros2 launch realsense2_camera rs_launch.py enable_rgbd:=true enable_sync:=true a
   
 The metadata messages store the camera's available metadata in a *json* format. To learn more, a dedicated script for echoing a metadata topic in runtime is attached. For instance, use the following command to echo the camera/depth/metadata topic:
 ```
-python3 src/realsense-ros/realsense2_camera/scripts/echo_metadada.py /camera/depth/metadata
+python3 src/realsense-ros/realsense2_camera/scripts/echo_metadada.py /camera/camera/depth/metadata
 ```
   
 <hr>
@@ -452,10 +452,10 @@ python3 src/realsense-ros/realsense2_camera/scripts/echo_metadada.py /camera/dep
 </h3>
   
 The following post processing filters are available:
- - ```align_depth```: If enabled, will publish the depth image aligned to the color image on the topic `/camera/aligned_depth_to_color/image_raw`.
+ - ```align_depth```: If enabled, will publish the depth image aligned to the color image on the topic `/camera/camera/aligned_depth_to_color/image_raw`.
    - The pointcloud, if created, will be based on the aligned depth image.
  - ```colorizer```: will color the depth image. On the depth topic an RGB image will be published, instead of the 16bit depth values .
- - ```pointcloud```: will add a pointcloud topic `/camera/depth/color/points`.
+ - ```pointcloud```: will add a pointcloud topic `/camera/camera/depth/color/points`.
     * The texture of the pointcloud can be modified using the `pointcloud.stream_filter` parameter.</br>
     * The depth FOV and the texture FOV are not similar. By default, pointcloud is limited to the section of depth containing the texture. You can have a full depth to pointcloud, coloring the regions beyond the texture with zeros, by setting `pointcloud.allow_no_texture_points` to true.
     * pointcloud is of an unordered format by default. This can be changed by setting `pointcloud.ordered_pc` to true.
@@ -484,7 +484,7 @@ Each of the above filters have it's own parameters, following the naming convent
   Available services
 </h3>
   
-- device_info : retrieve information about the device - serial_number, firmware_version etc. Type `ros2 interface show realsense2_camera_msgs/srv/DeviceInfo` for the full list. Call example: `ros2 service call /camera/device_info realsense2_camera_msgs/srv/DeviceInfo`
+- device_info : retrieve information about the device - serial_number, firmware_version etc. Type `ros2 interface show realsense2_camera_msgs/srv/DeviceInfo` for the full list. Call example: `ros2 service call /camera/camera/device_info realsense2_camera_msgs/srv/DeviceInfo`
 
 <hr>
 

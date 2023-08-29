@@ -32,7 +32,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_yaml
 from pytest_rs_utils import get_rosbag_file_path
-
+from pytest_rs_utils import get_node_heirarchy
 
 '''
 This test imitates the ros2 launch rs_launch.py realsense2_camera with the given parameters below
@@ -66,11 +66,11 @@ class TestBasicAlignDepthEnable(pytest_rs_utils.RsTestBaseClass):
     def test_align_depth_on(self, launch_descr_with_yaml):
         params = launch_descr_with_yaml[1]
         themes = [
-            {'topic': '/'+params['camera_name']+'/color/image_raw', 'msg_type': msg_Image,
+            {'topic': get_node_heirarchy(params)+'/color/image_raw', 'msg_type': msg_Image,
              'expected_data_chunks': 1, 'width': 640, 'height': 480},
-            {'topic': '/'+params['camera_name']+'/depth/image_rect_raw', 'msg_type': msg_Image,
+            {'topic': get_node_heirarchy(params)+'/depth/image_rect_raw', 'msg_type': msg_Image,
              'expected_data_chunks': 1, 'width': 1280, 'height': 720},
-            {'topic': '/'+params['camera_name']+'/aligned_depth_to_color/image_raw', 'msg_type': msg_Image,
+            {'topic': get_node_heirarchy(params)+'/aligned_depth_to_color/image_raw', 'msg_type': msg_Image,
              'expected_data_chunks': 1, 'width': 640, 'height': 480}
         ]
         try:
