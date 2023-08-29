@@ -268,7 +268,6 @@
   - On occasions the device was not closed properly and due to firmware issues needs to reset. 
   - If set to true, the device will reset prior to usage.
   - For example: `initial_reset:=true`
-- ***<stream_name>*_frame_id**, ***<stream_name>*_optical_frame_id**, **aligned_depth_to_*<stream_name>*_frame_id**: Specify the different frame_id for the different frames. Especially important when using multiple cameras.
 - **base_frame_id**: defines the frame_id all static transformations refers to.
 - **odom_frame_id**: defines the origin coordinate system in ROS convention (X-Forward, Y-Left, Z-Up). pose topic defines the pose relative to that system.
 
