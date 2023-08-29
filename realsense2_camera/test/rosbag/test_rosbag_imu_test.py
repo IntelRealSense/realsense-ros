@@ -38,6 +38,7 @@ from pytest_rs_utils import launch_descr_with_parameters
 
 from pytest_rs_utils import delayed_launch_descr_with_parameters
 from pytest_rs_utils import get_rosbag_file_path
+from pytest_rs_utils import get_node_heirarchy
 
 
 test_params_accel = {"rosbag_filename":get_rosbag_file_path("D435i_Depth_and_IMU_Stands_still.bag"),
@@ -63,7 +64,7 @@ class TestAccelUp1(pytest_rs_utils.RsTestBaseClass):
         params = delayed_launch_descr_with_parameters[1]
         data = pytest_rs_utils.AccelGetDataDeviceStandStraight(params["rosbag_filename"])
         themes = [
-        {'topic':'/'+params['camera_name']+'/accel/sample',
+        {'topic':get_node_heirarchy(params)+'/accel/sample',
          'msg_type':msg_Imu,
          'expected_data_chunks':1,
          'data':data
@@ -107,19 +108,19 @@ class TestImuTopics(pytest_rs_utils.RsTestBaseClass):
         params = delayed_launch_descr_with_parameters[1]
         self.rosbag = params["rosbag_filename"]
         themes = [{
-         'topic':'/'+params['camera_name']+'/imu',
+         'topic':get_node_heirarchy(params)+'/imu',
          'msg_type':msg_Imu,
          'expected_data_chunks':1,
          #'data':depth_to_color_data
         },
         {
-         'topic':'/'+params['camera_name']+'/gyro/sample',
+         'topic':get_node_heirarchy(params)+'/gyro/sample',
          'msg_type':msg_Imu,
          'expected_data_chunks':1,
          #'data':depth_to_color_data
         },
         {
-         'topic':'/'+params['camera_name']+'/accel/sample',
+         'topic':get_node_heirarchy(params)+'/accel/sample',
          'msg_type':msg_Imu,
          'expected_data_chunks':1,
          #'data':depth_to_color_data

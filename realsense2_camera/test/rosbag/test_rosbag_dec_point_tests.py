@@ -32,6 +32,7 @@ import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_parameters
 from pytest_rs_utils import delayed_launch_descr_with_parameters
 from pytest_rs_utils import get_rosbag_file_path
+from pytest_rs_utils import get_node_heirarchy
 
 
 test_params_depth_avg_decimation_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
@@ -56,7 +57,7 @@ class TestDepthAvgDecimation1(pytest_rs_utils.RsTestBaseClass):
         params = launch_descr_with_parameters[1]
         data = pytest_rs_utils.ImageDepthGetData_decimation(params["rosbag_filename"])
         themes = [
-        {'topic':'/'+params['camera_name']+'/depth/image_rect_raw',
+        {'topic':get_node_heirarchy(params)+'/depth/image_rect_raw',
          'msg_type':msg_Image,
          'expected_data_chunks':1,
          'data':data
@@ -97,7 +98,7 @@ class TestDepthAvg1(pytest_rs_utils.RsTestBaseClass):
         params = launch_descr_with_parameters[1]
         data = pytest_rs_utils.ImageDepthGetData(params["rosbag_filename"])
         themes = [
-        {'topic':'/'+params['camera_name']+'/depth/image_rect_raw',
+        {'topic':get_node_heirarchy(params)+'/depth/image_rect_raw',
          'msg_type':msg_Image,
          'expected_data_chunks':1,
          'data':data
@@ -139,7 +140,7 @@ class TestDepthAvgDecimation1(pytest_rs_utils.RsTestBaseClass):
         params = launch_descr_with_parameters[1]
         data = pytest_rs_utils.ImageDepthGetData_decimation(params["rosbag_filename"])
         themes = [
-        {'topic':'/'+params['camera_name']+'/depth/image_rect_raw',
+        {'topic':get_node_heirarchy(params)+'/depth/image_rect_raw',
          'msg_type':msg_Image,
          'expected_data_chunks':1,
          'data':data
@@ -181,7 +182,7 @@ class TestPointsCloud1(pytest_rs_utils.RsTestBaseClass):
         params = delayed_launch_descr_with_parameters[1]
         self.rosbag = params["rosbag_filename"]
         themes = [
-        {'topic':'/'+params['camera_name']+'/depth/color/points',
+        {'topic':get_node_heirarchy(params)+'/depth/color/points',
          'msg_type':msg_PointCloud2,
          'expected_data_chunks':1,
          #'data':data
