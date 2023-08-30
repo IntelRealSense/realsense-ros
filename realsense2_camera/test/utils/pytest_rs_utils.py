@@ -15,6 +15,7 @@ import os
 import sys
 import time
 from collections import deque
+import functools
 import pytest
 
 import numpy as np
@@ -28,10 +29,31 @@ import rclpy
 from rclpy import qos
 from rclpy.node import Node
 from rclpy.utilities import ok
+from ros2topic.verb.bw import ROSTopicBandwidth
+from ros2topic.verb.hz import ROSTopicHz
+from ros2topic.api import get_msg_class
 
 import ctypes
 import struct
 import requests
+import math
+
+#from rclpy.parameter import Parameter
+from rcl_interfaces.msg import Parameter
+from rcl_interfaces.msg import ParameterValue
+from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
+'''
+humble doesn't have the SetParametersResult and SetParameters_Response imported using 
+__init__.py. The below two lines can be used for iron and hopefully succeeding ROS2 versions
+'''
+#from rcl_interfaces.msg import SetParametersResult
+#from rcl_interfaces.srv import SetParameters_Response
+from rcl_interfaces.msg._set_parameters_result import SetParametersResult
+from rcl_interfaces.srv._set_parameters  import SetParameters_Response
+
+from rcl_interfaces.msg import ParameterType
+from rcl_interfaces.msg import ParameterValue
+
 
 
 from sensor_msgs.msg import Image as msg_Image
@@ -54,6 +76,11 @@ from importRosbag.importRosbag import importRosbag
 import tempfile
 import os
 import requests
+
+def debug_print(*args):
+    if(True):
+        print(*args)
+
 class RosbagManager(object):
     def __new__(cls):
         if not hasattr(cls, 'instance'):
@@ -82,12 +109,13 @@ class RosbagManager(object):
     def get_rosbag_path(self, filename):
         if filename in self.rosbag_files:
             return self.rosbag_location + "/" + filename
-rosbagMgr = RosbagManager()
+
 def get_rosbag_file_path(filename):
+    rosbagMgr = RosbagManager()
     path = rosbagMgr.get_rosbag_path(filename)
     assert path, "No rosbag file found :"+filename 
     return path
-
+get_rosbag_file_path.rosbagMgr = None
 
 def CameraInfoGetData(rec_filename, topic):
     data = importRosbag(rec_filename, importTopics=[topic], log='ERROR', disable_bar=True)[topic]
@@ -552,6 +580,16 @@ def delayed_launch_descr_with_parameters(request):
             actions = [
         first_node,], period=period)
     ]),params
+class HzWrapper(ROSTopicHz):
+    def _callback_hz(self, m, topic=None):
+        if self.get_last_printed_tn(topic=topic) == 0:
+            self.set_last_printed_tn(self.get_msg_tn(topic=topic), topic=topic)
+        return self.callback_hz(m, topic)
+    def restart_topic(self, topic):
+        self._last_printed_tn[topic] = 0
+        self._times[topic].clear()
+        self._msg_tn[topic] = 0
+        self._msg_t0[topic] = -1
 
 ''' 
 This is that holds the test node that listens to a subscription created by a test.  
@@ -564,6 +602,7 @@ class RsTestNode(Node):
         self.data = {}
         self.tfBuffer = None
         self.frame_counter = {}
+        self._ros_topic_hz = HzWrapper(super(), 10000, use_wtime=False)
 
     def wait_for_node(self, node_name, timeout=8.0):
         start = time.time()
@@ -576,10 +615,21 @@ class RsTestNode(Node):
                 return True, ""
             time.sleep(timeout/5)
         return False, "Timed out waiting for "+ str(timeout)+  "seconds"
-    def create_subscription(self, msg_type, topic , data_type, store_raw_data):
-        super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
+    def reset_data(self, topic):
         self.data[topic] = deque()
         self.frame_counter[topic] = 0
+        self._ros_topic_hz.restart_topic(topic)
+
+
+    def create_subscription(self, msg_type, topic , data_type, store_raw_data, measure_hz):
+        self.reset_data(topic)
+        super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
+        #hz measurements are not working
+        if measure_hz == True:
+            msg_class = get_msg_class(super(), topic, blocking=True, include_hidden_topics=True)
+            super().create_subscription(msg_class,topic,functools.partial(self._ros_topic_hz._callback_hz, topic=topic),data_type)
+            self._ros_topic_hz.set_last_printed_tn(0, topic=topic)
+
         if (os.getenv('ROS_DISTRO') != "dashing") and (self.tfBuffer == None):
             self.tfBuffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, super())
@@ -592,14 +642,14 @@ class RsTestNode(Node):
     
     def image_msg_to_numpy(self, data):
         fmtString = data.encoding
-        if fmtString in ['mono8', '8UC1', 'bgr8', 'rgb8', 'bgra8', 'rgba8']:
+        if fmtString in ['mono8', '8UC1', 'bgr8', 'rgb8', 'bgra8', 'rgba8', 'yuv422_yuy2', 'yuv422']:
             img = np.frombuffer(data.data, np.uint8)
         elif fmtString in ['mono16', '16UC1', '16SC1']:
             img = np.frombuffer(data.data, np.uint16)
         elif fmtString == '32FC1':
             img = np.frombuffer(data.data, np.float32)
         else:
-            print('image format not supported:' + fmtString)
+            print('py_rs_utils.image_msg_to_numpy:image format not supported:' + fmtString)
             return None
 
         depth = data.step / (data.width * img.dtype.itemsize)
@@ -613,9 +663,9 @@ class RsTestNode(Node):
     The processing of data is taken from the existing testcase in scripts rs2_test
     '''
     def rsCallback(self, topic, msg_type, store_raw_data):
-        print("RSCallback")
+        debug_print("RSCallback")
         def _rsCallback(data):
-            print('Got the callback for ' + topic)
+            debug_print('Got the callback for ' + topic)
             #print(data.header)
             self.flag = True
             if store_raw_data == True:
@@ -707,23 +757,71 @@ class RsTestBaseClass():
         self.flag = False
         self.node = RsTestNode(name)
         self.subscribed_topics = []
-    def create_subscription(self, msg_type, topic, data_type, store_raw_data=False):
-        if not topic in self.subscribed_topics:
-            self.node.create_subscription(msg_type, topic, data_type, store_raw_data)
-            self.subscribed_topics.append(topic)
 
-    def spin_for_data(self,themes):
+    def wait_for_node(self, node_name, timeout=8.0):
+        self.node.wait_for_node(node_name, timeout)
+    def create_subscription(self, msg_type, topic, data_type, store_raw_data=False, measure_hz=False):
+        if not topic in self.subscribed_topics:
+            self.node.create_subscription(msg_type, topic, data_type, store_raw_data, measure_hz)
+            self.subscribed_topics.append(topic)
+        else:
+            self.node.reset_data(topic)
+
+   
+
+    def create_param_ifs(self, camera_name):
+
+        self.set_param_if = self.node.create_client(SetParameters, camera_name + '/set_parameters')
+        self.get_param_if = self.node.create_client(GetParameters, camera_name + '/get_parameters')
+        while not self.get_param_if.wait_for_service(timeout_sec=1.0):
+            print('service not available, waiting again...') 
+        while not self.set_param_if.wait_for_service(timeout_sec=1.0):
+            print('service not available, waiting again...') 
+
+    def send_param(self, req):
+        future = self.set_param_if.call_async(req)
+        while rclpy.ok():
+            rclpy.spin_once(self.node)
+            if future.done():
+                try:
+                    response = future.result()
+                    if response.results[0].successful:
+                        return True
+                except Exception as e:
+                    print("exception raised:")
+                    print(e)
+                    pass
+                return False
+
+    def set_string_param(self, param_name, param_value):
+        req = SetParameters.Request()
+        new_param_value = ParameterValue(type=ParameterType.PARAMETER_STRING, string_value=param_value)
+        req.parameters = [Parameter(name=param_name, value=new_param_value)]
+        return self.send_param(req)
+    
+    def set_bool_param(self, param_name, param_value):
+        req = SetParameters.Request()
+        new_param_value = ParameterValue(type=ParameterType.PARAMETER_BOOL, bool_value=param_value)
+        req.parameters = [Parameter(name=param_name, value=new_param_value)]
+        return self.send_param(req)
+
+    def set_integer_param(self, param_name, param_value):
+        req = SetParameters.Request()
+        new_param_value = ParameterValue(type=ParameterType.PARAMETER_INTEGER, integer_value=param_value)
+        req.parameters = [Parameter(name=param_name, value=new_param_value)]
+        return self.send_param(req)
+
+    def spin_for_data(self,themes, timeout=5.0):
         start = time.time()
         '''
         timeout value varies depending upon the system, it needs to be more if
         the access is over the network
         '''
-        timeout = 25.0
         print('Waiting for topic... ' )
         flag = False
         while (time.time() - start) < timeout:
             rclpy.spin_once(self.node, timeout_sec=1)
-            print('Spun once... ' )
+            debug_print('Spun once... ' )
             all_found = True 
             for theme in themes:
                 if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
@@ -739,21 +837,28 @@ class RsTestBaseClass():
 
     def spin_for_time(self,wait_time):
         start = time.time()
-        print('Waiting for topic... ' )
+        print('Waiting for time... ' )
         flag = False
-        while time.time() - start < wait_time:
-            rclpy.spin_once(self.node)
-            print('Spun once... ' )
+        while (time.time() - start) < wait_time:
+            print('Spun for time once... ' )
+            rclpy.spin_once(self.node, timeout_sec=wait_time)
  
-    def run_test(self, themes):
+    def run_test(self, themes, initial_wait_time=0.0, timeout=5.0):
         try:
             for theme in themes:
                 store_raw_data = False
                 if 'store_raw_data' in theme:
                     store_raw_data = theme['store_raw_data']
-                self.create_subscription(theme['msg_type'], theme['topic'] , qos.qos_profile_sensor_data,store_raw_data)
+                if 'expected_fps_in_hz' in theme:
+                    measure_hz = True
+                else:
+                    measure_hz = False
+
+                self.create_subscription(theme['msg_type'], theme['topic'] , qos.qos_profile_sensor_data,store_raw_data, measure_hz)
                 print('subscription created for ' + theme['topic'])
-            self.flag = self.spin_for_data(themes)                
+            if initial_wait_time != 0.0: 
+                self.spin_for_time(initial_wait_time)
+            self.flag = self.spin_for_data(themes, timeout)                
         except  Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -773,11 +878,25 @@ class RsTestBaseClass():
     '''
     def process_data(self, themes):
         for theme in themes:
+            if theme['expected_data_chunks'] == 0:
+                assert self.node.get_num_chunks(theme['topic']) == 0, "Received data, when not expected for topic:" + theme['topic']
+                continue #no more checks needed if data is not available
+
+            if 'expected_fps_in_hz' in theme:
+                hz = self.node._ros_topic_hz.get_hz(theme['topic'])
+                if hz == None:
+                    print("Couldn't measure fps, no of data frames expected are enough for the measurement?")
+                else:
+                    speed= 1e9*hz[0]
+                    msg = "FPS in Hz of topic " + theme['topic'] + " is " + str(speed) + ". Expected is " + str(theme['expected_fps_in_hz'])
+                    print(msg)
+                    if (abs(theme['expected_fps_in_hz']-speed) > theme['expected_fps_in_hz']/10):
+                        assert False,msg
             data = self.node.pop_first_chunk(theme['topic'])
             if 'width' in theme:
-                assert theme['width'] == data['shape'][0][1]  # (get from numpy image the width)
+                assert theme['width'] == data['shape'][0][1], "Width not matched. Expected:" +  str(theme['width']) + " & got: " + str(data['shape'][0][1]) # (get from numpy image the width)
             if 'height' in theme:
-                assert theme['height'] == data['shape'][0][0]  # (get from numpy image the height)
+                assert theme['height'] == data['shape'][0][0], "Height not matched. Expected:" +  str(theme['height']) + " & got: " + str(data['shape'][0][0])  # (get from numpy image the height)
             if 'data' not in theme:
                 print('No data to compare for ' + theme['topic'])
                 #print(data)
