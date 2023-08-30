@@ -1091,7 +1091,9 @@ void BaseRealSenseNode::publishRGBD(
         auto depth_camera_info = _camera_info.at(DEPTH);
         msg->depth_camera_info = depth_camera_info;
 
+        realsense2_camera_msgs::msg::RGBD *msg_address = msg.get();
         _rgbd_publisher->publish(std::move(msg));
+        ROS_DEBUG_STREAM("rgbd stream published, message address: " << std::hex << msg_address);
     }
 }
 
