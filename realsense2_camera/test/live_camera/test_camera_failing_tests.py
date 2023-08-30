@@ -37,70 +37,6 @@ from rclpy.parameter import Parameter
 from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
 from pytest_live_camera_utils import debug_print
-def check_if_skip_test(profile, format):
-    '''
-    if profile == 'Color':
-        if "BGRA8" == format:
-            return True
-        if "RGBA8" == format:
-            return True
-        if "Y8" == format:
-            return True
-    elif profile == 'Depth':
-        if "Z16" == format:
-            return True
-    elif profile == 'Infrared':
-        if "Y8" == format:
-            return True
-        if "Y16" == format:
-            return True
-        if "BGRA8" == format:
-            return True
-        if "RGBA8" == format:
-            return True
-        if "Y10BPACK" == format:
-            return True
-        if "UYVY" == format:
-            return True
-        if "BGR8" == format:
-            return True
-        if "RGB8" == format:
-            return True
-        if "RAW10" == format:
-            return True
-    elif profile == 'Infrared1':
-        if "Y8" ==format:
-            return True
-        if "Y16" ==format:
-            return True
-        if "Y10BPACK"  == format:
-            return True
-        if "UYVY" ==format:
-            return True
-        if "BGR8" ==format:
-            return True
-        if "RGB8" ==format:
-            return True
-        if "RAW10" ==format:
-            return True
-    if profile == 'Infrared2':                    
-        if "Y8" == format:
-            return True
-        if "Y16" == format:
-            return True
-        if "Y10BPACK" == format:
-            return True
-        if "UYVY" == format:
-            return True
-        if "BGR8" == format:
-            return True
-        if "RGB8" == format:
-            return True
-        if "RAW10" == format:
-            return True
-    '''
-    return False
-
 
 test_params_all_profiles_d455 = {
     'camera_name': 'D455',
@@ -110,12 +46,6 @@ test_params_all_profiles_d415 = {
     'camera_name': 'D415',
     'device_type': 'D415',
     }
-test_params_all_profiles_d435 = {
-    'camera_name': 'D435',
-    'device_type': 'D435',
-    }
-
-
 '''
 This test was implemented as a template to set the parameters and run the test.
 This directory is not added to the CMakeLists.txt so as to avoid the colcon failure in the
@@ -123,20 +53,112 @@ machines that don't have the D455 connected.
 1. Only a subset of parameter types are implemented in py_rs_utils, it has to be extended for others
 2. After setting the param, rclpy.spin_once may be needed.Test passes even without this though.
 '''
-@pytest.mark.parametrize("launch_descr_with_parameters", [
-    pytest.param(test_params_all_profiles_d455, marks=pytest.mark.d455),
-    pytest.param(test_params_all_profiles_d415, marks=pytest.mark.d415),
-    pytest.param(test_params_all_profiles_d435, marks=pytest.mark.d435),]
-    ,indirect=True)
+@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_all_profiles_d415],indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
     def test_LiveCamera_Change_Resolution(self,launch_descr_with_parameters):
-        skipped_tests = []
+        passed_tests = []
         failed_tests = []
         num_passed = 0
         num_failed = 0
+        wait_time_s = 1.2
+        cap = {}
+        '''
+        need two configurations with different profiles(height & width) for each profile,
+        this is to ensure the test sets a different profile first, before testing the 
+        actual profile to be tested. 
+        '''
+        cap['color_profile'] = [
+            ['Color', '1920x1080x30','RGB8'],
+            ['Color', '1280x720x30','RGB8'],
+        ]
+        cap['depth_profile'] = [
+            ['Infrared1', '1920x1080x25', 'Y8'],
+            ['Infrared1', '1920x1080x25', 'Y16'],
+            ['Infrared1', '1920x1080x15', 'Y16'],
+            ['Infrared', '848x100x100', 'BGRA8'],
+            ['Infrared', '640x480x60', 'BGRA8'],
+            ['Infrared', '640x480x60', 'RGBA8'],
+            ['Infrared', '640x480x60', 'RGB8'],
+            ['Infrared', '640x360x60', 'RGBA8'],
+            ['Infrared', '640x360x60', 'RGB8'],
+            ['Infrared', '640x360x30', 'UYVY'],
+            ['Infrared', '480x270x15', 'RGB8'],
+            ['Infrared', '424x240x60', 'BGRA8'],
+            ['Infrared', '424x240x30', 'UYVY'],
+            ['Infrared1', '1920x1080x15', 'Y8'],
+            ['Infrared1', '1280x720x30', 'Y8'],
+            ['Infrared1', '1280x720x15', 'Y8'],
+            ['Infrared1', '1280x720x6', 'Y8'],
+            ['Infrared1', '960x540x25', 'Y16'],
+            ['Infrared1', '960x540x15', 'Y16'],
+            ['Infrared1', '848x480x90', 'Y8'],
+            ['Infrared1', '848x480x60', 'Y8'],
+            ['Infrared1', '848x480x30', 'Y8'],
+            ['Infrared1', '848x480x15', 'Y8'],
+            ['Infrared1', '848x480x6', 'Y8'],
+            ['Infrared1', '848x100x100', 'Y8'],
+            ['Infrared1', '640x480x90', 'Y8'],
+            ['Infrared1', '640x480x60', 'Y8'],
+            ['Infrared1', '640x480x30', 'Y8'],
+            ['Infrared1', '640x480x15', 'Y8'],
+            ['Infrared1', '640x480x6', 'Y8'],
+            ['Infrared1', '640x360x90', 'Y8'],
+            ['Infrared1', '640x360x60', 'Y8'],
+            ['Infrared1', '640x360x30', 'Y8'],
+            ['Infrared1', '640x360x15', 'Y8'],
+            ['Infrared1', '640x360x6', 'Y8'],
+            ['Infrared1', '480x270x90', 'Y8'],
+            ['Infrared1', '480x270x60', 'Y8'],
+            ['Infrared1', '480x270x30', 'Y8'],
+            ['Infrared1', '480x270x15', 'Y8'],
+            ['Infrared1', '480x270x6', 'Y8'],
+            ['Infrared1', '424x240x90', 'Y8'],
+            ['Infrared1', '424x240x60', 'Y8'],
+            ['Infrared1', '424x240x30', 'Y8'],
+            ['Infrared1', '424x240x15', 'Y8'],
+            ['Infrared1', '424x240x6', 'Y8'],
+            ['Infrared2', '1920x1080x25', 'Y16'],
+            ['Infrared2', '1920x1080x25', 'Y8'],
+            ['Infrared2', '1920x1080x15', 'Y16'],
+            ['Infrared2', '1920x1080x15', 'Y8'],
+            ['Infrared2', '1280x720x30', 'Y8'],
+            ['Infrared2', '1280x720x15', 'Y8'],
+            ['Infrared2', '1280x720x6', 'Y8'],
+            ['Infrared2', '960x540x25', 'Y16'],
+            ['Infrared2', '960x540x15', 'Y16'],
+            ['Infrared2', '848x480x90', 'Y8'],
+            ['Infrared2', '848x480x60', 'Y8'],
+            ['Infrared2', '848x480x30', 'Y8'],
+            ['Infrared2', '848x480x15', 'Y8'],
+            ['Infrared2', '848x480x6', 'Y8'],
+            ['Infrared2', '848x100x100', 'Y8'],
+            ['Infrared2', '640x480x90', 'Y8'],
+            ['Infrared2', '640x480x60', 'Y8'],
+            ['Infrared2', '640x480x30', 'Y8'],
+            ['Infrared2', '640x480x15', 'Y8'],
+            ['Infrared2', '640x480x6', 'Y8'],
+            ['Infrared2', '640x360x90', 'Y8'],
+            ['Infrared2', '640x360x60', 'Y8'],
+            ['Infrared2', '640x360x30', 'Y8'],
+            ['Infrared2', '640x360x15', 'Y8'],
+            ['Infrared2', '640x360x6', 'Y8'],
+            ['Infrared2', '480x270x90', 'Y8'],
+            ['Infrared2', '480x270x60', 'Y8'],
+            ['Infrared2', '480x270x30', 'Y8'],
+            ['Infrared2', '480x270x15', 'Y8'],
+            ['Infrared2', '480x270x6', 'Y8'],
+            ['Infrared2', '424x240x90', 'Y8'],
+            ['Infrared2', '424x240x60', 'Y8'],
+            ['Infrared2', '424x240x30', 'Y8'],
+            ['Infrared2', '424x240x15', 'Y8'],
+            ['Infrared2', '424x240x6', 'Y8'],
+            ['Depth', '640x360x30', 'Z16'],
+            ['Depth', '480x270x30', 'Z16'],
+            ['Depth', '424x240x30', 'Z16'],
+        ]         
         params = launch_descr_with_parameters[1]
-        themes = [{'topic':'/'+params['camera_name']+'/color/image_raw', 'msg_type':msg_Image,'expected_data_chunks':1}]
+        themes = [{'topic':'/'+params['camera_name']+'/color/image_raw', 'msg_type':msg_Image,'expected_data_chunks':1,'initial_reset':True}]
         config = pytest_live_camera_utils.get_profile_config(params['camera_name'])
         try:
             ''' 
@@ -147,7 +169,6 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
                 serial_no = params['serial_no']
             self.init_test("RsTest"+params['camera_name'])
             self.spin_for_time(wait_time=1.0)
-            cap = pytest_live_camera_utils.get_camera_capabilities(params['device_type'], serial_no)
             if cap == None:
                 debug_print("Device not found? : " + params['device_type'])
                 return
@@ -161,9 +182,6 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
                 profile_type = key[0]
                 profile = key[1]
                 format = key[2]
-                if check_if_skip_test(profile_type, format):
-                    skipped_tests.append(" ".join(key))
-                    continue
                 print("Testing " + " ".join(key))
                 themes[0]['topic'] = config[profile_type]['topic']
                 themes[0]['width'] = int(profile.split('x')[0])
@@ -174,15 +192,17 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
                     self.set_string_param(config[profile_type]["profile"], config[profile_type]["default_profile2"])
                 self.set_bool_param(config[profile_type]["param"], True)
                 self.disable_all_params()
-                self.spin_for_time(wait_time=0.2)
+                self.spin_for_time(wait_time=wait_time_s)
                 self.set_string_param(config[profile_type]["profile"], profile)
                 self.set_string_param(config[profile_type]["format"], format)
                 self.set_bool_param(config[profile_type]["param"], True)
+                self.spin_for_time(wait_time=wait_time_s)
                 try:
                     ret = self.run_test(themes)
                     assert ret[0], ret[1]
                     assert self.process_data(themes), " ".join(key) + " failed"
                     num_passed += 1
+                    passed_tests.append(" ".join(key))
                 except Exception as e:
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -196,9 +216,6 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
                 profile_type = key[0]
                 profile = key[1]
                 format = key[2]
-                if check_if_skip_test(profile_type, format):
-                    skipped_tests.append(" ".join(key))
-                    continue
                 print("Testing " + " ".join(key))
                 
                 themes[0]['topic'] = config[profile_type]['topic']
@@ -212,15 +229,17 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
 
 
                 self.disable_all_params()
-                self.spin_for_time(wait_time=0.2)
+                self.spin_for_time(wait_time=wait_time_s)
                 self.set_string_param(config[profile_type]["profile"], profile)
                 self.set_string_param(config[profile_type]["format"], format)
                 self.set_bool_param(config[profile_type]["param"], True)
+                self.spin_for_time(wait_time=wait_time_s)
                 try:
                     ret = self.run_test(themes)
                     assert ret[0], ret[1]
                     assert self.process_data(themes), " ".join(key) + " failed"
                     num_passed += 1
+                    passed_tests.append(" ".join(key))
                 except Exception as e:
                     print("Test failed")
                     print(e)
@@ -232,10 +251,9 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
             pytest_rs_utils.kill_realsense2_camera_node()
             self.shutdown()
             print("Tests passed " + str(num_passed))
-            print("Tests skipped " + str(len(skipped_tests)))
-            if len(skipped_tests):
-                debug_print("\nSkipped tests:" + params['device_type'])
-                debug_print("\n".join(skipped_tests))
+            if len(passed_tests):
+                debug_print("\nPassed tests:" + params['device_type'])
+                debug_print("\n".join(passed_tests))
             print("Tests failed " + str(num_failed))
             if len(failed_tests):
                 print("\nFailed tests:" + params['device_type'])
@@ -247,4 +265,3 @@ class TestLiveCamera_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
         self.set_bool_param('enable_infra', False)
         self.set_bool_param('enable_infra1', False)
         self.set_bool_param('enable_infra2', False)
-

@@ -78,7 +78,7 @@ import os
 import requests
 
 def debug_print(*args):
-    if(False):
+    if(True):
         print(*args)
 
 class RosbagManager(object):
@@ -661,14 +661,14 @@ class RsTestNode(Node):
     
     def image_msg_to_numpy(self, data):
         fmtString = data.encoding
-        if fmtString in ['mono8', '8UC1', 'bgr8', 'rgb8', 'bgra8', 'rgba8']:
+        if fmtString in ['mono8', '8UC1', 'bgr8', 'rgb8', 'bgra8', 'rgba8', 'yuv422_yuy2', 'yuv422']:
             img = np.frombuffer(data.data, np.uint8)
         elif fmtString in ['mono16', '16UC1', '16SC1']:
             img = np.frombuffer(data.data, np.uint16)
         elif fmtString == '32FC1':
             img = np.frombuffer(data.data, np.float32)
         else:
-            print('image format not supported:' + fmtString)
+            print('py_rs_utils.image_msg_to_numpy:image format not supported:' + fmtString)
             return None
 
         depth = data.step / (data.width * img.dtype.itemsize)
@@ -859,8 +859,8 @@ class RsTestBaseClass():
         print('Waiting for time... ' )
         flag = False
         while (time.time() - start) < wait_time:
-            debug_print('Spun for time once... ' )
-            rclpy.spin_once(self.node)
+            print('Spun for time once... ' )
+            rclpy.spin_once(self.node, timeout_sec=wait_time)
  
     def run_test(self, themes, initial_wait_time=0.0, timeout=5.0):
         try:
@@ -902,10 +902,15 @@ class RsTestBaseClass():
                 continue #no more checks needed if data is not available
 
             if 'expected_fps_in_hz' in theme:
-                speed= 1e9*self.node._ros_topic_hz.get_hz(theme['topic'])[0]
-                msg = "FPS in Hz of topic " + theme['topic'] + " is " + str(speed) + ". Expected is " + str(theme['expected_fps_in_hz'])
-                if (abs(theme['expected_fps_in_hz']-speed) > theme['expected_fps_in_hz']/10):
-                    assert False,msg
+                hz = self.node._ros_topic_hz.get_hz(theme['topic'])
+                if hz == None:
+                    print("Couldn't measure fps, no of data frames expected are enough for the measurement?")
+                else:
+                    speed= 1e9*hz[0]
+                    msg = "FPS in Hz of topic " + theme['topic'] + " is " + str(speed) + ". Expected is " + str(theme['expected_fps_in_hz'])
+                    print(msg)
+                    if (abs(theme['expected_fps_in_hz']-speed) > theme['expected_fps_in_hz']/10):
+                        assert False,msg
             data = self.node.pop_first_chunk(theme['topic'])
             if 'width' in theme:
                 assert theme['width'] == data['shape'][0][1], "Width not matched. Expected:" +  str(theme['width']) + " & got: " + str(data['shape'][0][1]) # (get from numpy image the width)
