@@ -95,7 +95,7 @@ test_params_imu_topics = {#"rosbag_filename":get_rosbag_file_path("outdoors_1col
     'enable_accel':True,
     'enable_gyro':True,
     'unite_imu_method':1,
-    'delay_ms':3000, #delay the start
+    #'delay_ms':3000, #delay the start
     }
 @pytest.mark.rosbag
 @pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_imu_topics],indirect=True)
