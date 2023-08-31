@@ -819,9 +819,12 @@ class RsTestBaseClass():
         '''
         print('Waiting for topic... ' )
         flag = False
+        data_not_expected = [i for i in themes if (i["expected_data_chunks"]) == 0]
         while (time.time() - start) < timeout:
             rclpy.spin_once(self.node, timeout_sec=1)
             debug_print('Spun once... ' )
+            if data_not_expected == True:
+                continue
             all_found = True 
             for theme in themes:
                 if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
@@ -831,8 +834,9 @@ class RsTestBaseClass():
                 flag =True
                 break
         else:
-            print("Timed out waiting for", timeout, "seconds" )
-            return False, "run_test timedout"
+            if data_not_expected == False:
+                print("Timed out waiting for", timeout, "seconds" )
+                return False, "run_test timedout"
         return flag,""
 
     def spin_for_time(self,wait_time):
