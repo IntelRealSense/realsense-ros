@@ -43,8 +43,8 @@ from pytest_live_camera_utils import debug_print
 test_params_all_profiles_d455 = {
     'camera_name': 'D455',
     'device_type': 'D455',
-    'enable_accel':True,
-    'enable_gyro':True,
+    'enable_accel':"True",
+    'enable_gyro':"True",
     'unite_imu_method':1,
     }
 
@@ -64,62 +64,53 @@ class TestLiveCamera_TestMotionSensor(pytest_rs_utils.RsTestBaseClass):
         if params['unite_imu_method'] == '0':
             themes[IMU_TOPIC]['expected_data_chunks'] = 0
         try:
-            ''' 
-            initialize, run and check the data 
-            '''
-            msg = "Test with the default params "
+            #initialize 
             self.init_test("RsTest"+params['camera_name'])
             self.create_param_ifs(get_node_heirarchy(params))
+
+
+            #run with default params and check the data
+            msg = "Test with the default params "
             print(msg)
-            ret = self.run_test(themes)
+            ret = self.run_test(themes, timeout=50)
             assert ret[0], msg + str(ret[1])
             assert self.process_data(themes), msg + " failed"
 
-            
             msg = "Test with the accel false "
             self.set_bool_param('enable_accel', False)
             self.set_bool_param('enable_gyro', True)
-            '''
-            This step fails if the next line is commented
-            '''
-            self.set_integer_param('unite_imu_method', 0) #this shouldn't matter because the unite_imu_method cannot be changed
             themes[ACCEL_TOPIC]['expected_data_chunks'] = 0
+            #uncomment once RSDEV-550 is closed
+            #themes[IMU_TOPIC]['expected_data_chunks'] = 0
             print(msg)
             ret = self.run_test(themes)
             assert ret[0], msg + str(ret[1])
             assert self.process_data(themes), msg + " failed"
-            '''
-            Test fails
-            '''
 
             msg =  "Test with the gyro false "
             self.set_bool_param('enable_accel', True)
             self.set_bool_param('enable_gyro', False)
-            self.set_integer_param('unite_imu_method', 0) #this shouldn't matter because the unite_imu_method cannot be changed
-            themes[IMU_TOPIC]['expected_data_chunks'] = 1
+            themes[IMU_TOPIC]['expected_data_chunks'] = 0
             themes[ACCEL_TOPIC]['expected_data_chunks'] = 1
             themes[GYRO_TOPIC]['expected_data_chunks'] = 0
             print(msg)
+            self.spin_for_time(wait_time=1.0)
             ret = self.run_test(themes)
             assert ret[0], msg + str(ret[1])
             assert self.process_data(themes), msg + " failed"
 
-            '''
-            Test fails, both gyro and accel data is available, not imu 
-            '''
             msg = "Test with both gyro and accel false "
             self.set_bool_param('enable_accel', False)
             self.set_bool_param('enable_gyro', False)
-            self.set_integer_param('unite_imu_method', 1) #this shouldn't matter because the unite_imu_method cannot be changed
-
+            self.set_integer_param('unite_imu_method', 1)
+            self.spin_for_time(wait_time=1.0)
             themes[ACCEL_TOPIC]['expected_data_chunks'] = 0
             themes[GYRO_TOPIC]['expected_data_chunks'] = 0
-            themes[IMU_TOPIC]['expected_data_chunks'] = 1  #Seems that imu data is available even if gyro and accel is disabled
+            themes[IMU_TOPIC]['expected_data_chunks'] = 0
             print(msg)
-            ret = self.run_test(themes, initial_wait_time=1.0) #wait_time added as test doesn't have to wait for any data
+            ret = self.run_test(themes, initial_wait_time=1.0) 
             assert ret[0], msg + " failed"
             assert self.process_data(themes), msg +" failed"
-
         finally:
             #this step is important because the test will fail next time
             pytest_rs_utils.kill_realsense2_camera_node()
