@@ -100,12 +100,10 @@ class TestDepthPointsCloud1(pytest_rs_utils.RsTestBaseClass):
 
 
 test_params_static_tf_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
-    'camera_name': 'Static_tf_1',
+    'camera_name': 'Static_tf1',
     'color_width': '0',
     'color_height': '0',
-    'depth_width': '0',
-    'depth_height': '0',
-    'infra_width': '0',
+    "static_tf":True,
     'infra_height': '0',
     'enable_infra1':'true', 
     'enable_infra2':'true'
@@ -119,43 +117,38 @@ the command used to run is "python3 realsense2_camera/scripts/rs2_test.py static
 @pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
 class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
     def test_static_tf_1(self,delayed_launch_descr_with_parameters):
-        params = delayed_launch_descr_with_parameters[1]
-        self.rosbag = params["rosbag_filename"]
-        data = {('camera_link', 'camera_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702]), 
-                                                          ('camera_link', 'camera_depth_frame'): ([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]), 
-                                                          ('camera_link', 'camera_infra1_frame'): ([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]), 
-                                                          ('camera_depth_frame', 'camera_infra1_frame'): ([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]), 
-                                                          ('camera_depth_frame', 'camera_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702]), 
-                                                          ('camera_infra1_frame', 'camera_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702])}
+        self.params = delayed_launch_descr_with_parameters[1]
+        self.rosbag = self.params["rosbag_filename"]
         themes = [
-        {'topic':get_node_heirarchy(params)+'/color/image_raw',
+        {'topic':get_node_heirarchy(self.params)+'/color/image_raw',
          'msg_type':msg_Image,
          'expected_data_chunks':1,
-         'data':data,
+         'static_tf':True,
         }
         ]
         try:
             ''' 
             initialize, run and check the data 
             '''
-            self.init_test("RsTest"+params['camera_name'])
+            self.init_test("RsTest"+self.params['camera_name'])
             ret = self.run_test(themes)
             assert ret[0], ret[1]
             assert self.process_data(themes)
         finally:
             self.shutdown()
     def process_data(self, themes):
-        #print ('Gathering static transforms')
-        frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame', 'camera_fisheye_frame', 'camera_pose']
+        expected_data = {(self.params['camera_name']+'_link', self.params['camera_name']+'_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702]), 
+                                                          (self.params['camera_name']+'_link', self.params['camera_name']+'_depth_frame'): ([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]), 
+                                                          (self.params['camera_name']+'_link', self.params['camera_name']+'_infra1_frame'): ([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]), 
+                                                          (self.params['camera_name']+'_depth_frame', self.params['camera_name']+'_infra1_frame'): ([0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]), 
+                                                          (self.params['camera_name']+'_depth_frame', self.params['camera_name']+'_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702]), 
+                                                          (self.params['camera_name']+'_infra1_frame', self.params['camera_name']+'_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702])}
+        frame_ids = [self.params['camera_name']+'_link', self.params['camera_name']+'_depth_frame', self.params['camera_name']+'_infra1_frame', self.params['camera_name']+'_infra2_frame', self.params['camera_name']+'_color_frame', self.params['camera_name']+'_fisheye_frame', self.params['camera_name']+'_pose']
         coupled_frame_ids = [xx for xx in itertools.combinations(frame_ids, 2)]
-        res = {}
-        for couple in coupled_frame_ids:
-            from_id, to_id = couple
-            if (self.node.tfBuffer.can_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6))):
-                res[couple] = self.node.tfBuffer.lookup_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=1e6)).transform
-            else:
-                res[couple] = None
-        return pytest_rs_utils.staticTFTest(res, themes[0]["data"])
+        tfs_data = self.get_tfs(coupled_frame_ids)
+        ret = pytest_rs_utils.staticTFTest(tfs_data, expected_data)
+        assert ret[0], ret[1]
+        return ret[0]
 
 
 test_params_non_existing_rosbag = {"rosbag_filename":"non_existent.bag",
