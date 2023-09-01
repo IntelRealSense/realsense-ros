@@ -16,7 +16,10 @@ import sys
 import time
 from collections import deque
 import functools
+import itertools
+
 import pytest
+
 
 import numpy as np
 
@@ -620,8 +623,7 @@ class RsTestNode(Node):
         self.frame_counter[topic] = 0
         self._ros_topic_hz.restart_topic(topic)
 
-
-    def create_subscription(self, msg_type, topic , data_type, store_raw_data, measure_hz):
+    def create_subscription(self, msg_type, topic , data_type, store_raw_data, measure_hz, static_tf):
         self.reset_data(topic)
         super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
         #hz measurements are not working
@@ -633,6 +635,15 @@ class RsTestNode(Node):
         if self.tfBuffer == None:
             self.tfBuffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, super())
+    def get_tfs(self, coupled_frame_ids):
+        res = dict()
+        for couple in coupled_frame_ids:
+            from_id, to_id = couple
+            if (self.tfBuffer.can_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6))):
+                res[couple] = self.tfBuffer.lookup_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=1e6)).transform
+            else:
+                res[couple] = None
+        return res
 
     def get_num_chunks(self,topic):
         return len(self.data[topic])
@@ -760,9 +771,9 @@ class RsTestBaseClass():
 
     def wait_for_node(self, node_name, timeout=8.0):
         self.node.wait_for_node(node_name, timeout)
-    def create_subscription(self, msg_type, topic, data_type, store_raw_data=False, measure_hz=False):
+    def create_subscription(self, msg_type, topic, data_type, store_raw_data=False, measure_hz=False, static_tf=False):
         if not topic in self.subscribed_topics:
-            self.node.create_subscription(msg_type, topic, data_type, store_raw_data, measure_hz)
+            self.node.create_subscription(msg_type, topic, data_type, store_raw_data, measure_hz, static_tf)
             self.subscribed_topics.append(topic)
         else:
             self.node.reset_data(topic)
@@ -770,7 +781,6 @@ class RsTestBaseClass():
    
 
     def create_param_ifs(self, camera_name):
-
         self.set_param_if = self.node.create_client(SetParameters, camera_name + '/set_parameters')
         self.get_param_if = self.node.create_client(GetParameters, camera_name + '/get_parameters')
         while not self.get_param_if.wait_for_service(timeout_sec=1.0):
@@ -849,6 +859,7 @@ class RsTestBaseClass():
  
     def run_test(self, themes, initial_wait_time=0.0, timeout=5.0):
         try:
+            static_tf_found = False
             for theme in themes:
                 store_raw_data = False
                 if 'store_raw_data' in theme:
@@ -857,12 +868,17 @@ class RsTestBaseClass():
                     measure_hz = True
                 else:
                     measure_hz = False
+                if 'static_tf' in theme:
+                    static_tf = True
+                    static_tf_found = True
+                else:
+                    static_tf = False
 
-                self.create_subscription(theme['msg_type'], theme['topic'] , qos.qos_profile_sensor_data,store_raw_data, measure_hz)
+                self.create_subscription(theme['msg_type'], theme['topic'] , qos.qos_profile_sensor_data,store_raw_data, measure_hz, static_tf)
                 print('subscription created for ' + theme['topic'])
             if initial_wait_time != 0.0: 
                 self.spin_for_time(initial_wait_time)
-            self.flag = self.spin_for_data(themes, timeout)                
+            self.flag = self.spin_for_data(themes, timeout)     
         except  Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -875,6 +891,8 @@ class RsTestBaseClass():
                 self.flag =False,e
             
         return self.flag 
+    def get_tfs(self, coupled_frame_ids):
+        return self.node.get_tfs(coupled_frame_ids)
     '''
     Please override and use your own process_data if the default check is not suitable.
     Please also store_raw_data parameter in the themes as True, if you want the
