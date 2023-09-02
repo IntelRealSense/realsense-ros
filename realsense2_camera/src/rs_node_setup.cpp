@@ -142,8 +142,7 @@ void BaseRealSenseNode::setAvailableSensors()
         const std::string module_name(rs2_to_ros(sensor.get_info(RS2_CAMERA_INFO_NAME)));
         std::unique_ptr<RosSensor> rosSensor;
         if (sensor.is<rs2::depth_sensor>() ||
-            sensor.is<rs2::color_sensor>() ||
-            sensor.is<rs2::fisheye_sensor>())
+            sensor.is<rs2::color_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as VideoSensor.");
             rosSensor = std::make_unique<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, _use_intra_process, _dev.is<playback>());
@@ -152,11 +151,6 @@ void BaseRealSenseNode::setAvailableSensors()
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as ImuSensor.");
             rosSensor = std::make_unique<RosSensor>(sensor, _parameters, imu_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, false, _dev.is<playback>());
-        }
-        else if (sensor.is<rs2::pose_sensor>())
-        {
-            ROS_DEBUG_STREAM("Set " << module_name << " as PoseSensor.");
-            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, multiple_message_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, false, _dev.is<playback>());
         }
         else
         {
@@ -225,6 +219,8 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             if (sensor.rs2::sensor::is<rs2::depth_sensor>())
                 rectified_image = true;
 
+            // adding "~/" to the topic name will add node namespace and node name to the topic
+            // see "Private Namespace Substitution Character" section on https://design.ros2.org/articles/topic_and_service_names.html
             image_raw << "~/" << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << "~/" << stream_name << "/camera_info";
 
@@ -309,6 +305,8 @@ void BaseRealSenseNode::startRGBDPublisherIfNeeded()
         {
             rmw_qos_profile_t qos = _use_intra_process ? qos_string_to_qos(DEFAULT_QOS) : qos_string_to_qos(IMAGE_QOS);
 
+            // adding "~/" to the topic name will add node namespace and node name to the topic
+            // see "Private Namespace Substitution Character" section on https://design.ros2.org/articles/topic_and_service_names.html
             _rgbd_publisher = _node.create_publisher<realsense2_camera_msgs::msg::RGBD>("~/rgbd",
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
         }
@@ -330,7 +328,7 @@ void BaseRealSenseNode::updateSensors()
             std::vector<stream_profile> wanted_profiles;
 
             bool is_profile_changed(sensor->getUpdatedProfiles(wanted_profiles));
-            bool is_video_sensor = (sensor->is<rs2::depth_sensor>() || sensor->is<rs2::color_sensor>() || sensor->is<rs2::fisheye_sensor>());
+            bool is_video_sensor = (sensor->is<rs2::depth_sensor>() || sensor->is<rs2::color_sensor>());
 
             // do all updates if profile has been changed, or if the align depth filter status has been changed
             // and we are on a video sensor. TODO: explore better options to monitor and update changes
@@ -396,6 +394,8 @@ void BaseRealSenseNode::updateSensors()
 
 void BaseRealSenseNode::publishServices()
 {
+    // adding "~/" to the service name will add node namespace and node name to the service
+    // see "Private Namespace Substitution Character" section on https://design.ros2.org/articles/topic_and_service_names.html
     _device_info_srv = _node.create_service<realsense2_camera_msgs::srv::DeviceInfo>(
             "~/device_info",
             [&](const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr req,

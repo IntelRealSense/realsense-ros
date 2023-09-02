@@ -32,7 +32,6 @@ aluminum peripherial evaluation case.
    publishing TF values with actual calibrated camera extrinsic values -->
   <xacro:property name="r430_cam_depth_to_infra1_offset" value="-0.025"/>
   <xacro:property name="r430_cam_depth_to_infra2_offset" value="0.025"/>
-  <xacro:property name="r430_cam_depth_to_fisheye_offset" value="0.042"/>
 
   <!-- The following values model the aluminum peripherial case for the
     R430 camera, with the camera joint represented by the actual 

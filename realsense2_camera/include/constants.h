@@ -31,7 +31,7 @@
 #define ROS_WARN(...) RCLCPP_WARN(_logger, __VA_ARGS__)
 #define ROS_ERROR(...) RCLCPP_ERROR(_logger, __VA_ARGS__)
 
-// Based on: https://docs.ros2.org/foxy/api/rclcpp/logging_8hpp.html
+// Based on: https://docs.ros2.org/latest/api/rclcpp/logging_8hpp.html
 #define ROS_DEBUG_STREAM(msg) RCLCPP_DEBUG_STREAM(_logger, msg)
 #define ROS_INFO_STREAM(msg) RCLCPP_INFO_STREAM(_logger, msg)
 #define ROS_WARN_STREAM(msg) RCLCPP_WARN_STREAM(_logger, msg)

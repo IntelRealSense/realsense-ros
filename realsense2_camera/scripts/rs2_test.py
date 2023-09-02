@@ -333,7 +333,7 @@ def run_tests(tests):
             listener_res = msg_retriever.wait_for_messages(themes)
             if 'static_tf' in [test['type'] for test in rec_tests]:
                 print ('Gathering static transforms')
-                frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame', 'camera_fisheye_frame', 'camera_pose']
+                frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame']
                 coupled_frame_ids = [xx for xx in itertools.combinations(frame_ids, 2)]
                 listener_res['static_tf'] = get_tfs(coupled_frame_ids)
 

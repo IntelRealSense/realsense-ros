@@ -22,7 +22,6 @@
 
 // Header files for disabling intra-process comms for static broadcaster.
 #include <rclcpp/publisher_options.hpp>
-
 #include <tf2_ros/qos.hpp>
 
 using namespace realsense2_camera;
@@ -171,7 +170,6 @@ void BaseRealSenseNode::initializeFormatsMaps()
     // where U is unsigned integer type, S is signed integer type, and F is float type.
     // For example, CV_8UC1 means a 8-bit single-channel array,
     // CV_32FC2 means a 2-channel (complex) floating-point array, and so on.
-
     _rs_format_to_cv_format[RS2_FORMAT_Y8] = CV_8UC1;
     _rs_format_to_cv_format[RS2_FORMAT_Y16] = CV_16UC1;
     _rs_format_to_cv_format[RS2_FORMAT_Z16] = CV_16UC1;
@@ -856,7 +854,6 @@ bool BaseRealSenseNode::fillROSImageMsgAndReturnStatus(
     const rclcpp::Time& t,
     sensor_msgs::msg::Image* img_msg_ptr)
 {
-
     if (cv_matrix_image.empty())
     {
         ROS_ERROR_STREAM("cv::Mat is empty. Ignoring this frame.");
@@ -870,7 +867,7 @@ bool BaseRealSenseNode::fillROSImageMsgAndReturnStatus(
     }
     // Convert the CV::Mat into a ROS image message (1 copy is done here)
     cv_bridge::CvImage(std_msgs::msg::Header(), _rs_format_to_ros_format[stream_format], cv_matrix_image).toImageMsg(*img_msg_ptr);
-  
+
     // Convert OpenCV Mat to ROS Image
     img_msg_ptr->header.frame_id = OPTICAL_FRAME_ID(stream);
     img_msg_ptr->header.stamp = t;
@@ -890,7 +887,6 @@ bool BaseRealSenseNode::fillCVMatImageAndReturnStatus(
 {
     auto& image = images[stream];
     auto stream_format = frame.get_profile().format();
-
 
     if (_rs_format_to_cv_format.find(stream_format) == _rs_format_to_cv_format.end())
     {
