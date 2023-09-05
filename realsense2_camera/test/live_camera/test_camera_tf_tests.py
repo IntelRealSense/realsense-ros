@@ -103,15 +103,7 @@ class TestCamera_TestTF_Static_change(pytest_rs_utils.RsTestBaseClass):
             self.create_param_ifs(get_node_heirarchy(self.params))
             ret = self.run_test(themes, timeout=10)
             assert ret[0], ret[1]
-            frame_ids = [self.params['camera_name']+'_link', 
-                self.params['camera_name']+'_depth_frame', 
-                self.params['camera_name']+'_infra1_frame', 
-                self.params['camera_name']+'_infra2_frame', 
-                self.params['camera_name']+'_color_frame']
-            if self.params['device_type'] == 'D455':
-                frame_ids.append(self.params['camera_name']+'_gyro_frame')
-                frame_ids.append(self.params['camera_name']+'_accel_frame')
-
+           
             ret = self.process_data(themes, False)
             assert ret[0], ret[1]
             assert self.set_bool_param('enable_infra1', True)
@@ -130,12 +122,20 @@ class TestCamera_TestTF_Static_change(pytest_rs_utils.RsTestBaseClass):
         if self.params['device_type'] == 'D455':
             frame_ids.append(self.params['camera_name']+'_gyro_frame')
             frame_ids.append(self.params['camera_name']+'_accel_frame')
-        if enable_infra1:
-            frame_ids.append(self.params['camera_name']+'_infra1_frame')
-
+        frame_ids.append(self.params['camera_name']+'_infra1_frame')
         data = self.node.pop_first_chunk('/tf_static')
-        ret = self.check_transform_data(data, frame_ids, True)
-        return ret
+        coupled_frame_ids = [xx for xx in itertools.combinations(frame_ids, 2)]
+        res = self.get_transform_data(data, coupled_frame_ids, is_static=True)
+        for couple in coupled_frame_ids:
+            if self.params['camera_name']+'_infra1_frame' in couple:
+                if enable_infra1 == True and res[couple] != None:
+                        continue
+                if enable_infra1 == False and res[couple] == None:
+                        continue
+                return False, str(couple) + ": tf_data not as expected"
+            if res[couple] == None:
+                return False, str(couple) + ": didn't get any tf data"
+        return True,""
 
 
 test_params_tf_d455 = {
