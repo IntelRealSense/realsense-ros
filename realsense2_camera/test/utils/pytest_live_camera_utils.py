@@ -177,6 +177,23 @@ def get_camera_capabilities(device_type, serial_no=None):
             return capability
     return None    
 
+def check_if_camera_connected(device_type, serial_no=None):
+    long_data = os.popen("rs-enumerate-devices -s").read().splitlines()
+    debug_print(serial_no)
+    index = 0
+    for index in range(len(long_data)):
+        name_line = long_data[index].split()
+        if name_line[0] != "Intel":
+            continue
+        if name_line[2] != device_type:
+            continue
+        if serial_no == None:
+            return True
+        if serial_no == name_line[3]:
+            return True
+
+    return False
+
 if __name__ == '__main__':
     device_type = 'D455'
     serial_no = None

@@ -81,7 +81,7 @@ import os
 import requests
 
 def debug_print(*args):
-    if(True):
+    if(False):
         print(*args)
 
 class RosbagManager(object):
@@ -623,7 +623,7 @@ class RsTestNode(Node):
         self.frame_counter[topic] = 0
         self._ros_topic_hz.restart_topic(topic)
 
-    def create_subscription(self, msg_type, topic , data_type, store_raw_data, measure_hz, static_tf):
+    def create_subscription(self, msg_type, topic , data_type, store_raw_data, measure_hz):
         self.reset_data(topic)
         super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
         #hz measurements are not working
@@ -632,7 +632,7 @@ class RsTestNode(Node):
             super().create_subscription(msg_class,topic,functools.partial(self._ros_topic_hz._callback_hz, topic=topic),data_type)
             self._ros_topic_hz.set_last_printed_tn(0, topic=topic)
 
-        if (static_tf == True) and (self.tfBuffer == None):
+        if self.tfBuffer == None:
             self.tfBuffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, super())
     def get_tfs(self, coupled_frame_ids):
@@ -771,9 +771,9 @@ class RsTestBaseClass():
 
     def wait_for_node(self, node_name, timeout=8.0):
         self.node.wait_for_node(node_name, timeout)
-    def create_subscription(self, msg_type, topic, data_type, store_raw_data=False, measure_hz=False, static_tf=False):
+    def create_subscription(self, msg_type, topic, data_type, store_raw_data=False, measure_hz=False):
         if not topic in self.subscribed_topics:
-            self.node.create_subscription(msg_type, topic, data_type, store_raw_data, measure_hz, static_tf)
+            self.node.create_subscription(msg_type, topic, data_type, store_raw_data, measure_hz)
             self.subscribed_topics.append(topic)
         else:
             self.node.reset_data(topic)
@@ -859,7 +859,6 @@ class RsTestBaseClass():
  
     def run_test(self, themes, initial_wait_time=0.0, timeout=5.0):
         try:
-            static_tf_found = False
             for theme in themes:
                 store_raw_data = False
                 if 'store_raw_data' in theme:
@@ -868,13 +867,10 @@ class RsTestBaseClass():
                     measure_hz = True
                 else:
                     measure_hz = False
-                if 'static_tf' in theme:
-                    static_tf = True
-                    static_tf_found = True
-                else:
-                    static_tf = False
-
-                self.create_subscription(theme['msg_type'], theme['topic'] , qos.qos_profile_sensor_data,store_raw_data, measure_hz, static_tf)
+                qos_type = qos.qos_profile_sensor_data
+                if 'qos' in theme:
+                    qos_type = theme['qos']
+                self.create_subscription(theme['msg_type'], theme['topic'] , qos_type,store_raw_data, measure_hz)
                 print('subscription created for ' + theme['topic'])
             if initial_wait_time != 0.0: 
                 self.spin_for_time(initial_wait_time)
@@ -893,6 +889,28 @@ class RsTestBaseClass():
         return self.flag 
     def get_tfs(self, coupled_frame_ids):
         return self.node.get_tfs(coupled_frame_ids)
+    
+
+    def check_transform_data(self, data, frame_ids, is_static=False):
+        coupled_frame_ids = [xx for xx in itertools.combinations(frame_ids, 2)]
+        tfBuffer = tf2_ros.Buffer()
+        for transform in data.transforms:
+            if is_static:
+                tfBuffer.set_transform_static(transform, "default_authority")
+            else:
+                tfBuffer.set_transform(transform, "default_authority")
+        res = dict()
+        for couple in coupled_frame_ids:
+            from_id, to_id = couple
+            if (tfBuffer.can_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6))):
+                res[couple] = tfBuffer.lookup_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=1e6)).transform
+            else:
+                res[couple] = None
+        for couple in coupled_frame_ids:
+            if res[couple] == None:
+                return False, str(couple) + ": didn't get any tf data"
+        return True,""
+    
     '''
     Please override and use your own process_data if the default check is not suitable.
     Please also store_raw_data parameter in the themes as True, if you want the

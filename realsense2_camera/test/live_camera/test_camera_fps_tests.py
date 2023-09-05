@@ -38,7 +38,7 @@ from rclpy.parameter import Parameter
 from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import SetParameters, GetParameters, ListParameters
 
-test_params_depth_avg_1 = {
+test_params_test_fps = {
     'camera_name': 'D455',
     'device_type': 'D455',
     }
@@ -47,7 +47,7 @@ The test was implemented to check the fps of Depth and Color frames. The RosTopi
 modified to make it work, see py_rs_utils for more details.
 To check the fps, a value 'expected_fps_in_hz' has to be added to the corresponding theme
 '''
-@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_depth_avg_1],indirect=True)
+@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_test_fps],indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestCamera_TestFPS(pytest_rs_utils.RsTestBaseClass):
     def test_camera_test_fps(self,launch_descr_with_parameters):
