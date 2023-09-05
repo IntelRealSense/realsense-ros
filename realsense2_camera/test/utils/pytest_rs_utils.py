@@ -891,8 +891,7 @@ class RsTestBaseClass():
         return self.node.get_tfs(coupled_frame_ids)
     
 
-    def check_transform_data(self, data, frame_ids, is_static=False):
-        coupled_frame_ids = [xx for xx in itertools.combinations(frame_ids, 2)]
+    def get_transform_data(self, data, coupled_frame_ids, is_static=False):
         tfBuffer = tf2_ros.Buffer()
         for transform in data.transforms:
             if is_static:
@@ -906,6 +905,10 @@ class RsTestBaseClass():
                 res[couple] = tfBuffer.lookup_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=1e6)).transform
             else:
                 res[couple] = None
+        return res
+    def check_transform_data(self, data, frame_ids, is_static=False):
+        coupled_frame_ids = [xx for xx in itertools.combinations(frame_ids, 2)]
+        res = self.get_transform_data(data, coupled_frame_ids, is_static)
         for couple in coupled_frame_ids:
             if res[couple] == None:
                 return False, str(couple) + ": didn't get any tf data"
