@@ -31,7 +31,7 @@ using namespace realsense2_camera;
 constexpr auto realsense_ros_camera_version = REALSENSE_ROS_EMBEDDED_VERSION_STR;
 
 RealSenseNodeFactory::RealSenseNodeFactory(const rclcpp::NodeOptions & node_options) :
-    Node("camera", "/", node_options),
+    Node("camera", "/camera", node_options),
     _logger(this->get_logger())
 {
   init();

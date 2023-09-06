@@ -27,6 +27,7 @@
   * [Installation](#installation)
   * [Usage](#usage)
      * [Starting the camera node](#start-camera-node)
+     * [Camera name and namespace](#camera-name-and-namespace)
      * [Parameters](#parameters)
      * [ROS2-vs-Optical Coordination Systems](#coordination)
      * [TF from coordinate A to coordinate B](#tfs)
@@ -183,6 +184,74 @@
 
 <hr>
 
+<h3 id="camera-name-and-namespace">
+  Camera Name And Camera Namespace
+</h3>
+
+### Usage
+User can set the camera name and camera namespace, to distinguish between cameras and platforms, which helps identifying the right nodes and topics to work with.
+
+### Example
+- If user have multiple cameras (might be of the same model) and multiple robots then user can choose to launch/run his nodes on this way.
+- For the first robot and first camera he will run/launch it with these parameters:
+  - camera_namespace:
+    - robot1
+  - camera_name
+    - D455_1
+  
+  - With ros2 launch (via command line or by editing these two parameters in the launch file):
+    
+  ```ros2 launch realsense2_camera rs_launch.py camera_namespace:=robot1 camera_name:=D455_1```
+    
+  - With ros2 run (using remapping mechanisim [Reference](https://docs.ros.org/en/foxy/How-To-Guides/Node-arguments.html)):
+    
+  ```ros2 run realsense2_camera realsense2_camera_node --ros-args -r __node:=D455_1 -r __ns:=robot1```
+
+  - Result
+  ```
+  > ros2 node list
+  /robot1/D455_1
+  
+  > ros2 topic list
+  /robot1/D455_1/color/camera_info
+  /robot1/D455_1/color/image_raw
+  /robot1/D455_1/color/metadata
+  /robot1/D455_1/depth/camera_info
+  /robot1/D455_1/depth/image_rect_raw
+  /robot1/D455_1/depth/metadata
+  /robot1/D455_1/extrinsics/depth_to_color
+  /robot1/D455_1/imu
+  
+  > ros2 service list
+  /robot1/D455_1/device_info
+  ```
+
+### Default behavior if non of these parameters are given:
+  - camera_namespace:=camera
+  - camera_name:=camera
+
+```
+> ros2 node list
+/camera/camera
+
+> ros2 topic list
+/camera/camera/color/camera_info
+/camera/camera/color/image_raw
+/camera/camera/color/metadata
+/camera/camera/depth/camera_info
+/camera/camera/depth/image_rect_raw
+/camera/camera/depth/metadata
+/camera/camera/extrinsics/depth_to_color
+/camera/camera/imu
+
+> ros2 service list
+/camera/camera/device_info
+```
+
+
+<hr>
+
+
 <h3 id="parameters">
   Parameters
 <h3>
@@ -268,7 +337,6 @@
   - On occasions the device was not closed properly and due to firmware issues needs to reset. 
   - If set to true, the device will reset prior to usage.
   - For example: `initial_reset:=true`
-- ***<stream_name>*_frame_id**, ***<stream_name>*_optical_frame_id**, **aligned_depth_to_*<stream_name>*_frame_id**: Specify the different frame_id for the different frames. Especially important when using multiple cameras.
 - **base_frame_id**: defines the frame_id all static transformations refers to.
 - **odom_frame_id**: defines the origin coordinate system in ROS convention (X-Forward, Y-Left, Z-Up). pose topic defines the pose relative to that system.
 
@@ -464,7 +532,7 @@ The following post processing filters are available:
     * pointcloud is of an unordered format by default. This can be changed by setting `pointcloud.ordered_pc` to true.
  - ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values.
   - The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.
-  - To view the effect on the infrared image for each sequence id use the `sequence_id_filter.sequence_id` parameter.
+  - To view the effect on the infrared image for each sequence id use the `filter_by_sequence_id.sequence_id` parameter.
   - To initialize these parameters in start time use the following parameters:
     - `depth_module.exposure.1`
     - `depth_module.gain.1`
