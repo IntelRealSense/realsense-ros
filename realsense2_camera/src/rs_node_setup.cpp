@@ -311,7 +311,10 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
     }
     if (_is_accel_enabled && _is_gyro_enabled && (_imu_sync_method > imu_sync_method::NONE))
     {
-        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
+        rmw_qos_profile_t qos = _use_intra_process ? qos_string_to_qos(DEFAULT_QOS) : qos_string_to_qos(HID_QOS);
+        
+        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("~/imu", 
+                                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos)));
     }
 
 }
