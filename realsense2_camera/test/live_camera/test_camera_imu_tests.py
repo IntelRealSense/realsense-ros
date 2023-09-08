@@ -80,8 +80,7 @@ class TestLiveCamera_TestMotionSensor(pytest_rs_utils.RsTestBaseClass):
             self.set_bool_param('enable_accel', False)
             self.set_bool_param('enable_gyro', True)
             themes[ACCEL_TOPIC]['expected_data_chunks'] = 0
-            #uncomment once RSDEV-550 is closed
-            #themes[IMU_TOPIC]['expected_data_chunks'] = 0
+            themes[IMU_TOPIC]['expected_data_chunks'] = 0
             print(msg)
             ret = self.run_test(themes)
             assert ret[0], msg + str(ret[1])
