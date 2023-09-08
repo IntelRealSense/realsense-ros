@@ -57,7 +57,6 @@ test_params_all_topics = {"rosbag_filename":get_rosbag_file_path("outdoors_1colo
 '''
 To test all topics published
 '''
-@pytest.mark.skip
 @pytest.mark.rosbag
 @pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_all_topics],indirect=True)
 @pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
