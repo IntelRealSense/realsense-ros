@@ -330,13 +330,8 @@ if(BUILD_TESTING)
       OUTPUT_VARIABLE RS_DEVICE_INFO)
   message(STATUS "rs_device_info:")
   message(STATUS "${RS_DEVICE_INFO}")
-  if(RS_DEVICE_INFO MATCHES "D455")
+  if((RS_DEVICE_INFO MATCHES "D455") OR (RS_DEVICE_INFO MATCHES "D415") OR (RS_DEVICE_INFO MATCHES "D435"))
     message(STATUS "D455 device found")
-    set(_pytest_live_folders
-      test/live_camera
-    )
-  elseif(RS_DEVICE_INFO MATCHES "D415")
-    message(STATUS "D415 device found")
     set(_pytest_live_folders
       test/live_camera
     )
