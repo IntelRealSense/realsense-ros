@@ -140,6 +140,7 @@ machines that don't have the D455 connected.
 1. Only a subset of parameter types are implemented in py_rs_utils, it has to be extended for others
 2. After setting the param, rclpy.spin_once may be needed.Test passes even without this though.
 '''
+@pytest.mark.skipif (os.getenv('RS_ROS_REGRESSION', "not found") == "not found",reason="Regression is not enabled, define RS_ROS_REGRESSION")
 @pytest.mark.parametrize("launch_descr_with_parameters", [
     pytest.param(test_params_all_profiles_d455, marks=pytest.mark.d455),
     pytest.param(test_params_all_profiles_d415, marks=pytest.mark.d415),

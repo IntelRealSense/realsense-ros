@@ -48,19 +48,6 @@ def get_default_profiles(cap, profile):
     debug_print(profile + " default profile2:" +  profile2)
     return profile1,profile2
 
-def get_camera_capabilities_short(device_type, serial_no=None):
-    short_data = os.popen("rs-enumerate-devices -s").read().splitlines()
-    print(serial_no)
-    for line in short_data:
-        print(line)
-        if device_type in line:
-            if serial_no is None or  serial_no == "" :
-                print(device_type+ " found in " + line)
-                return
-            if serial_no in line:
-                print(device_type + " with serial_no " + serial_no +" found in " + line)
-                return
-    print(device_type + " not found")
 
 
 device_info_string = "Device info:"
@@ -177,6 +164,20 @@ def get_camera_capabilities(device_type, serial_no=None):
             return capability
     return None    
 
+def get_camera_capabilities_short(device_type, serial_no=None):
+    short_data = os.popen("rs-enumerate-devices -s").read().splitlines()
+    print(serial_no)
+    for line in short_data:
+        print(line)
+        if device_type in line:
+            if serial_no is None or  serial_no == "" :
+                print(device_type+ " found in " + line)
+                return
+            if serial_no in line:
+                print(device_type + " with serial_no " + serial_no +" found in " + line)
+                return
+    print(device_type + " not found")
+
 def check_if_camera_connected(device_type, serial_no=None):
     long_data = os.popen("rs-enumerate-devices -s").read().splitlines()
     debug_print(serial_no)
@@ -201,7 +202,6 @@ if __name__ == '__main__':
         device_type = sys.argv[1]
     if len(sys.argv) > 2:
         serial_no = sys.argv[2]
-
     cap = get_camera_capabilities(device_type, serial_no)
     print("Capabilities:")
     print(cap)
