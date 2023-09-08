@@ -146,6 +146,17 @@ The below command finds the test with the name test_static_tf_1 in realsense2_ca
 
 	pytest-3 -s -k test_static_tf_1 realsense2_camera/test/
 
+### Marking tests as regression tests
+Some of the tests, especially the live tests with multiple runs, for e.g., all profile tests (test_camera_all_profile_tests.py) take a long time. Such tests are marked are skipped with condition so that "colcon test" skips it.
+If a user wants to add a test to this conditional skip, user can add by adding a marker as below.
+
+@pytest.mark.skipif (os.getenv('RS_ROS_REGRESSION', "not found") == "not found",reason="Regression is not enabled, define RS_ROS_REGRESSION")
+
+### Running skipped regression tests
+1. Set the environment variable RS_ROS_REGRESSION as 1 and run the "colcon test"
+2. pytest example: 
+	RS_ROS_REGRESSION=1 PYTHONPATH=$PYTHONPATH:$PWD/realsense2_camera/test/utils:$PWD/realsense2_camera//launch:$PWD/realsense2_camera//scripts pytest-3 -s realsense2_camera/test/live_camera/test_camera_aligned_tests.py -k test_camera_align_depth_color_all -m d415
+
 ## Points to be noted while writing pytests
 The tests that are in one file are normally run in parallel. So if there are multiple tests in one file, the system capacity can influence the test execution. It's recomended to have 3-4 tests in file, more than that can affect the test results due to delays.
 ### Passing/changing parameters
