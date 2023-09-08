@@ -27,6 +27,7 @@
   * [Installation](#installation)
   * [Usage](#usage)
      * [Starting the camera node](#start-camera-node)
+     * [Camera name and namespace](#camera-name-and-namespace)
      * [Parameters](#parameters)
      * [ROS2-vs-Optical Coordination Systems](#coordination)
      * [TF from coordinate A to coordinate B](#tfs)
@@ -183,6 +184,74 @@
 
 <hr>
 
+<h3 id="camera-name-and-namespace">
+  Camera Name And Camera Namespace
+</h3>
+
+### Usage
+User can set the camera name and camera namespace, to distinguish between cameras and platforms, which helps identifying the right nodes and topics to work with.
+
+### Example
+- If user have multiple cameras (might be of the same model) and multiple robots then user can choose to launch/run his nodes on this way.
+- For the first robot and first camera he will run/launch it with these parameters:
+  - camera_namespace:
+    - robot1
+  - camera_name
+    - D455_1
+  
+  - With ros2 launch (via command line or by editing these two parameters in the launch file):
+    
+  ```ros2 launch realsense2_camera rs_launch.py camera_namespace:=robot1 camera_name:=D455_1```
+    
+  - With ros2 run (using remapping mechanisim [Reference](https://docs.ros.org/en/foxy/How-To-Guides/Node-arguments.html)):
+    
+  ```ros2 run realsense2_camera realsense2_camera_node --ros-args -r __node:=D455_1 -r __ns:=robot1```
+
+  - Result
+  ```
+  > ros2 node list
+  /robot1/D455_1
+  
+  > ros2 topic list
+  /robot1/D455_1/color/camera_info
+  /robot1/D455_1/color/image_raw
+  /robot1/D455_1/color/metadata
+  /robot1/D455_1/depth/camera_info
+  /robot1/D455_1/depth/image_rect_raw
+  /robot1/D455_1/depth/metadata
+  /robot1/D455_1/extrinsics/depth_to_color
+  /robot1/D455_1/imu
+  
+  > ros2 service list
+  /robot1/D455_1/device_info
+  ```
+
+### Default behavior if non of these parameters are given:
+  - camera_namespace:=camera
+  - camera_name:=camera
+
+```
+> ros2 node list
+/camera/camera
+
+> ros2 topic list
+/camera/camera/color/camera_info
+/camera/camera/color/image_raw
+/camera/camera/color/metadata
+/camera/camera/depth/camera_info
+/camera/camera/depth/image_rect_raw
+/camera/camera/depth/metadata
+/camera/camera/extrinsics/depth_to_color
+/camera/camera/imu
+
+> ros2 service list
+/camera/camera/device_info
+```
+
+
+<hr>
+
+
 <h3 id="parameters">
   Parameters
 <h3>
@@ -235,6 +304,22 @@
   - This param also depends on **publish_tf** param
     - If **publish_tf:=false**, then no TFs will be published, even if **tf_publish_rate** is >0.0 Hz
     - If **publish_tf:=true** and **tf_publish_rate** set to >0.0 Hz, then dynamic TFs will be published at the specified rate
+- **unite_imu_method**:
+  - For the D400 cameras with built in IMU components, below 2 unrelated streams (each with it's own frequency) will be created:
+    - *gyro* - which shows angular velocity 
+    - *accel* - which shows linear acceleration. 
+  - Both streams will publish data to its corresponding topics:
+    - '/camera/camera/gyro/sample' & '/camera/camera/accel/sample'
+    - Though both topics are of same message type 'sensor_msgs::Imu', only their relevant fields are filled out.
+  - A new topic called **imu** will be created, when both *accel* and *gyro* streams are enabled and the param *unite_imu_method* set to > 0.
+    - Data from both accel and gyro are combined and published to this topic
+    - All the fields of the Imu message are filled out.
+    - It will be published at the rate of the gyro.
+  - `unite_imu_method` param supports below values:
+    - 0 -> **none**: no imu topic
+    - 1 -> **copy**: Every gyro message will be attached by the last accel message.
+    - 2 -> **linear_interpolation**: Every gyro message will be attached by an accel message which is interpolated to gyro's timestamp.
+  - Note: When the param *unite_imu_method* is dynamically updated, re-enable either gyro or accel stream for the change to take effect.
 
 #### Parameters that cannot be changed in runtime:
 - **serial_no**:
@@ -270,18 +355,6 @@
   - For example: `initial_reset:=true`
 - **base_frame_id**: defines the frame_id all static transformations refers to.
 - **odom_frame_id**: defines the origin coordinate system in ROS convention (X-Forward, Y-Left, Z-Up). pose topic defines the pose relative to that system.
-
-- **unite_imu_method**:
-  - D400 cameras have built in IMU components which produce 2 unrelated streams, each with it's own frequency: 
-    - *gyro* - which shows angular velocity 
-    - *accel* which shows linear acceleration. 
-  - By default, 2 corresponding topics are available, each with only the relevant fields of the message sensor_msgs::Imu are filled out.
-  - Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default *gyro* and *accel* topics.
-    - The *imu* topic is published at the rate of the gyro.
-    - All the fields of the Imu message under the *imu* topic are filled out. 
-  - `unite_imu_method` parameter supported values are [0-2] meaning:  [0 -> None, 1 -> Copy, 2 -> Linear_ interpolation] when:
-    - **linear_interpolation**: Every gyro message is attached by the an accel message interpolated to the gyro's timestamp.
-    - **copy**: Every gyro message is attached by the last accel message.
 - **clip_distance**:
   - Remove from the depth image all values above a given value (meters). Disable by giving negative value (default)
   - For example: `clip_distance:=1.5`
@@ -463,7 +536,7 @@ The following post processing filters are available:
     * pointcloud is of an unordered format by default. This can be changed by setting `pointcloud.ordered_pc` to true.
  - ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values.
   - The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.
-  - To view the effect on the infrared image for each sequence id use the `sequence_id_filter.sequence_id` parameter.
+  - To view the effect on the infrared image for each sequence id use the `filter_by_sequence_id.sequence_id` parameter.
   - To initialize these parameters in start time use the following parameters:
     - `depth_module.exposure.1`
     - `depth_module.gain.1`

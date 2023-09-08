@@ -27,16 +27,10 @@ void BaseRealSenseNode::setup()
     setAvailableSensors();
     SetBaseStream();
     setupFilters();
-    setupFiltersPublishers();
     setCallbackFunctions();
     monitoringProfileChanges();
     updateSensors();
     publishServices();
-}
-
-void BaseRealSenseNode::setupFiltersPublishers()
-{
-    _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("~/imu", 5));
 }
 
 void BaseRealSenseNode::monitoringProfileChanges()
@@ -190,6 +184,9 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
         }
         else if (profile.is<rs2::motion_stream_profile>())
         {
+            _is_accel_enabled = false;
+            _is_gyro_enabled = false;
+            _synced_imu_publisher.reset();
             _imu_publishers.erase(sip);
             _imu_info_publishers.erase(sip);
         }
@@ -225,6 +222,8 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             if (sensor.rs2::sensor::is<rs2::depth_sensor>())
                 rectified_image = true;
 
+            // adding "~/" to the topic name will add node namespace and node name to the topic
+            // see "Private Namespace Substitution Character" section on https://design.ros2.org/articles/topic_and_service_names.html
             image_raw << "~/" << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
             camera_info << "~/" << stream_name << "/camera_info";
 
@@ -270,6 +269,11 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
         }
         else if (profile.is<rs2::motion_stream_profile>())
         {
+            if(profile.stream_type() == RS2_STREAM_ACCEL)
+                _is_accel_enabled = true;
+            else if (profile.stream_type() == RS2_STREAM_GYRO)
+                _is_gyro_enabled = true;
+
             std::stringstream data_topic_name, info_topic_name;
             data_topic_name << "~/" << stream_name << "/sample";
             _imu_publishers[sip] = _node.create_publisher<sensor_msgs::msg::Imu>(data_topic_name.str(),
@@ -305,6 +309,14 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(extrinsics_qos), extrinsics_qos), std::move(options));
         }
     }
+    if (_is_accel_enabled && _is_gyro_enabled && (_imu_sync_method > imu_sync_method::NONE))
+    {
+        rmw_qos_profile_t qos = _use_intra_process ? qos_string_to_qos(DEFAULT_QOS) : qos_string_to_qos(HID_QOS);
+        
+        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("~/imu", 
+                                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos)));
+    }
+
 }
 
 void BaseRealSenseNode::startRGBDPublisherIfNeeded()
@@ -316,6 +328,8 @@ void BaseRealSenseNode::startRGBDPublisherIfNeeded()
         {
             rmw_qos_profile_t qos = _use_intra_process ? qos_string_to_qos(DEFAULT_QOS) : qos_string_to_qos(IMAGE_QOS);
 
+            // adding "~/" to the topic name will add node namespace and node name to the topic
+            // see "Private Namespace Substitution Character" section on https://design.ros2.org/articles/topic_and_service_names.html
             _rgbd_publisher = _node.create_publisher<realsense2_camera_msgs::msg::RGBD>("~/rgbd",
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
         }
@@ -403,6 +417,8 @@ void BaseRealSenseNode::updateSensors()
 
 void BaseRealSenseNode::publishServices()
 {
+    // adding "~/" to the service name will add node namespace and node name to the service
+    // see "Private Namespace Substitution Character" section on https://design.ros2.org/articles/topic_and_service_names.html
     _device_info_srv = _node.create_service<realsense2_camera_msgs::srv::DeviceInfo>(
             "~/device_info",
             [&](const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr req,

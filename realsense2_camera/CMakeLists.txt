@@ -272,6 +272,12 @@ install(DIRECTORY
     DESTINATION share/${PROJECT_NAME}
     )
 
+# Install example files
+install(DIRECTORY 
+    examples
+    DESTINATION share/${PROJECT_NAME}
+)
+
 # Test
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
