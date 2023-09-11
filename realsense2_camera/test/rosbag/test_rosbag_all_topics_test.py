@@ -44,15 +44,9 @@ from pytest_rs_utils import get_node_heirarchy
 
 test_params_all_topics = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'AllTopics',
-    'color_width': '0',
-    'color_height': '0',
-    'depth_width': '0',
-    'depth_height': '0',
-    'infra_width': '0',
-    'infra_height': '0',
     'enable_infra1':'true',
     'enable_infra2':'true',
-    'align_depth.enable':'true',
+    #'align_depth.enable':'true',
     }
 '''
 To test all topics published
