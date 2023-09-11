@@ -822,7 +822,6 @@ class RsTestBaseClass():
         return self.send_param(req)
 
     def spin_for_data(self,themes, timeout=5.0):
-        start = time.time()
         '''
         timeout value varies depending upon the system, it needs to be more if
         the access is over the network
@@ -830,6 +829,7 @@ class RsTestBaseClass():
         print('Waiting for topic... ' )
         flag = False
         data_not_expected = [i for i in themes if (i["expected_data_chunks"]) == 0]
+        start = time.time()
         while (time.time() - start) < timeout:
             rclpy.spin_once(self.node, timeout_sec=1)
             debug_print('Spun once... ' )
@@ -847,7 +847,9 @@ class RsTestBaseClass():
             if data_not_expected == False:
                 print("Timed out waiting for", timeout, "seconds" )
                 return False, "run_test timedout"
-        return flag,""
+        if flag:
+            return flag,""
+        return flag,"Unexpected error in spin_for_data"
 
     def spin_for_time(self,wait_time):
         start = time.time()
@@ -885,8 +887,8 @@ class RsTestBaseClass():
             else:
                 print(e)
                 self.flag =False,e
-            
         return self.flag 
+
     def get_tfs(self, coupled_frame_ids):
         return self.node.get_tfs(coupled_frame_ids)
     
