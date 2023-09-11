@@ -515,7 +515,7 @@ def get_rs_node_description(params):
         executable='realsense2_camera_node',
         parameters=[tmp_yaml.name],
         output='screen',
-        arguments=['--ros-args', '--log-level', "info"],
+        arguments=['--ros-args', '--log-level', "debug"],
         emulate_tty=True,
     )
 
