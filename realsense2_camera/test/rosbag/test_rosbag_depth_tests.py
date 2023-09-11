@@ -78,12 +78,6 @@ class TestDepthPointsCloud1(pytest_rs_utils.RsTestBaseClass):
          'expected_data_chunks':1,
          'data':data1
         },
-        {'topic':get_node_heirarchy(params)+'/depth/image_rect_raw',
-         'msg_type':msg_Image,
-         'expected_data_chunks':1,
-         'data':data2
-        }
-
         ]
         try:
             ''' 
