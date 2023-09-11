@@ -46,13 +46,18 @@ test_params_all_topics = {"rosbag_filename":get_rosbag_file_path("outdoors_1colo
     'camera_name': 'AllTopics',
     'enable_infra1':'true',
     'enable_infra2':'true',
-    'delay_ms':8000,
-    #'align_depth.enable':'true',
+    'delay_ms':1000,
+    'align_depth.enable':'true',
     }
 '''
 To test all topics published
+
+The test doesn't work in CI due to sync. The unlike the live camera, rosbag node publishes the extrinsics only once,
+not every time the subscription is created. The CI due to limited resource can start the ros node much earlier than 
+the testcase, hence missing the published data by the test 
 '''
 @pytest.mark.rosbag
+@pytest.mark.skipif (os.getenv('RS_ROS_REGRESSION', "not found") == "not found",reason="The test doesn't work in CI")
 @pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_all_topics],indirect=True)
 @pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
 class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
@@ -94,7 +99,7 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            ret = self.run_test(themes, timeout=25.0)
+            ret = self.run_test(themes, timeout=5.0)
             assert ret[0], ret[1]
             time.sleep(0.5)
             assert self.process_data(themes), "Data check failed, probably the rosbag file changed?"
