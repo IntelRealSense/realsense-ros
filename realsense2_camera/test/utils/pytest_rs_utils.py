@@ -676,7 +676,7 @@ class RsTestNode(Node):
     def rsCallback(self, topic, msg_type, store_raw_data):
         debug_print("RSCallback")
         def _rsCallback(data):
-            debug_print('Got the callback for ' + topic)
+            print('Got the callback for ' + topic)
             #print(data.header)
             self.flag = True
             if store_raw_data == True:
@@ -828,7 +828,11 @@ class RsTestBaseClass():
         '''
         print('Waiting for topic... ' )
         flag = False
-        data_not_expected = [i for i in themes if (i["expected_data_chunks"]) == 0]
+        data_not_expected1 = [i for i in themes if (i["expected_data_chunks"]) == 0]
+        if data_not_expected1 == []:
+            data_not_expected = False
+        else:
+            data_not_expected = True
         start = time.time()
         msg = ""
         while (time.time() - start) < timeout:
@@ -846,13 +850,11 @@ class RsTestBaseClass():
                 break
         else:
             if data_not_expected == False:
-                print("Timed out waiting for", timeout, "seconds" )
-                return False, "run_test timedout"
-        if flag ==False:
-            for theme in themes:
-                if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
-                    msg = "Data expected, but not received for: " + theme['topic']
-                    break
+                msg = "Timedout:  Data expected, but not received for: "
+                for theme in themes:
+                    if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
+                        msg += " " + theme['topic']
+                return False, msg
         return flag,msg
 
     def spin_for_time(self,wait_time):
