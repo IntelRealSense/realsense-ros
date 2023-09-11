@@ -52,7 +52,7 @@ test_params_all_topics = {"rosbag_filename":get_rosbag_file_path("outdoors_1colo
     'infra_height': '0',
     'enable_infra1':'true',
     'enable_infra2':'true',
-    #'align_depth.enable':'true',
+    'align_depth.enable':'true',
     }
 '''
 To test all topics published
@@ -99,7 +99,7 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test("RsTest"+params['camera_name'])
-            ret = self.run_test(themes)
+            ret = self.run_test(themes, timeout=25.0)
             assert ret[0], ret[1]
             time.sleep(0.5)
             assert self.process_data(themes), "Data check failed, probably the rosbag file changed?"
