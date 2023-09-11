@@ -27,16 +27,10 @@ void BaseRealSenseNode::setup()
     setAvailableSensors();
     SetBaseStream();
     setupFilters();
-    setupFiltersPublishers();
     setCallbackFunctions();
     monitoringProfileChanges();
     updateSensors();
     publishServices();
-}
-
-void BaseRealSenseNode::setupFiltersPublishers()
-{
-    _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("imu", 5));
 }
 
 void BaseRealSenseNode::monitoringProfileChanges()
@@ -108,12 +102,12 @@ void BaseRealSenseNode::setAvailableSensors()
     ROS_INFO_STREAM("Device Product ID: 0x" << pid);
 
     ROS_INFO_STREAM("Sync Mode: " << ((_sync_frames)?"On":"Off"));
-    
+
     std::function<void(rs2::frame)> frame_callback_function = [this](rs2::frame frame){
         bool is_filter(_filters.end() != find_if(_filters.begin(), _filters.end(), [](std::shared_ptr<NamedFilter> f){return (f->is_enabled()); }));
         if (_sync_frames || is_filter)
             this->_asyncer.invoke(frame);
-        else 
+        else
             frame_callback(frame);
     };
 
@@ -141,7 +135,7 @@ void BaseRealSenseNode::setAvailableSensors()
     {
         const std::string module_name(rs2_to_ros(sensor.get_info(RS2_CAMERA_INFO_NAME)));
         std::unique_ptr<RosSensor> rosSensor;
-        if (sensor.is<rs2::depth_sensor>() || 
+        if (sensor.is<rs2::depth_sensor>() ||
             sensor.is<rs2::color_sensor>() ||
             sensor.is<rs2::fisheye_sensor>())
         {
@@ -190,6 +184,9 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
         }
         else if (profile.is<rs2::motion_stream_profile>())
         {
+            _is_accel_enabled = false;
+            _is_gyro_enabled = false;
+            _synced_imu_publisher.reset();
             _imu_publishers.erase(sip);
             _imu_info_publishers.erase(sip);
         }
@@ -225,8 +222,10 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             if (sensor.rs2::sensor::is<rs2::depth_sensor>())
                 rectified_image = true;
 
-            image_raw << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
-            camera_info << stream_name << "/camera_info";
+            // adding "~/" to the topic name will add node namespace and node name to the topic
+            // see "Private Namespace Substitution Character" section on https://design.ros2.org/articles/topic_and_service_names.html
+            image_raw << "~/" << stream_name << "/image_" << ((rectified_image)?"rect_":"") << "raw";
+            camera_info << "~/" << stream_name << "/camera_info";
 
             // We can use 2 types of publishers:
             // Native RCL publisher that support intra-process zero-copy comunication
@@ -247,8 +246,8 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             if (_align_depth_filter->is_enabled() && (sip != DEPTH) && sip.second < 2)
             {
                 std::stringstream aligned_image_raw, aligned_camera_info;
-                aligned_image_raw << "aligned_depth_to_" << stream_name << "/image_raw";
-                aligned_camera_info << "aligned_depth_to_" << stream_name << "/camera_info";
+                aligned_image_raw << "~/" << "aligned_depth_to_" << stream_name << "/image_raw";
+                aligned_camera_info << "~/" << "aligned_depth_to_" << stream_name << "/camera_info";
 
                 std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
 
@@ -270,12 +269,17 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
         }
         else if (profile.is<rs2::motion_stream_profile>())
         {
+            if(profile.stream_type() == RS2_STREAM_ACCEL)
+                _is_accel_enabled = true;
+            else if (profile.stream_type() == RS2_STREAM_GYRO)
+                _is_gyro_enabled = true;
+
             std::stringstream data_topic_name, info_topic_name;
-            data_topic_name << stream_name << "/sample";
+            data_topic_name << "~/" << stream_name << "/sample";
             _imu_publishers[sip] = _node.create_publisher<sensor_msgs::msg::Imu>(data_topic_name.str(),
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
             // Publish Intrinsics:
-            info_topic_name << stream_name << "/imu_info";
+            info_topic_name << "~/" << stream_name << "/imu_info";
             _imu_info_publishers[sip] = _node.create_publisher<IMUInfo>(info_topic_name.str(),
                                         rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
             IMUInfo info_msg = getImuInfo(profile);
@@ -284,14 +288,14 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
         else if (profile.is<rs2::pose_stream_profile>())
         {
             std::stringstream data_topic_name, info_topic_name;
-            data_topic_name << stream_name << "/sample";
+            data_topic_name << "~/" << stream_name << "/sample";
             _odom_publisher = _node.create_publisher<nav_msgs::msg::Odometry>(data_topic_name.str(),
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
         }
-        std::string topic_metadata(stream_name + "/metadata");
-        _metadata_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(topic_metadata, 
+        std::string topic_metadata("~/" + stream_name + "/metadata");
+        _metadata_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(topic_metadata,
             rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
-        
+
         if (!((rs2::stream_profile)profile==(rs2::stream_profile)_base_profile))
         {
 
@@ -299,12 +303,20 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             rclcpp::PublisherOptionsWithAllocator<std::allocator<void>> options;
             options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
             rmw_qos_profile_t extrinsics_qos = rmw_qos_profile_latched;
-            
-            std::string topic_extrinsics("extrinsics/" + create_graph_resource_name(ros_stream_to_string(_base_profile.stream_type()) + "_to_" + stream_name));
-            _extrinsics_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Extrinsics>(topic_extrinsics, 
+
+            std::string topic_extrinsics("~/extrinsics/" + create_graph_resource_name(ros_stream_to_string(_base_profile.stream_type()) + "_to_" + stream_name));
+            _extrinsics_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Extrinsics>(topic_extrinsics,
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(extrinsics_qos), extrinsics_qos), std::move(options));
         }
     }
+    if (_is_accel_enabled && _is_gyro_enabled && (_imu_sync_method > imu_sync_method::NONE))
+    {
+        rmw_qos_profile_t qos = _use_intra_process ? qos_string_to_qos(DEFAULT_QOS) : qos_string_to_qos(HID_QOS);
+        
+        _synced_imu_publisher = std::make_shared<SyncedImuPublisher>(_node.create_publisher<sensor_msgs::msg::Imu>("~/imu", 
+                                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos)));
+    }
+
 }
 
 void BaseRealSenseNode::startRGBDPublisherIfNeeded()
@@ -316,7 +328,9 @@ void BaseRealSenseNode::startRGBDPublisherIfNeeded()
         {
             rmw_qos_profile_t qos = _use_intra_process ? qos_string_to_qos(DEFAULT_QOS) : qos_string_to_qos(IMAGE_QOS);
 
-            _rgbd_publisher = _node.create_publisher<realsense2_camera_msgs::msg::RGBD>("rgbd",
+            // adding "~/" to the topic name will add node namespace and node name to the topic
+            // see "Private Namespace Substitution Character" section on https://design.ros2.org/articles/topic_and_service_names.html
+            _rgbd_publisher = _node.create_publisher<realsense2_camera_msgs::msg::RGBD>("~/rgbd",
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
         }
         else {
@@ -327,7 +341,7 @@ void BaseRealSenseNode::startRGBDPublisherIfNeeded()
 }
 
 void BaseRealSenseNode::updateSensors()
-{    
+{
     std::lock_guard<std::mutex> lock_guard(_update_sensor_mutex);
     try{
         for(auto&& sensor : _available_ros_sensors)
@@ -337,7 +351,7 @@ void BaseRealSenseNode::updateSensors()
             std::vector<stream_profile> wanted_profiles;
 
             bool is_profile_changed(sensor->getUpdatedProfiles(wanted_profiles));
-            bool is_video_sensor = (sensor->is<rs2::depth_sensor>() || sensor->is<rs2::color_sensor>() || sensor->is<rs2::fisheye_sensor>());          
+            bool is_video_sensor = (sensor->is<rs2::depth_sensor>() || sensor->is<rs2::color_sensor>() || sensor->is<rs2::fisheye_sensor>());
 
             // do all updates if profile has been changed, or if the align depth filter status has been changed
             // and we are on a video sensor. TODO: explore better options to monitor and update changes
@@ -403,8 +417,10 @@ void BaseRealSenseNode::updateSensors()
 
 void BaseRealSenseNode::publishServices()
 {
+    // adding "~/" to the service name will add node namespace and node name to the service
+    // see "Private Namespace Substitution Character" section on https://design.ros2.org/articles/topic_and_service_names.html
     _device_info_srv = _node.create_service<realsense2_camera_msgs::srv::DeviceInfo>(
-            "device_info",
+            "~/device_info",
             [&](const realsense2_camera_msgs::srv::DeviceInfo::Request::SharedPtr req,
                         realsense2_camera_msgs::srv::DeviceInfo::Response::SharedPtr res)
                         {getDeviceInfo(req, res);});

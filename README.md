@@ -27,6 +27,7 @@
   * [Installation](#installation)
   * [Usage](#usage)
      * [Starting the camera node](#start-camera-node)
+     * [Camera name and namespace](#camera-name-and-namespace)
      * [Parameters](#parameters)
      * [ROS2-vs-Optical Coordination Systems](#coordination)
      * [TF from coordinate A to coordinate B](#tfs)
@@ -183,6 +184,74 @@
 
 <hr>
 
+<h3 id="camera-name-and-namespace">
+  Camera Name And Camera Namespace
+</h3>
+
+### Usage
+User can set the camera name and camera namespace, to distinguish between cameras and platforms, which helps identifying the right nodes and topics to work with.
+
+### Example
+- If user have multiple cameras (might be of the same model) and multiple robots then user can choose to launch/run his nodes on this way.
+- For the first robot and first camera he will run/launch it with these parameters:
+  - camera_namespace:
+    - robot1
+  - camera_name
+    - D455_1
+  
+  - With ros2 launch (via command line or by editing these two parameters in the launch file):
+    
+  ```ros2 launch realsense2_camera rs_launch.py camera_namespace:=robot1 camera_name:=D455_1```
+    
+  - With ros2 run (using remapping mechanisim [Reference](https://docs.ros.org/en/foxy/How-To-Guides/Node-arguments.html)):
+    
+  ```ros2 run realsense2_camera realsense2_camera_node --ros-args -r __node:=D455_1 -r __ns:=robot1```
+
+  - Result
+  ```
+  > ros2 node list
+  /robot1/D455_1
+  
+  > ros2 topic list
+  /robot1/D455_1/color/camera_info
+  /robot1/D455_1/color/image_raw
+  /robot1/D455_1/color/metadata
+  /robot1/D455_1/depth/camera_info
+  /robot1/D455_1/depth/image_rect_raw
+  /robot1/D455_1/depth/metadata
+  /robot1/D455_1/extrinsics/depth_to_color
+  /robot1/D455_1/imu
+  
+  > ros2 service list
+  /robot1/D455_1/device_info
+  ```
+
+### Default behavior if non of these parameters are given:
+  - camera_namespace:=camera
+  - camera_name:=camera
+
+```
+> ros2 node list
+/camera/camera
+
+> ros2 topic list
+/camera/camera/color/camera_info
+/camera/camera/color/image_raw
+/camera/camera/color/metadata
+/camera/camera/depth/camera_info
+/camera/camera/depth/image_rect_raw
+/camera/camera/depth/metadata
+/camera/camera/extrinsics/depth_to_color
+/camera/camera/imu
+
+> ros2 service list
+/camera/camera/device_info
+```
+
+
+<hr>
+
+
 <h3 id="parameters">
   Parameters
 <h3>
@@ -190,9 +259,9 @@
 ### Available Parameters:
 - For the entire list of parameters type `ros2 param list`.
 - For reading a parameter value use `ros2 param get <node> <parameter_name>` 
-  - For example: `ros2 param get /camera/camera depth_module.emitter_on_off`
+  - For example: `ros2 param get /camera/camera depth_module.emitter_enabled`
 - For setting a new value for a parameter use `ros2 param set <node> <parameter_name> <value>`
-  - For example: `ros2 param set /camera/camera depth_module.emitter_on_off true`
+  - For example: `ros2 param set /camera/camera depth_module.emitter_enabled 1`
 
 #### Parameters that can be modified during runtime:
 - All of the filters and sensors inner parameters.
@@ -235,6 +304,22 @@
   - This param also depends on **publish_tf** param
     - If **publish_tf:=false**, then no TFs will be published, even if **tf_publish_rate** is >0.0 Hz
     - If **publish_tf:=true** and **tf_publish_rate** set to >0.0 Hz, then dynamic TFs will be published at the specified rate
+- **unite_imu_method**:
+  - For the D400 cameras with built in IMU components, below 2 unrelated streams (each with it's own frequency) will be created:
+    - *gyro* - which shows angular velocity 
+    - *accel* - which shows linear acceleration. 
+  - Both streams will publish data to its corresponding topics:
+    - '/camera/camera/gyro/sample' & '/camera/camera/accel/sample'
+    - Though both topics are of same message type 'sensor_msgs::Imu', only their relevant fields are filled out.
+  - A new topic called **imu** will be created, when both *accel* and *gyro* streams are enabled and the param *unite_imu_method* set to > 0.
+    - Data from both accel and gyro are combined and published to this topic
+    - All the fields of the Imu message are filled out.
+    - It will be published at the rate of the gyro.
+  - `unite_imu_method` param supports below values:
+    - 0 -> **none**: no imu topic
+    - 1 -> **copy**: Every gyro message will be attached by the last accel message.
+    - 2 -> **linear_interpolation**: Every gyro message will be attached by an accel message which is interpolated to gyro's timestamp.
+  - Note: When the param *unite_imu_method* is dynamically updated, re-enable either gyro or accel stream for the change to take effect.
 
 #### Parameters that cannot be changed in runtime:
 - **serial_no**:
@@ -268,21 +353,8 @@
   - On occasions the device was not closed properly and due to firmware issues needs to reset. 
   - If set to true, the device will reset prior to usage.
   - For example: `initial_reset:=true`
-- ***<stream_name>*_frame_id**, ***<stream_name>*_optical_frame_id**, **aligned_depth_to_*<stream_name>*_frame_id**: Specify the different frame_id for the different frames. Especially important when using multiple cameras.
 - **base_frame_id**: defines the frame_id all static transformations refers to.
 - **odom_frame_id**: defines the origin coordinate system in ROS convention (X-Forward, Y-Left, Z-Up). pose topic defines the pose relative to that system.
-
-- **unite_imu_method**:
-  - D400 cameras have built in IMU components which produce 2 unrelated streams, each with it's own frequency: 
-    - *gyro* - which shows angular velocity 
-    - *accel* which shows linear acceleration. 
-  - By default, 2 corresponding topics are available, each with only the relevant fields of the message sensor_msgs::Imu are filled out.
-  - Setting *unite_imu_method* creates a new topic, *imu*, that replaces the default *gyro* and *accel* topics.
-    - The *imu* topic is published at the rate of the gyro.
-    - All the fields of the Imu message under the *imu* topic are filled out. 
-  - `unite_imu_method` parameter supported values are [0-2] meaning:  [0 -> None, 1 -> Copy, 2 -> Linear_ interpolation] when:
-    - **linear_interpolation**: Every gyro message is attached by the an accel message interpolated to the gyro's timestamp.
-    - **copy**: Every gyro message is attached by the last accel message.
 - **clip_distance**:
   - Remove from the depth image all values above a given value (meters). Disable by giving negative value (default)
   - For example: `clip_distance:=1.5`
@@ -349,7 +421,7 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 ![d435i](https://user-images.githubusercontent.com/99127997/230220297-e392f0fc-63bf-4bab-8001-af1ddf0ed00e.png)
 
 ```
-administrator@perclnx466 ~/ros2_humble $ ros2 topic echo /camera/extrinsics/depth_to_color
+administrator@perclnx466 ~/ros2_humble $ ros2 topic echo /camera/camera/extrinsics/depth_to_color
 rotation:
 - 0.9999583959579468
 - 0.008895332925021648
@@ -379,17 +451,17 @@ translation:
   
 The published topics differ according to the device and parameters.
 After running the above command with D435i attached, the following list of topics will be available (This is a partial list. For full one type `ros2 topic list`):
-- /camera/aligned_depth_to_color/camera_info
-- /camera/aligned_depth_to_color/image_raw
-- /camera/color/camera_info
-- /camera/color/image_raw
-- /camera/color/metadata
-- /camera/depth/camera_info
-- /camera/depth/color/points
-- /camera/depth/image_rect_raw
-- /camera/depth/metadata
-- /camera/extrinsics/depth_to_color
-- /camera/imu
+- /camera/camera/aligned_depth_to_color/camera_info
+- /camera/camera/aligned_depth_to_color/image_raw
+- /camera/camera/color/camera_info
+- /camera/camera/color/image_raw
+- /camera/camera/color/metadata
+- /camera/camera/depth/camera_info
+- /camera/camera/depth/color/points
+- /camera/camera/depth/image_rect_raw
+- /camera/camera/depth/metadata
+- /camera/camera/extrinsics/depth_to_color
+- /camera/camera/imu
 - /diagnostics
 - /parameter_events
 - /rosout
@@ -406,14 +478,14 @@ ros2 param set /camera/camera enable_gyro true
 ```
 
 Enabling stream adds matching topics. For instance, enabling the gyro and accel streams adds the following topics:
-- /camera/accel/imu_info
-- /camera/accel/metadata
-- /camera/accel/sample
-- /camera/extrinsics/depth_to_accel
-- /camera/extrinsics/depth_to_gyro
-- /camera/gyro/imu_info
-- /camera/gyro/metadata
-- /camera/gyro/sample
+- /camera/camera/accel/imu_info
+- /camera/camera/accel/metadata
+- /camera/camera/accel/sample
+- /camera/camera/extrinsics/depth_to_accel
+- /camera/camera/extrinsics/depth_to_gyro
+- /camera/camera/gyro/imu_info
+- /camera/camera/gyro/metadata
+- /camera/camera/gyro/sample
 
 <hr>
 
@@ -445,7 +517,7 @@ ros2 launch realsense2_camera rs_launch.py enable_rgbd:=true enable_sync:=true a
   
 The metadata messages store the camera's available metadata in a *json* format. To learn more, a dedicated script for echoing a metadata topic in runtime is attached. For instance, use the following command to echo the camera/depth/metadata topic:
 ```
-python3 src/realsense-ros/realsense2_camera/scripts/echo_metadada.py /camera/depth/metadata
+python3 src/realsense-ros/realsense2_camera/scripts/echo_metadada.py /camera/camera/depth/metadata
 ```
   
 <hr>
@@ -455,16 +527,16 @@ python3 src/realsense-ros/realsense2_camera/scripts/echo_metadada.py /camera/dep
 </h3>
   
 The following post processing filters are available:
- - ```align_depth```: If enabled, will publish the depth image aligned to the color image on the topic `/camera/aligned_depth_to_color/image_raw`.
+ - ```align_depth```: If enabled, will publish the depth image aligned to the color image on the topic `/camera/camera/aligned_depth_to_color/image_raw`.
    - The pointcloud, if created, will be based on the aligned depth image.
  - ```colorizer```: will color the depth image. On the depth topic an RGB image will be published, instead of the 16bit depth values .
- - ```pointcloud```: will add a pointcloud topic `/camera/depth/color/points`.
+ - ```pointcloud```: will add a pointcloud topic `/camera/camera/depth/color/points`.
     * The texture of the pointcloud can be modified using the `pointcloud.stream_filter` parameter.</br>
     * The depth FOV and the texture FOV are not similar. By default, pointcloud is limited to the section of depth containing the texture. You can have a full depth to pointcloud, coloring the regions beyond the texture with zeros, by setting `pointcloud.allow_no_texture_points` to true.
     * pointcloud is of an unordered format by default. This can be changed by setting `pointcloud.ordered_pc` to true.
  - ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values.
   - The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.
-  - To view the effect on the infrared image for each sequence id use the `sequence_id_filter.sequence_id` parameter.
+  - To view the effect on the infrared image for each sequence id use the `filter_by_sequence_id.sequence_id` parameter.
   - To initialize these parameters in start time use the following parameters:
     - `depth_module.exposure.1`
     - `depth_module.gain.1`
@@ -487,7 +559,7 @@ Each of the above filters have it's own parameters, following the naming convent
   Available services
 </h3>
   
-- device_info : retrieve information about the device - serial_number, firmware_version etc. Type `ros2 interface show realsense2_camera_msgs/srv/DeviceInfo` for the full list. Call example: `ros2 service call /camera/device_info realsense2_camera_msgs/srv/DeviceInfo`
+- device_info : retrieve information about the device - serial_number, firmware_version etc. Type `ros2 interface show realsense2_camera_msgs/srv/DeviceInfo` for the full list. Call example: `ros2 service call /camera/camera/device_info realsense2_camera_msgs/srv/DeviceInfo`
 
 <hr>
 

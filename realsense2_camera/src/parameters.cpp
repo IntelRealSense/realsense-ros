@@ -135,6 +135,8 @@ void BaseRealSenseNode::setDynamicParams()
                             [this](const rclcpp::Parameter& parameter)
                             {
                                 _imu_sync_method = imu_sync_method(parameter.get_value<int>());
+                                ROS_WARN("For the 'unite_imu_method' param update to take effect, "
+                                         "re-enable either gyro or accel stream.");
                             }, crnt_descriptor);
     _parameters_names.push_back(param_name);
 }
