@@ -46,7 +46,7 @@ test_params_all_topics = {"rosbag_filename":get_rosbag_file_path("outdoors_1colo
     'camera_name': 'AllTopics',
     'enable_infra1':'true',
     'enable_infra2':'true',
-    'delay_ms':5000,
+    'delay_ms':8000,
     #'align_depth.enable':'true',
     }
 '''
