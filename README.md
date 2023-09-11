@@ -304,6 +304,22 @@ User can set the camera name and camera namespace, to distinguish between camera
   - This param also depends on **publish_tf** param
     - If **publish_tf:=false**, then no TFs will be published, even if **tf_publish_rate** is >0.0 Hz
     - If **publish_tf:=true** and **tf_publish_rate** set to >0.0 Hz, then dynamic TFs will be published at the specified rate
+- **unite_imu_method**:
+  - For the D400 cameras with built in IMU components, below 2 unrelated streams (each with it's own frequency) will be created:
+    - *gyro* - which shows angular velocity 
+    - *accel* - which shows linear acceleration. 
+  - Both streams will publish data to its corresponding topics:
+    - '/camera/camera/gyro/sample' & '/camera/camera/accel/sample'
+    - Though both topics are of same message type 'sensor_msgs::Imu', only their relevant fields are filled out.
+  - A new topic called **imu** will be created, when both *accel* and *gyro* streams are enabled and the param *unite_imu_method* set to > 0.
+    - Data from both accel and gyro are combined and published to this topic
+    - All the fields of the Imu message are filled out.
+    - It will be published at the rate of the gyro.
+  - `unite_imu_method` param supports below values:
+    - 0 -> **none**: no imu topic
+    - 1 -> **copy**: Every gyro message will be attached by the last accel message.
+    - 2 -> **linear_interpolation**: Every gyro message will be attached by an accel message which is interpolated to gyro's timestamp.
+  - Note: When the param *unite_imu_method* is dynamically updated, re-enable either gyro or accel stream for the change to take effect.
 
 #### Parameters that cannot be changed in runtime:
 - **serial_no**:
@@ -338,7 +354,6 @@ User can set the camera name and camera namespace, to distinguish between camera
   - If set to true, the device will reset prior to usage.
   - For example: `initial_reset:=true`
 - **base_frame_id**: defines the frame_id all static transformations refers to.
-
 - **unite_imu_method**:
   - D400 cameras have built in IMU components which produce 2 unrelated streams, each with it's own frequency: 
     - *gyro* - which shows angular velocity 
@@ -529,7 +544,7 @@ The following post processing filters are available:
     * pointcloud is of an unordered format by default. This can be changed by setting `pointcloud.ordered_pc` to true.
  - ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values.
   - The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.
-  - To view the effect on the infrared image for each sequence id use the `sequence_id_filter.sequence_id` parameter.
+  - To view the effect on the infrared image for each sequence id use the `filter_by_sequence_id.sequence_id` parameter.
   - To initialize these parameters in start time use the following parameters:
     - `depth_module.exposure.1`
     - `depth_module.gain.1`

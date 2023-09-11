@@ -109,6 +109,8 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _enable_rgbd(ENABLE_RGBD),
     _is_color_enabled(false),
     _is_depth_enabled(false),
+    _is_accel_enabled(false),
+    _is_gyro_enabled(false),
     _pointcloud(false),
     _imu_sync_method(imu_sync_method::NONE),
     _is_profile_changed(false),
@@ -412,7 +414,7 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
         _is_initialized_time_base = setBaseTime(frame_time, frame.get_frame_timestamp_domain());
     }
 
-    if (0 != _synced_imu_publisher->getNumSubscribers())
+    if (_synced_imu_publisher && (0 != _synced_imu_publisher->getNumSubscribers()))
     {
         auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
         Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
@@ -495,7 +497,8 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
 
 void BaseRealSenseNode::frame_callback(rs2::frame frame)
 {
-    _synced_imu_publisher->Pause();
+    if (_synced_imu_publisher)
+        _synced_imu_publisher->Pause();
     double frame_time = frame.get_timestamp();
 
     // We compute a ROS timestamp which is based on an initial ROS time at point of first frame,
@@ -609,7 +612,8 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
         }
         publishFrame(frame, t, sip, _images, _info_publishers, _image_publishers);
      }
-    _synced_imu_publisher->Resume();
+     if (_synced_imu_publisher)
+        _synced_imu_publisher->Resume();
 } // frame_callback
 
 void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_method sync_method)
@@ -797,7 +801,7 @@ void BaseRealSenseNode::SetBaseStream()
 
 void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset)
 {
-    std::string frame_id = (_align_depth_filter->is_enabled() ? OPTICAL_FRAME_ID(COLOR) : OPTICAL_FRAME_ID(DEPTH));
+    std::string frame_id = OPTICAL_FRAME_ID(DEPTH);
     _pc_filter->Publish(pc, t, frameset, frame_id);
 }
 

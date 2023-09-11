@@ -253,7 +253,6 @@ namespace realsense2_camera
         void startDiagnosticsUpdater();
         void monitoringProfileChanges();
         void publish_temperature();
-        void setupFiltersPublishers();
         void setAvailableSensors();
         void setCallbackFunctions();
         void updateSensors();
@@ -311,6 +310,8 @@ namespace realsense2_camera
         bool _enable_rgbd;
         bool _is_color_enabled;
         bool _is_depth_enabled;
+        bool _is_accel_enabled;
+        bool _is_gyro_enabled;
         bool _pointcloud;
         imu_sync_method _imu_sync_method;
         stream_index_pair _pointcloud_texture;
