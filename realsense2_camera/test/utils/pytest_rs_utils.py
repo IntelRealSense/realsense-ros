@@ -830,6 +830,7 @@ class RsTestBaseClass():
         flag = False
         data_not_expected = [i for i in themes if (i["expected_data_chunks"]) == 0]
         start = time.time()
+        msg = "Unexpected error in spin_for_data"
         while (time.time() - start) < timeout:
             rclpy.spin_once(self.node, timeout_sec=1)
             debug_print('Spun once... ' )
@@ -847,9 +848,10 @@ class RsTestBaseClass():
             if data_not_expected == False:
                 print("Timed out waiting for", timeout, "seconds" )
                 return False, "run_test timedout"
+            flag = True
         if flag:
             return flag,""
-        return flag,"Unexpected error in spin_for_data"
+        return flag,msg
 
     def spin_for_time(self,wait_time):
         start = time.time()
