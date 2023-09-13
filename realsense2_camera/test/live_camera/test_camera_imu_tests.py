@@ -77,6 +77,7 @@ class TestLiveCamera_TestMotionSensor(pytest_rs_utils.RsTestBaseClass):
             assert self.process_data(themes), msg + " failed"
 
             msg = "Test with the accel false "
+            self.set_integer_param('unite_imu_method', 0)
             self.set_bool_param('enable_accel', False)
             self.set_bool_param('enable_gyro', True)
             themes[ACCEL_TOPIC]['expected_data_chunks'] = 0
