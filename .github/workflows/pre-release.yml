@@ -46,7 +46,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: industrial_ci
-        id: industrial_ci_step
         uses: ros-industrial/industrial_ci@master
-      - name: output industrial_ci output
-        run: echo ${{ steps.industrial_ci_step.outputs.stdout }}
