@@ -111,6 +111,8 @@ the command used to run is "python3 realsense2_camera/scripts/rs2_test.py static
 @pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
 class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
     def test_static_tf_1(self,delayed_launch_descr_with_parameters):
+        import time
+        print("Started test:", time.time())
         self.params = delayed_launch_descr_with_parameters[1]
         self.rosbag = self.params["rosbag_filename"]
         themes = [

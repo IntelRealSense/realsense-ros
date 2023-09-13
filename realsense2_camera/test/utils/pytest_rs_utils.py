@@ -523,7 +523,7 @@ def get_rs_node_description(params):
         #name=LaunchConfiguration("camera_name"),
         namespace=params["camera_namespace"],
         name=params["camera_name"],
-        #prefix=['xterm -e gdb --args'],
+        #prefix=['xterm -e gdb -ex=run --args'],
         executable='realsense2_camera_node',
         parameters=[tmp_yaml.name],
         output='screen',
@@ -869,6 +869,7 @@ class RsTestBaseClass():
                 for theme in themes:
                     if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
                         msg += " " + theme['topic']
+                msg += " Nodes available: " + str(self.node.get_node_names())
                 return False, msg
             flag = True
         return flag,msg
