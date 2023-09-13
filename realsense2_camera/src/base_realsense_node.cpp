@@ -655,7 +655,10 @@ void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_met
             else imu_callback(frame);
             break;
         case RS2_STREAM_POSE:
-            pose_callback(frame);
+	    if ( _t265_cnt_throttle % (_t265_odom_fps_original / _t265_odom_fps) == 0 ) { 
+            	pose_callback(frame);
+	    }
+	    _t265_cnt_throttle ++;
             break;
         default:
             frame_callback(frame);

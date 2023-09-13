@@ -248,6 +248,10 @@ namespace realsense2_camera
         bool _use_intra_process;      
         std::map<stream_index_pair, std::shared_ptr<image_publisher>> _image_publishers;
         
+	int _t265_cnt_throttle = 0;
+	int _t265_odom_fps_original = 200;
+	int _t265_interval;
+	int _t265_odom_fps;
         std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr> _imu_publishers;
         std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> _odom_publisher;
         std::shared_ptr<SyncedImuPublisher> _synced_imu_publisher;

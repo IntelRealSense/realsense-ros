@@ -36,6 +36,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'enable_gyro',                  'default': 'false', 'description': "''"},                           
                            {'name': 'enable_accel',                 'default': 'false', 'description': "''"},                           
                            {'name': 'enable_pose',                  'default': 'true', 'description': "''"},                           
+                           {'name': 't265_odom_fps',                'default': '200', 'description': 'Desired frequency to publish T265 odom'},                           
                            {'name': 'pose_fps',                     'default': '200', 'description': "''"},                           
                            {'name': 'pointcloud.enable',            'default': 'false', 'description': ''}, 
                            {'name': 'pointcloud.stream_filter',     'default': '2', 'description': 'texture stream for pointcloud'},
