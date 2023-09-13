@@ -17,6 +17,7 @@ import time
 from collections import deque
 import functools
 import itertools
+import subprocess
 
 import pytest
 
@@ -444,6 +445,17 @@ def kill_realsense2_camera_node():
     pass
 
 '''
+function gets all the topics for a camera node
+'''
+
+def get_all_topics(camera_name=None):
+    cmd = 'ros2 topic list'
+    if camera_name!=None:
+        cmd += '| grep ' + camera_name
+    direct_output = os.popen(cmd).read()
+    return direct_output
+
+'''
 get the default parameters from the launch script so that the test doesn't have to
 get updated for each change to the parameter or default values 
 '''
@@ -515,7 +527,7 @@ def get_rs_node_description(params):
         executable='realsense2_camera_node',
         parameters=[tmp_yaml.name],
         output='screen',
-        arguments=['--ros-args', '--log-level', "debug"],
+        arguments=['--ros-args', '--log-level', "info"],
         emulate_tty=True,
     )
 
@@ -676,7 +688,10 @@ class RsTestNode(Node):
     def rsCallback(self, topic, msg_type, store_raw_data):
         debug_print("RSCallback")
         def _rsCallback(data):
-            print('Got the callback for ' + topic)
+            '''
+            enabling prints in callback reduces the fps in some cases
+            '''
+            debug_print('Got the callback for ' + topic)
             #print(data.header)
             self.flag = True
             if store_raw_data == True:
@@ -855,6 +870,7 @@ class RsTestBaseClass():
                     if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
                         msg += " " + theme['topic']
                 return False, msg
+            flag = True
         return flag,msg
 
     def spin_for_time(self,wait_time):
