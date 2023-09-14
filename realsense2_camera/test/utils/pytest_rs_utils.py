@@ -647,16 +647,6 @@ class RsTestNode(Node):
         if self.tfBuffer == None:
             self.tfBuffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, super())
-    def get_tfs(self, coupled_frame_ids):
-        res = dict()
-        for couple in coupled_frame_ids:
-            from_id, to_id = couple
-            if (self.tfBuffer.can_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6))):
-                res[couple] = self.tfBuffer.lookup_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=1e6)).transform
-            else:
-                res[couple] = None
-        return res
-
     def get_num_chunks(self,topic):
         return len(self.data[topic])
     
@@ -882,7 +872,7 @@ class RsTestBaseClass():
             print('Spun for time once... ' )
             rclpy.spin_once(self.node, timeout_sec=wait_time)
  
-    def run_test(self, themes, initial_wait_time=0.0, timeout=5.0):
+    def run_test(self, themes, initial_wait_time=0.0, timeout=0):
         try:
             for theme in themes:
                 store_raw_data = False
@@ -897,6 +887,15 @@ class RsTestBaseClass():
                     qos_type = theme['qos']
                 self.create_subscription(theme['msg_type'], theme['topic'] , qos_type,store_raw_data, measure_hz)
                 print('subscription created for ' + theme['topic'])
+            '''
+            change the default based on whether data is expected or not
+            '''
+            if timeout == 0:
+                timeout = 5.0
+                data_not_expected1 = [i for i in themes if (i["expected_data_chunks"]) == 0]
+                if data_not_expected1 == []:
+                    timeout = 50.0 #high value due to resource constraints in CI
+
             if initial_wait_time != 0.0: 
                 self.spin_for_time(initial_wait_time)
             self.flag = self.spin_for_data(themes, timeout)     
@@ -911,10 +910,6 @@ class RsTestBaseClass():
                 print(e)
                 self.flag =False,e
         return self.flag 
-
-    def get_tfs(self, coupled_frame_ids):
-        return self.node.get_tfs(coupled_frame_ids)
-    
 
     def get_transform_data(self, data, coupled_frame_ids, is_static=False):
         tfBuffer = tf2_ros.Buffer()
