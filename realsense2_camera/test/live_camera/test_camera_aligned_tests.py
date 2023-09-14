@@ -66,6 +66,7 @@ machines that don't have the D455 connected.
 1. Only a subset of parameter types are implemented in py_rs_utils, it has to be extended for others
 2. After setting the param, rclpy.spin_once may be needed.Test passes even without this though.
 '''
+
 @pytest.mark.parametrize("launch_descr_with_parameters",[
     pytest.param(test_params_align_depth_color_d455, marks=pytest.mark.d455),
     pytest.param(test_params_align_depth_color_d415, marks=pytest.mark.d415),
@@ -76,6 +77,9 @@ machines that don't have the D455 connected.
 class TestCamera_AlignDepthColor(pytest_rs_utils.RsTestBaseClass):
     def test_camera_align_depth_color(self,launch_descr_with_parameters):
         params = launch_descr_with_parameters[1]
+        if pytest_live_camera_utils.check_if_camera_connected(params['device_type']) == False:
+            print("Device not found? : " + params['device_type'])
+            return
         themes = [
         {'topic':get_node_heirarchy(params)+'/color/image_raw',
          'msg_type':msg_Image,
@@ -122,8 +126,6 @@ class TestCamera_AlignDepthColor(pytest_rs_utils.RsTestBaseClass):
             pytest_rs_utils.kill_realsense2_camera_node()
             self.shutdown()
 
-
-
 test_params_all_profiles_d455 = {
     'camera_name': 'D455',
     'device_type': 'D455',
@@ -167,13 +169,16 @@ machines that don't have the D455 connected.
     pytest.param(test_params_all_profiles_d435, marks=pytest.mark.d435),]
     ,indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
-class TestCamera_AlignDepthColor(pytest_rs_utils.RsTestBaseClass):
-    def test_camera_align_depth_color_all(self,launch_descr_with_parameters):
+class TestCamera_AllAlignDepthColor(pytest_rs_utils.RsTestBaseClass):
+    def test_camera_all_align_depth_color(self,launch_descr_with_parameters):
         skipped_tests = []
         failed_tests = []
         num_passed = 0
         num_failed = 0
         params = launch_descr_with_parameters[1]
+        if pytest_live_camera_utils.check_if_camera_connected(params['device_type']) == False:
+            print("Device not found? : " + params['device_type'])
+            return
         themes = [
         {'topic':get_node_heirarchy(params)+'/color/image_raw',
          'msg_type':msg_Image,

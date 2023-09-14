@@ -17,6 +17,7 @@ import time
 from collections import deque
 import functools
 import itertools
+import subprocess
 
 import pytest
 
@@ -444,6 +445,17 @@ def kill_realsense2_camera_node():
     pass
 
 '''
+function gets all the topics for a camera node
+'''
+
+def get_all_topics(camera_name=None):
+    cmd = 'ros2 topic list'
+    if camera_name!=None:
+        cmd += '| grep ' + camera_name
+    direct_output = os.popen(cmd).read()
+    return direct_output
+
+'''
 get the default parameters from the launch script so that the test doesn't have to
 get updated for each change to the parameter or default values 
 '''
@@ -511,11 +523,11 @@ def get_rs_node_description(params):
         #name=LaunchConfiguration("camera_name"),
         namespace=params["camera_namespace"],
         name=params["camera_name"],
-        #prefix=['xterm -e gdb --args'],
+        #prefix=['xterm -e gdb -ex=run --args'],
         executable='realsense2_camera_node',
         parameters=[tmp_yaml.name],
         output='screen',
-        arguments=['--ros-args', '--log-level', "debug"],
+        arguments=['--ros-args', '--log-level', "info"],
         emulate_tty=True,
     )
 
@@ -635,16 +647,6 @@ class RsTestNode(Node):
         if self.tfBuffer == None:
             self.tfBuffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, super())
-    def get_tfs(self, coupled_frame_ids):
-        res = dict()
-        for couple in coupled_frame_ids:
-            from_id, to_id = couple
-            if (self.tfBuffer.can_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6))):
-                res[couple] = self.tfBuffer.lookup_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=1e6)).transform
-            else:
-                res[couple] = None
-        return res
-
     def get_num_chunks(self,topic):
         return len(self.data[topic])
     
@@ -676,7 +678,10 @@ class RsTestNode(Node):
     def rsCallback(self, topic, msg_type, store_raw_data):
         debug_print("RSCallback")
         def _rsCallback(data):
-            print('Got the callback for ' + topic)
+            '''
+            enabling prints in callback reduces the fps in some cases
+            '''
+            debug_print('Got the callback for ' + topic)
             #print(data.header)
             self.flag = True
             if store_raw_data == True:
@@ -854,7 +859,9 @@ class RsTestBaseClass():
                 for theme in themes:
                     if theme['expected_data_chunks'] > int(self.node.get_num_chunks(theme['topic'])):
                         msg += " " + theme['topic']
+                msg += " Nodes available: " + str(self.node.get_node_names())
                 return False, msg
+            flag = True
         return flag,msg
 
     def spin_for_time(self,wait_time):
@@ -865,7 +872,7 @@ class RsTestBaseClass():
             print('Spun for time once... ' )
             rclpy.spin_once(self.node, timeout_sec=wait_time)
  
-    def run_test(self, themes, initial_wait_time=0.0, timeout=5.0):
+    def run_test(self, themes, initial_wait_time=0.0, timeout=0):
         try:
             for theme in themes:
                 store_raw_data = False
@@ -880,6 +887,15 @@ class RsTestBaseClass():
                     qos_type = theme['qos']
                 self.create_subscription(theme['msg_type'], theme['topic'] , qos_type,store_raw_data, measure_hz)
                 print('subscription created for ' + theme['topic'])
+            '''
+            change the default based on whether data is expected or not
+            '''
+            if timeout == 0:
+                timeout = 5.0
+                data_not_expected1 = [i for i in themes if (i["expected_data_chunks"]) == 0]
+                if data_not_expected1 == []:
+                    timeout = 50.0 #high value due to resource constraints in CI
+
             if initial_wait_time != 0.0: 
                 self.spin_for_time(initial_wait_time)
             self.flag = self.spin_for_data(themes, timeout)     
@@ -894,10 +910,6 @@ class RsTestBaseClass():
                 print(e)
                 self.flag =False,e
         return self.flag 
-
-    def get_tfs(self, coupled_frame_ids):
-        return self.node.get_tfs(coupled_frame_ids)
-    
 
     def get_transform_data(self, data, coupled_frame_ids, is_static=False):
         tfBuffer = tf2_ros.Buffer()
