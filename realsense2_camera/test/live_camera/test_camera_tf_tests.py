@@ -160,7 +160,7 @@ test_params_tf_d415 = {
     }
 @pytest.mark.parametrize("launch_descr_with_parameters", [
     pytest.param(test_params_tf_d455, marks=pytest.mark.d455),
-    pytest.param(test_params_tf_d435, marks=pytest.mark.d415),
+    pytest.param(test_params_tf_d435, marks=pytest.mark.d435),
     pytest.param(test_params_tf_d415, marks=pytest.mark.d415),
     ],indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
