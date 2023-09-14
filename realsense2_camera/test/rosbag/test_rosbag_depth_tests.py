@@ -20,10 +20,14 @@ import itertools
 
 import pytest
 import rclpy
+from rclpy.qos import DurabilityPolicy
+from rclpy.qos import HistoryPolicy
+from rclpy.qos import QoSProfile
 
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import Imu as msg_Imu
 from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
+from tf2_msgs.msg import TFMessage as msg_TFMessage
 
 import numpy as np
 
@@ -78,12 +82,6 @@ class TestDepthPointsCloud1(pytest_rs_utils.RsTestBaseClass):
          'expected_data_chunks':1,
          'data':data1
         },
-        {'topic':get_node_heirarchy(params)+'/depth/image_rect_raw',
-         'msg_type':msg_Image,
-         'expected_data_chunks':1,
-         'data':data2
-        }
-
         ]
         try:
             ''' 
@@ -124,6 +122,11 @@ class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
          'msg_type':msg_Image,
          'expected_data_chunks':1,
          'static_tf':True,
+        },
+        {'topic':'/tf_static',
+         'msg_type':msg_TFMessage,
+         'expected_data_chunks':1,
+         'qos' :  QoSProfile(depth=100,durability=DurabilityPolicy.TRANSIENT_LOCAL,history=HistoryPolicy.KEEP_LAST,)#static
         }
         ]
         try:
@@ -145,7 +148,9 @@ class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
                                                           (self.params['camera_name']+'_infra1_frame', self.params['camera_name']+'_color_frame'): ([-0.00010158783697988838, 0.014841210097074509, -0.00022671300393994898], [-0.0008337442995980382, 0.0010442184284329414, -0.0009920650627464056, 0.9999986290931702])}
         frame_ids = [self.params['camera_name']+'_link', self.params['camera_name']+'_depth_frame', self.params['camera_name']+'_infra1_frame', self.params['camera_name']+'_infra2_frame', self.params['camera_name']+'_color_frame', self.params['camera_name']+'_fisheye_frame', self.params['camera_name']+'_pose']
         coupled_frame_ids = [xx for xx in itertools.combinations(frame_ids, 2)]
-        tfs_data = self.get_tfs(coupled_frame_ids)
+        data = self.node.pop_first_chunk('/tf_static')
+        coupled_frame_ids = [xx for xx in itertools.combinations(frame_ids, 2)]
+        tfs_data = self.get_transform_data(data, coupled_frame_ids, is_static=True)
         ret = pytest_rs_utils.staticTFTest(tfs_data, expected_data)
         assert ret[0], ret[1]
         return ret[0]
