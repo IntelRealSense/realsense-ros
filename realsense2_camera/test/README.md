@@ -158,7 +158,7 @@ If a user wants to add a test to this conditional skip, user can add by adding a
 	RS_ROS_REGRESSION=1 PYTHONPATH=$PYTHONPATH:$PWD/realsense2_camera/test/utils:$PWD/realsense2_camera//launch:$PWD/realsense2_camera//scripts pytest-3 -s realsense2_camera/test/live_camera/test_camera_aligned_tests.py -k test_camera_align_depth_color_all -m d415
 
 ## Points to be noted while writing pytests
-The tests that are in one file are normally run in parallel. So if there are multiple tests in one file, the system capacity can influence the test execution. It's recomended to have 3-4 tests in file, more than that can affect the test results due to delays.
+The tests that are in one file are normally run in parallel, there could also be changes in the pytest plugin. So if there are multiple tests in one file, the system capacity can influence the test execution. It's recomended to have 3-4 tests in file, more than that can affect the test results due to delays.
 ### Passing/changing parameters
 The parameters passed while creating the node can be initialized individually for each test, please see the test_parameterized_template example for reference. The default values are taken from rs_launch.py and the passed parameters are used for overriding the default values. The parameters that can be dynamically modified can be changed using the param interface provided. However, the function create_param_ifs has to be called to create this interface. Please see the test_d455_basic_tests.py for reference. There are specific functions to change the string, integer and bool parameters, the utils can be extended if any more types are needed.
 ### Difference in setting the bool parameters
