@@ -49,6 +49,7 @@ machines that don't have the D455 connected.
 1. Only a subset of parameter types are implemented in py_rs_utils, it has to be extended for others
 2. After setting the param, rclpy.spin_once may be needed.Test passes even without this though.
 '''
+@pytest.mark.d455
 @pytest.mark.parametrize("launch_descr_with_parameters", [test_params_depth_avg_1],indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestD455_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
