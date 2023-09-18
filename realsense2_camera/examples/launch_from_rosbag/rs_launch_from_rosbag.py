@@ -37,7 +37,7 @@ local_parameters = [{'name': 'camera_name',         'default': 'camera', 'descri
                     {'name': 'enable_depth',        'default': 'true', 'description': 'enable depth stream'},
                     {'name': 'enable_gyro',         'default': 'true', 'description': "'enable gyro stream'"},
                     {'name': 'enable_accel',        'default': 'true', 'description': "'enable accel stream'"},
-                    {'name': 'rosbag_filename',     'default': [ThisLaunchFileDir(), "/D435i_Depth_and_IMU_Stands_still.bag"], 'description': 'A realsense bagfile to run from as a device'},
+                    {'name': 'rosbag_filename',     'default': [ThisLaunchFileDir(), "/rosbag/D435i_Depth_and_IMU_Stands_still.bag"], 'description': 'A realsense bagfile to run from as a device'},
                    ]
 
 def set_configurable_parameters(local_params):

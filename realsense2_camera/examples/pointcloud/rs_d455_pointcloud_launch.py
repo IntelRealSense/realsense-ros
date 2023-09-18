@@ -77,7 +77,7 @@ def generate_launch_description():
             namespace='',
             executable='rviz2',
             name='rviz2',
-            arguments=['-d', [ThisLaunchFileDir(), '/urdf_pointcloud.rviz']],
+            arguments=['-d', [ThisLaunchFileDir(), '/rviz/urdf_pointcloud.rviz']],
             output='screen',
             parameters=[{'use_sim_time': False}]
         ),

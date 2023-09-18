@@ -57,6 +57,6 @@ def generate_launch_description():
             namespace='',
             executable='rviz2',
             name='rviz2',
-            arguments=['-d', [ThisLaunchFileDir(), '/pointcloud.rviz']]
+            arguments=['-d', [ThisLaunchFileDir(), '/rviz/pointcloud.rviz']]
     )
     ])
