@@ -591,20 +591,3 @@ void MotionProfilesManager::registerFPSParams()
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
-
-void PoseProfilesManager::registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func)
-{
-    std::set<stream_index_pair> checked_sips;
-    for (auto& profile : all_profiles)
-    {
-        if (!profile.is<pose_stream_profile>()) continue;
-        _all_profiles.push_back(profile);
-        stream_index_pair sip(profile.stream_type(), profile.stream_index());
-        checked_sips.insert(sip);
-    }
-    registerSensorUpdateParam("enable_%s", checked_sips, _enabled_profiles, true, update_sensor_func);
-    registerSensorUpdateParam("%s_fps", checked_sips, _fps, 0, update_sensor_func);
-    registerSensorQOSParam("%s_qos", checked_sips, _profiles_image_qos_str, HID_QOS);
-    registerSensorQOSParam("%s_info_qos", checked_sips, _profiles_info_qos_str, DEFAULT_QOS);
-}

@@ -32,6 +32,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
 from pytest_rs_utils import launch_descr_with_parameters
 from pytest_rs_utils import get_rosbag_file_path
+from pytest_rs_utils import get_node_heirarchy
 
 
 
@@ -61,7 +62,7 @@ class TestCamera2(pytest_rs_utils.RsTestBaseClass):
     def test_node_start(self, launch_descr_with_parameters):
         params = launch_descr_with_parameters[1]
         themes = [
-            {'topic':'/'+params['camera_name']+'/depth/image_rect_raw',
+            {'topic':get_node_heirarchy(params)+'/depth/image_rect_raw',
                 'msg_type':msg_Image,
                 'store_raw_data':True,
                 'expected_data_chunks':1, 

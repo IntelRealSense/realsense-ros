@@ -143,34 +143,18 @@ set(SOURCES
 if(NOT DEFINED ENV{ROS_DISTRO})
   message(FATAL_ERROR "ROS_DISTRO is not defined." )
 endif()
-if("$ENV{ROS_DISTRO}" STREQUAL "dashing")
-  message(STATUS "Build for ROS2 Dashing")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDASHING")
-  set(SOURCES "${SOURCES}" src/ros_param_backend_dashing.cpp)
-elseif("$ENV{ROS_DISTRO}" STREQUAL "eloquent")
-  message(STATUS "Build for ROS2 eloquent")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DELOQUENT")
-  set(SOURCES "${SOURCES}" src/ros_param_backend_foxy.cpp)
-elseif("$ENV{ROS_DISTRO}" STREQUAL "foxy")
-  message(STATUS "Build for ROS2 Foxy")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFOXY")
-  set(SOURCES "${SOURCES}" src/ros_param_backend_foxy.cpp)
-elseif("$ENV{ROS_DISTRO}" STREQUAL "galactic")
-  message(STATUS "Build for ROS2 Galactic")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGALACTIC")
-  set(SOURCES "${SOURCES}" src/ros_param_backend_foxy.cpp)
-elseif("$ENV{ROS_DISTRO}" STREQUAL "humble")
+if("$ENV{ROS_DISTRO}" STREQUAL "humble")
   message(STATUS "Build for ROS2 Humble")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHUMBLE")
-  set(SOURCES "${SOURCES}" src/ros_param_backend_foxy.cpp)
+  set(SOURCES "${SOURCES}" src/ros_param_backend.cpp)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "iron")
   message(STATUS "Build for ROS2 Iron")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIRON")
-  set(SOURCES "${SOURCES}" src/ros_param_backend_foxy.cpp)
+  set(SOURCES "${SOURCES}" src/ros_param_backend.cpp)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "rolling")
   message(STATUS "Build for ROS2 Rolling")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DROLLING")
-  set(SOURCES "${SOURCES}" src/ros_param_backend_rolling.cpp)
+  set(SOURCES "${SOURCES}" src/ros_param_backend.cpp)
 else()
   message(FATAL_ERROR "Unsupported ROS Distribution: " "$ENV{ROS_DISTRO}")
 endif()
@@ -270,6 +254,12 @@ install(DIRECTORY
     launch
     DESTINATION share/${PROJECT_NAME}
     )
+
+# Install example files
+install(DIRECTORY 
+    examples
+    DESTINATION share/${PROJECT_NAME}
+)
 
 # Test
 if(BUILD_TESTING)

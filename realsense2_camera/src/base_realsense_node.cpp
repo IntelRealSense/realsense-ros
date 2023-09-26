@@ -24,10 +24,7 @@
 
 // Header files for disabling intra-process comms for static broadcaster.
 #include <rclcpp/publisher_options.hpp>
-// This header file is not available in ROS 2 Dashing.
-#ifndef DASHING
 #include <tf2_ros/qos.hpp>
-#endif
 
 using namespace realsense2_camera;
 
@@ -114,8 +111,9 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _enable_rgbd(ENABLE_RGBD),
     _is_color_enabled(false),
     _is_depth_enabled(false),
+    _is_accel_enabled(false),
+    _is_gyro_enabled(false),
     _pointcloud(false),
-    _publish_odom_tf(false),
     _imu_sync_method(imu_sync_method::NONE),
     _is_profile_changed(false),
     _is_align_depth_changed(false)
@@ -418,7 +416,7 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
         _is_initialized_time_base = setBaseTime(frame_time, frame.get_frame_timestamp_domain());
     }
 
-    if (0 != _synced_imu_publisher->getNumSubscribers())
+    if (_synced_imu_publisher && (0 != _synced_imu_publisher->getNumSubscribers()))
     {
         auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
         Eigen::Vector3d v(crnt_reading.x, crnt_reading.y, crnt_reading.z);
@@ -501,7 +499,8 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
 
 void BaseRealSenseNode::frame_callback(rs2::frame frame)
 {
-    _synced_imu_publisher->Pause();
+    if (_synced_imu_publisher)
+        _synced_imu_publisher->Pause();
     double frame_time = frame.get_timestamp();
 
     // We compute a ROS timestamp which is based on an initial ROS time at point of first frame,
@@ -619,18 +618,20 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
             }
         }
         publishFrame(frame, t, sip, _images, _info_publishers, _image_publishers);
-    }
-    else if (frame.is<rs2::labeled_points>())
-    {
-        auto stream_type = frame.get_profile().stream_type();
-        auto stream_index = frame.get_profile().stream_index();
-        stream_index_pair sip{stream_type,stream_index};
-        ROS_DEBUG("Single labeled point cloud frame arrived (%s, %d). frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
-                    rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame_time, t.nanoseconds());
-        publishLabeledPointCloud(frame.as<rs2::labeled_points>(), t);
-        publishMetadata(frame, t, OPTICAL_FRAME_ID(sip));
-    }
-    _synced_imu_publisher->Resume();
+     }
+     else if (frame.is<rs2::labeled_points>())
+     {
+         auto stream_type = frame.get_profile().stream_type();
+         auto stream_index = frame.get_profile().stream_index();
+         stream_index_pair sip{stream_type,stream_index};
+         ROS_DEBUG("Single labeled point cloud frame arrived (%s, %d). frame_number: %llu ; frame_TS: %f ; ros_TS(NSec): %lu",
+                     rs2_stream_to_string(stream_type), stream_index, frame.get_frame_number(), frame_time, t.nanoseconds());
+         publishLabeledPointCloud(frame.as<rs2::labeled_points>(), t);
+         publishMetadata(frame, t, OPTICAL_FRAME_ID(sip));
+     }
+     
+     if (_synced_imu_publisher)
+        _synced_imu_publisher->Resume();
 } // frame_callback
 
 void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_method sync_method)
@@ -642,9 +643,6 @@ void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_met
         case RS2_STREAM_ACCEL:
             if (sync_method > imu_sync_method::NONE) imu_callback_sync(frame, sync_method);
             else imu_callback(frame);
-            break;
-        case RS2_STREAM_POSE:
-            pose_callback(frame);
             break;
         default:
             frame_callback(frame);
@@ -685,17 +683,7 @@ rclcpp::Time BaseRealSenseNode::frameSystemTimeSec(rs2::frame frame)
     {
         double elapsed_camera_ns = millisecondsToNanoseconds(timestamp_ms - _camera_time_base);
 
-        /*
-        Fixing deprecated-declarations compilation warning.
-        Duration(rcl_duration_value_t) is deprecated in favor of 
-        static Duration::from_nanoseconds(rcl_duration_value_t)
-        starting from GALACTIC.
-        */
-#if defined(FOXY) || defined(ELOQUENT) || defined(DASHING)
-        auto duration = rclcpp::Duration(elapsed_camera_ns);
-#else
         auto duration = rclcpp::Duration::from_nanoseconds(elapsed_camera_ns);
-#endif
 
         return rclcpp::Time(_ros_time_base + duration);
     }
@@ -801,7 +789,7 @@ void BaseRealSenseNode::updateExtrinsicsCalibData(const rs2::video_stream_profil
 
 void BaseRealSenseNode::SetBaseStream()
 {
-    const std::vector<stream_index_pair> base_stream_priority = {DEPTH, POSE};
+    const std::vector<stream_index_pair> base_stream_priority = {DEPTH};
     std::set<stream_index_pair> checked_sips;
     std::map<stream_index_pair, rs2::stream_profile> available_profiles;
     for(auto&& sensor : _available_ros_sensors)
@@ -831,7 +819,7 @@ void BaseRealSenseNode::SetBaseStream()
 
 void BaseRealSenseNode::publishPointCloud(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset)
 {
-    std::string frame_id = (_align_depth_filter->is_enabled() ? OPTICAL_FRAME_ID(COLOR) : OPTICAL_FRAME_ID(DEPTH));
+    std::string frame_id = OPTICAL_FRAME_ID(DEPTH);
     _pc_filter->Publish(pc, t, frameset, frame_id);
 }
 
@@ -962,7 +950,6 @@ bool BaseRealSenseNode::fillROSImageMsgAndReturnStatus(
     img_msg_ptr->width = width;
     img_msg_ptr->is_bigendian = false;
     img_msg_ptr->step = width * cv_matrix_image.elemSize();
-
     return true;
 }
 
