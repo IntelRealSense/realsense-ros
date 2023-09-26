@@ -40,8 +40,6 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'enable_infra',                 'default': 'false', 'description': 'enable infra0 stream'},
                            {'name': 'enable_infra1',                'default': 'false', 'description': 'enable infra1 stream'},
                            {'name': 'enable_infra2',                'default': 'false', 'description': 'enable infra2 stream'},
-                           {'name': 'enable_fisheye1',              'default': 'true', 'description': 'enable fisheye1 stream'},
-                           {'name': 'enable_fisheye2',              'default': 'true', 'description': 'enable fisheye2 stream'},
                            {'name': 'depth_module.profile',         'default': '0,0,0', 'description': 'depth module profile'},
                            {'name': 'depth_module.depth_format',    'default': 'Z16', 'description': 'depth stream format'},
                            {'name': 'depth_module.infra_format',    'default': 'RGB8', 'description': 'infra0 stream format'},
@@ -55,7 +53,6 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'depth_module.gain.1',          'default': '16', 'description': 'Depth module first gain value. Used for hdr_merge filter'},
                            {'name': 'depth_module.exposure.2',      'default': '1', 'description': 'Depth module second exposure value. Used for hdr_merge filter'},
                            {'name': 'depth_module.gain.2',          'default': '16', 'description': 'Depth module second gain value. Used for hdr_merge filter'},
-                           {'name': 'enable_confidence',            'default': 'true', 'description': 'enable confidence'},
                            {'name': 'enable_sync',                  'default': 'false', 'description': "'enable sync mode'"},
                            {'name': 'enable_rgbd',                  'default': 'false', 'description': "'enable rgbd topic'"},
                            {'name': 'enable_gyro',                  'default': 'false', 'description': "'enable gyro stream'"},
@@ -63,8 +60,6 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'gyro_fps',                     'default': '0', 'description': "''"},
                            {'name': 'accel_fps',                    'default': '0', 'description': "''"},
                            {'name': 'unite_imu_method',             'default': "0", 'description': '[0-None, 1-copy, 2-linear_interpolation]'},
-                           {'name': 'enable_pose',                  'default': 'true', 'description': "'enable pose stream'"},
-                           {'name': 'pose_fps',                     'default': '200', 'description': "''"},
                            {'name': 'clip_distance',                'default': '-2.', 'description': "''"},
                            {'name': 'angular_velocity_cov',         'default': '0.01', 'description': "''"},
                            {'name': 'linear_accel_cov',             'default': '0.01', 'description': "''"},
@@ -101,37 +96,18 @@ def yaml_to_dict(path_to_yaml):
 def launch_setup(context, params, param_name_suffix=''):
     _config_file = LaunchConfiguration('config_file' + param_name_suffix).perform(context)
     params_from_file = {} if _config_file == "''" else yaml_to_dict(_config_file)
-    # Realsense
-    if (os.getenv('ROS_DISTRO') == "dashing") or (os.getenv('ROS_DISTRO') == "eloquent"):
-        return [
-            launch_ros.actions.Node(
-                package='realsense2_camera',
-                node_namespace=LaunchConfiguration('camera_namespace' + param_name_suffix),
-                node_name=LaunchConfiguration('camera_name' + param_name_suffix),
-                node_executable='realsense2_camera_node',
-                prefix=['stdbuf -o L'],
-                parameters=[params
-                            , params_from_file
-                            ],
-                output=LaunchConfiguration('output' + param_name_suffix),
-                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level' + param_name_suffix)],
-                )
-            ]
-    else:
-        return [
-            launch_ros.actions.Node(
-                package='realsense2_camera',
-                namespace=LaunchConfiguration('camera_namespace' + param_name_suffix),
-                name=LaunchConfiguration('camera_name' + param_name_suffix),
-                executable='realsense2_camera_node',
-                parameters=[params
-                            , params_from_file
-                            ],
-                output=LaunchConfiguration('output' + param_name_suffix),
-                arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level' + param_name_suffix)],
-                emulate_tty=True,
-                )
-        ]
+    return [
+        launch_ros.actions.Node(
+            package='realsense2_camera',
+            namespace=LaunchConfiguration('camera_namespace' + param_name_suffix),
+            name=LaunchConfiguration('camera_name' + param_name_suffix),
+            executable='realsense2_camera_node',
+            parameters=[params, params_from_file],
+            output=LaunchConfiguration('output' + param_name_suffix),
+            arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level' + param_name_suffix)],
+            emulate_tty=True,
+            )
+    ]
 
 def generate_launch_description():
     return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [

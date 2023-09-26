@@ -176,12 +176,6 @@ void RosSensor::registerSensorParameters()
     {
         _profile_managers.push_back(profile_manager);
     }
-    profile_manager = std::make_shared<PoseProfilesManager>(_params.getParameters(), _logger);
-    profile_manager->registerProfileParameters(all_profiles, _update_sensor_func);
-    if (profile_manager->isTypeExist())
-    {
-        _profile_managers.push_back(profile_manager);
-    }
 }
 
 void RosSensor::runFirstFrameInitialization()
