@@ -28,7 +28,39 @@ FrameLatencyNode::FrameLatencyNode( const std::string & node_name,
 {
 }
 
-std::string topic_name = "/color/image_raw";
+std::string topic_name = "/camera/color/image_raw";
+std::string topic_type = "image";
+
+template <typename MsgType>
+void FrameLatencyNode::createListener(std::string topicName, const rmw_qos_profile_t qos_profile)
+{
+    _sub = this->create_subscription<MsgType>(
+                topicName,
+                rclcpp::QoS( rclcpp::QoSInitialization::from_rmw( qos_profile ),
+                            qos_profile ),
+                [&, this]( const std::shared_ptr< MsgType> msg ) {
+                    rclcpp::Time curr_time = this->get_clock()->now();
+                    auto latency = ( curr_time - msg->header.stamp ).seconds();
+                    ROS_INFO_STREAM( "Got msg with "<< msg->header.frame_id <<" frame id at address 0x"
+                                    << std::hex << reinterpret_cast< std::uintptr_t >( msg.get() )
+                                    << std::dec << " with latency of " << latency << " [sec]" );
+                } );
+}
+
+void FrameLatencyNode::createTFListener(std::string topicName, const rmw_qos_profile_t qos_profile)
+{
+    _sub = this->create_subscription<tf2_msgs::msg::TFMessage>(
+                topicName,
+                rclcpp::QoS( rclcpp::QoSInitialization::from_rmw( qos_profile ),
+                            qos_profile ),
+                [&, this]( const std::shared_ptr<tf2_msgs::msg::TFMessage> msg ) {
+                    rclcpp::Time curr_time = this->get_clock()->now();
+                    auto latency = ( curr_time - msg->transforms.back().header.stamp ).seconds();
+                    ROS_INFO_STREAM( "Got msg with "<< msg->transforms.back().header.frame_id <<" frame id at address 0x"
+                                    << std::hex << reinterpret_cast< std::uintptr_t >( msg.get() )
+                                    << std::dec << " with latency of " << latency << " [sec]" );
+                } );
+}
 
 FrameLatencyNode::FrameLatencyNode( const rclcpp::NodeOptions & node_options )
     : Node( "frame_latency", "/", node_options )
@@ -39,21 +71,28 @@ FrameLatencyNode::FrameLatencyNode( const rclcpp::NodeOptions & node_options )
                      << ( this->get_node_options().use_intra_process_comms() ? "ON" : "OFF" ) );
 
     topic_name = this->declare_parameter("topic_name", topic_name);
+    topic_type = this->declare_parameter("topic_type", topic_type);
 
     ROS_INFO_STREAM( "Subscribing to Topic: " << topic_name);
 
-    // Create a subscription on the input topic.
-    _sub = this->create_subscription< sensor_msgs::msg::Image >(
-        topic_name,
-        rclcpp::QoS( rclcpp::QoSInitialization::from_rmw( rmw_qos_profile_default ),
-                     rmw_qos_profile_default ),
-        [&, this]( const sensor_msgs::msg::Image::SharedPtr msg ) {
-            rclcpp::Time curr_time = this->get_clock()->now();
-            auto latency = ( curr_time - msg->header.stamp ).seconds();
-            ROS_INFO_STREAM( "Got msg with "<< msg->header.frame_id <<" frame id at address 0x"
-                             << std::hex << reinterpret_cast< std::uintptr_t >( msg.get() )
-                             << std::dec << " with latency of " << latency << " [sec]" );
-        } );
+    if (topic_type == "image")
+        createListener<sensor_msgs::msg::Image>(topic_name, rmw_qos_profile_default);
+    else if (topic_type == "points")
+        createListener<sensor_msgs::msg::PointCloud2>(topic_name, rmw_qos_profile_default);
+    else if (topic_type == "imu")
+        createListener<sensor_msgs::msg::Imu>(topic_name, rmw_qos_profile_sensor_data);
+    else if (topic_type == "metadata")
+        createListener<realsense2_camera_msgs::msg::Metadata>(topic_name, rmw_qos_profile_default);
+    else if (topic_type == "camera_info")
+        createListener<sensor_msgs::msg::CameraInfo>(topic_name, rmw_qos_profile_default);
+    else if (topic_type == "rgbd")
+        createListener<realsense2_camera_msgs::msg::RGBD>(topic_name, rmw_qos_profile_default);
+    else if (topic_type == "imu_info")
+        createListener<realsense2_camera_msgs::msg::IMUInfo>(topic_name, rmw_qos_profile_default);
+    else if (topic_type == "tf")
+        createTFListener(topic_name, rmw_qos_profile_default);
+    else
+        ROS_ERROR_STREAM("Specified message type '" << topic_type << "' is not supported");
 }
 
 #include "rclcpp_components/register_node_macro.hpp"
