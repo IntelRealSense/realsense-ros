@@ -113,11 +113,7 @@ namespace realsense2_camera
         try
         {
             ROS_DEBUG_STREAM("setParam::Setting parameter: " << param_name);
-#if defined(DASHING) || defined(ELOQUENT) || defined(FOXY)
-            //do nothing for old versions
-#else
-            descriptor.dynamic_typing=true; // Without this, undeclare_parameter() throws in Galactic onward.
-#endif
+            descriptor.dynamic_typing=true; // Without this, undeclare_parameter() throws error.
             if (!_node.get_parameter(param_name, result_value))
             {
                 result_value = _node.declare_parameter(param_name, initial_value, descriptor);

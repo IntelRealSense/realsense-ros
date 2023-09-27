@@ -17,11 +17,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
-#if defined( DASHING ) || defined( ELOQUENT )
-#include <image_transport/image_transport.h>
-#else
 #include <image_transport/image_transport.hpp>
-#endif
 
 namespace realsense2_camera {
 class image_publisher

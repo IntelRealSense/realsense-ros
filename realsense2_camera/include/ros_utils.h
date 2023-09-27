@@ -31,12 +31,8 @@ namespace realsense2_camera
     const stream_index_pair INFRA0{RS2_STREAM_INFRARED, 0};
     const stream_index_pair INFRA1{RS2_STREAM_INFRARED, 1};
     const stream_index_pair INFRA2{RS2_STREAM_INFRARED, 2};
-    const stream_index_pair FISHEYE{RS2_STREAM_FISHEYE, 0};
-    const stream_index_pair FISHEYE1{RS2_STREAM_FISHEYE, 1};
-    const stream_index_pair FISHEYE2{RS2_STREAM_FISHEYE, 2};
     const stream_index_pair GYRO{RS2_STREAM_GYRO, 0};
     const stream_index_pair ACCEL{RS2_STREAM_ACCEL, 0};
-    const stream_index_pair POSE{RS2_STREAM_POSE, 0};
 
     bool isValidCharInName(char c);
 

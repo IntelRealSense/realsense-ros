@@ -580,7 +580,7 @@ class RsTestNode(Node):
         super().create_subscription(msg_type, topic , self.rsCallback(topic,msg_type, store_raw_data), data_type)
         self.data[topic] = deque()
         self.frame_counter[topic] = 0
-        if (os.getenv('ROS_DISTRO') != "dashing") and (self.tfBuffer == None):
+        if (self.tfBuffer == None):
             self.tfBuffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, super())
 
