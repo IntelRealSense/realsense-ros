@@ -74,7 +74,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /camera1/depth/color/points
+        Value: /camera1/camera1/depth/color/points
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -108,7 +108,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /camera2/depth/color/points
+        Value: /camera2/camera2/depth/color/points
       Use Fixed Frame: true
       Use rainbow: true
       Value: true

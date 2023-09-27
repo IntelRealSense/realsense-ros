@@ -19,7 +19,7 @@
 # For each device, the parameter name was changed to include an index.
 # For example: to set camera_name for device1 set parameter camera_name1.
 # command line example:
-# ros2 launch realsense2_camera rs_dual_camera_launch.py camera_name1:=D400 device_type2:=l5. device_type1:=d4..
+# ros2 launch realsense2_camera rs_dual_camera_launch.py serial_no1:=<serial number of 1st camera> serial_no2:=<serial number of 2nd camera>
 
 """Launch realsense2_camera node."""
 import copy
@@ -68,7 +68,7 @@ def duplicate_params(general_params, posix):
     return local_params
     
 def launch_static_transform_publisher_node(context : LaunchContext):
-    # dummy static transformation from camera1 to camera2
+    # Static transformation from camera1 to camera2
     node = launch_ros.actions.Node(
             name = "my_static_transform_publisher",
             package = "tf2_ros",
@@ -104,6 +104,6 @@ def generate_launch_description():
             namespace='',
             executable='rviz2',
             name='rviz2',
-            arguments=['-d', [ThisLaunchFileDir(), '/dual_camera_pointcloud.rviz']]
+            arguments=['-d', [ThisLaunchFileDir(), '/rviz/dual_camera_pointcloud.rviz']]
         )
     ])
