@@ -12,11 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// DESCRIPTION: #
+// ------------ #
+// This tool created a node which can be used to calulate the specified topic's latency.
+// Input parameters: 
+//    - topic_name : <String>
+//          - topic to which latency need to be calculated 
+//    - topic_type : <String>
+//          - Message type of the topic.
+//          - Valid inputs: {'image','points','imu','metadata','camera_info','rgbd','imu_info','tf'}
+// Note: 
+//    - This tool doesn't support calulating latency for extrinsic topics.
+//      Because, those topics doesn't have timestamp in it and this tool uses
+//      that timestamp as an input to calculate the latency.
+//
+
 #include <sstream>
 #include <string>
 #include <frame_latency/frame_latency.h>
 #include <constants.h>
-// Node which receives sensor_msgs/Image messages and prints the image latency.
 
 using namespace rs2_ros::tools::frame_latency;
 
