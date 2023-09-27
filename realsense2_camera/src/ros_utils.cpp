@@ -111,10 +111,8 @@ static const rmw_qos_profile_t rmw_qos_profile_latched =
 
 const rmw_qos_profile_t qos_string_to_qos(std::string str)
 {
-#if !defined(DASHING) && !defined(ELOQUENT)
     if (str == "UNKNOWN")
         return rmw_qos_profile_unknown;
-#endif
     if (str == "SYSTEM_DEFAULT")
         return rmw_qos_profile_system_default;
     if (str == "DEFAULT")
@@ -133,10 +131,8 @@ const rmw_qos_profile_t qos_string_to_qos(std::string str)
 const std::string list_available_qos_strings()
 {
     std::stringstream res;
-#ifndef DASHING
-    res << "UNKNOWN" << "\n";
-#endif
-    res << "SYSTEM_DEFAULT" << "\n"
+    res << "UNKNOWN" << "\n"
+        << "SYSTEM_DEFAULT" << "\n"
         << "DEFAULT" << "\n"
         << "PARAMETER_EVENTS" << "\n"
         << "SERVICES_DEFAULT" << "\n"

@@ -19,18 +19,12 @@ from rclpy.node import Node
 from rclpy import qos
 from sensor_msgs.msg import Image as msg_Image
 import numpy as np
-import inspect
 import ctypes
 import struct
 import quaternion
-import os
-if (os.getenv('ROS_DISTRO') != "dashing"):
-    import tf2_ros
-if (os.getenv('ROS_DISTRO') == "humble"):
-    from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
-    from sensor_msgs_py import point_cloud2 as pc2
-# from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
-# import sensor_msgs.point_cloud2 as pc2
+import tf2_ros
+from sensor_msgs.msg import PointCloud2 as msg_PointCloud2
+from sensor_msgs_py import point_cloud2 as pc2
 from sensor_msgs.msg import Imu as msg_Imu
 
 try:
@@ -220,9 +214,8 @@ class CWaitForMessage:
             node.get_logger().info('Subscribing %s on topic: %s' % (theme_name, theme['topic']))
             self.func_data[theme_name]['sub'] = node.create_subscription(theme['msg_type'], theme['topic'], theme['callback'](theme_name), qos.qos_profile_sensor_data)
 
-        if (os.getenv('ROS_DISTRO') != "dashing"):
-            self.tfBuffer = tf2_ros.Buffer()
-            self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, node)
+        self.tfBuffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tfBuffer, node)
 
         self.prev_time = time.time()
         break_timeout = False

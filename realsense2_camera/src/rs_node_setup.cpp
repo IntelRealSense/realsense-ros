@@ -136,8 +136,7 @@ void BaseRealSenseNode::setAvailableSensors()
         const std::string module_name(rs2_to_ros(sensor.get_info(RS2_CAMERA_INFO_NAME)));
         std::unique_ptr<RosSensor> rosSensor;
         if (sensor.is<rs2::depth_sensor>() ||
-            sensor.is<rs2::color_sensor>() ||
-            sensor.is<rs2::fisheye_sensor>())
+            sensor.is<rs2::color_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as VideoSensor.");
             rosSensor = std::make_unique<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, _use_intra_process, _dev.is<playback>());
@@ -146,11 +145,6 @@ void BaseRealSenseNode::setAvailableSensors()
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as ImuSensor.");
             rosSensor = std::make_unique<RosSensor>(sensor, _parameters, imu_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, false, _dev.is<playback>());
-        }
-        else if (sensor.is<rs2::pose_sensor>())
-        {
-            ROS_DEBUG_STREAM("Set " << module_name << " as PoseSensor.");
-            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, multiple_message_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, false, _dev.is<playback>());
         }
         else
         {
@@ -285,15 +279,8 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             IMUInfo info_msg = getImuInfo(profile);
             _imu_info_publishers[sip]->publish(info_msg);
         }
-        else if (profile.is<rs2::pose_stream_profile>())
-        {
-            std::stringstream data_topic_name, info_topic_name;
-            data_topic_name << "~/" << stream_name << "/sample";
-            _odom_publisher = _node.create_publisher<nav_msgs::msg::Odometry>(data_topic_name.str(),
-                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
-        }
         std::string topic_metadata("~/" + stream_name + "/metadata");
-        _metadata_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(topic_metadata,
+        _metadata_publishers[sip] = _node.create_publisher<realsense2_camera_msgs::msg::Metadata>(topic_metadata, 
             rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
 
         if (!((rs2::stream_profile)profile==(rs2::stream_profile)_base_profile))
@@ -351,7 +338,7 @@ void BaseRealSenseNode::updateSensors()
             std::vector<stream_profile> wanted_profiles;
 
             bool is_profile_changed(sensor->getUpdatedProfiles(wanted_profiles));
-            bool is_video_sensor = (sensor->is<rs2::depth_sensor>() || sensor->is<rs2::color_sensor>() || sensor->is<rs2::fisheye_sensor>());
+            bool is_video_sensor = (sensor->is<rs2::depth_sensor>() || sensor->is<rs2::color_sensor>());
 
             // do all updates if profile has been changed, or if the align depth filter status has been changed
             // and we are on a video sensor. TODO: explore better options to monitor and update changes
