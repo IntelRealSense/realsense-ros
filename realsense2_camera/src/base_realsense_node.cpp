@@ -22,10 +22,7 @@
 
 // Header files for disabling intra-process comms for static broadcaster.
 #include <rclcpp/publisher_options.hpp>
-// This header file is not available in ROS 2 Dashing.
-#ifndef DASHING
 #include <tf2_ros/qos.hpp>
-#endif
 
 using namespace realsense2_camera;
 
@@ -115,7 +112,6 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _is_accel_enabled(false),
     _is_gyro_enabled(false),
     _pointcloud(false),
-    _publish_odom_tf(false),
     _imu_sync_method(imu_sync_method::NONE),
     _is_profile_changed(false),
     _is_align_depth_changed(false)
@@ -630,9 +626,6 @@ void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_met
             if (sync_method > imu_sync_method::NONE) imu_callback_sync(frame, sync_method);
             else imu_callback(frame);
             break;
-        case RS2_STREAM_POSE:
-            pose_callback(frame);
-            break;
         default:
             frame_callback(frame);
     }
@@ -672,17 +665,7 @@ rclcpp::Time BaseRealSenseNode::frameSystemTimeSec(rs2::frame frame)
     {
         double elapsed_camera_ns = millisecondsToNanoseconds(timestamp_ms - _camera_time_base);
 
-        /*
-        Fixing deprecated-declarations compilation warning.
-        Duration(rcl_duration_value_t) is deprecated in favor of 
-        static Duration::from_nanoseconds(rcl_duration_value_t)
-        starting from GALACTIC.
-        */
-#if defined(FOXY) || defined(ELOQUENT) || defined(DASHING)
-        auto duration = rclcpp::Duration(elapsed_camera_ns);
-#else
         auto duration = rclcpp::Duration::from_nanoseconds(elapsed_camera_ns);
-#endif
 
         return rclcpp::Time(_ros_time_base + duration);
     }
@@ -788,7 +771,7 @@ void BaseRealSenseNode::updateExtrinsicsCalibData(const rs2::video_stream_profil
 
 void BaseRealSenseNode::SetBaseStream()
 {
-    const std::vector<stream_index_pair> base_stream_priority = {DEPTH, POSE};
+    const std::vector<stream_index_pair> base_stream_priority = {DEPTH};
     std::set<stream_index_pair> checked_sips;
     std::map<stream_index_pair, rs2::stream_profile> available_profiles;
     for(auto&& sensor : _available_ros_sensors)
@@ -896,7 +879,6 @@ bool BaseRealSenseNode::fillROSImageMsgAndReturnStatus(
     img_msg_ptr->width = width;
     img_msg_ptr->is_bigendian = false;
     img_msg_ptr->step = width * cv_matrix_image.elemSize();
-
     return true;
 }
 

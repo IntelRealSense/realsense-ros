@@ -32,7 +32,6 @@ aluminum peripherial evaluation case.
    publishing TF values with actual calibrated camera extrinsic values -->
   <xacro:property name="r430_cam_depth_to_infra1_offset" value="-0.025"/>
   <xacro:property name="r430_cam_depth_to_infra2_offset" value="0.025"/>
-  <xacro:property name="r430_cam_depth_to_fisheye_offset" value="0.042"/>
 
   <!-- The following values model the aluminum peripherial case for the
     R430 camera, with the camera joint represented by the actual 
@@ -125,20 +124,6 @@ aluminum peripherial evaluation case.
       </joint>
       <link name="${name}_infra2_optical_frame"/>
 
-      <!-- camera fisheye joints and links -->
-      <joint name="${name}_fisheye_joint" type="fixed">
-        <origin xyz="0 ${r430_cam_depth_to_fisheye_offset} 0" rpy="0 0 0" />
-        <parent link="${name}_depth_frame" />
-        <child link="${name}_fisheye_frame" />
-      </joint>
-      <link name="${name}_fisheye_frame"/>
-
-      <joint name="${name}_fisheye_optical_joint" type="fixed">
-        <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}" />
-        <parent link="${name}_fisheye_frame" />
-        <child link="${name}_fisheye_optical_frame" />
-      </joint>
-      <link name="${name}_fisheye_optical_frame"/>
     </xacro:if>
   </xacro:macro>
 </robot>

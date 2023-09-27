@@ -146,7 +146,7 @@ class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
             self.shutdown()
     def process_data(self, themes):
         #print ('Gathering static transforms')
-        frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame', 'camera_fisheye_frame', 'camera_pose']
+        frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame']
         coupled_frame_ids = [xx for xx in itertools.combinations(frame_ids, 2)]
         res = {}
         for couple in coupled_frame_ids:

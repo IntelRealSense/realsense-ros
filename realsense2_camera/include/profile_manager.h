@@ -103,12 +103,4 @@ namespace realsense2_camera
         protected:
             std::map<stream_index_pair, std::shared_ptr<int> > _fps;
     };
-
-    class PoseProfilesManager : public MotionProfilesManager
-    {
-        public:
-            using MotionProfilesManager::MotionProfilesManager;
-            void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) override;
-    };
-
 }

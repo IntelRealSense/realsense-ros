@@ -21,8 +21,7 @@ import rclpy
 from rclpy.node import Node
 from importRosbag.importRosbag import importRosbag
 import numpy as np
-if (os.getenv('ROS_DISTRO') != "dashing"):
-    import tf2_ros
+import tf2_ros
 import itertools
 import subprocess
 import time
@@ -277,20 +276,16 @@ def print_results(results):
 
 def get_tfs(coupled_frame_ids):
     res = dict()
-    if (os.getenv('ROS_DISTRO') == "dashing"):
-        for couple in coupled_frame_ids:
+    tfBuffer = tf2_ros.Buffer()
+    node = Node('tf_listener')
+    listener = tf2_ros.TransformListener(tfBuffer, node)
+    rclpy.spin_once(node)
+    for couple in coupled_frame_ids:
+        from_id, to_id = couple
+        if (tfBuffer.can_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6))):
+            res[couple] = tfBuffer.lookup_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=1e6)).transform
+        else:
             res[couple] = None
-    else:
-        tfBuffer = tf2_ros.Buffer()
-        node = Node('tf_listener')
-        listener = tf2_ros.TransformListener(tfBuffer, node)
-        rclpy.spin_once(node)
-        for couple in coupled_frame_ids:
-            from_id, to_id = couple
-            if (tfBuffer.can_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=3e6))):
-                res[couple] = tfBuffer.lookup_transform(from_id, to_id, rclpy.time.Time(), rclpy.time.Duration(nanoseconds=1e6)).transform
-            else:
-                res[couple] = None
     return res
 
 def kill_realsense2_camera_node():
@@ -338,7 +333,7 @@ def run_tests(tests):
             listener_res = msg_retriever.wait_for_messages(themes)
             if 'static_tf' in [test['type'] for test in rec_tests]:
                 print ('Gathering static transforms')
-                frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame', 'camera_fisheye_frame', 'camera_pose']
+                frame_ids = ['camera_link', 'camera_depth_frame', 'camera_infra1_frame', 'camera_infra2_frame', 'camera_color_frame']
                 coupled_frame_ids = [xx for xx in itertools.combinations(frame_ids, 2)]
                 listener_res['static_tf'] = get_tfs(coupled_frame_ids)
 
@@ -372,17 +367,12 @@ def main():
                  #{'name': 'points_cloud_1', 'type': 'pointscloud_avg', 'params': {'rosbag_filename': outdoors_filename, 'pointcloud.enable': 'true'}},
                  {'name': 'depth_w_cloud_1', 'type': 'depth_avg', 'params': {'rosbag_filename': outdoors_filename, 'pointcloud.enable': 'true'}},
                  {'name': 'align_depth_color_1', 'type': 'align_depth_color', 'params': {'rosbag_filename': outdoors_filename, 'align_depth.enable':'true'}},
-                 {'name': 'align_depth_ir1_1', 'type': 'align_depth_ir1', 'params': {'rosbag_filename': outdoors_filename, 'align_depth.enable': 'true',
-                                                                                     'enable_infra1':'true', 'enable_infra2':'true'}},
+                 {'name': 'align_depth_ir1_1', 'type': 'align_depth_ir1', 'params': {'rosbag_filename': outdoors_filename, 'align_depth.enable': 'true', 'enable_infra1':'true', 'enable_infra2':'true'}},
                  {'name': 'depth_avg_decimation_1', 'type': 'depth_avg_decimation', 'params': {'rosbag_filename': outdoors_filename, 'decimation_filter.enable':'true'}},
                  {'name': 'align_depth_ir1_decimation_1', 'type': 'align_depth_ir1_decimation', 'params': {'rosbag_filename': outdoors_filename, 'align_depth.enable':'true', 'decimation_filter.enable':'true'}},
-                 ]
-    if (os.getenv('ROS_DISTRO') != "dashing"):
-        all_tests.extend([
-                    {'name': 'static_tf_1', 'type': 'static_tf', 'params': {'rosbag_filename': outdoors_filename,
-                                                                                     'enable_infra1':'true', 'enable_infra2':'true'}}, 
-                    {'name': 'accel_up_1', 'type': 'accel_up', 'params': {'rosbag_filename': './records/D435i_Depth_and_IMU_Stands_still.bag', 'enable_accel': 'true', 'accel_fps': '0.0'}},
-        ])
+                 {'name': 'static_tf_1', 'type': 'static_tf', 'params': {'rosbag_filename': outdoors_filename, 'enable_infra1':'true', 'enable_infra2':'true'}}, 
+                 {'name': 'accel_up_1', 'type': 'accel_up', 'params': {'rosbag_filename': './records/D435i_Depth_and_IMU_Stands_still.bag', 'enable_accel': 'true', 'accel_fps': '0.0'}},
+        ]
 
     # Normalize parameters:
     for test in all_tests:
