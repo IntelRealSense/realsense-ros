@@ -34,7 +34,7 @@ import rs_launch
 
 local_parameters = [{'name': 'camera_name',         'default': 'camera', 'description': 'camera unique name'},
                     {'name': 'camera_namespace',    'default': 'camera', 'description': 'camera namespace'},
-                    {'name': 'config_file',         'default': [ThisLaunchFileDir(), "/config.yaml"], 'description': 'yaml config file'},
+                    {'name': 'config_file',         'default': [ThisLaunchFileDir(), "/config/config.yaml"], 'description': 'yaml config file'},
                    ]
 
 def set_configurable_parameters(local_params):
