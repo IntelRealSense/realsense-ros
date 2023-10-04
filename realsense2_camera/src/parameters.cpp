@@ -24,6 +24,10 @@ void BaseRealSenseNode::getParameters()
 
     std::string param_name;
 
+    param_name = std::string("camera_name");
+    _camera_name = _parameters->setParam<std::string>(param_name, "camera");
+    _parameters_names.push_back(param_name);
+
     param_name = std::string("publish_tf");
     _publish_tf = _parameters->setParam<bool>(param_name, PUBLISH_TF);
     _parameters_names.push_back(param_name);
