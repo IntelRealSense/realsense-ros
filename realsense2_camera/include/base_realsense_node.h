@@ -58,11 +58,11 @@ using realsense2_camera_msgs::msg::Extrinsics;
 using realsense2_camera_msgs::msg::IMUInfo;
 using realsense2_camera_msgs::msg::RGBD;
 
-#define FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_" << STREAM_NAME(sip) << "_frame")).str()
-#define IMU_FRAME_ID (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_imu_frame")).str()
-#define IMU_OPTICAL_FRAME_ID (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_imu_optical_frame")).str()
-#define OPTICAL_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_" << STREAM_NAME(sip) << "_optical_frame")).str()
-#define ALIGNED_DEPTH_TO_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_" << "aligned_depth_to_" << STREAM_NAME(sip) << "_frame")).str()
+#define FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << _frame_prefix << "_" << STREAM_NAME(sip) << "_frame")).str()
+#define IMU_FRAME_ID (static_cast<std::ostringstream&&>(std::ostringstream() << _frame_prefix << "_imu_frame")).str()
+#define IMU_OPTICAL_FRAME_ID (static_cast<std::ostringstream&&>(std::ostringstream() << _frame_prefix << "_imu_optical_frame")).str()
+#define OPTICAL_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << _frame_prefix << "_" << STREAM_NAME(sip) << "_optical_frame")).str()
+#define ALIGNED_DEPTH_TO_FRAME_ID(sip) (static_cast<std::ostringstream&&>(std::ostringstream() << _frame_prefix << "_" << "aligned_depth_to_" << STREAM_NAME(sip) << "_frame")).str()
 
 namespace realsense2_camera
 {
@@ -142,7 +142,7 @@ namespace realsense2_camera
         std::string _base_frame_id;
         bool _is_running;
         rclcpp::Node& _node;
-        std::string _camera_name;
+        std::string _frame_prefix;
         std::vector<rs2_option> _monitor_options;
         rclcpp::Logger _logger;
         rclcpp::Service<realsense2_camera_msgs::srv::DeviceInfo>::SharedPtr _device_info_srv;

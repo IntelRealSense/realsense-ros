@@ -121,9 +121,6 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
         ROS_INFO("Intra-Process communication enabled");
     }
 
-    // Get node name
-    _camera_name = _node.get_name();
-
     initializeFormatsMaps();
     _monitor_options = {RS2_OPTION_ASIC_TEMPERATURE, RS2_OPTION_PROJECTOR_TEMPERATURE};
 }

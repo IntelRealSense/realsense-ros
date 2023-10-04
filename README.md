@@ -353,6 +353,9 @@ User can set the camera name and camera namespace, to distinguish between camera
   - On occasions the device was not closed properly and due to firmware issues needs to reset. 
   - If set to true, the device will reset prior to usage.
   - For example: `initial_reset:=true`
+- **frame_prefix**:
+  - String param - prefixed to frame_id & child_frame_id of the topics' header.
+  - Default prefix - node's name.
 - **base_frame_id**: defines the frame_id all static transformations refers to.
 - **clip_distance**:
   - Remove from the depth image all values above a given value (meters). Disable by giving negative value (default)

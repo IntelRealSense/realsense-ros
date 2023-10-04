@@ -24,6 +24,10 @@ void BaseRealSenseNode::getParameters()
 
     std::string param_name;
 
+    param_name = std::string("frame_prefix");
+    _frame_prefix = _parameters->setParam<std::string>(param_name, _node.get_name());
+    _parameters_names.push_back(param_name);
+
     param_name = std::string("publish_tf");
     _publish_tf = _parameters->setParam<bool>(param_name, PUBLISH_TF);
     _parameters_names.push_back(param_name);
@@ -76,7 +80,7 @@ void BaseRealSenseNode::getParameters()
 
     param_name = std::string("base_frame_id");
     _base_frame_id = _parameters->setParam<std::string>(param_name, DEFAULT_BASE_FRAME_ID);
-    _base_frame_id = (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_" << _base_frame_id)).str();
+    _base_frame_id = (static_cast<std::ostringstream&&>(std::ostringstream() << _frame_prefix << "_" << _base_frame_id)).str();
     _parameters_names.push_back(param_name);
 }
 
