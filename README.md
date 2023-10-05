@@ -369,6 +369,10 @@ User can set the camera name and camera namespace, to distinguish between camera
   - double, positive values set the period between diagnostics updates on the `/diagnostics` topic.
   - 0 or negative values mean no diagnostics topic is published. Defaults to 0.</br>
 The `/diagnostics` topic includes information regarding the device temperatures and actual frequency of the enabled streams.
+- **json_file_path**:
+  - JSON file with advanced configurations like depth presets.
+  - The user can get predefined depth presets from 'realsense-viewer' or https://dev.intelrealsense.com/docs/d400-series-visual-presets based on their usecase.
+  - Note: Once these configurations are loaded, it will remain in the device until there is a reset or power cycle.
 
 <hr>
 
@@ -603,6 +607,40 @@ The launch file accepts a parameter, `intra_process_comms`, controlling whether 
 ```bash
 ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comms:=true
 ```
+
+<hr>
+
+### Providing launch params in YAML file:
+Generally, the launch params can be provided in 'ros2 launch' command. For example:
+```bash
+ros2 launch realsense2_camera rs_launch.py enable_depth:=true enable_color:=true
+```
+
+Alternatively, they can be defined in a YAML file and that YAML file can be passed through 'config_file' param.
+For example:
+```bash
+ros2 launch realsense2_camera rs_launch.py config_file:='/full/path/to/config.yaml'
+```
+
+The yaml file should have the launch params' in the following syntax:
+  - <`param_name`>: <`value`>
+
+Example `config.yaml` file:
+```bash
+enable_depth: true
+enable_color: true
+rgb_camera.color_format: RGB8
+tf_publish_rate: 10.0
+```
+
+Note:
+- If a same param is set in both YAML file and in ros2 launch command, the value set in YAML will have high priority. For example:
+  - Let's say, in command line, 'enable_depth' is set to true:
+    - `ros2 launch realsense2_camera rs_launch.py config_file:='/full/path/to/config.yaml' enable_depth:=true`
+  - And in config.yaml, 'enable_depth' is set to false:
+    - `enable_depth: false`
+  - The param provided in command line during launch will be overwritten by the value provided in YAML file.
+    - So, the result will be `enable_depth = false`
 
 </details>
 
