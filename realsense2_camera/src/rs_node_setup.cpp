@@ -237,7 +237,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             _info_publishers[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(camera_info.str(),
                                     rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
 
-            if (_align_depth_filter->is_enabled() && (sip != DEPTH) && sip.second < 2)
+            if (_align_depth_filter->is_enabled() && (sip == COLOR))
             {
                 std::stringstream aligned_image_raw, aligned_camera_info;
                 aligned_image_raw << "~/" << "aligned_depth_to_" << stream_name << "/image_raw";
