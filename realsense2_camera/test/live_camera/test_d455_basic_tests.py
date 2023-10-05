@@ -29,6 +29,7 @@ import numpy as np
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../utils"))
 import pytest_rs_utils
+import pytest_live_camera_utils
 from pytest_rs_utils import launch_descr_with_parameters
 
 from pytest_rs_utils import get_rosbag_file_path
@@ -55,6 +56,10 @@ machines that don't have the D455 connected.
 class TestD455_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
     def test_D455_Change_Resolution(self,launch_descr_with_parameters):
         params = launch_descr_with_parameters[1]
+        if pytest_live_camera_utils.check_if_camera_connected(params['device_type']) == False:
+            print("Device not found? : " + params['device_type'])
+            return
+
         themes = [
         {'topic':get_node_heirarchy(params)+'/color/image_raw',
          'msg_type':msg_Image,

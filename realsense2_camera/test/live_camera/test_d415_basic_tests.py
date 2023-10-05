@@ -55,8 +55,12 @@ machines that don't have the D415 connected.
 class TestD415_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
     def test_D415_Change_Resolution(self,launch_descr_with_parameters):
         params = launch_descr_with_parameters[1]
+        if pytest_live_camera_utils.check_if_camera_connected(params['device_type']) == False:
+            print("Device not found? : " + params['device_type'])
+            return
         failed_tests = []
         num_passed = 0
+
         num_failed = 0
         themes = [{'topic':get_node_heirarchy(params)+'/color/image_raw', 'msg_type':msg_Image,'expected_data_chunks':1}]
         config = pytest_live_camera_utils.get_profile_config(get_node_heirarchy(params))
