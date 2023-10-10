@@ -8,5 +8,5 @@ The aligned image will be published to the topic "/aligned_depth_to_color/image_
 
 Also, align depth to color can enabled by following cmd:
 ```
-ros2 launch realsense2_camera rs_launch.py align_depth.enable:=true"
+ros2 launch realsense2_camera rs_launch.py align_depth.enable:=true
 ```
