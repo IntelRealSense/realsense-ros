@@ -102,6 +102,24 @@ void RosSensor::UpdateSequenceIdCallback()
     if (!supports(RS2_OPTION_SEQUENCE_ID))
         return;
 
+    bool is_hdr_enabled = static_cast<bool>(get_option(RS2_OPTION_HDR_ENABLED));
+
+    // Deleter to revert back the RS2_OPTION_HDR_ENABLED value at the end.
+    auto deleter_to_revert_hdr = std::unique_ptr<bool, std::function<void(bool*)>>(&is_hdr_enabled,
+                                                [&](bool* enable_back_hdr) {
+                                                    if (enable_back_hdr && *enable_back_hdr)
+                                                    {
+                                                        set_option(RS2_OPTION_HDR_ENABLED, true);
+                                                    }
+                                                });
+
+    // From FW version 5.14.x.x, if HDR is enabled, updating UVC controls like exposure, gain , etc are restricted.
+    // So, disable it before updating.
+    if (is_hdr_enabled)
+    {
+        set_option(RS2_OPTION_HDR_ENABLED, false);
+    }
+
     int original_seq_id = static_cast<int>(get_option(RS2_OPTION_SEQUENCE_ID));   // To Set back to default.
     std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
     
@@ -146,7 +164,6 @@ void RosSensor::UpdateSequenceIdCallback()
         ROS_WARN_STREAM("Setting alternative callback: Failed to set parameter:" << option_name << " : " << e.what());
         return;
     }
-
 }
 
 void RosSensor::set_sensor_parameter_to_ros(rs2_option option)
