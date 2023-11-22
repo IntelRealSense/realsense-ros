@@ -81,6 +81,19 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'hdr_merge.enable',             'default': 'false', 'description': 'hdr_merge filter enablement flag'},
                            {'name': 'wait_for_device_timeout',      'default': '-1.', 'description': 'Timeout for waiting for device to connect (Seconds)'},
                            {'name': 'reconnect_timeout',            'default': '6.', 'description': 'Timeout(seconds) between consequtive reconnection attempts'},
+                           {'name': 'accel_info_qos',    'default': 'DEFAULT', 'description': 'set qos profile for accel info'},
+                           {'name': 'accel_qos',    'default': 'SENSOR_DATA', 'description': 'set qos profile for accel'},
+                           {'name': 'color_info_qos',    'default': 'DEFAULT', 'description': 'set qos profile for color info'},
+                           {'name': 'color_qos',    'default': 'SYSTEM_DEFAULT', 'description': 'set qos profile for color'},
+                           {'name': 'depth_info_qos',    'default': 'DEFAULT', 'description': 'set qos profile for depth info'},
+                           {'name': 'depth_qos',    'default': 'SYSTEM_DEFAULT', 'description': 'set qos profile for depth'},
+                           {'name': 'gyro_info_qos',    'default': 'DEFAULT', 'description': 'set qos profile for gyro info'},
+                           {'name': 'gyro_qos',    'default': 'SENSOR_DATA', 'description': 'set qos profile for gyro'},
+                           {'name': 'infra1_info_qos',    'default': 'DEFAULT', 'description': 'set qos profile for infra1 info'},
+                           {'name': 'infra1_qos',    'default': 'SYSTEM_DEFAULT', 'description': 'set qos profile for infra1'},
+                           {'name': 'infra2_info_qos',    'default': 'DEFAULT', 'description': 'set qos profile for infra2 info'},
+                           {'name': 'infra2_qos',    'default': 'SYSTEM_DEFAULT', 'description': 'set qos profile for infra2'},
+                           {'name': 'pointcloud.pointcloud_qos',    'default': 'DEFAULT', 'description': 'set qos profile for pointcloud'},
                           ]
 
 def declare_configurable_parameters(parameters):
