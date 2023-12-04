@@ -23,29 +23,27 @@
 <hr>
 
 ## Table of contents
-  * [ROS1 and ROS2 legacy](#legacy)
+  * [ROS1 and ROS2 legacy](#ros1-and-ros2-legacy)
   * [Installation](#installation)
   * [Usage](#usage)
-     * [Starting the camera node](#start-camera-node)
-     * [Camera name and namespace](#camera-name-and-namespace)
+     * [Starting the camera node](#start-the-camera-node)
+     * [Camera name and namespace](#camera-name-and-camera-namespace)
      * [Parameters](#parameters)
-     * [ROS2-vs-Optical Coordination Systems](#coordination)
-     * [TF from coordinate A to coordinate B](#tfs)
-     * [Extrinsics from sensor A to sensor B](#extrinsics)
-     * [Topics](#topics)
-     * [RGBD Topic](#rgbd)
-     * [Metadata Topic](#metadata)
-     * [Post-Processing Filters](#filters)
-     * [Available Services](#services)
-     * [Efficient intra-process communication](#intra-process)
+     * [ROS2-vs-Optical Coordination Systems](#ros2robot-vs-opticalcamera-coordination-systems)
+     * [TF from coordinate A to coordinate B](#tf-from-coordinate-a-to-coordinate-b)
+     * [Extrinsics from sensor A to sensor B](#extrinsics-from-sensor-a-to-sensor-b)
+     * [Topics](#published-topics)
+     * [RGBD Topic](#rgbd-topic)
+     * [Metadata Topic](#metadata-topic)
+     * [Post-Processing Filters](#post-processing-filters)
+     * [Available Services](#available-services)
+     * [Efficient intra-process communication](#efficient-intra-process-communication)
   * [Contributing](CONTRIBUTING.md)
   * [License](LICENSE)
 
 <hr>
 
-<h2 id="legacy">
-  Legacy
-</h2>
+# ROS1 and ROS2 Legacy
 
 <details>
   <summary>
@@ -80,9 +78,7 @@
 </details>
     
 
-<h2 id="installation">
-  Installation
-</h2>
+# Installation
   
 <details>
   <summary>
@@ -165,13 +161,9 @@
 
 <hr>
 
-<h2 id="usage">
-  Usage
-</h2>
+# Usage
 
-<h3 id="start-camera-node">
-  Start the camera node
-</h3>
+## Start the camera node
   
   #### with ros2 run:
     ros2 run realsense2_camera realsense2_camera_node
@@ -184,9 +176,7 @@
 
 <hr>
 
-<h3 id="camera-name-and-namespace">
-  Camera Name And Camera Namespace
-</h3>
+## Camera Name And Camera Namespace
 
 User can set the camera name and camera namespace, to distinguish between cameras and platforms, which helps identifying the right nodes and topics to work with.
 
@@ -247,13 +237,9 @@ User can set the camera name and camera namespace, to distinguish between camera
 /camera/camera/device_info
 ```
 
-
 <hr>
 
-
-<h3 id="parameters">
-  Parameters
-<h3>
+## Parameters
 
 ### Available Parameters:
 - For the entire list of parameters type `ros2 param list`.
@@ -371,9 +357,7 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 
 <hr>
 
-<h3 id="coordination">
-  ROS2(Robot) vs Optical(Camera) Coordination Systems:
-</h3>
+## ROS2(Robot) vs Optical(Camera) Coordination Systems:
 
 - Point Of View:
   - Imagine we are standing behind of the camera, and looking forward.
@@ -389,9 +373,7 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 
 <hr>
 
-<h3 id="tfs">
-   TF from coordinate A to coordinate B:
-</h3>
+## TF from coordinate A to coordinate B:
 
 - TF msg expresses a transform from coordinate frame "header.frame_id" (source) to the coordinate frame child_frame_id (destination) [Reference](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Transform.html)
 - In RealSense cameras, the origin point (0,0,0) is taken from the left IR (infra1) position and named as "camera_link" frame
@@ -403,10 +385,7 @@ The `/diagnostics` topic includes information regarding the device temperatures 
 
 <hr>
 
-<h3 id="extrinsics">
-   Extrinsics from sensor A to sensor B:
-</h3>
-
+## Extrinsics from sensor A to sensor B:
 
 - Extrinsic from sensor A to sensor B means the position and orientation of sensor A relative to sensor B.
 - Imagine that B is the origin (0,0,0), then the Extrensics(A->B) describes where is sensor A relative to sensor B.
@@ -441,9 +420,7 @@ translation:
 
 <hr>
 
-<h3 id="topics">
-  Published Topics
-</h3>
+## Published Topics
   
 The published topics differ according to the device and parameters.
 After running the above command with D435i attached, the following list of topics will be available (This is a partial list. For full one type `ros2 topic list`):
@@ -485,9 +462,7 @@ Enabling stream adds matching topics. For instance, enabling the gyro and accel 
 
 <hr>
 
-<h3 id="rgbd">
-  RGBD Topic
-</h3>
+## RGBD Topic
 
 RGBD new topic, publishing [RGB + Depth] in the same message (see RGBD.msg for reference). For now, works only with depth aligned to color images, as color and depth images are synchronized by frame time tag.
 
@@ -507,9 +482,7 @@ ros2 launch realsense2_camera rs_launch.py enable_rgbd:=true enable_sync:=true a
 
 <hr>
 
-<h3 id="metadata">
-  Metadata topic
-</h3>
+## Metadata topic
   
 The metadata messages store the camera's available metadata in a *json* format. To learn more, a dedicated script for echoing a metadata topic in runtime is attached. For instance, use the following command to echo the camera/depth/metadata topic:
 ```
@@ -518,10 +491,8 @@ python3 src/realsense-ros/realsense2_camera/scripts/echo_metadada.py /camera/cam
   
 <hr>
 
-<h3 id="filters">
-  Post-Processing Filters
-</h3>
-  
+## Post-Processing Filters
+
 The following post processing filters are available:
  - ```align_depth```: If enabled, will publish the depth image aligned to the color image on the topic `/camera/camera/aligned_depth_to_color/image_raw`.
    - The pointcloud, if created, will be based on the aligned depth image.
@@ -554,17 +525,13 @@ Each of the above filters have it's own parameters, following the naming convent
 
 <hr>
 
-<h3 id="services">
-  Available services
-</h3>
+## Available services
   
 - device_info : retrieve information about the device - serial_number, firmware_version etc. Type `ros2 interface show realsense2_camera_msgs/srv/DeviceInfo` for the full list. Call example: `ros2 service call /camera/camera/device_info realsense2_camera_msgs/srv/DeviceInfo`
 
 <hr>
 
-<h3 id="intra-process">
-  Efficient intra-process communication:
-</h3>
+## Efficient intra-process communication:
   
 Our ROS2 Wrapper node supports zero-copy communications if loaded in the same process as a subscriber node. This can reduce copy times on image/pointcloud topics, especially with big frame resolutions and high FPS.
 
