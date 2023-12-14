@@ -25,6 +25,8 @@ namespace realsense2_camera
         _params_backend.add_on_set_parameters_callback(
             [this](const std::vector<rclcpp::Parameter> & parameters) 
                 { 
+                    rcl_interfaces::msg::SetParametersResult result;
+                    result.successful = true;
                     for (const auto & parameter : parameters) 
                     {
                         try
@@ -43,15 +45,15 @@ namespace realsense2_camera
                                 }
                             }
                         }
-                        catch(const std::out_of_range& e)
-                        {}
                         catch(const std::exception& e)
                         {
-                            std::cerr << e.what() << ":" << parameter.get_name() << '\n';
+                            result.successful = false;
+                            result.reason = e.what();
+                            ROS_WARN_STREAM("Set parameter {" << parameter.get_name()
+                                                            << "} failed: " << e.what());
                         }                            
                     }
-                    rcl_interfaces::msg::SetParametersResult result;
-                    result.successful = true;
+
                     return result;
                 });
         monitor_update_functions(); // Start parameters update thread

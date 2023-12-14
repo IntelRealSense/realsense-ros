@@ -505,7 +505,7 @@ The following post processing filters are available:
   - `depth_module.hdr_enabled`: to enable/disable HDR
   - The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.
     - From FW versions 5.14.x.x and above, if HDR is enabled, the preset configs (like exposure, gain, etc.,) cannot be updated.
-    - The user should disable the HDR first using `depth_module.hdr_enabled` parameter and then, update the required presets.
+      - Disable the HDR first using `depth_module.hdr_enabled` parameter and then, update the required presets.
   - To view the effect on the infrared image for each sequence id use the `filter_by_sequence_id.sequence_id` parameter.
   - To initialize these parameters in start time use the following parameters:
     - `depth_module.exposure.1`
