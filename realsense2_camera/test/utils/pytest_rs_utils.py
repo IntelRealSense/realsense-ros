@@ -808,6 +808,20 @@ class RsTestBaseClass():
                     pass
                 return False
 
+    def get_param(self, req):
+        future = self.get_param_if.call_async(req)
+        while rclpy.ok():
+            rclpy.spin_once(self.node)
+            if future.done():
+                try:
+                    response = future.result()
+                    return response.values[0]
+                except Exception as e:
+                    print("exception raised:")
+                    print(e)
+                    pass
+                return None
+
     def set_string_param(self, param_name, param_value):
         req = SetParameters.Request()
         new_param_value = ParameterValue(type=ParameterType.PARAMETER_STRING, string_value=param_value)
@@ -825,6 +839,15 @@ class RsTestBaseClass():
         new_param_value = ParameterValue(type=ParameterType.PARAMETER_INTEGER, integer_value=param_value)
         req.parameters = [Parameter(name=param_name, value=new_param_value)]
         return self.send_param(req)
+
+    def get_integer_param(self, param_name):
+        req = GetParameters.Request()
+        req.names = [param_name]
+        value = self.get_param(req)
+        if (value == None) or (value.type == ParameterType.PARAMETER_NOT_SET):
+            return None
+        else:
+            return value.integer_value
 
     def spin_for_data(self,themes, timeout=5.0):
         '''
