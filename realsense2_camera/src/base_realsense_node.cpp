@@ -1140,10 +1140,18 @@ void BaseRealSenseNode::startDiagnosticsUpdater()
             {
                 for (rs2_option option : _monitor_options)
                 {
-                    if (sensor->supports(option))
+                    try
                     {
-                        status.add(rs2_option_to_string(option), sensor->get_option(option));
-                        got_temperature = true;
+                        if (sensor->supports(option))
+                        {
+                            status.add(rs2_option_to_string(option), sensor->get_option(option));
+                            got_temperature = true;
+                        }
+                    }
+                    catch(const std::exception& ex)
+                    {
+                        got_temperature = false;
+                        ROS_WARN_STREAM("An error has occurred during monitoring: " << ex.what());
                     }
                 }
                 if (got_temperature) break;
