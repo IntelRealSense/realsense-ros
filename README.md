@@ -502,7 +502,10 @@ The following post processing filters are available:
     * The depth FOV and the texture FOV are not similar. By default, pointcloud is limited to the section of depth containing the texture. You can have a full depth to pointcloud, coloring the regions beyond the texture with zeros, by setting `pointcloud.allow_no_texture_points` to true.
     * pointcloud is of an unordered format by default. This can be changed by setting `pointcloud.ordered_pc` to true.
  - ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values.
+  - `depth_module.hdr_enabled`: to enable/disable HDR
   - The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.
+    - From FW versions 5.14.x.x and above, if HDR is enabled, the preset configs (like exposure, gain, etc.,) cannot be updated.
+      - Disable the HDR first using `depth_module.hdr_enabled` parameter and then, update the required presets.
   - To view the effect on the infrared image for each sequence id use the `filter_by_sequence_id.sequence_id` parameter.
   - To initialize these parameters in start time use the following parameters:
     - `depth_module.exposure.1`
