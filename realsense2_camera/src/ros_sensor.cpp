@@ -85,6 +85,14 @@ RosSensor::~RosSensor()
 void RosSensor::setParameters(bool is_rosbag_file)
 {
     std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
+
+    // From FW version 5.14.x.x, if HDR is enabled, updating UVC controls like exposure, gain , etc are restricted.
+    // So, during init of the node, forcefully disabling the HDR upfront and update it with new values.
+    if((!is_rosbag_file) && supports(RS2_OPTION_HDR_ENABLED))
+    {
+        set_option(RS2_OPTION_HDR_ENABLED, false);
+    }
+
     _params.registerDynamicOptions(*this, module_name);
 
     // for rosbag files, don't set hdr(sequence_id) / gain / exposure options

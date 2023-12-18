@@ -151,7 +151,14 @@ namespace realsense2_camera
             };
         if (result_value != initial_value && func)
         {
-            func(rclcpp::Parameter(param_name, result_value));
+            try
+            {
+                func(rclcpp::Parameter(param_name, result_value));
+            }
+            catch(const std::exception& e)
+            {
+                ROS_WARN_STREAM("Set parameter {" << param_name << "} failed: " << e.what());
+            } 
         }
         return result_value;
     }
