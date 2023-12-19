@@ -146,7 +146,32 @@ The below command finds the test with the name test_static_tf_1 in realsense2_ca
 
 	pytest-3 -s -k test_static_tf_1 realsense2_camera/test/
 
-### Points to be noted while writing pytests
-The tests that are in one file are nromally run in parallel. So if there are multiple tests in one file, the system capacity can influence the test execution. It's recomended to have 3-4 tests in file, more than that can affect the test results due to delays.
+### Marking tests as regression tests
+Some of the tests, especially the live tests with multiple runs, for e.g., all profile tests (test_camera_all_profile_tests.py) take a long time. Such tests are marked are skipped with condition so that "colcon test" skips it.
+If a user wants to add a test to this conditional skip, user can add by adding a marker as below.
 
+@pytest.mark.skipif (os.getenv('RS_ROS_REGRESSION', "not found") == "not found",reason="Regression is not enabled, define RS_ROS_REGRESSION")
+
+### Running skipped regression tests
+1. Set the environment variable RS_ROS_REGRESSION as 1 and run the "colcon test"
+2. pytest example: 
+	RS_ROS_REGRESSION=1 PYTHONPATH=$PYTHONPATH:$PWD/realsense2_camera/test/utils:$PWD/realsense2_camera//launch:$PWD/realsense2_camera//scripts pytest-3 -s realsense2_camera/test/live_camera/test_camera_aligned_tests.py -k test_camera_align_depth_color_all -m d415
+
+## Points to be noted while writing pytests
+The tests that are in one file are normally run in parallel, there could also be changes in the pytest plugin. So if there are multiple tests in one file, the system capacity can influence the test execution. It's recomended to have 3-4 tests in file, more than that can affect the test results due to delays.
+### Passing/changing parameters
+The parameters passed while creating the node can be initialized individually for each test, please see the test_parameterized_template example for reference. The default values are taken from rs_launch.py and the passed parameters are used for overriding the default values. The parameters that can be dynamically modified can be changed using the param interface provided. However, the function create_param_ifs has to be called to create this interface. Please see the test_d455_basic_tests.py for reference. There are specific functions to change the string, integer and bool parameters, the utils can be extended if any more types are needed.
+### Difference in setting the bool parameters
+There is a difference between setting the default values of bool parameters and setting them dynamically.
+The bool test params are assinged withn quotes as below.
+	test_params_all_profiles_d455 = {
+		'camera_name': 'D455',
+		'device_type': 'D455',
+		'enable_accel':"True",
+		'enable_gyro':"True",
+		'unite_imu_method':1,
+		}
+
+However the function that implements the setting of bool parameter dynamically takes the python bool datatype. For example:
+	self.set_bool_param('enable_accel', False)
 

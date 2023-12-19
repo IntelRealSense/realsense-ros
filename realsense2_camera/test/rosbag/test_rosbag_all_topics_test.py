@@ -39,25 +39,27 @@ from pytest_rs_utils import launch_descr_with_parameters
 
 from pytest_rs_utils import delayed_launch_descr_with_parameters
 from pytest_rs_utils import get_rosbag_file_path
+from pytest_rs_utils import get_node_heirarchy
 
 
 test_params_all_topics = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
     'camera_name': 'AllTopics',
-    'color_width': '0',
-    'color_height': '0',
-    'depth_width': '0',
-    'depth_height': '0',
-    'infra_width': '0',
-    'infra_height': '0',
     'enable_infra1':'true',
     'enable_infra2':'true',
-    #'align_depth.enable':'true',
+    'align_depth.enable':'true',
     }
 '''
 To test all topics published
 '''
-@pytest.mark.skip
+'''
+To test all topics published
+
+The test doesn't work in CI due to sync. The unlike the live camera, rosbag node publishes the extrinsics only once,
+not every time the subscription is created. The CI due to limited resource can start the ros node much earlier than 
+the testcase, hence missing the published data by the test 
+'''
 @pytest.mark.rosbag
+@pytest.mark.skipif (os.getenv('RS_ROS_REGRESSION', "not found") == "not found",reason="The test doesn't work in CI")
 @pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_all_topics],indirect=True)
 @pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
 class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
@@ -77,18 +79,18 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
         data = pytest_rs_utils.ImageColorGetData(params["rosbag_filename"])
         themes = [
         {
-         'topic':'/'+params['camera_name']+'/extrinsics/depth_to_color',
+         'topic':get_node_heirarchy(params)+'/extrinsics/depth_to_color',
          'msg_type':msg_Extrinsics,
          'expected_data_chunks':1,
          'data':depth_to_color_extrinsics_data
         },
         {
-         'topic':'/'+params['camera_name']+'/extrinsics/depth_to_infra1',
+         'topic':get_node_heirarchy(params)+'/extrinsics/depth_to_infra1',
          'msg_type':msg_Extrinsics,
          'expected_data_chunks':1,
          'data':depth_to_infra_extrinsics_data
         },
-               {'topic':'/'+params['camera_name']+'/color/image_raw',
+        {'topic':get_node_heirarchy(params)+'/color/image_raw',
          'msg_type':msg_Image,
          'expected_data_chunks':1,
          'data':data
@@ -145,19 +147,19 @@ class TestMetaDataTopics(pytest_rs_utils.RsTestBaseClass):
 
         themes = [
         {
-         'topic':'/'+params['camera_name']+'/color/metadata',
+         'topic':get_node_heirarchy(params)+'/color/metadata',
          'msg_type':msg_Metadata,
          'expected_data_chunks':1,
          #'data':color_metadata
         },
         {
-         'topic':'/'+params['camera_name']+'/depth/metadata',
+         'topic':get_node_heirarchy(params)+'/depth/metadata',
          'msg_type':msg_Metadata,
          'expected_data_chunks':1,
          #'data':depth_metadata
         },
         {
-         'topic':'/'+params['camera_name']+'/infra1/metadata',
+         'topic':get_node_heirarchy(params)+'/infra1/metadata',
          'msg_type':msg_Metadata,
          'expected_data_chunks':1,
          #'data':infra1_metadata
@@ -260,19 +262,19 @@ class TestCamerInfoTopics(pytest_rs_utils.RsTestBaseClass):
 
         themes = [
          {
-         'topic':'/'+params['camera_name']+'/color/camera_info',
+         'topic':get_node_heirarchy(params)+'/color/camera_info',
          'msg_type':CameraInfo,
          'expected_data_chunks':1,
          'data':color_data
         },
         {
-         'topic':'/'+params['camera_name']+'/depth/camera_info',
+         'topic':get_node_heirarchy(params)+'/depth/camera_info',
          'msg_type':CameraInfo,
          'expected_data_chunks':1,
          'data':depth_data
         },
         {
-         'topic':'/'+params['camera_name']+'/infra1/camera_info',
+         'topic':get_node_heirarchy(params)+'/infra1/camera_info',
          'msg_type':CameraInfo,
          'expected_data_chunks':1,
          'data':infra1_data

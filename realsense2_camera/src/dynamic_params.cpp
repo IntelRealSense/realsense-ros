@@ -25,6 +25,8 @@ namespace realsense2_camera
         _params_backend.add_on_set_parameters_callback(
             [this](const std::vector<rclcpp::Parameter> & parameters) 
                 { 
+                    rcl_interfaces::msg::SetParametersResult result;
+                    result.successful = true;
                     for (const auto & parameter : parameters) 
                     {
                         try
@@ -43,15 +45,15 @@ namespace realsense2_camera
                                 }
                             }
                         }
-                        catch(const std::out_of_range& e)
-                        {}
                         catch(const std::exception& e)
                         {
-                            std::cerr << e.what() << ":" << parameter.get_name() << '\n';
+                            result.successful = false;
+                            result.reason = e.what();
+                            ROS_WARN_STREAM("Set parameter {" << parameter.get_name()
+                                                            << "} failed: " << e.what());
                         }                            
                     }
-                    rcl_interfaces::msg::SetParametersResult result;
-                    result.successful = true;
+
                     return result;
                 });
         monitor_update_functions(); // Start parameters update thread
@@ -113,11 +115,7 @@ namespace realsense2_camera
         try
         {
             ROS_DEBUG_STREAM("setParam::Setting parameter: " << param_name);
-#if defined(DASHING) || defined(ELOQUENT) || defined(FOXY)
-            //do nothing for old versions
-#else
-            descriptor.dynamic_typing=true; // Without this, undeclare_parameter() throws in Galactic onward.
-#endif
+            descriptor.dynamic_typing=true; // Without this, undeclare_parameter() throws error.
             if (!_node.get_parameter(param_name, result_value))
             {
                 result_value = _node.declare_parameter(param_name, initial_value, descriptor);
@@ -153,7 +151,14 @@ namespace realsense2_camera
             };
         if (result_value != initial_value && func)
         {
-            func(rclcpp::Parameter(param_name, result_value));
+            try
+            {
+                func(rclcpp::Parameter(param_name, result_value));
+            }
+            catch(const std::exception& e)
+            {
+                ROS_WARN_STREAM("Set parameter {" << param_name << "} failed: " << e.what());
+            } 
         }
         return result_value;
     }

@@ -31,8 +31,6 @@ class ImageListener(Node):
         self.bridge = CvBridge()
         self.sub = self.create_subscription(msg_Image, depth_image_topic, self.imageDepthCallback, 1)
         self.sub_info = self.create_subscription(CameraInfo, depth_info_topic, self.imageDepthInfoCallback, 1)
-        confidence_topic = depth_image_topic.replace('depth', 'confidence')
-        self.sub_conf = self.create_subscription(msg_Image, confidence_topic, self.confidenceCallback, 1)
         self.intrinsics = None
         self.pix = None
         self.pix_grade = None
@@ -61,17 +59,6 @@ class ImageListener(Node):
             return
         except ValueError as e:
             return
-
-    def confidenceCallback(self, data):
-        try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
-            grades = np.bitwise_and(cv_image >> 4, 0x0f)
-            if (self.pix):
-                self.pix_grade = grades[self.pix[1], self.pix[0]]
-        except CvBridgeError as e:
-            print(e)
-            return
-
 
 
     def imageDepthInfoCallback(self, cameraInfo):
@@ -106,7 +93,6 @@ def main():
     print ('Application subscribes to %s and %s topics.' % (depth_image_topic, depth_info_topic))
     print ('Application then calculates and print the range to the closest object.')
     print ('If intrinsics data is available, it also prints the 3D location of the object')
-    print ('If a confedence map is also available in the topic %s, it also prints the confidence grade.' % depth_image_topic.replace('depth', 'confidence'))
     print ()
     
     listener = ImageListener(depth_image_topic, depth_info_topic)
