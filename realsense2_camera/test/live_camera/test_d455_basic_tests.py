@@ -97,3 +97,56 @@ class TestD455_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
             self.shutdown()
 
 
+test_params_seq_id_update = {
+    'camera_name': 'D455',
+    'device_type': 'D455',
+    'exposure_1' : 2000,
+    'gain_1'     : 20,
+    'exposure_2' : 3000,
+    'gain_2'     : 30,
+    }
+'''
+This test sets the sequence ID param and validates the corresponding Exposure & Gain values.
+'''
+@pytest.mark.d455
+@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_seq_id_update],indirect=True)
+@pytest.mark.launch(fixture=launch_descr_with_parameters)
+class Test_D455_Seq_ID_Update(pytest_rs_utils.RsTestBaseClass):
+    def test_D455_Seq_ID_update(self,launch_descr_with_parameters):
+        params = launch_descr_with_parameters[1]
+        if pytest_live_camera_utils.check_if_camera_connected(params['device_type']) == False:
+            print("Device not found? : " + params['device_type'])
+            return
+
+        try:
+            '''
+            initialize, run and check the data
+            '''
+            print("Starting camera test...")
+            self.init_test("RsTest"+params['camera_name'])
+            self.wait_for_node(params['camera_name'])
+            self.create_param_ifs(get_node_heirarchy(params))
+
+            assert self.set_bool_param('depth_module.hdr_enabled', False)
+
+            assert self.set_integer_param('depth_module.sequence_id', 1)
+            assert self.set_integer_param('depth_module.exposure', params['exposure_1'])
+            assert self.set_integer_param('depth_module.gain', params['gain_1'])
+
+            assert self.set_integer_param('depth_module.sequence_id', 2)
+            assert self.set_integer_param('depth_module.exposure', params['exposure_2'])
+            assert self.set_integer_param('depth_module.gain', params['gain_2'])
+
+            assert self.set_integer_param('depth_module.sequence_id', 1)
+            assert self.get_integer_param('depth_module.exposure') == params['exposure_1']
+            assert self.get_integer_param('depth_module.gain') == params['gain_1']
+
+            assert self.set_integer_param('depth_module.sequence_id', 2)
+            assert self.get_integer_param('depth_module.exposure') == params['exposure_2']
+            assert self.get_integer_param('depth_module.gain') == params['gain_2']
+
+        finally:
+            #this step is important because the test will fail next time
+            pytest_rs_utils.kill_realsense2_camera_node()
+            self.shutdown()
+

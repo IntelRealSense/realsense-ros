@@ -162,8 +162,8 @@ void RosSensor::UpdateSequenceIdCallback()
             {
                 set_option(RS2_OPTION_SEQUENCE_ID, parameter.get_value<int>());
                 std::vector<std::function<void()> > funcs;
-                funcs.push_back([this](){set_sensor_parameter_to_ros(RS2_OPTION_GAIN);});
-                funcs.push_back([this](){set_sensor_parameter_to_ros(RS2_OPTION_EXPOSURE);});
+                funcs.push_back([this](){set_sensor_parameter_to_ros<int>(RS2_OPTION_GAIN);});
+                funcs.push_back([this](){set_sensor_parameter_to_ros<int>(RS2_OPTION_EXPOSURE);});
                 _params.getParameters()->pushUpdateFunctions(funcs);
             });
     }
@@ -174,11 +174,12 @@ void RosSensor::UpdateSequenceIdCallback()
     }
 }
 
+template<class T> 
 void RosSensor::set_sensor_parameter_to_ros(rs2_option option)
 {
     std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
     const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
-    float value = get_option(option);
+    auto value = static_cast<T>(get_option(option));
     _params.getParameters()->setRosParamValue(option_name, &value);
 }
 
