@@ -841,7 +841,7 @@ bool BaseRealSenseNode::shouldPublishCameraInfo(const stream_index_pair& sip)
     return (stream != RS2_STREAM_SAFETY && stream != RS2_STREAM_OCCUPANCY && stream != RS2_STREAM_LABELED_POINT_CLOUD);
 }
 
-void BaseRealSenseNode::publishLabeledPointCloud(rs2::labeled_points pc, const rclcpp::Time& t){
+void BaseRealSenseNode::publishLabeledPointCloud(rs2::labeled_points lpc, const rclcpp::Time& t){
     if(!_labeled_pointcloud_publisher || 0 == _labeled_pointcloud_publisher->get_subscription_count())
         return;
     
@@ -857,22 +857,34 @@ void BaseRealSenseNode::publishLabeledPointCloud(rs2::labeled_points pc, const r
                                 "y", 1, sensor_msgs::msg::PointField::FLOAT32,
                                 "z", 1, sensor_msgs::msg::PointField::FLOAT32,
                                 "label", 1, sensor_msgs::msg::PointField::UINT8);
-    modifier.resize(pc.size());
+    modifier.resize(lpc.size());
 
     // Fill the PointCloud message with data
     sensor_msgs::PointCloud2Iterator<float> iter_x(*msg_pointcloud, "x");
     sensor_msgs::PointCloud2Iterator<float> iter_y(*msg_pointcloud, "y");
     sensor_msgs::PointCloud2Iterator<float> iter_z(*msg_pointcloud, "z");
     sensor_msgs::PointCloud2Iterator<uint8_t> iter_label(*msg_pointcloud, "label");
-    const rs2::vertex* vertex = pc.get_vertices();
-    const uint8_t* label = pc.get_labels();
-    msg_pointcloud->width = 320;
-    msg_pointcloud->height = 180;
+    const rs2::vertex* vertex = lpc.get_vertices();
+    const uint8_t* label = lpc.get_labels();
+    
+    // Calculate label point cloud width & height from the size
+    // We know the aspect ratio is the same for both resolutions and we know that w * h = vertices_count
+    // so:
+    // aspect ratio is 320/180 == 640/360 == 0.5625
+    // vertices_count = w * h --> w * 0.5625w --> w = sqrt(size / 0.5625)
+    auto lpc_size = lpc.size();
+    static const auto aspect_ratio = 0.5625f;  //  640/360 or 320/180
+    int lpc_width = static_cast< int >( std::sqrt( lpc_size / aspect_ratio ) );
+    lpc_width = ( lpc_width == 0 ) ? 1 : lpc_width; // protect dev by 0
+    int lpc_height = static_cast< int >( lpc_size / lpc_width );
+
+    msg_pointcloud->width = lpc_width;
+    msg_pointcloud->height = lpc_height;
     msg_pointcloud->point_step = 3*sizeof(float) + sizeof(uint8_t);
     msg_pointcloud->row_step = msg_pointcloud->width * msg_pointcloud->point_step;
     msg_pointcloud->data.resize(msg_pointcloud->height * msg_pointcloud->row_step);
 
-    for (size_t point_idx=0; point_idx < pc.size(); point_idx++, vertex++, label++)
+    for (size_t point_idx=0; point_idx < lpc.size(); point_idx++, vertex++, label++)
     {
         *iter_x = vertex->x;
         *iter_y = vertex->y;
