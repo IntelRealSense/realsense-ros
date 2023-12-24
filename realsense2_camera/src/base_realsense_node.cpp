@@ -867,19 +867,8 @@ void BaseRealSenseNode::publishLabeledPointCloud(rs2::labeled_points lpc, const 
     const rs2::vertex* vertex = lpc.get_vertices();
     const uint8_t* label = lpc.get_labels();
     
-    // Calculate label point cloud width & height from the size
-    // We know the aspect ratio is the same for both resolutions and we know that w * h = vertices_count
-    // so:
-    // aspect ratio is 320/180 == 640/360 == 0.5625
-    // vertices_count = w * h --> w * 0.5625w --> w = sqrt(size / 0.5625)
-    auto lpc_size = lpc.size();
-    static const auto aspect_ratio = 0.5625f;  //  640/360 or 320/180
-    int lpc_width = static_cast< int >( std::sqrt( lpc_size / aspect_ratio ) );
-    lpc_width = ( lpc_width == 0 ) ? 1 : lpc_width; // protect dev by 0
-    int lpc_height = static_cast< int >( lpc_size / lpc_width );
-
-    msg_pointcloud->width = lpc_width;
-    msg_pointcloud->height = lpc_height;
+    msg_pointcloud->width = lpc.get_width();
+    msg_pointcloud->height = lpc.get_height();
     msg_pointcloud->point_step = 3*sizeof(float) + sizeof(uint8_t);
     msg_pointcloud->row_step = msg_pointcloud->width * msg_pointcloud->point_step;
     msg_pointcloud->data.resize(msg_pointcloud->height * msg_pointcloud->row_step);
