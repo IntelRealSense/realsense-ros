@@ -869,7 +869,7 @@ void BaseRealSenseNode::publishLabeledPointCloud(rs2::labeled_points lpc, const 
     
     msg_pointcloud->width = lpc.get_width();
     msg_pointcloud->height = lpc.get_height();
-    msg_pointcloud->point_step = 3*sizeof(float) + sizeof(uint8_t);
+    msg_pointcloud->point_step = lpc.get_bits_per_pixel() / 8;
     msg_pointcloud->row_step = msg_pointcloud->width * msg_pointcloud->point_step;
     msg_pointcloud->data.resize(msg_pointcloud->height * msg_pointcloud->row_step);
 
