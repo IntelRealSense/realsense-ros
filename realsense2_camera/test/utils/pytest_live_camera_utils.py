@@ -176,17 +176,27 @@ def get_camera_capabilities_short(device_type, serial_no=None):
             if serial_no in line:
                 print(device_type + " with serial_no " + serial_no +" found in " + line)
                 return
-    print(device_type + " not found")
+    print(device_type + " #### Deepak not found")
 
 def check_if_camera_connected(device_type, serial_no=None):
     long_data = os.popen("rs-enumerate-devices -s").read().splitlines()
+    print ("long_data")
+    print (long_data)
+    print (device_type)
+    print(type(device_type))
     debug_print(serial_no)
     index = 0
     for index in range(len(long_data)):
+        print ("name_line")
         name_line = long_data[index].split()
+        print (name_line)
+        print(type(name_line))
         if name_line[0] != "Intel":
             continue
-        if name_line[2] != device_type:
+        print (''.join(name_line[2]))
+        if  device_type not in ''.join(name_line[2]) :
+        #if name_line[2] != device_type:
+            print ("NOT FOUND !!!!!!!!")
             continue
         if serial_no == None:
             return True
