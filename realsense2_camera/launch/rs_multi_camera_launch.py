@@ -49,7 +49,7 @@ def duplicate_params(general_params, posix):
         param['name'] += posix
     return local_params
 
-def add_node_action(context : LaunchContext):
+def launch_static_transform_publisher_node(context : LaunchContext):
     # dummy static transformation from camera1 to camera2
     node = launch_ros.actions.Node(
             package = "tf2_ros",
@@ -74,5 +74,5 @@ def generate_launch_description():
         OpaqueFunction(function=rs_launch.launch_setup,
                        kwargs = {'params'           : set_configurable_parameters(params2),
                                  'param_name_suffix': '2'}),
-        OpaqueFunction(function=add_node_action)
+        OpaqueFunction(function=launch_static_transform_publisher_node)
     ])

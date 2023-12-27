@@ -85,6 +85,14 @@ RosSensor::~RosSensor()
 void RosSensor::setParameters(bool is_rosbag_file)
 {
     std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
+
+    // From FW version 5.14.x.x, if HDR is enabled, updating UVC controls like exposure, gain , etc are restricted.
+    // So, during init of the node, forcefully disabling the HDR upfront and update it with new values.
+    if((!is_rosbag_file) && supports(RS2_OPTION_HDR_ENABLED))
+    {
+        set_option(RS2_OPTION_HDR_ENABLED, false);
+    }
+
     _params.registerDynamicOptions(*this, module_name);
 
     // for rosbag files, don't set hdr(sequence_id) / gain / exposure options
@@ -101,6 +109,24 @@ void RosSensor::UpdateSequenceIdCallback()
     // also updates ros server about the gain and exposure of the selected sequence id.
     if (!supports(RS2_OPTION_SEQUENCE_ID))
         return;
+
+    bool is_hdr_enabled = static_cast<bool>(get_option(RS2_OPTION_HDR_ENABLED));
+
+    // Deleter to revert back the RS2_OPTION_HDR_ENABLED value at the end.
+    auto deleter_to_revert_hdr = std::unique_ptr<bool, std::function<void(bool*)>>(&is_hdr_enabled,
+                                                [&](bool* enable_back_hdr) {
+                                                    if (enable_back_hdr && *enable_back_hdr)
+                                                    {
+                                                        set_option(RS2_OPTION_HDR_ENABLED, true);
+                                                    }
+                                                });
+
+    // From FW version 5.14.x.x, if HDR is enabled, updating UVC controls like exposure, gain , etc are restricted.
+    // So, disable it before updating.
+    if (is_hdr_enabled)
+    {
+        set_option(RS2_OPTION_HDR_ENABLED, false);
+    }
 
     int original_seq_id = static_cast<int>(get_option(RS2_OPTION_SEQUENCE_ID));   // To Set back to default.
     std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
@@ -136,8 +162,8 @@ void RosSensor::UpdateSequenceIdCallback()
             {
                 set_option(RS2_OPTION_SEQUENCE_ID, parameter.get_value<int>());
                 std::vector<std::function<void()> > funcs;
-                funcs.push_back([this](){set_sensor_parameter_to_ros(RS2_OPTION_GAIN);});
-                funcs.push_back([this](){set_sensor_parameter_to_ros(RS2_OPTION_EXPOSURE);});
+                funcs.push_back([this](){set_sensor_parameter_to_ros<int>(RS2_OPTION_GAIN);});
+                funcs.push_back([this](){set_sensor_parameter_to_ros<int>(RS2_OPTION_EXPOSURE);});
                 _params.getParameters()->pushUpdateFunctions(funcs);
             });
     }
@@ -146,14 +172,14 @@ void RosSensor::UpdateSequenceIdCallback()
         ROS_WARN_STREAM("Setting alternative callback: Failed to set parameter:" << option_name << " : " << e.what());
         return;
     }
-
 }
 
+template<class T> 
 void RosSensor::set_sensor_parameter_to_ros(rs2_option option)
 {
     std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
     const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(option)));
-    float value = get_option(option);
+    auto value = static_cast<T>(get_option(option));
     _params.getParameters()->setRosParamValue(option_name, &value);
 }
 
@@ -171,12 +197,6 @@ void RosSensor::registerSensorParameters()
         registerAutoExposureROIOptions();
     }
     profile_manager = std::make_shared<MotionProfilesManager>(_params.getParameters(), _logger);
-    profile_manager->registerProfileParameters(all_profiles, _update_sensor_func);
-    if (profile_manager->isTypeExist())
-    {
-        _profile_managers.push_back(profile_manager);
-    }
-    profile_manager = std::make_shared<PoseProfilesManager>(_params.getParameters(), _logger);
     profile_manager->registerProfileParameters(all_profiles, _update_sensor_func);
     if (profile_manager->isTypeExist())
     {

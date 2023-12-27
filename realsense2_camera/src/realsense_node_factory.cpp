@@ -31,7 +31,7 @@ using namespace realsense2_camera;
 constexpr auto realsense_ros_camera_version = REALSENSE_ROS_EMBEDDED_VERSION_STR;
 
 RealSenseNodeFactory::RealSenseNodeFactory(const rclcpp::NodeOptions & node_options) :
-    Node("camera", "/", node_options),
+    Node("camera", "/camera", node_options),
     _logger(this->get_logger())
 {
   init();
@@ -358,8 +358,6 @@ void RealSenseNodeFactory::startDevice()
     {
         switch(pid)
         {
-        case SR300_PID:
-        case SR300v2_PID:
         case RS400_PID:
         case RS405_PID:
         case RS410_PID:
@@ -377,9 +375,6 @@ void RealSenseNodeFactory::startDevice()
         case RS457_PID:
         case RS465_PID:
         case RS_USB2_PID:
-        case RS_L515_PID_PRE_PRQ:
-        case RS_L515_PID:
-        case RS_L535_PID:
         case RS_D585_PID:
         case RS_D585S_PID:
             _realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(*this, _device, _parameters, this->get_node_options().use_intra_process_comms()));
