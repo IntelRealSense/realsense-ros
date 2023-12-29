@@ -115,6 +115,9 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _imu_sync_method(imu_sync_method::NONE),
     _is_profile_changed(false),
     _is_align_depth_changed(false)
+#if defined (ACCELERATE_WITH_GPU)
+    ,_app(1280, 720, "RS_GLFW_Window")
+#endif
 {
     if ( use_intra_process )
     {
@@ -127,6 +130,10 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
 
 BaseRealSenseNode::~BaseRealSenseNode()
 {
+#if defined (ACCELERATE_WITH_GPU)
+    shutdownOpenGLProcessing();
+#endif
+
     // Kill dynamic transform thread
     _is_running = false;
     _cv_tf.notify_one();
@@ -229,10 +236,17 @@ void BaseRealSenseNode::setupFilters()
         _cv_mpc.notify_one();
     };
 
-    _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::colorizer>(), _parameters, _logger); 
-    _filters.push_back(_colorizer_filter);
+#if defined (ACCELERATE_WITH_GPU)
+    _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::gl::colorizer>(), _parameters, _logger); 
+
+    _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::gl::pointcloud>(), _node, _parameters, _logger);
+#else
+    _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::colorizer>(), _parameters, _logger);
 
     _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::pointcloud>(), _node, _parameters, _logger);
+#endif
+
+    _filters.push_back(_colorizer_filter);
     _filters.push_back(_pc_filter);
 
     _align_depth_filter = std::make_shared<AlignDepthFilter>(std::make_shared<rs2::align>(RS2_STREAM_COLOR), update_align_depth_func, _parameters, _logger);

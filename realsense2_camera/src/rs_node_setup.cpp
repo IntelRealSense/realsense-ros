@@ -22,6 +22,10 @@ using namespace rs2;
 
 void BaseRealSenseNode::setup()
 {
+#if defined (ACCELERATE_WITH_GPU)
+    bool use_gpu_processing = (_accelerate_with_gpu == accelerate_with_gpu::GL_GPU);
+    initOpenGLProcessing(use_gpu_processing);
+#endif
     setDynamicParams();
     startDiagnosticsUpdater();
     setAvailableSensors();
