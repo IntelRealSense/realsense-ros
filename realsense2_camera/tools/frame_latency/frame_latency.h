@@ -16,6 +16,25 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include "sensor_msgs/msg/image.hpp"
+#include "sensor_msgs/msg/imu.hpp"
+#include "sensor_msgs/msg/point_cloud2.hpp"
+
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <diagnostic_updater/publisher.hpp>
+#include "realsense2_camera_msgs/msg/imu_info.hpp"
+#include "realsense2_camera_msgs/msg/extrinsics.hpp"
+#include "realsense2_camera_msgs/msg/metadata.hpp"
+#include "realsense2_camera_msgs/msg/rgbd.hpp"
+#include "realsense2_camera_msgs/srv/device_info.hpp"
+#include <librealsense2/hpp/rs_processing.hpp>
+#include <librealsense2/rs_advanced_mode.hpp>
+
+#include <sensor_msgs/image_encodings.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <tf2_msgs/msg/tf_message.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+
 
 namespace rs2_ros {
 namespace tools {
@@ -31,8 +50,14 @@ public:
                       const rclcpp::NodeOptions & node_options
                       = rclcpp::NodeOptions().use_intra_process_comms( true ) );
 
+    template <typename MsgType>
+    void createListener(std::string topicName, const rmw_qos_profile_t qos_profile);
+
+    void createTFListener(std::string topicName, const rmw_qos_profile_t qos_profile);
+
 private:
-    rclcpp::Subscription< sensor_msgs::msg::Image >::SharedPtr _sub;
+    std::shared_ptr<void > _sub;
+
     rclcpp::Logger _logger;
 };
 }  // namespace frame_latency

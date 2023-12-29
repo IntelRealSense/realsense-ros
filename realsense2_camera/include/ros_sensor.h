@@ -105,6 +105,7 @@ namespace realsense2_camera
             void set_sensor_auto_exposure_roi();
             void registerAutoExposureROIOptions();
             void UpdateSequenceIdCallback();
+            template<class T> 
             void set_sensor_parameter_to_ros(rs2_option option);
 
         private:
