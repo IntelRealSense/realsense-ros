@@ -32,7 +32,7 @@ jobs:
           _python: 'python'
 
     steps:   
-    - uses: ros-tooling/setup-ros@v0.2
+    - uses: ros-tooling/setup-ros@v0.7
       with:
         required-ros-distributions: ${{ matrix.ros_distro }}
     
