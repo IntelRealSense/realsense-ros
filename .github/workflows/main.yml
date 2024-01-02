@@ -22,14 +22,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04]
+        os: [ubuntu-20.04]
         include:
         - os: ubuntu-20.04
           ros_distro: 'noetic'
           _python: 'python3'
-        - os: ubuntu-18.04
-          ros_distro: 'melodic'
-          _python: 'python'
 
     steps:   
     - uses: ros-tooling/setup-ros@v0.7
