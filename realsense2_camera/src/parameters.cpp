@@ -115,7 +115,7 @@ void BaseRealSenseNode::setDynamicParams()
     }
     sort(enum_vec.begin(), enum_vec.end(), [](std::pair<std::string, int> e1, std::pair<std::string, int> e2){return (e1.second < e2.second);});
     std::stringstream enum_str_values;
-    for (auto vec_iter : enum_vec)
+    for (auto& vec_iter : enum_vec)
     {
         enum_str_values << std::setw(longest_desc+6) << std::left << vec_iter.first << " : " << vec_iter.second << std::endl;
     }

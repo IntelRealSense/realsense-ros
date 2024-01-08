@@ -108,8 +108,8 @@ namespace realsense2_camera
 
     template <class T>
     T Parameters::setParam(std::string param_name, const T& initial_value, 
-                              std::function<void(const rclcpp::Parameter&)> func, 
-                              rcl_interfaces::msg::ParameterDescriptor descriptor)
+                              std::function<void(const rclcpp::Parameter&)>& func, 
+                              rcl_interfaces::msg::ParameterDescriptor& descriptor)
     {
         T result_value(initial_value);
         try
@@ -124,11 +124,11 @@ namespace realsense2_camera
         catch(const std::exception& e)
         {
             std::stringstream range;
-            for (auto val : descriptor.floating_point_range)
+            for (auto& val : descriptor.floating_point_range)
             {
                 range << val.from_value << ", " << val.to_value;
             }
-            for (auto val : descriptor.integer_range)
+            for (auto& val : descriptor.integer_range)
             {
                 range << val.from_value << ", " << val.to_value;
             }
@@ -168,8 +168,8 @@ namespace realsense2_camera
     //      if param is destroyed the behavior of the callback is undefined.
     template <class T>
     void Parameters::setParamT(std::string param_name, T& param, 
-                              std::function<void(const rclcpp::Parameter&)> func,
-                              rcl_interfaces::msg::ParameterDescriptor descriptor)
+                              std::function<void(const rclcpp::Parameter&)>& func,
+                              rcl_interfaces::msg::ParameterDescriptor& descriptor)
 
     {
     param = setParam<T>(param_name, param, 

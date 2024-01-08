@@ -142,7 +142,7 @@ std::map<stream_index_pair, rs2::stream_profile> ProfilesManager::getDefaultProf
 void ProfilesManager::addWantedProfiles(std::vector<rs2::stream_profile>& wanted_profiles)
 {    
     std::map<stream_index_pair, bool> found_sips;
-    for (auto profile : _all_profiles)
+    for (auto const & profile : _all_profiles)
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
         if (!(*_enabled_profiles[sip])) continue;

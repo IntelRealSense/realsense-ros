@@ -60,7 +60,6 @@ namespace realsense2_camera
             void setParameters();
 
         private:
-            bool _is_enabled_pc;
             rclcpp::Node& _node;
             bool _allow_no_texture_points;
             bool _ordered_pc;
