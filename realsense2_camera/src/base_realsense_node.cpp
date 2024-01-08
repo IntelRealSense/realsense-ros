@@ -537,7 +537,7 @@ void BaseRealSenseNode::frame_callback(rs2::frame frame)
         rs2::video_frame original_color_frame = frameset.get_color_frame();
 
         ROS_DEBUG("num_filters: %d", static_cast<int>(_filters.size()));
-        for (auto filter_it : _filters)
+        for (auto& filter_it : _filters)
         {
             frameset = filter_it->Process(frameset);
         }

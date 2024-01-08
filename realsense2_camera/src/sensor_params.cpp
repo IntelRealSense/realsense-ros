@@ -277,14 +277,14 @@ void SensorParams::registerDynamicOptions(rs2::options sensor, const std::string
         {
             std::vector<std::pair<std::string, int> > enum_vec;
             size_t longest_desc(0);
-            for (auto enum_iter : enum_dict)
+            for (auto& enum_iter : enum_dict)
             {
                 enum_vec.push_back(std::make_pair(enum_iter.first, enum_iter.second));
                 longest_desc = std::max(longest_desc, enum_iter.first.size());
             }
             sort(enum_vec.begin(), enum_vec.end(), [](std::pair<std::string, int> e1, std::pair<std::string, int> e2){return (e1.second < e2.second);});
             std::stringstream description;
-            for (auto vec_iter : enum_vec)
+            for (auto& vec_iter : enum_vec)
             {
                 description << std::setw(longest_desc+6) << std::left << vec_iter.first << " : " << vec_iter.second << std::endl;
             }
