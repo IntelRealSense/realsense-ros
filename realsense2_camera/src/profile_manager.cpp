@@ -37,9 +37,7 @@ void ProfilesManager::clearParameters()
 std::string applyTemplateName(std::string template_name, stream_index_pair sip)
 {
     const std::string stream_name(create_graph_resource_name(STREAM_NAME(sip)));
-    char* param_name = new char[template_name.size() + stream_name.size()];
-    sprintf(param_name, template_name.c_str(), stream_name.c_str());
-    return std::string(param_name);
+    return template_name + stream_name;
 }
 
 void ProfilesManager::registerSensorQOSParam(std::string template_name, 
@@ -120,7 +118,7 @@ std::map<stream_index_pair, rs2::stream_profile> ProfilesManager::getDefaultProf
     if (_all_profiles.empty()) 
         throw std::runtime_error("Wrong commands sequence. No profiles set.");
 
-    for (auto profile : _all_profiles)
+    for (auto& profile : _all_profiles)
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
         if (profile.is_default() && (sip_default_profiles.find(sip) == sip_default_profiles.end()))
@@ -219,6 +217,9 @@ VideoProfilesManager::VideoProfilesManager(std::shared_ptr<Parameters> parameter
                                            const std::string& module_name, rclcpp::Logger logger, bool force_image_default_qos):
     ProfilesManager(parameters, logger),
     _module_name(module_name),
+    _fps(0),
+    _width(0),
+    _height(0),
     _force_image_default_qos(force_image_default_qos)
 {
 
@@ -354,13 +355,13 @@ void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair>
     _fps = video_profile.fps();
 
     // Set the stream formats
-    for (auto sip : sips)
+    for (auto& sip : sips)
     {
         registerVideoSensorProfileFormat(sip);
     }
 
     // Overwrite the _formats with default values queried from LibRealsense
-    for (auto sip_default_profile : sip_default_profiles)
+    for (auto& sip_default_profile : sip_default_profiles)
     {
         stream_index_pair sip = sip_default_profile.first;
 
@@ -431,7 +432,7 @@ void VideoProfilesManager::registerVideoSensorParams(std::set<stream_index_pair>
             }, crnt_descriptor);
     _parameters_names.push_back(param_name);
 
-    for (auto sip : sips)
+    for (auto& sip : sips)
     {
         std::string param_name(_module_name + "." + STREAM_NAME(sip) + "_format");
         std::string param_value = rs2_format_to_string(_formats[sip]);
@@ -528,7 +529,7 @@ void MotionProfilesManager::registerFPSParams()
 
     // Overwrite with default values:
     std::map<stream_index_pair, rs2::stream_profile> sip_default_profiles = getDefaultProfiles();
-    for (auto sip_default_profile : sip_default_profiles)
+    for (auto& sip_default_profile : sip_default_profiles)
     {
         stream_index_pair sip = sip_default_profile.first;
         *(_fps[sip]) = sip_default_profile.second.as<rs2::motion_stream_profile>().fps();

@@ -27,7 +27,14 @@ TEST(realsense2_camera, test2)
 
 int main(int argc, char** argv)
 {
-    testing::InitGoogleTest(&argc, argv);
+    try
+    {
+        testing::InitGoogleTest(&argc, argv);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
     return RUN_ALL_TESTS();
 }
 

@@ -57,7 +57,6 @@ RosSensor::RosSensor(rs2::sensor sensor,
 {
     _frame_callback = [this](rs2::frame frame)
         {
-            runFirstFrameInitialization();
             auto stream_type = frame.get_profile().stream_type();
             auto stream_index = frame.get_profile().stream_index();
             stream_index_pair sip{stream_type, stream_index};
@@ -204,41 +203,6 @@ void RosSensor::registerSensorParameters()
     }
 }
 
-void RosSensor::runFirstFrameInitialization()
-{
-    if (_is_first_frame)
-    {
-        ROS_DEBUG_STREAM("runFirstFrameInitialization: " << _first_frame_functions_stack.size());
-        _is_first_frame = false;
-        if (!_first_frame_functions_stack.empty())
-        {
-            std::thread t = std::thread([=]()
-            {
-                try
-                {
-                    while (!_first_frame_functions_stack.empty())
-                    {
-                        _first_frame_functions_stack.back()();
-                        _first_frame_functions_stack.pop_back();
-                    }
-                }
-                catch(const std::exception& e)
-                {
-                    std::cerr << "runFirstFrameInitialization(): " << e.what() << '\n';
-                    throw e;
-                }
-                catch(...)
-                {
-                    std::cerr << "runFirstFrameInitialization()!!!" << std::endl;
-                    throw;
-                }                
-
-            });
-            t.detach();
-        }
-    }
-}
-
 bool RosSensor::start(const std::vector<stream_profile>& profiles)
 {
     if (get_active_streams().size() > 0)
@@ -262,13 +226,12 @@ bool RosSensor::start(const std::vector<stream_profile>& profiles)
 
 void RosSensor::stop()
 {
-    if (get_active_streams().size() == 0)
-        return;
-    ROS_INFO_STREAM("Stop Sensor: " << rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
-    _frequency_diagnostics.clear();
-
     try
     {
+        if (get_active_streams().size() == 0)
+            return;
+        ROS_INFO_STREAM("Stop Sensor: " << rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
+        _frequency_diagnostics.clear();
         rs2::sensor::stop();
     }
     catch (const std::exception& e)
@@ -352,7 +315,7 @@ bool RosSensor::getUpdatedProfiles(std::vector<stream_profile>& wanted_profiles)
 {
     wanted_profiles.clear();
     std::vector<stream_profile> active_profiles = get_active_streams();
-    for (auto profile_manager : _profile_managers)
+    for (auto& profile_manager : _profile_managers)
     {
         profile_manager->addWantedProfiles(wanted_profiles);        
     }
@@ -441,7 +404,7 @@ void RosSensor::registerAutoExposureROIOptions()
 
 void RosSensor::clearParameters()
 {
-    for (auto profile_manager : _profile_managers)
+    for (auto& profile_manager : _profile_managers)
     {
         profile_manager->clearParameters();
     }

@@ -74,10 +74,18 @@ void SyncedImuPublisher::PublishPendingMessages()
     while (!_pending_messages.empty())
     {
         const sensor_msgs::msg::Imu &imu_msg = _pending_messages.front();
-        _publisher->publish(imu_msg);
+        try
+        {
+            _publisher->publish(imu_msg);
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
         _pending_messages.pop();
     }
 }
+
 size_t SyncedImuPublisher::getNumSubscribers()
 { 
     if (!_publisher) return 0;
@@ -146,7 +154,14 @@ BaseRealSenseNode::~BaseRealSenseNode()
     clearParameters();
     for(auto&& sensor : _available_ros_sensors)
     {
-        sensor->stop();
+        try
+        {
+            sensor->stop();
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
     }
 }
 
