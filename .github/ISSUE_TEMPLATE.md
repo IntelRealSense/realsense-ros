@@ -19,7 +19,7 @@
 | Language                               |  {C/C#/labview/nodejs/opencv/pcl/python/unity }         | 
 | Segment			         |  {Robot/Smartphone/VR/AR/others }                             | 
 | ROS Distro			         |  {Iron/Humble/Rolling/etc.. }                                           | 
-| ROS Version                           |  {2.4.0, 2.5.0, 2.5.1, etc.. }                                                  | 
+| RealSense ROS Wrapper Version   |  {2.4.0, 2.5.0, 2.5.1, etc.. }                                                  | 
 
 
 ### Issue Description
