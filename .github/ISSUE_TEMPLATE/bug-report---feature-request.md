@@ -1,12 +1,3 @@
----
-name: Bug report / Feature Request
-about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
-
----
-
 * Before opening a new issue, we wanted to provide you with some useful suggestions (Click "Preview" above for a better view):
 
     * Consider checking our ROS RealSense Wrapper documentation [README](https://github.com/IntelRealSense/realsense-ros/blob/ros2-development/README.md).
