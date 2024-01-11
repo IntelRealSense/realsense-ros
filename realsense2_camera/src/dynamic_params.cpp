@@ -108,8 +108,8 @@ namespace realsense2_camera
 
     template <class T>
     T Parameters::setParam(std::string param_name, const T& initial_value, 
-                              std::function<void(const rclcpp::Parameter&)>& func, 
-                              rcl_interfaces::msg::ParameterDescriptor& descriptor)
+                              std::function<void(const rclcpp::Parameter&)> func, 
+                              rcl_interfaces::msg::ParameterDescriptor descriptor)
     {
         T result_value(initial_value);
         try
@@ -168,8 +168,8 @@ namespace realsense2_camera
     //      if param is destroyed the behavior of the callback is undefined.
     template <class T>
     void Parameters::setParamT(std::string param_name, T& param, 
-                              std::function<void(const rclcpp::Parameter&)>& func,
-                              rcl_interfaces::msg::ParameterDescriptor& descriptor)
+                              std::function<void(const rclcpp::Parameter&)> func,
+                              rcl_interfaces::msg::ParameterDescriptor descriptor)
 
     {
     param = setParam<T>(param_name, param, 
@@ -267,14 +267,14 @@ namespace realsense2_camera
         _param_functions.erase(param_name);
     }
 
-    template void Parameters::setParamT<bool>(std::string param_name, bool& param, std::function<void(const rclcpp::Parameter&)>& func, rcl_interfaces::msg::ParameterDescriptor& descriptor);
-    template void Parameters::setParamT<int>(std::string param_name, int& param, std::function<void(const rclcpp::Parameter&)>& func, rcl_interfaces::msg::ParameterDescriptor& descriptor);
-    template void Parameters::setParamT<double>(std::string param_name, double& param, std::function<void(const rclcpp::Parameter&)>& func, rcl_interfaces::msg::ParameterDescriptor& descriptor);
+    template void Parameters::setParamT<bool>(std::string param_name, bool& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template void Parameters::setParamT<int>(std::string param_name, int& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template void Parameters::setParamT<double>(std::string param_name, double& param, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
 
-    template bool Parameters::setParam<bool>(std::string param_name, const bool& initial_value, std::function<void(const rclcpp::Parameter&)>& func, rcl_interfaces::msg::ParameterDescriptor& descriptor);
-    template int Parameters::setParam<int>(std::string param_name, const int& initial_value, std::function<void(const rclcpp::Parameter&)>& func, rcl_interfaces::msg::ParameterDescriptor& descriptor);
-    template double Parameters::setParam<double>(std::string param_name, const double& initial_value, std::function<void(const rclcpp::Parameter&)>& func, rcl_interfaces::msg::ParameterDescriptor& descriptor);
-    template std::string Parameters::setParam<std::string>(std::string param_name, const std::string& initial_value, std::function<void(const rclcpp::Parameter&)>& func, rcl_interfaces::msg::ParameterDescriptor& descriptor);
+    template bool Parameters::setParam<bool>(std::string param_name, const bool& initial_value, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template int Parameters::setParam<int>(std::string param_name, const int& initial_value, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template double Parameters::setParam<double>(std::string param_name, const double& initial_value, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
+    template std::string Parameters::setParam<std::string>(std::string param_name, const std::string& initial_value, std::function<void(const rclcpp::Parameter&)> func, rcl_interfaces::msg::ParameterDescriptor descriptor);
 
     template void Parameters::setParamValue<int>(int& param, const int& value);
     template void Parameters::setParamValue<bool>(bool& param, const bool& value);
