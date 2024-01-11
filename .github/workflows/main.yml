@@ -37,10 +37,10 @@ jobs:
     steps:
 
     - name: Setup ROS2 Workspace
-      run: | 
+      run: |
         mkdir -p ${{github.workspace}}/ros2/src
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         path: 'ros2/src/realsense-ros'
     
