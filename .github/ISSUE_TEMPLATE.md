@@ -10,16 +10,16 @@
 
 | Required Info                         |                                                                                         |
 |---------------------------------|------------------------------------------------------------ |
-| Camera Model                       | { R200 / F200 / SR300 / ZR300 / D400 }                          | 
+| Camera Model                       | { D405 / D415 / D435 / D435i / D455 / D457 }                          | 
 | Firmware Version                   | (Open RealSense Viewer --> Click info)                          | 
-| Operating System & Version |   {Win (8.1/10/11) / Linux (Ubuntu 18/20/22) / MacOS  | 
-| Kernel Version (Linux Only)    |  (e.g. 5.14)                                                                       | 
+| Operating System & Version |   { Win (10/11) / Linux (Ubuntu 18/20/22) / MacOS } | 
+| Kernel Version (Linux Only)    |  (e.g. 5.4)                                                                       | 
 | Platform                                 | PC/Raspberry Pi/ NVIDIA Jetson / etc..                           |
-| Librealsense SDK Version       |  { legacy / 2.<?>.<?> }                                                    | 
-| Language                               |  {C/C#/labview/nodejs/opencv/pcl/python/unity }         | 
+| Librealsense SDK Version       |  { 2.<?>.<?> }                                                    | 
+| Language                               |  {C/C#/labview/opencv/pcl/python/unity }         | 
 | Segment			         |  {Robot/Smartphone/VR/AR/others }                             | 
 | ROS Distro			         |  {Iron/Humble/Rolling/etc.. }                                           | 
-| RealSense ROS Wrapper Version   |  {2.4.0, 2.5.0, 2.5.1, etc.. }                                                  | 
+| RealSense ROS Wrapper Version   |  {4.51.1, 4.54.1, etc..}                                                  | 
 
 
 ### Issue Description
