@@ -1003,8 +1003,20 @@ void BaseRealSenseNode::publishFrame(
     if (f.is<rs2::video_frame>())
     {
         auto timage = f.as<rs2::video_frame>();
-        width = timage.get_width();
-        height = timage.get_height();
+        if(stream.first == RS2_STREAM_OCCUPANCY)
+        {
+            if (!f.supports_frame_metadata(RS2_FRAME_METADATA_OCCUPANCY_GRID_ROWS) ||
+                !f.supports_frame_metadata(RS2_FRAME_METADATA_OCCUPANCY_GRID_COLUMNS))
+                throw std::runtime_error("Occupancy rows / columns could not be read from frame metadata");
+
+            width = static_cast<int>(f.get_frame_metadata(RS2_FRAME_METADATA_OCCUPANCY_GRID_COLUMNS));
+            height = static_cast<int>(f.get_frame_metadata(RS2_FRAME_METADATA_OCCUPANCY_GRID_ROWS));
+        }
+        else
+        {
+            width = timage.get_width();
+            height = timage.get_height();
+        }
         stream_format = timage.get_profile().format();
     }
     else
