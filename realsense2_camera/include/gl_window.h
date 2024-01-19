@@ -41,6 +41,7 @@ public:
         : _width(width), _height(height)
     {
         glfwInit();
+        glfwWindowHint(GLFW_VISIBLE, 0);
         win = glfwCreateWindow(width, height, title, nullptr, nullptr);
         if (!win)
             throw std::runtime_error("Could not open OpenGL window, please check your graphic drivers or use the textual SDK tools");
