@@ -76,16 +76,23 @@ def get_depth_profiles(long_data, start_index, end_index):
         if len(depth_profile) == 5:
             profile = depth_profile[0]
             value = depth_profile[1]+"x"+depth_profile[3]
-            format = depth_profile[4]
+            img_format = depth_profile[4]
         elif len(depth_profile) == 6:
             profile = depth_profile[0]+depth_profile[1]
             value = depth_profile[2]+"x"+depth_profile[4]
-            format = depth_profile[5]
+            img_format = depth_profile[5]
+        elif len(depth_profile) == 7:
+            profile = depth_profile[1]
+            value = depth_profile[2]+"x"+depth_profile[5]
+            img_format = depth_profile[3]
+        elif len(depth_profile) == 8:
+            profile = depth_profile[1]+depth_profile[2]
+            value = depth_profile[3]+"x"+depth_profile[6]
+            img_format = depth_profile[4]
         else:
             assert false, "Seems that the depth profile info format printed by rs-enumerate-devices changed"
-        value = value[:-2]
-        debug_print("depth profile added: " + profile, value, format)
-        cap.append([profile, value, format])
+        debug_print("depth profile added: " + profile, value, img_format)
+        cap.append([profile, value, img_format])
     debug_print(cap)
     return cap
 
@@ -100,12 +107,15 @@ def get_color_profiles(long_data, start_index, end_index):
         if len(color_profile) == 5:
             profile = color_profile[0]
             value = color_profile[1]+"x"+color_profile[3]
-            format = color_profile[4]
+            img_format = color_profile[4]
+        elif len(color_profile) == 7:
+            profile = color_profile[1]
+            value = color_profile[2]+"x"+color_profile[5]
+            img_format = color_profile[3]
         else:
             assert false, "Seems that the color profile info format printed by rs-enumerate-devices changed"
-        value = value[:-2]
-        debug_print("color profile added: " + profile, value, format)
-        cap.append([profile, value, format])
+        debug_print("color profile added: " + profile, value, img_format)
+        cap.append([profile, value, img_format])
     debug_print(cap)
     return cap
 
@@ -147,7 +157,7 @@ def parse_device_info(long_data, start_index, end_index, device_type, serial_no)
     return capability
 
 def get_camera_capabilities(device_type, serial_no=None):
-    long_data = os.popen("rs-enumerate-devices").read().splitlines()
+    long_data = os.popen("rs-enumerate-devices -v").read().splitlines()
     debug_print(serial_no)
     index = 0
     while index < len(long_data):
