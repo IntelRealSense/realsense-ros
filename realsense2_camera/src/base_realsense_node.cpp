@@ -239,15 +239,15 @@ void BaseRealSenseNode::setupFilters()
 #if defined (ACCELERATE_WITH_GPU)
     _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::gl::colorizer>(), _parameters, _logger); 
     _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::gl::pointcloud>(), _node, _parameters, _logger);
-    _align_depth_filter = std::make_shared<AlignDepthFilter>(std::make_shared<rs2::gl::align>(RS2_STREAM_COLOR), update_align_depth_func, _parameters, _logger);
 #else
     _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::colorizer>(), _parameters, _logger);
     _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::pointcloud>(), _node, _parameters, _logger);
-    _align_depth_filter = std::make_shared<AlignDepthFilter>(std::make_shared<rs2::align>(RS2_STREAM_COLOR), update_align_depth_func, _parameters, _logger);
 #endif
 
     _filters.push_back(_colorizer_filter);
     _filters.push_back(_pc_filter);
+
+    _align_depth_filter = std::make_shared<AlignDepthFilter>(std::make_shared<rs2::align>(RS2_STREAM_COLOR), update_align_depth_func, _parameters, _logger);
     _filters.push_back(_align_depth_filter);
 }
 

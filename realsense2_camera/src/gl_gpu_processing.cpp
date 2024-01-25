@@ -26,7 +26,8 @@ void BaseRealSenseNode::initOpenGLProcessing(bool use_gpu_processing)
     // Pass our window to enable sharing of textures between processed frames and the window
     // The "use_gpu_processing" is going to control if we will use CPU or GPU for data processing
     rs2::gl::init_processing(_app, use_gpu_processing);
-    rs2::gl::init_rendering();
+    if (use_gpu_processing)
+        rs2::gl::init_rendering();
 
     _timer = _node.create_wall_timer(1000ms, std::bind(&BaseRealSenseNode::glfwPollEventCallback, this));
 }
