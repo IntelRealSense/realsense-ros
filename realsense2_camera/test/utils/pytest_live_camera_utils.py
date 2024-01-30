@@ -72,27 +72,29 @@ def get_depth_profiles(long_data, start_index, end_index):
         if len(long_data[line_no]) == 0:
             break
         debug_print("depth profile processing:" + long_data[line_no])
-        depth_profile = long_data[line_no].split()
-        if len(depth_profile) == 5:
-            profile = depth_profile[0]
-            value = depth_profile[1]+"x"+depth_profile[3]
-            img_format = depth_profile[4]
-        elif len(depth_profile) == 6:
-            profile = depth_profile[0]+depth_profile[1]
-            value = depth_profile[2]+"x"+depth_profile[4]
-            img_format = depth_profile[5]
-        elif len(depth_profile) == 7:
-            profile = depth_profile[1]
-            value = depth_profile[2]+"x"+depth_profile[5]
-            img_format = depth_profile[3]
-        elif len(depth_profile) == 8:
-            profile = depth_profile[1]+depth_profile[2]
-            value = depth_profile[3]+"x"+depth_profile[6]
-            img_format = depth_profile[4]
+        enumerate_devices_line_splitted = long_data[line_no].split()
+        if len(enumerate_devices_line_splitted) == 7:
+            stream0_idx = 1
+            stream1_idx = 0
+            resolution_idx = 2
+            frequency_idx = 5
+            format_idx = 3
+        elif len(enumerate_devices_line_splitted) == 8:
+            stream0_idx = 1
+            stream1_idx = 2
+            resolution_idx = 3
+            frequency_idx = 6
+            format_idx = 4
         else:
             assert false, "Seems that the depth profile info format printed by rs-enumerate-devices changed"
-        debug_print("depth profile added: " + profile, value, img_format)
-        cap.append([profile, value, img_format])
+        if stream1_idx != 0:
+            depth_camera_stream = enumerate_devices_line_splitted[stream0_idx]+enumerate_devices_line_splitted[stream1_idx]
+        else:
+            depth_camera_stream = enumerate_devices_line_splitted[stream0_idx]
+        depth_profile_param = enumerate_devices_line_splitted[resolution_idx]+"x"+enumerate_devices_line_splitted[frequency_idx]
+        depth_format_param = enumerate_devices_line_splitted[format_idx]
+        debug_print("depth profile added: " + depth_camera_stream, depth_profile_param, depth_format_param)
+        cap.append([depth_camera_stream, depth_profile_param, depth_format_param])
     debug_print(cap)
     return cap
 
@@ -103,19 +105,19 @@ def get_color_profiles(long_data, start_index, end_index):
         if len(long_data[line_no]) == 0:
             break
         debug_print("color profile processing:" + long_data[line_no])
-        color_profile = long_data[line_no].split()
-        if len(color_profile) == 5:
-            profile = color_profile[0]
-            value = color_profile[1]+"x"+color_profile[3]
-            img_format = color_profile[4]
-        elif len(color_profile) == 7:
-            profile = color_profile[1]
-            value = color_profile[2]+"x"+color_profile[5]
-            img_format = color_profile[3]
+        enumerate_devices_line_splitted = long_data[line_no].split()
+        if len(enumerate_devices_line_splitted) == 7:
+            stream_idx = 1
+            resolution_idx = 2
+            frequency_idx = 5
+            format_idx = 3
         else:
             assert false, "Seems that the color profile info format printed by rs-enumerate-devices changed"
-        debug_print("color profile added: " + profile, value, img_format)
-        cap.append([profile, value, img_format])
+        color_camera_stream = enumerate_devices_line_splitted[stream_idx]
+        color_profile_param = enumerate_devices_line_splitted[resolution_idx]+"x"+enumerate_devices_line_splitted[frequency_idx]
+        color_format_param = enumerate_devices_line_splitted[format_idx]
+        debug_print("color profile added: " + color_camera_stream, color_profile_param, color_format_param)
+        cap.append([color_camera_stream, color_profile_param, color_format_param])
     debug_print(cap)
     return cap
 
