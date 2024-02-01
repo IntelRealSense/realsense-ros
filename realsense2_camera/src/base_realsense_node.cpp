@@ -116,7 +116,9 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _is_profile_changed(false),
     _is_align_depth_changed(false)
 #if defined (ACCELERATE_WITH_GPU)
-    ,_app(1280, 720, "RS_GLFW_Window")
+    ,_app(1280, 720, "RS_GLFW_Window"),
+    _accelerate_with_gpu(accelerate_with_gpu::NO_GPU),
+    _is_accelerate_with_gpu_changed(false)
 #endif
 {
     if ( use_intra_process )
@@ -130,10 +132,6 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
 
 BaseRealSenseNode::~BaseRealSenseNode()
 {
-#if defined (ACCELERATE_WITH_GPU)
-    shutdownOpenGLProcessing();
-#endif
-
     // Kill dynamic transform thread
     _is_running = false;
     _cv_tf.notify_one();

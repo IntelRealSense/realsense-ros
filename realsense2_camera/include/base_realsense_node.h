@@ -261,6 +261,8 @@ namespace realsense2_camera
         void setAvailableSensors();
         void setCallbackFunctions();
         void updateSensors();
+        void startVideoSensors();
+        void stopVideoSensors();
         void publishServices();
         void startPublishers(const std::vector<rs2::stream_profile>& profiles, const RosSensor& sensor);
         void startRGBDPublisherIfNeeded();
@@ -357,6 +359,7 @@ namespace realsense2_camera
         GLwindow _app;
         rclcpp::TimerBase::SharedPtr _timer;
         accelerate_with_gpu _accelerate_with_gpu;
+        bool _is_accelerate_with_gpu_changed;
 #endif
 
     };//end class

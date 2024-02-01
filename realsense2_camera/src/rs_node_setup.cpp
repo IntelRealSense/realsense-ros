@@ -25,6 +25,7 @@ void BaseRealSenseNode::setup()
 #if defined (ACCELERATE_WITH_GPU)
     bool use_gpu_processing = (_accelerate_with_gpu == accelerate_with_gpu::GL_GPU);
     initOpenGLProcessing(use_gpu_processing);
+    _is_accelerate_with_gpu_changed = false;
 #endif
     setDynamicParams();
     startDiagnosticsUpdater();
@@ -43,7 +44,11 @@ void BaseRealSenseNode::monitoringProfileChanges()
     std::function<void()> func = [this, time_interval](){
         std::unique_lock<std::mutex> lock(_profile_changes_mutex);
         while(_is_running) {
-            _cv_mpc.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return (!_is_running || _is_profile_changed || _is_align_depth_changed);});
+            _cv_mpc.wait_for(lock, std::chrono::milliseconds(time_interval), [&]{return (!_is_running || _is_profile_changed || _is_align_depth_changed
+#if defined (ACCELERATE_WITH_GPU)
+                || _is_accelerate_with_gpu_changed
+#endif
+                                );});
             if (_is_running && (_is_profile_changed || _is_align_depth_changed))
             {
                 ROS_DEBUG("Profile has changed");
@@ -58,6 +63,27 @@ void BaseRealSenseNode::monitoringProfileChanges()
                 _is_profile_changed = false;
                 _is_align_depth_changed = false;
             }
+#if defined (ACCELERATE_WITH_GPU)
+            if (_is_running && _is_accelerate_with_gpu_changed)
+            {
+                ROS_DEBUG("Accelerate_with_gpu changed");
+                try
+                {
+                    stopVideoSensors();
+                    shutdownOpenGLProcessing();
+
+                    bool use_gpu_processing = (_accelerate_with_gpu == accelerate_with_gpu::GL_GPU);
+                    initOpenGLProcessing(use_gpu_processing);
+
+                    startVideoSensors();
+                }
+                catch(const std::exception& e)
+                {
+                    ROS_ERROR_STREAM("Error updating the sensors: " << e.what());
+                }
+                _is_accelerate_with_gpu_changed = false;
+            }
+#endif
         }
     };
     _monitoring_pc = std::make_shared<std::thread>(func);
@@ -379,6 +405,108 @@ void BaseRealSenseNode::updateSensors()
                         ROS_INFO_STREAM("Starting Sensor: " << module_name);
                         sensor->start(wanted_profiles);
                     }
+
+                    if (sensor->rs2::sensor::is<rs2::depth_sensor>())
+                    {
+                        _depth_scale_meters = sensor->as<rs2::depth_sensor>().get_depth_scale();
+                    }
+                }
+            }
+        }
+        if (_publish_tf)
+        {
+            std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
+            publishStaticTransforms();
+        }
+        startRGBDPublisherIfNeeded();
+    }
+    catch(const std::exception& ex)
+    {
+        ROS_ERROR_STREAM(__FILE__ << ":" << __LINE__ << ":" << "An exception has been thrown: " << ex.what());
+        throw;
+    }
+    catch(...)
+    {
+        ROS_ERROR_STREAM(__FILE__ << ":" << __LINE__ << ":" << "Unknown exception has occured!");
+        throw;
+    }
+}
+
+void BaseRealSenseNode::stopVideoSensors()
+{
+    std::lock_guard<std::mutex> lock_guard(_update_sensor_mutex);
+    try{
+        for(auto&& sensor : _available_ros_sensors)
+        {
+            std::string module_name(rs2_to_ros(sensor->get_info(RS2_CAMERA_INFO_NAME)));
+
+            bool is_video_sensor = (sensor->is<rs2::depth_sensor>() || sensor->is<rs2::color_sensor>());
+
+            // do all updates if profile has been changed, or if the align depth filter status has been changed
+            // and we are on a video sensor. TODO: explore better options to monitor and update changes
+            // without resetting the whole sensors and topics.
+            if (is_video_sensor)
+            {
+                std::vector<stream_profile> active_profiles = sensor->get_active_streams();
+
+                // Start/stop sensors only if profile was changed
+                // No need to start/stop sensors if align_depth was changed
+                ROS_INFO_STREAM("Stopping Sensor: " << module_name);
+                sensor->stop();
+
+                stopPublishers(active_profiles);
+            }
+        }
+    }
+    catch(const std::exception& ex)
+    {
+        ROS_ERROR_STREAM(__FILE__ << ":" << __LINE__ << ":" << "An exception has been thrown: " << ex.what());
+        throw;
+    }
+    catch(...)
+    {
+        ROS_ERROR_STREAM(__FILE__ << ":" << __LINE__ << ":" << "Unknown exception has occured!");
+        throw;
+    }
+}
+
+void BaseRealSenseNode::startVideoSensors()
+{
+    std::lock_guard<std::mutex> lock_guard(_update_sensor_mutex);
+    try{
+        for(auto&& sensor : _available_ros_sensors)
+        {
+            std::string module_name(rs2_to_ros(sensor->get_info(RS2_CAMERA_INFO_NAME)));
+            // if active_profiles != wanted_profiles: stop sensor.
+            std::vector<stream_profile> wanted_profiles;
+
+            sensor->getUpdatedProfiles(wanted_profiles);
+            bool is_video_sensor = (sensor->is<rs2::depth_sensor>() || sensor->is<rs2::color_sensor>());
+
+            // do all updates if profile has been changed, or if the align depth filter status has been changed
+            // and we are on a video sensor. TODO: explore better options to monitor and update changes
+            // without resetting the whole sensors and topics.
+            if (is_video_sensor)
+            {
+                std::vector<stream_profile> active_profiles = sensor->get_active_streams();
+
+                if (!wanted_profiles.empty())
+                {
+                    startPublishers(wanted_profiles, *sensor);
+                    updateProfilesStreamCalibData(wanted_profiles);
+                    if (_publish_tf)
+                    {
+                        std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
+                        for (auto &profile : wanted_profiles)
+                        {
+                            calcAndAppendTransformMsgs(profile, _base_profile);
+                        }
+                    }
+
+                    // Start/stop sensors only if profile was changed
+                    // No need to start/stop sensors if align_depth was changed
+                    ROS_INFO_STREAM("Starting Sensor: " << module_name);
+                    sensor->start(wanted_profiles);
 
                     if (sensor->rs2::sensor::is<rs2::depth_sensor>())
                     {
