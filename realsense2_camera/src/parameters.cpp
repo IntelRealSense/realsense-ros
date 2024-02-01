@@ -82,6 +82,12 @@ void BaseRealSenseNode::getParameters()
     _base_frame_id = _parameters->setParam<std::string>(param_name, DEFAULT_BASE_FRAME_ID);
     _base_frame_id = (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_" << _base_frame_id)).str();
     _parameters_names.push_back(param_name);
+
+#if defined (ACCELERATE_WITH_GPU)
+    param_name = std::string("accelerate_with_gpu");
+    _accelerate_with_gpu = accelerate_with_gpu(_parameters->setParam<int>(param_name, int(accelerate_with_gpu::NO_GPU)));
+    _parameters_names.push_back(param_name);
+#endif
 }
 
 void BaseRealSenseNode::setDynamicParams()

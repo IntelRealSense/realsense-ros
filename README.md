@@ -354,6 +354,15 @@ User can set the camera name and camera namespace, to distinguish between camera
   - double, positive values set the period between diagnostics updates on the `/diagnostics` topic.
   - 0 or negative values mean no diagnostics topic is published. Defaults to 0.</br>
 The `/diagnostics` topic includes information regarding the device temperatures and actual frequency of the enabled streams.
+- **accelerate_with_gpu**:
+  - GPU accelerated processing of PointCloud and Colorizer filters.
+  - integer:
+    - 0 --> **NO_GPU**: use only CPU for proccessing PointCloud and Colorizer filters
+    - 1 --> **GL_GPU**: use GLSL to accelerate GPU for processing PointCloud and Colorizer filters
+  - Note: To enable GPU acceleration, turn ON `BUILD_ACCELERATE_WITH_GPU` during build:
+    ```bash
+    colcon build --cmake-args '-DBUILD_ACCELERATE_WITH_GPU=ON'
+    ```
 
 <hr>
 

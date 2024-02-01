@@ -117,6 +117,9 @@ find_package(tf2 REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 
 find_package(realsense2 2.54.1)
+if (BUILD_ACCELERATE_WITH_GPU)
+  find_package(realsense2-gl 2.54.1)
+endif()
 if(NOT realsense2_FOUND)
     message(FATAL_ERROR "\n\n Intel RealSense SDK 2.0 is missing, please install it from https://github.com/IntelRealSense/librealsense/releases\n\n")
 endif()
@@ -140,6 +143,10 @@ set(SOURCES
     src/image_publisher.cpp
     src/tfs.cpp
   )
+
+if (BUILD_ACCELERATE_WITH_GPU)
+  list(APPEND SOURCES src/gl_gpu_processing.cpp)
+endif()
 
 if(NOT DEFINED ENV{ROS_DISTRO})
   message(FATAL_ERROR "ROS_DISTRO is not defined." )
@@ -171,6 +178,10 @@ if(${rclcpp_VERSION} VERSION_GREATER_EQUAL "17.0")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRCLCPP_HAS_OnSetParametersCallbackType")
 endif()
 
+if (BUILD_ACCELERATE_WITH_GPU)
+  add_definitions(-DACCELERATE_WITH_GPU)
+endif()
+
 set(INCLUDES
     include/constants.h
     include/realsense_node_factory.h
@@ -184,6 +195,9 @@ set(INCLUDES
     include/profile_manager.h
     include/image_publisher.h)
 
+if (BUILD_ACCELERATE_WITH_GPU)
+  list(APPEND INCLUDES include/gl_window.h)
+endif()
 
 if (BUILD_TOOLS)
 
@@ -200,9 +214,15 @@ add_library(${PROJECT_NAME} SHARED
     ${SOURCES}
 )
 
+if (BUILD_ACCELERATE_WITH_GPU)
+  set(link_libraries ${realsense2-gl_LIBRARY})
+else()
+  set(link_libraries ${realsense2_LIBRARY})
+endif()
+
 target_link_libraries(${PROJECT_NAME}
-    ${realsense2_LIBRARY}
-    )
+    ${link_libraries}
+)
 
 set(dependencies
   cv_bridge
@@ -214,10 +234,15 @@ set(dependencies
   sensor_msgs
   nav_msgs
   tf2
-  realsense2
   tf2_ros
   diagnostic_updater
 )
+
+if (BUILD_ACCELERATE_WITH_GPU)
+  list(APPEND dependencies realsense2-gl)
+else()
+  list(APPEND dependencies realsense2)
+endif()
 
 ament_target_dependencies(${PROJECT_NAME}
   ${dependencies}
