@@ -279,7 +279,7 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
 
                 // special handling for labeled point cloud stream, since it a topic of PointCloud messages
                 // and not a normal image publisher
-                 _labeled_pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("labeled_point_cloud/points",
+                 _labeled_pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("~/labeled_point_cloud/points",
                     rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos),qos));
             }
         }
