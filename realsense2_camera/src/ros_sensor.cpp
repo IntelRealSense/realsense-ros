@@ -128,6 +128,19 @@ void RosSensor::UpdateSequenceIdCallback()
         set_option(RS2_OPTION_HDR_ENABLED, false);
     }
 
+    bool is_ae_enabled = static_cast<bool>(get_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE));
+
+    // Deleter to revert back the RS2_OPTION_ENABLE_AUTO_EXPOSURE value at the end.
+    // Whenver exposure or gain gets updated, RS2_OPTION_ENABLE_AUTO_EXPOSURE will automatically go OFF.
+    // So, this step is required to enable it back during initialization stage of the node.
+    auto deleter_to_revert_ae = std::unique_ptr<bool, std::function<void(bool*)>>(&is_ae_enabled,
+                                                [&](bool* enable_back_ae) {
+                                                    if (enable_back_ae && *enable_back_ae)
+                                                    {
+                                                        set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, true);
+                                                    }
+                                                });
+
     int original_seq_id = static_cast<int>(get_option(RS2_OPTION_SEQUENCE_ID));   // To Set back to default.
     std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
     
