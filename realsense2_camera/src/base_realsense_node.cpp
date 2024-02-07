@@ -710,8 +710,19 @@ void BaseRealSenseNode::updateProfilesStreamCalibData(const std::vector<rs2::str
 void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& video_profile)
 {
     stream_index_pair stream_index{video_profile.stream_type(), video_profile.stream_index()};
-    auto intrinsic = video_profile.get_intrinsics();
-    _stream_intrinsics[stream_index] = intrinsic;
+
+    rs2_intrinsics intrinsic;
+    try
+    {
+        intrinsic = video_profile.get_intrinsics();
+    }
+    catch(const std::exception& ex)
+    {
+        // e.g. infra1/infra2 in Y16i format (calibration mode) doesn't have intrinsics.
+        ROS_WARN_STREAM("No intrinsics available for this stream profile. Using zeroed intrinsics as default.");
+        intrinsic = { 0, 0, 0, 0, 0, 0, RS2_DISTORTION_NONE ,{ 0,0,0,0,0 } };
+    }
+
     _camera_info[stream_index].width = intrinsic.width;
     _camera_info[stream_index].height = intrinsic.height;
     _camera_info[stream_index].header.frame_id = OPTICAL_FRAME_ID(stream_index);
