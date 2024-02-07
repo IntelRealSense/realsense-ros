@@ -373,7 +373,6 @@ void RealSenseNodeFactory::startDevice()
         case RS435i_RGB_PID:
         case RS455_PID:
         case RS457_PID:
-        case RS465_PID:
         case RS_USB2_PID:
             _realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(*this, _device, _parameters, this->get_node_options().use_intra_process_comms()));
             break;
