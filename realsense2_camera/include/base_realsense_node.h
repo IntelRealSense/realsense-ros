@@ -261,8 +261,8 @@ namespace realsense2_camera
         void setAvailableSensors();
         void setCallbackFunctions();
         void updateSensors();
-        void startVideoSensors();
-        void stopVideoSensors();
+        void startUpdatedSensors();
+        void stopRequiredSensors();
         void publishServices();
         void startPublishers(const std::vector<rs2::stream_profile>& profiles, const RosSensor& sensor);
         void startRGBDPublisherIfNeeded();
