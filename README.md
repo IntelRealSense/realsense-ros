@@ -281,6 +281,7 @@ User can set the camera name and camera namespace, to distinguish between camera
   - <stream_type> can be any of *infra, infra1, infra2, color, depth, gyro, accel*.
   -  Available values are the following strings: `SYSTEM_DEFAULT`, `DEFAULT`, `PARAMETER_EVENTS`, `SERVICES_DEFAULT`, `PARAMETERS`, `SENSOR_DATA`.
   - For example: ```depth_qos:=SENSOR_DATA```
+  - Pointcloud QoS is controlled with the `pointcloud.pointcloud_qos` parameter in the pointcloud filter, refer to the Post-Processing Filters section for details.
   - Reference: [ROS2 QoS profiles formal documentation](https://docs.ros.org/en/rolling/Concepts/About-Quality-of-Service-Settings.html#qos-profiles)
 - **Notice:** ***<stream_type>*_info_qos** refers to both camera_info topics and metadata topics.
 - **tf_publish_rate**: 
@@ -510,6 +511,16 @@ The following post processing filters are available:
     * The texture of the pointcloud can be modified using the `pointcloud.stream_filter` parameter.</br>
     * The depth FOV and the texture FOV are not similar. By default, pointcloud is limited to the section of depth containing the texture. You can have a full depth to pointcloud, coloring the regions beyond the texture with zeros, by setting `pointcloud.allow_no_texture_points` to true.
     * pointcloud is of an unordered format by default. This can be changed by setting `pointcloud.ordered_pc` to true.
+    * The QoS of the pointcloud topic is independent from depth and color streams and can be controlled with the `pointcloud.pointcloud_qos` parameter.
+      - The same set of QoS values are supported as other streams, refer to <stream_type>_qos in the Parameters section of this page.
+      - The launch file should include the parameter with initial QoS value, for example,`{'name': 'pointcloud.pointcloud_qos',    'default': 'SENSOR_DATA', 'description': 'pointcloud qos'}`
+      - The QoS value can also be overridden at launch with command option, for example, `pointcloud.pointcloud_qos:=SENSOR_DATA`
+      - At runtime, the QoS can be changed dynamically but require the filter re-enable for the change to take effect, for example,
+        ```bash
+        ros2 param set /camera/camera pointcloud.pointcloud_qos SENSOR_DATA
+        ros2 param set /camera/camera pointcloud.enable false
+        ros2 param set /camera/camera pointcloud.enable true
+        ```
  - ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values.
   - `depth_module.hdr_enabled`: to enable/disable HDR
   - The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.
