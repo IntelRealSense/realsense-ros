@@ -40,7 +40,8 @@ void BaseRealSenseNode::glfwPollEventCallback()
 
 void BaseRealSenseNode::shutdownOpenGLProcessing()
 {
-
+    rs2::gl::shutdown_rendering();
+    rs2::gl::shutdown_processing();
 }
 
 #endif
