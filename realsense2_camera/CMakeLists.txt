@@ -117,7 +117,7 @@ find_package(tf2 REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 
 find_package(realsense2 2.54.1)
-if (BUILD_ACCELERATE_WITH_GPU)
+if (BUILD_ACCELERATE_GPU_WITH_GLSL)
   find_package(realsense2-gl 2.54.1)
 endif()
 if(NOT realsense2_FOUND)
@@ -144,7 +144,7 @@ set(SOURCES
     src/tfs.cpp
   )
 
-if (BUILD_ACCELERATE_WITH_GPU)
+if (BUILD_ACCELERATE_GPU_WITH_GLSL)
   list(APPEND SOURCES src/gl_gpu_processing.cpp)
 endif()
 
@@ -178,8 +178,8 @@ if(${rclcpp_VERSION} VERSION_GREATER_EQUAL "17.0")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRCLCPP_HAS_OnSetParametersCallbackType")
 endif()
 
-if (BUILD_ACCELERATE_WITH_GPU)
-  add_definitions(-DACCELERATE_WITH_GPU)
+if (BUILD_ACCELERATE_GPU_WITH_GLSL)
+  add_definitions(-DACCELERATE_GPU_WITH_GLSL)
 endif()
 
 set(INCLUDES
@@ -195,7 +195,7 @@ set(INCLUDES
     include/profile_manager.h
     include/image_publisher.h)
 
-if (BUILD_ACCELERATE_WITH_GPU)
+if (BUILD_ACCELERATE_GPU_WITH_GLSL)
   list(APPEND INCLUDES include/gl_window.h)
 endif()
 
@@ -214,7 +214,7 @@ add_library(${PROJECT_NAME} SHARED
     ${SOURCES}
 )
 
-if (BUILD_ACCELERATE_WITH_GPU)
+if (BUILD_ACCELERATE_GPU_WITH_GLSL)
   set(link_libraries ${realsense2-gl_LIBRARY})
 else()
   set(link_libraries ${realsense2_LIBRARY})
@@ -238,7 +238,7 @@ set(dependencies
   diagnostic_updater
 )
 
-if (BUILD_ACCELERATE_WITH_GPU)
+if (BUILD_ACCELERATE_GPU_WITH_GLSL)
   list(APPEND dependencies realsense2-gl)
 else()
   list(APPEND dependencies realsense2)

@@ -16,7 +16,7 @@
 
 #include <librealsense2/rs.hpp> // Include RealSense Cross Platform API
 
-#if defined (ACCELERATE_WITH_GPU)
+#if defined (ACCELERATE_GPU_WITH_GLSL)
 
 #define GL_SILENCE_DEPRECATION
 #define GLFW_INCLUDE_GLU

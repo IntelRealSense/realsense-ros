@@ -83,17 +83,17 @@ void BaseRealSenseNode::getParameters()
     _base_frame_id = (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_" << _base_frame_id)).str();
     _parameters_names.push_back(param_name);
 
-#if defined (ACCELERATE_WITH_GPU)
-    param_name = std::string("accelerate_with_gpu");
-     _parameters->setParam<int>(param_name, int(accelerate_with_gpu::NO_GPU), 
+#if defined (ACCELERATE_GPU_WITH_GLSL)
+    param_name = std::string("accelerate_gpu_with_glsl");
+     _parameters->setParam<bool>(param_name, false, 
                     [this](const rclcpp::Parameter& parameter)
                     {
-                        accelerate_with_gpu temp_value = accelerate_with_gpu(parameter.get_value<int>());
-                        if (_accelerate_with_gpu != temp_value)
+                        bool temp_value = parameter.get_value<bool>();
+                        if (_accelerate_gpu_with_glsl != temp_value)
                         {
-                            _accelerate_with_gpu = temp_value;
+                            _accelerate_gpu_with_glsl = temp_value;
                             std::lock_guard<std::mutex> lock_guard(_profile_changes_mutex);
-                            _is_accelerate_with_gpu_changed = true;
+                            _is_accelerate_gpu_with_glsl_changed = true;
                         }
                         _cv_mpc.notify_one();
                     });

@@ -29,7 +29,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'config_file',                  'default': "''", 'description': 'yaml config file'},
                            {'name': 'json_file_path',               'default': "''", 'description': 'allows advanced configuration'},
                            {'name': 'initial_reset',                'default': 'false', 'description': "''"},
-                           {'name': 'accelerate_with_gpu',          'default': "0", 'description': '[0-No_GPU, 1-GL_GPU]'},
+                           {'name': 'accelerate_gpu_with_glsl',     'default': "false", 'description': 'enable GPU acceleration with GLSL'},
                            {'name': 'rosbag_filename',              'default': "''", 'description': 'A realsense bagfile to run from as a device'},
                            {'name': 'log_level',                    'default': 'info', 'description': 'debug log level [DEBUG|INFO|WARN|ERROR|FATAL]'},
                            {'name': 'output',                       'default': 'screen', 'description': 'pipe node output [screen|log]'},
