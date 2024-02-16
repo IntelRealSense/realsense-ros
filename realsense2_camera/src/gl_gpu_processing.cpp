@@ -18,7 +18,7 @@
 using namespace realsense2_camera;
 using namespace std::chrono_literals;
 
-#if defined (ACCELERATE_WITH_GPU)
+#if defined (ACCELERATE_GPU_WITH_GLSL)
 
 void BaseRealSenseNode::initOpenGLProcessing(bool use_gpu_processing)
 {

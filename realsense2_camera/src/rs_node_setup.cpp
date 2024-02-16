@@ -22,10 +22,9 @@ using namespace rs2;
 
 void BaseRealSenseNode::setup()
 {
-#if defined (ACCELERATE_WITH_GPU)
-    bool use_gpu_processing = (_accelerate_with_gpu == accelerate_with_gpu::GL_GPU);
-    initOpenGLProcessing(use_gpu_processing);
-    _is_accelerate_with_gpu_changed = false;
+#if defined (ACCELERATE_GPU_WITH_GLSL)
+    initOpenGLProcessing(_accelerate_gpu_with_glsl);
+    _is_accelerate_gpu_with_glsl_changed = false;
 #endif
     setDynamicParams();
     startDiagnosticsUpdater();
@@ -47,15 +46,15 @@ void BaseRealSenseNode::monitoringProfileChanges()
             _cv_mpc.wait_for(lock, std::chrono::milliseconds(time_interval),
                                                [&]{return (!_is_running || _is_profile_changed
                                                                         || _is_align_depth_changed
-                                                                        #if defined (ACCELERATE_WITH_GPU)
-                                                                            || _is_accelerate_with_gpu_changed
+                                                                        #if defined (ACCELERATE_GPU_WITH_GLSL)
+                                                                            || _is_accelerate_gpu_with_glsl_changed
                                                                         #endif
                                                            );});
 
             if (_is_running && (_is_profile_changed
                                         || _is_align_depth_changed
-                                        #if defined (ACCELERATE_WITH_GPU)
-                                            || _is_accelerate_with_gpu_changed
+                                        #if defined (ACCELERATE_GPU_WITH_GLSL)
+                                            || _is_accelerate_gpu_with_glsl_changed
                                         #endif
                                 ))
             {
@@ -71,8 +70,8 @@ void BaseRealSenseNode::monitoringProfileChanges()
                 _is_profile_changed = false;
                 _is_align_depth_changed = false;
 
-                #if defined (ACCELERATE_WITH_GPU)
-                    _is_accelerate_with_gpu_changed = false;
+                #if defined (ACCELERATE_GPU_WITH_GLSL)
+                    _is_accelerate_gpu_with_glsl_changed = false;
                 #endif
             }
         }
@@ -354,13 +353,12 @@ void BaseRealSenseNode::updateSensors()
     try{
         stopRequiredSensors();
 
-        #if defined (ACCELERATE_WITH_GPU)
-            if (_is_accelerate_with_gpu_changed)
+        #if defined (ACCELERATE_GPU_WITH_GLSL)
+            if (_is_accelerate_gpu_with_glsl_changed)
             {
                 shutdownOpenGLProcessing();
 
-                bool use_gpu_processing = (_accelerate_with_gpu == accelerate_with_gpu::GL_GPU);
-                initOpenGLProcessing(use_gpu_processing);
+                initOpenGLProcessing(_accelerate_gpu_with_glsl);
             }
         #endif
 
@@ -394,15 +392,15 @@ void BaseRealSenseNode::stopRequiredSensors()
             // and we are on a video sensor. TODO: explore better options to monitor and update changes
             // without resetting the whole sensors and topics.
             if (is_profile_changed || (is_video_sensor && (_is_align_depth_changed
-                                                                #if defined (ACCELERATE_WITH_GPU)
-                                                                    || _is_accelerate_with_gpu_changed
+                                                                #if defined (ACCELERATE_GPU_WITH_GLSL)
+                                                                    || _is_accelerate_gpu_with_glsl_changed
                                                                 #endif
                                                             )))
             {
                 std::vector<stream_profile> active_profiles = sensor->get_active_streams();
                 if (is_profile_changed
-                        #if defined (ACCELERATE_WITH_GPU)
-                            || _is_accelerate_with_gpu_changed
+                        #if defined (ACCELERATE_GPU_WITH_GLSL)
+                            || _is_accelerate_gpu_with_glsl_changed
                         #endif
                     )
                 {
@@ -440,8 +438,8 @@ void BaseRealSenseNode::startUpdatedSensors()
             bool is_video_sensor = (sensor->is<rs2::depth_sensor>() || sensor->is<rs2::color_sensor>());
 
             if (is_profile_changed || (is_video_sensor && (_is_align_depth_changed
-                                                                #if defined (ACCELERATE_WITH_GPU)
-                                                                    || _is_accelerate_with_gpu_changed
+                                                                #if defined (ACCELERATE_GPU_WITH_GLSL)
+                                                                    || _is_accelerate_gpu_with_glsl_changed
                                                                 #endif
                                                             )))
             {
@@ -459,8 +457,8 @@ void BaseRealSenseNode::startUpdatedSensors()
                     }
 
                     if (is_profile_changed
-                            #if defined (ACCELERATE_WITH_GPU)
-                                || _is_accelerate_with_gpu_changed
+                            #if defined (ACCELERATE_GPU_WITH_GLSL)
+                                || _is_accelerate_gpu_with_glsl_changed
                             #endif
                         )
                     {

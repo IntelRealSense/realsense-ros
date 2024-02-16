@@ -115,10 +115,10 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _imu_sync_method(imu_sync_method::NONE),
     _is_profile_changed(false),
     _is_align_depth_changed(false)
-#if defined (ACCELERATE_WITH_GPU)
+#if defined (ACCELERATE_GPU_WITH_GLSL)
     ,_app(1280, 720, "RS_GLFW_Window"),
-    _accelerate_with_gpu(accelerate_with_gpu::NO_GPU),
-    _is_accelerate_with_gpu_changed(false)
+    _accelerate_gpu_with_glsl(false),
+    _is_accelerate_gpu_with_glsl_changed(false)
 #endif
 {
     if ( use_intra_process )
@@ -234,7 +234,7 @@ void BaseRealSenseNode::setupFilters()
         _cv_mpc.notify_one();
     };
 
-#if defined (ACCELERATE_WITH_GPU)
+#if defined (ACCELERATE_GPU_WITH_GLSL)
     _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::gl::colorizer>(), _parameters, _logger); 
     _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::gl::pointcloud>(), _node, _parameters, _logger);
 #else

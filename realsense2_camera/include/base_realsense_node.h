@@ -49,7 +49,7 @@
 #include <ros_sensor.h>
 #include <named_filter.h>
 
-#if defined (ACCELERATE_WITH_GPU)
+#if defined (ACCELERATE_GPU_WITH_GLSL)
 #include <gl_window.h>
 #endif
 
@@ -119,7 +119,6 @@ namespace realsense2_camera
 
     public:
         enum class imu_sync_method{NONE, COPY, LINEAR_INTERPOLATION};
-        enum class accelerate_with_gpu {NO_GPU, GL_GPU};
 
     protected:
         class float3
@@ -268,7 +267,7 @@ namespace realsense2_camera
         void startRGBDPublisherIfNeeded();
         void stopPublishers(const std::vector<rs2::stream_profile>& profiles);
 
-#if defined (ACCELERATE_WITH_GPU)
+#if defined (ACCELERATE_GPU_WITH_GLSL)
         void initOpenGLProcessing(bool use_gpu_processing);
         void shutdownOpenGLProcessing();
         void glfwPollEventCallback();
@@ -354,11 +353,11 @@ namespace realsense2_camera
         std::shared_ptr<diagnostic_updater::Updater> _diagnostics_updater;
         rs2::stream_profile _base_profile;
 
-#if defined (ACCELERATE_WITH_GPU)
+#if defined (ACCELERATE_GPU_WITH_GLSL)
         GLwindow _app;
         rclcpp::TimerBase::SharedPtr _timer;
-        accelerate_with_gpu _accelerate_with_gpu;
-        bool _is_accelerate_with_gpu_changed;
+        bool _accelerate_gpu_with_glsl;
+        bool _is_accelerate_gpu_with_glsl_changed;
 #endif
 
     };//end class
