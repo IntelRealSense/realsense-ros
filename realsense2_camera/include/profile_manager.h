@@ -68,22 +68,22 @@ namespace realsense2_camera
             VideoProfilesManager(std::shared_ptr<Parameters> parameters, const std::string& module_name, rclcpp::Logger logger, bool force_image_default_qos = false);
             bool isWantedProfile(const rs2::stream_profile& profile) override;
             void registerProfileParameters(std::vector<stream_profile> all_profiles, std::function<void()> update_sensor_func) override;
-            int getHeight() {return _height;};
-            int getWidth() {return _width;};
-            int getFPS() {return _fps;};
+            int getHeight(rs2_stream stream_type) {return _height[stream_type];};
+            int getWidth(rs2_stream stream_type) {return _width[stream_type];};
+            int getFPS(rs2_stream stream_type) {return _fps[stream_type];};
 
         private:
             bool isSameProfileValues(const rs2::stream_profile& profile, const int width, const int height, const int fps, const rs2_format format);
+            rs2::stream_profile validateAndGetSuitableProfile(rs2_stream stream_type, rs2::stream_profile given_profile);
             void registerVideoSensorProfileFormat(stream_index_pair sip);
             void registerVideoSensorParams(std::set<stream_index_pair> sips);
-            std::string get_profiles_descriptions();
+            std::string get_profiles_descriptions(rs2_stream stream_type);
             std::string getProfileFormatsDescriptions(stream_index_pair sip);
 
         private:
             std::string _module_name;
             std::map<stream_index_pair, rs2_format>  _formats;
-            int      _fps;
-            int _width, _height;
+            std::map<rs2_stream, int> _fps, _width, _height;
             bool _is_profile_exist;
             bool _force_image_default_qos;
     };
