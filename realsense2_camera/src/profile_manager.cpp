@@ -141,9 +141,6 @@ std::map<stream_index_pair, rs2::stream_profile> ProfilesManager::getDefaultProf
 
 rs2::stream_profile VideoProfilesManager::validateAndGetSuitableProfile(rs2_stream stream_type, rs2::stream_profile given_profile)
 {
-    if (_all_profiles.empty()) 
-        throw std::runtime_error("Wrong commands sequence. No profiles set.");
-
     rs2::stream_profile suitable_profile = given_profile;
     bool is_given_profile_suitable = false;
 
