@@ -218,7 +218,21 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
             else if (profile.stream_type() == RS2_STREAM_DEPTH)
                 _is_depth_enabled = true;
 
-            if (profile.stream_type() != RS2_STREAM_LABELED_POINT_CLOUD)
+            if (profile.stream_type() == RS2_STREAM_OCCUPANCY)
+            {
+                // special handling for occupancy stream, since it is a topic of nav_msgs/msg/GridCells messages
+                // and not a normal image publisher
+                 _occupancy_publisher = _node.create_publisher<nav_msgs::msg::GridCells>("~/occupancy",
+                    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos),qos));
+            }
+            else if(profile.stream_type() == RS2_STREAM_LABELED_POINT_CLOUD)
+            {
+                // special handling for labeled point cloud stream, since it is a topic of PointCloud messages
+                // and not a normal image publisher
+                 _labeled_pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("~/labeled_point_cloud/points",
+                    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos),qos));
+            }
+            else
             {
                 std::stringstream image_raw, camera_info;
                 bool rectified_image = false;
@@ -274,13 +288,6 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                     _depth_aligned_info_publisher[sip] = _node.create_publisher<sensor_msgs::msg::CameraInfo>(aligned_camera_info.str(),
                                                       rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
                 }
-            }
-            else {
-
-                // special handling for labeled point cloud stream, since it a topic of PointCloud messages
-                // and not a normal image publisher
-                 _labeled_pointcloud_publisher = _node.create_publisher<sensor_msgs::msg::PointCloud2>("~/labeled_point_cloud/points",
-                    rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos),qos));
             }
         }
         else if (profile.is<rs2::motion_stream_profile>())
