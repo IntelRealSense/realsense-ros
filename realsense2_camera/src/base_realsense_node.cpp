@@ -819,7 +819,7 @@ const rmw_qos_profile_t BaseRealSenseNode::qos_string_to_qos(std::string str)
 {
 #ifndef DASHING
     if (str == "UNKNOWN")
-        return rmw_qos_profile_unknown;
+        return rmw_qos_profile_system_default;
 #endif
     if (str == "SYSTEM_DEFAULT")
         return rmw_qos_profile_system_default;
