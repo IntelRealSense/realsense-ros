@@ -110,7 +110,34 @@ void RosSensor::UpdateSequenceIdCallback()
     if (!supports(RS2_OPTION_SEQUENCE_ID))
         return;
 
+    std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
+    std::string param_name = module_name + "." + create_graph_resource_name(rs2_option_to_string(RS2_OPTION_ENABLE_AUTO_EXPOSURE));
+
+    bool user_set_enable_ae_value = _params.getParameters()->getParam<bool>(param_name);
     bool is_hdr_enabled = static_cast<bool>(get_option(RS2_OPTION_HDR_ENABLED));
+
+    if (is_hdr_enabled && user_set_enable_ae_value)
+    {
+        bool is_ae_enabled = static_cast<bool>(get_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE));
+
+        // If AE got auto-disabled, update the Enable_Auto_Exposure ROS paramerter as well accordingly.
+        if (!is_ae_enabled)
+        {
+            ROS_WARN_STREAM("Auto Exposure functionality is not supported when HDR is enabled. " << 
+                                                "So, disabling the '" << param_name << "' param.");
+
+            try
+            {
+                std::vector<std::function<void()> > funcs;
+                funcs.push_back([this](){set_sensor_parameter_to_ros<bool>(RS2_OPTION_ENABLE_AUTO_EXPOSURE);});
+                _params.getParameters()->pushUpdateFunctions(funcs);
+            }
+            catch(const std::exception& e)
+            {
+                ROS_WARN_STREAM("Failed to set parameter:" << param_name << " : " << e.what());
+            }
+        }
+    }
 
     // Deleter to revert back the RS2_OPTION_HDR_ENABLED value at the end.
     auto deleter_to_revert_hdr = std::unique_ptr<bool, std::function<void(bool*)>>(&is_hdr_enabled,
@@ -121,36 +148,35 @@ void RosSensor::UpdateSequenceIdCallback()
                                                     }
                                                 });
 
-    // From FW version 5.14.x.x, if HDR is enabled, updating UVC controls like exposure, gain , etc are restricted.
-    // So, disable it before updating.
     if (is_hdr_enabled)
     {
+        // From FW version 5.14.x.x, if HDR is enabled, updating UVC controls like exposure, gain , etc are restricted.
+        // So, disable it before updating. It will be reverted back by the deleter 'deleter_to_revert_hdr'.
         set_option(RS2_OPTION_HDR_ENABLED, false);
-    }
 
-    int original_seq_id = static_cast<int>(get_option(RS2_OPTION_SEQUENCE_ID));   // To Set back to default.
-    std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
-    
-    // Read initialization parameters and set to sensor:
-    std::vector<rs2_option> options{RS2_OPTION_EXPOSURE, RS2_OPTION_GAIN};
-    unsigned int seq_size = get_option(RS2_OPTION_SEQUENCE_SIZE);
-    for (unsigned int seq_id = 1; seq_id <= seq_size; seq_id++ )
-    {
-        set_option(RS2_OPTION_SEQUENCE_ID, seq_id);
-        for (rs2_option& option : options)
+        int original_seq_id = static_cast<int>(get_option(RS2_OPTION_SEQUENCE_ID));   // To Set back to default.
+
+        // Read initialization parameters and set to sensor:
+        std::vector<rs2_option> options{RS2_OPTION_EXPOSURE, RS2_OPTION_GAIN};
+        unsigned int seq_size = get_option(RS2_OPTION_SEQUENCE_SIZE);
+        for (unsigned int seq_id = 1; seq_id <= seq_size; seq_id++ )
         {
-            std::stringstream param_name_str;
-            param_name_str << module_name << "." << create_graph_resource_name(rs2_option_to_string(option)) << "." << seq_id;
-            int option_value = get_option(option);
-            int user_set_option_value = _params.getParameters()->readAndDeleteParam(param_name_str.str(), option_value);
-            if (option_value != user_set_option_value)
+            set_option(RS2_OPTION_SEQUENCE_ID, seq_id);
+            for (rs2_option& option : options)
             {
-                ROS_INFO_STREAM("Set " << rs2_option_to_string(option) << "." << seq_id << " to " << user_set_option_value);
-                set_option(option, user_set_option_value);
+                std::stringstream param_name_str;
+                param_name_str << module_name << "." << create_graph_resource_name(rs2_option_to_string(option)) << "." << seq_id;
+                int option_value = get_option(option);
+                int user_set_option_value = _params.getParameters()->readAndDeleteParam(param_name_str.str(), option_value);
+                if (option_value != user_set_option_value)
+                {
+                    ROS_INFO_STREAM("Set " << rs2_option_to_string(option) << "." << seq_id << " to " << user_set_option_value);
+                    set_option(option, user_set_option_value);
+                }
             }
         }
+        set_option(RS2_OPTION_SEQUENCE_ID, original_seq_id);   // Set back to default.
     }
-    set_option(RS2_OPTION_SEQUENCE_ID, original_seq_id);   // Set back to default.
 
     // Set callback to update ros parameters to gain and exposure matching the selected sequence_id:
     const std::string option_name(module_name + "." + create_graph_resource_name(rs2_option_to_string(RS2_OPTION_SEQUENCE_ID)));

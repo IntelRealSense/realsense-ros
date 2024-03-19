@@ -524,17 +524,21 @@ The following post processing filters are available:
         ros2 param set /camera/camera pointcloud.enable true
         ```
  - ```hdr_merge```: Allows depth image to be created by merging the information from 2 consecutive frames, taken with different exposure and gain values.
-  - `depth_module.hdr_enabled`: to enable/disable HDR
-  - The way to set exposure and gain values for each sequence in runtime is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.
-    - From FW versions 5.14.x.x and above, if HDR is enabled, the preset configs (like exposure, gain, etc.,) cannot be updated.
-      - Disable the HDR first using `depth_module.hdr_enabled` parameter and then, update the required presets.
-  - To view the effect on the infrared image for each sequence id use the `filter_by_sequence_id.sequence_id` parameter.
-  - To initialize these parameters in start time use the following parameters:
-    - `depth_module.exposure.1`
-    - `depth_module.gain.1`
-    - `depth_module.exposure.2`
-    - `depth_module.gain.2`
-  - For in-depth review of the subject please read the accompanying [white paper](https://dev.intelrealsense.com/docs/high-dynamic-range-with-stereoscopic-depth-cameras).
+ - `depth_module.hdr_enabled`: to enable/disable HDR. The way to set exposure and gain values for each sequence:
+   -  during Runtime:
+      - is by first selecting the sequence id, using the `depth_module.sequence_id` parameter and then modifying the `depth_module.gain`, and `depth_module.exposure`.
+      - From FW versions 5.14.x.x and above, if HDR is enabled, the preset configs (like exposure, gain, etc.,) cannot be updated.
+        - Disable the HDR first using `depth_module.hdr_enabled` parameter and then, update the required presets.
+    - during Launch time of the node:
+      - is by setting below parameters
+        - `depth_module.exposure.1`
+        - `depth_module.gain.1`
+        - `depth_module.exposure.2`
+        - `depth_module.gain.2`
+      - Make sure to set `depth_module.hdr_enabled` to true, otherwise these parameters won't be considered.
+    - To view the effect on the infrared image for each sequence id use the `filter_by_sequence_id.sequence_id` parameter.
+    - For in-depth review of the subject please read the accompanying [white paper](https://dev.intelrealsense.com/docs/high-dynamic-range-with-stereoscopic-depth-cameras).
+    - **Note**: Auto exposure functionality is not supported when HDR is enabled. i.e., Auto exposure will be auto-disabled if HDR is enabled.
 
   - The following filters have detailed descriptions in : https://github.com/IntelRealSense/librealsense/blob/master/doc/post-processing-filters.md
     - ```disparity_filter``` - convert depth to disparity before applying other filters and back.
