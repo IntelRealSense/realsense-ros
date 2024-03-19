@@ -57,6 +57,7 @@ class TestD415_Change_Resolution(pytest_rs_utils.RsTestBaseClass):
         params = launch_descr_with_parameters[1]
         if pytest_live_camera_utils.check_if_camera_connected(params['device_type']) == False:
             print("Device not found? : " + params['device_type'])
+            assert False
             return
         failed_tests = []
         num_passed = 0

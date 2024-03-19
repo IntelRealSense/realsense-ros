@@ -79,6 +79,7 @@ class TestCamera_AlignDepthColor(pytest_rs_utils.RsTestBaseClass):
         params = launch_descr_with_parameters[1]
         if pytest_live_camera_utils.check_if_camera_connected(params['device_type']) == False:
             print("Device not found? : " + params['device_type'])
+            assert False
             return
         themes = [
         {'topic':get_node_heirarchy(params)+'/color/image_raw',
@@ -144,9 +145,9 @@ test_params_all_profiles_d415 = {
     'rgb_camera.profile':'640x480x30',    
     'align_depth.enable':'true'
     }
-test_params_all_profiles_d435 = {
-    'camera_name': 'D435',
-    'device_type': 'D435',
+test_params_all_profiles_d435i = {
+    'camera_name': 'D435I',
+    'device_type': 'D435I',
     'enable_color':'true',
     'enable_depth':'true',
     'depth_module.profile':'848x480x30',    
@@ -166,7 +167,7 @@ machines that don't have the D455 connected.
 @pytest.mark.parametrize("launch_descr_with_parameters", [
     pytest.param(test_params_all_profiles_d455, marks=pytest.mark.d455),
     pytest.param(test_params_all_profiles_d415, marks=pytest.mark.d415),
-    pytest.param(test_params_all_profiles_d435, marks=pytest.mark.d435),]
+    pytest.param(test_params_all_profiles_d435i, marks=pytest.mark.d435i),]
     ,indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestCamera_AllAlignDepthColor(pytest_rs_utils.RsTestBaseClass):
@@ -178,6 +179,7 @@ class TestCamera_AllAlignDepthColor(pytest_rs_utils.RsTestBaseClass):
         params = launch_descr_with_parameters[1]
         if pytest_live_camera_utils.check_if_camera_connected(params['device_type']) == False:
             print("Device not found? : " + params['device_type'])
+            assert False
             return
         themes = [
         {'topic':get_node_heirarchy(params)+'/color/image_raw',
