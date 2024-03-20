@@ -153,10 +153,13 @@ BaseRealSenseNode::~BaseRealSenseNode()
         _monitoring_pc->join();
     }
     clearParameters();
-    for(auto&& sensor : _available_ros_sensors)
+    try
     {
-        sensor->stop();
-    }
+        for(auto&& sensor : _available_ros_sensors)
+        {
+            sensor->stop();
+        }
+    catch(...){} // Not allowed to throw from Dtor
 }
 
 void BaseRealSenseNode::hardwareResetRequest()
