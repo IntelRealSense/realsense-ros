@@ -34,7 +34,11 @@ SyncedImuPublisher::SyncedImuPublisher(rclcpp::Publisher<sensor_msgs::msg::Imu>:
 
 SyncedImuPublisher::~SyncedImuPublisher()
 {
-    PublishPendingMessages();
+    try
+    {
+        PublishPendingMessages();
+    }
+    catch(...){} // Not allowed to throw from Dtor
 }
 
 void SyncedImuPublisher::Publish(sensor_msgs::msg::Imu imu_msg)
