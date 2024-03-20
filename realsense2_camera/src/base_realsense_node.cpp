@@ -159,6 +159,7 @@ BaseRealSenseNode::~BaseRealSenseNode()
         {
             sensor->stop();
         }
+    }
     catch(...){} // Not allowed to throw from Dtor
 }
 
@@ -654,7 +655,7 @@ bool BaseRealSenseNode::setBaseTime(double frame_time, rs2_timestamp_domain time
     {
         ROS_WARN_ONCE("Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)");
     }
-    
+
     if (time_domain == RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK)
     {
         ROS_WARN("frame's time domain is HARDWARE_CLOCK. Timestamps may reset periodically.");
