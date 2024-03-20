@@ -39,7 +39,9 @@ std::string applyTemplateName(std::string template_name, stream_index_pair sip)
     const std::string stream_name(create_graph_resource_name(STREAM_NAME(sip)));
     char* param_name = new char[template_name.size() + stream_name.size()];
     sprintf(param_name, template_name.c_str(), stream_name.c_str());
-    return std::string(param_name);
+    std::string full_name(param_name);
+    delete [] param_name;
+    return full_name;
 }
 
 void ProfilesManager::registerSensorQOSParam(std::string template_name, 
