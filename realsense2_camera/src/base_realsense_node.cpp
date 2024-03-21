@@ -34,7 +34,11 @@ SyncedImuPublisher::SyncedImuPublisher(rclcpp::Publisher<sensor_msgs::msg::Imu>:
 
 SyncedImuPublisher::~SyncedImuPublisher()
 {
-    PublishPendingMessages();
+    try
+    {
+        PublishPendingMessages();
+    }
+    catch(...){} // Not allowed to throw from Dtor
 }
 
 void SyncedImuPublisher::Publish(sensor_msgs::msg::Imu imu_msg)
@@ -149,10 +153,14 @@ BaseRealSenseNode::~BaseRealSenseNode()
         _monitoring_pc->join();
     }
     clearParameters();
-    for(auto&& sensor : _available_ros_sensors)
+    try
     {
-        sensor->stop();
+        for(auto&& sensor : _available_ros_sensors)
+        {
+            sensor->stop();
+        }
     }
+    catch(...){} // Not allowed to throw from Dtor
 }
 
 void BaseRealSenseNode::hardwareResetRequest()
@@ -643,7 +651,11 @@ void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_met
 
 bool BaseRealSenseNode::setBaseTime(double frame_time, rs2_timestamp_domain time_domain)
 {
-    ROS_WARN_ONCE(time_domain == RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME ? "Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)" : "");
+    if (time_domain == RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)
+    {
+        ROS_WARN_ONCE("Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)");
+    }
+
     if (time_domain == RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK)
     {
         ROS_WARN("frame's time domain is HARDWARE_CLOCK. Timestamps may reset periodically.");

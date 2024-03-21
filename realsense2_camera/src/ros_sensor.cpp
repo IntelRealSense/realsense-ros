@@ -78,8 +78,12 @@ RosSensor::RosSensor(rs2::sensor sensor,
 
 RosSensor::~RosSensor()
 {
-    clearParameters();
-    stop();
+    try
+    {
+        clearParameters();
+        stop();
+    }
+    catch(...){} // Not allowed to throw from Dtor
 }
 
 void RosSensor::setParameters(bool is_rosbag_file)
