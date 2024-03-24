@@ -97,16 +97,20 @@ def yaml_to_dict(path_to_yaml):
 def launch_setup(context, params, param_name_suffix=''):
     _config_file = LaunchConfiguration('config_file' + param_name_suffix).perform(context)
     params_from_file = {} if _config_file == "''" else yaml_to_dict(_config_file)
+
+    # Overwrite the params with the values provided in YAML config file
+    params.update(params_from_file)
+
     return [
         launch_ros.actions.Node(
-            package='realsense2_camera',
-            namespace=LaunchConfiguration('camera_namespace' + param_name_suffix),
-            name=LaunchConfiguration('camera_name' + param_name_suffix),
-            executable='realsense2_camera_node',
-            parameters=[params, params_from_file],
-            output=LaunchConfiguration('output' + param_name_suffix),
-            arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level' + param_name_suffix)],
-            emulate_tty=True,
+            package     = 'realsense2_camera',
+            namespace   = params['camera_namespace'],
+            name        = params['camera_name'],
+            executable  = 'realsense2_camera_node',
+            parameters  = [params],
+            output      = params['output'],
+            arguments   = ['--ros-args', '--log-level', params['log_level']],
+            emulate_tty = True,
             )
     ]
 
