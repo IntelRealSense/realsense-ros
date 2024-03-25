@@ -164,7 +164,7 @@
 <hr>
 
 # Installation on Windows
-  **PLEASE PAY ATTENTION: RealSense ROS2 Wrapper is not meant to be supported on Windows by our team, since ROS2 and its packages are still not fully supported over Windows. We are putting these installation steps below in order to try and make it easier for users who already started working with ROS2 on Windows and want to take advantage of the capabilities of our RealSense cameras**
+  **PLEASE PAY ATTENTION: RealSense ROS2 Wrapper is not meant to be supported on Windows by our team, since ROS2 and its packages are still not fully supported over Windows. We added these installation steps below in order to try and make it easier for users who already started working with ROS2 on Windows and want to take advantage of the capabilities of our RealSense cameras**
 
 <details>
   <summary>
@@ -175,7 +175,7 @@
   **Please choose only one option from the two options below (in order to prevent multiple versions installation and workspace conflicts)**
   - Manual install from ROS2 formal documentation:
     - [ROS2 Iron](https://docs.ros.org/en/iron/Installation/Windows-Install-Binary.html)
-	- [ROS2 Humble](https://docs.ros.org/en/humble/Installation/Windows-Install-Binary.html)
+    - [ROS2 Humble](https://docs.ros.org/en/humble/Installation/Windows-Install-Binary.html)
   - Microsoft IOT binary installation:
     - https://ms-iot.github.io/ROSOnWindows/GettingStarted/SetupRos2.html
     - Pay attention that the examples of install are for Foxy distro (which is not supported anymore by RealSense ROS2 Wrapper)
@@ -189,7 +189,7 @@
   
 - Download the latest [Intel&reg; RealSense&trade; ROS2 Wrapper 4.54.1](https://github.com/IntelRealSense/realsense-ros/tree/4.54.1)
 - Download the latest [Intel&reg; RealSense&trade; SDK 2.0 2.54.1](https://github.com/IntelRealSense/librealsense/tree/v2.54.1)
-- Put the librealsense folder inside the realsense-ros folder, to make the librealsense package set beside realsense2_camera, realsense2_camera_msgs and realsense2_description packages
+- Place the librealsense folder inside the realsense-ros folder, to make the librealsense package set beside realsense2_camera, realsense2_camera_msgs and realsense2_description packages
 </details>
   
 <details>
