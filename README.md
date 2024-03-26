@@ -187,8 +187,8 @@
     Step 2: Download RealSense&trade; ROS2 Wrapper and RealSense&trade; SDK 2.0 source code from github:
   </summary>
   
-- Download the latest [Intel&reg; RealSense&trade; ROS2 Wrapper 4.54.1](https://github.com/IntelRealSense/realsense-ros/tree/4.54.1)
-- Download the latest [Intel&reg; RealSense&trade; SDK 2.0 2.54.1](https://github.com/IntelRealSense/librealsense/tree/v2.54.1)
+- Download Intel&reg; RealSense&trade; ROS2 Wrapper source code from [Intel&reg; RealSense&trade; ROS2 Wrapper Releases](https://github.com/IntelRealSense/realsense-ros/releases)
+- Download the corrosponding supported Intel&reg; RealSense&trade; SDK 2.0 source code from the **"Supported RealSense SDK" section** of the specific release you chose fronm the link above
 - Place the librealsense folder inside the realsense-ros folder, to make the librealsense package set beside realsense2_camera, realsense2_camera_msgs and realsense2_description packages
 </details>
   
