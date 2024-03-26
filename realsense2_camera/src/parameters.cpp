@@ -82,6 +82,24 @@ void BaseRealSenseNode::getParameters()
     _base_frame_id = _parameters->setParam<std::string>(param_name, DEFAULT_BASE_FRAME_ID);
     _base_frame_id = (static_cast<std::ostringstream&&>(std::ostringstream() << _camera_name << "_" << _base_frame_id)).str();
     _parameters_names.push_back(param_name);
+
+#if defined (ACCELERATE_GPU_WITH_GLSL)
+    param_name = std::string("accelerate_gpu_with_glsl");
+     _parameters->setParam<bool>(param_name, false, 
+                    [this](const rclcpp::Parameter& parameter)
+                    {
+                        bool temp_value = parameter.get_value<bool>();
+                        if (_accelerate_gpu_with_glsl != temp_value)
+                        {
+                            _accelerate_gpu_with_glsl = temp_value;
+                            std::lock_guard<std::mutex> lock_guard(_profile_changes_mutex);
+                            _is_accelerate_gpu_with_glsl_changed = true;
+                        }
+                        _cv_mpc.notify_one();
+                    });
+    _parameters_names.push_back(param_name);
+#endif
+
 }
 
 void BaseRealSenseNode::setDynamicParams()

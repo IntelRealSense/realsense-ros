@@ -13,6 +13,8 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+permissions: read-all
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 # This workflow contains a single job called "build"
 
@@ -35,10 +37,10 @@ jobs:
     steps:
 
     - name: Setup ROS2 Workspace
-      run: | 
+      run: |
         mkdir -p ${{github.workspace}}/ros2/src
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         path: 'ros2/src/realsense-ros'
     
