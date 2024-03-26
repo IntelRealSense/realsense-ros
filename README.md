@@ -305,6 +305,10 @@ User can set the camera name and camera namespace, to distinguish between camera
     - 1 -> **copy**: Every gyro message will be attached by the last accel message.
     - 2 -> **linear_interpolation**: Every gyro message will be attached by an accel message which is interpolated to gyro's timestamp.
   - Note: When the param *unite_imu_method* is dynamically updated, re-enable either gyro or accel stream for the change to take effect.
+- **safety_camera.safety_mode**:
+  - 0 -> **Run** mode
+  - 1 -> **Standby** mode
+  - 2 -> **Service** mode
 
 #### Parameters that cannot be changed in runtime:
 - **serial_no**:
