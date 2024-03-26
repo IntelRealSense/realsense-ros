@@ -46,7 +46,10 @@ namespace realsense2_camera
 
             template <class T>
             void queueSetRosValue(const std::string& param_name, const T value);
-            
+
+            template <class T>
+            T getParam(std::string param_name);
+
         private:
             void monitor_update_functions();
 

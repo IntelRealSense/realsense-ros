@@ -36,7 +36,11 @@ SyncedImuPublisher::SyncedImuPublisher(rclcpp::Publisher<sensor_msgs::msg::Imu>:
 
 SyncedImuPublisher::~SyncedImuPublisher()
 {
-    PublishPendingMessages();
+    try
+    {
+        PublishPendingMessages();
+    }
+    catch(...){} // Not allowed to throw from Dtor
 }
 
 void SyncedImuPublisher::Publish(sensor_msgs::msg::Imu imu_msg)
@@ -117,6 +121,11 @@ BaseRealSenseNode::BaseRealSenseNode(rclcpp::Node& node,
     _imu_sync_method(imu_sync_method::NONE),
     _is_profile_changed(false),
     _is_align_depth_changed(false)
+#if defined (ACCELERATE_GPU_WITH_GLSL)
+    ,_app(1280, 720, "RS_GLFW_Window"),
+    _accelerate_gpu_with_glsl(false),
+    _is_accelerate_gpu_with_glsl_changed(false)
+#endif
 {
     if ( use_intra_process )
     {
@@ -146,10 +155,14 @@ BaseRealSenseNode::~BaseRealSenseNode()
         _monitoring_pc->join();
     }
     clearParameters();
-    for(auto&& sensor : _available_ros_sensors)
+    try
     {
-        sensor->stop();
+        for(auto&& sensor : _available_ros_sensors)
+        {
+            sensor->stop();
+        }
     }
+    catch(...){} // Not allowed to throw from Dtor
 }
 
 void BaseRealSenseNode::hardwareResetRequest()
@@ -231,14 +244,22 @@ void BaseRealSenseNode::setupFilters()
         _cv_mpc.notify_one();
     };
 
-    _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::colorizer>(), _parameters, _logger); 
-    _filters.push_back(_colorizer_filter);
-
+#if defined (ACCELERATE_GPU_WITH_GLSL)
+    _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::gl::colorizer>(), _parameters, _logger); 
+    _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::gl::pointcloud>(), _node, _parameters, _logger);
+#else
+    _colorizer_filter = std::make_shared<NamedFilter>(std::make_shared<rs2::colorizer>(), _parameters, _logger);
     _pc_filter = std::make_shared<PointcloudFilter>(std::make_shared<rs2::pointcloud>(), _node, _parameters, _logger);
+#endif
+
+    // Apply PointCloud filter before applying Align-depth as it requires original depth image not aligned-depth image.
     _filters.push_back(_pc_filter);
 
     _align_depth_filter = std::make_shared<AlignDepthFilter>(std::make_shared<rs2::align>(RS2_STREAM_COLOR), update_align_depth_func, _parameters, _logger);
     _filters.push_back(_align_depth_filter);
+
+    // Apply Colorizer filter after applying Align-Depth to get colorized aligned depth image.
+    _filters.push_back(_colorizer_filter);
 }
 
 cv::Mat& BaseRealSenseNode::fix_depth_scale(const cv::Mat& from_image, cv::Mat& to_image)
@@ -661,7 +682,11 @@ void BaseRealSenseNode::multiple_message_callback(rs2::frame frame, imu_sync_met
 
 bool BaseRealSenseNode::setBaseTime(double frame_time, rs2_timestamp_domain time_domain)
 {
-    ROS_WARN_ONCE(time_domain == RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME ? "Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)" : "");
+    if (time_domain == RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)
+    {
+        ROS_WARN_ONCE("Frame metadata isn't available! (frame_timestamp_domain = RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)");
+    }
+
     if (time_domain == RS2_TIMESTAMP_DOMAIN_HARDWARE_CLOCK)
     {
         ROS_WARN("frame's time domain is HARDWARE_CLOCK. Timestamps may reset periodically.");
@@ -726,8 +751,19 @@ void BaseRealSenseNode::updateProfilesStreamCalibData(const std::vector<rs2::str
 void BaseRealSenseNode::updateStreamCalibData(const rs2::video_stream_profile& video_profile)
 {
     stream_index_pair stream_index{video_profile.stream_type(), video_profile.stream_index()};
-    auto intrinsic = video_profile.get_intrinsics();
-    _stream_intrinsics[stream_index] = intrinsic;
+
+    rs2_intrinsics intrinsic;
+    try
+    {
+        intrinsic = video_profile.get_intrinsics();
+    }
+    catch(const std::exception& ex)
+    {
+        // e.g. infra1/infra2 in Y16i format (calibration mode) doesn't have intrinsics.
+        ROS_WARN_STREAM("No intrinsics available for this stream profile. Using zeroed intrinsics as default.");
+        intrinsic = { 0, 0, 0, 0, 0, 0, RS2_DISTORTION_NONE ,{ 0,0,0,0,0 } };
+    }
+
     _camera_info[stream_index].width = intrinsic.width;
     _camera_info[stream_index].height = intrinsic.height;
     _camera_info[stream_index].header.frame_id = OPTICAL_FRAME_ID(stream_index);
