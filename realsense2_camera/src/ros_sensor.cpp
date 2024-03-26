@@ -409,8 +409,18 @@ void RosSensor::set_sensor_auto_exposure_roi()
 {
     try
     {
-        int width = std::dynamic_pointer_cast<VideoProfilesManager>(_profile_managers[0])->getWidth();
-        int height = std::dynamic_pointer_cast<VideoProfilesManager>(_profile_managers[0])->getHeight();
+        rs2_stream stream_type;
+        if (this->rs2::sensor::is<rs2::depth_sensor>())
+        {
+            stream_type = RS2_STREAM_DEPTH;
+        }
+        else if (this->rs2::sensor::is<rs2::color_sensor>())
+        {
+            stream_type = RS2_STREAM_COLOR;
+        }
+
+        int width = std::dynamic_pointer_cast<VideoProfilesManager>(_profile_managers[0])->getWidth(stream_type);
+        int height = std::dynamic_pointer_cast<VideoProfilesManager>(_profile_managers[0])->getHeight(stream_type);
 
         bool update_roi_range(false);
         if (_auto_exposure_roi.max_x > width)
@@ -441,8 +451,18 @@ void RosSensor::registerAutoExposureROIOptions()
 
     if (this->rs2::sensor::is<rs2::roi_sensor>())
     {
-        int width = std::dynamic_pointer_cast<VideoProfilesManager>(_profile_managers[0])->getWidth();
-        int height = std::dynamic_pointer_cast<VideoProfilesManager>(_profile_managers[0])->getHeight();
+        rs2_stream stream_type;
+        if (this->rs2::sensor::is<rs2::depth_sensor>())
+        {
+            stream_type = RS2_STREAM_DEPTH;
+        }
+        else if (this->rs2::sensor::is<rs2::color_sensor>())
+        {
+            stream_type = RS2_STREAM_COLOR;
+        }
+
+        int width = std::dynamic_pointer_cast<VideoProfilesManager>(_profile_managers[0])->getWidth(stream_type);
+        int height = std::dynamic_pointer_cast<VideoProfilesManager>(_profile_managers[0])->getHeight(stream_type);
 
         int max_x(width-1);
         int max_y(height-1);

@@ -244,7 +244,7 @@
   
   #### with ros2 launch:
     ros2 launch realsense2_camera rs_launch.py
-    ros2 launch realsense2_camera rs_launch.py depth_module.profile:=1280x720x30 pointcloud.enable:=true
+    ros2 launch realsense2_camera rs_launch.py depth_module.depth_profile:=1280x720x30 pointcloud.enable:=true
 
 <hr>
 
@@ -323,10 +323,10 @@ User can set the camera name and camera namespace, to distinguish between camera
 #### Parameters that can be modified during runtime:
 - All of the filters and sensors inner parameters.
 - Video Sensor Parameters: (```depth_module``` and ```rgb_camera```)
-  - They have, at least, the **profile** parameter.
+  - They have, at least, the **<stream_type>_profile** parameter.
     - The profile parameter is a string of the following format: \<width>X\<height>X\<fps> (The dividing character can be X, x or ",". Spaces are ignored.)
-    - For example: ```depth_module.profile:=640x480x30 rgb_camera.profile:=1280x720x30```
-    - Since infra, infra1, infra2 and depth are all streams of the depth_module, their width, height and fps are defined by the same param **depth_module.profile**
+    - For example: ```depth_module.depth_profile:=640x480x30 depth_module.infra_profile:=640x480x30 rgb_camera.color_profile:=1280x720x30```
+    - Note: The param **depth_module.infra_profile** is common for all infra streams. i.e., infra 0, 1 & 2.
     - If the specified combination of parameters is not available by the device, the default or previously set configuration will be used.
       - Run ```ros2 param describe <your_node_name> <param_name>``` to get the list of supported profiles.
     - Note: Should re-enable the stream for the change to take effect.
