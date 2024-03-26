@@ -115,6 +115,7 @@ find_package(nav_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(diagnostic_updater REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS core)
 
 find_package(realsense2 2.54.1)
 if (BUILD_ACCELERATE_GPU_WITH_GLSL)
@@ -126,6 +127,8 @@ endif()
 
 #set(CMAKE_NO_SYSTEM_FROM_IMPORTED true)
 include_directories(include)
+
+include_directories(${OpenCV_INCLUDE_DIRS})  # add OpenCV includes to the included dirs
 
 set(node_plugins "")
 
@@ -219,6 +222,8 @@ if (BUILD_ACCELERATE_GPU_WITH_GLSL)
 else()
   set(link_libraries ${realsense2_LIBRARY})
 endif()
+
+list(APPEND link_libraries ${OpenCV_LIBS})  # add OpenCV libs to link_libraries
 
 target_link_libraries(${PROJECT_NAME}
     ${link_libraries}
