@@ -58,9 +58,9 @@ test_params_tf_static_change_d455 = {
     'enable_accel': 'true',
     'enable_gyro': 'true',
     }
-test_params_tf_static_change_d435 = {
-    'camera_name': 'D435',
-    'device_type': 'D435',
+test_params_tf_static_change_d435i = {
+    'camera_name': 'D435I',
+    'device_type': 'D435I',
     'enable_infra1': 'false',
     'enable_infra2': 'true',
     'enable_accel': 'true',
@@ -77,7 +77,7 @@ test_params_tf_static_change_d415 = {
     }    
 @pytest.mark.parametrize("launch_descr_with_parameters", [
     pytest.param(test_params_tf_static_change_d455, marks=pytest.mark.d455),
-    pytest.param(test_params_tf_static_change_d435, marks=pytest.mark.d435),
+    pytest.param(test_params_tf_static_change_d435i, marks=pytest.mark.d435i),
     pytest.param(test_params_tf_static_change_d415, marks=pytest.mark.d415),
     ],indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
@@ -86,6 +86,7 @@ class TestCamera_TestTF_Static_change(pytest_rs_utils.RsTestBaseClass):
         self.params = launch_descr_with_parameters[1]
         if pytest_live_camera_utils.check_if_camera_connected(self.params['device_type']) == False:
             print("Device not found? : " + self.params['device_type'])
+            assert False
             return
         themes = [
         {'topic':'/tf_static',
@@ -145,9 +146,9 @@ test_params_tf_d455 = {
     'tf_publish_rate': '1.1',
     }
 
-test_params_tf_d435 = {
-    'camera_name': 'D435',
-    'device_type': 'D435',
+test_params_tf_d435i = {
+    'camera_name': 'D435I',
+    'device_type': 'D435I',
     'publish_tf': 'true',
     'tf_publish_rate': '1.1',
     }
@@ -160,7 +161,7 @@ test_params_tf_d415 = {
     }
 @pytest.mark.parametrize("launch_descr_with_parameters", [
     pytest.param(test_params_tf_d455, marks=pytest.mark.d455),
-    pytest.param(test_params_tf_d435, marks=pytest.mark.d435),
+    pytest.param(test_params_tf_d435i, marks=pytest.mark.d435i),
     pytest.param(test_params_tf_d415, marks=pytest.mark.d415),
     ],indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
@@ -169,6 +170,7 @@ class TestCamera_TestTF_DYN(pytest_rs_utils.RsTestBaseClass):
         self.params = launch_descr_with_parameters[1]
         if pytest_live_camera_utils.check_if_camera_connected(self.params['device_type']) == False:
             print("Device not found? : " + self.params['device_type'])
+            assert False
             return
         themes = [
         {'topic':'/tf',

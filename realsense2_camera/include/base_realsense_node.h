@@ -50,6 +50,10 @@
 #include <ros_sensor.h>
 #include <named_filter.h>
 
+#if defined (ACCELERATE_GPU_WITH_GLSL)
+#include <gl_window.h>
+#endif
+
 #include <queue>
 #include <mutex>
 #include <atomic>
@@ -260,10 +264,18 @@ namespace realsense2_camera
         void setAvailableSensors();
         void setCallbackFunctions();
         void updateSensors();
+        void startUpdatedSensors();
+        void stopRequiredSensors();
         void publishServices();
         void startPublishers(const std::vector<rs2::stream_profile>& profiles, const RosSensor& sensor);
         void startRGBDPublisherIfNeeded();
         void stopPublishers(const std::vector<rs2::stream_profile>& profiles);
+
+#if defined (ACCELERATE_GPU_WITH_GLSL)
+        void initOpenGLProcessing(bool use_gpu_processing);
+        void shutdownOpenGLProcessing();
+        void glfwPollEventCallback();
+#endif
 
         rs2::device _dev;
         std::map<stream_index_pair, rs2::sensor> _sensors;
@@ -277,7 +289,6 @@ namespace realsense2_camera
         double _angular_velocity_cov;
         bool  _hold_back_imu_for_frames;
 
-        std::map<stream_index_pair, rs2_intrinsics> _stream_intrinsics;
         std::map<stream_index_pair, bool> _enable;
         bool _publish_tf;
         double _tf_publish_rate, _diagnostics_period;
@@ -347,6 +358,12 @@ namespace realsense2_camera
         std::shared_ptr<diagnostic_updater::Updater> _diagnostics_updater;
         rs2::stream_profile _base_profile;
 
+#if defined (ACCELERATE_GPU_WITH_GLSL)
+        GLwindow _app;
+        rclcpp::TimerBase::SharedPtr _timer;
+        bool _accelerate_gpu_with_glsl;
+        bool _is_accelerate_gpu_with_glsl_changed;
+#endif
 
     };//end class
 }
