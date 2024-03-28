@@ -40,7 +40,7 @@ jobs:
       run: |
         mkdir -p ${{github.workspace}}/ros2/src
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         path: 'ros2/src/realsense-ros'
     
