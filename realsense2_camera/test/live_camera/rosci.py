@@ -1,4 +1,4 @@
-# Copyright 2023 Intel Corporation. All Rights Reserved.
+# Copyright 2024 Intel Corporation. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -80,8 +80,10 @@ def run_test(cmd, dev_name, stdout=None, append =False):
                     universal_newlines=True,
                     timeout=200,
                     check=True )
-
+            if not result.returncode:
+                 log.i("---Test Passed---")
         except Exception as e:
+             log.e("---Test Failed---")
              log.w( "Error Exception:\n ",e )
                          
         finally:
@@ -115,7 +117,7 @@ try:
     #Import '_device_by_sn' from devices.py module of librealsense repo
     from rspy import devices
     if not devices.hub:
-         assert False, 'hub not available'
+         assert False, 'No hub available'
     else:
         devices.hub.connect()
     devices.query( hub_reset = hub_reset )
@@ -123,11 +125,11 @@ try:
     global _device_by_sn         
 
     if not devices._device_by_sn:
-         assert False, 'No Camera Devices detected!'
+         assert False, 'No Camera device detected!'
     else:
          #Loop in for all devices and run tests
          for device in devices._device_by_sn.values():
-              print(f'\033[93m Device found: {device.name} \033[0]')
+              print(f' Device found: {device.name} ')
          for device in devices._device_by_sn.values():
             if device.name == 'D455':
                 print('Running test on device:', device.name)
@@ -138,6 +140,7 @@ try:
 
 finally:
         devices.hub.disconnect()
+        log.i("Log path- \"Build Artifacts\":/ros2/realsense_camera/log ")
         run_time = time.time() - start_time
         log.d( "server took", run_time, "seconds" )
 
