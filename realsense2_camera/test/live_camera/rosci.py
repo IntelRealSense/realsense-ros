@@ -1,7 +1,17 @@
-#!python3
+# Copyright 2023 Intel Corporation. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-# License: Apache 2.0. See LICENSE file in root directory.
-# Copyright(c) 2021 Intel Corporation. All Rights Reserved.
 import sys, os, subprocess, re, platform, getopt, time
 sys.path.append( os.path.join( os.environ['WORKSPACE'], 'lrs/unit-tests/py' ))
 from rspy import log, file, repo, libci
@@ -11,11 +21,6 @@ print(f'{current_dir}')
 root = os.path.dirname( os.path.dirname( os.path.dirname( os.path.dirname( os.path.dirname( os.path.abspath( __file__ ))))))
 dir_live_tests = os.path.join( os.environ['WORKSPACE'], 'ros2/realsense2_camera/test/live_camera' )
 
-#Setting PYTHONPATH
-#pythonpath = os.environ['HOME'], ''
-#os.environ['PYTHONPATH'] = '
-#pytest-3 -s -m "not d415 and not d435i" realsense2_camera/test/live_camera/test_d455_basic_tests.py
-#export PYTHONPATH=$PYTHONPATH:$PWD/realsense2_camera/test/utils:$PWD/realsense2_camera//launch:$PWD/realsense2_camera/scripts
 hub_reset = False
 logdir = None
 handle = None
