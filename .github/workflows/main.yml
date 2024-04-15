@@ -90,6 +90,10 @@ jobs:
         source ${{github.workspace}}/.bashrc
         cd ${{github.workspace}}/ros2
         echo "================= ROSDEP UPDATE ====================="
+        # temp fix for rolling sources.. TODO: track when we can remove the two commands below
+        # see https://discourse.ros.org/t/psa-rolling-ci-or-docker-build-fix-from-rosdep-errors-in-24-04-transition/36902
+        sudo sed -i "s|ros\/rosdistro\/master|ros\/rosdistro\/rolling\/2024-02-28|" /etc/ros/rosdep/sources.list.d/20-default.list
+        export ROSDISTRO_INDEX_URL=https://raw.githubusercontent.com/ros/rosdistro/rolling/2024-02-28/index-v4.yaml
         rosdep update --rosdistro ${{ matrix.ros_distro }} --include-eol-distros
         echo "================= ROSDEP INSTALL ===================="
         rosdep install -i --reinstall --from-path src --rosdistro ${{ matrix.ros_distro }} --skip-keys=librealsense2 -y
