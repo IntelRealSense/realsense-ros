@@ -4,7 +4,7 @@
 </h1>
 
 <p align="center">
-  ROS2 packages for using Intel RealSense D400 cameras.<br>
+  ROS Wrapper for Intel(R) RealSense(TM) Cameras<br>
   <a href="https://github.com/IntelRealSense/realsense-ros/releases">Latest release notes</a>
 </p>
 
