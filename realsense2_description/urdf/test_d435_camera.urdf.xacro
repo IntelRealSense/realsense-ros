@@ -2,8 +2,8 @@
 <robot name="realsense2_camera" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:include filename="$(find realsense2_description)/urdf/_d435.urdf.xacro" />
   
-  <link name="base_link" />
-  <xacro:sensor_d435 name="camera" topics_ns="camera" parent="base_link" publish_pointcloud="true">
-    <origin xyz="0 0 0" rpy="0 0 0" />
+  <link name="world" />
+  <xacro:sensor_d435 name="camera" topics_ns="camera" parent="world" publish_pointcloud="true">
+    <origin xyz="-1 -1 0" rpy="0 0 0" />
   </xacro:sensor_d435>  
 </robot>
