@@ -47,6 +47,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'depth_module.infra_format',    'default': 'RGB8', 'description': 'infra0 stream format'},
                            {'name': 'depth_module.infra1_format',   'default': 'Y8', 'description': 'infra1 stream format'},
                            {'name': 'depth_module.infra2_format',   'default': 'Y8', 'description': 'infra2 stream format'},
+                           {'name': 'depth_module.color_profile',   'default': '0,0,0', 'description': 'Depth module color stream profile'},
                            {'name': 'depth_module.exposure',        'default': '8500', 'description': 'Depth module manual exposure value'},
                            {'name': 'depth_module.gain',            'default': '16', 'description': 'Depth module manual gain value'},
                            {'name': 'depth_module.hdr_enabled',     'default': 'false', 'description': 'Depth module hdr enablement flag. Used for hdr_merge filter'},
