@@ -4,7 +4,7 @@
 </h1>
 
 <p align="center">
-  ROS2 packages for using Intel RealSense D400 cameras.<br>
+  ROS Wrapper for Intel(R) RealSense(TM) Cameras<br>
   <a href="https://github.com/IntelRealSense/realsense-ros/releases">Latest release notes</a>
 </p>
 
@@ -14,6 +14,7 @@
 [![rolling][rolling-badge]][rolling]
 [![iron][iron-badge]][iron]
 [![humble][humble-badge]][humble]
+[![foxy][foxy-badge]][foxy]
 [![ubuntu22][ubuntu22-badge]][ubuntu22]
 [![ubuntu20][ubuntu20-badge]][ubuntu20]
 
@@ -90,12 +91,15 @@
 - #### Ubuntu 22.04:
   - [ROS2 Iron](https://docs.ros.org/en/iron/Installation/Ubuntu-Install-Debians.html)
   - [ROS2 Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html)
+  #### Ubuntu 20.04
+	- [ROS2 Foxy](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)
 </details>
   
 <details>
   <summary>
     Step 2: Install latest Intel&reg; RealSense&trade; SDK 2.0
   </summary>
+
   **Please choose only one option from the 3 options below (in order to prevent multiple versions installation and workspace conflicts)**
 
 - #### Option 1: Install librealsense2 debian package from Intel servers
@@ -103,7 +107,7 @@
   - Otherwise, install from [Linux Debian Installation Guide](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md#installing-the-packages)
     - In this case treat yourself as a developer: make sure to follow the instructions to also install librealsense2-dev and librealsense2-dkms packages
   
-- #### Option 2: Install librealsense2 (without graphical tools and examples) debian package from ROS servers:
+- #### Option 2: Install librealsense2 (without graphical tools and examples) debian package from ROS servers (Foxy EOL distro is not supported by this option):
   - [Configure](http://wiki.ros.org/Installation/Ubuntu/Sources) your Ubuntu repositories
   - Install all realsense ROS packages by ```sudo apt install ros-<ROS_DISTRO>-librealsense2*```
     - For example, for Humble distro: ```sudo apt install ros-humble-librealsense2*```
@@ -119,7 +123,7 @@
     Step 3: Install Intel&reg; RealSense&trade; ROS2 wrapper
   </summary>
   
-#### Option 1: Install debian package from ROS servers
+#### Option 1: Install debian package from ROS servers (Foxy EOL distro is not supported by this option):
   - [Configure](http://wiki.ros.org/Installation/Ubuntu/Sources) your Ubuntu repositories
   - Install all realsense ROS packages by ```sudo apt install ros-<ROS_DISTRO>-realsense2-*```
   - For example, for Humble distro: ```sudo apt install ros-humble-realsense2-*```
@@ -153,7 +157,7 @@
 
   -  Source environment
    ```bash
-   ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: iron, humble
+   ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: iron, humble, foxy
    source /opt/ros/$ROS_DISTRO/setup.bash
    cd ~/ros2_ws
    . install/local_setup.bash
@@ -172,14 +176,17 @@
   </summary>
   
 - #### Windows 10/11
+
   **Please choose only one option from the two options below (in order to prevent multiple versions installation and workspace conflicts)**
+  
   - Manual install from ROS2 formal documentation:
     - [ROS2 Iron](https://docs.ros.org/en/iron/Installation/Windows-Install-Binary.html)
     - [ROS2 Humble](https://docs.ros.org/en/humble/Installation/Windows-Install-Binary.html)
+    - [ROS2 Foxy](https://docs.ros.org/en/foxy/Installation/Windows-Install-Binary.html)
   - Microsoft IOT binary installation:
     - https://ms-iot.github.io/ROSOnWindows/GettingStarted/SetupRos2.html
     - Pay attention that the examples of install are for Foxy distro (which is not supported anymore by RealSense ROS2 Wrapper)
-	- Please replace the word "Foxy" with Humble or Iron, as you choose
+	- Please replace the word "Foxy" with Humble or Iron, depends on the chosen distro.
 </details>
   
 <details>
@@ -680,6 +687,8 @@ ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comm
 
 [rolling-badge]: https://img.shields.io/badge/-ROLLING-orange?style=flat-square&logo=ros
 [rolling]: https://docs.ros.org/en/rolling/index.html
+[foxy-badge]: https://img.shields.io/badge/-foxy-orange?style=flat-square&logo=ros
+[foxy]: https://docs.ros.org/en/foxy/index.html
 [humble-badge]: https://img.shields.io/badge/-HUMBLE-orange?style=flat-square&logo=ros
 [humble]: https://docs.ros.org/en/humble/index.html
 [iron-badge]: https://img.shields.io/badge/-IRON-orange?style=flat-square&logo=ros

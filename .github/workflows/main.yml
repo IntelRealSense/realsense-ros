@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [rolling, iron, humble]
+        ros_distro: [rolling, iron, humble, foxy]
         include:
         - ros_distro: 'rolling'
           os: ubuntu-22.04
@@ -33,6 +33,8 @@ jobs:
           os: ubuntu-22.04
         - ros_distro: 'humble'
           os: ubuntu-22.04
+        - ros_distro: 'foxy'
+          os: ubuntu-20.04
 
     steps:
 
@@ -40,7 +42,7 @@ jobs:
       run: |
         mkdir -p ${{github.workspace}}/ros2/src
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         path: 'ros2/src/realsense-ros'
     
@@ -50,13 +52,27 @@ jobs:
         cd ${{github.workspace}}/ros2/src/realsense-ros/scripts
         ./pr_check.sh 
 
-    - name: build ROS2
+    # setup-ros@v0.6 is the last version supporting foxy (EOL)
+    # setup-ros@v0.7 is needed to support humble/iron/rolling
+    # so, seperating steps with if conditions
+    - name: build ROS2 for foxy
+      if: ${{ matrix.ros_distro == 'foxy' }}
+      uses: ros-tooling/setup-ros@v0.6
+      with:
+        required-ros-distributions: ${{ matrix.ros_distro }}
+    - name: build ROS2 for humble/iron/rolling
+      if: ${{ matrix.ros_distro != 'foxy' }}
       uses: ros-tooling/setup-ros@v0.7
       with:
         required-ros-distributions: ${{ matrix.ros_distro }}
                 
-    - name: Build RealSense SDK 2.0 from source
+    - name: Build RealSense SDK 2.0 (development branch) from source
       run: |
+
+        # libusb-1.0-0-dev is needed for librealsense build in ubuntu 20.04
+        # This apt install command will be ignored in ubuntu 22.04 as libusb-1.0-0-dev already installed there
+        sudo apt install -y libusb-1.0-0-dev
+        
         cd ${{github.workspace}}
         git clone https://github.com/IntelRealSense/librealsense.git -b development
         cd librealsense
@@ -68,13 +84,17 @@ jobs:
         sudo make -j10
         sudo make install
 
-    - name: Build RealSense ROS2 Wrapper
-      run: | 
+    - name: Build RealSense ROS2 Wrapper from source
+      run: |
         echo "source /opt/ros/${{ matrix.ros_distro }}/setup.bash" >> ${{github.workspace}}/.bashrc
         source ${{github.workspace}}/.bashrc
         cd ${{github.workspace}}/ros2
         echo "================= ROSDEP UPDATE ====================="
-        rosdep update --rosdistro ${{ matrix.ros_distro }}
+        # temp fix for rolling sources.. TODO: track when we can remove the two commands below
+        # see https://discourse.ros.org/t/psa-rolling-ci-or-docker-build-fix-from-rosdep-errors-in-24-04-transition/36902
+        sudo sed -i "s|ros\/rosdistro\/master|ros\/rosdistro\/rolling\/2024-02-28|" /etc/ros/rosdep/sources.list.d/20-default.list
+        export ROSDISTRO_INDEX_URL=https://raw.githubusercontent.com/ros/rosdistro/rolling/2024-02-28/index-v4.yaml
+        rosdep update --rosdistro ${{ matrix.ros_distro }} --include-eol-distros
         echo "================= ROSDEP INSTALL ===================="
         rosdep install -i --reinstall --from-path src --rosdistro ${{ matrix.ros_distro }} --skip-keys=librealsense2 -y
         echo "================== COLCON BUILD ======================"
@@ -103,10 +123,16 @@ jobs:
         cd ${{github.workspace}}/ros2
         source ${{github.workspace}}/.bashrc
         . install/local_setup.bash
+        # the next command might be needed for foxy distro, since this package is not installed
+        # by default in ubuntu 20.04. For other distro, the apt install command will be ignored.
+        sudo apt install -y ros-${{matrix.ros_distro}}-sensor-msgs-py
         python3 src/realsense-ros/realsense2_camera/scripts/rs2_test.py non_existent_file
     
+    # don't run integration tests for foxy since some testing dependecies packages like 
+    # tf_ros_py are not avaialble
+    # TODO: check when we can run integration tests on rolling
     - name: Run integration tests
-      if: ${{ matrix.ros_distro != 'rolling'}}
+      if: ${{ matrix.ros_distro != 'rolling' && matrix.ros_distro != 'foxy' }}
       run: |
         cd ${{github.workspace}}/ros2
         source ${{github.workspace}}/.bashrc
