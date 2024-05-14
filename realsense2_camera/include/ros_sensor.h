@@ -82,8 +82,7 @@ namespace realsense2_camera
                       std::shared_ptr<diagnostic_updater::Updater> diagnostics_updater,
                       rclcpp::Logger logger,
                       bool force_image_default_qos = false,
-                      bool is_rosbag_file = false,
-                      int inter_cam_sync_mode = 0);
+                      bool is_rosbag_file = false);
             ~RosSensor();
             void registerSensorParameters();
             bool getUpdatedProfiles(std::vector<rs2::stream_profile>& wanted_profiles);
@@ -106,7 +105,6 @@ namespace realsense2_camera
             void set_sensor_auto_exposure_roi();
             void registerAutoExposureROIOptions();
             void UpdateSequenceIdCallback();
-            void set_inter_cam_sync_mode(int inter_cam_sync_mode = 0);
             template<class T> 
             void set_sensor_parameter_to_ros(rs2_option option);
 

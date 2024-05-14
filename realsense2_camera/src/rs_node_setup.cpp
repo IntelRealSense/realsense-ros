@@ -159,7 +159,7 @@ void BaseRealSenseNode::setAvailableSensors()
             sensor.is<rs2::color_sensor>())
         {
             ROS_DEBUG_STREAM("Set " << module_name << " as VideoSensor.");
-            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, _use_intra_process, _dev.is<playback>(), _inter_cam_sync_mode);
+            rosSensor = std::make_unique<RosSensor>(sensor, _parameters, frame_callback_function, update_sensor_func, hardware_reset_func, _diagnostics_updater, _logger, _use_intra_process, _dev.is<playback>());
         }
         else if (sensor.is<rs2::motion_sensor>())
         {

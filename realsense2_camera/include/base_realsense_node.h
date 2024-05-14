@@ -318,7 +318,6 @@ namespace realsense2_camera
 
         rclcpp::Time _ros_time_base;
         bool _sync_frames;
-        int _inter_cam_sync_mode;
         bool _enable_rgbd;
         bool _is_color_enabled;
         bool _is_depth_enabled;
