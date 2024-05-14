@@ -47,6 +47,11 @@ void BaseRealSenseNode::getParameters()
     _parameters->setParamT(param_name, _sync_frames);
     _parameters_names.push_back(param_name);
 
+    param_name = std::string("inter_cam_sync_mode");
+    _parameters->setParamT(param_name, _inter_cam_sync_mode);
+    _parameters_names.push_back(param_name);
+
+
     param_name = std::string("enable_rgbd");
     _parameters->setParamT(param_name, _enable_rgbd, [this](const rclcpp::Parameter& )
     {

@@ -46,7 +46,8 @@ RosSensor::RosSensor(rs2::sensor sensor,
     std::shared_ptr<diagnostic_updater::Updater> diagnostics_updater,
     rclcpp::Logger logger,
     bool force_image_default_qos,
-    bool is_rosbag_file):
+    bool is_rosbag_file,
+    int inter_cam_sync_mode):
     rs2::sensor(sensor),
     _logger(logger),
     _origin_frame_callback(frame_callback),
@@ -75,6 +76,7 @@ RosSensor::RosSensor(rs2::sensor sensor,
             }
         };
     setParameters(is_rosbag_file);
+    set_inter_cam_sync_mode(inter_cam_sync_mode);
 }
 
 RosSensor::~RosSensor()
@@ -106,6 +108,23 @@ void RosSensor::setParameters(bool is_rosbag_file)
         UpdateSequenceIdCallback();
     
     registerSensorParameters();
+}
+
+void RosSensor::set_inter_cam_sync_mode(int inter_cam_sync_mode)
+{
+    std::string module_name = create_graph_resource_name(rs2_to_ros(get_info(RS2_CAMERA_INFO_NAME)));
+   
+    // Only depth_module supports the option RS2_OPTION_INTER_CAM_SYNC_MODE, modules rgb_camera and motion_module 
+    // throw an error when trying to set the option RS2_OPTION_INTER_CAM_SYNC_MODE
+    if (module_name == std::string("depth_module")){
+        if ((0 <= inter_cam_sync_mode) && (2 >= inter_cam_sync_mode))
+        {
+            ROS_INFO_STREAM("Set Ros param depth_module.inter_cam_sync_mode to " << inter_cam_sync_mode << " (0=Default, 1=Master and 2=slave)");
+            set_option(RS2_OPTION_INTER_CAM_SYNC_MODE, inter_cam_sync_mode);
+        } else {
+            ROS_ERROR_STREAM("Ros param depth_module.inter_cam_sync_mode was not set. Given value "<< inter_cam_sync_mode << " is invalid");
+        }
+    } 
 }
 
 void RosSensor::UpdateSequenceIdCallback()
