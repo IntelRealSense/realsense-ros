@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.55.1 (2024-05-28)
+-------------------
 * PR `#3106 <https://github.com/IntelRealSense/realsense-ros/issues/3106>`_ from SamerKhshiboun: Remove unused parameter _is_profile_exist
 * PR `#3098 <https://github.com/IntelRealSense/realsense-ros/issues/3098>`_ from kadiredd: ROS live cam test fixes
 * PR `#3094 <https://github.com/IntelRealSense/realsense-ros/issues/3094>`_ from kadiredd: ROSCI infra for live camera testing
