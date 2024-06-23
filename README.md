@@ -40,6 +40,7 @@
      * [Metadata Topic](#metadata-topic)
      * [Post-Processing Filters](#post-processing-filters)
      * [Available Services](#available-services)
+     * [Available Actions](#available-actions)
      * [Efficient intra-process communication](#efficient-intra-process-communication)
   * [Contributing](CONTRIBUTING.md)
   * [License](LICENSE)
@@ -667,6 +668,28 @@ Each of the above filters have it's own parameters, following the naming convent
   - [JSON safety interface config example](realsense2_camera/examples/jsons/calib_config_example.json)
   - Result example: `realsense2_camera_msgs.srv.CalibConfigWrite_Response(success=True, error_message='')`
 
+
+<hr>
+
+## Available actions
+
+### triggered_calibration
+  - Type `ros2 interface show realsense2_camera_msgs/action/TriggeredCalibration` for the full request/result/feedback fields.
+    ```
+    # request
+    string json "calib run"  # default value
+    ---
+    # result
+    string calibration
+    float32 health
+    ---
+    # feedback
+    float32 progress
+
+    ```
+  - To use from command line: `ros2 action send_goal /camera/camera/triggered_calibration realsense2_camera_msgs/action/TriggeredCalibration '{json: "{calib run}"}'` or even with an empty request `ros2 action send_goal /camera/camera/triggered_calibration realsense2_camera_msgs/action/TriggeredCalibration ''` because the default behavior is already calib run.
+  - The action gives an updated feedback about the progress (%) if the client asks for feedback.
+  - If succeded, the action writes the new calibration table to the flash. It also returns the new calibration table as json string and the health as float32
 
 <hr>
 
