@@ -47,7 +47,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         path: 'ros2/src/realsense-ros'
-    
+
     - name: Check Copyright & Line-Endings
       shell: bash
       run: |
@@ -67,7 +67,14 @@ jobs:
       uses: ros-tooling/setup-ros@v0.7
       with:
         required-ros-distributions: ${{ matrix.ros_distro }}
-                
+
+    - name: Checkout librealsense/development
+      uses: actions/checkout@v4
+      with:
+        repository: IntelRealSense/librealsense
+        path: librealsense
+        ref: development
+
     - name: Build RealSense SDK 2.0 (development branch) from source
       run: |
 
@@ -75,9 +82,7 @@ jobs:
         # This apt install command will be ignored in ubuntu 22.04 as libusb-1.0-0-dev already installed there
         sudo apt install -y libusb-1.0-0-dev
         
-        cd ${{github.workspace}}
-        git clone https://github.com/IntelRealSense/librealsense.git -b development
-        cd librealsense
+        cd ${{github.workspace}}/librealsense
         sudo mkdir build
         cd build
         sudo cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=false -DBUILD_GRAPHICAL_EXAMPLES=false
@@ -112,7 +117,7 @@ jobs:
     #    bag_filename="https://librealsense.intel.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag";
     #    wget $bag_filename -P "records/"
     #    sudo apt install ros-${{ matrix.ros_distro}}-launch-pytest
-       
+
     - name: Install Packages For Foxy Tests
       if: ${{ matrix.ros_distro == 'foxy' }}
       run: |
@@ -138,8 +143,7 @@ jobs:
         # numpy-quaternion needs numpy<2.0.0. Chose 1.26.4 as it is the lowest working version for ubuntu 24.04.
         pip3 install --force-reinstall numpy==1.26.4
         pip3 install numpy-quaternion tqdm pyyaml
-  
- 
+
     - name: Run Tests
       run: |
         cd ${{github.workspace}}/ros2
@@ -150,7 +154,7 @@ jobs:
         sudo apt install -y ros-${{matrix.ros_distro}}-sensor-msgs-py
         source ../.venv/bin/activate
         python3 src/realsense-ros/realsense2_camera/scripts/rs2_test.py non_existent_file
-    
+
     # don't run integration tests for foxy since some testing dependecies packages like 
     # tf_ros_py are not avaialble
     # TODO: check when we can run integration tests on rolling
