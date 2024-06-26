@@ -217,7 +217,6 @@ void BaseRealSenseNode::stopPublishers(const std::vector<stream_profile>& profil
 
 void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profiles, const RosSensor& sensor)
 {
-    const std::string module_name(create_graph_resource_name(rs2_to_ros(sensor.get_info(RS2_CAMERA_INFO_NAME))));
     for (auto& profile : profiles)
     {
         stream_index_pair sip(profile.stream_type(), profile.stream_index());
@@ -263,8 +262,6 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                 std::stringstream aligned_image_raw, aligned_camera_info;
                 aligned_image_raw << "~/" << "aligned_depth_to_" << stream_name << "/image_raw";
                 aligned_camera_info << "~/" << "aligned_depth_to_" << stream_name << "/camera_info";
-
-                std::string aligned_stream_name = "aligned_depth_to_" + stream_name;
 
                 // We can use 2 types of publishers:
                 // Native RCL publisher that support intra-process zero-copy comunication
@@ -451,7 +448,7 @@ void BaseRealSenseNode::startUpdatedSensors()
                     if (_publish_tf)
                     {
                         std::lock_guard<std::mutex> lock_guard(_publish_tf_mutex);
-                        for (auto &profile : wanted_profiles)
+                        for (const auto &profile : wanted_profiles)
                         {
                             calcAndAppendTransformMsgs(profile, _base_profile);
                         }

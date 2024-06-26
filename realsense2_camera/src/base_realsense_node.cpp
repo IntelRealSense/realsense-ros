@@ -815,7 +815,6 @@ void BaseRealSenseNode::updateExtrinsicsCalibData(const rs2::video_stream_profil
 void BaseRealSenseNode::SetBaseStream()
 {
     const std::vector<stream_index_pair> base_stream_priority = {DEPTH};
-    std::set<stream_index_pair> checked_sips;
     std::map<stream_index_pair, rs2::stream_profile> available_profiles;
     for(auto&& sensor : _available_ros_sensors)
     {
@@ -831,7 +830,7 @@ void BaseRealSenseNode::SetBaseStream()
     std::vector<stream_index_pair>::const_iterator base_stream(base_stream_priority.begin());
     while((base_stream != base_stream_priority.end()) && (available_profiles.find(*base_stream) == available_profiles.end()))
     {
-        base_stream++;
+        ++base_stream;
     }
     if (base_stream == base_stream_priority.end())
     {
@@ -1120,7 +1119,7 @@ void BaseRealSenseNode::publishRGBD(
         auto depth_camera_info = _camera_info.at(DEPTH);
         msg->depth_camera_info = depth_camera_info;
 
-        realsense2_camera_msgs::msg::RGBD *msg_address = msg.get();
+        const realsense2_camera_msgs::msg::RGBD *msg_address = msg.get();
         _rgbd_publisher->publish(std::move(msg));
         ROS_DEBUG_STREAM("rgbd stream published, message address: " << std::hex << msg_address);
     }

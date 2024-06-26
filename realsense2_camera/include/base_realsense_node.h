@@ -95,9 +95,8 @@ namespace realsense2_camera
             ~SyncedImuPublisher();
             void Pause();   // Pause sending messages. All messages from now on are saved in queue.
             void Resume();  // Send all pending messages and allow sending future messages.
-            void Publish(sensor_msgs::msg::Imu msg);     //either send or hold message.
+            void Publish(sensor_msgs::msg::Imu imu_msg);     //either send or hold message.
             size_t getNumSubscribers();
-            void Enable(bool is_enabled) {_is_enabled=is_enabled;};
         
         private:
             void PublishPendingMessages();
@@ -225,7 +224,7 @@ namespace realsense2_camera
         void publishStaticTransforms();
         void startDynamicTf();
         void publishDynamicTransforms();
-        void publishPointCloud(rs2::points f, const rclcpp::Time& t, const rs2::frameset& frameset);
+        void publishPointCloud(rs2::points pc, const rclcpp::Time& t, const rs2::frameset& frameset);
         Extrinsics rsExtrinsicsToMsg(const rs2_extrinsics& extrinsics) const;
         IMUInfo getImuInfo(const rs2::stream_profile& profile);
         void initializeFormatsMaps();

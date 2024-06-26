@@ -104,7 +104,6 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
                 std::string pn = dev.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT);
                 std::string name = dev.get_info(RS2_CAMERA_INFO_NAME);
                 ROS_INFO_STREAM("Device with physical ID " << pn << " was found.");
-                std::vector<std::string> results;
                 ROS_INFO_STREAM("Device with name " << name << " was found.");
                 std::string port_id = parseUsbPort(pn);
                 if (port_id.empty())

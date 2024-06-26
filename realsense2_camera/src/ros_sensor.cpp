@@ -355,17 +355,14 @@ bool profiles_equal(const rs2::stream_profile& a, const rs2::stream_profile& b)
 
 bool is_profiles_in_profiles(const std::vector<stream_profile>& sub_profiles, const std::vector<stream_profile>& all_profiles)
 {
-    for (auto& a : sub_profiles)
+    for (const auto &a : sub_profiles)
     {
-        bool found_profile(false);
-        for (auto& b : all_profiles)
-        {
-            if (profiles_equal(a, b))
-            {
-                found_profile = true;
-                break;
-            }
-        }
+        bool found_profile = std::any_of(
+            all_profiles.begin(),
+            all_profiles.end(),
+            [&a](const stream_profile &b) {
+                return profiles_equal(a, b);
+            });
         if (!found_profile)
         {
             return false;

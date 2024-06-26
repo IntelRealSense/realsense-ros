@@ -109,7 +109,7 @@ static const rmw_qos_profile_t rmw_qos_profile_latched =
     false
 };
 
-const rmw_qos_profile_t qos_string_to_qos(std::string str)
+const rmw_qos_profile_t qos_string_to_qos(const std::string &str)
 {
     if (str == "UNKNOWN")
         return rmw_qos_profile_unknown;

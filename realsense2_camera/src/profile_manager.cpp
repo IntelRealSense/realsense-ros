@@ -51,7 +51,7 @@ void ProfilesManager::registerSensorQOSParam(std::string template_name,
 {
     // For each pair of stream-index, Function add a QOS parameter to <params> and advertise it by <template_name>.
     // parameters in <params> are dynamically being updated. If invalid they are reverted.
-    for (auto& sip : unique_sips)
+    for (const auto &sip : unique_sips)
     {
         std::string param_name = applyTemplateName(template_name, sip);
         params[sip] = std::make_shared<std::string>(value);
@@ -320,7 +320,7 @@ std::string VideoProfilesManager::get_profiles_descriptions(rs2_stream stream_ty
         }
     }
     std::stringstream descriptors_strm;
-    for (auto& profile_str : profiles_str)
+    for (const auto &profile_str : profiles_str)
     {
         descriptors_strm << profile_str << "\n";
     }
@@ -345,7 +345,7 @@ std::string VideoProfilesManager::getProfileFormatsDescriptions(stream_index_pai
         }
     }
     std::stringstream descriptors_strm;
-    for (auto& profile_format_str : profile_formats_str)
+    for (const auto &profile_format_str : profile_formats_str)
     {
         descriptors_strm << profile_format_str << "\n";
     }
