@@ -6,9 +6,11 @@ on:
   push:
     branches:
       - ros2-development
+      - ros2-master
   pull_request:
     branches:
       - ros2-development
+      - ros2-master
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -29,14 +31,14 @@ jobs:
         include:
         - ros_distro: 'rolling'
           os: ubuntu-24.04
+        - ros_distro: 'jazzy'
+          os: ubuntu-24.04
         - ros_distro: 'iron'
           os: ubuntu-22.04
         - ros_distro: 'humble'
           os: ubuntu-22.04
         - ros_distro: 'foxy'
           os: ubuntu-20.04
-        - ros_distro: 'jazzy'
-          os: ubuntu-24.04
 
     steps:
 

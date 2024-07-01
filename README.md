@@ -12,9 +12,11 @@
 
 
 [![rolling][rolling-badge]][rolling]
+[![jazzy][jazzy-badge]][jazzy]
 [![iron][iron-badge]][iron]
 [![humble][humble-badge]][humble]
 [![foxy][foxy-badge]][foxy]
+[![ubuntu24][ubuntu24-badge]][ubuntu24]
 [![ubuntu22][ubuntu22-badge]][ubuntu22]
 [![ubuntu20][ubuntu20-badge]][ubuntu20]
 
@@ -88,7 +90,10 @@
   <summary>
     Step 1: Install the ROS2 distribution 
   </summary>
-  
+
+- #### Ubuntu 24.04:
+  - [ROS2 Jazzy](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debians.html)
+
 - #### Ubuntu 22.04:
   - [ROS2 Iron](https://docs.ros.org/en/iron/Installation/Ubuntu-Install-Debians.html)
   - [ROS2 Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html)
@@ -158,7 +163,7 @@
 
   -  Source environment
    ```bash
-   ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: iron, humble, foxy
+   ROS_DISTRO=<YOUR_SYSTEM_ROS_DISTRO>  # set your ROS_DISTRO: jazzy, iron, humble, foxy
    source /opt/ros/$ROS_DISTRO/setup.bash
    cd ~/ros2_ws
    . install/local_setup.bash
@@ -181,13 +186,14 @@
   **Please choose only one option from the two options below (in order to prevent multiple versions installation and workspace conflicts)**
   
   - Manual install from ROS2 formal documentation:
+    - [ROS2 Jazzy](https://docs.ros.org/en/jazzy/Installation/Windows-Install-Binary.html)
     - [ROS2 Iron](https://docs.ros.org/en/iron/Installation/Windows-Install-Binary.html)
     - [ROS2 Humble](https://docs.ros.org/en/humble/Installation/Windows-Install-Binary.html)
     - [ROS2 Foxy](https://docs.ros.org/en/foxy/Installation/Windows-Install-Binary.html)
   - Microsoft IOT binary installation:
     - https://ms-iot.github.io/ROSOnWindows/GettingStarted/SetupRos2.html
     - Pay attention that the examples of install are for Foxy distro (which is not supported anymore by ROS Wrapper for Intel&reg; RealSense&trade; cameras)
-	- Please replace the word "Foxy" with Humble or Iron, depends on the chosen distro.
+	- Please replace the word "Foxy" with Humble, Iron or Jazzy, depends on the chosen distro.
 </details>
   
 <details>
@@ -740,12 +746,16 @@ ros2 launch realsense2_camera rs_intra_process_demo_launch.py intra_process_comm
 
 [rolling-badge]: https://img.shields.io/badge/-ROLLING-orange?style=flat-square&logo=ros
 [rolling]: https://docs.ros.org/en/rolling/index.html
-[foxy-badge]: https://img.shields.io/badge/-foxy-orange?style=flat-square&logo=ros
+[jazzy-badge]: https://img.shields.io/badge/-JAZZY-orange?style=flat-square&logo=ros
+[jazzy]: https://docs.ros.org/en/jazzy/index.html
+[foxy-badge]: https://img.shields.io/badge/-FOXY-orange?style=flat-square&logo=ros
 [foxy]: https://docs.ros.org/en/foxy/index.html
 [humble-badge]: https://img.shields.io/badge/-HUMBLE-orange?style=flat-square&logo=ros
 [humble]: https://docs.ros.org/en/humble/index.html
 [iron-badge]: https://img.shields.io/badge/-IRON-orange?style=flat-square&logo=ros
 [iron]: https://docs.ros.org/en/iron/index.html
+[ubuntu24-badge]: https://img.shields.io/badge/-UBUNTU%2024%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
+[ubuntu24]: https://releases.ubuntu.com/noble/
 [ubuntu22-badge]: https://img.shields.io/badge/-UBUNTU%2022%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
 [ubuntu22]: https://releases.ubuntu.com/jammy/
 [ubuntu20-badge]: https://img.shields.io/badge/-UBUNTU%2020%2E04-blue?style=flat-square&logo=ubuntu&logoColor=white
