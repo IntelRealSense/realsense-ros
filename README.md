@@ -673,13 +673,15 @@ Each of the above filters have it's own parameters, following the naming convent
 
 ## Available actions
 
-### triggered_calibration
+### triggered_calibration (supported only for D500 devices)
   - Type `ros2 interface show realsense2_camera_msgs/action/TriggeredCalibration` for the full request/result/feedback fields.
     ```
     # request
     string json "calib run"  # default value
     ---
     # result
+    bool success
+    string error_msg
     string calibration
     float32 health
     ---
@@ -688,8 +690,16 @@ Each of the above filters have it's own parameters, following the naming convent
 
     ```
   - To use from command line: `ros2 action send_goal /camera/camera/triggered_calibration realsense2_camera_msgs/action/TriggeredCalibration '{json: "{calib run}"}'` or even with an empty request `ros2 action send_goal /camera/camera/triggered_calibration realsense2_camera_msgs/action/TriggeredCalibration ''` because the default behavior is already calib run.
-  - The action gives an updated feedback about the progress (%) if the client asks for feedback.
+  - The action gives an updated feedback about the progress (%) if the client asks for feedback. To do that, add `--feedback` to the end of the command.
   - If succeded, the action writes the new calibration table to the flash. It also returns the new calibration table as json string and the health as float32
+  - If failed, it will return the error message inside the result. For example:
+  ```
+  Result:
+    success: false
+    error_msg: 'TriggeredCalibrationExecute: Aborted. Error: Calibration completed but algorithm failed'
+    calibration: '{}'
+    health: 0.0
+  ```
 
 <hr>
 
