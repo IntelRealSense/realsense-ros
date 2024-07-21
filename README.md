@@ -652,7 +652,7 @@ Each of the above filters have it's own parameters, following the naming convent
     <details>
     <summary>Click to see the full response of the call example</summary>
 
-    `response: realsense2_camera_msgs.srv.CalibConfigRead_Response(success=True, error_message='', calib_config='{"calibration_config":{"calib_roi_num_of_segments":0,"camera_position":{"rotation":[[0,0,0],[0,0,0],[0,0,0]],"translation":[0,0,0]},"crypto_signature":[0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],"roi":[[[0,0],[0,0],[0,0],[0,0]],[[0,0],[0,0],[0,0],[0,0]],[[0,0],[0,0],[0,0],[0,0]],[[0,0],[0,0],[0,0],[0,0]]]}}')`
+    `response: realsense2_camera_msgs.srv.CalibConfigRead_Response(success=True, error_message='', calib_config='{"calibration_config":{"camera_position":{"rotation":[[0.0,0.0,1.0],[-1.0,0.0,0.0],[0.0,-1.0,0.0]],"translation":[0.0,0.0,0.0]},"crypto_signature":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"roi_0":{"vertex_0":[0,0],"vertex_1":[0,0],"vertex_2":[0,0],"vertex_3":[0,0]},"roi_1":{"vertex_0":[0,0],"vertex_1":[0,0],"vertex_2":[0,0],"vertex_3":[0,0]},"roi_2":{"vertex_0":[0,0],"vertex_1":[0,0],"vertex_2":[0,0],"vertex_3":[0,0]},"roi_3":{"vertex_0":[0,0],"vertex_1":[0,0],"vertex_2":[0,0],"vertex_3":[0,0]},"roi_num_of_segments":0}}')`
 
     </details>
 
@@ -667,7 +667,7 @@ Each of the above filters have it's own parameters, following the naming convent
     <details>
     <summary>Click to see full call example</summary>
 
-    `ros2 service call /camera/camera/calib_config_write realsense2_camera_msgs/srv/CalibConfigWrite "{calib_config: '{\"calibration_config\":{\"calib_roi_num_of_segments\":0,\"camera_position\":{\"rotation\":[[0,0,0],[0,0,0],[0,0,0]],\"translation\":[0,0,0]},\"crypto_signature\":[0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],\"roi\":[[[0,0],[0,0],[0,0],[0,0]],[[0,0],[0,0],[0,0],[0,0]],[[0,0],[0,0],[0,0],[0,0]],[[0,0],[0,0],[0,0],[0,0]]]}}' }"`
+    `ros2 service call /camera/camera/calib_config_write realsense2_camera_msgs/srv/CalibConfigWrite "{calib_config: '{\"calibration_config\":{\"camera_position\":{\"rotation\":[[0.0,0.0,1.0],[-1.0,0.0,0.0],[0.0,-1.0,0.0]],\"translation\":[0.0,0.0,0.0]},\"crypto_signature\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"roi_0\":{\"vertex_0\":[0,0],\"vertex_1\":[0,0],\"vertex_2\":[0,0],\"vertex_3\":[0,0]},\"roi_1\":{\"vertex_0\":[0,0],\"vertex_1\":[0,0],\"vertex_2\":[0,0],\"vertex_3\":[0,0]},\"roi_2\":{\"vertex_0\":[0,0],\"vertex_1\":[0,0],\"vertex_2\":[0,0],\"vertex_3\":[0,0]},\"roi_3\":{\"vertex_0\":[0,0],\"vertex_1\":[0,0],\"vertex_2\":[0,0],\"vertex_3\":[0,0]},\"roi_num_of_segments\":0}}' }"`
 
     </details>
 
@@ -695,6 +695,13 @@ Each of the above filters have it's own parameters, following the naming convent
     float32 progress
 
     ```
+  - Before calling triggered calibration, user should set the following parameters:
+    - `depth_module.visual_preset: 1` # switch to visual preset #1 in depth module
+    - `depth_module.emitter_enabled: true` # enable emitter in depth module
+    - `depth_module.enable_auto_exposure: true` # enable AE in depth moudle
+    - `enable_depth: false` # turn off depth stream
+    - `enable_infra1: false` # turn off infra1 stream
+    - `enable_infra2: false` # turn off infra2 stream
   - To use from command line: `ros2 action send_goal /camera/camera/triggered_calibration realsense2_camera_msgs/action/TriggeredCalibration '{json: "{calib run}"}'` or even with an empty request `ros2 action send_goal /camera/camera/triggered_calibration realsense2_camera_msgs/action/TriggeredCalibration ''` because the default behavior is already calib run.
   - The action gives an updated feedback about the progress (%) if the client asks for feedback. To do that, add `--feedback` to the end of the command.
   - If succeded, the action writes the new calibration table to the flash. It also returns the new calibration table as json string and the health as float32
