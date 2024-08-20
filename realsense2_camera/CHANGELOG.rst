@@ -2,6 +2,22 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* PR `#3166 <https://github.com/IntelRealSense/realsense-ros/issues/3166>`_ from SamerKhshiboun: Update Calibration Config API
+* PR `#3159 <https://github.com/IntelRealSense/realsense-ros/issues/3159>`_ from noacoohen: Add D421 PID
+* PR `#3153 <https://github.com/IntelRealSense/realsense-ros/issues/3153>`_ from SamerKhshiboun: TC | Fix feedback and update readme
+* PR `#3147 <https://github.com/IntelRealSense/realsense-ros/issues/3147>`_ from SamerKhshiboun: Update READMEs and CONTRIBUTING files regarding ros2-master
+* PR `#3138 <https://github.com/IntelRealSense/realsense-ros/issues/3138>`_ from SamerKhshiboun: Support Triggered Calibration as ROS2 Action
+* PR `#3135 <https://github.com/IntelRealSense/realsense-ros/issues/3135>`_ from kadiredd: Casefolding device name instead of strict case sensitive comparison
+* PR `#3133 <https://github.com/IntelRealSense/realsense-ros/issues/3133>`_ from SamerKhshiboun: update librealsense2 version to 2.56.0
+* PR `#3124 <https://github.com/IntelRealSense/realsense-ros/issues/3124>`_ from kadiredd: Support testing ROS2 service call device_info
+* PR `#3125 <https://github.com/IntelRealSense/realsense-ros/issues/3125>`_ from SamerKhshiboun: Support calibration config read/write services
+* PR `#3114 <https://github.com/IntelRealSense/realsense-ros/issues/3114>`_ from Arun-Prasad-V: Ubuntu 24.04 support for Rolling and Jazzy distros
+* PR `#3102 <https://github.com/IntelRealSense/realsense-ros/issues/3102>`_ from fortizcuesta: Allow hw synchronization of several realsense using a synchonization cable
+* PR `#3096 <https://github.com/IntelRealSense/realsense-ros/issues/3096>`_ from anisotropicity: Update rs_launch.py to add depth_module.color_profile
+* Contributors: Arun-Prasad-V, Madhukar Reddy Kadireddy, Ortiz Cuesta, Fernando, Samer Khshiboun, SamerKhshiboun, anisotropicity, noacoohen
+
 4.55.1 (2024-05-28)
 -------------------
 * PR `#3106 <https://github.com/IntelRealSense/realsense-ros/issues/3106>`_ from SamerKhshiboun: Remove unused parameter _is_profile_exist
