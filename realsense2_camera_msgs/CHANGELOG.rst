@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.56.1 (2024-08-20)
+-------------------
 * PR `#3153 <https://github.com/IntelRealSense/realsense-ros/issues/3153>`_ from SamerKhshiboun: TC | Fix feedback and update readme
 * PR `#3138 <https://github.com/IntelRealSense/realsense-ros/issues/3138>`_ from SamerKhshiboun: Support Triggered Calibration as ROS2 Action
 * PR `#3125 <https://github.com/IntelRealSense/realsense-ros/issues/3125>`_ from SamerKhshiboun: Support calibration config read/write services

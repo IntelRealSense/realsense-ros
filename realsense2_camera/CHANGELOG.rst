@@ -2,8 +2,8 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.56.1 (2024-08-20)
+-------------------
 * PR `#3166 <https://github.com/IntelRealSense/realsense-ros/issues/3166>`_ from SamerKhshiboun: Update Calibration Config API
 * PR `#3159 <https://github.com/IntelRealSense/realsense-ros/issues/3159>`_ from noacoohen: Add D421 PID
 * PR `#3153 <https://github.com/IntelRealSense/realsense-ros/issues/3153>`_ from SamerKhshiboun: TC | Fix feedback and update readme
