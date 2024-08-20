@@ -656,8 +656,6 @@ Each of the above filters have it's own parameters, following the naming convent
 
     </details>
 
-  - [JSON safety interface config example](realsense2_camera/examples/jsons/calib_config_example.json)
-
 ### calib_config_write (for specific camera modules):
   - Write calibration config.
   - Note that writing calibration config is applicable only in Safey Service Mode
@@ -671,9 +669,8 @@ Each of the above filters have it's own parameters, following the naming convent
 
     </details>
 
-  - [JSON safety interface config example](realsense2_camera/examples/jsons/calib_config_example.json)
+  - [JSON calib config example](realsense2_camera/examples/d500_tables/calib_config_example.json)
   - Result example: `realsense2_camera_msgs.srv.CalibConfigWrite_Response(success=True, error_message='')`
-
 
 <hr>
 
