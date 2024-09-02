@@ -46,7 +46,7 @@ image_transport_publisher::image_transport_publisher( rclcpp::Node & node,
 }
 void image_transport_publisher::publish( sensor_msgs::msg::Image::UniquePtr image_ptr )
 {
-    image_publisher_impl->publish( *image_ptr );
+    image_publisher_impl->publish( std::move( image_ptr ) );
 }
 
 size_t image_transport_publisher::get_subscription_count() const
