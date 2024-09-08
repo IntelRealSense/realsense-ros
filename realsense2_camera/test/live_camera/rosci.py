@@ -25,8 +25,6 @@ else:
     #For running this script locally
     #Extract the root where both realsense-ros and librealsense are cloned
     ws_local = '/'.join(os.path.abspath( __file__ ).split( os.path.sep )[0:-5])
-    print("##Check point")
-    print(ws_local)
     #expected to have 'librealsense' repo in parallel to 'realsense-ros'
     assert os.path.exists( os.path.join(ws_local, 'librealsense')), f" 'librealsense' doesn't exist at {ws_local} "
     sys.path.append( os.path.join( ws_local, 'librealsense/unit-tests/py' ))
