@@ -287,7 +287,7 @@ void RealSenseNodeFactory::init()
             }
             if (_device)
             {
-                bool rosbag_loop(declare_parameter("rosbag_loop", rclcpp::ParameterValue(false)).getrclcpp::PARAMETER_BOOL());
+                bool rosbag_loop(declare_parameter("rosbag_loop", rclcpp::ParameterValue(false)).get<rclcpp::PARAMETER_BOOL>());
                 do
                 {
                     startDevice();
