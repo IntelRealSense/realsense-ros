@@ -38,7 +38,7 @@ RealSenseNodeFactory::RealSenseNodeFactory(const rclcpp::NodeOptions & node_opti
 }
 
 RealSenseNodeFactory::RealSenseNodeFactory(const std::string & node_name, const std::string & ns,
-                                           const rclcpp::NodeOptions & node_options) : 
+                                           const rclcpp::NodeOptions & node_options) :
     Node(node_name, ns, node_options),
     _logger(this->get_logger())
 {
@@ -123,7 +123,7 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
                 }
                 else
                 {
-                    ROS_INFO_STREAM("Device with port number " << port_id << " was found.");                    
+                    ROS_INFO_STREAM("Device with port number " << port_id << " was found.");
                 }
                 bool found_device_type(true);
                 if (!_device_type.empty())
@@ -193,7 +193,7 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
             ROS_INFO("Resetting device...");
             _device.hardware_reset();
             _device = rs2::device();
-            
+
         }
         catch(const std::exception& ex)
         {
@@ -287,7 +287,11 @@ void RealSenseNodeFactory::init()
             }
             if (_device)
             {
-                startDevice();
+                bool rosbag_loop(declare_parameter("rosbag_loop", rclcpp::ParameterValue(false)).getrclcpp::PARAMETER_BOOL());
+                do
+                {
+                    startDevice();
+                } while (rosbag_loop); // Terminate loop only after CTRL-C
             }
         }
         else
@@ -390,7 +394,7 @@ void RealSenseNodeFactory::startDevice()
         std::cerr << "Failed to start device: " << e.what() << '\n';
         _device.hardware_reset();
         _device = rs2::device();
-    }    
+    }
 }
 
 void RealSenseNodeFactory::tryGetLogSeverity(rs2_log_severity& severity) const
