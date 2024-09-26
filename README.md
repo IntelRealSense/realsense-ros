@@ -288,6 +288,7 @@ User can set the camera name and camera namespace, to distinguish between camera
   /robot1/D455_1
   
   > ros2 topic list
+  /parameter_events
   /robot1/D455_1/color/camera_info
   /robot1/D455_1/color/image_raw
   /robot1/D455_1/color/metadata
@@ -295,10 +296,18 @@ User can set the camera name and camera namespace, to distinguish between camera
   /robot1/D455_1/depth/image_rect_raw
   /robot1/D455_1/depth/metadata
   /robot1/D455_1/extrinsics/depth_to_color
-  /robot1/D455_1/imu
+  /robot1/D455_1/extrinsics/depth_to_depth
+  /rosout
+  /tf_static
   
   > ros2 service list
+  /robot1/D455_1/describe_parameters
   /robot1/D455_1/device_info
+  /robot1/D455_1/get_parameter_types
+  /robot1/D455_1/get_parameters
+  /robot1/D455_1/list_parameters
+  /robot1/D455_1/set_parameters
+  /robot1/D455_1/set_parameters_atomically
   ```
 
 ### Default behavior if non of these parameters are given:
@@ -317,10 +326,19 @@ User can set the camera name and camera namespace, to distinguish between camera
 /camera/camera/depth/image_rect_raw
 /camera/camera/depth/metadata
 /camera/camera/extrinsics/depth_to_color
-/camera/camera/imu
+/camera/camera/extrinsics/depth_to_depth
+/parameter_events
+/rosout
+/tf_static
 
 > ros2 service list
+/camera/camera/describe_parameters
 /camera/camera/device_info
+/camera/camera/get_parameter_types
+/camera/camera/get_parameters
+/camera/camera/list_parameters
+/camera/camera/set_parameters
+/camera/camera/set_parameters_atomically
 ```
 
 <hr>
