@@ -161,6 +161,7 @@ class Test_D455_Seq_ID_Update(pytest_rs_utils.RsTestBaseClass):
 test_params_reset_device = {
     'camera_name': 'D455',
     'device_type': 'D455',
+    'rgb_camera.color_profile': '640x480x30',
     }
 '''
 This test was implemented as a template to set the parameters and run the test.
@@ -170,7 +171,7 @@ machines that don't have the D455 connected.
 2. After setting the param, rclpy.spin_once may be needed.Test passes even without this though.
 '''
 @pytest.mark.d455
-@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_depth_avg_1],indirect=True)
+@pytest.mark.parametrize("launch_descr_with_parameters", [test_params_reset_device],indirect=True)
 @pytest.mark.launch(fixture=launch_descr_with_parameters)
 class TestD455_reset_device(pytest_rs_utils.RsTestBaseClass):
     def test_D455_Reset_Device(self,launch_descr_with_parameters):
@@ -218,10 +219,8 @@ class TestD455_reset_device(pytest_rs_utils.RsTestBaseClass):
 
             self.reset_device()
 
-            #default value, the test will fail if default value is changed in librealsense
-            themes[0]['width'] = 1280
-            themes[0]['height'] = 720
-
+            themes[0]['width'] = int(params['rgb_camera.color_profile'].split('x')[0])
+            themes[0]['height'] = int(params['rgb_camera.color_profile'].split('x')[1])
             ret = self.run_test(themes)
             assert ret[0], ret[1]
             assert self.process_data(themes)
