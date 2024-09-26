@@ -288,10 +288,37 @@ void RealSenseNodeFactory::init()
             if (_device)
             {
                 bool rosbag_loop(declare_parameter("rosbag_loop", rclcpp::ParameterValue(false)).get<rclcpp::PARAMETER_BOOL>());
-                do
+                startDevice();
+
+                if (rosbag_loop)
                 {
-                    startDevice();
-                } while (rosbag_loop); // Terminate loop only after CTRL-C
+                    auto playback = _device.as<rs2::playback>(); // Object to check the playback status periodically.
+                    bool is_playing = true; // Flag to indicate if the playback is active
+
+                    while (rclcpp::ok())
+                    {
+                        // Check the current status only if the playback is not active
+                        if (!is_playing && playback.current_status() == RS2_PLAYBACK_STATUS_STOPPED)
+                        {
+                            RCLCPP_INFO(this->get_logger(), "Bag file playback has completed and it is going to be replayed.");
+                            startDevice(); // Re-start bag file execution
+                            is_playing = true; // Set the flag to true as playback has been restarted
+                        }
+                        else if (playback.current_status() != RS2_PLAYBACK_STATUS_STOPPED)
+                        {
+                            // If the playback status is not stopped, it means the playback is active
+                            is_playing = true;
+                        }
+                        else
+                        {
+                            // If the playback status is stopped, set the flag to false
+                            is_playing = false;
+                        }
+
+                        // Add a small delay to prevent busy-waiting
+                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    }
+                }
             }
         }
         else
