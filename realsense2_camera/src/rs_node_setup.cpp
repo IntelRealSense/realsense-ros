@@ -295,8 +295,14 @@ void BaseRealSenseNode::startPublishers(const std::vector<stream_profile>& profi
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(qos), qos));
             // Publish Intrinsics:
             info_topic_name << "~/" << stream_name << "/imu_info";
-            _imu_info_publishers[sip] = _node.create_publisher<IMUInfo>(info_topic_name.str(),
-                                        rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(info_qos), info_qos));
+
+            // QoS settings for Latching-like behavior for the imu_info topic
+            // History: KeepLast(1) - Retains only the last message
+            // Durability: Transient Local - Ensures that late subscribers get the last message that was published
+            // Reliability: Ensures reliable delivery of messages
+            auto qos = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
+            _imu_info_publishers[sip] = _node.create_publisher<IMUInfo>(info_topic_name.str(), qos);
+
             IMUInfo info_msg = getImuInfo(profile);
             _imu_info_publishers[sip]->publish(info_msg);
         }

@@ -480,7 +480,26 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
                 frame.get_profile().stream_index(),
                 rs2_timestamp_domain_to_string(frame.get_frame_timestamp_domain()));
 
-    auto stream_index = (stream == GYRO.first)?GYRO:ACCEL;
+    stream_index_pair stream_index;
+    
+    if(stream == GYRO.first)
+    {
+        stream_index = GYRO;
+    }
+    else if(stream == ACCEL.first)
+    {
+        stream_index = ACCEL;
+    }
+    else if(stream == IMU.first)
+    {
+        stream_index = IMU;
+    }
+    else 
+    {
+        ROS_ERROR("Unknown IMU stream type.");
+        return;
+    }
+
     rclcpp::Time t(frameSystemTimeSec(frame));
 
     if(_imu_publishers.find(stream_index) == _imu_publishers.end())
@@ -495,19 +514,35 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         ImuMessage_AddDefaultValues(imu_msg);
         imu_msg.header.frame_id = OPTICAL_FRAME_ID(stream_index);
 
-        auto crnt_reading = *(reinterpret_cast<const float3*>(frame.get_data()));
-        if (GYRO == stream_index)
+        const float3 *crnt_reading = reinterpret_cast<const float3 *>(frame.get_data());
+        if (IMU == stream_index)
         {
-            imu_msg.angular_velocity.x = crnt_reading.x;
-            imu_msg.angular_velocity.y = crnt_reading.y;
-            imu_msg.angular_velocity.z = crnt_reading.z;
+            // Expecting two float3 objects: first for accel, second for gyro
+            const float3 &accel_data = crnt_reading[0];
+            const float3 &gyro_data = crnt_reading[1];
+
+            // Fill the IMU ROS2 message with both accel and gyro data
+            imu_msg.linear_acceleration.x = accel_data.x;
+            imu_msg.linear_acceleration.y = accel_data.y;
+            imu_msg.linear_acceleration.z = accel_data.z;
+
+            imu_msg.angular_velocity.x = gyro_data.x;
+            imu_msg.angular_velocity.y = gyro_data.y;
+            imu_msg.angular_velocity.z = gyro_data.z;
         }
-        else if (ACCEL == stream_index)
+        else if (GYRO == stream_index)
         {
-            imu_msg.linear_acceleration.x = crnt_reading.x;
-            imu_msg.linear_acceleration.y = crnt_reading.y;
-            imu_msg.linear_acceleration.z = crnt_reading.z;
+            imu_msg.angular_velocity.x = crnt_reading->x;
+            imu_msg.angular_velocity.y = crnt_reading->y;
+            imu_msg.angular_velocity.z = crnt_reading->z;
         }
+        else // ACCEL == stream_index
+        {
+            imu_msg.linear_acceleration.x = crnt_reading->x;
+            imu_msg.linear_acceleration.y = crnt_reading->y;
+            imu_msg.linear_acceleration.z = crnt_reading->z;
+        }
+
         imu_msg.header.stamp = t;
         _imu_publishers[stream_index]->publish(imu_msg);
         ROS_DEBUG("Publish %s stream", ros_stream_to_string(frame.get_profile().stream_type()).c_str());
