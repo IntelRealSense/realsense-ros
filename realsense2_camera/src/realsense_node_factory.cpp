@@ -359,7 +359,7 @@ void RealSenseNodeFactory::init()
 void RealSenseNodeFactory::startDevice()
 {
     if (_realSenseNode) _realSenseNode.reset();
-    std::string device_name = _device.get_info(RS2_CAMERA_INFO_NAME);
+    std::string device_name(_device.get_info(RS2_CAMERA_INFO_NAME));
     std::string pid_str(_device.get_info(RS2_CAMERA_INFO_PRODUCT_ID));
     uint16_t pid;
 

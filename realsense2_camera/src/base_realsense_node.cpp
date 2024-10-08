@@ -515,20 +515,33 @@ void BaseRealSenseNode::imu_callback(rs2::frame frame)
         imu_msg.header.frame_id = OPTICAL_FRAME_ID(stream_index);
 
         const float3 *crnt_reading = reinterpret_cast<const float3 *>(frame.get_data());
+        size_t data_size = frame.get_data_size();
+
         if (IMU == stream_index)
         {
             // Expecting two float3 objects: first for accel, second for gyro
-            const float3 &accel_data = crnt_reading[0];
-            const float3 &gyro_data = crnt_reading[1];
+            // Check if we have at least two float3s
+            if (data_size >= 2 * sizeof(float3))
+            {
+                const float3 &accel_data = crnt_reading[0];
+                const float3 &gyro_data = crnt_reading[1];
 
-            // Fill the IMU ROS2 message with both accel and gyro data
-            imu_msg.linear_acceleration.x = accel_data.x;
-            imu_msg.linear_acceleration.y = accel_data.y;
-            imu_msg.linear_acceleration.z = accel_data.z;
+                // Fill the IMU ROS2 message with both accel and gyro data
+                imu_msg.linear_acceleration.x = accel_data.x;
+                imu_msg.linear_acceleration.y = accel_data.y;
+                imu_msg.linear_acceleration.z = accel_data.z;
 
-            imu_msg.angular_velocity.x = gyro_data.x;
-            imu_msg.angular_velocity.y = gyro_data.y;
-            imu_msg.angular_velocity.z = gyro_data.z;
+                imu_msg.angular_velocity.x = gyro_data.x;
+                imu_msg.angular_velocity.y = gyro_data.y;
+                imu_msg.angular_velocity.z = gyro_data.z;
+            }
+            else
+            {
+                ROS_ERROR_STREAM("Insufficient data for IMU (Motion) frame: expected at least "
+                                 << 2 * sizeof(float3) << " bytes, but got "
+                                 << data_size << " bytes.");
+                return;
+            }
         }
         else if (GYRO == stream_index)
         {
