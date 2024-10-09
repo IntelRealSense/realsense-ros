@@ -107,24 +107,31 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
                 std::vector<std::string> results;
                 ROS_INFO_STREAM("Device with name " << name << " was found.");
                 std::string port_id = parseUsbPort(pn);
-                if (port_id.empty())
+
+                std::string pid_str(dev.get_info(RS2_CAMERA_INFO_PRODUCT_ID));
+                if(pid_str != "DDS")
                 {
-                    std::stringstream msg;
-                    msg << "Error extracting usb port from device with physical ID: " << pn << std::endl << "Please report on github issue at https://github.com/IntelRealSense/realsense-ros";
-                    if (_usb_port_id.empty())
+                    if (port_id.empty())
                     {
-                        ROS_WARN_STREAM(msg.str());
+                        std::stringstream msg;
+                        msg << "Error extracting usb port from device with physical ID: " << pn << std::endl
+                            << "Please report on github issue at https://github.com/IntelRealSense/realsense-ros";
+                        if (_usb_port_id.empty())
+                        {
+                            ROS_WARN_STREAM(msg.str());
+                        }
+                        else
+                        {
+                            ROS_ERROR_STREAM(msg.str());
+                            ROS_ERROR_STREAM("Please use serial number instead of usb port.");
+                        }
                     }
                     else
                     {
-                        ROS_ERROR_STREAM(msg.str());
-                        ROS_ERROR_STREAM("Please use serial number instead of usb port.");
+                        ROS_INFO_STREAM("Device with port number " << port_id << " was found.");
                     }
                 }
-                else
-                {
-                    ROS_INFO_STREAM("Device with port number " << port_id << " was found.");                    
-                }
+
                 bool found_device_type(true);
                 if (!_device_type.empty())
                 {
@@ -352,8 +359,20 @@ void RealSenseNodeFactory::init()
 void RealSenseNodeFactory::startDevice()
 {
     if (_realSenseNode) _realSenseNode.reset();
+    std::string device_name(_device.get_info(RS2_CAMERA_INFO_NAME));
     std::string pid_str(_device.get_info(RS2_CAMERA_INFO_PRODUCT_ID));
-    uint16_t pid = std::stoi(pid_str, 0, 16);
+    uint16_t pid;
+
+    if (device_name == "Intel RealSense D555")
+    {
+        // currently the PID of DDS devices is hardcoded as "DDS"
+        // need to be fixed in librealsense
+        pid = RS555_PID;
+    }
+    else
+    {
+        pid = std::stoi(pid_str, 0, 16);
+    }
     try
     {
         switch(pid)
@@ -374,6 +393,7 @@ void RealSenseNodeFactory::startDevice()
         case RS435i_RGB_PID:
         case RS455_PID:
         case RS457_PID:
+        case RS555_PID:
         case RS_USB2_PID:
             _realSenseNode = std::unique_ptr<BaseRealSenseNode>(new BaseRealSenseNode(*this, _device, _parameters, this->get_node_options().use_intra_process_comms()));
             break;
