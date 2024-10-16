@@ -190,15 +190,6 @@ void BaseRealSenseNode::calcAndAppendTransformMsgs(const rs2::stream_profile& pr
     // We are using zero translation vector here, since no translation between frame and optical_frame, but only rotation
     append_static_tf_msg(transform_ts_, zero_trans, quaternion_optical, FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
 
-    if (profile.is<rs2::video_stream_profile>() &&
-                profile.stream_type() != RS2_STREAM_DEPTH &&
-                profile.stream_index() == 1)
-    {
-        append_static_tf_msg(transform_ts_, trans, Q, _base_frame_id, ALIGNED_DEPTH_TO_FRAME_ID(sip));
-        append_static_tf_msg(transform_ts_, zero_trans, quaternion_optical, 
-                                                ALIGNED_DEPTH_TO_FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
-    }
-
     if ((_imu_sync_method > imu_sync_method::NONE) && (profile.stream_type() == RS2_STREAM_GYRO))
     {
         append_static_tf_msg(transform_ts_, zero_trans, zero_rot_quaternions, FRAME_ID(sip), IMU_FRAME_ID);
@@ -212,14 +203,6 @@ void BaseRealSenseNode::eraseTransformMsgs(const stream_index_pair& sip, const r
 
     erase_static_tf_msg(_base_frame_id, FRAME_ID(sip));
     erase_static_tf_msg(FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
-
-    if (profile.is<rs2::video_stream_profile>() &&
-                profile.stream_type() != RS2_STREAM_DEPTH &&
-                profile.stream_index() == 1)
-    {
-        erase_static_tf_msg(_base_frame_id, ALIGNED_DEPTH_TO_FRAME_ID(sip));
-        erase_static_tf_msg(ALIGNED_DEPTH_TO_FRAME_ID(sip), OPTICAL_FRAME_ID(sip));
-    }
 
     if ((_imu_sync_method > imu_sync_method::NONE) && (profile.stream_type() == RS2_STREAM_GYRO))
     {
