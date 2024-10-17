@@ -38,7 +38,7 @@ RealSenseNodeFactory::RealSenseNodeFactory(const rclcpp::NodeOptions & node_opti
 }
 
 RealSenseNodeFactory::RealSenseNodeFactory(const std::string & node_name, const std::string & ns,
-                                           const rclcpp::NodeOptions & node_options) : 
+                                           const rclcpp::NodeOptions & node_options) :
     Node(node_name, ns, node_options),
     _logger(this->get_logger())
 {
@@ -200,7 +200,7 @@ void RealSenseNodeFactory::getDevice(rs2::device_list list)
             ROS_INFO("Resetting device...");
             _device.hardware_reset();
             _device = rs2::device();
-            
+
         }
         catch(const std::exception& ex)
         {
@@ -294,7 +294,39 @@ void RealSenseNodeFactory::init()
             }
             if (_device)
             {
+                bool rosbag_loop(declare_parameter("rosbag_loop", rclcpp::ParameterValue(false)).get<rclcpp::PARAMETER_BOOL>());
                 startDevice();
+
+                if (rosbag_loop)
+                {
+                    auto playback = _device.as<rs2::playback>(); // Object to check the playback status periodically.
+                    bool is_playing = true; // Flag to indicate if the playback is active
+
+                    while (rclcpp::ok())
+                    {
+                        // Check the current status only if the playback is not active
+                        auto status = playback.current_status();
+                        if (!is_playing && status == RS2_PLAYBACK_STATUS_STOPPED)
+                        {
+                            RCLCPP_INFO(this->get_logger(), "Bag file playback has completed and it is going to be replayed.");
+                            startDevice(); // Re-start bag file execution
+                            is_playing = true; // Set the flag to true as playback has been restarted
+                        }
+                        else if (status != RS2_PLAYBACK_STATUS_STOPPED)
+                        {
+                            // If the playback status is not stopped, it means the playback is active
+                            is_playing = true;
+                        }
+                        else
+                        {
+                            // If the playback status is stopped, set the flag to false
+                            is_playing = false;
+                        }
+
+                        // Add a small delay to prevent busy-waiting
+                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    }
+                }
             }
         }
         else
@@ -410,7 +442,7 @@ void RealSenseNodeFactory::startDevice()
         std::cerr << "Failed to start device: " << e.what() << '\n';
         _device.hardware_reset();
         _device = rs2::device();
-    }    
+    }
 }
 
 void RealSenseNodeFactory::tryGetLogSeverity(rs2_log_severity& severity) const
