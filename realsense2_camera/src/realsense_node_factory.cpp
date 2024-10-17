@@ -298,13 +298,14 @@ void RealSenseNodeFactory::init()
                     while (rclcpp::ok())
                     {
                         // Check the current status only if the playback is not active
-                        if (!is_playing && playback.current_status() == RS2_PLAYBACK_STATUS_STOPPED)
+                        auto status = playback.current_status();
+                        if (!is_playing && status == RS2_PLAYBACK_STATUS_STOPPED)
                         {
                             RCLCPP_INFO(this->get_logger(), "Bag file playback has completed and it is going to be replayed.");
                             startDevice(); // Re-start bag file execution
                             is_playing = true; // Set the flag to true as playback has been restarted
                         }
-                        else if (playback.current_status() != RS2_PLAYBACK_STATUS_STOPPED)
+                        else if (status != RS2_PLAYBACK_STATUS_STOPPED)
                         {
                             // If the playback status is not stopped, it means the playback is active
                             is_playing = true;
