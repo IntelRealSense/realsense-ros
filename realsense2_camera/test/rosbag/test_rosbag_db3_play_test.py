@@ -32,6 +32,7 @@ TOPICS = [
 ]
 
 
+@pytest.mark.no_librealsense
 @pytest.mark.rosbag
 def test_ros2_bag_play_db3():
     assert subprocess.run(["ros2", "bag", "play", "--help"],

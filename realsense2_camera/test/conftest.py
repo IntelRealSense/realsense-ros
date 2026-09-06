@@ -30,18 +30,17 @@ def librealsense_path():
     except Exception:
         pass
     libs = [lib for d in os.environ.get('LD_LIBRARY_PATH', '').split(':') if d
-            for lib in glob.glob(os.path.join(d, 'librealsense2.so*')) if os.path.getsize(lib)]
+            for lib in glob.glob(os.path.join(d, 'librealsense2.so*'))]
     return libs[0] if libs else None
 
 
-def sdk_plays_compressed_db3():
-    ''' Whether the installed librealsense2 can read the /compressed and /compressedDepth
+def sdk_plays_compressed_db3(path):
+    ''' Whether the librealsense2 at `path` can read the /compressed and /compressedDepth
         topics of the .db3 test recordings (librealsense PR #15556). Probes the library for
         the topic suffix rather than its version, since a source build of the development
         branch reports 2.58.0 - lower than the released 2.58.4 that lacks the support.
         Returns True when it cannot tell, so the tests run.
     '''
-    path = librealsense_path()
     if not path:
         return True
     try:
@@ -52,10 +51,12 @@ def sdk_plays_compressed_db3():
 
 
 def pytest_collection_modifyitems(config, items):
-    if sdk_plays_compressed_db3():
+    path = librealsense_path()
+    if sdk_plays_compressed_db3(path):
         return
+    print('rosbag tests skipped: %s lacks compressed .db3 support' % path)
     skip = pytest.mark.skip(reason="installed librealsense2 cannot play compressed .db3 "
                                    "recordings (needs librealsense PR #15556)")
     for item in items:
-        if 'rosbag' in item.keywords:
+        if 'rosbag' in item.keywords and 'no_librealsense' not in item.keywords:
             item.add_marker(skip)
