@@ -1,6 +1,6 @@
 name: Question / Help Wanted
 description: Ask a question or request help with the RealSense ROS Wrapper
-title: "[Question] "
+title: "[Question] <one-line summary>"
 labels: ["question"]
 body:
   - type: markdown
