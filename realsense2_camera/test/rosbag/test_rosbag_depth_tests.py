@@ -167,6 +167,7 @@ test_params_non_existing_rosbag = {"rosbag_filename":"non_existent.db3",
 This test was ported from rs2_test.py
 the command used to run is "python3 realsense2_camera/scripts/rs2_test.py static_tf_1"
 '''
+@pytest.mark.no_librealsense
 @pytest.mark.rosbag
 @pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_non_existing_rosbag],indirect=True)
 @pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
