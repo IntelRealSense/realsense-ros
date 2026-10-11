@@ -2,6 +2,14 @@
 Changelog for package realsense2_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Push 4.59.1 release into ros2-master (`#3574 <https://github.com/realsenseai/realsense-ros/issues/3574>`_)
+* Push 4.59.1 release into ros2-master
+* Freeze 4.59.1: bump version (`#3563 <https://github.com/realsenseai/realsense-ros/issues/3563>`_)
+* Update version to 4.59.1
+* Contributors: Nir Azkiel
+
 4.58.4 (2026-08-30)
 -------------------
 * Update changelogs for 4.58.4

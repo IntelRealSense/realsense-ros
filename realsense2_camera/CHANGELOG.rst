@@ -2,6 +2,36 @@
 Changelog for package realsense2_camera
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Push 4.59.1 release into ros2-master (`#3574 <https://github.com/realsenseai/realsense-ros/issues/3574>`_)
+* Push 4.59.1 release into ros2-master
+* Freeze 4.59.1: bump version (`#3563 <https://github.com/realsenseai/realsense-ros/issues/3563>`_)
+* Update version to 4.59.1
+* Enable only the streams the device tags as default (`#3561 <https://github.com/realsenseai/realsense-ros/issues/3561>`_)
+* Enable only the streams the device tags as default
+* Skip rosbag tests when the installed librealsense2 cannot play compressed db3 (`#3558 <https://github.com/realsenseai/realsense-ros/issues/3558>`_)
+* Address review: exempt SDK-independent tests, drop the size filter, log the skip
+* Close the maps handle explicitly
+* Resolve librealsense2 through the loader, not the ldconfig cache
+* Trim the compressed-db3 probe
+* Skip rosbag tests when the installed librealsense2 cannot play compressed db3
+* Merge branch 'ros2-development' into issue-templates
+* Occupancy: publish camera-computed grid + ~/occupancy_certainty; remove host-side raycasting (`#3555 <https://github.com/realsenseai/realsense-ros/issues/3555>`_)
+* feat(occupancy): parse self-describing MAP1 in-node; add ~/occupancy_certainty
+* Migrate rosbag tests to db3 and deflake align_depth (`#3539 <https://github.com/realsenseai/realsense-ros/issues/3539>`_)
+* Default all streams of an untagged sensor to one shared frame rate (`#3556 <https://github.com/realsenseai/realsense-ros/issues/3556>`_)
+* Log the frame rate the fallback picked
+* Confine the shared frame rate fallback to motion streams
+* Say which frame rate the fallback picked
+* Default all streams of an untagged sensor to one shared frame rate
+* turn the FATAL_ERROR for ROS distro check into a WARNING (`#3550 <https://github.com/realsenseai/realsense-ros/issues/3550>`_)
+* remove emoji from status message
+* remove trailing whitespace
+* always add 'ros_param_backend.cpp' to the sources
+* turn the FATAL_ERROR for ROS distro check into a WARNING
+* Contributors: Avia Avraham, Christian Rauch, Nir Azkiel, Niv Goren, Ohad Meir
+
 4.58.4 (2026-08-30)
 -------------------
 * Update changelogs for 4.58.4
