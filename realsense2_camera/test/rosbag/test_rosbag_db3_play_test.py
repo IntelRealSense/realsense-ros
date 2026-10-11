@@ -12,61 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Verify an rs-converted .db3 round-trips cleanly through `ros2 bag play`:
-# every sensor_msgs/msg/Image message delivered by ros2 bag play must be
-# byte-identical to the corresponding frame in the source .bag.
+# Verify vanilla `ros2 bag play` (not librealsense) delivers every image message
+# byte-identical to the one stored in the .db3.
 
-import hashlib, os, shutil, subprocess, sys, time
+import hashlib, os, subprocess, sys, time
 import pytest, rclpy
 from rclpy.qos import HistoryPolicy, QoSProfile
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/../utils"))
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/../../scripts"))
-from pytest_rs_utils import get_rosbag_file_path
-from importRosbag.importRosbag import importRosbag
+from pytest_rs_utils import get_rosbag_file_path, db3_topic_messages
 
+DB3 = "outdoors_1color.db3"
 
 TOPICS = [
-    "/device_0/sensor_1/Color_0/image/data",
-    "/device_0/sensor_0/Depth_0/image/data",
-    "/device_0/sensor_0/Infrared_1/image/data",
+    "/device_0/sensor_1/Color_0/image/data/compressed",
+    "/device_0/sensor_0/Depth_0/image/data/compressedDepth",
+    "/device_0/sensor_0/Infrared_1/image/data/compressed",
 ]
 
 
-def get_frame_hash(frames):
-    return [hashlib.sha256(f).hexdigest() for f in frames]
-
-
+@pytest.mark.no_librealsense
 @pytest.mark.rosbag
-def test_ros2_bag_play_db3(tmp_path):
-    rs_convert = shutil.which("rs-convert")
-    assert rs_convert, "rs-convert not on PATH (was librealsense built/installed?)"
-    # rosdistro's librealsense2 may predate the bag-to-db3 converter (added
-    # in librealsense PR #14882). pre-release.yml's own header notes this:
-    # "may fail due to outdated librealsense2 on the ROS package servers".
-    rs_help = subprocess.run([rs_convert, "--help"], capture_output=True).stdout.decode()
-    if "output-db3" not in rs_help:
-        pytest.skip(f"{rs_convert} predates --output-db3; rebuild librealsense from source")
+def test_ros2_bag_play_db3():
     assert subprocess.run(["ros2", "bag", "play", "--help"],
                           capture_output=True).returncode == 0, \
         "ros2 bag play not available (install ros-${ROS_DISTRO}-ros2bag)"
-    bag = get_rosbag_file_path("outdoors_1color.bag")
-    db3 = str(tmp_path / "out.db3")
-    subprocess.run([rs_convert, "-i", bag, "-D", db3],
-                   check=True, capture_output=True, timeout=120)
+    db3 = get_rosbag_file_path(DB3)
 
     if not rclpy.ok():
         rclpy.init()
     node = rclpy.create_node("db3_play_subscriber")
-    # ros2 bag play publishes RELIABLE by default (no metadata.yaml beside the
-    # .db3); KEEP_ALL + large depth prevents subscriber-side drops. Stream-hash
-    # in the callback so raw frame buffers don't pile up in memory.
+    # KEEP_ALL avoids subscriber-side drops; hash in the callback so frames don't pile up.
     qos = QoSProfile(history=HistoryPolicy.KEEP_ALL, depth=1000)
     received = {t: [] for t in TOPICS}
     for t in TOPICS:
         node.create_subscription(
-            Image, t,
+            CompressedImage, t,
             lambda m, t=t: received[t].append(hashlib.sha256(bytes(m.data)).hexdigest()),
             qos)
 
@@ -94,9 +76,9 @@ def test_ros2_bag_play_db3(tmp_path):
     assert proc.returncode == 0, \
         f"ros2 bag play failed (rc={proc.returncode}):\n{out}"
 
-    src = importRosbag(bag, importTopics=TOPICS, log='ERROR', disable_bar=True)
     for t in TOPICS:
-        src_h = get_frame_hash(f.tobytes() for f in src[t]['frames'])
+        src_h = [hashlib.sha256(bytes(m.data)).hexdigest()
+                 for m in db3_topic_messages(db3, t, CompressedImage)]
         rx_h = received[t]
         assert rx_h and (rx_h == src_h[:len(rx_h)] or rx_h == src_h[-len(rx_h):]), \
             f"{t}: content mismatch (got {len(rx_h)} / {len(src_h)} source frames)"

@@ -34,12 +34,14 @@ from pytest_rs_utils import launch_descr_with_yaml
 from pytest_rs_utils import get_rosbag_file_path
 from pytest_rs_utils import get_node_heirarchy
 
+DB3 = "outdoors_1color.db3"
+
 '''
 This test imitates the ros2 launch rs_launch.py realsense2_camera with the given parameters below
 Full command to reproduce locally
 ros2 launch rs_launch.py realsense2_camera camera_name:=camera enable_color:=true \
     enable_depth:=true rgb_camera.profile:=1280x720x30 depth_module.profile:=640x480x30 \
-    align_depth.enable:true rosbag_filename:=`realpath outdoors_1color.bag`
+    align_depth.enable:true rosbag_filename:=`realpath outdoors_1color.db3`
 
 Then we check if these topics exist:
 /camera/color/image_raw
@@ -49,7 +51,8 @@ Then we check if these topics exist:
 Also we check that the recieved frames of each topic are in the right width and height
 '''
 test_params = {
-    "rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
+    "rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'camera_1',
     'enable_color': 'true',
     'enable_depth': 'true',
@@ -78,6 +81,7 @@ class TestBasicAlignDepthEnable(pytest_rs_utils.RsTestBaseClass):
             initialize, run and check the data 
             '''
             self.init_test('RsTest'+params['camera_name'])
+            self.wait_for_node(params['camera_name'])
             ret = self.run_test(themes)
             assert ret[0], ret[1]
             assert self.process_data(themes)

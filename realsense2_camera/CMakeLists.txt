@@ -152,9 +152,9 @@ else()
   set(SENSOR_MSGS_TARGET ${sensor_msgs_LIBRARIES})
 endif()
 
-find_package(realsense2 2.58.0)
+find_package(realsense2 2.59.0)
 if (BUILD_ACCELERATE_GPU_WITH_GLSL)
-  find_package(realsense2-gl 2.58.0)
+  find_package(realsense2-gl 2.59.0)
 endif()
 if(NOT realsense2_FOUND)
     message(FATAL_ERROR "\n\n RealSense SDK 2.0 is missing, please install it from https://github.com/realsenseai/librealsense/releases\n\n")
@@ -184,6 +184,7 @@ set(SOURCES
     src/tfs.cpp
     src/actions.cpp
     src/safety.cpp
+    src/ros_param_backend.cpp
   )
 
 if (BUILD_ACCELERATE_GPU_WITH_GLSL)
@@ -196,33 +197,26 @@ endif()
 if("$ENV{ROS_DISTRO}" STREQUAL "foxy")
   message(STATUS "Build for ROS2 Foxy")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFOXY")
-  set(SOURCES "${SOURCES}" src/ros_param_backend.cpp)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "humble")
   message(STATUS "Build for ROS2 Humble")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHUMBLE")
-  set(SOURCES "${SOURCES}" src/ros_param_backend.cpp)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "iron")
   message(STATUS "Build for ROS2 Iron")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIRON")
-  set(SOURCES "${SOURCES}" src/ros_param_backend.cpp)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "rolling")
   message(STATUS "Build for ROS2 Rolling")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DROLLING")
-  set(SOURCES "${SOURCES}" src/ros_param_backend.cpp)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "jazzy")
   message(STATUS "Build for ROS2 Jazzy")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJAZZY")
-  set(SOURCES "${SOURCES}" src/ros_param_backend.cpp)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "kilted")
   message(STATUS "Build for ROS2 Kilted")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DKILTED")
-  set(SOURCES "${SOURCES}" src/ros_param_backend.cpp)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "lyrical")
   message(STATUS "Build for ROS2 Lyrical")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLYRICAL")
-  set(SOURCES "${SOURCES}" src/ros_param_backend.cpp)
 else()
-  message(FATAL_ERROR "Unsupported ROS Distribution: " "$ENV{ROS_DISTRO}")
+  message(WARNING "Unsupported ROS Distribution: " "$ENV{ROS_DISTRO}")
 endif()
 
 # The header 'cv_bridge/cv_bridge.hpp' was added in version 3.3.0. For older
@@ -330,11 +324,11 @@ if(USE_LIFECYCLE_NODE)
     find_package(rclcpp_lifecycle REQUIRED)
     find_package(lifecycle_msgs REQUIRED)
     list(APPEND dependencies rclcpp_lifecycle lifecycle_msgs)
-    list(APPEND targets 
+    list(APPEND targets
         rclcpp_lifecycle::rclcpp_lifecycle
         lifecycle_msgs::lifecycle_msgs__rosidl_typesupport_cpp)
     add_definitions(-DUSE_LIFECYCLE_NODE)
-    message("🚀 USE_LIFECYCLE_NODE is ENABLED")
+    message(STATUS "USE_LIFECYCLE_NODE is ENABLED")
 
     # Create a configuration file for the launch file
     file(WRITE "${CMAKE_BINARY_DIR}/global_settings.yaml"
@@ -422,13 +416,13 @@ install(
 )
 
 # Install launch files
-install(DIRECTORY 
+install(DIRECTORY
     launch
     DESTINATION share/${PROJECT_NAME}
     )
 
 # Install example files
-install(DIRECTORY 
+install(DIRECTORY
     examples
     DESTINATION share/${PROJECT_NAME}
 )
@@ -456,6 +450,13 @@ if(BUILD_TESTING)
     endforeach()
   endforeach()
 
+  # Unit tests for occupancy grid utilities
+  ament_add_gtest(test_occupancy_grid_utils test/unit/test_occupancy_grid_utils.cpp)
+  target_include_directories(test_occupancy_grid_utils PRIVATE include)
+
+  # Unit tests for the MAP1 self-describing occupancy payload parser
+  ament_add_gtest(test_occupancy_map1 test/unit/test_occupancy_map1.cpp)
+  target_include_directories(test_occupancy_map1 PRIVATE include)
 
   find_package(ament_cmake_pytest REQUIRED)
   set(_pytest_folders

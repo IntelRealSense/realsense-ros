@@ -74,10 +74,11 @@ import tf2_ros
 import json
 import rs_launch
 
-'''
-Copied from the old code in scripts folder
-'''
-from importRosbag.importRosbag import importRosbag
+import io
+import rosbag2_py
+from PIL import Image as PILImage
+from rclpy.serialization import deserialize_message
+from sensor_msgs.msg import CompressedImage as msg_CompressedImage
 
 import tempfile
 import os
@@ -95,8 +96,8 @@ class RosbagManager(object):
         return cls.instance
     def init(self):
         self.rosbag_files = {
-                "outdoors_1color.bag":"https://librealsense.realsenseai.com/rs-tests/TestData/outdoors_1color.bag",
-                "D435i_Depth_and_IMU_Stands_still.bag":"https://librealsense.realsenseai.com/rs-tests/D435i_Depth_and_IMU_Stands_still.bag"
+                "outdoors_1color.db3":"https://librealsense.realsenseai.com/rs-tests/TestData/outdoors_1color.db3",
+                "D435i_Depth_and_IMU_Stands_still.db3":"https://librealsense.realsenseai.com/rs-tests/D435i_Depth_and_IMU_Stands_still.db3"
                 }
         self.rosbag_location = os.getenv("HOME") + "/realsense_records/" 
         print(self.rosbag_location)
@@ -123,18 +124,36 @@ def get_rosbag_file_path(filename):
     return path
 get_rosbag_file_path.rosbagMgr = None
 
-def CameraInfoGetData(rec_filename, topic):
-    data = importRosbag(rec_filename, importTopics=[topic], log='ERROR', disable_bar=True)[topic]
-    data =  {k.lower(): v for k, v in data.items()}
-    data['distortionmodel'] = "plumb_bob"
-    data['k'] = data['k'].reshape(-1)
-    data['r'] = data['r'].reshape(-1)
-    data['p'] = data['p'].reshape(-1)
-    return data
+def db3_topic_messages(db3_filename, topic, msg_type):
+    ''' Returns the deserialized messages of the topic, read via rosbag2's own reader. '''
+    reader = rosbag2_py.SequentialReader()
+    reader.open(rosbag2_py.StorageOptions(uri=db3_filename, storage_id='sqlite3'),
+                rosbag2_py.ConverterOptions('', ''))
+    reader.set_filter(rosbag2_py.StorageFilter(topics=[topic]))
+    msgs = []
+    while reader.has_next():
+        _, data, _ = reader.read_next()
+        msgs.append(deserialize_message(bytes(data), msg_type))
+    return msgs
 
-def CameraInfoColorGetData(rec_filename):
-    return CameraInfoGetData(rec_filename, '/device_0/sensor_1/Color_0/info/camera_info')
+# Image topics are PNG CompressedImage per image_transport conventions; depth
+# (<topic>/compressedDepth) carries a 12-byte header before the PNG.
+def db3_image_frames(db3_filename, topic, header_size=0):
+    frames = []
+    for msg in db3_topic_messages(db3_filename, topic, msg_CompressedImage):
+        png = bytes(msg.data)[header_size:]
+        img = np.array(PILImage.open(io.BytesIO(png)))
+        if img.dtype == np.int32:  # PIL decodes 16-bit grayscale PNG as int32
+            img = img.astype(np.uint16)
+        frames.append(img)
+    assert frames, "No image frames for topic " + topic + " in " + db3_filename
+    return frames
 
+def db3_imu_acc(db3_filename, topic):
+    msgs = db3_topic_messages(db3_filename, topic, msg_Imu)
+    assert msgs, "No imu messages for topic " + topic + " in " + db3_filename
+    return np.array([[m.linear_acceleration.x, m.linear_acceleration.y, m.linear_acceleration.z]
+                     for m in msgs])
 
 def ImuGetData(rec_filename, topic):
     # res['value'] = first value of topic.
@@ -143,9 +162,9 @@ def ImuGetData(rec_filename, topic):
     res = dict()
     res['value'] = None
     res['max_diff'] = [0,0,0]
-    data = importRosbag(rec_filename, importTopics=[topic], log='ERROR', disable_bar=True)[topic]
-    res['value'] = data['acc'][0,:]
-    res['max_diff'] = data['acc'].max(0) - data['acc'].min(0)
+    acc = db3_imu_acc(rec_filename, topic)
+    res['value'] = acc[0,:]
+    res['max_diff'] = acc.max(0) - acc.min(0)
     return res
 
 def AccelGetData(rec_filename):
@@ -159,12 +178,11 @@ def AccelGetDataDeviceStandStraight(rec_filename):
 
 
 
-def ImageGetData(rec_filename, topic):
+def ImageGetData(rec_filename, topic, header_size=0):
     all_avg = []
     ok_percent = []
     res = dict()
-    data = importRosbag(rec_filename, importTopics=[topic], log='ERROR', disable_bar=True)[topic]
-    for pyimg in data['frames']:
+    for pyimg in db3_image_frames(rec_filename, topic, header_size):
         ok_number = (pyimg != 0).sum()
         channels = pyimg.shape[2] if len(pyimg.shape) > 2 else 1
         ok_percent.append(float(ok_number) / (pyimg.shape[0] * pyimg.shape[1] * channels))
@@ -182,14 +200,14 @@ def ImageGetData(rec_filename, topic):
     return res
 
 def ImageColorGetData(rec_filename):
-    return ImageGetData(rec_filename, '/device_0/sensor_1/Color_0/image/data')
+    return ImageGetData(rec_filename, '/device_0/sensor_1/Color_0/image/data/compressed')
 
 
 def ImageDepthGetData(rec_filename):
-    return ImageGetData(rec_filename, '/device_0/sensor_0/Depth_0/image/data')
+    return ImageGetData(rec_filename, '/device_0/sensor_0/Depth_0/image/data/compressedDepth', header_size=12)
 
 def ImageInfra1GetData(rec_filename):
-    return ImageGetData(rec_filename, '/device_0/sensor_0/Infrared_1/image/data')
+    return ImageGetData(rec_filename, '/device_0/sensor_0/Infrared_1/image/data/compressed')
 
 def ImageDepthInColorShapeGetData(rec_filename):
     gt_data = ImageDepthGetData(rec_filename)

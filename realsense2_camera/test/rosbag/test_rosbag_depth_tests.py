@@ -38,8 +38,11 @@ from pytest_rs_utils import delayed_launch_descr_with_parameters
 from pytest_rs_utils import get_rosbag_file_path
 from pytest_rs_utils import get_node_heirarchy
 
+DB3 = "outdoors_1color.db3"
 
-test_params_depth_points_cloud_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
+
+test_params_depth_points_cloud_1 = {"rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'Points_cloud_1',
     'color_width': '0',
     'color_height': '0',
@@ -70,9 +73,9 @@ class TestDepthPointsCloud1(pytest_rs_utils.RsTestBaseClass):
         since there are two callbacks, the initial few frames/data gets lost.
         '''
         params = delayed_launch_descr_with_parameters[1]
-        self.rosbag = params["rosbag_filename"]
-        data2 = pytest_rs_utils.ImageDepthGetData(params["rosbag_filename"])
-        data1 = {'width': [660353, 3300], 
+        self.rosbag = get_rosbag_file_path(DB3)
+        data2 = pytest_rs_utils.ImageDepthGetData(get_rosbag_file_path(DB3))
+        data1 = {'width': [660353, 3300],
                 'height': [1], 
                 'avg': [np.array([ 1.28251814, -0.15839984, 4.82235184, 80, 160, 240])], 
                 'epsilon': [0.04, 5]}
@@ -97,7 +100,8 @@ class TestDepthPointsCloud1(pytest_rs_utils.RsTestBaseClass):
         return super().process_data(themes)
 
 
-test_params_static_tf_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
+test_params_static_tf_1 = {"rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'Static_tf1',
     'color_width': '0',
     'color_height': '0',
@@ -116,7 +120,7 @@ the command used to run is "python3 realsense2_camera/scripts/rs2_test.py static
 class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
     def test_static_tf_1(self,delayed_launch_descr_with_parameters):
         self.params = delayed_launch_descr_with_parameters[1]
-        self.rosbag = self.params["rosbag_filename"]
+        self.rosbag = get_rosbag_file_path(DB3)
         themes = [
         {'topic':get_node_heirarchy(self.params)+'/color/image_raw',
          'msg_type':msg_Image,
@@ -156,13 +160,14 @@ class TestStaticTf1(pytest_rs_utils.RsTestBaseClass):
         return ret[0]
 
 
-test_params_non_existing_rosbag = {"rosbag_filename":"non_existent.bag",
+test_params_non_existing_rosbag = {"rosbag_filename":"non_existent.db3",
     'camera_name': 'non_existing_rosbag',
     }
 '''
 This test was ported from rs2_test.py
 the command used to run is "python3 realsense2_camera/scripts/rs2_test.py static_tf_1"
 '''
+@pytest.mark.no_librealsense
 @pytest.mark.rosbag
 @pytest.mark.parametrize("delayed_launch_descr_with_parameters", [test_params_non_existing_rosbag],indirect=True)
 @pytest.mark.launch(fixture=delayed_launch_descr_with_parameters)
@@ -181,7 +186,8 @@ class TestNonExistingRosbag(pytest_rs_utils.RsTestBaseClass):
 
 
 
-test_params_align_depth_color_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
+test_params_align_depth_color_1 = {"rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'Align_Depth_Color_1',
     'color_width': '0',
     'color_height': '0',
@@ -201,7 +207,7 @@ the command used to run is "python3 realsense2_camera/scripts/rs2_test.py align_
 class TestAlignDepthColor(pytest_rs_utils.RsTestBaseClass):
     def test_align_depth_color_1(self,delayed_launch_descr_with_parameters):
         params = delayed_launch_descr_with_parameters[1]
-        data = pytest_rs_utils.ImageDepthInColorShapeGetData(params["rosbag_filename"])
+        data = pytest_rs_utils.ImageDepthInColorShapeGetData(get_rosbag_file_path(DB3))
         themes = [
         {'topic':get_node_heirarchy(params)+'/aligned_depth_to_color/image_raw',
          'msg_type':msg_Image,
@@ -223,7 +229,8 @@ class TestAlignDepthColor(pytest_rs_utils.RsTestBaseClass):
         return super().process_data(themes)
 
 
-test_params_align_depth_infra_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
+test_params_align_depth_infra_1 = {"rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'Align_Depth_Infra_1',
     'color_width': '0',
     'color_height': '0',
@@ -256,8 +263,8 @@ The following testcase is skipped due to a possible issue. It can be re-enabled 
 class TestAlignDepthInfra1(pytest_rs_utils.RsTestBaseClass):
     def test_align_depth_infra_1(self,delayed_launch_descr_with_parameters):
         params = delayed_launch_descr_with_parameters[1]
-        self.rosbag = params["rosbag_filename"]
-        #data = pytest_rs_utils.ImageDepthInColorShapeGetData(params["rosbag_filename"])
+        self.rosbag = get_rosbag_file_path(DB3)
+        #data = pytest_rs_utils.ImageDepthInColorShapeGetData(get_rosbag_file_path(DB3))
         themes = [
         {'topic':get_node_heirarchy(params)+'/aligned_depth_to_infra1/image_raw',
          'msg_type':msg_Image,

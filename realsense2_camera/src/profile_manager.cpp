@@ -86,6 +86,7 @@ void ProfilesManager::registerSensorUpdateParam(std::string template_name,
     // This function registers parameters that their modification requires a sensor update.
     // For each pair of stream-index, Function add a parameter to <params>, if does not exist yet, and advertise it by <template_name>.
     // parameters in <params> are dynamically being updated.
+    auto sip_default_profiles = getDefaultProfiles();
     for (auto& sip : unique_sips)
     {
         std::string param_name = applyTemplateName(template_name, sip);
@@ -95,7 +96,7 @@ void ProfilesManager::registerSensorUpdateParam(std::string template_name,
                 // Disabling Infra 0 stream by default
                 params[sip] = std::make_shared<T>(false);
             else
-                params[sip] = std::make_shared<T>(value);
+                params[sip] = std::make_shared<T>(sip_default_profiles.count(sip) ? value : T{});
         }
         std::shared_ptr<T> param = params[sip];
         _params.getParameters()->setParam<T>(param_name, *(params[sip]), [param, update_sensor_func](const rclcpp::Parameter& parameter)
@@ -132,13 +133,16 @@ std::map<stream_index_pair, rs2::stream_profile> ProfilesManager::getDefaultProf
     }
 
     if (sip_default_profiles.empty())
-    {
-        ROS_INFO_STREAM("No default profile found. Setting the first available profile as the default one.");
-        rs2::stream_profile first_profile = _all_profiles.front();
-        sip_default_profiles[{first_profile.stream_type(), first_profile.stream_index()}] = first_profile;
-    }
+        sip_default_profiles = getFallbackProfiles();
 
     return sip_default_profiles;
+}
+
+std::map<stream_index_pair, rs2::stream_profile> ProfilesManager::getFallbackProfiles()
+{
+    ROS_INFO_STREAM("No default profile found. Setting the first available profile as the default one.");
+    rs2::stream_profile first_profile = _all_profiles.front();
+    return { { { first_profile.stream_type(), first_profile.stream_index() }, first_profile } };
 }
 
 rs2::stream_profile VideoProfilesManager::validateAndGetSuitableProfile(rs2_stream stream_type, rs2::stream_profile given_profile)
@@ -582,6 +586,34 @@ std::map<stream_index_pair, std::vector<int>> MotionProfilesManager::getAvailabl
         res[sip].push_back(profile.as<rs2::motion_stream_profile>().fps());
     }
     return res;
+}
+
+std::map<stream_index_pair, rs2::stream_profile> MotionProfilesManager::getFallbackProfiles()
+{
+    std::map<int, std::map<stream_index_pair, rs2::stream_profile>> profiles_per_fps;
+    std::set<stream_index_pair> all_sips;
+    for (auto profile : _all_profiles)
+    {
+        stream_index_pair sip(profile.stream_type(), profile.stream_index());
+        profiles_per_fps[profile.fps()].emplace(sip, profile);
+        all_sips.insert(sip);
+    }
+
+    // One rate for all the streams - some sensors cannot stream theirs at different ones.
+    std::map<stream_index_pair, rs2::stream_profile> fallback_profiles;
+    for (auto& fps_profiles : profiles_per_fps)
+    {
+        if (fps_profiles.second.size() > fallback_profiles.size())
+            fallback_profiles = fps_profiles.second;
+    }
+
+    ROS_INFO_STREAM("No default profile found. Using the lowest frame rate shared by the most streams: "
+                    << fallback_profiles.begin()->second.fps());
+    if (fallback_profiles.size() < all_sips.size())
+        ROS_WARN_STREAM("No frame rate is shared by all the motion streams, "
+                        << (all_sips.size() - fallback_profiles.size()) << " of them keep their own.");
+
+    return fallback_profiles;
 }
 
 void MotionProfilesManager::registerFPSParams()

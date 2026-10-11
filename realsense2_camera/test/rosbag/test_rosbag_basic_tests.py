@@ -34,7 +34,10 @@ from pytest_rs_utils import delayed_launch_descr_with_parameters
 from pytest_rs_utils import get_rosbag_file_path
 from pytest_rs_utils import get_node_heirarchy
 
-test_params = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
+DB3 = "outdoors_1color.db3"
+
+test_params = {"rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'Vis2_Cam',
     'color_width': '0',
     'color_height': '0',
@@ -53,7 +56,7 @@ the command used to run is "python3 realsense2_camera/scripts/rs2_test.py vis_av
 class TestVis2(pytest_rs_utils.RsTestBaseClass):
     def test_vis_2(self,delayed_launch_descr_with_parameters):
         params = delayed_launch_descr_with_parameters[1]
-        data = pytest_rs_utils.ImageColorGetData(params["rosbag_filename"])
+        data = pytest_rs_utils.ImageColorGetData(get_rosbag_file_path(DB3))
         themes = [
         {'topic':get_node_heirarchy(params)+'/color/image_raw',
          'msg_type':msg_Image,
@@ -75,7 +78,8 @@ class TestVis2(pytest_rs_utils.RsTestBaseClass):
         return super().process_data(themes)
 
     
-test_params_depth = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
+test_params_depth = {"rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'Depth_W_Cloud',
     'color_width': '0',
     'color_height': '0',
@@ -95,7 +99,7 @@ the command used to run is "python3 realsense2_camera/scripts/rs2_test.py depth_
 class TestDepthWCloud(pytest_rs_utils.RsTestBaseClass):
     def test_depth_w_cloud_1(self,launch_descr_with_parameters):
         params = launch_descr_with_parameters[1]
-        data = pytest_rs_utils.ImageDepthGetData(params["rosbag_filename"])
+        data = pytest_rs_utils.ImageDepthGetData(get_rosbag_file_path(DB3))
         themes = [
         {'topic':get_node_heirarchy(params)+'/depth/image_rect_raw',
          'msg_type':msg_Image,
@@ -117,7 +121,8 @@ class TestDepthWCloud(pytest_rs_utils.RsTestBaseClass):
         return super().process_data(themes)
 
 
-test_params_depth_avg_1 = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
+test_params_depth_avg_1 = {"rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'Depth_Avg_1',
     'color_width': '0',
     'color_height': '0',
@@ -136,7 +141,7 @@ the command used to run is "python3 realsense2_camera/scripts/rs2_test.py depth_
 class TestDepthAvg1(pytest_rs_utils.RsTestBaseClass):
     def test_depth_avg_1(self,launch_descr_with_parameters):
         params = launch_descr_with_parameters[1]
-        data = pytest_rs_utils.ImageDepthGetData(params["rosbag_filename"])
+        data = pytest_rs_utils.ImageDepthGetData(get_rosbag_file_path(DB3))
         themes = [
         {'topic':get_node_heirarchy(params)+'/depth/image_rect_raw',
          'msg_type':msg_Image,
