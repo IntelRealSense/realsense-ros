@@ -93,7 +93,11 @@ namespace realsense2_camera
 
     Parameters::~Parameters()
     {
-        _is_running = false;
+        {
+            std::lock_guard<std::mutex> lock(_mu);
+            _is_running = false;
+        }
+        _update_functions_cv.notify_one();
         if (_update_functions_t && _update_functions_t->joinable())
             _update_functions_t->join();
         for (auto const& param : _param_functions)
