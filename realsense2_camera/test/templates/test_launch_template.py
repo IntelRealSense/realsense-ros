@@ -45,7 +45,7 @@ parameters.
 @pytest.fixture
 def start_camera():
     params = pytest_rs_utils.get_default_params() 
-    rosfile = get_rosbag_file_path("outdoors_1color.bag")
+    rosfile = get_rosbag_file_path("outdoors_1color.db3")
     params['camera_name'] = 'camera'
     params['rosbag_filename'] = rosfile
     params['color_width'] = '0'

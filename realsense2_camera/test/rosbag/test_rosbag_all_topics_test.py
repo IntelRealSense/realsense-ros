@@ -41,8 +41,11 @@ from pytest_rs_utils import delayed_launch_descr_with_parameters
 from pytest_rs_utils import get_rosbag_file_path
 from pytest_rs_utils import get_node_heirarchy
 
+DB3 = "outdoors_1color.db3"
 
-test_params_all_topics = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
+
+test_params_all_topics = {"rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'AllTopics',
     'enable_infra1':'true',
     'enable_infra2':'true',
@@ -66,7 +69,7 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
     def test_all_topics(self,delayed_launch_descr_with_parameters):
  
         params = delayed_launch_descr_with_parameters[1]
-        self.rosbag = params["rosbag_filename"]
+        self.rosbag = get_rosbag_file_path(DB3)
 
         depth_to_infra_extrinsics_data = msg_Extrinsics()
         depth_to_infra_extrinsics_data.rotation = [1., 0., 0., 0., 1., 0., 0., 0., 1.]
@@ -76,7 +79,7 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
         depth_to_color_extrinsics_data.rotation=array('f',[ 0.99999666,  0.00166541,  0.00198587, -0.00166956,  0.99999642,
                         0.00208678, -0.00198239, -0.00209009,  0.99999583])
         depth_to_color_extrinsics_data.translation=array('f',[ 0.01484134, -0.00020221,  0.00013059])
-        data = pytest_rs_utils.ImageColorGetData(params["rosbag_filename"])
+        data = pytest_rs_utils.ImageColorGetData(get_rosbag_file_path(DB3))
         themes = [
         {
          'topic':get_node_heirarchy(params)+'/extrinsics/depth_to_color',
@@ -110,7 +113,8 @@ class TestAllTopics(pytest_rs_utils.RsTestBaseClass):
     def process_data(self, themes):
         return super().process_data(themes)
 
-test_params_metadata_topics = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
+test_params_metadata_topics = {"rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'MetadataTopics',
     'color_width': '0',
     'color_height': '0',
@@ -135,7 +139,7 @@ class TestMetaDataTopics(pytest_rs_utils.RsTestBaseClass):
         current rosbag file doesn't have color data 
         '''
         params = delayed_launch_descr_with_parameters[1]
-        self.rosbag = params["rosbag_filename"]
+        self.rosbag = get_rosbag_file_path(DB3)
 
         color_metadata = msg_Metadata()
         color_metadata.json_data = '{"frame_number":39,"clock_domain":"system_time","frame_timestamp":1508282881033.132324,"frame_counter":-8134432827560165376,"time_of_arrival":1508282881033}'
@@ -178,7 +182,8 @@ class TestMetaDataTopics(pytest_rs_utils.RsTestBaseClass):
     def process_data(self, themes):
         return super().process_data(themes)
 
-test_params_camera_info_topics = {"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
+test_params_camera_info_topics = {"rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'CameraInfoTopics',
     'color_width': '0',
     'color_height': '0',
@@ -202,12 +207,9 @@ class TestCamerInfoTopics(pytest_rs_utils.RsTestBaseClass):
         current rosbag file doesn't have color data 
         '''
         params = delayed_launch_descr_with_parameters[1]
-        self.rosbag = params["rosbag_filename"]
+        self.rosbag = get_rosbag_file_path(DB3)
         '''
         The test is hardwired to ensure the rosbag file is not changed.
-        The function CameraInfoColorGetData requires changes to adapt to the changes
-        made by the rosbag reader on extrincsic
-        color_data = pytest_rs_utils.CameraInfoColorGetData(self.rosbag)
         '''
         color_data = CameraInfo(header=Header(stamp=Time(sec=1508282881, nanosec=33132324),
                                         frame_id=params['camera_name']+"_color_optical_frame"),

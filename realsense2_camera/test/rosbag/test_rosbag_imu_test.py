@@ -40,8 +40,11 @@ from pytest_rs_utils import delayed_launch_descr_with_parameters
 from pytest_rs_utils import get_rosbag_file_path
 from pytest_rs_utils import get_node_heirarchy
 
+DB3 = "D435i_Depth_and_IMU_Stands_still.db3"
 
-test_params_accel = {"rosbag_filename":get_rosbag_file_path("D435i_Depth_and_IMU_Stands_still.bag"),
+
+test_params_accel = {"rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'Accel_Cam',
     'color_width': '0',
     'color_height': '0',
@@ -62,7 +65,7 @@ the command used to run is "python3 realsense2_camera/scripts/rs2_test.py accel_
 class TestAccelUp1(pytest_rs_utils.RsTestBaseClass):
     def test_accel_up_1(self,delayed_launch_descr_with_parameters):
         params = delayed_launch_descr_with_parameters[1]
-        data = pytest_rs_utils.AccelGetDataDeviceStandStraight(params["rosbag_filename"])
+        data = pytest_rs_utils.AccelGetDataDeviceStandStraight(get_rosbag_file_path(DB3))
         themes = [
         {'topic':get_node_heirarchy(params)+'/accel/sample',
          'msg_type':msg_Imu,
@@ -83,8 +86,9 @@ class TestAccelUp1(pytest_rs_utils.RsTestBaseClass):
     def process_data(self, themes):
         return super().process_data(themes)
 
-test_params_imu_topics = {#"rosbag_filename":get_rosbag_file_path("outdoors_1color.bag"),
-                          "rosbag_filename":get_rosbag_file_path("D435i_Depth_and_IMU_Stands_still.bag"),
+test_params_imu_topics = {
+                          "rosbag_filename":get_rosbag_file_path(DB3),
+    'rosbag_loop': 'true',
     'camera_name': 'ImuTopics',
     'color_width': '0',
     'color_height': '0',
@@ -106,7 +110,7 @@ class TestImuTopics(pytest_rs_utils.RsTestBaseClass):
         current rosbag file doesn't have color data 
         '''
         params = delayed_launch_descr_with_parameters[1]
-        self.rosbag = params["rosbag_filename"]
+        self.rosbag = get_rosbag_file_path(DB3)
         themes = [{
          'topic':get_node_heirarchy(params)+'/imu',
          'msg_type':msg_Imu,
