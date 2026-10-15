@@ -490,11 +490,10 @@ void RealSenseNodeFactory::closeDevice()
     }
 
     stopDevice();
+    RSContextSingletonWrapper::getInstance().set_devices_changed_callback([](rs2::event_information&) {});
     if (_device)
     {
         ROS_INFO("Closing RealSense device...");
-        RSContextSingletonWrapper::getInstance().set_devices_changed_callback([](rs2::event_information&) {});
-
         // To go into unconfigured lifecycle state for lifecycled node we have to also disconnect the device
         _device = rs2::device();
     }
