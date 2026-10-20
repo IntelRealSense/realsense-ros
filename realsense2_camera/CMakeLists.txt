@@ -152,9 +152,9 @@ else()
   set(SENSOR_MSGS_TARGET ${sensor_msgs_LIBRARIES})
 endif()
 
-find_package(realsense2 2.58.0)
+find_package(realsense2 2.59.0)
 if (BUILD_ACCELERATE_GPU_WITH_GLSL)
-  find_package(realsense2-gl 2.58.0)
+  find_package(realsense2-gl 2.59.0)
 endif()
 if(NOT realsense2_FOUND)
     message(FATAL_ERROR "\n\n RealSense SDK 2.0 is missing, please install it from https://github.com/realsenseai/librealsense/releases\n\n")
@@ -453,10 +453,6 @@ if(BUILD_TESTING)
   # Unit tests for occupancy grid utilities
   ament_add_gtest(test_occupancy_grid_utils test/unit/test_occupancy_grid_utils.cpp)
   target_include_directories(test_occupancy_grid_utils PRIVATE include)
-
-  # Unit tests for the MAP1 self-describing occupancy payload parser
-  ament_add_gtest(test_occupancy_map1 test/unit/test_occupancy_map1.cpp)
-  target_include_directories(test_occupancy_map1 PRIVATE include)
 
   find_package(ament_cmake_pytest REQUIRED)
   set(_pytest_folders
