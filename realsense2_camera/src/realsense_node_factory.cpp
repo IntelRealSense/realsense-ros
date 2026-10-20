@@ -489,8 +489,8 @@ void RealSenseNodeFactory::closeDevice()
         _query_thread.join();
     }
 
-    stopDevice();
     RSContextSingletonWrapper::getInstance().set_devices_changed_callback([](rs2::event_information&) {});
+    stopDevice();
     if (_device)
     {
         ROS_INFO("Closing RealSense device...");
